@@ -19,8 +19,9 @@ The main features offered by this artifact are :
 
  * Add security to OpenAPI description
  * Implement state machine features
- * Implement SQL Dao
+ * Implement SQL DAO for mysql, mariaDB, PostGre, Oracle, MSSQL
  * Implement Spring AOT
+ * Implement Event publishers for kafka, mqtt, amqp
  * Improve the Rest Services returned object => find a way to parametrize the EntityResponse
 
 
