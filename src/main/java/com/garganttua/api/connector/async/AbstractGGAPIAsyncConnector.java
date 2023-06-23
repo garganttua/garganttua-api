@@ -35,10 +35,10 @@ public abstract class AbstractGGAPIAsyncConnector<T extends IGGAPIEntity, S exte
 	@Inject
 	protected ExecutorService executor;
 	
-	@Value("${spring.domain.crudify.connector.timeout}")
+	@Value("${com.garganttua.api.connector.timeout}")
 	protected int timeout;
 	
-	@Value("${spring.domain.crudify.connector.timeout.timeUnit}")
+	@Value("${com.garganttua.api.connector.timeout.timeUnit}")
 	protected TimeUnit unit;
 	
 	private ObjectMapper mapper = new ObjectMapper();

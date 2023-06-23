@@ -50,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
-public class GGAPIDynamicDomainEngine implements IGGAPIDynamicDomainEngine {
+public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 
 	@Inject
 	protected Optional<MongoTemplate> mongo;
@@ -58,10 +58,10 @@ public class GGAPIDynamicDomainEngine implements IGGAPIDynamicDomainEngine {
 	@Inject
 	protected ApplicationContext context;
 
-	@Value("${spring.domain.crudify.magicTenantId}")
+	@Value("${com.garganttua.api.magicTenantId}")
 	protected String magicTenantId;
 
-	@Value("${spring.domain.crudify.engine.packages}")
+	@Value("${com.garganttua.api.engine.packages}")
 	protected String[] scanPackages;
 
 	@Inject
@@ -112,7 +112,7 @@ public class GGAPIDynamicDomainEngine implements IGGAPIDynamicDomainEngine {
 
 		log.info("============================================");
 		log.info("======                                ======");
-		log.info("====== Starting Dynamic Domain Engine ======");
+		log.info("====== Starting Garganttua API Engine ======");
 		log.info("======                                ======");
 		log.info("============================================");
 		log.info("Version: {}", this.getClass().getPackage().getImplementationVersion());

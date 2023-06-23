@@ -15,10 +15,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Service
-@ConditionalOnProperty(name = "spring.domain.crudify.security.tenant.verify", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security.tenant.verify", havingValue = "enabled", matchIfMissing = true)
 public class GGAPITenantVerifier extends OncePerRequestFilter {
 
-	@Value("${spring.domain.crudify.magicTenantId}")
+	@Value("${com.garganttua.api.magicTenantId}")
 	private String magicTenantId;
 
 	@Override

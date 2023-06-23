@@ -28,7 +28,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@ConditionalOnProperty(name = "spring.domain.crudify.security", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security", havingValue = "enabled", matchIfMissing = true)
 @SecurityScheme(name = "Bearer Authentication", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 @Slf4j
 public class GGAPISecurityHelper implements IGGAPISecurityHelper {

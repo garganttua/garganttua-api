@@ -30,7 +30,7 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	@Inject
 	protected MongoTemplate mongo;
 	
-	@Value("${spring.domain.crudify.magicTenantId}")
+	@Value("${com.garganttua.api.magicTenantId}")
 	protected String magicTenantId;
 
 	@Override

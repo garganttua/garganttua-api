@@ -26,15 +26,12 @@ The main features offered by this artifact are :
 
 ### Architecture
 
+![plot](./garganttua-api-architecture.png)
+
 #### Layers
 
-Controller, WS, Repository
+Controller, WS, Repository, DAO, security 
 
-#### Entity VS DTO pojos
-
-
-
-####
 
 
     
@@ -44,22 +41,22 @@ This artifact is compiled with java 18 Compliance
 
 ## Usage
 
-### Import the Spring Domain Crudify 
+### Import the Garganttua API Framework Library 
 
 First step is to create your Spring Boot Project. Then, you can import that artifact in your project.
 
 To import into Maven project, add the following dependency inside `pom.xml`:
 
 	<dependency>
-		<groupId>org.sdc</groupId>
-		<artifactId>spring-domain-crudify</artifactId>
-		<version>1.0.8</version>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api</artifactId>
+		<version>1.0.0</version>
 	</dependency>
 
 For Gradle users, add these lines inside `build.gradle`:
 
     dependencies {
-        compile group: 'org.sdc', name: 'spring-domain-crudify', version: '1.0.8'
+        compile group: 'com.garganttua', name: 'garganttua-api', version: '1.0.0'
     }
     
 ### Configuration
@@ -79,7 +76,7 @@ You must also indicate to Spring Boot the Spring Domain Crudify packages to scan
 Finally your main class should look like the following. 
 
 
-	@ComponentScan({"com.mypackage", "org.sdc"})
+	@ComponentScan({"com.mypackage", "com.garganttua"})
 	@Configuration
 	@SpringBootApplication(exclude = SecurityAutoConfiguration.class)
 	public class Application {
@@ -95,16 +92,17 @@ Once the project is well set, it is now time to develop your domains.
 
 #### Use the Dynamic Domain Engine
 
-This way to do is very convenient for building an API based on CRUD endpoints very quickly. But, by this way, CRUD endpoints and software layers cannot be overrided and the Swagger Web UI won't display the endpoints declared by the Dynamic Domain Engine. 
+This way to do is very convenient for building an API based on CRUD endpoints very quickly. But, by this way, CRUD endpoints and software layers cannot be overrided and the Swagger Web UI won't display the endpoints declared by the Garganttua API Engine. 
 
 In that way to do, the only things you need to do is :
  * Chose the database (mongodb, ...)
  * Define your domain entities
  * Define your domain DTOs
  
-Let's take a simple example : we imagine that we develop an API for booking meeting rooms. It is pretty simple to imagine that our API deals with 2 entities : 
+Let's take a simple example : we imagine that we develop an API for booking meeting rooms. It is pretty simple to imagine that our API deals with 3 entities : 
 1/ Meeting Room
 2/ Booking
+3/ Facilities
 
 ##### Entity Meeting Room 
 
@@ -112,7 +110,7 @@ Let's take a simple example : we imagine that we develop an API for booking meet
 	@Setter
 	@NoArgsConstructor
 	@AllArgsConstructor
-	@SpringCrudifyEntity(dto = "org.sdc.spring.domain.crudify.example.MeetingRoomDTO")
+	@SpringCrudifyEntity(dto = "com.garganttua.api.example.MeetingRoomDTO")
 	public class MeetingRoomEntity implements ISpringCrudifyEntity {
 	
 		private static String domain = "meetingRooms";
@@ -167,6 +165,6 @@ This way is a little bit more complicated and takes more time to develop but has
 
 
 
-### Activate the Swagger Web Ui 	
+### Activate the Swagger Web Ui
 
 

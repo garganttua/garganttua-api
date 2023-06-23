@@ -30,25 +30,25 @@ public class GGAPIJwtTokenProvider implements IGGAPIAuthorizationProvider {
 
 	private IGGAPIKeyManager keyManager;
 
-	@Value("${spring.domain.crudify.security.authorization.token.jwt.key.manager}")
+	@Value("${com.garganttua.api.security.authorization.token.jwt.key.manager}")
 	private GGAPIKeyManagerType keyManagerType;
 
-	@Value("${spring.domain.crudify.security.authorization.token.jwt.key.algorithm}")
+	@Value("${com.garganttua.api.security.authorization.token.jwt.key.algorithm}")
 	private String keyAlgorythm;
 
-	@Value("${spring.domain.crudify.security.authorization.token.jwt.key.realm}")
+	@Value("${com.garganttua.api.security.authorization.token.jwt.key.realm}")
 	private String keyRealm;
 
-	@Value("${spring.domain.crudify.security.authorization.token.jwt.key.renewal}")
+	@Value("${com.garganttua.api.security.authorization.token.jwt.key.renewal}")
 	private GGAPIKeyRenewal keyRenewal;
 
-	@Value("${spring.domain.crudify.security.authorization.token.jwt.key.lifetime}")
+	@Value("${com.garganttua.api.security.authorization.token.jwt.key.lifetime}")
 	private long keyLifetime;
 
-	@Value("${spring.domain.crudify.security.authorization.token.jwt.key.lifetime.unit}")
+	@Value("${com.garganttua.api.security.authorization.token.jwt.key.lifetime.unit}")
 	private TimeUnit keyLifetimeUnit;
 
-	@Value("${spring.domain.crudify.security.authorization.token.lifetime}")
+	@Value("${com.garganttua.api.security.authorization.token.lifetime}")
 	private int tokenLifetime;
 
 	@PostConstruct

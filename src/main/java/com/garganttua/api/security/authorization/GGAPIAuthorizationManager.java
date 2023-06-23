@@ -15,16 +15,16 @@ import com.garganttua.api.security.authorization.bearer.GGAPIBearerAuthorization
 import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtTokenProvider;
 
 @Service
-@ConditionalOnProperty(name = "spring.domain.crudify.security.authentication", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 
-	@Value("${spring.domain.crudify.security.authorization}")
+	@Value("${com.garganttua.api.security.authorization}")
 	private GGAPIAuthorizationType authorizationType;
 	
-	@Value("${spring.domain.crudify.security.authorization.token.type}")
+	@Value("${com.garganttua.api.security.authorization.token.type}")
 	private GGAPITokenAuthorizationType tokenAuthorizationType;
 	
-	@Value("${spring.domain.crudify.security.authorization.token.provider}")
+	@Value("${com.garganttua.api.security.authorization.token.provider}")
 	private GGAPITokenProviderType tokenProviderType;
 	
 	@Inject
@@ -32,7 +32,7 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 
 	private GGAPIJwtTokenProvider authorizationProvider = null;
 
-	@Value("${spring.domain.crudify.security.extractUserId}")
+	@Value("${com.garganttua.api.security.extractUserId}")
 	private String extractUserId;
 	
 	@Bean 

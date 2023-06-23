@@ -27,10 +27,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @ComponentScan("com.citech.iot")
 @Tag(name = "Auhtentication", description = "The Spring Domain Crudify built-in authentication API")
 @RestController
-@ConditionalOnProperty(name = "spring.domain.crudify.security.authentication", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIAuthenticationRestService {
 	
-	@Value("${spring.domain.crudify.security.authentication.mode}")
+	@Value("${com.garganttua.api.security.authentication.mode}")
 	private GGAPIAuthenticationMode authenticationMode;
 	
 	@Autowired
@@ -40,7 +40,7 @@ public class GGAPIAuthenticationRestService {
 	private IGGAPIAuthorizationProvider authorizationProvider;
 	
 	@PostMapping("/authenticate")
-	@ConditionalOnProperty(name = "spring.domain.crudify.security.authentication.mode", havingValue = "loginpassword", matchIfMissing = true)
+	@ConditionalOnProperty(name = "com.garganttua.api.security.authentication.mode", havingValue = "loginpassword", matchIfMissing = true)
     public ResponseEntity<?> authenticate(@RequestBody GGAPILoginPasswordAuthenticationRequest authenticationRequest) {
        
 		Authentication authentication = this.getAuthentication(authenticationRequest);

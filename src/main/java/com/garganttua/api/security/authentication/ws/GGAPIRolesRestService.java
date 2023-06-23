@@ -24,7 +24,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @ComponentScan("com.citech.iot")
 @Tag(name = "Roles", description = "The Spring Domain Crudify built-in roles API")
 @RestController
-@ConditionalOnProperty(name = "spring.domain.crudify.security.exposeRoles", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security.exposeRoles", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIRolesRestService {
 	
 	private ArrayList<IGGAPIAuthorization> roles = new ArrayList<IGGAPIAuthorization>();

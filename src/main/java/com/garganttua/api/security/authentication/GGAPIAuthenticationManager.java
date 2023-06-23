@@ -19,16 +19,16 @@ import org.springframework.stereotype.Service;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
 
 @Service
-@ConditionalOnProperty(name = "spring.domain.crudify.security.authentication", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 
 	@Inject
 	private IGGAPIAuthenticationUserMapper userMapper;
 	
-	@Value("${spring.domain.crudify.security.authentication.type}")
+	@Value("${com.garganttua.api.security.authentication.type}")
 	private GGAPIAuthenticationType authenticationType;
 
-	@Value("${spring.domain.crudify.security.authentication.password.encoder}")
+	@Value("${com.garganttua.api.security.authentication.password.encoder}")
 	private GGAPIAuthenticationPasswordEncoder passwordEncoderType;
 	
 	@Bean
