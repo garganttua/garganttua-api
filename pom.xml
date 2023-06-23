@@ -6,18 +6,18 @@
 	<artifactId>garganttua-api</artifactId>
 	<version>1.0.0</version>
 
-	<!--<distributionManagement>
+	<distributionManagement>
 		<snapshotRepository>
 			<id>github</id>
 			<name>GitHub Packages</name>
-			<url>https://maven.pkg.github.com/mimir234/SpringDomainCrudify</url>
+			<url>https://maven.pkg.github.com/garganttua/garganttua-api</url>
 		</snapshotRepository>
 		<repository>
 			<id>github</id>
 			<name>GitHub Packages</name>
-			<url>https://maven.pkg.github.com/mimir234/SpringDomainCrudify</url>
+			<url>https://maven.pkg.github.com/garganttua/garganttua-api</url>
 		</repository>
-	</distributionManagement>-->
+	</distributionManagement>
 
 	<properties>
 		<spring.version>3.0.5</spring.version>
