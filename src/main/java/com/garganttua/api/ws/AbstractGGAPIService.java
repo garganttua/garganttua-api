@@ -104,7 +104,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				
 				Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
 				
-				entity = this.controller.createEntity(tenantId, entity);
+				entity = this.controller.createEntity(tenantId, userId, entity);
 				response = new ResponseEntity<>(entity, HttpStatus.CREATED);
 			} catch (GGAPIEntityException e) {
 				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
@@ -147,7 +147,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			}
 
 			try {
-				entities = this.controller.getEntityList(tenantId, pageSize, pageIndex, filter, sort, mode);
+				entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, mode);
 			} catch (GGAPIEntityException e) {
 				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 						this.getHttpErrorCodeFromEntityExceptionCode(e));
@@ -158,7 +158,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			if (pageSize > 0) {
 				long totalCount = 0;
 				try {
-					totalCount = this.controller.getEntityTotalCount(tenantId, filter);
+					totalCount = this.controller.getEntityTotalCount(tenantId, userId, filter);
 				} catch (GGAPIEntityException e) {
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
@@ -191,7 +191,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		if (this.AUTHORIZE_GET_ONE) {
 			Entity entity;
 			try {
-				entity = this.controller.getEntity(tenantId, uuid);
+				entity = this.controller.getEntity(tenantId, userId, uuid);
 				response = new ResponseEntity<>(entity, HttpStatus.OK);
 			} catch (GGAPIEntityException e) {
 				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
@@ -222,7 +222,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
 				
 				entity.setUuid(uuid);
-				Entity updatedEntity = this.controller.updateEntity(tenantId, entity);
+				Entity updatedEntity = this.controller.updateEntity(tenantId, userId, entity);
 				response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
 			} catch (GGAPIEntityException e) {
 				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
@@ -250,7 +250,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			ResponseEntity<?> response = null;
 
 			try {
-				this.controller.deleteEntity(tenantId, uuid);
+				this.controller.deleteEntity(tenantId, userId, uuid);
 				response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 			} catch (GGAPIEntityException e) {
 				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
@@ -278,7 +278,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			ResponseEntity<?> response = null;
 
 			try {
-				this.controller.deleteEntities(tenantId);
+				this.controller.deleteEntities(tenantId, userId);
 				response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 			} catch (GGAPIEntityException e) {
 				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
@@ -306,7 +306,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			ResponseEntity<?> response = null;
 
 			try {
-				long count = this.controller.getEntityTotalCount(tenantId, null);
+				long count = this.controller.getEntityTotalCount(tenantId, userId, null);
 				response = new ResponseEntity<>(count, HttpStatus.OK);
 			} catch (GGAPIEntityException e) {
 				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),

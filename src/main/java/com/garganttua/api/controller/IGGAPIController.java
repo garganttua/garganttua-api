@@ -20,19 +20,19 @@ import com.garganttua.api.spec.sort.GGAPISort;
 
 public interface IGGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto>{
 
-	public Entity createEntity(String tenantId, Entity object) throws GGAPIEntityException;
+	public Entity createEntity(String tenantId, String userId, Entity object) throws GGAPIEntityException;
 
-	public Entity updateEntity(String tenantId, Entity entity) throws GGAPIEntityException;
+	public Entity updateEntity(String tenantId, String userId, Entity entity) throws GGAPIEntityException;
 	
-	public void deleteEntity(String tenantId, String id) throws GGAPIEntityException;
+	public void deleteEntity(String tenantId, String userId, String id) throws GGAPIEntityException;
 
-	public void deleteEntities(String tenantId) throws GGAPIEntityException;
+	public void deleteEntities(String tenantId, String userId) throws GGAPIEntityException;
 
-	public Entity getEntity(String tenantId, String uuid) throws GGAPIEntityException;
+	public Entity getEntity(String tenantId, String userId, String uuid) throws GGAPIEntityException;
 
-	public long getEntityTotalCount(String tenantId, GGAPILiteral filter) throws GGAPIEntityException;
+	public long getEntityTotalCount(String tenantId, String userId, GGAPILiteral filter) throws GGAPIEntityException;
 
-	public List<?> getEntityList(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort,
+	public List<?> getEntityList(String tenantId, String userId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort,
 			GGAPIReadOutputMode mode) throws GGAPIEntityException;
 
 	public void setRepository(Optional<IGGAPIRepository<Entity, Dto>> repository);

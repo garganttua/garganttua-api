@@ -75,7 +75,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	 * 
 	 */
 	@Override
-	public Entity getEntity(String tenantId, String uuid) throws GGAPIEntityException {
+	public Entity getEntity(String tenantId, String userId, String uuid) throws GGAPIEntityException {
 		log.info("[Tenant {}] [Domain {}] Getting entity with Uuid " + uuid, tenantId, this.domain);
 		Entity entity = null;
 
@@ -108,7 +108,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public Entity createEntity(String tenantId, Entity entity) throws GGAPIEntityException {
+	public Entity createEntity(String tenantId, String userId, Entity entity) throws GGAPIEntityException {
 
 		log.info("[Tenant {}] [Domain {}] Creating entity with uuid {}", tenantId, this.domain, entity.getUuid());
 
@@ -151,7 +151,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public List<?> getEntityList(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIReadOutputMode mode)
+	public List<?> getEntityList(String tenantId, String userId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIReadOutputMode mode)
 			throws GGAPIEntityException {
 		log.info("[Tenant {}] [Domain {}] Getting entities, mode {}, page size {}, page index {}, filter {}, sort {}", tenantId, this.domain, mode, pageSize, pageIndex, filter, sort);
 		try {
@@ -190,7 +190,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public Entity updateEntity(String tenantId, Entity entity) throws GGAPIEntityException {
+	public Entity updateEntity(String tenantId, String userId, Entity entity) throws GGAPIEntityException {
 		log.info("[Tenant {}] [Domain {}] Updating entity with Uuid " + entity.getUuid(), tenantId, this.domain);
 		Entity updated = null;
 		
@@ -228,10 +228,10 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public void deleteEntity(String tenantId, String uuid) throws GGAPIEntityException {
+	public void deleteEntity(String tenantId, String userId, String uuid) throws GGAPIEntityException {
 		log.info("[Tenant {}] [Domain {}] Deleting entity with Uuid " + uuid, tenantId, this.domain);
 
-		Entity entity = this.getEntity(tenantId, uuid);
+		Entity entity = this.getEntity(tenantId, userId, uuid);
 
 		if (entity == null) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND,
@@ -266,13 +266,13 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public void deleteEntities(final String tenantId) throws GGAPIEntityException {
+	public void deleteEntities(final String tenantId, String userId) throws GGAPIEntityException {
 		log.info("[Tenant {}] [Domain {}] Deleting all entities", tenantId, this.domain);
 		List<Entity> entities = this.repository.get().getEntities(tenantId, 0, 1, null, null);
 
 		for (Entity s : entities) {
 			try {
-				this.deleteEntity(tenantId, s.getUuid());
+				this.deleteEntity(tenantId, userId, s.getUuid());
 			} catch (GGAPIEntityException e) {
 				throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR,
 						"Error during entities deletion");
@@ -281,7 +281,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public long getEntityTotalCount(String tenantId, GGAPILiteral filter) throws GGAPIEntityException {
+	public long getEntityTotalCount(String tenantId, String userId, GGAPILiteral filter) throws GGAPIEntityException {
 		if (this.connector.isPresent()) {
 			try {
 				Future<List<Entity>> list = this.connector.get().requestList(tenantId, null, null);
