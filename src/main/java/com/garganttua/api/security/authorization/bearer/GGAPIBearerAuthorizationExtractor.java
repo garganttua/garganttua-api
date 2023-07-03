@@ -54,7 +54,7 @@ public class GGAPIBearerAuthorizationExtractor extends OncePerRequestFilter {
 				    if( this.extractUserId != null && !this.extractUserId.isEmpty() && this.extractUserId.equals("enabled")) {
 				    	request.setAttribute("userId", userDetails.getUuid());
 				    }
-				    			    
+		    
 				    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 				    
 				    SecurityContextHolder.getContext().setAuthentication(authToken);

@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.Getter;
 
-public class AbstractGGAPIUserDetails implements UserDetails {
+public class AbstractGGAPIUserDetails implements UserDetails, IGGAPIUser {
 
 	/**
 	 * 

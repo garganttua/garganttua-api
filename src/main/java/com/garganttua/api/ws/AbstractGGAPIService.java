@@ -96,7 +96,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> createEntity(String entity__, String tenantId) {
+	public ResponseEntity<?> createEntity(String entity__, String tenantId, String userId) {
 		ResponseEntity<?> response = null;
 
 		if (this.AUTHORIZE_CREATION) {
@@ -126,7 +126,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex, String filterString, String sortString) {
+	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex, String filterString, String sortString, String userId) {
 
 		if (this.AUTHORIZE_GET_ALL) {
 
@@ -185,7 +185,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getEntity(String tenantId, String uuid) {
+	public ResponseEntity<?> getEntity(String tenantId, String uuid, String userId) {
 		ResponseEntity<?> response = null;
 
 		if (this.AUTHORIZE_GET_ONE) {
@@ -212,7 +212,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> updateEntity(String uuid, String entity__, String tenantId) {
+	public ResponseEntity<?> updateEntity(String uuid, String entity__, String tenantId, String userId) {
 
 		ResponseEntity<?> response = null;
 
@@ -244,7 +244,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestHeader(name = "tenantId") String tenantId) {
+	public ResponseEntity<?> deleteEntity(String uuid, String tenantId, String userId) {
 
 		if (this.AUTHORIZE_DELETE_ONE) {
 			ResponseEntity<?> response = null;
@@ -272,7 +272,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteAll(String tenantId) {
+	public ResponseEntity<?> deleteAll(String tenantId, String userId) {
 
 		if (this.AUTHORIZE_DELETE_ALL) {
 			ResponseEntity<?> response = null;
@@ -300,7 +300,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getCount(@RequestHeader(name = "tenantId") String tenantId) {
+	public ResponseEntity<?> getCount(String tenantId, String userId) {
 
 		if (this.AUTHORIZE_COUNT) {
 			ResponseEntity<?> response = null;

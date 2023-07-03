@@ -21,15 +21,14 @@ import com.garganttua.api.security.authorization.IGGAPIAuthorization;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin(origins = "*")
-@ComponentScan("com.citech.iot")
-@Tag(name = "Roles", description = "The Spring Domain Crudify built-in roles API")
+@Tag(name = "Authorizations", description = "The Spring Domain Crudify built-in authorizations API")
 @RestController
-@ConditionalOnProperty(name = "com.garganttua.api.security.exposeRoles", havingValue = "enabled", matchIfMissing = true)
+@ConditionalOnProperty(name = "com.garganttua.api.security.exposeAuthorizations", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIRolesRestService {
 	
 	private ArrayList<IGGAPIAuthorization> roles = new ArrayList<IGGAPIAuthorization>();
 
-	@GetMapping("/roles")
+	@GetMapping("/authorizations")
 	public ResponseEntity<?> getRoles() {
 		List<String> auths = new ArrayList<String>();
 		
@@ -44,7 +43,7 @@ public class GGAPIRolesRestService {
 
 	public List<IGGAPIAuthorization> getCustomAuthorizations() {
 		List<IGGAPIAuthorization> auths = new ArrayList<IGGAPIAuthorization>();
-		auths.add(new BasicGGAPIAuthorization("/roles", "roles-read", HttpMethod.GET));
+		auths.add(new BasicGGAPIAuthorization("/authorizations", "roles-read", HttpMethod.GET));
 
 		return auths;
 		

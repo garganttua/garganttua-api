@@ -24,7 +24,6 @@ import com.garganttua.api.ws.IGGAPIErrorObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin(origins = "*")
-@ComponentScan("com.citech.iot")
 @Tag(name = "Auhtentication", description = "The Spring Domain Crudify built-in authentication API")
 @RestController
 @ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)

@@ -450,40 +450,40 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		if (authorize_read_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
 					ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class,
-							Integer.class, Integer.class, String.class, String.class));
+							Integer.class, Integer.class, String.class, String.class, String.class));
 			this.openApi.path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet()));
 		}
 		if (authorize_delete_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
-					ws.getClass().getMethod("deleteAll", String.class));
+					ws.getClass().getMethod("deleteAll", String.class, String.class));
 			this.openApi.path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete()));
 		}
 		if (authorize_creation) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
-					ws.getClass().getMethod("createEntity", String.class, String.class));
+					ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost()));
 		}
 		if (authorize_count) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
-					ws.getClass().getMethod("getCount", String.class));
+					ws.getClass().getMethod("getCount", String.class, String.class));
 			this.openApi.path(baseUrl + "/count",
 					pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet()));
 		}
 		if (authorize_read_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
-					ws.getClass().getMethod("getEntity", String.class, String.class));
+					ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
 					pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet()));
 		}
 		if (authorize_update_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
-					ws.getClass().getMethod("updateEntity", String.class, String.class, String.class));
+					ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
 					pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch()));
 		}
 		if (authorize_delete_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
-					ws.getClass().getMethod("deleteEntity", String.class, String.class));
+					ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
 					pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete()));
 		}

@@ -1,4 +1,8 @@
-# SpringDomainCrudify
+# Garganttua API
+
+DISCLAIMER : This README is under construction, so it is not complete. 
+
+Please check the example project available here : https://github.com/garganttua/garganttua-api-example
 
 ## Description
 
@@ -34,8 +38,6 @@ The main features offered by this artifact are :
 Controller, WS, Repository, DAO, security 
 
 
-
-    
 ### Note
 
 This artifact is compiled with java 18 Compliance
@@ -111,59 +113,97 @@ Let's take a simple example : we imagine that we develop an API for booking meet
 	@Setter
 	@NoArgsConstructor
 	@AllArgsConstructor
-	@SpringCrudifyEntity(dto = "com.garganttua.api.example.MeetingRoomDTO")
-	public class MeetingRoomEntity implements ISpringCrudifyEntity {
+	@Builder
+	@GGAPIEntity(dto = "com.garganttua.api.example.MeetingRoomDTO", eventPublisher = "class:com.garganttua.api.example.CustomEventPublisher", domain = "meetingRooms")
+	public class MeetingRoomEntity extends AbstractGGAPIEntity {
+
+	@JsonProperty
+	private String name;
 	
-		private static String domain = "meetingRooms";
+	@JsonProperty
+	private String location;
 	
-		@JsonProperty
-		private String uuid;
-	
-		@JsonProperty
-		private String id;
-		
-		@JsonProperty
-		private String name;
-		
-		@JsonProperty
-		private String location;
-		
-		@JsonProperty
-		private String[] facilities;
-	
-		@Override
-		public ISpringCrudifyEntityFactory<MeetingRoomEntity> getFactory() {
-			ISpringCrudifyEntityFactory<MeetingRoomEntity> factory = new ISpringCrudifyEntityFactory<MeetingRoomEntity>() {
-			
-				@Override
-				public MeetingRoomEntity newInstance() {
-					return new MeetingRoomEntity();
-				}
-	
-				@Override
-				public MeetingRoomEntity newInstance(String uuid) {
-					MeetingRoomEntity entity = new MeetingRoomEntity();
-					entity.setUuid(uuid);
-					return entity;
-				}
-			};
-			return factory ;
-		}
-	
-		@Override
-		public String getDomain() {
-			return domain;
-		}
+	@JsonProperty
+	private String[] facilities;
+
+	@Override
+	public IGGAPIEntityFactory<MeetingRoomEntity> getFactory() {
+		IGGAPIEntityFactory<MeetingRoomEntity> factory = new IGGAPIEntityFactory<MeetingRoomEntity>() {
+
+			@Override
+			public MeetingRoomEntity newInstance() {
+				return new MeetingRoomEntity();
+			}
+
+			@Override
+			public MeetingRoomEntity newInstance(String uuid) {
+				MeetingRoomEntity entity = new MeetingRoomEntity();
+				entity.setUuid(uuid);
+				return entity;
+			}
+		};
+		return factory ;
 	}
+
+}
 	
 ##### DTO Meeting Room
 
+	@Getter
+	@Setter
+	@NoArgsConstructor
+	@AllArgsConstructor
+	@Document(collection = "meetingRooms")
+	public class MeetingRoomDTO extends AbstractGGAPIDTOObject<MeetingRoomEntity> {
+	
+	@JsonProperty
+	private String name;
+	
+	@JsonProperty
+	private String location;
+	
+	@JsonProperty
+	private String[] facilities;
+	
+	public MeetingRoomDTO(String tenantId, MeetingRoomEntity entity) {
+		super(tenantId, entity);
+	}
 
+	@Override
+	public void create(MeetingRoomEntity entity) {
+		this.name = entity.getName();
+		this.location = entity.getLocation();
+		this.facilities = entity.getFacilities();
+	}
 
-#### Overrides the layers
+	@Override
+	public MeetingRoomEntity convert() {
+		MeetingRoomEntity mre = new MeetingRoomEntity(this.name, this.location, this.facilities);
+		super.convert(mre);
+		mre.setId(this.id);
+		mre.setUuid(this.uuid);
+		return mre;
+	}
 
-This way is a little bit more complicated and takes more time to develop but has the advantage to allow you to enrich and override the behaviour of the built-in CRUB methods. This way allows you to create new Http/Rest Endpoints to enhance new features.
+	@Override
+	public void update(IGGAPIDTOObject<MeetingRoomEntity> object) {
+		this.name = ((MeetingRoomDTO) object).getName();
+		this.location = ((MeetingRoomDTO) object).getLocation();
+		this.facilities = ((MeetingRoomDTO) object).getFacilities();
+	}
 
+	@Override
+	public IGGAPIDTOFactory<MeetingRoomEntity, MeetingRoomDTO> getFactory() {
+		IGGAPIDTOFactory<MeetingRoomEntity, MeetingRoomDTO> factory = new IGGAPIDTOFactory<MeetingRoomEntity, MeetingRoomDTO>() {
+			@Override
+			public MeetingRoomDTO newInstance(String tenantId, MeetingRoomEntity entity) {
+				return new MeetingRoomDTO(tenantId, entity);
+			}
+		};
+		return factory;
+	}
+
+}
 
 
 ### Activate the Swagger Web Ui
