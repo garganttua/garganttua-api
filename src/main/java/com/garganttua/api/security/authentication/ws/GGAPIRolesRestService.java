@@ -5,18 +5,16 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.security.authentication.modes.loginpassword.GGAPILoginPasswordAuthenticationRequest;
 import com.garganttua.api.security.authorization.BasicGGAPIAuthorization;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
+import com.garganttua.api.spec.GGAPICrudAccess;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -33,7 +31,7 @@ public class GGAPIRolesRestService {
 		List<String> auths = new ArrayList<String>();
 		
 		this.roles.forEach(r -> {
-			auths.add(r.getRole());
+			auths.add(r.getAuthorization());
 		});
 		
 		List<String> listWithoutDuplicates = new ArrayList<String>(new HashSet<>(auths));
@@ -43,7 +41,7 @@ public class GGAPIRolesRestService {
 
 	public List<IGGAPIAuthorization> getCustomAuthorizations() {
 		List<IGGAPIAuthorization> auths = new ArrayList<IGGAPIAuthorization>();
-		auths.add(new BasicGGAPIAuthorization("/authorizations", "roles-read", HttpMethod.GET));
+		auths.add(new BasicGGAPIAuthorization("/authorizations", "roles-read", HttpMethod.GET, GGAPICrudAccess.authenticated));
 
 		return auths;
 		

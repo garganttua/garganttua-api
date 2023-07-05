@@ -15,19 +15,33 @@ public @interface GGAPIEntity {
 
 	GGAPIDao db() default GGAPIDao.mongo;
 	
-	boolean authorize_creation() default true;
+	boolean allow_creation() default true;
 
-	boolean authorize_read_all() default true;
+	boolean allow_read_all() default true;
 
-	boolean authorize_read_one() default true;
+	boolean allow_read_one() default true;
 
-	boolean authorize_update_one() default true;
+	boolean allow_update_one() default true;
 
-	boolean authorize_delete_one() default true;
+	boolean allow_delete_one() default true;
 
-	boolean authorize_delete_all() default true;
+	boolean allow_delete_all() default true;
 
-	boolean authorize_count() default true;
+	boolean allow_count() default true;
+	
+	GGAPICrudAccess creation_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess read_all_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess read_one_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess update_one_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess delete_one_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess delete_all_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess count_access() default GGAPICrudAccess.authenticated;
 	
 	String controller() default "";
 	
@@ -46,5 +60,11 @@ public @interface GGAPIEntity {
 	String eventPublisher() default "";
 
 	String domain();
-
+	
+	boolean publicEntity() default false;
+	
+	boolean hiddenAble() default false;
+	
+	String shared() default "";
+	
 }

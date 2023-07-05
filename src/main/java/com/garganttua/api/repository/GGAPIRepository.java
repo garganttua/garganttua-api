@@ -166,4 +166,5 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		this.daoRepository = dao;
 	}
 
+
 }

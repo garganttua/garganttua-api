@@ -33,6 +33,12 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	@Value("${com.garganttua.api.magicTenantId}")
 	protected String magicTenantId;
 
+	private boolean hiddenable;
+
+	private boolean publicEntity;
+
+	private String field;
+
 	@Override
 	public void setMagicTenantId(String magicTenantId) {
 		this.magicTenantId = magicTenantId;
@@ -53,8 +59,22 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
+		} else {
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId));
+			}
+	
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
 
 		if (filter != null) {
@@ -162,10 +182,24 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId).and("uuid").is(uuid));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
 		} else {
-			query.addCriteria(Criteria.where("uuid").is(uuid));
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId).and("uuid").is(uuid));
+			} else {
+				query.addCriteria(Criteria.where("uuid").is(uuid));
+			}
+			
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
 		
 		return this.mongo.findOne(query, this.dtoClass);
@@ -176,11 +210,26 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId).and("id").is(id));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
 		} else {
-			query.addCriteria(Criteria.where("id").is(id));
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId).and("id").is(id));
+			} else {
+				query.addCriteria(Criteria.where("id").is(id));
+			}
+			
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
+		
 		
 		return this.mongo.findOne(query, this.dtoClass);
 	}
@@ -196,16 +245,45 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
+		} else {
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId));
+			}
+			
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
-
+	
 		if (filter != null) {
 			Criteria criteria = GGAPIMongoRepository.getCriteriaFromFilter(filter);
 			query.addCriteria(criteria);
 		}
 		
 		return this.mongo.count(query, this.dtoClass);
+	}
+
+	@Override
+	public void setHiddenable(boolean hiddenable) {
+		this.hiddenable = hiddenable;
+	}
+
+	@Override
+	public void setPublic(boolean publicEntity) {
+		this.publicEntity = publicEntity;
+	}
+
+	@Override
+	public void setShared(String field) {
+		this.field = field;	
 	}
 
 }

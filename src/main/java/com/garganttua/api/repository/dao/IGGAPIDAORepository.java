@@ -28,4 +28,10 @@ public interface IGGAPIDAORepository<Entity extends IGGAPIEntity, Dto extends IG
 	long countByTenantId(String tenantId, GGAPILiteral filter);
 
 	void setMagicTenantId(String magicTenantId);
+	
+	void setHiddenable(boolean hiddenable);
+	
+	void setPublic(boolean publicEntity);
+	
+	void setShared(String field);
 }

@@ -13,6 +13,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import org.reflections.Reflections;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -25,26 +26,29 @@ import org.springframework.web.util.pattern.PathPatternParser;
 
 import com.garganttua.api.business.IGGAPIBusiness;
 import com.garganttua.api.connector.IGGAPIConnector;
-import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.controller.GGAPIEngineController;
+import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.GGAPIEngineRepository;
-import com.garganttua.api.repository.dao.IGGAPIDAORepository;
+import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dao.GGAPIDao;
+import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dao.mongodb.GGAPIEngineMongoRepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.IGGAPIDomain;
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.repository.dto.IGGAPIHiddenableDTO;
+import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.GGAPIEntity;
 import com.garganttua.api.spec.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
-import com.garganttua.api.ws.IGGAPIRestService;
+import com.garganttua.api.spec.IGGAPIDomain;
+import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.IGGAPIHiddenableEntity;
 import com.garganttua.api.ws.GGAPIEngineRestService;
+import com.garganttua.api.ws.IGGAPIRestService;
 
+import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
-import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
@@ -105,6 +109,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 
 	@SuppressWarnings({ "unchecked" })
 	@Bean
+	@Qualifier(value = "dynamicServices")
 	protected List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> engineServices()
 			throws GGAPIEngineException {
 
@@ -129,34 +134,58 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			for (Class<?> clazz : entities__) {
 
 				if (!IGGAPIEntity.class.isAssignableFrom(clazz)) {
-					throw new GGAPIEngineException("The class [" + clazz.getName()
-							+ "] must implements the IGGAPIEntity interface.");
+					throw new GGAPIEngineException(
+							"The class [" + clazz.getName() + "] must implements the IGGAPIEntity interface.");
 				}
-				
+
 				Class<IGGAPIEntity> entityClass = (Class<IGGAPIEntity>) clazz;
 				Class<IGGAPIDTOObject<IGGAPIEntity>> dtoClass = null;
 
 				GGAPIEntity entityAnnotation = clazz.getAnnotation(GGAPIEntity.class);
 
-				boolean authorize_creation = entityAnnotation.authorize_creation();
-				boolean authorize_read_all = entityAnnotation.authorize_read_all();
-				boolean authorize_read_one = entityAnnotation.authorize_read_one();
-				boolean authorize_update_one = entityAnnotation.authorize_update_one();
-				boolean authorize_delete_one = entityAnnotation.authorize_delete_one();
-				boolean authorize_delete_all = entityAnnotation.authorize_delete_all();
-				boolean authorize_count = entityAnnotation.authorize_count();
-				
+				boolean allow_creation = entityAnnotation.allow_creation();
+				boolean allow_read_all = entityAnnotation.allow_read_all();
+				boolean allow_read_one = entityAnnotation.allow_read_one();
+				boolean allow_update_one = entityAnnotation.allow_update_one();
+				boolean allow_delete_one = entityAnnotation.allow_delete_one();
+				boolean allow_delete_all = entityAnnotation.allow_delete_all();
+				boolean allow_count = entityAnnotation.allow_count();
+
+				GGAPICrudAccess creation_access = entityAnnotation.creation_access();
+				GGAPICrudAccess read_all_access = entityAnnotation.read_all_access();
+				GGAPICrudAccess read_one_access = entityAnnotation.read_one_access();
+				GGAPICrudAccess update_one_access = entityAnnotation.update_one_access();
+				GGAPICrudAccess delete_one_access = entityAnnotation.delete_one_access();
+				GGAPICrudAccess delete_all_access = entityAnnotation.delete_all_access();
+				GGAPICrudAccess count_access = entityAnnotation.count_access();
+
+				boolean hiddenable = entityAnnotation.hiddenAble();
+				boolean publicEntity = entityAnnotation.publicEntity();
+				String shared = entityAnnotation.shared();
+
 				String domain = GGAPIEntityHelper.getDomain(entityClass);
-				
+
 				try {
 					dtoClass = (Class<IGGAPIDTOObject<IGGAPIEntity>>) Class.forName(entityAnnotation.dto());
 				} catch (ClassNotFoundException e) {
 					throw new GGAPIEngineException(e);
 				}
 
+				if (hiddenable) {
+					if (!IGGAPIHiddenableEntity.class.isAssignableFrom(clazz)) {
+						throw new GGAPIEngineException("The class [" + clazz.getName()
+								+ "] must implements the IGGAPIHiddenableEntity interface as it is mentionned as 'hiddenable'.");
+					}
+
+					if (!IGGAPIHiddenableDTO.class.isAssignableFrom(dtoClass)) {
+						throw new GGAPIEngineException("The class [" + clazz.getName()
+								+ "] must implements the IGGAPIHiddenableDTO interface as it is mentionned as 'hiddenable'.");
+					}
+				}
+
 				if (!IGGAPIDTOObject.class.isAssignableFrom(dtoClass)) {
-					throw new GGAPIEngineException("The class [" + dtoClass.getName()
-							+ "] must implements the IGGAPIDTOObject interface.");
+					throw new GGAPIEngineException(
+							"The class [" + dtoClass.getName() + "] must implements the IGGAPIDTOObject interface.");
 				}
 
 				GGAPIDao db = entityAnnotation.db();
@@ -166,7 +195,8 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 				IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> ws = null;
 
 				if (ws__ != null && !ws__.isEmpty()) {
-					ws = (IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>) this.getObjectFromConfiguration(ws__, IGGAPIRestService.class);
+					ws = (IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>) this
+							.getObjectFromConfiguration(ws__, IGGAPIRestService.class);
 				}
 
 				// Controller
@@ -183,8 +213,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 				IGGAPIEventPublisher event = null;
 
 				if (event__ != null && !event__.isEmpty()) {
-					event = (IGGAPIEventPublisher) this.getObjectFromConfiguration(event__,
-							IGGAPIEventPublisher.class);
+					event = (IGGAPIEventPublisher) this.getObjectFromConfiguration(event__, IGGAPIEventPublisher.class);
 				}
 
 				// Business
@@ -192,8 +221,8 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 				IGGAPIBusiness<IGGAPIEntity> business = null;
 
 				if (business__ != null && !business__.isEmpty()) {
-					business = (IGGAPIBusiness<IGGAPIEntity>) this
-							.getObjectFromConfiguration(business__, IGGAPIBusiness.class);
+					business = (IGGAPIBusiness<IGGAPIEntity>) this.getObjectFromConfiguration(business__,
+							IGGAPIBusiness.class);
 				}
 
 				// Connector
@@ -224,9 +253,11 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 				}
 
 				try {
-					this.services.add( this.createDynamicDomain(domain, entityClass, dtoClass, db, ws, controller, business, event,
-							connector, repo, dao, authorize_creation, authorize_read_all, authorize_read_one,
-							authorize_update_one, authorize_delete_one, authorize_delete_all, authorize_count));
+					this.services.add(this.createDynamicDomain(domain, entityClass, dtoClass, db, ws, controller,
+							business, event, connector, repo, dao, allow_creation, allow_read_all, allow_read_one,
+							allow_update_one, allow_delete_one, allow_delete_all, allow_count, creation_access,
+							read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
+							count_access, hiddenable, publicEntity, shared));
 				} catch (NoSuchMethodException | InstantiationException | IllegalAccessException
 						| IllegalArgumentException | InvocationTargetException | IOException e) {
 					throw new GGAPIEngineException(e);
@@ -287,14 +318,14 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 	 * @param connector
 	 * @param repo
 	 * @param dao
-	 * @param authorize_creation
-	 * @param authorize_read_all
-	 * @param authorize_read_one
-	 * @param authorize_update_one
-	 * @param authorize_delete_one
-	 * @param authorize_delete_all
-	 * @param authorize_count
-	 * @param domain 
+	 * @param allow_creation
+	 * @param allow_read_all
+	 * @param allow_read_one
+	 * @param allow_update_one
+	 * @param allow_delete_one
+	 * @param allow_delete_all
+	 * @param allow_count
+	 * @param domain
 	 * @throws NoSuchMethodException
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
@@ -302,25 +333,19 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 	 * @throws InvocationTargetException
 	 * @throws IOException
 	 */
-	private IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> createDynamicDomain(
-			String domain,
-			Class<IGGAPIEntity> entityClass, 
-			Class<IGGAPIDTOObject<IGGAPIEntity>> dtoClass,
-			GGAPIDao db, 
+	private IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> createDynamicDomain(String domain,
+			Class<IGGAPIEntity> entityClass, Class<IGGAPIDTOObject<IGGAPIEntity>> dtoClass, GGAPIDao db,
 			IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> ws,
 			IGGAPIController<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> controller,
-			IGGAPIBusiness<IGGAPIEntity> business, 
-			IGGAPIEventPublisher event,
-			IGGAPIConnector<IGGAPIEntity, List<IGGAPIEntity>, IGGAPIDTOObject<IGGAPIEntity>> connector, 
+			IGGAPIBusiness<IGGAPIEntity> business, IGGAPIEventPublisher event,
+			IGGAPIConnector<IGGAPIEntity, List<IGGAPIEntity>, IGGAPIDTOObject<IGGAPIEntity>> connector,
 			IGGAPIRepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> repo,
-			IGGAPIDAORepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> dao, 
-			boolean authorize_creation,
-			boolean authorize_read_all, 
-			boolean authorize_read_one, 
-			boolean authorize_update_one,
-			boolean authorize_delete_one, 
-			boolean authorize_delete_all, 
-			boolean authorize_count)
+			IGGAPIDAORepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> dao, boolean allow_creation,
+			boolean allow_read_all, boolean allow_read_one, boolean allow_update_one, boolean allow_delete_one,
+			boolean allow_delete_all, boolean allow_count, GGAPICrudAccess creation_access,
+			GGAPICrudAccess read_all_access, GGAPICrudAccess read_one_access, GGAPICrudAccess update_one_access,
+			GGAPICrudAccess delete_one_access, GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access,
+			boolean hiddenable, boolean publicEntity, String shared)
 			throws NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, IOException {
 
@@ -343,19 +368,20 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			public String getDomain() {
 				return domain;
 			}
-			
-		};
-		
-		log.info(
-				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], authorize_creation [{}], authorize_read_all [{}], authorize_read_one [{}], authorize_update_one [{}], authorize_delete_one [{}], authorize_delete_all [{}], authorize_count [{}]]",
-				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, authorize_creation,
-				authorize_read_all, authorize_read_one, authorize_update_one, authorize_delete_one,
-				authorize_delete_all, authorize_count);
 
-		if( connector != null ) {
+		};
+
+		log.info(
+				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}]",
+				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, allow_creation,
+				allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
+				creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
+				delete_all_access, count_access);
+
+		if (connector != null) {
 			connector.setDomain(domainObj);
 		}
-		
+
 		Optional<IGGAPIConnector<IGGAPIEntity, List<IGGAPIEntity>, IGGAPIDTOObject<IGGAPIEntity>>> connectorObj = Optional
 				.ofNullable(connector);
 		Optional<IGGAPIBusiness<IGGAPIEntity>> businessObj = Optional.ofNullable(business);
@@ -371,6 +397,9 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		} else {
 			dao.setMagicTenantId(this.magicTenantId);
 		}
+		dao.setHiddenable(hiddenable);
+		dao.setPublic(publicEntity);
+		dao.setShared(shared);
 
 		if (repo == null) {
 			repo = new GGAPIEngineRepository(domainObj, dao);
@@ -392,13 +421,15 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		}
 
 		if (ws == null) {
-			ws = new GGAPIEngineRestService(domainObj, controller, authorize_creation, authorize_read_all,
-					authorize_read_one, authorize_update_one, authorize_delete_one, authorize_delete_all,
-					authorize_count);
+			ws = new GGAPIEngineRestService(domainObj, controller, allow_creation, allow_read_all, allow_read_one,
+					allow_update_one, allow_delete_one, allow_delete_all, allow_count);
 		} else {
 			ws.setDomain(domainObj);
 			ws.setController(controller);
-			ws.authorize(authorize_creation, authorize_read_all, authorize_read_one, authorize_update_one, authorize_delete_one, authorize_delete_all, authorize_count);
+			ws.allow(allow_creation, allow_read_all, allow_read_one, allow_update_one, allow_delete_one,
+					allow_delete_all, allow_count);
+			ws.setAccesses(creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
+					delete_all_access, count_access);
 		}
 
 		this.daos.put(domain.toLowerCase() + "_dao", dao);
@@ -429,8 +460,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		Tag tag = new Tag().name("Domain " + domain.toLowerCase());
 		this.openApi.addTagsItem(tag);
 
-		GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass)
-				.getAnnotation(GGAPIEntity.class);
+		GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass).getAnnotation(GGAPIEntity.class);
 
 		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.toLowerCase(), entityClass.getSimpleName(),
 				entityAnnotation.openApiSchemas());
@@ -447,41 +477,41 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		this.openApi.getComponents().addSchemas("FilterQuery",
 				templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
 
-		if (authorize_read_all) {
+		if (allow_read_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
-					ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class,
-							Integer.class, Integer.class, String.class, String.class, String.class));
+					ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
+							Integer.class, String.class, String.class, String.class));
 			this.openApi.path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet()));
 		}
-		if (authorize_delete_all) {
+		if (allow_delete_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
 					ws.getClass().getMethod("deleteAll", String.class, String.class));
 			this.openApi.path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete()));
 		}
-		if (authorize_creation) {
+		if (allow_creation) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
 					ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost()));
 		}
-		if (authorize_count) {
+		if (allow_count) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
 					ws.getClass().getMethod("getCount", String.class, String.class));
 			this.openApi.path(baseUrl + "/count",
 					pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet()));
 		}
-		if (authorize_read_one) {
+		if (allow_read_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
 					ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
 					pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet()));
 		}
-		if (authorize_update_one) {
+		if (allow_update_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
 					ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
 					pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch()));
 		}
-		if (authorize_delete_one) {
+		if (allow_delete_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
 					ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",

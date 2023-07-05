@@ -14,9 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
+import com.garganttua.api.spec.GGAPICrudAccess;
+import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.GGAPIReadOutputMode;
 
 public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto> {
 
@@ -50,9 +51,11 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
 	ResponseEntity<?> getCount(@RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId );
 
-	void authorize(boolean authorize_creation, boolean authorize_read_all, boolean authorize_read_one,
-			boolean authorize_update_one, boolean authorize_delete_one, boolean authorize_delete_all,
-			boolean authorize_count);
+	void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
+			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,
+			boolean allow_count);
+	
+	void setAccesses(GGAPICrudAccess creation_access, GGAPICrudAccess read_all_access, GGAPICrudAccess read_one_access, GGAPICrudAccess update_one_access, GGAPICrudAccess delete_one_access, GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access);
 
 	void setController(IGGAPIController<Entity, Dto> controller);
 
