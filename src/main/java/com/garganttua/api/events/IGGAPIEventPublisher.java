@@ -4,6 +4,6 @@ import com.garganttua.api.spec.IGGAPIEntity;
 
 public interface IGGAPIEventPublisher {
 	
-	public void publishEntityEvent(GGAPIEntityEvent event, IGGAPIEntity entity);
+	public <Entity extends IGGAPIEntity> void publishEvent(GGAPIEvent<Entity> event);
 		
 }

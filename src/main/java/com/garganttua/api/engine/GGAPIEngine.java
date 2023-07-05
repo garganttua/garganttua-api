@@ -44,6 +44,7 @@ import com.garganttua.api.spec.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.IGGAPIEntityWithTenant;
 import com.garganttua.api.spec.IGGAPIHiddenableEntity;
 import com.garganttua.api.ws.GGAPIEngineRestService;
 import com.garganttua.api.ws.IGGAPIRestService;
@@ -176,6 +177,8 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 
 				boolean tenant = entityAnnotation.tenantEntity();
 				String[] unicity = entityAnnotation.unicity();
+				
+				boolean showTenantId = entityAnnotation.showTenantId();
 
 				if (tenant && !tenantFound) {
 					tenantFound = true;
@@ -200,6 +203,13 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 					if (!IGGAPIHiddenableDTO.class.isAssignableFrom(dtoClass)) {
 						throw new GGAPIEngineException("The class [" + clazz.getName()
 								+ "] must implements the IGGAPIHiddenableDTO interface as it is mentionned as 'hiddenable'.");
+					}
+				}
+				
+				if(showTenantId) {
+					if (!IGGAPIEntityWithTenant.class.isAssignableFrom(clazz)) {
+						throw new GGAPIEngineException("The class [" + clazz.getName()
+								+ "] must implements the IGGAPIEntityWithTenant interface as it is mentionned as 'showTenantId'.");
 					}
 				}
 
@@ -279,7 +289,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 							read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
 							count_access, creation_authority, read_all_authority, read_one_authority,
 							update_one_authority, delete_one_authority, delete_all_authority, count_authority,
-							hiddenable, publicEntity, shared, tenant, unicity));
+							hiddenable, publicEntity, shared, tenant, unicity, showTenantId));
 				} catch (NoSuchMethodException | InstantiationException | IllegalAccessException
 						| IllegalArgumentException | InvocationTargetException | IOException e) {
 					throw new GGAPIEngineException(e);
@@ -370,7 +380,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
 			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
 			boolean count_authority, boolean hiddenable, boolean publicEntity, String shared, boolean tenantEntity,
-			String[] unicity) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+			String[] unicity, boolean showTenantId) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 
 		/*
@@ -396,8 +406,8 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		};
 
 		log.info(
-				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}], creation_authority [{}], read_all_authority [{}], read_one_authority [{}], update_one_authority [{}], delete_one_authority [{}], delete_all_authority [{}], count_authority [{}]",
-				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, allow_creation,
+				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], Public [{}], Shared [{}], Hiddenable [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}], creation_authority [{}], read_all_authority [{}], read_one_authority [{}], update_one_authority [{}], delete_one_authority [{}], delete_all_authority [{}], count_authority [{}]",
+				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, publicEntity, shared, hiddenable, allow_creation,
 				allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
 				creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
 				delete_all_access, count_access, creation_authority, read_all_authority, read_one_authority,
@@ -436,27 +446,25 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		Optional<IGGAPIRepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>> repoObj = Optional.ofNullable(repo);
 
 		if (controller == null) {
-			controller = new GGAPIEngineController(domainObj, repoObj, connectorObj, businessObj, eventObj,
-					tenantEntity);
+			controller = new GGAPIEngineController(domainObj, repoObj, connectorObj, businessObj, tenantEntity);
 		} else {
 			controller.setDomain(domainObj);
 			controller.setRepository(repoObj);
 			controller.setConnector(connectorObj);
 			controller.setBusiness(businessObj);
-			controller.setEventPublisher(eventObj);
 			controller.setTenant(tenantEntity);
 		}
 		controller.setUnicity(unicity);
 
 		if (ws == null) {
-			ws = new GGAPIEngineRestService(domainObj, controller, allow_creation, allow_read_all, allow_read_one,
-					allow_update_one, allow_delete_one, allow_delete_all, allow_count);
+			ws = new GGAPIEngineRestService(domainObj, controller);
 		} else {
 			ws.setDomain(domainObj);
 			ws.setController(controller);
-			ws.allow(allow_creation, allow_read_all, allow_read_one, allow_update_one, allow_delete_one,
-					allow_delete_all, allow_count);
 		}
+		ws.setEventPublisher(eventObj);
+		ws.allow(allow_creation, allow_read_all, allow_read_one, allow_update_one, allow_delete_one,
+				allow_delete_all, allow_count);
 		ws.setAccesses(creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
 				delete_all_access, count_access);
 		ws.setAuthorities(creation_authority, read_all_authority, read_one_authority, update_one_authority, delete_one_authority, delete_all_authority, count_authority);
@@ -486,7 +494,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		RequestMappingInfo requestMappingInfoDeleteOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
 				.methods(RequestMethod.DELETE).options(options).build();
 
-		Tag tag = new Tag().name("Domain " + domain.toLowerCase());
+		Tag tag = new Tag().name("Domain " + domain.toLowerCase()).description("Public Entity ["+publicEntity+"] Shared Entity ["+(shared.isEmpty()?"false":shared)+"] Hiddenable Entity ["+hiddenable+"]");
 		this.openApi.addTagsItem(tag);
 
 		GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass).getAnnotation(GGAPIEntity.class);

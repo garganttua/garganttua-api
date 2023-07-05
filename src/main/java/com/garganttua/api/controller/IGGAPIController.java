@@ -8,13 +8,12 @@ import java.util.Optional;
 
 import com.garganttua.api.business.IGGAPIBusiness;
 import com.garganttua.api.connector.IGGAPIConnector;
-import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.IGGAPIDomainable;
-import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
+import com.garganttua.api.spec.IGGAPIDomainable;
+import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
@@ -40,8 +39,6 @@ public interface IGGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAP
 	public void setConnector(Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> connector);
 
 	public void setBusiness(Optional<IGGAPIBusiness<Entity>> businessObj);
-
-	public void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 
 	public void setTenant(boolean tenantEntity);
 	

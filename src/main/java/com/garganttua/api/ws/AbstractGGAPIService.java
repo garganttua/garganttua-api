@@ -5,6 +5,7 @@ package com.garganttua.api.ws;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 
@@ -15,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.events.GGAPIEvent;
+import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.BasicGGAPIAuthorization;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
@@ -37,7 +40,8 @@ import lombok.Setter;
  *
  * @param <Entity>
  */
-public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIRestService<Entity, Dto> {
+public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>>
+		extends GGAPIDomainable<Entity, Dto> implements IGGAPIRestService<Entity, Dto> {
 
 	public AbstractGGAPIService(IGGAPIDomain<Entity, Dto> domain) {
 		super(domain);
@@ -55,7 +59,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected boolean ALLOW_DELETE_ONE = false;
 	protected boolean ALLOW_DELETE_ALL = false;
 	protected boolean ALLOW_COUNT = false;
-	
+
 	protected GGAPICrudAccess CREATION_ACCESS = GGAPICrudAccess.owner;
 	protected GGAPICrudAccess GET_ALL_ACCESS = GGAPICrudAccess.owner;
 	protected GGAPICrudAccess GET_ONE_ACCESS = GGAPICrudAccess.owner;
@@ -63,7 +67,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected GGAPICrudAccess DELETE_ONE_ACCESS = GGAPICrudAccess.owner;
 	protected GGAPICrudAccess DELETE_ALL_ACCESS = GGAPICrudAccess.owner;
 	protected GGAPICrudAccess COUNT_ACCESS = GGAPICrudAccess.owner;
-	
+
 	protected boolean CREATION_AUTHORITY = false;
 	protected boolean GET_ALL_AUTHORITY = false;
 	protected boolean GET_ONE_AUTHORITY = false;
@@ -71,36 +75,76 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected boolean DELETE_ONE_AUTHORITY = false;
 	protected boolean DELETE_ALL_AUTHORITY = false;
 	protected boolean COUNT_AUTHORITY = false;
-	
+
 	protected abstract List<IGGAPIAuthorization> createCustomAuthorizations();
 
 	private ArrayList<IGGAPIAuthorization> authorizations;
 
+	@Inject
+	@Setter
+	protected Optional<IGGAPIEventPublisher> eventPublisher;
+
 	@PostConstruct
 	protected void init() {
-		this.allow(this.ALLOW_CREATION, this.ALLOW_COUNT, this.ALLOW_COUNT, this.ALLOW_UPDATE, this.ALLOW_DELETE_ONE, this.ALLOW_DELETE_ALL, this.ALLOW_COUNT);
+		this.allow(this.ALLOW_CREATION, this.ALLOW_COUNT, this.ALLOW_COUNT, this.ALLOW_UPDATE, this.ALLOW_DELETE_ONE,
+				this.ALLOW_DELETE_ALL, this.ALLOW_COUNT);
 	}
 
 	@Override
 	public List<IGGAPIAuthorization> createAuthorizations() {
-		if( this.authorizations == null ) {
+		if (this.authorizations == null) {
 			this.authorizations = new ArrayList<IGGAPIAuthorization>();
-			
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.GET_ALL_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.read_all):null, HttpMethod.GET, this.GET_ALL_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.CREATION_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.create_one):null, HttpMethod.POST, this.CREATION_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.DELETE_ALL_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.delete_all):null, HttpMethod.DELETE, this.DELETE_ALL_ACCESS));	
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/count", this.COUNT_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.count):null, HttpMethod.GET, this.COUNT_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.GET_ONE_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.read_one):null, HttpMethod.GET, this.GET_ONE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.UPDATE_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.update_one):null, HttpMethod.PATCH, this.UPDATE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.DELETE_ONE_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.delete_one):null, HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
-			
-			if( this.createCustomAuthorizations() != null ) {
+
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase(),
+					this.GET_ALL_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.read_all)
+							: null,
+					HttpMethod.GET, this.GET_ALL_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase(),
+					this.CREATION_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.create_one)
+							: null,
+					HttpMethod.POST, this.CREATION_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase(),
+					this.DELETE_ALL_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.delete_all)
+							: null,
+					HttpMethod.DELETE, this.DELETE_ALL_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/count",
+					this.COUNT_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.count)
+							: null,
+					HttpMethod.GET, this.COUNT_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/*",
+					this.GET_ONE_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.read_one)
+							: null,
+					HttpMethod.GET, this.GET_ONE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/*",
+					this.UPDATE_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.update_one)
+							: null,
+					HttpMethod.PATCH, this.UPDATE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/*",
+					this.DELETE_ONE_AUTHORITY == true
+							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
+									GGAPICrudOperation.delete_one)
+							: null,
+					HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
+
+			if (this.createCustomAuthorizations() != null) {
 				this.authorizations.addAll(this.createCustomAuthorizations());
 			}
 		}
 		return authorizations;
 	}
-	
+
 	@Inject
 	@Setter
 	protected IGGAPIController<Entity, Dto> controller;
@@ -114,25 +158,36 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	@Override
 	public ResponseEntity<?> createEntity(String entity__, String tenantId, String userId) {
 		ResponseEntity<?> response = null;
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.create_one);
+		try {
+			if (this.ALLOW_CREATION) {
+				try {
 
-		if (this.ALLOW_CREATION) {
-			try {
-				
-				Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
-				
-				entity = this.controller.createEntity(tenantId, userId, entity);
-				response = new ResponseEntity<>(entity, HttpStatus.CREATED);
-			} catch (GGAPIEntityException e) {
-				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						this.getHttpErrorCodeFromEntityExceptionCode(e));
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+					Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
+
+					entity = this.controller.createEntity(tenantId, userId, entity);
+					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
+				} catch (GGAPIEntityException e) {
+					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							this.getHttpErrorCodeFromEntityExceptionCode(e));
+				} catch (Exception e) {
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+			} else {
+				response = new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
-		} else {
-			response = new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
-		}
 
-		return response;
+			return response;
+
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
+		}
 	}
 
 	/**
@@ -142,55 +197,70 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex, String filterString, String sortString, String userId) {
+	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
+			String filterString, String sortString, String userId) {
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.read_all);
+		try {
+			if (this.ALLOW_GET_ALL) {
 
-		if (this.ALLOW_GET_ALL) {
+				Object entities = null;
 
-			Object entities = null;
-			
-			ObjectMapper mapper = new ObjectMapper();
-			GGAPILiteral filter = null;
-			GGAPISort sort = null;
-			try {
-				if( filterString != null && !filterString.isEmpty() ) {
-					filter = mapper.readValue(filterString, GGAPILiteral.class);
-				}
-				if( sortString != null && !sortString.isEmpty() ) {
-					sort = mapper.readValue(sortString, GGAPISort.class);
-				}
-			} catch (JsonProcessingException e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject("Error parsing request param : "+e.getMessage()), HttpStatus.BAD_REQUEST);
-			}
-
-			try {
-				entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, mode);
-			} catch (GGAPIEntityException e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						this.getHttpErrorCodeFromEntityExceptionCode(e));
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-
-			if (pageSize > 0) {
-				long totalCount = 0;
+				ObjectMapper mapper = new ObjectMapper();
+				GGAPILiteral filter = null;
+				GGAPISort sort = null;
 				try {
-					totalCount = this.controller.getEntityTotalCount(tenantId, userId, filter);
+					if (filterString != null && !filterString.isEmpty()) {
+						filter = mapper.readValue(filterString, GGAPILiteral.class);
+					}
+					if (sortString != null && !sortString.isEmpty()) {
+						sort = mapper.readValue(sortString, GGAPISort.class);
+					}
+				} catch (JsonProcessingException e) {
+					return new ResponseEntity<>(
+							new IGGAPIErrorObject("Error parsing request param : " + e.getMessage()),
+							HttpStatus.BAD_REQUEST);
+				}
+
+				try {
+					entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, mode);
 				} catch (GGAPIEntityException e) {
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
-					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
-				GGAPIWsPage page = new GGAPIWsPage(totalCount, ((List<Object>) entities));
+				if (pageSize > 0) {
+					long totalCount = 0;
+					try {
+						totalCount = this.controller.getEntityTotalCount(tenantId, userId, filter);
+					} catch (GGAPIEntityException e) {
+						return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+								this.getHttpErrorCodeFromEntityExceptionCode(e));
+					} catch (Exception e) {
+						return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+								HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 
-				return new ResponseEntity<>(page, HttpStatus.OK);
+					GGAPIWsPage page = new GGAPIWsPage(totalCount, ((List<Object>) entities));
+
+					return new ResponseEntity<>(page, HttpStatus.OK);
+				} else {
+					return new ResponseEntity<>(entities, HttpStatus.OK);
+				}
+
 			} else {
-				return new ResponseEntity<>(entities, HttpStatus.OK);
+				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 
-		} else {
-			return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
 		}
 
 	}
@@ -202,24 +272,34 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	public ResponseEntity<?> getEntity(String tenantId, String uuid, String userId) {
-		ResponseEntity<?> response = null;
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.read_one);
+		try {
+			ResponseEntity<?> response = null;
 
-		if (this.ALLOW_GET_ONE) {
-			Entity entity;
-			try {
-				entity = this.controller.getEntity(tenantId, userId, uuid);
-				response = new ResponseEntity<>(entity, HttpStatus.OK);
-			} catch (GGAPIEntityException e) {
-				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						this.getHttpErrorCodeFromEntityExceptionCode(e));
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+			if (this.ALLOW_GET_ONE) {
+				Entity entity;
+				try {
+					entity = this.controller.getEntity(tenantId, userId, uuid);
+					response = new ResponseEntity<>(entity, HttpStatus.OK);
+				} catch (GGAPIEntityException e) {
+					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							this.getHttpErrorCodeFromEntityExceptionCode(e));
+				} catch (Exception e) {
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+			} else {
+				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
-		} else {
-			return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+			return response;
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
 		}
-		return response;
-
 	}
 
 	/**
@@ -229,29 +309,39 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	public ResponseEntity<?> updateEntity(String uuid, String entity__, String tenantId, String userId) {
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.update_one);
+		try {
+			ResponseEntity<?> response = null;
 
-		ResponseEntity<?> response = null;
+			if (this.ALLOW_UPDATE) {
+				try {
 
-		if (this.ALLOW_UPDATE) {
-			try {
-				
-				Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
-				
-				entity.setUuid(uuid);
-				Entity updatedEntity = this.controller.updateEntity(tenantId, userId, entity);
-				response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
-			} catch (GGAPIEntityException e) {
-				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						this.getHttpErrorCodeFromEntityExceptionCode(e));
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+					Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
+
+					entity.setUuid(uuid);
+					Entity updatedEntity = this.controller.updateEntity(tenantId, userId, entity);
+					response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
+				} catch (GGAPIEntityException e) {
+					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							this.getHttpErrorCodeFromEntityExceptionCode(e));
+				} catch (Exception e) {
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
+
+			} else {
+				response = new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 
-		} else {
-			response = new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+			return response;
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
 		}
-
-		return response;
 	}
 
 	/**
@@ -261,24 +351,33 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	public ResponseEntity<?> deleteEntity(String uuid, String tenantId, String userId) {
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.delete_one);
+		try {
+			if (this.ALLOW_DELETE_ONE) {
+				ResponseEntity<?> response = null;
 
-		if (this.ALLOW_DELETE_ONE) {
-			ResponseEntity<?> response = null;
+				try {
+					this.controller.deleteEntity(tenantId, userId, uuid);
+					response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+				} catch (GGAPIEntityException e) {
+					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.NOT_ACCEPTABLE);
+				} catch (Exception e) {
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 
-			try {
-				this.controller.deleteEntity(tenantId, userId, uuid);
-				response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
-			} catch (GGAPIEntityException e) {
-				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						HttpStatus.NOT_ACCEPTABLE);
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+				return response;
+
+			} else {
+				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
-
-			return response;
-
-		} else {
-			return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
 		}
 	}
 
@@ -289,24 +388,34 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	public ResponseEntity<?> deleteAll(String tenantId, String userId) {
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.delete_all);
+		try {
+			if (this.ALLOW_DELETE_ALL) {
+				ResponseEntity<?> response = null;
 
-		if (this.ALLOW_DELETE_ALL) {
-			ResponseEntity<?> response = null;
+				try {
+					this.controller.deleteEntities(tenantId, userId);
+					response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+				} catch (GGAPIEntityException e) {
+					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							this.getHttpErrorCodeFromEntityExceptionCode(e));
+				} catch (Exception e) {
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 
-			try {
-				this.controller.deleteEntities(tenantId, userId);
-				response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
-			} catch (GGAPIEntityException e) {
-				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						this.getHttpErrorCodeFromEntityExceptionCode(e));
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+				return response;
+
+			} else {
+				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
-
-			return response;
-
-		} else {
-			return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
 		}
 	}
 
@@ -317,24 +426,34 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	public ResponseEntity<?> getCount(String tenantId, String userId) {
+		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+		event.setTenantId(tenantId);
+		event.setUserId(userId);
+		event.setOperation(GGAPICrudOperation.count);
+		try {
+			if (this.ALLOW_COUNT) {
+				ResponseEntity<?> response = null;
 
-		if (this.ALLOW_COUNT) {
-			ResponseEntity<?> response = null;
+				try {
+					long count = this.controller.getEntityTotalCount(tenantId, userId, null);
+					response = new ResponseEntity<>(count, HttpStatus.OK);
+				} catch (GGAPIEntityException e) {
+					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							this.getHttpErrorCodeFromEntityExceptionCode(e));
+				} catch (Exception e) {
+					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
+							HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 
-			try {
-				long count = this.controller.getEntityTotalCount(tenantId, userId, null);
-				response = new ResponseEntity<>(count, HttpStatus.OK);
-			} catch (GGAPIEntityException e) {
-				response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
-						this.getHttpErrorCodeFromEntityExceptionCode(e));
-			} catch (Exception e) {
-				return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+				return response;
+
+			} else {
+				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
-
-			return response;
-
-		} else {
-			return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+		} finally {
+			if (this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEvent(event);
+			}
 		}
 	}
 

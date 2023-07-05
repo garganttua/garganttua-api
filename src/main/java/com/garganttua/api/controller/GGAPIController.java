@@ -13,19 +13,18 @@ import java.util.concurrent.Future;
 import javax.inject.Inject;
 
 import com.garganttua.api.business.IGGAPIBusiness;
-import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.connector.GGAPIConnectorException;
+import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.connector.IGGAPIConnector.GGAPIConnectorOperation;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.events.GGAPIEntityEvent;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.IGGAPIDomain;
-import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
+import com.garganttua.api.spec.IGGAPIDomain;
+import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.GGAPILiteralException;
 import com.garganttua.api.spec.sort.GGAPISort;
@@ -39,15 +38,16 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @param <Entity>
  * 
- *            This class implements the data treatments that have to be done one
- *            the entities during their process. If the Uuid of an entity is not
- *            set before storage, then the controller calculates one and affects
- *            it to the entity.
+ *                 This class implements the data treatments that have to be
+ *                 done one the entities during their process. If the Uuid of an
+ *                 entity is not set before storage, then the controller
+ *                 calculates one and affects it to the entity.
  * 
  * 
  */
 @Slf4j
-public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIController<Entity, Dto> {
+public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>>
+		extends GGAPIDomainable<Entity, Dto> implements IGGAPIController<Entity, Dto> {
 
 	public GGAPIController(IGGAPIDomain<Entity, Dto> domain) {
 		super(domain);
@@ -63,20 +63,16 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	@Inject
 	@Setter
 	protected Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> connector;
-	
-	@Inject
-	@Setter
-	protected Optional<IGGAPIEventPublisher> eventPublisher;
-	
+
 	@Inject
 	@Setter
 	protected Optional<IGGAPIBusiness<Entity>> business;
-	
+
 	protected boolean tenant = false;
-	
+
 	@Setter
 	protected String[] unicity = {};
-	
+
 	/**
 	 * 
 	 */
@@ -91,7 +87,8 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 				entity = this.entityFactory.newInstance(uuid);
 
-				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.READ);
+				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity,
+						GGAPIConnectorOperation.READ);
 
 				while (!entityResponse.isDone()) {
 					Thread.sleep(250);
@@ -99,6 +96,8 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 				entity = entityResponse.get();
 			} catch (Exception e) {
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during getting entity with Uuid " + uuid, e);
 				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 			}
 
@@ -107,86 +106,95 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 
 		if (entity == null) {
-			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND,
-					"Entity does not exist");
+			log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with Uuid " + uuid + " not found", tenantId, userId,
+					this.domain);
+			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND, "Entity does not exist");
 		}
 		return entity;
+
 	}
 
 	@Override
 	public Entity createEntity(String tenantId, String userId, Entity entity) throws GGAPIEntityException {
 
-		log.info("[Tenant {}] [UserId {}] [Domain {}] Creating entity with uuid {}", tenantId, userId, this.domain, entity.getUuid());
+		log.info("[Tenant {}] [UserId {}] [Domain {}] Creating entity with uuid {}", tenantId, userId, this.domain,
+				entity.getUuid());
 
-		try {
-			if (entity.getUuid() == null || entity.getUuid().isEmpty()) {
-				entity.setUuid(UUID.randomUUID().toString());
-			}
-			
-			if( this.tenant ) {
-				tenantId = entity.getUuid();
-			}
-	
-			if(this.business.isPresent()) {
-				this.business.get().beforeCreate(tenantId, entity);
-			}
-	
-			if (this.connector.isPresent()) {
-				try {
-	
-					Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.CREATE);
-	
-					while (!entityResponse.isDone()) {
-						Thread.sleep(250);
-					}
-	
-					entity = entityResponse.get();
-				} catch (Exception e) {
-					throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-				}
-			} else if (this.repository.isPresent()) {
-	
-				if (this.repository.get().doesExists(tenantId, entity)) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
-							"Entity already exists");
-				}
-				
-				for( String fieldUnique: this.unicity ) {
-					try {
-						if( this.repository.get().doesExist(tenantId, fieldUnique, GGAPIEntityHelper.getFieldValue(this.entityClass, fieldUnique, entity)) ) {
-							throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
-									"Entity with same "+fieldUnique+" value already exists");
-						}
-					} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-							| IllegalAccessException | GGAPIEntityException e) {
-						throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR,
-								e.getMessage(), e);
-					}
-				}
-				
-	
-				this.repository.get().save(tenantId, entity);
-			}
-			
-			if(this.business.isPresent()) {
-				this.business.get().afterCreate(tenantId, entity);
-			}
-		} finally {
-			if( this.eventPublisher.isPresent()) {
-				this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.CREATE, entity);
-			}
+		if (entity.getUuid() == null || entity.getUuid().isEmpty()) {
+			entity.setUuid(UUID.randomUUID().toString());
 		}
-		
+
+		if (this.tenant) {
+			tenantId = entity.getUuid();
+		}
+
+		if (this.business.isPresent()) {
+			this.business.get().beforeCreate(tenantId, entity);
+		}
+
+		if (this.connector.isPresent()) {
+			try {
+
+				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity,
+						GGAPIConnectorOperation.CREATE);
+
+				while (!entityResponse.isDone()) {
+					Thread.sleep(250);
+				}
+
+				entity = entityResponse.get();
+			} catch (Exception e) {
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during creating entity with Uuid " + entity.getUuid(), e);
+				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
+			}
+		} else if (this.repository.isPresent()) {
+
+			if (this.repository.get().doesExists(tenantId, entity)) {
+				log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with Uuid " + entity.getUuid() + " already exists",
+						tenantId, userId, this.domain);
+				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS, "Entity already exists");
+			}
+
+			for (String fieldUnique : this.unicity) {
+				try {
+					if (this.repository.get().doesExist(tenantId, fieldUnique,
+							GGAPIEntityHelper.getFieldValue(this.entityClass, fieldUnique, entity))) {
+						log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with value for field " + fieldUnique
+								+ " already exists", tenantId, userId, this.domain);
+						throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
+								"Entity with same " + fieldUnique + " value already exists");
+					}
+				} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException
+						| GGAPIEntityException e) {
+					log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+							+ "}] Error during creating entity with Uuid " + entity.getUuid(), e);
+					throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, e.getMessage(), e);
+				}
+			}
+
+			this.repository.get().save(tenantId, entity);
+		}
+
+		if (this.business.isPresent()) {
+			this.business.get().afterCreate(tenantId, entity);
+		}
+
 		return entity;
 	}
 
 	@Override
-	public List<?> getEntityList(String tenantId, String userId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIReadOutputMode mode)
-			throws GGAPIEntityException {
-		log.info("[Tenant {}] [UserId {}] [Domain {}] Getting entities, mode {}, page size {}, page index {}, filter {}, sort {}", tenantId, userId, this.domain, mode, pageSize, pageIndex, filter, sort);
+	public List<?> getEntityList(String tenantId, String userId, int pageSize, int pageIndex, GGAPILiteral filter,
+			GGAPISort sort, GGAPIReadOutputMode mode) throws GGAPIEntityException {
+		log.info(
+				"[Tenant {}] [UserId {}] [Domain {}] Getting entities, mode {}, page size {}, page index {}, filter {}, sort {}",
+				tenantId, userId, this.domain, mode, pageSize, pageIndex, filter, sort);
+
 		try {
 			GGAPILiteral.validate(filter);
 		} catch (GGAPILiteralException e) {
+			log.warn("[Tenant {}] [UserId {}] [Domain {}] Cannot validate filter " + filter, tenantId, userId,
+					this.domain);
 			throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, e);
 		}
 		ArrayList<String> entityUuids = new ArrayList<String>();
@@ -196,14 +204,17 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		if (this.connector.isPresent()) {
 			try {
 
-				Future<List<Entity>> entityResponse = this.connector.get().requestList(tenantId, null, GGAPIConnectorOperation.READ);
-				
-				while( !entityResponse.isDone() ) {
+				Future<List<Entity>> entityResponse = this.connector.get().requestList(tenantId, null,
+						GGAPIConnectorOperation.READ);
+
+				while (!entityResponse.isDone()) {
 					Thread.sleep(250);
 				}
-				
-				entities = entityResponse.get();	
+
+				entities = entityResponse.get();
 			} catch (Exception e) {
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during getting entity list ", e);
 				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 			}
 		} else if (this.repository.isPresent()) {
@@ -211,92 +222,39 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 
 		switch (mode) {
-		case full -> {return entities;}
-		case id -> {entities.forEach(e -> { entityUuids.add(e.getId()); });}
-		case uuid -> {entities.forEach(e -> { entityUuids.add(e.getUuid()); });}
+		case full -> {
+			return entities;
 		}
-		
+		case id -> {
+			entities.forEach(e -> {
+				entityUuids.add(e.getId());
+			});
+		}
+		case uuid -> {
+			entities.forEach(e -> {
+				entityUuids.add(e.getUuid());
+			});
+		}
+		}
+
 		return entityUuids;
 	}
 
 	@Override
 	public Entity updateEntity(String tenantId, String userId, Entity entity) throws GGAPIEntityException {
-		log.info("[Tenant {}] [UserId {}] [Domain {}] Updating entity with Uuid " + entity.getUuid(), tenantId, userId, this.domain);
+		log.info("[Tenant {}] [UserId {}] [Domain {}] Updating entity with Uuid " + entity.getUuid(), tenantId, userId,
+				this.domain);
 		Entity updated = null;
-		
-		try {
-			if(this.business.isPresent()) {
-				this.business.get().beforeUpdate(tenantId, entity);
-			}
-	
-			if (this.connector.isPresent()) {
-				try {
-	
-					Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.UPDATE);
-	
-					while (!entityResponse.isDone()) {
-						Thread.sleep(250);
-					}
-	
-					entity = entityResponse.get();
-				} catch (Exception e) {
-					throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-				}
-			} else if (this.repository.isPresent()) {
-				if (!this.repository.get().doesExists(tenantId, entity)) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND,
-							"Entity does not exist");
-				}
-				
-				for( String fieldUnique: this.unicity ) {
-					try {
-						if( this.repository.get().doesExist(tenantId, fieldUnique, GGAPIEntityHelper.getFieldValue(this.entityClass, fieldUnique, entity)) ) {
-							throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
-									"Entity with same "+fieldUnique+" value already exists");
-						}
-					} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-							| IllegalAccessException | GGAPIEntityException e) {
-						throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR,
-								e.getMessage(), e);
-					}
-				}
-	
-				updated = this.repository.get().update(tenantId, entity);
-			}
-			
-			if(this.business.isPresent()) {
-				this.business.get().afterUpdate(tenantId, entity);
-			}
-		} finally {
-			if( this.eventPublisher.isPresent()) {
-				this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.UPDATE, updated);
-			}
+
+		if (this.business.isPresent()) {
+			this.business.get().beforeUpdate(tenantId, entity);
 		}
 
-		return updated;
-	}
-
-	@Override
-	public void deleteEntity(String tenantId, String userId, String uuid) throws GGAPIEntityException {
-		log.info("[Tenant {}] [UserId {}] [Domain {}] Deleting entity with Uuid " + uuid, tenantId, userId, this.domain);
-
-		Entity entity = this.getEntity(tenantId, userId, uuid);
-		
-		try {
-
-		if (entity == null) {
-			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND,
-					"Entity does not exist");
-		}
-		
-		if(this.business.isPresent()) {
-			this.business.get().beforeDelete(tenantId, entity);
-		}
-		
 		if (this.connector.isPresent()) {
 			try {
 
-				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.DELETE);
+				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity,
+						GGAPIConnectorOperation.UPDATE);
 
 				while (!entityResponse.isDone()) {
 					Thread.sleep(250);
@@ -304,20 +262,82 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 				entity = entityResponse.get();
 			} catch (Exception e) {
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during updating entity ", e);
+				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
+			}
+		} else if (this.repository.isPresent()) {
+			if (!this.repository.get().doesExists(tenantId, entity)) {
+				log.warn(
+						"[Tenant {}] [UserId {}] [Domain {}] Entity with uuid " + entity.getUuid() + " does not exists",
+						tenantId, userId, this.domain);
+				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND, "Entity does not exist");
+			}
+
+			for (String fieldUnique : this.unicity) {
+				try {
+					if (this.repository.get().doesExist(tenantId, fieldUnique,
+							GGAPIEntityHelper.getFieldValue(this.entityClass, fieldUnique, entity))) {
+						log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with value for field " + fieldUnique
+								+ " already exists", tenantId, userId, this.domain);
+						throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
+								"Entity with same " + fieldUnique + " value already exists");
+					}
+				} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException
+						| GGAPIEntityException e) {
+					log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+							+ "}] Error during creating entity with Uuid " + entity.getUuid(), e);
+					throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, e.getMessage(), e);
+				}
+			}
+
+			updated = this.repository.get().update(tenantId, entity);
+		}
+
+		if (this.business.isPresent()) {
+			this.business.get().afterUpdate(tenantId, entity);
+		}
+
+		return updated;
+	}
+
+	@Override
+	public void deleteEntity(String tenantId, String userId, String uuid) throws GGAPIEntityException {
+		log.info("[Tenant {}] [UserId {}] [Domain {}] Deleting entity with Uuid " + uuid, tenantId, userId,
+				this.domain);
+
+		Entity entity = this.getEntity(tenantId, userId, uuid);
+
+		if (entity == null) {
+			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND, "Entity does not exist");
+		}
+
+		if (this.business.isPresent()) {
+			this.business.get().beforeDelete(tenantId, entity);
+		}
+
+		if (this.connector.isPresent()) {
+			try {
+
+				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity,
+						GGAPIConnectorOperation.DELETE);
+
+				while (!entityResponse.isDone()) {
+					Thread.sleep(250);
+				}
+
+				entity = entityResponse.get();
+			} catch (Exception e) {
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during updating entity ", e);
 				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 			}
 		} else if (this.repository.isPresent()) {
 			this.repository.get().delete(tenantId, entity);
 		}
-		
-		if(this.business.isPresent()) {
+
+		if (this.business.isPresent()) {
 			this.business.get().afterDelete(tenantId, entity);
-		}
-		
-		} finally {
-			if( this.eventPublisher.isPresent()) {
-				this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.DELETE, entity);
-			}
 		}
 
 	}
@@ -331,8 +351,9 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			try {
 				this.deleteEntity(tenantId, userId, s.getUuid());
 			} catch (GGAPIEntityException e) {
-				throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR,
-						"Error during entities deletion");
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during entities deletion ", e);
+				throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, "Error during entities deletion");
 			}
 		}
 	}
@@ -347,13 +368,14 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 				}
 				return list.get().size();
 			} catch (InterruptedException | ExecutionException | GGAPIConnectorException e) {
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+						+ "}] Error during updating entity ", e);
 				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 			}
 		} else if (this.repository.isPresent()) {
 			return this.repository.get().getCount(tenantId, filter);
 		}
 		return 0;
-
 	}
 
 	@Override

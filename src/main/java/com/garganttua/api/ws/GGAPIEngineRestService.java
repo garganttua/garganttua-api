@@ -11,16 +11,9 @@ import com.garganttua.api.spec.IGGAPIEntity;
 
 public class GGAPIEngineRestService extends AbstractGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> {
 
-	public GGAPIEngineRestService(IGGAPIDomain<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> domain, IGGAPIController<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> controller, boolean allow_creation, boolean allow_read_all, boolean allow_read_one, boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all, boolean allow_count) {
+	public GGAPIEngineRestService(IGGAPIDomain<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> domain, IGGAPIController<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> controller) {
 		super(domain);
 		this.controller = controller;
-		this.ALLOW_CREATION = allow_creation;
-		this.ALLOW_GET_ALL = allow_read_all;
-		this.ALLOW_GET_ONE = allow_read_one;
-		this.ALLOW_UPDATE = allow_update_one;
-		this.ALLOW_DELETE_ONE = allow_delete_one;
-		this.ALLOW_DELETE_ALL = allow_delete_all;
-		this.ALLOW_COUNT = allow_count;
 	}
 
 	@Override

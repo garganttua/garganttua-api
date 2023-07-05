@@ -46,7 +46,7 @@ public class GGAPITenantVerifier extends OncePerRequestFilter {
 				//GET_ONE
 				rule = domain+"-read-one";
 			}
-			if( method.equals("GET") && splits.length == 3 && splits[3].equals("count")) {
+			if( method.equals("GET") && splits.length == 3 && splits[2].equals("count")) {
 				//COUNT
 				rule = domain+"-get-count";
 			}

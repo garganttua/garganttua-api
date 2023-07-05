@@ -84,5 +84,7 @@ public @interface GGAPIEntity {
 	String[] unicity() default {};
 
 	boolean tenantEntity() default false;
+
+	boolean showTenantId() default false;
 	
 }

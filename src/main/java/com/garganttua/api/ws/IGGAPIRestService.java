@@ -1,6 +1,7 @@
 package com.garganttua.api.ws;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
 import com.garganttua.api.spec.GGAPICrudAccess;
@@ -62,5 +64,9 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 	void setAuthorities(boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
 			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
 			boolean count_authority);
+	
+
+	public void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
+
 
 }

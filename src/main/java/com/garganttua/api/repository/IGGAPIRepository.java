@@ -22,8 +22,7 @@ public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	boolean doesExists(String tenantId, Entity entity);
 
-	List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter,
-			GGAPISort sort);
+	List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort);
 
 	void save(String tenantId, Entity entity);
 
