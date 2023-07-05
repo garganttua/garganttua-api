@@ -24,6 +24,7 @@ import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.GGAPIEntityException;
+import com.garganttua.api.spec.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.GGAPILiteralException;
@@ -71,6 +72,11 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	@Setter
 	protected Optional<IGGAPIBusiness<Entity>> business;
 	
+	protected boolean tenant = false;
+	
+	@Setter
+	protected String[] unicity = {};
+	
 	/**
 	 * 
 	 */
@@ -112,39 +118,63 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 		log.info("[Tenant {}] [UserId {}] [Domain {}] Creating entity with uuid {}", tenantId, userId, this.domain, entity.getUuid());
 
-		if (entity.getUuid() == null || entity.getUuid().isEmpty()) {
-			entity.setUuid(UUID.randomUUID().toString());
-		}
-
-		if(this.business.isPresent()) {
-			this.business.get().beforeCreate(tenantId, entity);
-		}
-
-		if (this.connector.isPresent()) {
-			try {
-
-				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.CREATE);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
+		try {
+			if (entity.getUuid() == null || entity.getUuid().isEmpty()) {
+				entity.setUuid(UUID.randomUUID().toString());
+			}
+			
+			if( this.tenant ) {
+				tenantId = entity.getUuid();
+			}
+	
+			if(this.business.isPresent()) {
+				this.business.get().beforeCreate(tenantId, entity);
+			}
+	
+			if (this.connector.isPresent()) {
+				try {
+	
+					Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.CREATE);
+	
+					while (!entityResponse.isDone()) {
+						Thread.sleep(250);
+					}
+	
+					entity = entityResponse.get();
+				} catch (Exception e) {
+					throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 				}
-
-				entity = entityResponse.get();
-			} catch (Exception e) {
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
+			} else if (this.repository.isPresent()) {
+	
+				if (this.repository.get().doesExists(tenantId, entity)) {
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
+							"Entity already exists");
+				}
+				
+				for( String fieldUnique: this.unicity ) {
+					try {
+						if( this.repository.get().doesExist(tenantId, fieldUnique, GGAPIEntityHelper.getFieldValue(this.entityClass, fieldUnique, entity)) ) {
+							throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
+									"Entity with same "+fieldUnique+" value already exists");
+						}
+					} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
+							| IllegalAccessException | GGAPIEntityException e) {
+						throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR,
+								e.getMessage(), e);
+					}
+				}
+				
+	
+				this.repository.get().save(tenantId, entity);
 			}
-		} else if (this.repository.isPresent()) {
-
-			if (this.repository.get().doesExists(tenantId, entity)) {
-				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
-						"Entity already exists");
+			
+			if(this.business.isPresent()) {
+				this.business.get().afterCreate(tenantId, entity);
 			}
-
-			this.repository.get().save(tenantId, entity);
-		}
-		
-		if( this.eventPublisher.isPresent()) {
-			this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.CREATE, entity);
+		} finally {
+			if( this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.CREATE, entity);
+			}
 		}
 		
 		return entity;
@@ -194,34 +224,53 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		log.info("[Tenant {}] [UserId {}] [Domain {}] Updating entity with Uuid " + entity.getUuid(), tenantId, userId, this.domain);
 		Entity updated = null;
 		
-		if(this.business.isPresent()) {
-			this.business.get().beforeUpdate(tenantId, entity);
-		}
-
-		if (this.connector.isPresent()) {
-			try {
-
-				Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.UPDATE);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
+		try {
+			if(this.business.isPresent()) {
+				this.business.get().beforeUpdate(tenantId, entity);
+			}
+	
+			if (this.connector.isPresent()) {
+				try {
+	
+					Future<Entity> entityResponse = this.connector.get().requestEntity(tenantId, entity, GGAPIConnectorOperation.UPDATE);
+	
+					while (!entityResponse.isDone()) {
+						Thread.sleep(250);
+					}
+	
+					entity = entityResponse.get();
+				} catch (Exception e) {
+					throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 				}
-
-				entity = entityResponse.get();
-			} catch (Exception e) {
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
+			} else if (this.repository.isPresent()) {
+				if (!this.repository.get().doesExists(tenantId, entity)) {
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND,
+							"Entity does not exist");
+				}
+				
+				for( String fieldUnique: this.unicity ) {
+					try {
+						if( this.repository.get().doesExist(tenantId, fieldUnique, GGAPIEntityHelper.getFieldValue(this.entityClass, fieldUnique, entity)) ) {
+							throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
+									"Entity with same "+fieldUnique+" value already exists");
+						}
+					} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
+							| IllegalAccessException | GGAPIEntityException e) {
+						throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR,
+								e.getMessage(), e);
+					}
+				}
+	
+				updated = this.repository.get().update(tenantId, entity);
 			}
-		} else if (this.repository.isPresent()) {
-			if (!this.repository.get().doesExists(tenantId, entity)) {
-				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND,
-						"Entity does not exist");
+			
+			if(this.business.isPresent()) {
+				this.business.get().afterUpdate(tenantId, entity);
 			}
-
-			updated = this.repository.get().update(tenantId, entity);
-		}
-		
-		if( this.eventPublisher.isPresent()) {
-			this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.UPDATE, entity);
+		} finally {
+			if( this.eventPublisher.isPresent()) {
+				this.eventPublisher.get().publishEntityEvent(GGAPIEntityEvent.UPDATE, updated);
+			}
 		}
 
 		return updated;
@@ -259,6 +308,10 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			}
 		} else if (this.repository.isPresent()) {
 			this.repository.get().delete(tenantId, entity);
+		}
+		
+		if(this.business.isPresent()) {
+			this.business.get().afterDelete(tenantId, entity);
 		}
 		
 		} finally {
@@ -301,6 +354,11 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 		return 0;
 
+	}
+
+	@Override
+	public void setTenant(boolean tenant) {
+		this.tenant = tenant;
 	}
 
 }

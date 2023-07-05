@@ -55,4 +55,17 @@ public class GGAPIEngineRestService extends AbstractGGAPIService<IGGAPIEntity, I
 		this.COUNT_ACCESS = count_access;
 		
 	}
+
+	@Override
+	public void setAuthorities(boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
+			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
+			boolean count_authority) {
+		this.CREATION_AUTHORITY = creation_authority;
+		this.GET_ALL_AUTHORITY = read_all_authority;
+		this.GET_ONE_AUTHORITY = read_one_authority;
+		this.UPDATE_AUTHORITY = update_one_authority;
+		this.DELETE_ONE_AUTHORITY = delete_one_authority;
+		this.DELETE_ALL_AUTHORITY = delete_all_authority;
+		this.COUNT_AUTHORITY = count_authority;
+	}
 }

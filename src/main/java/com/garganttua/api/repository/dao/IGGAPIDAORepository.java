@@ -34,4 +34,6 @@ public interface IGGAPIDAORepository<Entity extends IGGAPIEntity, Dto extends IG
 	void setPublic(boolean publicEntity);
 	
 	void setShared(String field);
+	
+	String getMagicTenantId();
 }

@@ -18,12 +18,13 @@ public class GGAPIEngineController extends GGAPIController<IGGAPIEntity, IGGAPID
 			Optional<IGGAPIRepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>> repository,
 			Optional<IGGAPIConnector<IGGAPIEntity, List<IGGAPIEntity>, IGGAPIDTOObject<IGGAPIEntity>>> connector,
 			Optional<IGGAPIBusiness<IGGAPIEntity>> business,
-			Optional<IGGAPIEventPublisher> event ) {
+			Optional<IGGAPIEventPublisher> event, boolean tenant) {
 		super(domain);
 		this.repository = repository;
 		this.connector = connector;
 		this.business = business;
 		this.eventPublisher = event;
+		this.tenant = tenant;
 	}
 
 }

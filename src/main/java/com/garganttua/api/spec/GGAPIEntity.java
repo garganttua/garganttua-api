@@ -43,6 +43,20 @@ public @interface GGAPIEntity {
 
 	GGAPICrudAccess count_access() default GGAPICrudAccess.authenticated;
 	
+	boolean creation_authority() default false;
+
+	boolean read_all_authority() default false;
+
+	boolean read_one_authority() default false;
+
+	boolean update_one_authority() default false;
+
+	boolean delete_one_authority() default false;
+
+	boolean delete_all_authority() default false;
+
+	boolean count_authority() default false;
+	
 	String controller() default "";
 	
 	String business() default "";
@@ -66,5 +80,9 @@ public @interface GGAPIEntity {
 	boolean hiddenAble() default false;
 	
 	String shared() default "";
+	
+	String[] unicity() default {};
+
+	boolean tenantEntity() default false;
 	
 }

@@ -22,6 +22,7 @@ The main features offered by this artifact are :
 ### RoadMap
 
  * Add security to OpenAPI description
+ * Improve unicity checking by allowing that entities and dtos may not have exactly same fields
  * Implement state machine features
  * Implement SQL DAO for mysql, mariaDB, PostGre, Oracle, MSSQL
  * Implement Spring AOT

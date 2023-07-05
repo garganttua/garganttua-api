@@ -8,7 +8,6 @@ import javax.inject.Inject;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
 import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.ws.AbstractGGAPIService;
 import com.garganttua.api.ws.IGGAPIRestService;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -84,8 +82,17 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 				log.info("Applying security configuration {}", a);
 				
 				if( a.getAccess() == GGAPICrudAccess.authenticated || a.getAccess() == GGAPICrudAccess.owner ) {
-					http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).hasAnyAuthority(a.getAuthorization()).and().authorizeHttpRequests();
-				} else {
+					if( a.getAuthorization() != null && !a.getAuthorization().isEmpty() ) {
+						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).hasAnyAuthority(a.getAuthorization()).and().authorizeHttpRequests();
+					} else {
+						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).authenticated().and().authorizeHttpRequests();
+					}
+					
+					if( a.getAccess() == GGAPICrudAccess.owner && this.tenantVerifier.isPresent() ) {
+						this.tenantVerifier.get().addOwnerRule(a.getAuthorization());
+					}
+					
+				} else if( a.getAccess() == GGAPICrudAccess.anonymous){
 					http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).permitAll().and().authorizeHttpRequests();
 				}
 				

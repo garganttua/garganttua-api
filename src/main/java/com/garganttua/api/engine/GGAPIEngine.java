@@ -123,6 +123,7 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		log.info("Version: {}", this.getClass().getPackage().getImplementationVersion());
 
 		this.services = new ArrayList<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
+		boolean tenantFound = false;
 
 		for (String pack : this.scanPackages) {
 			log.info("Scanning package " + pack);
@@ -159,9 +160,26 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 				GGAPICrudAccess delete_all_access = entityAnnotation.delete_all_access();
 				GGAPICrudAccess count_access = entityAnnotation.count_access();
 
+				boolean creation_authority = entityAnnotation.creation_authority();
+				boolean read_all_authority = entityAnnotation.read_all_authority();
+				boolean read_one_authority = entityAnnotation.read_one_authority();
+				boolean update_one_authority = entityAnnotation.update_one_authority();
+				boolean delete_one_authority = entityAnnotation.delete_one_authority();
+				boolean delete_all_authority = entityAnnotation.delete_all_authority();
+				boolean count_authority = entityAnnotation.count_authority();
+
 				boolean hiddenable = entityAnnotation.hiddenAble();
 				boolean publicEntity = entityAnnotation.publicEntity();
 				String shared = entityAnnotation.shared();
+
+				boolean tenant = entityAnnotation.tenantEntity();
+				String[] unicity = entityAnnotation.unicity();
+
+				if (tenant && !tenantFound) {
+					tenantFound = true;
+				} else if (tenant && !tenantFound) {
+					throw new GGAPIEngineException("There are more than one entity declared as tenantEntity.");
+				}
 
 				String domain = GGAPIEntityHelper.getDomain(entityClass);
 
@@ -257,7 +275,9 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 							business, event, connector, repo, dao, allow_creation, allow_read_all, allow_read_one,
 							allow_update_one, allow_delete_one, allow_delete_all, allow_count, creation_access,
 							read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
-							count_access, hiddenable, publicEntity, shared));
+							count_access, creation_authority, read_all_authority, read_one_authority,
+							update_one_authority, delete_one_authority, delete_all_authority, count_authority,
+							hiddenable, publicEntity, shared, tenant, unicity));
 				} catch (NoSuchMethodException | InstantiationException | IllegalAccessException
 						| IllegalArgumentException | InvocationTargetException | IOException e) {
 					throw new GGAPIEngineException(e);
@@ -345,9 +365,11 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			boolean allow_delete_all, boolean allow_count, GGAPICrudAccess creation_access,
 			GGAPICrudAccess read_all_access, GGAPICrudAccess read_one_access, GGAPICrudAccess update_one_access,
 			GGAPICrudAccess delete_one_access, GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access,
-			boolean hiddenable, boolean publicEntity, String shared)
-			throws NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, IOException {
+			boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
+			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
+			boolean count_authority, boolean hiddenable, boolean publicEntity, String shared, boolean tenantEntity,
+			String[] unicity) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, IOException {
 
 		/*
 		 * TODO: THIS METHOD NEEDS TO BE REFACTORED
@@ -372,11 +394,12 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		};
 
 		log.info(
-				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}]",
+				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}], creation_authority [{}], read_all_authority [{}], read_one_authority [{}], update_one_authority [{}], delete_one_authority [{}], delete_all_authority [{}], count_authority [{}]",
 				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, allow_creation,
 				allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
 				creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
-				delete_all_access, count_access);
+				delete_all_access, count_access, creation_authority, read_all_authority, read_one_authority,
+				update_one_authority, delete_one_authority, delete_all_authority, count_authority);
 
 		if (connector != null) {
 			connector.setDomain(domainObj);
@@ -411,14 +434,17 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		Optional<IGGAPIRepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>> repoObj = Optional.ofNullable(repo);
 
 		if (controller == null) {
-			controller = new GGAPIEngineController(domainObj, repoObj, connectorObj, businessObj, eventObj);
+			controller = new GGAPIEngineController(domainObj, repoObj, connectorObj, businessObj, eventObj,
+					tenantEntity);
 		} else {
 			controller.setDomain(domainObj);
 			controller.setRepository(repoObj);
 			controller.setConnector(connectorObj);
 			controller.setBusiness(businessObj);
 			controller.setEventPublisher(eventObj);
+			controller.setTenant(tenantEntity);
 		}
+		controller.setUnicity(unicity);
 
 		if (ws == null) {
 			ws = new GGAPIEngineRestService(domainObj, controller, allow_creation, allow_read_all, allow_read_one,
@@ -428,9 +454,10 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			ws.setController(controller);
 			ws.allow(allow_creation, allow_read_all, allow_read_one, allow_update_one, allow_delete_one,
 					allow_delete_all, allow_count);
-			ws.setAccesses(creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
-					delete_all_access, count_access);
 		}
+		ws.setAccesses(creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
+				delete_all_access, count_access);
+		ws.setAuthorities(creation_authority, read_all_authority, read_one_authority, update_one_authority, delete_one_authority, delete_all_authority, count_authority);
 
 		this.daos.put(domain.toLowerCase() + "_dao", dao);
 		this.repositries.put(domain.toLowerCase() + "_repository", repo);
@@ -481,41 +508,41 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
 					ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
 							Integer.class, String.class, String.class, String.class));
-			this.openApi.path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet()));
+			this.openApi.path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+read_all_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 		if (allow_delete_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
 					ws.getClass().getMethod("deleteAll", String.class, String.class));
-			this.openApi.path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete()));
+			this.openApi.path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+delete_all_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 		if (allow_creation) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
 					ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
-			this.openApi.path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost()));
+			this.openApi.path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+creation_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 		if (allow_count) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
 					ws.getClass().getMethod("getCount", String.class, String.class));
 			this.openApi.path(baseUrl + "/count",
-					pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet()));
+					pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+count_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 		if (allow_read_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
 					ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
-					pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet()));
+					pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+read_one_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 		if (allow_update_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
 					ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
-					pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch()));
+					pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+update_one_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 		if (allow_delete_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
 					ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
 			this.openApi.path(baseUrl + "/{uuid}",
-					pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete()));
+					pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+delete_one_access+"] - Authority ["+(creation_authority==false?"none":domain+"")+"]")));
 		}
 
 		Info infos = this.openApi.getInfo();

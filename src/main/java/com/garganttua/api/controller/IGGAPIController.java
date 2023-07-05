@@ -43,4 +43,8 @@ public interface IGGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	public void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 
+	public void setTenant(boolean tenantEntity);
+	
+	public void setUnicity(String[] unicity);
+
 }

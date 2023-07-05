@@ -1,6 +1,7 @@
 package com.garganttua.api.spec;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
 public class GGAPIEntityHelper {
@@ -27,6 +28,23 @@ public class GGAPIEntityHelper {
 	@SuppressWarnings("unchecked")
 	public static <T extends IGGAPIEntity> IGGAPIEntityFactory<T> getFactory(Class<T> clazz) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		return (IGGAPIEntityFactory<T>) GGAPIEntityHelper.getOneInstance(clazz).getFactory();
+	}
+
+	public static <T extends IGGAPIEntity> String getFieldValue(Class<T> clazz, String fieldName, T entity) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		Field field = null; 
+		
+		if( fieldName.equals("id") || fieldName.equals("uuid") ) {
+			field = IGGAPIEntity.class.getDeclaredField(fieldName);
+		} else {
+			field = clazz.getDeclaredField(fieldName);
+		}
+		
+		field.setAccessible(true);
+		String value = (String) field.get(entity);
+		
+		field.setAccessible(false);
+		
+		return value;
 	}
 
 }

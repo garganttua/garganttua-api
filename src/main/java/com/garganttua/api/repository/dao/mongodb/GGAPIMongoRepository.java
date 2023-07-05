@@ -15,11 +15,13 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
+
+import lombok.Getter;
 
 public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIDAORepository<Entity, Dto> {
 
@@ -31,6 +33,7 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	protected MongoTemplate mongo;
 	
 	@Value("${com.garganttua.api.magicTenantId}")
+	@Getter
 	protected String magicTenantId;
 
 	private boolean hiddenable;

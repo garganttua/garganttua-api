@@ -12,11 +12,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
@@ -164,6 +166,37 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	@Override
 	public void setDao(IGGAPIDAORepository<Entity, Dto> dao) {
 		this.daoRepository = dao;
+	}
+
+	@Override
+	public String getTenant(Entity entity) {
+		Dto object = this.daoRepository.findOneByUuidAndTenantId(entity.getUuid(), this.daoRepository.getMagicTenantId());
+		
+		return object.getTenantId();
+	}
+
+	@Override
+	public boolean doesExist(String tenantId, String fieldName, String fieldValue) {
+		
+		log.info("[Tenant {}] [Domain {}] Checking if entity with field {} valued at {} exists", tenantId, this.domain, fieldName, fieldValue);
+		
+		/*
+		 * WARNING : This method takes in account that fields of entities and dto are exactly the same, which may not be the case
+		 */
+		
+		String fiterString = "{\"name\":\"$field\", \"value\":\""+fieldName+"\",\"literals\":[{\"name\":\"$eq\",\"value\":\""+fieldValue+"\"}]}";
+		
+		ObjectMapper mapper = new ObjectMapper();
+		GGAPILiteral filter = null;
+		try {
+			filter = mapper.readValue(fiterString, GGAPILiteral.class);
+		} catch (JsonProcessingException e) {
+			
+		}
+		
+		List<Dto> entities = this.daoRepository.findByTenantId(tenantId, null, filter, null);
+		
+		return entities.size()>0?true:false;
 	}
 
 

@@ -63,6 +63,14 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected GGAPICrudAccess DELETE_ALL_ACCESS = GGAPICrudAccess.owner;
 	protected GGAPICrudAccess COUNT_ACCESS = GGAPICrudAccess.owner;
 	
+	protected boolean CREATION_AUTHORITY = false;
+	protected boolean GET_ALL_AUTHORITY = false;
+	protected boolean GET_ONE_AUTHORITY = false;
+	protected boolean UPDATE_AUTHORITY = false;
+	protected boolean DELETE_ONE_AUTHORITY = false;
+	protected boolean DELETE_ALL_AUTHORITY = false;
+	protected boolean COUNT_AUTHORITY = false;
+	
 	protected abstract List<IGGAPIAuthorization> createCustomAuthorizations();
 
 	private ArrayList<IGGAPIAuthorization> authorizations;
@@ -77,13 +85,13 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		if( this.authorizations == null ) {
 			this.authorizations = new ArrayList<IGGAPIAuthorization>();
 			
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.domain.toLowerCase()+"-read", HttpMethod.GET, this.GET_ALL_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.domain.toLowerCase()+"-create", HttpMethod.POST, this.CREATION_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.domain.toLowerCase()+"-delete-all", HttpMethod.DELETE, this.DELETE_ALL_ACCESS));	
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/count", this.domain.toLowerCase()+"-get-count", HttpMethod.GET, this.COUNT_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.domain.toLowerCase()+"-read", HttpMethod.GET, this.GET_ONE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.domain.toLowerCase()+"-update", HttpMethod.PATCH, this.UPDATE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.domain.toLowerCase()+"-delete-one", HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.GET_ALL_AUTHORITY==true?this.domain.toLowerCase()+"-read-all":null, HttpMethod.GET, this.GET_ALL_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.CREATION_AUTHORITY==true?this.domain.toLowerCase()+"-create-one":null, HttpMethod.POST, this.CREATION_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.DELETE_ALL_AUTHORITY==true?this.domain.toLowerCase()+"-delete-all":null, HttpMethod.DELETE, this.DELETE_ALL_ACCESS));	
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/count", this.COUNT_AUTHORITY==true?this.domain.toLowerCase()+"-get-count":null, HttpMethod.GET, this.COUNT_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.GET_ONE_AUTHORITY==true?this.domain.toLowerCase()+"-read-one":null, HttpMethod.GET, this.GET_ONE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.UPDATE_AUTHORITY==true?this.domain.toLowerCase()+"-update-one":null, HttpMethod.PATCH, this.UPDATE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.DELETE_ONE_AUTHORITY==true?this.domain.toLowerCase()+"-delete-one":null, HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
 			
 			if( this.createCustomAuthorizations() != null ) {
 				this.authorizations.addAll(this.createCustomAuthorizations());

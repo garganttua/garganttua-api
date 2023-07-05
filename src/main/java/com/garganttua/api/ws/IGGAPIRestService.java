@@ -59,4 +59,8 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 
 	void setController(IGGAPIController<Entity, Dto> controller);
 
+	void setAuthorities(boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
+			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
+			boolean count_authority);
+
 }
