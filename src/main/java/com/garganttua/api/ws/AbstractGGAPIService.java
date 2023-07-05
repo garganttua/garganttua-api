@@ -19,6 +19,7 @@ import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.BasicGGAPIAuthorization;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
 import com.garganttua.api.spec.GGAPICrudAccess;
+import com.garganttua.api.spec.GGAPICrudOperation;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
@@ -85,13 +86,13 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		if( this.authorizations == null ) {
 			this.authorizations = new ArrayList<IGGAPIAuthorization>();
 			
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.GET_ALL_AUTHORITY==true?this.domain.toLowerCase()+"-read-all":null, HttpMethod.GET, this.GET_ALL_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.CREATION_AUTHORITY==true?this.domain.toLowerCase()+"-create-one":null, HttpMethod.POST, this.CREATION_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.DELETE_ALL_AUTHORITY==true?this.domain.toLowerCase()+"-delete-all":null, HttpMethod.DELETE, this.DELETE_ALL_ACCESS));	
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/count", this.COUNT_AUTHORITY==true?this.domain.toLowerCase()+"-get-count":null, HttpMethod.GET, this.COUNT_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.GET_ONE_AUTHORITY==true?this.domain.toLowerCase()+"-read-one":null, HttpMethod.GET, this.GET_ONE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.UPDATE_AUTHORITY==true?this.domain.toLowerCase()+"-update-one":null, HttpMethod.PATCH, this.UPDATE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.DELETE_ONE_AUTHORITY==true?this.domain.toLowerCase()+"-delete-one":null, HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.GET_ALL_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.read_all):null, HttpMethod.GET, this.GET_ALL_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.CREATION_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.create_one):null, HttpMethod.POST, this.CREATION_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase(), this.DELETE_ALL_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.delete_all):null, HttpMethod.DELETE, this.DELETE_ALL_ACCESS));	
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/count", this.COUNT_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.count):null, HttpMethod.GET, this.COUNT_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.GET_ONE_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.read_one):null, HttpMethod.GET, this.GET_ONE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.UPDATE_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.update_one):null, HttpMethod.PATCH, this.UPDATE_ACCESS));
+			this.authorizations.add(new BasicGGAPIAuthorization("/"+this.domain.toLowerCase()+"/*", this.DELETE_ONE_AUTHORITY==true?BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(), GGAPICrudOperation.delete_one):null, HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
 			
 			if( this.createCustomAuthorizations() != null ) {
 				this.authorizations.addAll(this.createCustomAuthorizations());
