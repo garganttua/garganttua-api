@@ -21,6 +21,7 @@ The main features offered by this artifact are :
     
 ### RoadMap
 
+ * Record event when authentification
  * Add security to OpenAPI description
  * Improve unicity checking by allowing that entities and dtos may not have exactly same fields
  * add logging in WS
