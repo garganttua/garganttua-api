@@ -4,7 +4,10 @@
 package com.garganttua.api.ws;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.inject.Inject;
@@ -168,16 +171,27 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 
 					Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
 
+					event.setIn(entity);
 					entity = this.controller.createEntity(tenantId, userId, entity);
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
+					event.setOut(entity);
+					event.setHttpCode(HttpStatus.CREATED);
 				} catch (GGAPIEntityException e) {
 					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR);
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			} else {
+				event.setHttpCode(HttpStatus.NOT_IMPLEMENTED);
 				response = new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 
@@ -185,6 +199,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
@@ -203,6 +218,13 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		event.setTenantId(tenantId);
 		event.setUserId(userId);
 		event.setOperation(GGAPICrudOperation.read_all);
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("mode", mode.toString());
+		params.put("pageSize", pageSize.toString());
+		params.put("pageIndex", pageIndex.toString());
+		params.put("filterString", filterString);
+		params.put("sortString", sortString);
+		event.setInParams(params);
 		try {
 			if (this.ALLOW_GET_ALL) {
 
@@ -219,6 +241,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 						sort = mapper.readValue(sortString, GGAPISort.class);
 					}
 				} catch (JsonProcessingException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.BAD_REQUEST);
 					return new ResponseEntity<>(
 							new IGGAPIErrorObject("Error parsing request param : " + e.getMessage()),
 							HttpStatus.BAD_REQUEST);
@@ -227,9 +252,15 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 					entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, mode);
 				} catch (GGAPIEntityException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -239,17 +270,26 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 					try {
 						totalCount = this.controller.getEntityTotalCount(tenantId, userId, filter);
 					} catch (GGAPIEntityException e) {
+//						event.setException(e);
+						event.setExceptionMessage(e.getMessage());
+						event.setExceptionCode(e.getCode());
+						event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 						return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 								this.getHttpErrorCodeFromEntityExceptionCode(e));
 					} catch (Exception e) {
+//						event.setException(e);
+						event.setExceptionMessage(e.getMessage());
 						return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 								HttpStatus.INTERNAL_SERVER_ERROR);
 					}
 
 					GGAPIWsPage page = new GGAPIWsPage(totalCount, ((List<Object>) entities));
-
+					event.setOutList((List<Entity>) entities);
+					event.setHttpCode(HttpStatus.OK);
 					return new ResponseEntity<>(page, HttpStatus.OK);
 				} else {
+					event.setOutList((List<Entity>) entities);
+					event.setHttpCode(HttpStatus.OK);
 					return new ResponseEntity<>(entities, HttpStatus.OK);
 				}
 
@@ -259,6 +299,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
@@ -276,6 +317,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		event.setTenantId(tenantId);
 		event.setUserId(userId);
 		event.setOperation(GGAPICrudOperation.read_one);
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("uuid", uuid);
+		event.setInParams(params);
 		try {
 			ResponseEntity<?> response = null;
 
@@ -284,19 +328,29 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 					entity = this.controller.getEntity(tenantId, userId, uuid);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
+					event.setOut(entity);
 				} catch (GGAPIEntityException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR);
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			} else {
+				event.setHttpCode(HttpStatus.NOT_IMPLEMENTED);
 				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 			return response;
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
@@ -313,6 +367,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		event.setTenantId(tenantId);
 		event.setUserId(userId);
 		event.setOperation(GGAPICrudOperation.update_one);
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("uuid", uuid);
+		event.setInParams(params);
 		try {
 			ResponseEntity<?> response = null;
 
@@ -320,25 +377,36 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 
 					Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
-
 					entity.setUuid(uuid);
+					event.setIn(entity);
 					Entity updatedEntity = this.controller.updateEntity(tenantId, userId, entity);
 					response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
+					event.setOut(entity);
+					event.setHttpCode(HttpStatus.OK);
 				} catch (GGAPIEntityException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR);
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
 			} else {
+				event.setHttpCode(HttpStatus.NOT_IMPLEMENTED);
 				response = new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 
 			return response;
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
@@ -355,6 +423,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		event.setTenantId(tenantId);
 		event.setUserId(userId);
 		event.setOperation(GGAPICrudOperation.delete_one);
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("uuid", uuid);
+		event.setInParams(params);
 		try {
 			if (this.ALLOW_DELETE_ONE) {
 				ResponseEntity<?> response = null;
@@ -362,9 +433,17 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 					this.controller.deleteEntity(tenantId, userId, uuid);
 					response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+					event.setHttpCode(HttpStatus.OK);
 				} catch (GGAPIEntityException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.NOT_ACCEPTABLE);
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR);
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -372,10 +451,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				return response;
 
 			} else {
+				event.setHttpCode(HttpStatus.NOT_IMPLEMENTED);
 				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
@@ -399,10 +480,18 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 					this.controller.deleteEntities(tenantId, userId);
 					response = new ResponseEntity<>(new IGGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+					event.setHttpCode(HttpStatus.OK);
 				} catch (GGAPIEntityException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR);
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -410,10 +499,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				return response;
 
 			} else {
+				event.setHttpCode(HttpStatus.NOT_IMPLEMENTED);
 				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
@@ -437,10 +528,19 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 					long count = this.controller.getEntityTotalCount(tenantId, userId, null);
 					response = new ResponseEntity<>(count, HttpStatus.OK);
+					event.setHttpCode(HttpStatus.OK);
+					event.setOutCount(count);
 				} catch (GGAPIEntityException e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setExceptionCode(e.getCode());
+					event.setHttpCode(this.getHttpErrorCodeFromEntityExceptionCode(e));
 					response = new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							this.getHttpErrorCodeFromEntityExceptionCode(e));
 				} catch (Exception e) {
+//					event.setException(e);
+					event.setExceptionMessage(e.getMessage());
+					event.setHttpCode(HttpStatus.INTERNAL_SERVER_ERROR);
 					return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
@@ -448,10 +548,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				return response;
 
 			} else {
+				event.setHttpCode(HttpStatus.NOT_IMPLEMENTED);
 				return new ResponseEntity<>(new IGGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 		} finally {
 			if (this.eventPublisher.isPresent()) {
+				event.setOutDate(new Date());
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}

@@ -1,7 +1,9 @@
 package com.garganttua.api.events;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatusCode;
 
@@ -14,20 +16,25 @@ import lombok.Data;
 public class GGAPIEvent<Entity extends IGGAPIEntity> {
 	
 	public GGAPIEvent() {
-		this.date = new Date();
+		this.inDate = new Date();
+		this.inParams = new HashMap<String, String>();
 	}
 	
 	private GGAPICrudOperation operation;
 	
-	private Date date; 
+	private Date inDate;
+	
+	private Date outDate; 
 	
 	private int exceptionCode; 
 	
-	private List<String> inParams;
+	private Map<String, String> inParams;
 	
 	private Entity in; 
 	
 	private Entity out; 
+	
+	private long outCount;
 	
 	private List<Entity> outList;
 	
@@ -36,6 +43,8 @@ public class GGAPIEvent<Entity extends IGGAPIEntity> {
 	private String userId; 
 	
 	private Exception exception;
+	
+	private String exceptionMessage;
 	
 	private HttpStatusCode httpCode;
 
