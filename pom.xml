@@ -8,13 +8,13 @@
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>github</id>
-			<name>GitHub Packages</name>
+			<id>github garganttua api</id>
+			<name>github garganttua api</name>
 			<url>https://maven.pkg.github.com/garganttua/garganttua-api</url>
 		</snapshotRepository>
 		<repository>
-			<id>github</id>
-			<name>GitHub Packages</name>
+			<id>github garganttua api</id>
+			<name>github garganttua api</name>
 			<url>https://maven.pkg.github.com/garganttua/garganttua-api</url>
 		</repository>
 	</distributionManagement>
