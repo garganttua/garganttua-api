@@ -18,10 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.garganttua.api.connector.GGAPIConnectorException;
-import com.garganttua.api.connector.async.AbstractGGAPIAsyncConnector;
-import com.garganttua.api.connector.async.GGAPIAsyncConnectorEnvelop;
-import com.garganttua.api.connector.async.GGAPIAsyncMessageType;
-import com.garganttua.api.connector.async.GGAPIAsyncResponseStatus;
 import com.garganttua.api.spec.IGGAPIDomain;
 
 import ch.qos.logback.classic.Level;

@@ -15,11 +15,13 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
+
+import lombok.Getter;
 
 public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIDAORepository<Entity, Dto> {
 
@@ -31,7 +33,14 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	protected MongoTemplate mongo;
 	
 	@Value("${com.garganttua.api.magicTenantId}")
+	@Getter
 	protected String magicTenantId;
+
+	private boolean hiddenable;
+
+	private boolean publicEntity;
+
+	private String field;
 
 	@Override
 	public void setMagicTenantId(String magicTenantId) {
@@ -53,8 +62,22 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
+		} else {
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId));
+			}
+	
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
 
 		if (filter != null) {
@@ -162,10 +185,24 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId).and("uuid").is(uuid));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
 		} else {
-			query.addCriteria(Criteria.where("uuid").is(uuid));
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId).and("uuid").is(uuid));
+			} else {
+				query.addCriteria(Criteria.where("uuid").is(uuid));
+			}
+			
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
 		
 		return this.mongo.findOne(query, this.dtoClass);
@@ -176,11 +213,26 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId).and("id").is(id));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
 		} else {
-			query.addCriteria(Criteria.where("id").is(id));
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId).and("id").is(id));
+			} else {
+				query.addCriteria(Criteria.where("id").is(id));
+			}
+			
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
+		
 		
 		return this.mongo.findOne(query, this.dtoClass);
 	}
@@ -196,16 +248,45 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		
 		Query query = new Query();
 		
-		if( !tenantId.equals(this.magicTenantId) ) {
-			query.addCriteria(Criteria.where("tenantId").is(tenantId));
+		if( this.publicEntity ) {
+			if( this.hiddenable ) {
+				query.addCriteria(Criteria.where("visible").is(true));
+			} 
+		} else {
+			if( !tenantId.equals(this.magicTenantId) ) {
+				query.addCriteria(Criteria.where("tenantId").is(tenantId));
+			}
+			
+			if( this.field != null && !this.field.isEmpty() ) {
+				if( this.hiddenable ) {
+					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+				} else {
+					query.addCriteria(Criteria.where(field).is(tenantId));
+				}
+			}
 		}
-
+	
 		if (filter != null) {
 			Criteria criteria = GGAPIMongoRepository.getCriteriaFromFilter(filter);
 			query.addCriteria(criteria);
 		}
 		
 		return this.mongo.count(query, this.dtoClass);
+	}
+
+	@Override
+	public void setHiddenable(boolean hiddenable) {
+		this.hiddenable = hiddenable;
+	}
+
+	@Override
+	public void setPublic(boolean publicEntity) {
+		this.publicEntity = publicEntity;
+	}
+
+	@Override
+	public void setShared(String field) {
+		this.field = field;	
 	}
 
 }

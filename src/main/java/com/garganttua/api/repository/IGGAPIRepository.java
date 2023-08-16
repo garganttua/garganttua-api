@@ -22,8 +22,7 @@ public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	boolean doesExists(String tenantId, Entity entity);
 
-	List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter,
-			GGAPISort sort);
+	List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort);
 
 	void save(String tenantId, Entity entity);
 
@@ -34,11 +33,15 @@ public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	void delete(String tenantId, Entity entity);
 
 	boolean doesExists(String tenantId, String uuid);
+	
+	boolean doesExist(String tenantId, String fieldName, String fieldValue);
 
 	Entity getOneByUuid(String tenantId, String uuid);
 
 	long getCount(String tenantId, GGAPILiteral filter);
 
 	void setDao(IGGAPIDAORepository<Entity, Dto> dao);
+
+	String getTenant(Entity entity);
 
 }

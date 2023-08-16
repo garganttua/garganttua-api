@@ -31,5 +31,6 @@ public interface IGGAPIEntity {
 	void setUuid(String uuid); 
 	
 	@JsonIgnore
-	IGGAPIEntityFactory<? extends IGGAPIEntity> getFactory();	
+	IGGAPIEntityFactory<? extends IGGAPIEntity> getFactory();
+	
 }

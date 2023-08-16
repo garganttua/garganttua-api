@@ -15,19 +15,47 @@ public @interface GGAPIEntity {
 
 	GGAPIDao db() default GGAPIDao.mongo;
 	
-	boolean authorize_creation() default true;
+	boolean allow_creation() default true;
 
-	boolean authorize_read_all() default true;
+	boolean allow_read_all() default true;
 
-	boolean authorize_read_one() default true;
+	boolean allow_read_one() default true;
 
-	boolean authorize_update_one() default true;
+	boolean allow_update_one() default true;
 
-	boolean authorize_delete_one() default true;
+	boolean allow_delete_one() default true;
 
-	boolean authorize_delete_all() default true;
+	boolean allow_delete_all() default true;
 
-	boolean authorize_count() default true;
+	boolean allow_count() default true;
+	
+	GGAPICrudAccess creation_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess read_all_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess read_one_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess update_one_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess delete_one_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess delete_all_access() default GGAPICrudAccess.authenticated;
+
+	GGAPICrudAccess count_access() default GGAPICrudAccess.authenticated;
+	
+	boolean creation_authority() default false;
+
+	boolean read_all_authority() default false;
+
+	boolean read_one_authority() default false;
+
+	boolean update_one_authority() default false;
+
+	boolean delete_one_authority() default false;
+
+	boolean delete_all_authority() default false;
+
+	boolean count_authority() default false;
 	
 	String controller() default "";
 	
@@ -46,5 +74,17 @@ public @interface GGAPIEntity {
 	String eventPublisher() default "";
 
 	String domain();
+	
+	boolean publicEntity() default false;
+	
+	boolean hiddenAble() default false;
+	
+	String shared() default "";
+	
+	String[] unicity() default {};
 
+	boolean tenantEntity() default false;
+
+	boolean showTenantId() default false;
+	
 }

@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -18,8 +19,8 @@ import com.garganttua.api.security.authentication.ws.GGAPIRolesRestService;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
+import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.ws.AbstractGGAPIService;
 import com.garganttua.api.ws.IGGAPIRestService;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
@@ -40,9 +41,10 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 	private Optional<IGGAPIAuthorizationManager> authorizationManager;
 	
 	@Inject
-	private List<AbstractGGAPIService<? extends IGGAPIEntity,? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> services;
+	private List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> engineServices;
 	
 	@Inject
+	@Qualifier(value = "dynamicServices")
 	private List<IGGAPIRestService<? extends IGGAPIEntity,? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices;
 	
 	@Inject
@@ -59,7 +61,7 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 		
 		this.authorizations = new ArrayList<IGGAPIAuthorization>();
 		
-		this.services.forEach(service -> {
+		this.engineServices.forEach(service -> {
 			List<IGGAPIAuthorization> serviceAuthorizations = service.createAuthorizations();
 			this.authorizations.addAll(serviceAuthorizations);
 		});
@@ -77,8 +79,23 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 		
 		this.authorizations.forEach(a -> {
 			try {
-				log.info("Created Basic Authorization {}", a);
-				http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).hasAnyAuthority(a.getRole());
+				log.info("Applying security configuration {}", a);
+				
+				if( a.getAccess() == GGAPICrudAccess.authenticated || a.getAccess() == GGAPICrudAccess.owner ) {
+					if( a.getAuthorization() != null && !a.getAuthorization().isEmpty() ) {
+						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).hasAnyAuthority(a.getAuthorization()).and().authorizeHttpRequests();
+					} else {
+						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).authenticated().and().authorizeHttpRequests();
+					}
+					
+					if( a.getAccess() == GGAPICrudAccess.owner && this.tenantVerifier.isPresent() ) {
+						this.tenantVerifier.get().addOwnerRule(a.getAuthorization());
+					}
+					
+				} else if( a.getAccess() == GGAPICrudAccess.anonymous){
+					http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).permitAll().and().authorizeHttpRequests();
+				}
+				
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
