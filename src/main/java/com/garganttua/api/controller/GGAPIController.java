@@ -16,7 +16,6 @@ import com.garganttua.api.business.IGGAPIBusiness;
 import com.garganttua.api.connector.GGAPIConnectorException;
 import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.connector.IGGAPIConnector.GGAPIConnectorOperation;
-import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
