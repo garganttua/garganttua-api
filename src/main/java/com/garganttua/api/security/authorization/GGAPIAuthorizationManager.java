@@ -1,7 +1,6 @@
 package com.garganttua.api.security.authorization;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -27,7 +26,7 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 	@Value("${com.garganttua.api.security.authorization.token.provider}")
 	private GGAPITokenProviderType tokenProviderType;
 	
-	@Inject
+	@Autowired
 	private IGGAPIAuthenticationUserMapper userMapper;
 
 	private GGAPIJwtTokenProvider authorizationProvider = null;

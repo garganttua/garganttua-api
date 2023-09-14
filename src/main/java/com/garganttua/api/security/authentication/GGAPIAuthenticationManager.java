@@ -1,7 +1,6 @@
 package com.garganttua.api.security.authentication;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +21,7 @@ import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMa
 @ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 
-	@Inject
+	@Autowired
 	private IGGAPIAuthenticationUserMapper userMapper;
 	
 	@Value("${com.garganttua.api.security.authentication.type}")

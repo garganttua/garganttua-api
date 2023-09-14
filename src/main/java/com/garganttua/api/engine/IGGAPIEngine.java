@@ -7,7 +7,7 @@ import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.ws.IGGAPIRestService;
 
-public interface IGGAPIDynamicDomainEngine {
+public interface IGGAPIEngine {
 
 	IGGAPIDAORepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getDao(String name);
 

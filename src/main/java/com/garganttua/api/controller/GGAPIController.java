@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.garganttua.api.business.IGGAPIBusiness;
 import com.garganttua.api.connector.GGAPIConnectorException;
@@ -55,15 +55,15 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	/**
 	 * The repository used to store the entity
 	 */
-	@Inject
+	@Autowired
 	@Setter
 	protected Optional<IGGAPIRepository<Entity, Dto>> repository;
 
-	@Inject
+	@Autowired
 	@Setter
 	protected Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> connector;
 
-	@Inject
+	@Autowired
 	@Setter
 	protected Optional<IGGAPIBusiness<Entity>> business;
 

@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,30 +33,30 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 
-	@Inject
+	@Autowired
 	private Optional<IGGAPIAuthenticationManager> authenticationManager;
 
-	@Inject
+	@Autowired
 	private Optional<IGGAPIAuthorizationManager> authorizationManager;
 	
-	@Inject
+	@Autowired
 	private List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> engineServices;
 	
-	@Inject
+	@Autowired
 	@Qualifier(value = "dynamicServices")
 	private List<IGGAPIRestService<? extends IGGAPIEntity,? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices;
 	
-	@Inject
+	@Autowired
 	private Optional<GGAPITenantVerifier> tenantVerifier;
 
 	@Getter
 	private ArrayList<IGGAPIAuthorization> authorizations;
 	
-	@Inject
+	@Autowired
 	private Optional<GGAPIRolesRestService> rolesRestService;
 	
 	@Override
-	public HttpSecurity configureFilterChain(HttpSecurity http) throws IGGAPISecurityException {
+	public HttpSecurity configureFilterChain(HttpSecurity http) {
 		
 		this.authorizations = new ArrayList<IGGAPIAuthorization>();
 		
@@ -127,9 +126,7 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 				
 			}
 		});
-
 		return http;
-
 	}
 
 }

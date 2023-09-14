@@ -10,9 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.inject.Inject;
-
 import org.reflections.Reflections;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -49,20 +48,20 @@ import com.garganttua.api.spec.IGGAPIHiddenableEntity;
 import com.garganttua.api.ws.GGAPIEngineRestService;
 import com.garganttua.api.ws.IGGAPIRestService;
 
-import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
-public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
+public class GGAPIEngine implements IGGAPIEngine {
 
-	@Inject
+	@Autowired
 	protected Optional<MongoTemplate> mongo;
 
-	@Inject
+	@Autowired
 	protected ApplicationContext context;
 
 	@Value("${com.garganttua.api.magicTenantId}")
@@ -71,10 +70,10 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 	@Value("${com.garganttua.api.engine.packages}")
 	protected String[] scanPackages;
 
-	@Inject
+	@Autowired
 	private RequestMappingHandlerMapping requestMappingHandlerMapping;
 
-	@Inject
+	@Autowired
 	public OpenAPI openApi;
 
 	private List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> services;
@@ -426,6 +425,9 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			switch (db) {
 			default:
 			case mongo:
+				if( this.mongo.isEmpty() ) {
+					throw new InstantiationException("No mongo connection available.");
+				}
 				dao = new GGAPIEngineMongoRepository(domainObj, this.mongo.get(), this.magicTenantId);
 				break;
 			}

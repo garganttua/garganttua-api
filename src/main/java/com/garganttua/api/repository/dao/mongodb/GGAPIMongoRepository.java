@@ -3,8 +3,7 @@ package com.garganttua.api.repository.dao.mongodb;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,7 +28,7 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		super(domain);
 	}
 
-	@Inject
+	@Autowired
 	protected MongoTemplate mongo;
 	
 	@Value("${com.garganttua.api.magicTenantId}")
