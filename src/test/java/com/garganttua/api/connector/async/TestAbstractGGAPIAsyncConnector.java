@@ -18,12 +18,13 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.garganttua.api.connector.GGAPIConnectorException;
+import com.garganttua.api.connector.IGGAPIConnector.GGAPIConnectorOperation;
 import com.garganttua.api.spec.IGGAPIDomain;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 
-public class TestAbstractGGAPIAsyncConnector extends AbstractGGAPIAsyncConnector<TestEntity, List<TestEntity>, Dto>{
+public class TestAbstractGGAPIAsyncConnector{
 
 	private static final IGGAPIDomain<TestEntity, Dto> domainObject = new IGGAPIDomain<TestEntity, Dto>() {
 
@@ -42,12 +43,48 @@ public class TestAbstractGGAPIAsyncConnector extends AbstractGGAPIAsyncConnector
 			return "tests";
 		}
 	};
+	
+	private static Connector connector = new Connector(domainObject);
+	
+	static private class Connector extends AbstractGGAPIAsyncConnector<TestEntity, List<TestEntity>, Dto>{
 
-	public TestAbstractGGAPIAsyncConnector(IGGAPIDomain<TestEntity, Dto> domain) {
-		super(domain);
+		public Connector(IGGAPIDomain<TestEntity, Dto> domain) {
+			super(domain);
+		}
+
+		@Override
+		public void publishRequest(GGAPIAsyncConnectorEnvelop<?> message) throws GGAPIConnectorException {
+			Thread t = new Thread() {
+
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(TestAbstractGGAPIAsyncConnector.responseDelay);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+					GGAPIAsyncConnectorEnvelop<?> response = new GGAPIAsyncConnectorEnvelop<>(
+							GGAPIAsyncMessageType.REQUEST, UUID.randomUUID().toString(), message.getMessageUuid(),
+							message.getTenantId(), message.getDomain(), GGAPIAsyncResponseStatus.OK,
+							message.getOperation(), message.getEntity(), null, "Success");
+
+					try {
+						connector.onResponse(response);
+					} catch (JsonProcessingException e) {
+						// TODO Auto-generated catch block
+//				e.printStackTrace();
+					} catch (GGAPIConnectorException e) {
+						// TODO Auto-generated catch block
+//				e.printStackTrace();
+					}
+				}
+			};
+			t.start();
+			
+		}
 	}
-
-	static TestAbstractGGAPIAsyncConnector connector = new TestAbstractGGAPIAsyncConnector(domainObject);
 
 	static long responseDelay = 150;
 
@@ -188,39 +225,5 @@ public class TestAbstractGGAPIAsyncConnector extends AbstractGGAPIAsyncConnector
 
 	}
 
-
-
-	@Override
-	public void publishRequest(GGAPIAsyncConnectorEnvelop<?> message) throws GGAPIConnectorException {
-
-		Thread t = new Thread() {
-
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(TestAbstractGGAPIAsyncConnector.responseDelay);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				GGAPIAsyncConnectorEnvelop<?> response = new GGAPIAsyncConnectorEnvelop<>(
-						GGAPIAsyncMessageType.REQUEST, UUID.randomUUID().toString(), message.getMessageUuid(),
-						message.getTenantId(), message.getDomain(), GGAPIAsyncResponseStatus.OK,
-						message.getOperation(), message.getEntity(), null, "Success");
-
-				try {
-					connector.onResponse(response);
-				} catch (JsonProcessingException e) {
-					// TODO Auto-generated catch block
-//			e.printStackTrace();
-				} catch (GGAPIConnectorException e) {
-					// TODO Auto-generated catch block
-//			e.printStackTrace();
-				}
-			}
-		};
-		t.start();
-	}
 
 }
