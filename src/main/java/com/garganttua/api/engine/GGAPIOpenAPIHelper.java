@@ -7,8 +7,8 @@ import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
 
-import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.parser.OpenAPIV3Parser;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,7 +37,7 @@ public class GGAPIOpenAPIHelper {
 
 		this.m.execute(writer, todo).flush();
 
-		return new OpenAPIParser().readContents(writer.toString(), null, null).getOpenAPI();
+		return new OpenAPIV3Parser().readContents(writer.toString(), null, null).getOpenAPI();
 		
 	}
 	

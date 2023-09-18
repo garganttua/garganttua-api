@@ -30,6 +30,7 @@ The main features offered by this artifact are :
  * Implement Spring AOT
  * Implement Event publishers for kafka, mqtt, amqp
  * Improve the Rest Services returned object => find a way to parametrize the EntityResponse
+ * Add API to consult list of domains and entities and further more
 
 
 ### Architecture

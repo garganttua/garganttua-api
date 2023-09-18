@@ -9,19 +9,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.connector.GGAPIConnectorException;
+import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.GGAPIDomainable;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +31,7 @@ public abstract class AbstractGGAPIAsyncConnector<T extends IGGAPIEntity, S exte
 		super(domain);
 	}
 
-	@Inject
+	@Autowired
 	protected ExecutorService executor;
 	
 	@Value("${com.garganttua.api.connector.timeout}")

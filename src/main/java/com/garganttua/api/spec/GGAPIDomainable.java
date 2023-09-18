@@ -2,18 +2,18 @@ package com.garganttua.api.spec;
 
 import java.lang.reflect.InvocationTargetException;
 
-import javax.inject.Inject;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.garganttua.api.repository.dto.GGAPIDtoHelper;
 import com.garganttua.api.repository.dto.IGGAPIDTOFactory;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.repository.dto.GGAPIDtoHelper;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 
 public class GGAPIDomainable<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> implements IGGAPIDomainable<Entity, Dto> {
 
-	@Inject 
+	@Autowired 
 	protected IGGAPIDomain<Entity, Dto> domainObj;
 
 	@Getter

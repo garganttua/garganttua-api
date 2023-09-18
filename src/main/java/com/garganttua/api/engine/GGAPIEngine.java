@@ -10,9 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.inject.Inject;
-
 import org.reflections.Reflections;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -49,20 +48,20 @@ import com.garganttua.api.spec.IGGAPIHiddenableEntity;
 import com.garganttua.api.ws.GGAPIEngineRestService;
 import com.garganttua.api.ws.IGGAPIRestService;
 
-import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Configuration
-public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
+public class GGAPIEngine implements IGGAPIEngine {
 
-	@Inject
+	@Autowired
 	protected Optional<MongoTemplate> mongo;
 
-	@Inject
+	@Autowired
 	protected ApplicationContext context;
 
 	@Value("${com.garganttua.api.magicTenantId}")
@@ -71,11 +70,11 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 	@Value("${com.garganttua.api.engine.packages}")
 	protected String[] scanPackages;
 
-	@Inject
+	@Autowired
 	private RequestMappingHandlerMapping requestMappingHandlerMapping;
 
-	@Inject
-	public OpenAPI openApi;
+	@Autowired
+	public Optional<OpenAPI> openApi;
 
 	private List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> services;
 
@@ -426,6 +425,9 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 			switch (db) {
 			default:
 			case mongo:
+				if( this.mongo.isEmpty() ) {
+					throw new InstantiationException("No mongo connection available.");
+				}
 				dao = new GGAPIEngineMongoRepository(domainObj, this.mongo.get(), this.magicTenantId);
 				break;
 			}
@@ -494,70 +496,73 @@ public class GGAPIEngine implements IGGAPIDynamicDomainEngine {
 		RequestMappingInfo requestMappingInfoDeleteOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
 				.methods(RequestMethod.DELETE).options(options).build();
 
-		Tag tag = new Tag().name("Domain " + domain.toLowerCase()).description("Public Entity ["+publicEntity+"] Shared Entity ["+(shared.isEmpty()?"false":shared)+"] Hiddenable Entity ["+hiddenable+"]");
-		this.openApi.addTagsItem(tag);
-
-		GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass).getAnnotation(GGAPIEntity.class);
-
-		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.toLowerCase(), entityClass.getSimpleName(),
-				entityAnnotation.openApiSchemas());
-		PathItem pathItemBase = new PathItem();
-		PathItem pathItemCount = new PathItem();
-		PathItem pathItemUuid = new PathItem();
-
-		this.openApi.getComponents().addSchemas(entityClass.getSimpleName(),
-				templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()));
-		this.openApi.getComponents().addSchemas("ErrorObject",
-				templateOpenApi.getComponents().getSchemas().get("ErrorObject"));
-		this.openApi.getComponents().addSchemas("SortQuery",
-				templateOpenApi.getComponents().getSchemas().get("SortQuery"));
-		this.openApi.getComponents().addSchemas("FilterQuery",
-				templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
-
-		if (allow_read_all) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
-					ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
-							Integer.class, String.class, String.class, String.class));
-			this.openApi.path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+read_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_all))+"]")));
-		}
-		if (allow_delete_all) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
-					ws.getClass().getMethod("deleteAll", String.class, String.class));
-			this.openApi.path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+delete_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
-		}
-		if (allow_creation) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
-					ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
-			this.openApi.path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+creation_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.create_one))+"]")));
-		}
-		if (allow_count) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
-					ws.getClass().getMethod("getCount", String.class, String.class));
-			this.openApi.path(baseUrl + "/count",
-					pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+count_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.count))+"]")));
-		}
-		if (allow_read_one) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
-					ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
-			this.openApi.path(baseUrl + "/{uuid}",
-					pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+read_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_one))+"]")));
-		}
-		if (allow_update_one) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
-					ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
-			this.openApi.path(baseUrl + "/{uuid}",
-					pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+update_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.update_one))+"]")));
-		}
-		if (allow_delete_one) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
-					ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
-			this.openApi.path(baseUrl + "/{uuid}",
-					pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+delete_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
-		}
-
-		Info infos = this.openApi.getInfo();
-		String description = infos.getDescription() + "       The configured Magic Tenant ID is : 0";
-		infos.description(description);
+		if( this.openApi.isPresent() ) {
+			
+			Tag tag = new Tag().name("Domain " + domain.toLowerCase()).description("Public Entity ["+publicEntity+"] Shared Entity ["+(shared.isEmpty()?"false":shared)+"] Hiddenable Entity ["+hiddenable+"]");
+			this.openApi.get().addTagsItem(tag);
+	
+			GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass).getAnnotation(GGAPIEntity.class);
+	
+			OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.toLowerCase(), entityClass.getSimpleName(),
+					entityAnnotation.openApiSchemas());
+			PathItem pathItemBase = new PathItem();
+			PathItem pathItemCount = new PathItem();
+			PathItem pathItemUuid = new PathItem();
+	
+			this.openApi.get().getComponents().addSchemas(entityClass.getSimpleName(),
+					templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()));
+			this.openApi.get().getComponents().addSchemas("ErrorObject",
+					templateOpenApi.getComponents().getSchemas().get("ErrorObject"));
+			this.openApi.get().getComponents().addSchemas("SortQuery",
+					templateOpenApi.getComponents().getSchemas().get("SortQuery"));
+			this.openApi.get().getComponents().addSchemas("FilterQuery",
+					templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
+	
+			if (allow_read_all) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
+						ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
+								Integer.class, String.class, String.class, String.class));
+				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+read_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_all))+"]")));
+			}
+			if (allow_delete_all) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
+						ws.getClass().getMethod("deleteAll", String.class, String.class));
+				this.openApi.get().path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+delete_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
+			}
+			if (allow_creation) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
+						ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
+				this.openApi.get().path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+creation_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.create_one))+"]")));
+			}
+			if (allow_count) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
+						ws.getClass().getMethod("getCount", String.class, String.class));
+				this.openApi.get().path(baseUrl + "/count",
+						pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+count_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.count))+"]")));
+			}
+			if (allow_read_one) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
+						ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
+				this.openApi.get().path(baseUrl + "/{uuid}",
+						pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+read_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_one))+"]")));
+			}
+			if (allow_update_one) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
+						ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
+				this.openApi.get().path(baseUrl + "/{uuid}",
+						pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+update_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.update_one))+"]")));
+			}
+			if (allow_delete_one) {
+				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
+						ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
+				this.openApi.get().path(baseUrl + "/{uuid}",
+						pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+delete_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
+			}
+	
+			Info infos = this.openApi.get().getInfo();
+			String description = infos.getDescription() + "       The configured Magic Tenant ID is : 0";
+			infos.description(description);
+	}
 
 		return ws;
 	}

@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -83,7 +82,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 
 	private ArrayList<IGGAPIAuthorization> authorizations;
 
-	@Inject
+	@Autowired
 	@Setter
 	protected Optional<IGGAPIEventPublisher> eventPublisher;
 
@@ -148,7 +147,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		return authorizations;
 	}
 
-	@Inject
+	@Autowired
 	@Setter
 	protected IGGAPIController<Entity, Dto> controller;
 

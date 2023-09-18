@@ -6,8 +6,7 @@ package com.garganttua.api.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
@@ -32,7 +31,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		super(domain);
 	}
 
-	@Inject
+	@Autowired
 	protected IGGAPIDAORepository<Entity, Dto> daoRepository;
 	
 	@Override
