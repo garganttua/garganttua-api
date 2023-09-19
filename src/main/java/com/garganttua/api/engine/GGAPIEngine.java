@@ -173,6 +173,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 				boolean hiddenable = entityAnnotation.hiddenAble();
 				boolean publicEntity = entityAnnotation.publicEntity();
 				String shared = entityAnnotation.shared();
+				String geolocalized = entityAnnotation.geolocialized();
 
 				boolean tenant = entityAnnotation.tenantEntity();
 				String[] unicity = entityAnnotation.unicity();
@@ -288,7 +289,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 							read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
 							count_access, creation_authority, read_all_authority, read_one_authority,
 							update_one_authority, delete_one_authority, delete_all_authority, count_authority,
-							hiddenable, publicEntity, shared, tenant, unicity, showTenantId));
+							hiddenable, publicEntity, shared, geolocalized, tenant, unicity, showTenantId));
 				} catch (NoSuchMethodException | InstantiationException | IllegalAccessException
 						| IllegalArgumentException | InvocationTargetException | IOException e) {
 					throw new GGAPIEngineException(e);
@@ -378,7 +379,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 			GGAPICrudAccess delete_one_access, GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access,
 			boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
 			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
-			boolean count_authority, boolean hiddenable, boolean publicEntity, String shared, boolean tenantEntity,
+			boolean count_authority, boolean hiddenable, boolean publicEntity, String shared, String geolocalized, boolean tenantEntity,
 			String[] unicity, boolean showTenantId) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 
@@ -405,8 +406,8 @@ public class GGAPIEngine implements IGGAPIEngine {
 		};
 
 		log.info(
-				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], Public [{}], Shared [{}], Hiddenable [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}], creation_authority [{}], read_all_authority [{}], read_one_authority [{}], update_one_authority [{}], delete_one_authority [{}], delete_all_authority [{}], count_authority [{}]",
-				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, publicEntity, shared, hiddenable, allow_creation,
+				"Creating Dynamic Domain {} [Entity [{}], DTO [{}], DB [{}], Public [{}], Shared [{}], Geolocalized [{}], Hiddenable [{}], allow_creation [{}], allow_read_all [{}], allow_read_one [{}], allow_update_one [{}], allow_delete_one [{}], allow_delete_all [{}], allow_count [{}]], creation_access [{}], read_all_access [{}], read_one_access [{}], update_one_access [{}], delete_one_access [{}], delete_all_access [{}], count_access [{}], creation_authority [{}], read_all_authority [{}], read_one_authority [{}], update_one_authority [{}], delete_one_authority [{}], delete_all_authority [{}], count_authority [{}]",
+				domainObj.getDomain(), entityClass.getCanonicalName(), dtoClass.getCanonicalName(), db, publicEntity, shared, geolocalized, hiddenable, allow_creation,
 				allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
 				creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
 				delete_all_access, count_access, creation_authority, read_all_authority, read_one_authority,
@@ -437,6 +438,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 		dao.setHiddenable(hiddenable);
 		dao.setPublic(publicEntity);
 		dao.setShared(shared);
+		dao.setGeolocalized(geolocalized);
 
 		if (repo == null) {
 			repo = new GGAPIEngineRepository(domainObj, dao);
@@ -498,7 +500,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 
 		if( this.openApi.isPresent() ) {
 			
-			Tag tag = new Tag().name("Domain " + domain.toLowerCase()).description("Public Entity ["+publicEntity+"] Shared Entity ["+(shared.isEmpty()?"false":shared)+"] Hiddenable Entity ["+hiddenable+"]");
+			Tag tag = new Tag().name("Domain " + domain.toLowerCase()).description("Public Entity ["+publicEntity+"] Shared Entity ["+(shared.isEmpty()?"false":shared)+"] Hiddenable Entity ["+hiddenable+"] Geolocalized ["+(geolocalized.isEmpty()?"false":geolocalized)+"]");
 			this.openApi.get().addTagsItem(tag);
 	
 			GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass).getAnnotation(GGAPIEntity.class);
@@ -521,7 +523,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 			if (allow_read_all) {
 				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
 						ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
-								Integer.class, String.class, String.class, String.class));
+								Integer.class, String.class, String.class, String.class, String.class));
 				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+read_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_all))+"]")));
 			}
 			if (allow_delete_all) {

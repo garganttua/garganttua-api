@@ -8,7 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Shape;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeospatialIndex;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -17,6 +21,7 @@ import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
@@ -39,7 +44,9 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	private boolean publicEntity;
 
-	private String field;
+	private String sharingField;
+
+	private String geolocField;
 
 	@Override
 	public void setMagicTenantId(String magicTenantId) {
@@ -56,7 +63,7 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	}
 	
 	@Override
-	public List<Dto> findByTenantId(String tenantId, Pageable pageable, GGAPILiteral filter, GGAPISort sort) {
+	public List<Dto> findByTenantId(String tenantId, Pageable pageable, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
 		List<Dto> results = new ArrayList<>();
 
 		Query query = new Query();
@@ -70,11 +77,11 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 				query.addCriteria(Criteria.where("tenantId").is(tenantId));
 			}
 	
-			if( this.field != null && !this.field.isEmpty() ) {
+			if( this.sharingField != null && !this.sharingField.isEmpty() ) {
 				if( this.hiddenable ) {
-					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId).and("visible").is(true));
 				} else {
-					query.addCriteria(Criteria.where(field).is(tenantId));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId));
 				}
 			}
 		}
@@ -82,6 +89,12 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		if (filter != null) {
 			Criteria criteria = GGAPIMongoRepository.getCriteriaFromFilter(filter);
 			query.addCriteria(criteria);
+		}
+		
+		if (geoloc != null) {
+			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, this.geolocField);
+			if( criteria != null)
+				query.addCriteria(criteria);
 		}
 
 		if (pageable != null) {
@@ -100,6 +113,28 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		results = this.mongo.find(query, this.dtoClass);
 
 		return results;
+	}
+
+	private static Criteria getCriteriaFromGeolocFilter(GGAPIGeolocFilter geoloc, String geolocField) {
+		Criteria criteria = null;
+		
+		if( geolocField != null ) {
+			Shape shape = geoloc.getShape().accept(new GGAPIGeoJsonToSpringShapeBinder());
+			
+			criteria = Criteria.where(geolocField);
+			switch(geoloc.getType()) {
+			default:
+				break;
+			case GEO_WITHIN:
+				criteria.within(shape);
+				break;
+			case GEO_WITHIN_SPHERE:
+				criteria.withinSphere((Circle) shape);
+				break;
+			}
+		}
+		
+		return criteria;
 	}
 
 	/*
@@ -188,6 +223,7 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 			if( this.hiddenable ) {
 				query.addCriteria(Criteria.where("visible").is(true));
 			} 
+			query.addCriteria(Criteria.where("uuid").is(uuid));
 		} else {
 			if( !tenantId.equals(this.magicTenantId) ) {
 				query.addCriteria(Criteria.where("tenantId").is(tenantId).and("uuid").is(uuid));
@@ -195,11 +231,11 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 				query.addCriteria(Criteria.where("uuid").is(uuid));
 			}
 			
-			if( this.field != null && !this.field.isEmpty() ) {
+			if( this.sharingField != null && !this.sharingField.isEmpty() ) {
 				if( this.hiddenable ) {
-					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId).and("visible").is(true));
 				} else {
-					query.addCriteria(Criteria.where(field).is(tenantId));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId));
 				}
 			}
 		}
@@ -223,11 +259,11 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 				query.addCriteria(Criteria.where("id").is(id));
 			}
 			
-			if( this.field != null && !this.field.isEmpty() ) {
+			if( this.sharingField != null && !this.sharingField.isEmpty() ) {
 				if( this.hiddenable ) {
-					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId).and("visible").is(true));
 				} else {
-					query.addCriteria(Criteria.where(field).is(tenantId));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId));
 				}
 			}
 		}
@@ -256,11 +292,11 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 				query.addCriteria(Criteria.where("tenantId").is(tenantId));
 			}
 			
-			if( this.field != null && !this.field.isEmpty() ) {
+			if( this.sharingField != null && !this.sharingField.isEmpty() ) {
 				if( this.hiddenable ) {
-					query.addCriteria(Criteria.where(field).is(tenantId).and("visible").is(true));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId).and("visible").is(true));
 				} else {
-					query.addCriteria(Criteria.where(field).is(tenantId));
+					query.addCriteria(Criteria.where(sharingField).is(tenantId));
 				}
 			}
 		}
@@ -284,8 +320,15 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	}
 
 	@Override
-	public void setShared(String field) {
-		this.field = field;	
+	public void setShared(String sharingField) {
+		this.sharingField = sharingField;	
+	}
+	
+	@Override
+	public void setGeolocalized(String geolocField) {
+		this.geolocField = geolocField;
+		if( this.geolocField != null && !this.geolocField.isEmpty())
+			this.mongo.indexOps(this.domainObj.getDtoClass()).ensureIndex( new GeospatialIndex(this.geolocField).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
 	}
 
 }

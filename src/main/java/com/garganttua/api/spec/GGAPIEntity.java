@@ -79,7 +79,17 @@ public @interface GGAPIEntity {
 	
 	boolean hiddenAble() default false;
 	
+	/**
+	 * Sharing field 
+	 * @return
+	 */
 	String shared() default "";
+	
+	/**
+	 * Refer sto a GeoJson field
+	 * @return
+	 */
+	String geolocialized() default "";
 	
 	String[] unicity() default {};
 

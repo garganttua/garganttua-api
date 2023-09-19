@@ -18,6 +18,7 @@ import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
@@ -64,7 +65,9 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		
 		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid "+object.getUuid()+" exists.", tenantId, this.domain);
 		
-		if( this.daoRepository.findOneByUuidAndTenantId(object.getUuid(), object.getTenantId()) != null ){
+		Dto temp = this.daoRepository.findOneByUuidAndTenantId(object.getUuid(), object.getTenantId());
+		
+		if( temp != null ){
 			log.info("[Tenant "+tenantId+"] Entity with uuid "+object.getUuid()+" exists.");
 			return true;
 		} 
@@ -73,7 +76,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort) {
+	public List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
 		log.info("[Tenant {}] [Domain {}] Getting entities", tenantId, this.domain);
 
 		List<Entity> entities = new ArrayList<Entity>();
@@ -85,7 +88,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			page = PageRequest.of(pageIndex, pageSize);
 		} 
 			
-		objects = this.daoRepository.findByTenantId(tenantId, page, filter, sort);
+		objects = this.daoRepository.findByTenantId(tenantId, page, filter, sort, geoloc);
 	
 		objects.forEach(s ->{
 			entities.add((Entity) s.convert());
@@ -193,7 +196,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			
 		}
 		
-		List<Dto> entities = this.daoRepository.findByTenantId(tenantId, null, filter, null);
+		List<Dto> entities = this.daoRepository.findByTenantId(tenantId, null, filter, null, null);
 		
 		return entities.size()>0?true:false;
 	}

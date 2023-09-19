@@ -24,6 +24,8 @@ import com.garganttua.api.spec.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilterException;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.GGAPILiteralException;
 import com.garganttua.api.spec.sort.GGAPISort;
@@ -184,18 +186,25 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 	@Override
 	public List<?> getEntityList(String tenantId, String userId, int pageSize, int pageIndex, GGAPILiteral filter,
-			GGAPISort sort, GGAPIReadOutputMode mode) throws GGAPIEntityException {
+			GGAPISort sort, GGAPIGeolocFilter geoloc, GGAPIReadOutputMode mode) throws GGAPIEntityException {
 		log.info(
-				"[Tenant {}] [UserId {}] [Domain {}] Getting entities, mode {}, page size {}, page index {}, filter {}, sort {}",
-				tenantId, userId, this.domain, mode, pageSize, pageIndex, filter, sort);
+				"[Tenant {}] [UserId {}] [Domain {}] Getting entities, mode {}, page size {}, page index {}, filter {}, sort {}, geoloc {}",
+				tenantId, userId, this.domain, mode, pageSize, pageIndex, filter, sort, geoloc);
 
 		try {
 			GGAPILiteral.validate(filter);
 		} catch (GGAPILiteralException e) {
-			log.warn("[Tenant {}] [UserId {}] [Domain {}] Cannot validate filter " + filter, tenantId, userId,
-					this.domain);
+			log.warn("[Tenant {}] [UserId {}] [Domain {}] Cannot validate filter " + filter, tenantId, userId, this.domain);
 			throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, e);
 		}
+		
+		try {
+			GGAPIGeolocFilter.validate(geoloc);
+		} catch (GGAPIGeolocFilterException e) {
+			log.warn("[Tenant {}] [UserId {}] [Domain {}] Cannot validate geo filter " + filter, tenantId, userId, this.domain);
+			throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, e);
+		}
+		
 		ArrayList<String> entityUuids = new ArrayList<String>();
 
 		List<Entity> entities = null;
@@ -203,8 +212,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		if (this.connector.isPresent()) {
 			try {
 
-				Future<List<Entity>> entityResponse = this.connector.get().requestList(tenantId, null,
-						GGAPIConnectorOperation.READ);
+				Future<List<Entity>> entityResponse = this.connector.get().requestList(tenantId, null, GGAPIConnectorOperation.READ);
 
 				while (!entityResponse.isDone()) {
 					Thread.sleep(250);
@@ -212,12 +220,11 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 				entities = entityResponse.get();
 			} catch (Exception e) {
-				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
-						+ "}] Error during getting entity list ", e);
+				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain + "}] Error during getting entity list ", e);
 				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 			}
 		} else if (this.repository.isPresent()) {
-			entities = this.repository.get().getEntities(tenantId, pageSize, pageIndex, filter, sort);
+			entities = this.repository.get().getEntities(tenantId, pageSize, pageIndex, filter, sort, geoloc);
 		}
 
 		switch (mode) {
@@ -344,7 +351,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	@Override
 	public void deleteEntities(final String tenantId, String userId) throws GGAPIEntityException {
 		log.info("[Tenant {}] [UserId {}] [Domain {}] Deleting all entities", tenantId, userId, this.domain);
-		List<Entity> entities = this.repository.get().getEntities(tenantId, 0, 1, null, null);
+		List<Entity> entities = this.repository.get().getEntities(tenantId, 0, 1, null, null, null);
 
 		for (Entity s : entities) {
 			try {

@@ -30,6 +30,7 @@ import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
@@ -212,7 +213,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	@Override
 	@SuppressWarnings("unchecked")
 	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
-			String filterString, String sortString, String userId) {
+			String filterString, String sortString, String geolocString, String userId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
 		event.setUserId(userId);
@@ -223,6 +224,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		params.put("pageIndex", pageIndex.toString());
 		params.put("filterString", filterString);
 		params.put("sortString", sortString);
+		params.put("geolocString", geolocString);
 		event.setInParams(params);
 		try {
 			if (this.ALLOW_GET_ALL) {
@@ -232,12 +234,16 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
 				GGAPISort sort = null;
+				GGAPIGeolocFilter geoloc = null;
 				try {
 					if (filterString != null && !filterString.isEmpty()) {
 						filter = mapper.readValue(filterString, GGAPILiteral.class);
 					}
 					if (sortString != null && !sortString.isEmpty()) {
 						sort = mapper.readValue(sortString, GGAPISort.class);
+					}
+					if (geolocString != null && !geolocString.isEmpty()) {
+						geoloc = mapper.readValue(geolocString, GGAPIGeolocFilter.class);
 					}
 				} catch (JsonProcessingException e) {
 //					event.setException(e);
@@ -249,7 +255,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				}
 
 				try {
-					entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, mode);
+					entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, geoloc, mode);
 				} catch (GGAPIEntityException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());

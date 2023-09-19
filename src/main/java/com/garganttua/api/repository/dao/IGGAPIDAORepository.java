@@ -10,12 +10,13 @@ import org.springframework.data.domain.Pageable;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
 public interface IGGAPIDAORepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto>{
 
-	List<Dto> findByTenantId(String tenantId, Pageable pageable, GGAPILiteral filter, GGAPISort sort);
+	List<Dto> findByTenantId(String tenantId, Pageable pageable, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc);
 
 	Dto findOneByUuidAndTenantId(String uuid, String tenantId);
 
@@ -36,4 +37,6 @@ public interface IGGAPIDAORepository<Entity extends IGGAPIEntity, Dto extends IG
 	void setShared(String sharingField);
 	
 	String getMagicTenantId();
+
+	void setGeolocalized(String geolocField);
 }

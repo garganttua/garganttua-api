@@ -3,6 +3,8 @@ package com.garganttua.api.spec.filter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.mongodb.core.aggregation.ConvertOperators.ToString;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -146,5 +148,6 @@ public class GGAPILiteral {
 			});
 		}
 	}
+
 
 }

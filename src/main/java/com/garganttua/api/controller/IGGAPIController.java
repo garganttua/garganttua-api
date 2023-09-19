@@ -14,6 +14,7 @@ import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
@@ -32,7 +33,7 @@ public interface IGGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAP
 	public long getEntityTotalCount(String tenantId, String userId, GGAPILiteral filter) throws GGAPIEntityException;
 
 	public List<?> getEntityList(String tenantId, String userId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort,
-			GGAPIReadOutputMode mode) throws GGAPIEntityException;
+			GGAPIGeolocFilter geoloc, GGAPIReadOutputMode mode) throws GGAPIEntityException;
 
 	public void setRepository(Optional<IGGAPIRepository<Entity, Dto>> repository);
 

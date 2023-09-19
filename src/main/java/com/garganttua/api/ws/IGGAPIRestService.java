@@ -36,6 +36,7 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 			@RequestParam(name = "pageIndex", defaultValue = "0") Integer pageIndex,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
+			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
 			@RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
