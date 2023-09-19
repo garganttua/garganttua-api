@@ -42,8 +42,8 @@ public class GGAPIGeoJsonToSpringShapeBinder implements GeoJsonObjectVisitor<Sha
 	
 		Point point = (Point) geoJsonObject.getGeometry();
 		double radius = geoJsonObject.getProperty(GGAPIGeolocFilter.CIRCLE_RADIUS);
-		double x = point.getCoordinates().getLatitude();
-		double y = point.getCoordinates().getLongitude();
+		double y = point.getCoordinates().getLatitude();
+		double x = point.getCoordinates().getLongitude();
 		
 		return new Circle(x, y, radius);
 	}
