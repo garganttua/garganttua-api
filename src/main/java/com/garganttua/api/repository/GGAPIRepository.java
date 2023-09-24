@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
+import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
@@ -178,16 +179,28 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public boolean doesExist(String tenantId, String fieldName, String fieldValue) {
+	public boolean doesExist(String tenantId, String uuid, String[] fieldNames, String[] fieldValues) throws GGAPIEntityException {
 		
-		log.info("[Tenant {}] [Domain {}] Checking if entity with field {} valued at {} exists", tenantId, this.domain, fieldName, fieldValue);
+		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} field {} valued at {} exists", tenantId, this.domain, uuid,fieldNames, fieldValues);
 		
 		/*
 		 * WARNING : This method takes in account that fields of entities and dto are exactly the same, which may not be the case
 		 */
 		
-		String fiterString = "{\"name\":\"$field\", \"value\":\""+fieldName+"\",\"literals\":[{\"name\":\"$eq\",\"value\":\""+fieldValue+"\"}]}";
-		
+		if( fieldNames.length != fieldValues.length ) {
+			throw new GGAPIEntityException("provided fieldNames and fieldValues arrays do not have the same length");
+		}
+		StringBuilder sb = new StringBuilder();
+		for( int i = 0; i < fieldNames.length; i++ ) {
+			if( fieldNames.length > 1 ) {
+				sb.append("{\"name\":\"$or\",\"literals\":[");
+			}
+			sb.append("{\"name\":\"$field\", \"value\":\""+fieldNames[i]+"\",\"literals\":[{\"name\":\"$eq\",\"value\":\""+fieldValues[i]+"\"}]}");
+		}
+		if( fieldNames.length > 1 ) {
+			sb.append("]}");
+		}
+		String fiterString = sb.toString();
 		ObjectMapper mapper = new ObjectMapper();
 		GGAPILiteral filter = null;
 		try {
@@ -197,6 +210,12 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 		
 		List<Dto> entities = this.daoRepository.findByTenantId(tenantId, null, filter, null, null);
+		
+		if( uuid != null ) {
+			if (entities.size()==1 && entities.get(0).getUuid().equals(uuid)) {
+				return false;
+			} 
+		}
 		
 		return entities.size()>0?true:false;
 	}

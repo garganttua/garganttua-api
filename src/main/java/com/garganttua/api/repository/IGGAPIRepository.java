@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
@@ -35,7 +36,7 @@ public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	boolean doesExists(String tenantId, String uuid);
 	
-	boolean doesExist(String tenantId, String fieldName, String fieldValue);
+	boolean doesExist(String tenantId, String uuid, String[] fieldNames, String[] fieldValues) throws GGAPIEntityException;
 
 	Entity getOneByUuid(String tenantId, String uuid);
 

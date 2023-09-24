@@ -27,6 +27,8 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 @ConditionalOnProperty(name = "com.garganttua.api.security", havingValue = "enabled", matchIfMissing = true)
 @SecurityScheme(name = "Bearer Authentication", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
@@ -42,9 +44,9 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 	@Autowired
 	private List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> engineServices;
 	
-	@Autowired
-	@Qualifier(value = "dynamicServices")
-	private List<IGGAPIRestService<? extends IGGAPIEntity,? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices;
+//	@Autowired
+//	@Qualifier(value = "dynamicServices")
+//	private List<IGGAPIRestService<? extends IGGAPIEntity,? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices;
 	
 	@Autowired
 	private Optional<GGAPITenantVerifier> tenantVerifier;
@@ -55,9 +57,8 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 	@Autowired
 	private Optional<GGAPIRolesRestService> rolesRestService;
 	
-	@Override
-	public HttpSecurity configureFilterChain(HttpSecurity http) {
-		
+	@PostConstruct
+	private void init(){
 		this.authorizations = new ArrayList<IGGAPIAuthorization>();
 		
 		this.engineServices.forEach(service -> {
@@ -65,17 +66,15 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 			this.authorizations.addAll(serviceAuthorizations);
 		});
 		
-		this.restServices.forEach(service -> {
-			List<IGGAPIAuthorization> serviceAuthorizations = service.createAuthorizations();
-			this.authorizations.addAll(serviceAuthorizations);
-		});
-		
 		if( this.rolesRestService.isPresent() ) {
 			this.authorizations.addAll(this.rolesRestService.get().getCustomAuthorizations());
-			
 			this.rolesRestService.get().setRoles(this.authorizations);
 		}
-		
+	}
+	
+	@Override
+	public HttpSecurity configureFilterChain(HttpSecurity http) {
+			
 		this.authorizations.forEach(a -> {
 			try {
 				log.info("Applying security configuration {}", a);

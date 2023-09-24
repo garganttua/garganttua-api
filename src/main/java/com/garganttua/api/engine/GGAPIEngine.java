@@ -132,7 +132,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 
 			Reflections reflections = new Reflections(pack);
 
-			Set<Class<?>> entities__ = reflections.getTypesAnnotatedWith(GGAPIEntity.class);
+			Set<Class<?>> entities__ = reflections.getTypesAnnotatedWith(GGAPIEntity.class, false);
 
 			for (Class<?> clazz : entities__) {
 
@@ -145,6 +145,10 @@ public class GGAPIEngine implements IGGAPIEngine {
 				Class<IGGAPIDTOObject<IGGAPIEntity>> dtoClass = null;
 
 				GGAPIEntity entityAnnotation = clazz.getAnnotation(GGAPIEntity.class);
+				
+				if( entityAnnotation == null ) {
+					continue;
+				}
 
 				boolean allow_creation = entityAnnotation.allow_creation();
 				boolean allow_read_all = entityAnnotation.allow_read_all();
@@ -521,42 +525,78 @@ public class GGAPIEngine implements IGGAPIEngine {
 					templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
 	
 			if (allow_read_all) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
-						ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
-								Integer.class, String.class, String.class, String.class, String.class));
+				if( read_all_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
+							ws.getClass().getMethod("getEntities", GGAPIReadOutputMode.class, Integer.class,
+									Integer.class, String.class, String.class, String.class, String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, ws,
+							ws.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class, Integer.class,
+									Integer.class, String.class, String.class, String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+read_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_all))+"]")));
 			}
 			if (allow_delete_all) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
-						ws.getClass().getMethod("deleteAll", String.class, String.class));
+				if( delete_all_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
+						ws.getClass().getMethod("deleteAll", String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, ws,
+							ws.getClass().getMethod("deleteAll", String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+delete_all_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
 			}
 			if (allow_creation) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
-						ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
+				if( creation_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
+						ws.getClass().getMethod("createEntity", String.class, String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, ws,
+							ws.getClass().getMethod("createEntity", String.class, String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+creation_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.create_one))+"]")));
 			}
 			if (allow_count) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
-						ws.getClass().getMethod("getCount", String.class, String.class));
+				if( count_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
+						ws.getClass().getMethod("getCount", String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, ws,
+							ws.getClass().getMethod("getCount", String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl + "/count",
 						pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+count_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.count))+"]")));
 			}
 			if (allow_read_one) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
-						ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
+				if( read_one_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
+						ws.getClass().getMethod("getEntity", String.class, String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, ws,
+							ws.getClass().getMethod("getEntity", String.class, String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl + "/{uuid}",
 						pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+read_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.read_one))+"]")));
 			}
 			if (allow_update_one) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
-						ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
+				if( update_one_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
+						ws.getClass().getMethod("updateEntity", String.class, String.class, String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, ws,
+							ws.getClass().getMethod("updateEntity", String.class, String.class, String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl + "/{uuid}",
 						pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+update_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.update_one))+"]")));
 			}
 			if (allow_delete_one) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
-						ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
+				if( delete_one_access == GGAPICrudAccess.anonymous ) {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
+						ws.getClass().getMethod("deleteEntity", String.class, String.class));
+				} else {
+					this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, ws,
+							ws.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
+				}
 				this.openApi.get().path(baseUrl + "/{uuid}",
 						pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+delete_one_access+"] - Authority ["+(creation_authority==false?"none":BasicGGAPIAuthorization.getAuthorization(domain.toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
 			}

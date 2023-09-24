@@ -1,14 +1,18 @@
 package com.garganttua.api.security.authorization.token.jwt;
 
 import java.security.Key;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
@@ -75,13 +79,20 @@ public class GGAPIJwtTokenProvider implements IGGAPIAuthorizationProvider {
 	public String getAuthorization(Authentication authentication) throws GGAPIKeyExpiredException {
 		AbstractGGAPIUserDetails principal = (AbstractGGAPIUserDetails) authentication.getPrincipal();
 
-		return this.generateToken(principal.getUsername(), principal.getTenantId(), principal.getUuid());
+		return this.generateToken(principal.getUsername(), principal.getTenantId(), principal.getUuid(), principal.getAuthorities());
 	}
 
-	public String generateToken(String userName, String tenantId, String uuid) throws GGAPIKeyExpiredException {
+	public String generateToken(String userName, String tenantId, String uuid, Collection<? extends GrantedAuthority> authorizations) throws GGAPIKeyExpiredException {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("tenantId", tenantId);
 		claims.put("uuid", uuid);
+		if( authorizations != null ) {
+			List<String> auths = new ArrayList<String>();
+			authorizations.forEach(auth -> {
+				auths.add(auth.getAuthority());
+			});
+			claims.put("authorizations", auths);
+		}
 		return createToken(claims, userName);
 	}
 

@@ -27,6 +27,8 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	@RequestMapping(value = "", method = RequestMethod.POST)
+	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	ResponseEntity<?> getEntities(
@@ -38,21 +40,40 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
 			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
 			@RequestAttribute(name="userId", required = false) String userId);
+	@RequestMapping(value = "", method = RequestMethod.GET)
+	ResponseEntity<?> getEntities(
+			@RequestParam(name = "mode", defaultValue = "full") GGAPIReadOutputMode mode,
+			@RequestParam(name = "pageSize", defaultValue = "0") Integer pageSize,
+			@RequestParam(name = "pageIndex", defaultValue = "0") Integer pageIndex,
+			@RequestParam(name = "filter", defaultValue = "") String filterString,
+			@RequestParam(name = "sort", defaultValue = "") String sortString, 
+			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
+			@RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
 	ResponseEntity<?> getEntity(@RequestHeader(name = "tenantId") String tenantId, @PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
+	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
+	ResponseEntity<?> getEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
 	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestHeader String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	@RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
+	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
 	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
+	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
 	ResponseEntity<?> deleteAll(@RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId );
+	@RequestMapping(value = "", method = RequestMethod.DELETE)
+	ResponseEntity<?> deleteAll(@RequestAttribute(name="userId", required = false) String userId );
 
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
 	ResponseEntity<?> getCount(@RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId );
+	@RequestMapping(value = "/count", method = RequestMethod.GET)
+	ResponseEntity<?> getCount(@RequestAttribute(name="userId", required = false) String userId );
 
 	void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
 			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,

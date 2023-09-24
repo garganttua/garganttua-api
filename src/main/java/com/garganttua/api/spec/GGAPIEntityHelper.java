@@ -33,8 +33,8 @@ public class GGAPIEntityHelper {
 	public static <T extends IGGAPIEntity> String getFieldValue(Class<T> clazz, String fieldName, T entity) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 		Field field = null; 
 		
-		if( fieldName.equals("id") || fieldName.equals("uuid") ) {
-			field = IGGAPIEntity.class.getDeclaredField(fieldName);
+		if( (fieldName.equals("id") || fieldName.equals("uuid") ) && (entity instanceof AbstractGGAPIEntity) ) {
+			field = AbstractGGAPIEntity.class.getDeclaredField(fieldName);
 		} else {
 			field = clazz.getDeclaredField(fieldName);
 		}

@@ -12,10 +12,10 @@ import lombok.Setter;
 public abstract class AbstractGGAPIEntity implements IGGAPIEntity {
 	
 	@JsonProperty
-	private String uuid;
+	protected String uuid;
 	
 	@JsonProperty
-	private String id;
+	protected String id;
 	
 	public AbstractGGAPIEntity(String uuid, String id) {
 		this.uuid = uuid;

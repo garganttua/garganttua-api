@@ -2,10 +2,13 @@ package com.garganttua.api.ws;
 
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
+
 import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
 import com.garganttua.api.spec.GGAPICrudAccess;
+import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
 
@@ -61,4 +64,11 @@ public class GGAPIEngineRestService extends AbstractGGAPIService<IGGAPIEntity, I
 		this.DELETE_ALL_AUTHORITY = delete_all_authority;
 		this.COUNT_AUTHORITY = count_authority;
 	}
+
+	@Override
+	public ResponseEntity<?> createEntity(String entity, String userId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

@@ -24,5 +24,10 @@ public abstract class AbstractGGAPIHiddenableDTO<Entity extends IGGAPIHiddenable
 		super(tenantId, entity);
 		this.visible = entity.isVisible();
 	}
+	
+	protected AbstractGGAPIHiddenableDTO(){
+		super();
+		this.visible = true;
+	}
 
 }

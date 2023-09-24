@@ -564,6 +564,42 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		}
 	}
 
+	@Override
+	public ResponseEntity<?> createEntity(String entity, String userId) {
+		return this.createEntity(entity, null, userId);
+	}
+
+	@Override
+	public ResponseEntity<?> getEntities(GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
+			String filterString, String sortString, String geolocString, String userId) {
+		return this.getEntities(null, mode, pageSize, pageIndex, filterString, sortString, geolocString, userId);
+	}
+
+	@Override
+	public ResponseEntity<?> getEntity(String uuid, String userId) {
+		return this.getEntity(null, uuid, userId);
+	}
+
+	@Override
+	public ResponseEntity<?> updateEntity(String uuid, String entity, String userId) {
+		return this.updateEntity(uuid, entity, null, userId);
+	}
+
+	@Override
+	public ResponseEntity<?> deleteEntity(String uuid, String userId) {
+		return this.deleteEntity(uuid, null, userId);
+	}
+
+	@Override
+	public ResponseEntity<?> deleteAll(String userId) {
+		return this.deleteAll(null, userId);
+	}
+
+	@Override
+	public ResponseEntity<?> getCount(String userId) {
+		return this.getCount(null, userId);
+	}
+
 	/**
 	 * 
 	 * @param e
