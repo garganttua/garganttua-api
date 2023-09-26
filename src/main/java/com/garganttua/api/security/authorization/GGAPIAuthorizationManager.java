@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.garganttua.api.security.authentication.IGGAPISecurityException;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
 import com.garganttua.api.security.authorization.bearer.GGAPIBearerAuthorizationExtractor;
+import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtDBTokenProvider;
 import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtTokenProvider;
 
 @Service
@@ -29,7 +30,7 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 	@Autowired
 	private IGGAPIAuthenticationUserMapper userMapper;
 
-	private GGAPIJwtTokenProvider authorizationProvider = null;
+	private IGGAPIAuthorizationProvider authorizationProvider = null;
 
 	@Value("${com.garganttua.api.security.extractUserId}")
 	private String extractUserId;
@@ -44,12 +45,13 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 			case jwt:
 				switch (this.tokenProviderType) {
 				case db:
+					this.authorizationProvider = new GGAPIJwtDBTokenProvider();
 					break;
 				case inmemory: 
 					break;
 				default: 
 				case none:
-					this.authorizationProvider  = new GGAPIJwtTokenProvider();
+					this.authorizationProvider = new GGAPIJwtTokenProvider();
 					break;
 				}
 				break;
@@ -60,8 +62,7 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 	}
 	
 	@Override
-	public HttpSecurity configureFilterChain(HttpSecurity http) throws IGGAPISecurityException {
-		
+	public HttpSecurity configureFilterChain(HttpSecurity http) throws IGGAPISecurityException {	
 		try {
 			http.authorizeHttpRequests().and().addFilterBefore(new GGAPIBearerAuthorizationExtractor(this.authorizationProvider, this.userMapper, this.extractUserId), UsernamePasswordAuthenticationFilter.class);
 		} catch (Exception e) {
@@ -69,7 +70,6 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 		}
 		
 		return http;
-
 	}
 
 }

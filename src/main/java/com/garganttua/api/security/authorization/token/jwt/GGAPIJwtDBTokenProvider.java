@@ -1,19 +1,24 @@
 package com.garganttua.api.security.authorization.token.jwt;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.garganttua.api.security.authorization.token.GGAPIToken;
 
-public class GGAPIJwtTokenProvider extends AbstractGGAPIJwtTokenProvider {
+public class GGAPIJwtDBTokenProvider extends AbstractGGAPIJwtTokenProvider {
+
+	@Autowired 
+	private IGGAPIDBTokenKeeper tokenKeeper;
+
 
 	@Override
 	protected void storeToken(GGAPIToken token) {
-		// TODO Auto-generated method stub
-		
+		this.tokenKeeper.store(token);
 	}
+
 
 	@Override
 	protected GGAPIToken findToken(GGAPIToken token) throws GGAPITokenNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		return this.tokenKeeper.findOne(token);
 	}
 
 }

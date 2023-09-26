@@ -1,16 +1,18 @@
 package com.garganttua.api.security.authorization;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-
+import com.garganttua.api.engine.GGAPIEngineException;
+import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
+import com.garganttua.api.security.authorization.token.GGAPIToken;
+import com.garganttua.api.security.authorization.token.jwt.GGAPITokenExpired;
+import com.garganttua.api.security.authorization.token.jwt.GGAPITokenNotFoundException;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
 
 public interface IGGAPIAuthorizationProvider {
 
-	String getAuthorization(Authentication authentication) throws GGAPIKeyExpiredException;
+	GGAPIToken getAuthorization(AbstractGGAPIUserDetails userDetails) throws GGAPIKeyExpiredException, GGAPIEngineException;
 
-	String getUserNameFromAuthorization(String token) throws GGAPIKeyExpiredException;
+	String getUserNameFromAuthorization(String token) throws GGAPIKeyExpiredException, GGAPIEngineException;
 
-	boolean validateAuthorization(String token, UserDetails userDetails) throws GGAPIKeyExpiredException;
+	boolean validateAuthorization(String token, AbstractGGAPIUserDetails userDetails) throws GGAPIKeyExpiredException, GGAPITokenNotFoundException, GGAPIEngineException, GGAPITokenExpired;
 
 }

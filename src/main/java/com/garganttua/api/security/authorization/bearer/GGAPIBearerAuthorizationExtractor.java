@@ -3,16 +3,22 @@ package com.garganttua.api.security.authorization.bearer;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtTokenProvider;
+import com.garganttua.api.security.authorization.token.jwt.GGAPITokenExpired;
+import com.garganttua.api.security.authorization.token.jwt.GGAPITokenNotFoundException;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
+import com.garganttua.api.ws.IGGAPIErrorObject;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -41,8 +47,13 @@ public class GGAPIBearerAuthorizationExtractor extends OncePerRequestFilter {
             token = authHeader.substring(7);
             try {
 				username = this.authorizationProvider.getUserNameFromAuthorization(token);
-			} catch (GGAPIKeyExpiredException e) {
-				throw new IOException(e);
+			} catch (GGAPIKeyExpiredException | GGAPIEngineException e) {
+				String responseToClient= e.getMessage();
+
+				response.setStatus(403);
+				response.getWriter().write(responseToClient);
+				response.getWriter().flush();
+				return;
 			}
         }
         
@@ -64,8 +75,13 @@ public class GGAPIBearerAuthorizationExtractor extends OncePerRequestFilter {
 				    
 				    SecurityContextHolder.getContext().setAuthentication(authToken);
 				}
-			} catch (GGAPIKeyExpiredException e) {
-				throw new IOException(e);
+			} catch (GGAPIKeyExpiredException | GGAPITokenNotFoundException | GGAPIEngineException | GGAPITokenExpired e) {
+				String responseToClient= e.getMessage();
+
+				response.setStatus(403);
+				response.getWriter().write(responseToClient);
+				response.getWriter().flush();
+				return;
 			}
         }
         filterChain.doFilter(request, response);

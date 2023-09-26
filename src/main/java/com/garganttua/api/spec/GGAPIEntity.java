@@ -31,7 +31,7 @@ public @interface GGAPIEntity {
 	
 	GGAPICrudAccess creation_access() default GGAPICrudAccess.authenticated;
 
-	GGAPICrudAccess read_all_access() default GGAPICrudAccess.authenticated;
+	GGAPICrudAccess read_all_access() default GGAPICrudAccess.owner;
 
 	GGAPICrudAccess read_one_access() default GGAPICrudAccess.authenticated;
 

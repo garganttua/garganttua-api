@@ -1,45 +1,47 @@
 package com.garganttua.api.security.keys;
 
-import java.security.Key;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
-public class GGAPISymetricKeyRealm implements IGGAPIKeyRealm {
+public class GGAPISymetricKeyRealm extends AbstractGGAPIKeyRealm {
 
-	private Date expirationDate = null;
-	private SecretKey secret;
+	private GGAPIKey key;
+	private SignatureAlgorithm algo;
+	private String realm;
 
-	public GGAPISymetricKeyRealm(SignatureAlgorithm algo, GGAPIKeyExpiration expiration) {
+	public GGAPISymetricKeyRealm(String realm, SignatureAlgorithm algo, GGAPIKeyExpiration expiration) {
+		super(algo, expiration);
+		this.realm = realm;
+		this.algo = algo;
 		if( expiration != null ) {
-			this.expirationDate = new Date(System.currentTimeMillis() + expiration.unit().toMillis(expiration.time()));
+			this.key.setExpiration(new Date(System.currentTimeMillis() + expiration.unit().toMillis(expiration.time())));
 		}
-		this.secret = Keys.secretKeyFor(algo);
 	}
 
 	@Override
-	public Key getCipheringKey() throws GGAPIKeyExpiredException {
-		if( this.expirationDate != null ) {
-			if( new Date().after(this.expirationDate) ) {
-				throw new GGAPIKeyExpiredException("The key has expired");
-			}
-		}
-		
-		return this.secret;
+	protected void getKey(SignatureAlgorithm algo) {
+		SecretKey key__ = Keys.secretKeyFor(algo);
+		this.key = new GGAPIKey(UUID.randomUUID().toString(), this.realm, key__.getAlgorithm(), null, GGAPIKeyType.SYMETRIC, key__.getEncoded());
 	}
 
 	@Override
-	public Key getUncipheringKey() throws GGAPIKeyExpiredException {
-		if( this.expirationDate != null ) {
-			if( new Date().after(this.expirationDate) ) {
-				throw new GGAPIKeyExpiredException("The key has expired");
-			}
-		}
-		
-		return this.secret;
+	protected GGAPIKey getCipheringKey_() {
+		return this.key;
+	}
+
+	@Override
+	protected GGAPIKey getUncipheringKey_() {
+		return this.key;
+	}
+
+	@Override
+	public String getName() {
+		return this.realm;
 	}
 
 }

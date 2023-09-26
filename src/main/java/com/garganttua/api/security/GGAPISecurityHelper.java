@@ -85,11 +85,10 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 					} else {
 						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).authenticated().and().authorizeHttpRequests();
 					}
-					
+
 					if( a.getAccess() == GGAPICrudAccess.owner && this.tenantVerifier.isPresent() ) {
-						this.tenantVerifier.get().addOwnerRule(a.getAuthorization());
+						this.tenantVerifier.get().addOwnerRule(a);
 					}
-					
 				} else if( a.getAccess() == GGAPICrudAccess.anonymous){
 					http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).permitAll().and().authorizeHttpRequests();
 				}

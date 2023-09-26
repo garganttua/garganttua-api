@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.GGAPIAuthenticationMode;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationRequest;
+import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
 import com.garganttua.api.security.authentication.modes.loginpassword.GGAPILoginPasswordAuthenticationRequest;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
+import com.garganttua.api.security.authorization.token.GGAPIToken;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.ws.IGGAPIErrorObject;
 
@@ -52,14 +55,14 @@ public class GGAPIAuthenticationRestService {
 		
         if (authentication.isAuthenticated()) {
         	
-        	String authorization;
+        	GGAPIToken authorization;
 			try {
-				authorization = this.authorizationProvider.getAuthorization(authentication);
-			} catch (GGAPIKeyExpiredException e) {
+				authorization = this.authorizationProvider.getAuthorization((AbstractGGAPIUserDetails) authentication.getPrincipal());
+			} catch (GGAPIKeyExpiredException | GGAPIEngineException e) {
 				return new ResponseEntity<>("Error during authorization creation", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
         	
-        	return new ResponseEntity<>(authorization, HttpStatus.CREATED);
+        	return new ResponseEntity<>(authorization.getToken(), HttpStatus.CREATED);
         	
         } else {
         	return new ResponseEntity<>(new IGGAPIErrorObject("Authentication failed"), HttpStatus.BAD_REQUEST);
