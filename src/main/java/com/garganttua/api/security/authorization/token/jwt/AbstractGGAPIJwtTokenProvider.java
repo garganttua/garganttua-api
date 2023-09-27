@@ -20,12 +20,11 @@ import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.token.GGAPIToken;
-import com.garganttua.api.security.keys.GGAPIAsymetricKeyRealm;
 import com.garganttua.api.security.keys.GGAPIKey;
 import com.garganttua.api.security.keys.GGAPIKeyExpiration;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
+import com.garganttua.api.security.keys.GGAPIKeyRealms;
 import com.garganttua.api.security.keys.GGAPIKeyRenewal;
-import com.garganttua.api.security.keys.GGAPISymetricKeyRealm;
 import com.garganttua.api.security.keys.IGGAPIKeyManager;
 import com.garganttua.api.security.keys.IGGAPIKeyRealm;
 
@@ -64,20 +63,20 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 	private TimeUnit keyLifetimeUnit;
 	
 	@Value("${com.garganttua.api.security.authorization.token.jwt.key.realm.create}")
-	private String createRealm;
+	private boolean createRealm;
 	
 	@PostConstruct
-	private IGGAPIKeyManager keyMnager() {
+	private IGGAPIKeyManager keyManager() {
 		
 		GGAPIKeyExpiration expiration = null;
 		
 		if (this.keyLifetime > 0) {
 			expiration = new GGAPIKeyExpiration(this.keyLifetime, this.keyLifetimeUnit);
 		}
-		IGGAPIKeyRealm realm = this.createRealm(this.keyRealm, SignatureAlgorithm.forName(this.keyAlgorythm), expiration);
+		IGGAPIKeyRealm realm = GGAPIKeyRealms.createRealm(this.keyRealm, SignatureAlgorithm.forName(this.keyAlgorythm).getValue(), expiration);
 		
 		try {
-			if( this.keyManager.getKeyForCiphering(this.keyRealm) == null ) {
+			if( this.keyManager.getKeyForCiphering(this.keyRealm) == null && this.createRealm ) {
 				this.keyManager.createRealm(realm);
 			}
 		} catch (GGAPIKeyExpiredException e) {
@@ -88,32 +87,6 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 		return keyManager;
 	}
 
-	private IGGAPIKeyRealm createRealm(String realm, SignatureAlgorithm signatureAlgorithm, GGAPIKeyExpiration expiration) {
-		IGGAPIKeyRealm keyRealm = null;
-
-		switch (signatureAlgorithm) {
-		default:
-		case HS256:
-		case HS384:
-		case HS512:
-			keyRealm = new GGAPISymetricKeyRealm(realm, signatureAlgorithm, expiration);
-			break;
-		case ES256:
-		case ES384:
-		case ES512:
-		case PS256:
-		case PS384:
-		case PS512:
-		case RS256:
-		case RS384:
-		case RS512:
-			keyRealm = new GGAPIAsymetricKeyRealm(realm, signatureAlgorithm, expiration);
-			break;
-		}
-		return keyRealm;
-
-	}
-
 	@Override
 	public GGAPIToken getAuthorization(AbstractGGAPIUserDetails userDetails)
 			throws GGAPIKeyExpiredException, GGAPIEngineException {
@@ -121,6 +94,8 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 		try {
 			token = this.generateToken(userDetails.getUsername(), userDetails.getTenantId(), userDetails.getUuid(),
 					userDetails.getAuthorities());
+			
+			
 		} catch (InvalidKeyException | SignatureException | InvalidKeySpecException | NoSuchAlgorithmException
 				| GGAPIKeyExpiredException e) {
 			throw new GGAPIEngineException(e);
@@ -128,8 +103,7 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 		return token;
 	}
 
-	private GGAPIToken generateToken(String userName, String tenantId, String uuid,
-			Collection<? extends GrantedAuthority> authorizations) throws GGAPIKeyExpiredException, InvalidKeyException,
+	private GGAPIToken generateToken(String userName, String tenantId, String uuid, Collection<? extends GrantedAuthority> authorizations) throws GGAPIKeyExpiredException, InvalidKeyException,
 			SignatureException, InvalidKeySpecException, NoSuchAlgorithmException {
 		GGAPIKey key = this.keyManager.getKeyForCiphering(this.keyRealm);
 		Map<String, Object> claims = new HashMap<>();
@@ -146,8 +120,7 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 			});
 			claims.put("authorizations", auths);
 		}
-		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(userName).setIssuedAt(now).signWith(key.getKey(),
-				SignatureAlgorithm.forName(this.keyAlgorythm));
+		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(userName).setIssuedAt(now).signWith(key.getKey(), SignatureAlgorithm.forName(this.keyAlgorythm));
 
 		if (this.tokenLifetime != 0) {
 			long expirationDate = now.getTime() + TimeUnit.MINUTES.toMillis(this.tokenLifetime);
@@ -156,6 +129,10 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 		}
 
 		String tokenStr = token.compact();
+		
+		GGAPIToken tokenObj = new GGAPIToken(UUID.randomUUID().toString(), uuid, now, expiration, tokenStr.getBytes(), key.getUuid());
+		
+		this.storeToken(tokenObj);
 
 		return new GGAPIToken(UUID.randomUUID().toString(), uuid, now, expiration, tokenStr.getBytes(), key.getUuid());
 	}
@@ -223,7 +200,8 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 				|| storeToken == null;
 
 		try {
-			return (username.equals(userDetails.getUsername()) && !isTokenExpired(token) && storeToken__);
+			boolean tokenValid = (username.equals(userDetails.getUsername()) && !(this.tokenLifetime!=0 && isTokenExpired(token)) && storeToken__);
+			return tokenValid;
 		} catch (GGAPIKeyExpiredException e) {
 			throw new GGAPIEngineException(e);
 		} catch (SignatureException e) {

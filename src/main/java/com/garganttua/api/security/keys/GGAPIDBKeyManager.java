@@ -9,13 +9,20 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 
 	@Override
 	public GGAPIKey getKeyForCiphering(String realm) throws GGAPIKeyExpiredException {
-		// TODO Auto-generated method stub
+		IGGAPIKeyRealm realm_ = this.keyKeeper.getRelam(realm);
+		if( realm_ != null ) {
+			return realm_.getCipheringKey();
+		}
+		
 		return null;
 	}
 
 	@Override
 	public GGAPIKey getKeyForUnciphering(String realm) throws GGAPIKeyExpiredException {
-		// TODO Auto-generated method stub
+		IGGAPIKeyRealm realm_ = this.keyKeeper.getRelam(realm);
+		if( realm_ != null ) {
+			return realm_.getUncipheringKey();
+		}
 		return null;
 	}
 
@@ -26,9 +33,8 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 	}
 
 	@Override
-	public void createRealm(IGGAPIKeyRealm realm) {
-		// TODO Auto-generated method stub
-		
+	public void createRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException {
+		this.keyKeeper.createRealm(realm);
 	}
 
 }

@@ -7,5 +7,7 @@ public interface IGGAPIKeyRealm {
 	GGAPIKey getUncipheringKey() throws GGAPIKeyExpiredException;
 
 	String getName();
+	
+	String getAlgo();
 
 }

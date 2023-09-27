@@ -11,22 +11,31 @@ import io.jsonwebtoken.security.Keys;
 public class GGAPISymetricKeyRealm extends AbstractGGAPIKeyRealm {
 
 	private GGAPIKey key;
-	private SignatureAlgorithm algo;
+	private String algo;
 	private String realm;
 
-	public GGAPISymetricKeyRealm(String realm, SignatureAlgorithm algo, GGAPIKeyExpiration expiration) {
+	public GGAPISymetricKeyRealm(String realm, GGAPIKey key) {
+		super();
+		this.realm = realm;
+		this.algo = key.getAlgorithm();
+		this.key = key;
+	}
+
+	public GGAPISymetricKeyRealm(String realm, String algo, GGAPIKeyExpiration expiration) {
 		super(algo, expiration);
 		this.realm = realm;
 		this.algo = algo;
-		if( expiration != null ) {
-			this.key.setExpiration(new Date(System.currentTimeMillis() + expiration.unit().toMillis(expiration.time())));
+		if (expiration != null) {
+			this.key.setExpiration(
+					new Date(System.currentTimeMillis() + expiration.unit().toMillis(expiration.time())));
 		}
 	}
 
 	@Override
-	protected void getKey(SignatureAlgorithm algo) {
-		SecretKey key__ = Keys.secretKeyFor(algo);
-		this.key = new GGAPIKey(UUID.randomUUID().toString(), this.realm, key__.getAlgorithm(), null, GGAPIKeyType.SYMETRIC, key__.getEncoded());
+	protected void getKey(String algo) {
+		SecretKey key__ = Keys.secretKeyFor(SignatureAlgorithm.forName(algo));
+		this.key = new GGAPIKey(UUID.randomUUID().toString(), this.realm, key__.getAlgorithm(), null,
+				GGAPIKeyType.SYMETRIC, key__.getEncoded());
 	}
 
 	@Override
@@ -42,6 +51,11 @@ public class GGAPISymetricKeyRealm extends AbstractGGAPIKeyRealm {
 	@Override
 	public String getName() {
 		return this.realm;
+	}
+
+	@Override
+	public String getAlgo() {
+		return this.algo;
 	}
 
 }

@@ -6,11 +6,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
 
 public abstract class AbstractGGAPIKeyRealm implements IGGAPIKeyRealm {
 	
-	public AbstractGGAPIKeyRealm(SignatureAlgorithm algo, GGAPIKeyExpiration expiration) {
+	public AbstractGGAPIKeyRealm() {
+		
+	}
+	
+	public AbstractGGAPIKeyRealm(String algo, GGAPIKeyExpiration expiration) {
 		this.getKey(algo);	
 	}
 
-	protected abstract void getKey(SignatureAlgorithm algo);
+	protected abstract void getKey(String algo);
 
 	@Override
 	public GGAPIKey getCipheringKey() throws GGAPIKeyExpiredException {
@@ -38,5 +42,4 @@ public abstract class AbstractGGAPIKeyRealm implements IGGAPIKeyRealm {
 	}
 
 	protected abstract GGAPIKey getUncipheringKey_();
-
 }

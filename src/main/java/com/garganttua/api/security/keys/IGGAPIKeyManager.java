@@ -8,6 +8,6 @@ public interface IGGAPIKeyManager {
 	
 	void renew(IGGAPIKeyRealm realm);
 	
-	void createRealm(IGGAPIKeyRealm  realm);
+	void createRealm(IGGAPIKeyRealm  realm) throws GGAPIKeyExpiredException;
 
 }
