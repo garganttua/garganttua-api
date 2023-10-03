@@ -2,9 +2,6 @@ package com.garganttua.api.security.authorization.bearer;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -14,11 +11,9 @@ import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
-import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtTokenProvider;
 import com.garganttua.api.security.authorization.token.jwt.GGAPITokenExpired;
 import com.garganttua.api.security.authorization.token.jwt.GGAPITokenNotFoundException;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
-import com.garganttua.api.ws.IGGAPIErrorObject;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

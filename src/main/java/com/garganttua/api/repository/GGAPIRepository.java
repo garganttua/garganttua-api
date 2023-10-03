@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
@@ -29,8 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 @EnableMongoRepositories
 public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIRepository<Entity, Dto> {
 	
-	public GGAPIRepository(IGGAPIDomain<Entity, Dto> domain) {
+	@Value("${com.garganttua.api.magicTenantId}")
+	private String magicTenantId;
+
+	public GGAPIRepository(IGGAPIDomain<Entity, Dto> domain, String magicTenantId) {
 		super(domain);
+		this.magicTenantId = magicTenantId;
 	}
 
 	@Autowired
@@ -179,25 +184,25 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public boolean doesExist(String tenantId, String uuid, String[] fieldNames, String[] fieldValues) throws GGAPIEntityException {
+	public boolean doesExist(String tenantId, String uuid, String[] unicalFieldNames, String[] unicalFieldValues) throws GGAPIEntityException {
 		
-		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} field {} valued at {} exists", tenantId, this.domain, uuid,fieldNames, fieldValues);
+		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} field {} valued at {} exists", tenantId, this.domain, uuid, unicalFieldNames, unicalFieldValues);
 		
 		/*
 		 * WARNING : This method takes in account that fields of entities and dto are exactly the same, which may not be the case
 		 */
 		
-		if( fieldNames.length != fieldValues.length ) {
+		if( unicalFieldNames.length != unicalFieldNames.length ) {
 			throw new GGAPIEntityException("provided fieldNames and fieldValues arrays do not have the same length");
 		}
 		StringBuilder sb = new StringBuilder();
-		for( int i = 0; i < fieldNames.length; i++ ) {
-			if( fieldNames.length > 1 ) {
+		for( int i = 0; i < unicalFieldNames.length; i++ ) {
+			if( unicalFieldNames.length > 1 ) {
 				sb.append("{\"name\":\"$or\",\"literals\":[");
 			}
-			sb.append("{\"name\":\"$field\", \"value\":\""+fieldNames[i]+"\",\"literals\":[{\"name\":\"$eq\",\"value\":\""+fieldValues[i]+"\"}]}");
+			sb.append("{\"name\":\"$field\", \"value\":\""+unicalFieldNames[i]+"\",\"literals\":[{\"name\":\"$eq\",\"value\":\""+unicalFieldValues[i]+"\"}]}");
 		}
-		if( fieldNames.length > 1 ) {
+		if( unicalFieldNames.length > 1 ) {
 			sb.append("]}");
 		}
 		String fiterString = sb.toString();
@@ -208,8 +213,12 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		} catch (JsonProcessingException e) {
 			
 		}
-		
-		List<Dto> entities = this.daoRepository.findByTenantId(tenantId, null, filter, null, null);
+		List<Dto> entities = null;
+		if( unicalFieldNames != null && unicalFieldNames.length>0 ) {
+			entities = this.daoRepository.findByTenantId(this.magicTenantId, null, filter, null, null);
+		} else {
+			entities = this.daoRepository.findByTenantId(tenantId, null, filter, null, null);
+		}
 		
 		if( uuid != null ) {
 			if (entities.size()==1 && entities.get(0).getUuid().equals(uuid)) {

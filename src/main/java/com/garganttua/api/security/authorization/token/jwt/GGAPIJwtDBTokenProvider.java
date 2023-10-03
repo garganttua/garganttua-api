@@ -9,16 +9,13 @@ public class GGAPIJwtDBTokenProvider extends AbstractGGAPIJwtTokenProvider {
 	@Autowired 
 	private IGGAPIDBTokenKeeper tokenKeeper;
 
-
 	@Override
 	protected void storeToken(GGAPIToken token) {
 		this.tokenKeeper.store(token);
 	}
 
-
 	@Override
 	protected GGAPIToken findToken(GGAPIToken token) throws GGAPITokenNotFoundException {
 		return this.tokenKeeper.findOne(token);
 	}
-
 }

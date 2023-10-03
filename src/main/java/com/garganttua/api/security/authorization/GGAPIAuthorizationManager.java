@@ -35,7 +35,7 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 	@Value("${com.garganttua.api.security.extractUserId}")
 	private String extractUserId;
 	
-	@Bean 
+	@Bean(value = "AuthorizationProvider")
 	private IGGAPIAuthorizationProvider getAuthorizationProvider() {
 		switch(this.authorizationType) {
 		default:

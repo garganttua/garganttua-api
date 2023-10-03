@@ -10,7 +10,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class IGGAPIErrorObject {
+public class GGAPIErrorObject {
 
 	private String message;
 	

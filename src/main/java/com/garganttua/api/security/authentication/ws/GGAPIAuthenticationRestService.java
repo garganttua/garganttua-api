@@ -3,7 +3,6 @@ package com.garganttua.api.security.authentication.ws;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +21,7 @@ import com.garganttua.api.security.authentication.modes.loginpassword.GGAPILogin
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.token.GGAPIToken;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
-import com.garganttua.api.ws.IGGAPIErrorObject;
+import com.garganttua.api.ws.GGAPIErrorObject;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -50,7 +49,7 @@ public class GGAPIAuthenticationRestService {
 		try {
 			authentication = this.authenticationManager.authenticate(authentication);
 		} catch (Exception e) {
-			return new ResponseEntity<>(new IGGAPIErrorObject(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), HttpStatus.BAD_REQUEST);
 		}
 		
         if (authentication.isAuthenticated()) {
@@ -65,7 +64,7 @@ public class GGAPIAuthenticationRestService {
         	return new ResponseEntity<>(authorization.getToken(), HttpStatus.CREATED);
         	
         } else {
-        	return new ResponseEntity<>(new IGGAPIErrorObject("Authentication failed"), HttpStatus.BAD_REQUEST);
+        	return new ResponseEntity<>(new GGAPIErrorObject("Authentication failed"), HttpStatus.BAD_REQUEST);
           
         }
     }

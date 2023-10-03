@@ -5,38 +5,40 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.http.HttpStatusCode;
-
 import com.garganttua.api.spec.GGAPICrudOperation;
 import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.ws.GGAPIErrorObject;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class GGAPIEvent<Entity extends IGGAPIEntity> {
-	
-	public GGAPIEvent() {
-		this.inDate = new Date();
-		this.inParams = new HashMap<String, String>();
-	}
-	
+
 	private GGAPICrudOperation operation;
 	
-	private Date inDate;
+	private Date inDate = new Date();
 	
 	private Date outDate; 
 	
 	private int exceptionCode; 
 	
-	private Map<String, String> inParams;
+	private Map<String, String> inParams = new HashMap<String, String>();
 	
 	private Entity in; 
 	
 	private Entity out; 
 	
+	private String entityClass;
+	
 	private long outCount;
 	
 	private List<Entity> outList;
+	
+	private GGAPIErrorObject errorObject;
 	
 	private String tenantId; 
 	
@@ -46,6 +48,6 @@ public class GGAPIEvent<Entity extends IGGAPIEntity> {
 	
 	private String exceptionMessage;
 	
-	private HttpStatusCode httpCode;
-
+	private int httpReturnedCode;
+	
 }

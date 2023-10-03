@@ -445,7 +445,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 		dao.setGeolocalized(geolocalized);
 
 		if (repo == null) {
-			repo = new GGAPIEngineRepository(domainObj, dao);
+			repo = new GGAPIEngineRepository(domainObj, dao, this.magicTenantId);
 		} else {
 			repo.setDomain(domainObj);
 			repo.setDao(dao);
