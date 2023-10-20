@@ -31,7 +31,7 @@ public class GGAPIEngineRestService extends AbstractGGAPIService<IGGAPIEntity, I
 			boolean allow_count) {
 		this.ALLOW_CREATION = allow_creation;
 		this.ALLOW_GET_ALL = allow_read_all;
-		this.ALLOW_COUNT = allow_read_one;
+		this.ALLOW_GET_ONE = allow_read_one;
 		this.ALLOW_UPDATE = allow_update_one;
 		this.ALLOW_DELETE_ONE = allow_delete_one;
 		this.ALLOW_DELETE_ALL = allow_delete_all;
