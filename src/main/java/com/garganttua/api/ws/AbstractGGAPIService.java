@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -86,6 +87,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	@Autowired
 	@Setter
 	protected Optional<IGGAPIEventPublisher> eventPublisher;
+	
+	@Setter
+	protected String magicTenantId;
 
 	@PostConstruct
 	protected void init() {
@@ -573,38 +577,38 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 
 	@Override
 	public ResponseEntity<?> createEntity(String entity, String userId) {
-		return this.createEntity(entity, null, userId);
+		return this.createEntity(entity, this.magicTenantId, userId);
 	}
 
 	@Override
 	public ResponseEntity<?> getEntities(GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
 			String filterString, String sortString, String geolocString, String userId) {
-		return this.getEntities(null, mode, pageSize, pageIndex, filterString, sortString, geolocString, userId);
+		return this.getEntities(this.magicTenantId, mode, pageSize, pageIndex, filterString, sortString, geolocString, userId);
 	}
 
 	@Override
 	public ResponseEntity<?> getEntity(String uuid, String userId) {
-		return this.getEntity(null, uuid, userId);
+		return this.getEntity(this.magicTenantId, uuid, userId);
 	}
 
 	@Override
 	public ResponseEntity<?> updateEntity(String uuid, String entity, String userId) {
-		return this.updateEntity(uuid, entity, null, userId);
+		return this.updateEntity(uuid, entity, this.magicTenantId, userId);
 	}
 
 	@Override
 	public ResponseEntity<?> deleteEntity(String uuid, String userId) {
-		return this.deleteEntity(uuid, null, userId);
+		return this.deleteEntity(uuid, this.magicTenantId, userId);
 	}
 
 	@Override
 	public ResponseEntity<?> deleteAll(String userId) {
-		return this.deleteAll(null, userId);
+		return this.deleteAll(this.magicTenantId, userId);
 	}
 
 	@Override
 	public ResponseEntity<?> getCount(String userId) {
-		return this.getCount(null, userId);
+		return this.getCount(this.magicTenantId, userId);
 	}
 
 	/**

@@ -90,5 +90,7 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 
 	public void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 
+	void setMagicTenantId(String magicTenantId);
+
 
 }

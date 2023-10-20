@@ -470,6 +470,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 			ws.setDomain(domainObj);
 			ws.setController(controller);
 		}
+		ws.setMagicTenantId(this.magicTenantId);
 		ws.setEventPublisher(eventObj);
 		ws.allow(allow_creation, allow_read_all, allow_read_one, allow_update_one, allow_delete_one,
 				allow_delete_all, allow_count);
