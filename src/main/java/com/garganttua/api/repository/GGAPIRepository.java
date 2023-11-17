@@ -52,7 +52,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
     }
 
 	@Override
-	public boolean doesExists(String tenantId, String uuid) {
+	public boolean doesExist(String tenantId, String uuid) {
  
 		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} exists.", tenantId, this.domain);
 		
@@ -65,7 +65,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 	
 	@Override
-	public boolean doesExists(String tenantId, Entity entity) {
+	public boolean doesExist(String tenantId, Entity entity) {
  
 		Dto object = this.dtoFactory.newInstance(tenantId, entity);
 		

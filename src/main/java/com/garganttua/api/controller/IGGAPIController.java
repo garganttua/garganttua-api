@@ -45,4 +45,6 @@ public interface IGGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAP
 	
 	public void setUnicity(String[] unicity);
 
+	public void setMandatory(String[] mandatory);
+
 }

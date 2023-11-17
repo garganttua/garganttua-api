@@ -181,6 +181,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 
 				boolean tenant = entityAnnotation.tenantEntity();
 				String[] unicity = entityAnnotation.unicity();
+				String[] mandatory = entityAnnotation.mandatory();
 				
 				boolean showTenantId = entityAnnotation.showTenantId();
 
@@ -293,7 +294,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 							read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
 							count_access, creation_authority, read_all_authority, read_one_authority,
 							update_one_authority, delete_one_authority, delete_all_authority, count_authority,
-							hiddenable, publicEntity, shared, geolocalized, tenant, unicity, showTenantId));
+							hiddenable, publicEntity, shared, geolocalized, tenant, unicity, mandatory, showTenantId));
 				} catch (NoSuchMethodException | InstantiationException | IllegalAccessException
 						| IllegalArgumentException | InvocationTargetException | IOException e) {
 					throw new GGAPIEngineException(e);
@@ -362,6 +363,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 	 * @param allow_delete_all
 	 * @param allow_count
 	 * @param domain
+	 * @param mandatory 
 	 * @throws NoSuchMethodException
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
@@ -384,7 +386,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 			boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
 			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
 			boolean count_authority, boolean hiddenable, boolean publicEntity, String shared, String geolocalized, boolean tenantEntity,
-			String[] unicity, boolean showTenantId) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
+			String[] unicity, String[] mandatory, boolean showTenantId) throws NoSuchMethodException, InstantiationException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, IOException {
 
 		/*
@@ -421,8 +423,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 			connector.setDomain(domainObj);
 		}
 
-		Optional<IGGAPIConnector<IGGAPIEntity, List<IGGAPIEntity>, IGGAPIDTOObject<IGGAPIEntity>>> connectorObj = Optional
-				.ofNullable(connector);
+		Optional<IGGAPIConnector<IGGAPIEntity, List<IGGAPIEntity>, IGGAPIDTOObject<IGGAPIEntity>>> connectorObj = Optional.ofNullable(connector);
 		Optional<IGGAPIBusiness<IGGAPIEntity>> businessObj = Optional.ofNullable(business);
 		Optional<IGGAPIEventPublisher> eventObj = Optional.ofNullable(event);
 
@@ -463,6 +464,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 			controller.setTenant(tenantEntity);
 		}
 		controller.setUnicity(unicity);
+		controller.setMandatory(mandatory);
 
 		if (ws == null) {
 			ws = new GGAPIEngineRestService(domainObj, controller);

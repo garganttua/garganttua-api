@@ -10,7 +10,6 @@ import org.geojson.MultiPoint;
 import org.geojson.MultiPolygon;
 import org.geojson.Polygon;
 import org.springframework.data.geo.Point;
-import org.springframework.data.geo.Shape;
 
 public class GGAPIGeoJsonPointToSpringPointBinder implements GeoJsonObjectVisitor<Point>{
 

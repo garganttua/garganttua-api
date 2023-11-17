@@ -57,6 +57,13 @@ public class GGAPIGeoJsonToSpringShapeBinder implements GeoJsonObjectVisitor<Sha
 	@Override
 	public Shape visit(Polygon geoJsonObject) {
 		List<org.springframework.data.geo.Point> points = new ArrayList<org.springframework.data.geo.Point>();
+		
+		geoJsonObject.getCoordinates().forEach(coordinates -> {
+			coordinates.forEach(point -> {
+				points.add(new org.springframework.data.geo.Point(point.getLongitude(), point.getLatitude()));
+			});
+		});
+		
 		org.springframework.data.geo.Polygon polygon = new org.springframework.data.geo.Polygon(points);
 		return polygon;
 	}

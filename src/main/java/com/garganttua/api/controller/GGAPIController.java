@@ -10,8 +10,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import javax.swing.event.ListSelectionEvent;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.garganttua.api.business.IGGAPIBusiness;
@@ -75,6 +73,9 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 	@Setter
 	protected String[] unicity = {};
+	
+	@Setter
+	protected String[] mandatory = {};
 
 	/**
 	 * 
@@ -130,6 +131,10 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		if (this.tenant) {
 			tenantId = entity.getUuid();
 		}
+		
+		if( this.mandatory.length > 0 ) {
+			this.checkMandatoryFields(this.mandatory, entity);
+		}
 
 		if (this.business.isPresent()) {
 			this.business.get().beforeCreate(tenantId, entity);
@@ -153,30 +158,14 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			}
 		} else if (this.repository.isPresent()) {
 
-			if (this.repository.get().doesExists(tenantId, entity)) {
+			if (this.repository.get().doesExist(tenantId, entity)) {
 				log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with Uuid " + entity.getUuid() + " already exists",
 						tenantId, userId, this.domain);
 				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS, "Entity already exists");
 			}
 
-			try {
-				List<String> values = new ArrayList<String>();
-				for (String fieldName : this.unicity) {
-					values.add(GGAPIEntityHelper.getFieldValue(this.entityClass, fieldName, entity));
-				}
-				String[] fieldValues = new String[values.size()];
-				values.toArray(fieldValues);
-
-				if (this.repository.get().doesExist(tenantId, null, this.unicity, fieldValues)) {
-					log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with value for field " + this.unicity
-							+ " already exists", tenantId, userId, this.domain);
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
-							"Entity with same " + this.unicity + " value already exists");
-				}
-			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
-						+ "}] Error during creating entity with Uuid " + entity.getUuid(), e);
-				throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, e.getMessage(), e);
+			if( this.unicity != null && this.unicity.length > 0) {
+				this.checkUnicityFields(tenantId, userId, entity, false);
 			}
 
 			this.repository.get().save(tenantId, entity);
@@ -187,6 +176,23 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 
 		return entity;
+	}
+
+	protected void checkMandatoryFields(String[] mandatory, Entity entity) throws GGAPIEntityException {
+		
+		for( String field: mandatory ) {
+			try {
+				Object value = GGAPIEntityHelper.getFieldValue(this.entityClass, field, entity);
+				
+				if( value == null ) {
+					throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, "Field "+field+" is mandatory");
+				} else if( value.toString().isEmpty() ){
+					throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, "Field "+field+" is mandatory");
+				}
+			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+				throw new GGAPIEntityException(e);
+			}
+		}
 	}
 
 	@Override
@@ -282,32 +288,15 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
 			}
 		} else if (this.repository.isPresent()) {
-			if (!this.repository.get().doesExists(tenantId, entity)) {
+			if (!this.repository.get().doesExist(tenantId, entity)) {
 				log.warn(
 						"[Tenant {}] [UserId {}] [Domain {}] Entity with uuid " + entity.getUuid() + " does not exists",
 						tenantId, userId, this.domain);
 				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_NOT_FOUND, "Entity does not exist");
 			}
 
-			try {
-				List<String> values = new ArrayList<String>();
-				for (String fieldName : this.unicity) {
-					values.add(GGAPIEntityHelper.getFieldValue(this.entityClass, fieldName, entity));
-				}
-				String[] fieldValues = new String[values.size()];
-				values.toArray(fieldValues);
-
-				if (this.repository.get().doesExist(tenantId, entity.getUuid(), this.unicity, fieldValues)) {
-					log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with value for field " + this.unicity
-							+ " already exists", tenantId, userId, this.domain);
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
-							"Entity with same " + this.unicity + " value already exists");
-				}
-			} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException
-					| GGAPIEntityException e) {
-				log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
-						+ "}] Error during creating entity with Uuid " + entity.getUuid(), e);
-				throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, e.getMessage(), e);
+			if( this.unicity != null && this.unicity.length > 0) {
+				this.checkUnicityFields(tenantId, userId, entity, true);
 			}
 
 			updated = this.repository.get().update(tenantId, entity);
@@ -318,6 +307,29 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 
 		return updated;
+	}
+
+	private void checkUnicityFields(String tenantId, String userId, Entity entity, boolean forUpdate) throws GGAPIEntityException {
+		try {
+			List<String> values = new ArrayList<String>();
+			for (String fieldName : this.unicity) {
+				values.add(GGAPIEntityHelper.getFieldValue(this.entityClass, fieldName, entity).toString());
+			}
+			String[] fieldValues = new String[values.size()];
+			values.toArray(fieldValues);
+
+			if (this.repository.get().doesExist(tenantId, forUpdate?entity.getUuid():null, this.unicity, fieldValues)) {
+				log.warn("[Tenant {}] [UserId {}] [Domain {}] Entity with value for field " + this.unicity.toString()
+						+ " already exists", tenantId, userId, this.domain);
+				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS,
+						"Entity with same " + this.unicity + " value already exists");
+			}
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException
+				| GGAPIEntityException e) {
+			log.error("[Tenant {" + tenantId + "}] [UserId {" + userId + "}] [Domain {" + this.domain
+					+ "}] Error during checking unicity fields for entity with Uuid " + entity.getUuid(), e);
+			throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, e.getMessage(), e);
+		}
 	}
 
 	@Override

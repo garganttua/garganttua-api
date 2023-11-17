@@ -22,7 +22,7 @@ import com.garganttua.api.spec.sort.GGAPISort;
  */
 public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto>{
 
-	boolean doesExists(String tenantId, Entity entity);
+	boolean doesExist(String tenantId, Entity entity);
 
 	List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc);
 
@@ -34,7 +34,7 @@ public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	void delete(String tenantId, Entity entity);
 
-	boolean doesExists(String tenantId, String uuid);
+	boolean doesExist(String tenantId, String uuid);
 	
 	boolean doesExist(String tenantId, String uuid, String[] fieldNames, String[] fieldValues) throws GGAPIEntityException;
 

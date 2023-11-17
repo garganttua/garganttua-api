@@ -92,6 +92,8 @@ public @interface GGAPIEntity {
 	String geolocialized() default "";
 	
 	String[] unicity() default {};
+	
+	String[] mandatory() default {};
 
 	boolean tenantEntity() default false;
 
