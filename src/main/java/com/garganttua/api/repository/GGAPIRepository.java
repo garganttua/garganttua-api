@@ -97,7 +97,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		objects = this.daoRepository.findByTenantId(tenantId, page, filter, sort, geoloc);
 	
 		objects.forEach(s ->{
-			entities.add((Entity) s.convert());
+			entities.add(this.convertDtoToEntity(s));
 		});
 	
 		return entities;
@@ -125,8 +125,8 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			objectToBeUpdated.update(object);
 		
 			this.daoRepository.save(objectToBeUpdated);
-			
-			return (Entity) object.convert();
+
+			return this.convertDtoToEntity(objectToBeUpdated);
 		
 		} else {
 			return null;
@@ -141,7 +141,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		
 		if( object != null ){
 			log.info("[Tenant {}] [Domain {}] Object with uuid "+uuid+" found !", tenantId, this.domain);
-			return (Entity) object.convert();
+			return this.convertDtoToEntity(object);
 		}
 		
 		log.info("[Tenant {}] [Domain {}] Object with uuid "+uuid+" not found.", tenantId, this.domain);
@@ -155,11 +155,18 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		
 		if( object != null ){
 			log.info("[Tenant {}] [Domain {}] Object with id "+id+" found !", tenantId, this.domain);
-			return (Entity) object.convert();
+			return this.convertDtoToEntity(object);
 		}
 		
 		log.info("[Tenant {}] [Domain {}] Object with id "+id+" not found.", tenantId, this.domain);
 		return null;
+	}
+
+	private Entity convertDtoToEntity(Dto object) {
+		Entity e = (Entity) object.convert();
+		e.setId(object.getId());
+		e.setUuid(object.getUuid());
+		return e;
 	}
 
 	@Override

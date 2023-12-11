@@ -16,23 +16,24 @@ import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
+import com.garganttua.api.security.tenants.GGAPIEngineTenantIdHeaderManager;
 import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
 
 public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto> {
-
+	
 	List<IGGAPIAuthorization> createAuthorizations();
 
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId);
 	@RequestMapping(value = "", method = RequestMethod.POST)
 	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	ResponseEntity<?> getEntities(
-			@RequestHeader(name = "tenantId") String tenantId,
+			@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId,
 			@RequestParam(name = "mode", defaultValue = "full") GGAPIReadOutputMode mode,
 			@RequestParam(name = "pageSize", defaultValue = "0") Integer pageSize,
 			@RequestParam(name = "pageIndex", defaultValue = "0") Integer pageIndex,
@@ -51,7 +52,7 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 			@RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
-	ResponseEntity<?> getEntity(@RequestHeader(name = "tenantId") String tenantId, @PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> getEntity(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
 	ResponseEntity<?> getEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
 
@@ -61,17 +62,17 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId);
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
 	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
 
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteAll(@RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId );
+	ResponseEntity<?> deleteAll(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId );
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
 	ResponseEntity<?> deleteAll(@RequestAttribute(name="userId", required = false) String userId );
 
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
-	ResponseEntity<?> getCount(@RequestHeader(name = "tenantId") String tenantId, @RequestAttribute(name="userId", required = false) String userId );
+	ResponseEntity<?> getCount(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId );
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
 	ResponseEntity<?> getCount(@RequestAttribute(name="userId", required = false) String userId );
 

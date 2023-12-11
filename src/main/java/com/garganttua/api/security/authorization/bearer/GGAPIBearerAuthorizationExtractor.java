@@ -14,6 +14,7 @@ import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.token.jwt.GGAPITokenExpired;
 import com.garganttua.api.security.authorization.token.jwt.GGAPITokenNotFoundException;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
+import com.garganttua.api.security.tenants.GGAPIEngineTenantIdHeaderManager;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -60,7 +61,7 @@ public class GGAPIBearerAuthorizationExtractor extends OncePerRequestFilter {
 				if (this.authorizationProvider.validateAuthorization(token, userDetails)) {
 				    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 				    
-				    request.setAttribute("tenantId", userDetails.getTenantId());
+				    request.setAttribute(GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName, userDetails.getTenantId());
 				    
 				    if( this.extractUserId != null && !this.extractUserId.isEmpty() && this.extractUserId.equals("enabled")) {
 				    	request.setAttribute("userId", userDetails.getUuid());

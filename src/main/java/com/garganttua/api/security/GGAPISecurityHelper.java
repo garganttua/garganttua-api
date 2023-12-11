@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -17,6 +16,7 @@ import com.garganttua.api.security.authentication.IGGAPISecurityException;
 import com.garganttua.api.security.authentication.ws.GGAPIRolesRestService;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
+import com.garganttua.api.security.tenants.GGAPIEngineTenantIdHeaderManager;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
 import com.garganttua.api.spec.GGAPICrudAccess;
 import com.garganttua.api.spec.IGGAPIEntity;
@@ -24,16 +24,18 @@ import com.garganttua.api.ws.IGGAPIRestService;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-
-import jakarta.annotation.PostConstruct;
 
 @Service
 @ConditionalOnProperty(name = "com.garganttua.api.security", havingValue = "enabled", matchIfMissing = true)
 @SecurityScheme(name = "Bearer Authentication", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 @Slf4j
 public class GGAPISecurityHelper implements IGGAPISecurityHelper {
+	
+	@Autowired
+	private GGAPIEngineTenantIdHeaderManager tenantIdHeaderManager;
 
 	@Autowired
 	private Optional<IGGAPIAuthenticationManager> authenticationManager;
@@ -117,6 +119,7 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 			}
 		});
 		
+
 		this.tenantVerifier.ifPresent(t -> {
 			try {
 				http.authorizeHttpRequests().and().addFilterAfter(t, UsernamePasswordAuthenticationFilter.class);
@@ -124,6 +127,14 @@ public class GGAPISecurityHelper implements IGGAPISecurityHelper {
 				
 			}
 		});
+		
+		try {
+			http.authorizeHttpRequests().and().addFilterBefore(this.tenantIdHeaderManager, UsernamePasswordAuthenticationFilter.class);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 		return http;
 	}
 

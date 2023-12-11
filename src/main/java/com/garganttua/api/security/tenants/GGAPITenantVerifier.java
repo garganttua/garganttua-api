@@ -24,9 +24,10 @@ import jakarta.servlet.http.HttpServletResponse;
 @ConditionalOnProperty(name = "com.garganttua.api.security", havingValue = "enabled", matchIfMissing = true)
 public class GGAPITenantVerifier extends OncePerRequestFilter {
 
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value(value = "${com.garganttua.api.magicTenantId}")
 	private String magicTenantId;
-
+	
+	
 	private List<IGGAPIAuthorization> rules = new ArrayList<IGGAPIAuthorization>();
 
 	@Override
@@ -76,9 +77,9 @@ public class GGAPITenantVerifier extends OncePerRequestFilter {
 			}
 
 			if( rule.getAccess() == GGAPICrudAccess.owner ) {
-				String userTenantId = (String) request.getAttribute("tenantId");
+				String userTenantId = (String) request.getAttribute(GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName);
 	
-				String requestedTenantId = request.getHeader("tenantId");
+				String requestedTenantId = request.getHeader(GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName);
 	
 				if (!userTenantId.equals(requestedTenantId) && !userTenantId.equals(this.magicTenantId)) {
 					throw new IOException("Requested tenantId [" + requestedTenantId + "] and authentifed user's tenantId ["
