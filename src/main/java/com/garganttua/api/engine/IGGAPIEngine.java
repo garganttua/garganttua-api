@@ -1,20 +1,30 @@
 package com.garganttua.api.engine;
 
-import com.garganttua.api.controller.IGGAPIController;
-import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.repository.dao.IGGAPIDAORepository;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.ws.IGGAPIRestService;
+import com.garganttua.api.engine.accessors.IGGAPIAuthenticatorAccessor;
+import com.garganttua.api.engine.accessors.IGGAPIOwnersControllerAccessor;
+import com.garganttua.api.engine.accessors.IGGAPITenantsControllerAccessor;
+import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
+import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
+import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
+import com.garganttua.api.security.IGGAPISecurity;
 
 public interface IGGAPIEngine {
-
-	IGGAPIDAORepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getDao(String name);
-
-	IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getRepository(String name);
-
-	IGGAPIController<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getController(String name);
-
-	IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getService(String name);
-
+    IGGAPIDynamicDomainsRegistry getDynamicDomainsRegistry();
+    
+    IGGAPIDaosRegistry getDaosRegistry();
+    
+    IGGAPIRepositoriesRegistry getRepositoriesRegistry();
+    
+    IGGAPIControllersRegistry getControllersRegistry();
+    
+    IGGAPIServicesRegistry getServicesRegistry();
+    
+    IGGAPIAuthenticatorAccessor getAuthenticatorAccessor();
+    
+    IGGAPITenantsControllerAccessor getTenantsControllerAccessor();
+    
+    IGGAPIOwnersControllerAccessor getOwnerControllerAccessor();
+    
+    IGGAPISecurity getSecurity();
 }

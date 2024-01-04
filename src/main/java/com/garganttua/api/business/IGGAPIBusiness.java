@@ -1,9 +1,10 @@
 package com.garganttua.api.business;
 
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.spec.GGAPIEntityException;
+import com.garganttua.api.spec.IGGAPIEntity;
 
-public interface IGGAPIBusiness<Entity extends IGGAPIEntity> {
+public interface IGGAPIBusiness<Entity extends IGGAPIEntity> extends IGGAPIEngineObject {
 
 	void beforeCreate(String tenantId, Entity entity) throws GGAPIEntityException;
 	

@@ -6,11 +6,12 @@ package com.garganttua.api.connector;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
 
-public interface IGGAPIConnector <T extends IGGAPIEntity, S extends List<T>, U extends IGGAPIDTOObject<T>> extends IGGAPIDomainable<T, U>{
+public interface IGGAPIConnector <T extends IGGAPIEntity, S extends List<T>, U extends IGGAPIDTOObject<T>> extends IGGAPIDomainable<T, U>, IGGAPIEngineObject {
 
 	public enum GGAPIConnectorOperation {
 		READ, CREATE, UPDATE, DELETE

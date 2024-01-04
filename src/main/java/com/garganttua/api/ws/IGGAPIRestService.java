@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAuthorization;
@@ -22,14 +23,14 @@ import com.garganttua.api.spec.GGAPIReadOutputMode;
 import com.garganttua.api.spec.IGGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIEntity;
 
-public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto> {
+public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto>, IGGAPIEngineObject {
 	
 	List<IGGAPIAuthorization> createAuthorizations();
 
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="ownerId", required = false) String ownerId);
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> createEntity(@RequestBody(required = true) String entity, @RequestAttribute(name="ownerId", required = false) String ownerId);
 
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	ResponseEntity<?> getEntities(
@@ -40,7 +41,7 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
 			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
-			@RequestAttribute(name="userId", required = false) String userId);
+			@RequestAttribute(name="ownerId", required = false) String ownerId);
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	ResponseEntity<?> getEntities(
 			@RequestParam(name = "mode", defaultValue = "full") GGAPIReadOutputMode mode,
@@ -49,32 +50,32 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
 			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
-			@RequestAttribute(name="userId", required = false) String userId);
+			@RequestAttribute(name="ownerId", required = false) String ownerId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
-	ResponseEntity<?> getEntity(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> getEntity(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @PathVariable(name = "uuid") String uuid, @RequestAttribute(name="ownerId", required = false) String ownerId);
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
-	ResponseEntity<?> getEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> getEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="ownerId", required = false) String ownerId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
-	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestHeader String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestHeader String tenantId, @RequestAttribute(name="ownerId", required = false) String ownerId);
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
-	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> updateEntity(@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity, @RequestAttribute(name="ownerId", required = false) String ownerId);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="ownerId", required = false) String ownerId);
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="userId", required = false) String userId);
+	ResponseEntity<?> deleteEntity(@PathVariable(name = "uuid") String uuid, @RequestAttribute(name="ownerId", required = false) String ownerId);
 
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteAll(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId );
+	ResponseEntity<?> deleteAll(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="ownerId", required = false) String ownerId );
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteAll(@RequestAttribute(name="userId", required = false) String userId );
+	ResponseEntity<?> deleteAll(@RequestAttribute(name="ownerId", required = false) String ownerId );
 
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
-	ResponseEntity<?> getCount(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="userId", required = false) String userId );
+	ResponseEntity<?> getCount(@RequestHeader(name = GGAPIEngineTenantIdHeaderManager.tenantIdHeaderName) String tenantId, @RequestAttribute(name="ownerId", required = false) String ownerId );
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
-	ResponseEntity<?> getCount(@RequestAttribute(name="userId", required = false) String userId );
+	ResponseEntity<?> getCount(@RequestAttribute(name="ownerId", required = false) String ownerId );
 
 	void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
 			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,
@@ -82,16 +83,19 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 	
 	void setAccesses(GGAPICrudAccess creation_access, GGAPICrudAccess read_all_access, GGAPICrudAccess read_one_access, GGAPICrudAccess update_one_access, GGAPICrudAccess delete_one_access, GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access);
 
-	void setController(IGGAPIController<Entity, Dto> controller);
+	void setController(Optional<IGGAPIController<Entity, Dto>> controller);
+
+	void setEventPublisher(Optional<IGGAPIEventPublisher<Entity>> eventObj);
+
+	void setMagicTenantId(String magicTenantId);
 
 	void setAuthorities(boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
 			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
 			boolean count_authority);
-	
 
-	public void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
+	List<IGGAPICustomService> getCustomServices();
 
-	void setMagicTenantId(String magicTenantId);
+	Optional<IGGAPIEventPublisher<Entity>> getEventPublisher();
 
 
 }

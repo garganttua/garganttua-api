@@ -6,7 +6,6 @@ package com.garganttua.api.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +13,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
@@ -24,25 +24,23 @@ import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @EnableMongoRepositories
 public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIRepository<Entity, Dto> {
 	
+	@Setter
 	@Value("${com.garganttua.api.magicTenantId}")
 	private String magicTenantId;
 
-	public GGAPIRepository(IGGAPIDomain<Entity, Dto> domain, String magicTenantId) {
-		super(domain);
-		this.magicTenantId = magicTenantId;
-	}
-
-	@Autowired
 	protected IGGAPIDAORepository<Entity, Dto> daoRepository;
+
+	protected IGGAPIEngine engine;
 	
 	@Override
-    public long getCount(String tenantId, GGAPILiteral filter) {
+    public long getCount(String tenantId, String ownerId, GGAPILiteral filter) {
     	log.info("[Tenant {}] [Domain {}] Get Total Count, Filter {}", tenantId, this.domain, filter);
     	long totalCount = 0;
     	
@@ -52,7 +50,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
     }
 
 	@Override
-	public boolean doesExist(String tenantId, String uuid) {
+	public boolean doesExist(String tenantId, String ownerId, String uuid) {
  
 		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} exists.", tenantId, this.domain);
 		
@@ -65,7 +63,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 	
 	@Override
-	public boolean doesExist(String tenantId, Entity entity) {
+	public boolean doesExist(String tenantId, String ownerId, Entity entity) {
  
 		Dto object = this.dtoFactory.newInstance(tenantId, entity);
 		
@@ -82,7 +80,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public List<Entity> getEntities(String tenantId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
+	public List<Entity> getEntities(String tenantId, String ownerId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
 		log.info("[Tenant {}] [Domain {}] Getting entities", tenantId, this.domain);
 
 		List<Entity> entities = new ArrayList<Entity>();
@@ -104,7 +102,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public void save(String tenantId, Entity entity) {
+	public void save(String tenantId, String ownerId, Entity entity) {
 		Dto object = this.dtoFactory.newInstance(tenantId, entity);
 		log.info("[Tenant {}] [Domain {}] Saving entity with uuid "+object.getUuid()+" exists.", tenantId, this.domain);
 
@@ -113,7 +111,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public Entity update(String tenantId, Entity entity) {
+	public Entity update(String tenantId, String ownerId, Entity entity) {
 		
 		Dto object = this.dtoFactory.newInstance(tenantId, entity);
 
@@ -135,7 +133,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public Entity getOneByUuid(String tenantId, String uuid) {
+	public Entity getOneByUuid(String tenantId, String ownerId, String uuid) {
 		log.info("[Tenant {}] [Domain {}] Looking for object with uuid "+uuid, tenantId, this.domain);
 		Dto object = this.daoRepository.findOneByUuidAndTenantId(uuid, tenantId);
 		
@@ -149,7 +147,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 	
 	@Override
-	public Entity getOneById(String tenantId, String id) {
+	public Entity getOneById(String tenantId, String ownerId, String id) {
 		log.info("[Tenant {}] [Domain {}] Looking for object with id "+id, tenantId, this.domain);
 		Dto object = this.daoRepository.findOneByIdAndTenantId(id, tenantId);
 		
@@ -170,7 +168,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public void delete(String tenantId, Entity entity) {
+	public void delete(String tenantId, String ownerId, Entity entity) {
 		Dto object = this.dtoFactory.newInstance(tenantId, entity);
 
 		log.info("[Tenant {}] [Domain {}] Deleting entity with Uuid "+object.getUuid(), tenantId, this.domain);
@@ -191,7 +189,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public boolean doesExist(String tenantId, String uuid, String[] unicalFieldNames, String[] unicalFieldValues) throws GGAPIEntityException {
+	public boolean doesExist(String tenantId, String ownerId, String uuid, String[] unicalFieldNames, String[] unicalFieldValues) throws GGAPIEntityException {
 		
 		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} field {} valued at {} exists", tenantId, this.domain, uuid, unicalFieldNames, unicalFieldValues);
 		
@@ -234,6 +232,11 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 		
 		return entities.size()>0?true:false;
+	}
+
+	@Override
+	public void setEngine(IGGAPIEngine engine) {
+		this.engine = engine;	
 	}
 
 

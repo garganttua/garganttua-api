@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.garganttua.api.connector.GGAPIConnectorException;
 import com.garganttua.api.connector.IGGAPIConnector;
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.IGGAPIDomain;
@@ -28,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class AbstractGGAPIAsyncConnector<T extends IGGAPIEntity, S extends List<T>, U extends IGGAPIDTOObject<T>> extends GGAPIDomainable<T, U> implements IGGAPIConnector<T, S, U> {
 
 	public AbstractGGAPIAsyncConnector(IGGAPIDomain<T, U> domain) {
-		super(domain);
+		this.setDomain(domain);
 	}
 
 	@Autowired
@@ -46,6 +47,12 @@ public abstract class AbstractGGAPIAsyncConnector<T extends IGGAPIEntity, S exte
 
 	private Map<String, GGAPIAsyncConnectorPair> receivedMessages = new HashMap<String, GGAPIAsyncConnectorPair>();
 
+	protected IGGAPIEngine engine;
+
+	@Override
+	public void setEngine(IGGAPIEngine engine) {
+		this.engine = engine;
+	}
 	
 	/*
 	 * This method drives me feeling sick, it has to be refactored ASAP !!!! The filosophy is to merge it with the requestEntity method.  

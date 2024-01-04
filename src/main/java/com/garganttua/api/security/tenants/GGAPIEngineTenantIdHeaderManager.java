@@ -24,6 +24,8 @@ public class GGAPIEngineTenantIdHeaderManager extends OncePerRequestFilter {
 
 	public final static String tenantIdHeaderName = "tenantId";
 
+	public static String ownerIdHeaderName = "ownerId";
+
 	@Value(value = "${com.garganttua.api.security.tenantIdHeaderName}")
 	private String tenantIdHeaderName__ = tenantIdHeaderName;
 

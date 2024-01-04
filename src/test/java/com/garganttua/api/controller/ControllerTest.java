@@ -120,7 +120,8 @@ class ControllerTest {
 			
 		};
 		
-		GGAPIController controller = new GGAPIController<>(domain);
+		GGAPIController controller = new GGAPIController<>();
+		controller.setDomain(domain);
 		
 		String[] fields = {"test", "integer", "integer2", "toto"};
 		

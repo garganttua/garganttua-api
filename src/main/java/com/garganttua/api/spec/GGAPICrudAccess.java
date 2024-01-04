@@ -2,6 +2,6 @@ package com.garganttua.api.spec;
 
 public enum GGAPICrudAccess {
 	
-	anonymous, authenticated, owner
+	anonymous, authenticated, tenant, owner
 
 }

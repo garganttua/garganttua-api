@@ -35,7 +35,9 @@ public class GGAPIEntityHelper {
 		
 		if( (fieldName.equals("id") || fieldName.equals("uuid") ) && (entity instanceof AbstractGGAPIEntity) ) {
 			field = AbstractGGAPIEntity.class.getDeclaredField(fieldName);
-		} else {
+		} 
+		
+		if( field == null ) {
 			field = clazz.getDeclaredField(fieldName);
 		}
 		

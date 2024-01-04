@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.garganttua.api.connector.GGAPIConnectorException;
 import com.garganttua.api.connector.IGGAPIConnector.GGAPIConnectorOperation;
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.spec.IGGAPIDomain;
 
 import ch.qos.logback.classic.Level;
@@ -82,6 +83,12 @@ public class TestAbstractGGAPIAsyncConnector{
 				}
 			};
 			t.start();
+			
+		}
+
+		@Override
+		public void setEngine(IGGAPIEngine engine) {
+			// TODO Auto-generated method stub
 			
 		}
 	}

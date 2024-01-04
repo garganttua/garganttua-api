@@ -13,7 +13,7 @@ import lombok.Getter;
 
 public class GGAPIDomainable<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> implements IGGAPIDomainable<Entity, Dto> {
 
-	@Autowired 
+//	@Autowired 
 	protected IGGAPIDomain<Entity, Dto> domainObj;
 
 	@Getter
@@ -31,19 +31,19 @@ public class GGAPIDomainable<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	@Getter
 	protected Class<Dto> dtoClass;
 	
-	public void setDomain(IGGAPIDomain<Entity, Dto> domain) {
-		this.domainObj = domain;
-		this.initDomainableObject();
-	}
+//	public void setDomain(IGGAPIDomain<Entity, Dto> domain) {
+//		this.domainObj = domain;
+//		this.initDomainableObject();
+//	}
 	
-	public GGAPIDomainable(IGGAPIDomain<Entity, Dto> domain) {
-		this.domainObj = domain;
-		this.initDomainableObject();
-	}
+//	public GGAPIDomainable(IGGAPIDomain<Entity, Dto> domain) {
+//		this.domainObj = domain;
+//		this.initDomainableObject();
+//	}
 	
 	@SuppressWarnings("unchecked")
-	@PostConstruct
-	protected void initDomainableObject() {
+	public void setDomain(IGGAPIDomain<Entity, Dto> domain) {
+		this.domainObj = domain;
 		this.dtoClass = this.domainObj.getDtoClass();
 		this.entityClass = this.domainObj.getEntityClass();
 		try {

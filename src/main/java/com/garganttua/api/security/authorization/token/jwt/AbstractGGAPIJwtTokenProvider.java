@@ -3,7 +3,6 @@ package com.garganttua.api.security.authorization.token.jwt;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -14,10 +13,10 @@ import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.Authentication;
 
 import com.garganttua.api.engine.GGAPIEngineException;
-import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
+import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.token.GGAPIToken;
 import com.garganttua.api.security.keys.GGAPIKey;
@@ -43,7 +42,7 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 
 	@Autowired
 	private IGGAPIKeyManager keyManager;
-
+	
 	@Value("${com.garganttua.api.security.authorization.token.lifetime}")
 	private int tokenLifetime;
 	
@@ -88,13 +87,11 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 	}
 
 	@Override
-	public GGAPIToken getAuthorization(AbstractGGAPIUserDetails userDetails)
-			throws GGAPIKeyExpiredException, GGAPIEngineException {
+	public GGAPIToken getAuthorization(Authentication authentication) throws GGAPIKeyExpiredException, GGAPIEngineException {
 		GGAPIToken token;
 		try {
-			token = this.generateToken(userDetails.getUsername(), userDetails.getTenantId(), userDetails.getUuid(),
-					userDetails.getAuthorities());
-			
+
+			token = this.generateToken((IGGAPIAuthenticator) authentication.getPrincipal());
 			
 		} catch (InvalidKeyException | SignatureException | InvalidKeySpecException | NoSuchAlgorithmException
 				| GGAPIKeyExpiredException e) {
@@ -103,24 +100,24 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 		return token;
 	}
 
-	private GGAPIToken generateToken(String userName, String tenantId, String uuid, Collection<? extends GrantedAuthority> authorizations) throws GGAPIKeyExpiredException, InvalidKeyException,
+	private GGAPIToken generateToken(IGGAPIAuthenticator user) throws GGAPIKeyExpiredException, InvalidKeyException,
 			SignatureException, InvalidKeySpecException, NoSuchAlgorithmException {
 		GGAPIKey key = this.keyManager.getKeyForCiphering(this.keyRealm);
 		Map<String, Object> claims = new HashMap<>();
 		Date now = new Date();
 		Date expiration = null;
 
-		claims.put("tenantId", tenantId);
-		claims.put("uuid", uuid);
+		claims.put("tenantId", user.getTenantId());
+		claims.put("ownerId", user.getUuid());
 
-		if (authorizations != null) {
+		if (user.getAuthorities() != null) {
 			List<String> auths = new ArrayList<String>();
-			authorizations.forEach(auth -> {
+			user.getAuthorities().forEach(auth -> {
 				auths.add(auth.getAuthority());
 			});
 			claims.put("authorizations", auths);
 		}
-		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(userName).setIssuedAt(now).signWith(key.getKey(), SignatureAlgorithm.forName(this.keyAlgorythm));
+		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(user.getAuthentication().getName()).setIssuedAt(now).signWith(key.getKey(), SignatureAlgorithm.forName(this.keyAlgorythm));
 
 		if (this.tokenLifetime != 0) {
 			long expirationDate = now.getTime() + TimeUnit.MINUTES.toMillis(this.tokenLifetime);
@@ -130,78 +127,67 @@ public abstract class AbstractGGAPIJwtTokenProvider implements IGGAPIAuthorizati
 
 		String tokenStr = token.compact();
 		
-		GGAPIToken tokenObj = new GGAPIToken(UUID.randomUUID().toString(), uuid, now, expiration, tokenStr.getBytes(), key.getUuid());
+		GGAPIToken tokenObj = new GGAPIToken(UUID.randomUUID().toString(), user.getUuid(), user.getTenantId(), now, expiration, tokenStr.getBytes(), key.getUuid(), user);
 		
 		this.storeToken(tokenObj);
 
-		return new GGAPIToken(UUID.randomUUID().toString(), uuid, now, expiration, tokenStr.getBytes(), key.getUuid());
+		return tokenObj;
 	}
 
-	@Override
-	public String getUserNameFromAuthorization(String token) throws GGAPIKeyExpiredException, GGAPIEngineException {
-		try {
-			return extractClaim(token, Claims::getSubject);
-		} catch (SignatureException | ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
-				| IllegalArgumentException | InvalidKeySpecException | NoSuchAlgorithmException
-				| GGAPIKeyExpiredException e) {
-			throw new GGAPIEngineException(e);
-		}
-	}
-
-	private <T> T extractClaim(String token, Function<Claims, T> claimsResolver)
+	private <T> T extractClaim(byte[] token, Function<Claims, T> claimsResolver)
 			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
 		final Claims claims = extractAllClaims(token);
 		return claimsResolver.apply(claims);
 	}
 
-	private Claims extractAllClaims(String token)
+	private Claims extractAllClaims(byte[] token)
 			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return Jwts.parserBuilder().setSigningKey(this.keyManager.getKeyForCiphering(this.keyRealm).getKey()).build()
-				.parseClaimsJws(token).getBody();
+				.parseClaimsJws(new String(token)).getBody();
 	}
 
-	public String extractUsername(String token)
+	public String extractUsername(byte[] token)
 			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return extractClaim(token, Claims::getSubject);
 	}
 
-	private Boolean isTokenExpired(String token)
+	private Boolean isTokenExpired(byte[] token)
 			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return extractExpiration(token).before(new Date());
 	}
 
-	public Date extractExpiration(String token)
+	public Date extractExpiration(byte[] token)
 			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
 			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
 		return extractClaim(token, Claims::getExpiration);
 	}
 
 	@Override
-	public boolean validateAuthorization(String token, AbstractGGAPIUserDetails userDetails)
+	public GGAPIToken validateAuthorization(byte[] token)
 			throws GGAPIKeyExpiredException, GGAPITokenNotFoundException, GGAPIEngineException, GGAPITokenExpired {
-		String username;
+	
 		try {
-			username = extractUsername(token);
-		} catch (SignatureException | ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
-				| IllegalArgumentException | InvalidKeySpecException | NoSuchAlgorithmException
-				| GGAPIKeyExpiredException e) {
-			throw new GGAPIEngineException(e);
-		}
-		
-		GGAPIToken tokenExample = new GGAPIToken(null, userDetails.getUuid(), null, null, token.getBytes(), null);
+			Claims claims = extractAllClaims(token);
+			
+			String ownerId = (String) claims.get("ownerId");
 
-		GGAPIToken storeToken = this.findToken(tokenExample);
-
-		boolean storeToken__ = (storeToken != null && token.equals(new String(storeToken.getToken())))
-				|| storeToken == null;
-
-		try {
-			boolean tokenValid = (username.equals(userDetails.getUsername()) && !(this.tokenLifetime!=0 && isTokenExpired(token)) && storeToken__);
-			return tokenValid;
+			GGAPIToken tokenExample = new GGAPIToken(null, ownerId, null, null, null, token, null, null);
+	
+			GGAPIToken storeToken = this.findToken(tokenExample);
+			
+			boolean storeToken__ = (storeToken != null && new String(token).equals(new String(storeToken.getToken()))) || storeToken == null;
+			
+			boolean tokenValid = (storeToken.getOwnerId().equals(ownerId) && !(this.tokenLifetime!=0 && isTokenExpired(token)) && storeToken__);
+			if( !tokenValid ) {
+				return null;
+			}
+			
+			return storeToken;
+			
 		} catch (GGAPIKeyExpiredException e) {
 			throw new GGAPIEngineException(e);
 		} catch (SignatureException e) {

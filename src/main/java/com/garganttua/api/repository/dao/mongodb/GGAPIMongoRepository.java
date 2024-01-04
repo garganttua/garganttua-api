@@ -16,28 +16,26 @@ import org.springframework.data.mongodb.core.index.GeospatialIndex;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.spec.GGAPIDomainable;
-import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIDAORepository<Entity, Dto> {
-
-	public GGAPIMongoRepository(IGGAPIDomain<Entity, Dto> domain) {
-		super(domain);
-	}
 
 	@Autowired
 	protected MongoTemplate mongo;
 	
 	@Value("${com.garganttua.api.magicTenantId}")
 	@Getter
+	@Setter
 	protected String magicTenantId;
 
 	private boolean hiddenable;
@@ -47,6 +45,8 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	private String sharingField;
 
 	private String geolocField;
+
+	protected IGGAPIEngine engine;
 
 	@Override
 	public void setMagicTenantId(String magicTenantId) {
@@ -329,6 +329,11 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		this.geolocField = geolocField;
 		if( this.geolocField != null && !this.geolocField.isEmpty())
 			this.mongo.indexOps(this.domainObj.getDtoClass()).ensureIndex( new GeospatialIndex(this.geolocField).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+	}
+
+	@Override
+	public void setEngine(IGGAPIEngine engine) {
+		this.engine = engine;	
 	}
 
 }

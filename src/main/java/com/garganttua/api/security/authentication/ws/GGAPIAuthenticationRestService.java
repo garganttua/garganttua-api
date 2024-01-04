@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.GGAPIAuthenticationMode;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationRequest;
-import com.garganttua.api.security.authentication.dao.AbstractGGAPIUserDetails;
 import com.garganttua.api.security.authentication.modes.loginpassword.GGAPILoginPasswordAuthenticationRequest;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.token.GGAPIToken;
@@ -26,7 +25,7 @@ import com.garganttua.api.ws.GGAPIErrorObject;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @CrossOrigin(origins = "*")
-@Tag(name = "Authentication", description = "The Spring Domain Crudify built-in authentication API")
+@Tag(name = "Authentication", description = "The Garganttua API built-in authentication API")
 @RestController
 @ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIAuthenticationRestService {
@@ -56,7 +55,7 @@ public class GGAPIAuthenticationRestService {
         	
         	GGAPIToken authorization;
 			try {
-				authorization = this.authorizationProvider.getAuthorization((AbstractGGAPIUserDetails) authentication.getPrincipal());
+				authorization = this.authorizationProvider.getAuthorization(authentication);
 			} catch (GGAPIKeyExpiredException | GGAPIEngineException e) {
 				return new ResponseEntity<>("Error during authorization creation", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
@@ -70,7 +69,7 @@ public class GGAPIAuthenticationRestService {
     }
 
 	private Authentication getAuthentication(IGGAPIAuthenticationRequest authenticationRequest) {
-		UsernamePasswordAuthenticationToken authentication = null;
+		Authentication authentication = null;
 		switch(this.authenticationMode) {
 		default:
 		case loginpassword:

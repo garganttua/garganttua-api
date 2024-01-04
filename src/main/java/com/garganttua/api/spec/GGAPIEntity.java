@@ -31,7 +31,7 @@ public @interface GGAPIEntity {
 	
 	GGAPICrudAccess creation_access() default GGAPICrudAccess.authenticated;
 
-	GGAPICrudAccess read_all_access() default GGAPICrudAccess.owner;
+	GGAPICrudAccess read_all_access() default GGAPICrudAccess.authenticated;
 
 	GGAPICrudAccess read_one_access() default GGAPICrudAccess.authenticated;
 
@@ -86,7 +86,7 @@ public @interface GGAPIEntity {
 	String shared() default "";
 	
 	/**
-	 * Refer sto a GeoJson field
+	 * Refers to a GeoJson field
 	 * @return
 	 */
 	String geolocialized() default "";
@@ -94,8 +94,8 @@ public @interface GGAPIEntity {
 	String[] unicity() default {};
 	
 	String[] mandatory() default {};
-
-	boolean tenantEntity() default false;
+	
+	boolean ownedEntity() default false;
 
 	boolean showTenantId() default false;
 	

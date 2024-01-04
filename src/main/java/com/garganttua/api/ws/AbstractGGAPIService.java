@@ -11,14 +11,15 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.events.GGAPIEvent;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
@@ -29,13 +30,13 @@ import com.garganttua.api.spec.GGAPICrudOperation;
 import com.garganttua.api.spec.GGAPIDomainable;
 import com.garganttua.api.spec.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIReadOutputMode;
-import com.garganttua.api.spec.IGGAPIDomain;
 import com.garganttua.api.spec.IGGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.sort.GGAPISort;
 
 import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -46,10 +47,6 @@ import lombok.Setter;
  */
 public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>>
 		extends GGAPIDomainable<Entity, Dto> implements IGGAPIRestService<Entity, Dto> {
-
-	public AbstractGGAPIService(IGGAPIDomain<Entity, Dto> domain) {
-		super(domain);
-	}
 
 	protected static final String SUCCESSFULLY_DELETED = "Ressource has been successfully deleted";
 
@@ -64,13 +61,13 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected boolean ALLOW_DELETE_ALL = false;
 	protected boolean ALLOW_COUNT = false;
 
-	protected GGAPICrudAccess CREATION_ACCESS = GGAPICrudAccess.owner;
-	protected GGAPICrudAccess GET_ALL_ACCESS = GGAPICrudAccess.owner;
-	protected GGAPICrudAccess GET_ONE_ACCESS = GGAPICrudAccess.owner;
-	protected GGAPICrudAccess UPDATE_ACCESS = GGAPICrudAccess.owner;
-	protected GGAPICrudAccess DELETE_ONE_ACCESS = GGAPICrudAccess.owner;
-	protected GGAPICrudAccess DELETE_ALL_ACCESS = GGAPICrudAccess.owner;
-	protected GGAPICrudAccess COUNT_ACCESS = GGAPICrudAccess.owner;
+	protected GGAPICrudAccess CREATION_ACCESS = GGAPICrudAccess.tenant;
+	protected GGAPICrudAccess GET_ALL_ACCESS = GGAPICrudAccess.tenant;
+	protected GGAPICrudAccess GET_ONE_ACCESS = GGAPICrudAccess.tenant;
+	protected GGAPICrudAccess UPDATE_ACCESS = GGAPICrudAccess.tenant;
+	protected GGAPICrudAccess DELETE_ONE_ACCESS = GGAPICrudAccess.tenant;
+	protected GGAPICrudAccess DELETE_ALL_ACCESS = GGAPICrudAccess.tenant;
+	protected GGAPICrudAccess COUNT_ACCESS = GGAPICrudAccess.tenant;
 
 	protected boolean CREATION_AUTHORITY = false;
 	protected boolean GET_ALL_AUTHORITY = false;
@@ -86,16 +83,24 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 
 	@Autowired
 	@Setter
-	protected Optional<IGGAPIEventPublisher> eventPublisher;
+	@Getter
+	protected Optional<IGGAPIEventPublisher<Entity>> eventPublisher;
 	
 	@Setter
 	protected String magicTenantId;
+
+	@Setter
+	protected IGGAPIEngine engine;
 
 	@PostConstruct
 	protected void init() {
 		this.allow(this.ALLOW_CREATION, this.ALLOW_COUNT, this.ALLOW_COUNT, this.ALLOW_UPDATE, this.ALLOW_DELETE_ONE,
 				this.ALLOW_DELETE_ALL, this.ALLOW_COUNT);
 	}
+	
+	@Autowired
+	@Setter
+	protected Optional<IGGAPIController<Entity, Dto>> controller;
 
 	@Override
 	public List<IGGAPIAuthorization> createAuthorizations() {
@@ -152,10 +157,6 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		return authorizations;
 	}
 
-	@Autowired
-	@Setter
-	protected IGGAPIController<Entity, Dto> controller;
-
 	/**
 	 * Creates an entity.
 	 * 
@@ -163,21 +164,21 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> createEntity(String entity__, String tenantId, String userId) {
+	public ResponseEntity<?> createEntity(String entity__, String tenantId, String ownerId) {
 		ResponseEntity<?> response = null;
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.create_one);
 		event.setEntityClass(this.entityClass.getName());
 		try {
 			if (this.ALLOW_CREATION) {
 				try {
 
-					Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
+					Entity entity = (Entity) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(entity__.getBytes(), this.entityClass);
 
 					event.setIn(entity);
-					entity = this.controller.createEntity(tenantId, userId, entity);
+					entity = this.controller.get().createEntity(tenantId, ownerId, entity);
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
@@ -218,10 +219,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	@Override
 	@SuppressWarnings("unchecked")
 	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
-			String filterString, String sortString, String geolocString, String userId) {
+			String filterString, String sortString, String geolocString, String ownerId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.read_all);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -261,7 +262,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				}
 
 				try {
-					entities = this.controller.getEntityList(tenantId, userId, pageSize, pageIndex, filter, sort, geoloc, mode);
+					entities = this.controller.get().getEntityList(tenantId, ownerId, pageSize, pageIndex, filter, sort, geoloc, mode);
 				} catch (GGAPIEntityException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -279,7 +280,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				if (pageSize > 0) {
 					long totalCount = 0;
 					try {
-						totalCount = this.controller.getEntityTotalCount(tenantId, userId, filter);
+						totalCount = this.controller.get().getEntityTotalCount(tenantId, ownerId, filter);
 					} catch (GGAPIEntityException e) {
 //						event.setException(e);
 						event.setExceptionMessage(e.getMessage());
@@ -323,10 +324,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getEntity(String tenantId, String uuid, String userId) {
+	public ResponseEntity<?> getEntity(String tenantId, String uuid, String ownerId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.read_one);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -338,7 +339,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			if (this.ALLOW_GET_ONE) {
 				Entity entity;
 				try {
-					entity = this.controller.getEntity(tenantId, userId, uuid);
+					entity = this.controller.get().getEntity(tenantId, ownerId, uuid);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
 				} catch (GGAPIEntityException e) {
@@ -374,10 +375,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> updateEntity(String uuid, String entity__, String tenantId, String userId) {
+	public ResponseEntity<?> updateEntity(String uuid, String entity__, String tenantId, String ownerId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.update_one);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -389,10 +390,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			if (this.ALLOW_UPDATE) {
 				try {
 
-					Entity entity = (Entity) new ObjectMapper().readValue(entity__.getBytes(), this.entityClass);
+					Entity entity = (Entity) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(entity__.getBytes(), this.entityClass);
 					entity.setUuid(uuid);
 					event.setIn(entity);
-					Entity updatedEntity = this.controller.updateEntity(tenantId, userId, entity);
+					Entity updatedEntity = this.controller.get().updateEntity(tenantId, ownerId, entity);
 					response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
@@ -431,10 +432,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteEntity(String uuid, String tenantId, String userId) {
+	public ResponseEntity<?> deleteEntity(String uuid, String tenantId, String ownerId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.delete_one);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -445,7 +446,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					this.controller.deleteEntity(tenantId, userId, uuid);
+					this.controller.get().deleteEntity(tenantId, ownerId, uuid);
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (GGAPIEntityException e) {
@@ -482,10 +483,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteAll(String tenantId, String userId) {
+	public ResponseEntity<?> deleteAll(String tenantId, String ownerId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.delete_all);
 		event.setEntityClass(this.entityClass.getName());
 		try {
@@ -493,7 +494,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					this.controller.deleteEntities(tenantId, userId);
+					this.controller.get().deleteEntities(tenantId, ownerId);
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (GGAPIEntityException e) {
@@ -531,10 +532,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getCount(String tenantId, String userId) {
+	public ResponseEntity<?> getCount(String tenantId, String ownerId) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(tenantId);
-		event.setUserId(userId);
+		event.setOwnerId(ownerId);
 		event.setOperation(GGAPICrudOperation.count);
 		event.setEntityClass(this.entityClass.getName());
 		try {
@@ -542,7 +543,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					long count = this.controller.getEntityTotalCount(tenantId, userId, null);
+					long count = this.controller.get().getEntityTotalCount(tenantId, ownerId, null);
 					response = new ResponseEntity<>(count, HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					event.setOutCount(count);
@@ -624,6 +625,46 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		case GGAPIEntityException.ENTITY_NOT_FOUND:
 			return HttpStatus.NOT_FOUND;
 		}
+	}
+	
+	@Override
+	public void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
+			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,
+			boolean allow_count) {
+		this.ALLOW_CREATION = allow_creation;
+		this.ALLOW_GET_ALL = allow_read_all;
+		this.ALLOW_GET_ONE = allow_read_one;
+		this.ALLOW_UPDATE = allow_update_one;
+		this.ALLOW_DELETE_ONE = allow_delete_one;
+		this.ALLOW_DELETE_ALL = allow_delete_all;
+		this.ALLOW_COUNT = allow_count;
+	}
+
+	@Override
+	public void setAccesses(GGAPICrudAccess creation_access, GGAPICrudAccess read_all_access,
+			GGAPICrudAccess read_one_access, GGAPICrudAccess update_one_access, GGAPICrudAccess delete_one_access,
+			GGAPICrudAccess delete_all_access, GGAPICrudAccess count_access) {
+		this.CREATION_ACCESS = creation_access;
+		this.GET_ALL_ACCESS = read_all_access;
+		this.GET_ONE_ACCESS = read_one_access;
+		this.UPDATE_ACCESS = update_one_access;
+		this.DELETE_ONE_ACCESS = delete_one_access;
+		this.DELETE_ALL_ACCESS = delete_all_access;
+		this.COUNT_ACCESS = count_access;
+		
+	}
+
+	@Override
+	public void setAuthorities(boolean creation_authority, boolean read_all_authority, boolean read_one_authority,
+			boolean update_one_authority, boolean delete_one_authority, boolean delete_all_authority,
+			boolean count_authority) {
+		this.CREATION_AUTHORITY = creation_authority;
+		this.GET_ALL_AUTHORITY = read_all_authority;
+		this.GET_ONE_AUTHORITY = read_one_authority;
+		this.UPDATE_AUTHORITY = update_one_authority;
+		this.DELETE_ONE_AUTHORITY = delete_one_authority;
+		this.DELETE_ALL_AUTHORITY = delete_all_authority;
+		this.COUNT_AUTHORITY = count_authority;
 	}
 
 }

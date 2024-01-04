@@ -42,7 +42,7 @@ public class GGAPIEvent<Entity extends IGGAPIEntity> {
 	
 	private String tenantId; 
 	
-	private String userId; 
+	private String ownerId; 
 	
 	private Exception exception;
 	

@@ -1,6 +1,5 @@
 package com.garganttua.api.security.authorization;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -8,9 +7,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.security.authentication.IGGAPISecurityException;
-import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
-import com.garganttua.api.security.authorization.bearer.GGAPIBearerAuthorizationExtractor;
+import com.garganttua.api.security.GGAPISecurityException;
+import com.garganttua.api.security.authorization.bearer.GGAPIBearerAuthorizationValidator;
 import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtDBTokenProvider;
 import com.garganttua.api.security.authorization.token.jwt.GGAPIJwtTokenProvider;
 
@@ -27,14 +25,8 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 	@Value("${com.garganttua.api.security.authorization.token.provider}")
 	private GGAPITokenProviderType tokenProviderType;
 	
-	@Autowired
-	private IGGAPIAuthenticationUserMapper userMapper;
-
 	private IGGAPIAuthorizationProvider authorizationProvider = null;
 
-	@Value("${com.garganttua.api.security.extractUserId}")
-	private String extractUserId;
-	
 	@Bean(value = "AuthorizationProvider")
 	private IGGAPIAuthorizationProvider getAuthorizationProvider() {
 		switch(this.authorizationType) {
@@ -62,11 +54,16 @@ public class GGAPIAuthorizationManager implements IGGAPIAuthorizationManager {
 	}
 	
 	@Override
-	public HttpSecurity configureFilterChain(HttpSecurity http) throws IGGAPISecurityException {	
+	public HttpSecurity configureFilterChain(HttpSecurity http) throws GGAPISecurityException {	
 		try {
-			http.authorizeHttpRequests().and().addFilterBefore(new GGAPIBearerAuthorizationExtractor(this.authorizationProvider, this.userMapper, this.extractUserId), UsernamePasswordAuthenticationFilter.class);
+			switch(this.authorizationType) {
+			default:
+			case token:
+				http.authorizeHttpRequests().and().addFilterBefore(new GGAPIBearerAuthorizationValidator(this.authorizationProvider), UsernamePasswordAuthenticationFilter.class);
+				break;
+			}
 		} catch (Exception e) {
-			throw new IGGAPISecurityException(e);
+			throw new GGAPISecurityException(e);
 		}
 		
 		return http;

@@ -2,6 +2,8 @@ package com.garganttua.api.security.authorization.token;
 
 import java.util.Date;
 
+import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,11 +13,13 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GGAPIToken {
+public class GGAPIToken implements IGGAPIToken {
 	
 	private String uuid;
 	
-	private String userId;
+	private String ownerId;
+	
+	private String tenantId;
 	
 	private Date creationDate;
 	
@@ -25,12 +29,14 @@ public class GGAPIToken {
 	
 	private String signingKeyId;
 	
+	private IGGAPIAuthenticator authenticator;
+	
 	@Override
 	public int hashCode() {	
 		return this.creationDate.hashCode() *
 				this.expirationDate.hashCode() *
 				this.uuid.hashCode() *
-				this.userId.hashCode() *
+				this.ownerId.hashCode() *
 				this.token.hashCode() *
 				this.signingKeyId.hashCode();
 	}
@@ -41,14 +47,14 @@ public class GGAPIToken {
 		return this.creationDate.equals(token.creationDate) 
 				&& this.expirationDate.equals(token.expirationDate)
 				&& this.uuid.equals(token.getUuid())
-				&& this.userId.equals(token.uuid)
+				&& this.ownerId.equals(token.uuid)
 				&& this.token.equals(token.token)
 				&& this.signingKeyId.equals(token.signingKeyId);
 	}
 	
 	@Override
 	public String toString() {
-		return this.uuid+":"+this.userId+":"+this.signingKeyId+":"+this.creationDate+":"+this.expirationDate+":"+this.token;
+		return this.uuid+":"+this.ownerId+":"+this.signingKeyId+":"+this.creationDate+":"+this.expirationDate+":"+this.token;
 	}
 
 }
