@@ -9,7 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntity;
 
 import lombok.Data;
 

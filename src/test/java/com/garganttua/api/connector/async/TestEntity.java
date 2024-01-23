@@ -2,10 +2,9 @@ package com.garganttua.api.connector.async;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.IGGAPIEntityFactory;
+import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntityFactory;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,9 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TestEntity implements IGGAPIEntity {
-	
-	@JsonIgnore
-	static private String domain = "Test";
 	
 	@JsonProperty
 	private String uuid;

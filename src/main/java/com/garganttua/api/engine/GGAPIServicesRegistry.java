@@ -16,17 +16,17 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.pattern.PathPatternParser;
 
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.core.GGAPICrudOperation;
+import com.garganttua.api.core.GGAPIEntity;
+import com.garganttua.api.core.GGAPIObjectsHelper;
+import com.garganttua.api.core.GGAPIReadOutputMode;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.security.authorization.BasicGGAPIAuthorization;
-import com.garganttua.api.spec.GGAPICrudAccess;
-import com.garganttua.api.spec.GGAPICrudOperation;
-import com.garganttua.api.spec.GGAPIEntity;
-import com.garganttua.api.spec.GGAPIObjectsHelper;
-import com.garganttua.api.spec.GGAPIReadOutputMode;
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.ws.GGAPIEngineRestService;
 import com.garganttua.api.ws.IGGAPICustomService;
 import com.garganttua.api.ws.IGGAPIRestService;
@@ -48,7 +48,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	@Autowired
 	private GGAPIObjectsHelper helper;
 
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
 	@Autowired
@@ -98,9 +98,8 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 				service = new GGAPIEngineRestService();
 			}
 			Optional<IGGAPIEventPublisher<IGGAPIEntity>> eventObj = this.getEventPublisher(ddomain);
-			service.setDomain(ddomain.getDomain());
+			service.setDomain(ddomain);
 			service.setController(Optional.ofNullable(controller));
-			service.setMagicTenantId(this.magicTenantId);
 			service.setEventPublisher(eventObj);
 			service.allow(ddomain.allow_creation(), ddomain.allow_read_all(), ddomain.allow_read_one(),
 					ddomain.allow_update_one(), ddomain.allow_delete_one(), ddomain.allow_delete_all(),
@@ -135,10 +134,11 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		return Optional.ofNullable(null);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void setOpenApiDocumentation(IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, GGAPIDynamicDomain ddomain, String baseUrl) throws IOException {
 		if( this.openApi.isPresent() ) {
 		
-			Class<IGGAPIEntity> entityClass = ddomain.entityClass();
+			Class<? extends IGGAPIEntity> entityClass = ddomain.entityClass();
 		
 			Tag tag = new Tag().name("Domain " + ddomain.domain().toLowerCase()).description("Public Entity ["+ddomain.publicEntity()+"] Shared Entity ["+(ddomain.shared().isEmpty()?"false":ddomain.shared())+"] Hiddenable Entity ["+ddomain.hiddenable()+"] Geolocalized ["+(ddomain.geolocalized().isEmpty()?"false":ddomain.geolocalized())+"]");
 			this.openApi.get().addTagsItem(tag);
@@ -156,25 +156,25 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 			this.openApi.get().getComponents().addSchemas("FilterQuery", templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
 		
 			if (ddomain.allow_read_all()) {
-				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+ddomain.read_all_access()+"] - Authority ["+(ddomain.read_all_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.read_all))+"]")));
+				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+ddomain.read_all_access()+"] - Authority ["+(ddomain.read_all_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.read_all))+"]")));
 			}
 			if (ddomain.allow_delete_all()) {
-				this.openApi.get().path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+ddomain.delete_all_access()+"] - Authority ["+(ddomain.delete_all_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
+				this.openApi.get().path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+ddomain.delete_all_access()+"] - Authority ["+(ddomain.delete_all_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
 			}
 			if (ddomain.allow_creation()) {
-				this.openApi.get().path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+ddomain.creation_access()+"] - Authority ["+(ddomain.creation_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.create_one))+"]")));
+				this.openApi.get().path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+ddomain.creation_access()+"] - Authority ["+(ddomain.creation_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.create_one))+"]")));
 			}
 			if (ddomain.allow_count()) {
-				this.openApi.get().path(baseUrl + "/count", pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+ddomain.count_access()+"] - Authority ["+(ddomain.count_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.count))+"]")));
+				this.openApi.get().path(baseUrl + "/count", pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+ddomain.count_access()+"] - Authority ["+(ddomain.count_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.count))+"]")));
 			}
 			if (ddomain.allow_read_one()) {
-				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+ddomain.read_one_access()+"] - Authority ["+(ddomain.read_one_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.read_one))+"]")));
+				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+ddomain.read_one_access()+"] - Authority ["+(ddomain.read_one_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.read_one))+"]")));
 			}
 			if (ddomain.allow_update_one()) {
-				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+ddomain.update_one_access()+"] - Authority ["+(ddomain.update_one_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.update_one))+"]")));
+				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+ddomain.update_one_access()+"] - Authority ["+(ddomain.update_one_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.update_one))+"]")));
 			}
 			if (ddomain.allow_delete_one()) {
-				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+ddomain.delete_one_access()+"] - Authority ["+(ddomain.delete_one_authority()==false?"none":BasicGGAPIAuthorization.getAuthorization(ddomain.domain().toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
+				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+ddomain.delete_one_access()+"] - Authority ["+(ddomain.delete_one_authority()==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain().toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
 			}
 			
 			if( service.getCustomServices() != null ) {
@@ -211,70 +211,33 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 				.methods(RequestMethod.DELETE).options(options).build();
 
 		if (ddomain.allow_read_all()) {
-			if (ddomain.read_all_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, service,
-						service.getClass().getMethod("getEntities", GGAPIReadOutputMode.class, Integer.class,
-								Integer.class, String.class, String.class, String.class, String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, service,
-						service.getClass().getMethod("getEntities", String.class, GGAPIReadOutputMode.class,
-								Integer.class, Integer.class, String.class, String.class, String.class,
-								String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, service,
+					service.getClass().getMethod("getEntities",IGGAPICaller.class, GGAPIReadOutputMode.class, Integer.class,
+							Integer.class, String.class, String.class, String.class));
 		}
 		if (ddomain.allow_delete_all()) {
-			if (ddomain.delete_all_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, service,
-						service.getClass().getMethod("deleteAll", String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, service,
-						service.getClass().getMethod("deleteAll", String.class, String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, service,
+					service.getClass().getMethod("deleteAll", IGGAPICaller.class));
 		}
 		if (ddomain.allow_creation()) {
-			if (ddomain.creation_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, service,
-						service.getClass().getMethod("createEntity", String.class, String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, service,
-						service.getClass().getMethod("createEntity", String.class, String.class, String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, service,
+					service.getClass().getMethod("createEntity", IGGAPICaller.class, String.class));
 		}
 		if (ddomain.allow_count()) {
-			if (ddomain.count_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, service,
-						service.getClass().getMethod("getCount", String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, service,
-						service.getClass().getMethod("getCount", String.class, String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, service,
+					service.getClass().getMethod("getCount", IGGAPICaller.class));
 		}
 		if (ddomain.allow_read_one()) {
-			if (ddomain.read_one_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, service,
-						service.getClass().getMethod("getEntity", String.class, String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, service,
-						service.getClass().getMethod("getEntity", String.class, String.class, String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, service,
+					service.getClass().getMethod("getEntity", IGGAPICaller.class, String.class));
 		}
 		if (ddomain.allow_update_one()) {
-			if (ddomain.update_one_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, service,
-						service.getClass().getMethod("updateEntity", String.class, String.class, String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, service, service.getClass()
-						.getMethod("updateEntity", String.class, String.class, String.class, String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, service,
+					service.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class, String.class));
 		}
 		if (ddomain.allow_delete_one()) {
-			if (ddomain.delete_one_access() == GGAPICrudAccess.anonymous) {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, service,
-						service.getClass().getMethod("deleteEntity", String.class, String.class));
-			} else {
-				this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, service,
-						service.getClass().getMethod("deleteEntity", String.class, String.class, String.class));
-			}
+			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, service,
+					service.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class));
 		}
 
 		if (service.getCustomServices() != null) {

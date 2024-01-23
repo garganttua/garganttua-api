@@ -5,8 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.api.spec.GGAPICrudOperation;
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.core.GGAPICrudOperation;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.ws.GGAPIErrorObject;
 
 import lombok.AllArgsConstructor;

@@ -1,8 +1,11 @@
 package com.garganttua.api.engine;
 
+import java.util.Optional;
+
 import com.garganttua.api.engine.accessors.IGGAPIAuthenticatorAccessor;
 import com.garganttua.api.engine.accessors.IGGAPIOwnersControllerAccessor;
 import com.garganttua.api.engine.accessors.IGGAPITenantsControllerAccessor;
+import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
@@ -26,5 +29,7 @@ public interface IGGAPIEngine {
     
     IGGAPIOwnersControllerAccessor getOwnerControllerAccessor();
     
-    IGGAPISecurity getSecurity();
+    Optional<IGGAPISecurity> getSecurity();
+
+	IGGAPIAccessRulesRegistry getAccessRulesRegistry();
 }

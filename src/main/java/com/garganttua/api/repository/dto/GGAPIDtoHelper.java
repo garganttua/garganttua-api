@@ -3,7 +3,7 @@ package com.garganttua.api.repository.dto;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntity;
 
 public class GGAPIDtoHelper {
 

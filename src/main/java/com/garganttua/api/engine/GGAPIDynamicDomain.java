@@ -2,16 +2,16 @@ package com.garganttua.api.engine;
 
 import java.util.Arrays;
 
+import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.IGGAPIDomain;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.repository.dao.GGAPIDao;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.GGAPICrudAccess;
-import com.garganttua.api.spec.IGGAPIDomain;
-import com.garganttua.api.spec.IGGAPIEntity;
 
 public record GGAPIDynamicDomain(
 		String domain,
-		Class<IGGAPIEntity> entityClass, 
-		Class<IGGAPIDTOObject<IGGAPIEntity>> dtoClass, 
+		Class<? extends IGGAPIEntity> entityClass, 
+		Class<? extends IGGAPIDTOObject<? extends IGGAPIEntity>> dtoClass, 
 		GGAPIDao db,
 		String ws,
 		String controller,
@@ -81,14 +81,16 @@ public record GGAPIDynamicDomain(
 	public IGGAPIDomain<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> getDomain() {
 		return new IGGAPIDomain<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>() {
 	
+			@SuppressWarnings("unchecked")
 			@Override
 			public Class<IGGAPIEntity> getEntityClass() {
-				return entityClass;
+				return (Class<IGGAPIEntity>) entityClass;
 			}
 	
+			@SuppressWarnings("unchecked")
 			@Override
 			public Class<IGGAPIDTOObject<IGGAPIEntity>> getDtoClass() {
-				return dtoClass;
+				return (Class<IGGAPIDTOObject<IGGAPIEntity>>) dtoClass;
 			}
 	
 			@Override

@@ -6,82 +6,76 @@ package com.garganttua.api.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.core.GGAPICaller;
+import com.garganttua.api.core.GGAPIDomainable;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.filter.GGAPIGeolocFilter;
+import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.sort.GGAPISort;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.GGAPIDomainable;
-import com.garganttua.api.spec.GGAPIEntityException;
-import com.garganttua.api.spec.IGGAPIDomain;
-import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
-import com.garganttua.api.spec.filter.GGAPILiteral;
-import com.garganttua.api.spec.sort.GGAPISort;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @EnableMongoRepositories
 public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIRepository<Entity, Dto> {
-	
-	@Setter
-	@Value("${com.garganttua.api.magicTenantId}")
-	private String magicTenantId;
 
 	protected IGGAPIDAORepository<Entity, Dto> daoRepository;
+	private IGGAPIEngine engine;
 
-	protected IGGAPIEngine engine;
-	
 	@Override
-    public long getCount(String tenantId, String ownerId, GGAPILiteral filter) {
-    	log.info("[Tenant {}] [Domain {}] Get Total Count, Filter {}", tenantId, this.domain, filter);
+    public long getCount(IGGAPICaller caller, GGAPILiteral filter) {
+    	log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Get Total Count, Filter {}", caller.getRequestedTenantId(), this.domain, filter);
     	long totalCount = 0;
     	
-    	totalCount = this.daoRepository.countByTenantId(tenantId, filter);
+    	totalCount = this.daoRepository.count(getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, filter));
     	
     	return totalCount;
     }
 
 	@Override
-	public boolean doesExist(String tenantId, String ownerId, String uuid) {
+	public boolean doesExist(IGGAPICaller caller, String uuid) {
  
-		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} exists.", tenantId, this.domain);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Checking if entity with uuid {} exists.", caller.getRequestedTenantId(), this.domain);
 		
-		if( this.daoRepository.findOneByUuidAndTenantId(uuid, tenantId) != null ){
-			log.info("Entity with uuid "+uuid+" exists.");
+		List<Dto> dto = this.daoRepository.find(null, getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, getUuidFilter(uuid)), null, null);
+		
+		if( dto.size() >= 1 ){
+			log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+"Entity with uuid "+uuid+" exists.");
 			return true;
 		} 
-		log.info("[Tenant {}] [Domain {}] Entity with uuid "+uuid+" does not exists.", tenantId, this.domain);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Entity with uuid "+uuid+" does not exists.", caller.getRequestedTenantId(), this.domain);
 		return false;
 	}
 	
 	@Override
-	public boolean doesExist(String tenantId, String ownerId, Entity entity) {
+	public boolean doesExist(IGGAPICaller caller, Entity entity) {
  
-		Dto object = this.dtoFactory.newInstance(tenantId, entity);
+		Dto object = this.dtoFactory.newInstance(caller.getRequestedTenantId(), entity);
 		
-		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid "+object.getUuid()+" exists.", tenantId, this.domain);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Checking if entity with uuid "+object.getUuid()+" exists.", caller.getRequestedTenantId(), this.domain);
 		
-		Dto temp = this.daoRepository.findOneByUuidAndTenantId(object.getUuid(), object.getTenantId());
+		List<Dto> dto = this.daoRepository.find(null, getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, getUuidFilter(entity.getUuid())), null, null);
 		
-		if( temp != null ){
-			log.info("[Tenant "+tenantId+"] Entity with uuid "+object.getUuid()+" exists.");
+		if( dto.size() >= 1 ){
+			log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Entity with uuid "+object.getUuid()+" exists.");
 			return true;
 		} 
-		log.info("[Tenant {}] [Domain {}] Entity with uuid "+object.getUuid()+" does not exists.", tenantId, this.domain);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Entity with uuid "+object.getUuid()+" does not exists.", caller.getRequestedTenantId(), this.domain);
 		return false;
 	}
 
 	@Override
-	public List<Entity> getEntities(String tenantId, String ownerId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
-		log.info("[Tenant {}] [Domain {}] Getting entities", tenantId, this.domain);
+	public List<Entity> getEntities(IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Getting entities", caller.getRequestedTenantId(), this.domain);
 
 		List<Entity> entities = new ArrayList<Entity>();
 		List<Dto> objects = null;
@@ -92,9 +86,10 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			page = PageRequest.of(pageIndex, pageSize);
 		} 
 			
-		objects = this.daoRepository.findByTenantId(tenantId, page, filter, sort, geoloc);
+		GGAPILiteral filterFromCallerInfosAndDomainInfos = getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, filter);
+		objects = this.daoRepository.find(page, filterFromCallerInfosAndDomainInfos, sort, geoloc);
 	
-		objects.forEach(s ->{
+		objects.forEach(s -> {
 			entities.add(this.convertDtoToEntity(s));
 		});
 	
@@ -102,23 +97,24 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public void save(String tenantId, String ownerId, Entity entity) {
-		Dto object = this.dtoFactory.newInstance(tenantId, entity);
-		log.info("[Tenant {}] [Domain {}] Saving entity with uuid "+object.getUuid()+" exists.", tenantId, this.domain);
+	public void save(IGGAPICaller caller, Entity entity) {
+		Dto object = this.dtoFactory.newInstance(caller.getRequestedTenantId(), entity);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Saving entity with uuid "+object.getUuid(), caller.getRequestedTenantId(), this.domain);
 
 		this.daoRepository.save( object );
 		
 	}
 
 	@Override
-	public Entity update(String tenantId, String ownerId, Entity entity) {
+	public Entity update(IGGAPICaller caller, Entity entity) {
 		
-		Dto object = this.dtoFactory.newInstance(tenantId, entity);
+		Dto object = this.dtoFactory.newInstance(caller.getRequestedTenantId(), entity);
 
-		Dto objectToBeUpdated = this.daoRepository.findOneByUuidAndTenantId(object.getUuid(), object.getTenantId());
-		log.info("[Tenant {}] [Domain {}] Updating entity with uuid "+object.getUuid()+" exists.", tenantId, this.domain);
+		List<Dto> dto = this.daoRepository.find(null, getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, getUuidFilter(entity.getUuid())), null, null);
 		
-		if( objectToBeUpdated != null ){
+		if( dto.size() >= 1 ){
+			log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Updating entity with uuid "+object.getUuid(), caller.getRequestedTenantId(), this.domain);
+			Dto objectToBeUpdated = dto.get(0);
 			
 			objectToBeUpdated.update(object);
 		
@@ -127,36 +123,37 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			return this.convertDtoToEntity(objectToBeUpdated);
 		
 		} else {
+			log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Entity with uuid "+object.getUuid()+" does not exist");
 			return null;
 		}
 
 	}
 
 	@Override
-	public Entity getOneByUuid(String tenantId, String ownerId, String uuid) {
-		log.info("[Tenant {}] [Domain {}] Looking for object with uuid "+uuid, tenantId, this.domain);
-		Dto object = this.daoRepository.findOneByUuidAndTenantId(uuid, tenantId);
+	public Entity getOneByUuid(IGGAPICaller caller, String uuid) {
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Looking for object with uuid "+uuid, caller.getRequestedTenantId(), this.domain);
+		List<Dto> dto = this.daoRepository.find(null, getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, getUuidFilter(uuid)), null, null);
 		
-		if( object != null ){
-			log.info("[Tenant {}] [Domain {}] Object with uuid "+uuid+" found !", tenantId, this.domain);
-			return this.convertDtoToEntity(object);
+		if( dto.size() >= 1 ){
+			log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Object with uuid "+uuid+" found !", caller.getRequestedTenantId(), this.domain);
+			return this.convertDtoToEntity(dto.get(0));
 		}
 		
-		log.info("[Tenant {}] [Domain {}] Object with uuid "+uuid+" not found.", tenantId, this.domain);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Object with uuid "+uuid+" not found.", caller.getRequestedTenantId(), this.domain);
 		return null;
 	}
 	
 	@Override
-	public Entity getOneById(String tenantId, String ownerId, String id) {
-		log.info("[Tenant {}] [Domain {}] Looking for object with id "+id, tenantId, this.domain);
-		Dto object = this.daoRepository.findOneByIdAndTenantId(id, tenantId);
+	public Entity getOneById(IGGAPICaller caller, String id) {
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Looking for object with id "+id, caller.getRequestedTenantId(), this.domain);
+		List<Dto> dto = this.daoRepository.find(null, getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, getIdFilter(id)), null, null);
 		
-		if( object != null ){
-			log.info("[Tenant {}] [Domain {}] Object with id "+id+" found !", tenantId, this.domain);
-			return this.convertDtoToEntity(object);
+		if( dto.size() >= 1 ){
+			log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Object with id "+id+" found !", caller.getRequestedTenantId(), this.domain);
+			return this.convertDtoToEntity(dto.get(0));
 		}
 		
-		log.info("[Tenant {}] [Domain {}] Object with id "+id+" not found.", tenantId, this.domain);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Object with id "+id+" not found.", caller.getRequestedTenantId(), this.domain);
 		return null;
 	}
 
@@ -168,10 +165,9 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	}
 
 	@Override
-	public void delete(String tenantId, String ownerId, Entity entity) {
-		Dto object = this.dtoFactory.newInstance(tenantId, entity);
-
-		log.info("[Tenant {}] [Domain {}] Deleting entity with Uuid "+object.getUuid(), tenantId, this.domain);
+	public void delete(IGGAPICaller caller, Entity entity) {
+		Dto object = this.dtoFactory.newInstance(caller.getRequestedTenantId(), entity);
+		log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Deleting entity with Uuid "+object.getUuid(), caller.getRequestedTenantId(), this.domain);
 		
 		this.daoRepository.delete(object);
 	}
@@ -183,61 +179,96 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 	@Override
 	public String getTenant(Entity entity) {
-		Dto object = this.daoRepository.findOneByUuidAndTenantId(entity.getUuid(), this.daoRepository.getMagicTenantId());
+		GGAPICaller caller = new GGAPICaller();
+		caller.setSuperTenant(true);
+		List<Dto> dto = this.daoRepository.find(null, getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, getUuidFilter(entity.getUuid())), null, null);
 		
-		return object.getTenantId();
-	}
-
-	@Override
-	public boolean doesExist(String tenantId, String ownerId, String uuid, String[] unicalFieldNames, String[] unicalFieldValues) throws GGAPIEntityException {
-		
-		log.info("[Tenant {}] [Domain {}] Checking if entity with uuid {} field {} valued at {} exists", tenantId, this.domain, uuid, unicalFieldNames, unicalFieldValues);
-		
-		/*
-		 * WARNING : This method takes in account that fields of entities and dto are exactly the same, which may not be the case
-		 */
-		
-		if( unicalFieldNames.length != unicalFieldNames.length ) {
-			throw new GGAPIEntityException("provided fieldNames and fieldValues arrays do not have the same length");
-		}
-		StringBuilder sb = new StringBuilder();
-		for( int i = 0; i < unicalFieldNames.length; i++ ) {
-			if( unicalFieldNames.length > 1 ) {
-				sb.append("{\"name\":\"$or\",\"literals\":[");
-			}
-			sb.append("{\"name\":\"$field\", \"value\":\""+unicalFieldNames[i]+"\",\"literals\":[{\"name\":\"$eq\",\"value\":\""+unicalFieldValues[i]+"\"}]}");
-		}
-		if( unicalFieldNames.length > 1 ) {
-			sb.append("]}");
-		}
-		String fiterString = sb.toString();
-		ObjectMapper mapper = new ObjectMapper();
-		GGAPILiteral filter = null;
-		try {
-			filter = mapper.readValue(fiterString, GGAPILiteral.class);
-		} catch (JsonProcessingException e) {
-			
-		}
-		List<Dto> entities = null;
-		if( unicalFieldNames != null && unicalFieldNames.length>0 ) {
-			entities = this.daoRepository.findByTenantId(this.magicTenantId, null, filter, null, null);
+		if( dto.size() >= 1 ){
+			return dto.get(0).getTenantId();
 		} else {
-			entities = this.daoRepository.findByTenantId(tenantId, null, filter, null, null);
+			return null;
 		}
-		
-		if( uuid != null ) {
-			if (entities.size()==1 && entities.get(0).getUuid().equals(uuid)) {
-				return false;
-			} 
-		}
-		
-		return entities.size()>0?true:false;
 	}
 
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
-		this.engine = engine;	
+		this.engine = engine;
 	}
+	
+	protected static GGAPILiteral getFilterFromCallerInfosAndDomainInfos(IGGAPICaller caller, GGAPIDynamicDomain domain, GGAPILiteral filter) {
+		String requestedTenantId = caller.getRequestedTenantId(); 
+		boolean superTenant = caller.isSuperTenant();
+		String shared = domain.shared();
+		
+		List<GGAPILiteral> andLiterals = new ArrayList<GGAPILiteral>();
+		if( filter != null ) {
+			andLiterals.add(filter);
+		}
+		
+		GGAPILiteral tenantIdFilter = requestedTenantId==null?null:GGAPILiteral.getFilterForTestingFieldEquality("tenantId", requestedTenantId);
 
+		if( superTenant && (requestedTenantId == null || requestedTenantId.isEmpty()) ){
+			
+		} else {
+			if( !domain.publicEntity() && !domain.hiddenable() ) {
+				
+				if( shared != null && !shared.isEmpty() ) {
+					GGAPILiteral shareFieldFilter = GGAPILiteral.getFilterForTestingFieldEquality(shared, requestedTenantId);
+					if( tenantIdFilter != null ) {
+						List<GGAPILiteral> orList = new ArrayList<GGAPILiteral>();
+						orList.add(tenantIdFilter);
+						orList.add(shareFieldFilter);
+						GGAPILiteral or = new GGAPILiteral(GGAPILiteral.OPERATOR_OR, null, orList );
+						andLiterals.add(or);
+					} else {
+						andLiterals.add(shareFieldFilter);
+					}
+				} else {
+					if( tenantIdFilter != null )
+						andLiterals.add(tenantIdFilter);
+				}
+			} else if( !domain.publicEntity() && domain.hiddenable() ) {
+				if( shared != null && !shared.isEmpty() ) {
+					GGAPILiteral shareFieldFilter = GGAPILiteral.getFilterForTestingFieldEquality(shared, requestedTenantId);
+					GGAPILiteral visibleFilter = GGAPILiteral.getFilterForTestingFieldEquality("visible", "true");
+					List<GGAPILiteral> andList = new ArrayList<GGAPILiteral>();
+					andList.add(shareFieldFilter);
+					andList.add(visibleFilter);
+					GGAPILiteral and = new GGAPILiteral(GGAPILiteral.OPERATOR_AND, null, andList);
+					
+					if( tenantIdFilter != null ) {
+						List<GGAPILiteral> orList = new ArrayList<GGAPILiteral>();
+						orList.add(tenantIdFilter);
+						orList.add(and);
+						GGAPILiteral or = new GGAPILiteral(GGAPILiteral.OPERATOR_OR, null, orList);
+						andLiterals.add(or);
+					} else {
+						andLiterals.add(and);
+					}
+				} else {
+					if( tenantIdFilter != null )
+						andLiterals.add(tenantIdFilter);
+				}
+			} else if( domain.publicEntity() && domain.hiddenable() ) {
+				GGAPILiteral visibleFilter = GGAPILiteral.getFilterForTestingFieldEquality("visible", "true");
+				andLiterals.add(visibleFilter);
+			} 
+		}
+
+		if( andLiterals.size() > 1) 
+			return new GGAPILiteral(GGAPILiteral.OPERATOR_AND, null, andLiterals);
+		else if( andLiterals.size() == 1 )
+			return andLiterals.get(0);
+		else 
+			return null;
+	}
+	
+	private static GGAPILiteral getUuidFilter(String uuid) {
+		return GGAPILiteral.getFilterForTestingFieldEquality("uuid", uuid);
+	}
+	
+	private static GGAPILiteral getIdFilter(String id) {
+		return GGAPILiteral.getFilterForTestingFieldEquality("id", id);
+	}
 
 }

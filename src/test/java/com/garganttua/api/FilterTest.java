@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.spec.filter.GGAPILiteral;
-import com.garganttua.api.spec.filter.GGAPILiteralException;
+import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.filter.GGAPILiteralException;
 import com.mongodb.client.model.Filters;
 
 public class FilterTest {

@@ -11,13 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.GGAPIObjectsHelper;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.repository.dao.GGAPIDao;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dao.mongodb.GGAPIEngineMongoRepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.GGAPIObjectsHelper;
-import com.garganttua.api.spec.IGGAPIEntity;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 	@Autowired
 	private IGGAPIDynamicDomainsRegistry dynamicDomains;
 
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
 	@SuppressWarnings("unchecked")
@@ -63,14 +63,12 @@ public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 					dao = new GGAPIEngineMongoRepository();
 					((GGAPIEngineMongoRepository) dao).setMongoTemplate(this.mongo.get());
 					break;
+				case fs:
+					
+					break;
 				}
 			}
-			dao.setDomain(ddomain.getDomain());
-			dao.setMagicTenantId(this.magicTenantId);
-			dao.setHiddenable(ddomain.hiddenable());
-			dao.setPublic(ddomain.publicEntity());
-			dao.setShared(ddomain.shared());
-			dao.setGeolocalized(ddomain.geolocalized());	
+			dao.setDomain(ddomain);
 			
 			this.daos.put(ddomain.domain(), dao);
 			if( dao__ != null && !dao__.isEmpty() ) {

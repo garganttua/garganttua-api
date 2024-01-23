@@ -9,26 +9,27 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIEntity;
+import com.garganttua.api.core.GGAPIEntityHelper;
+import com.garganttua.api.core.GGAPIObjectsHelper;
+import com.garganttua.api.core.GGAPIOwner;
+import com.garganttua.api.core.GGAPITenant;
+import com.garganttua.api.core.IGGAPIDomain;
+import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntityWithTenant;
+import com.garganttua.api.core.IGGAPIHiddenableEntity;
+import com.garganttua.api.core.IGGAPIOwnedEntity;
+import com.garganttua.api.core.IGGAPIOwner;
+import com.garganttua.api.core.IGGAPITenant;
 import com.garganttua.api.repository.dao.GGAPIDao;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.repository.dto.IGGAPIHiddenableDTO;
 import com.garganttua.api.security.authentication.GGAPIAuthenticator;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
-import com.garganttua.api.spec.GGAPICrudAccess;
-import com.garganttua.api.spec.GGAPIEntity;
-import com.garganttua.api.spec.GGAPIEntityHelper;
-import com.garganttua.api.spec.GGAPIObjectsHelper;
-import com.garganttua.api.spec.GGAPIOwner;
-import com.garganttua.api.spec.GGAPITenant;
-import com.garganttua.api.spec.IGGAPIDomain;
-import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.IGGAPIEntityWithTenant;
-import com.garganttua.api.spec.IGGAPIHiddenableEntity;
-import com.garganttua.api.spec.IGGAPIOwnedEntity;
-import com.garganttua.api.spec.IGGAPIOwner;
-import com.garganttua.api.spec.IGGAPITenant;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,14 +50,16 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 		this.dynamicDomains.forEach( ddomain -> {
 			domains.add(new IGGAPIDomain<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>() {
 				
+				@SuppressWarnings("unchecked")
 				@Override
 				public Class<IGGAPIEntity> getEntityClass() {
-					return ddomain.entityClass();
+					return (Class<IGGAPIEntity>) ddomain.entityClass();
 				}
 				
+				@SuppressWarnings("unchecked")
 				@Override
 				public Class<IGGAPIDTOObject<IGGAPIEntity>> getDtoClass() {
-					return ddomain.dtoClass();
+					return (Class<IGGAPIDTOObject<IGGAPIEntity>>) ddomain.dtoClass();
 				}
 				
 				@Override
@@ -218,6 +221,30 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 				count_access, creation_authority, read_all_authority, read_one_authority,
 				update_one_authority, delete_one_authority, delete_all_authority, count_authority,
 				hiddenable, publicEntity, shared, geolocalized, tenant, unicity, mandatory, showTenantId, ownedEntity, owner, authenticator);
+	}
+	
+	@Override
+	public GGAPIDynamicDomain getDomain(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+
+		String[] uriParts = uri.split("/");
+		
+		for (GGAPIDynamicDomain ddomain : this.dynamicDomains) {
+			if (ddomain.domain().toLowerCase().equals(uriParts[1])) {
+				return ddomain;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public GGAPIDynamicDomain getDomain(String domain) {
+		for( GGAPIDynamicDomain ddomain: this.dynamicDomains ) {
+			if( ddomain.domain().toLowerCase().equals(domain)) {
+				return ddomain;
+			}
+		}
+		return null;
 	}
 
 }

@@ -2,7 +2,7 @@ package com.garganttua.api.repository.dto;
 
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.spec.IGGAPIHiddenableEntity;
+import com.garganttua.api.core.IGGAPIHiddenableEntity;
 
 public abstract class AbstractGGAPIHiddenableDTO<Entity extends IGGAPIHiddenableEntity> extends AbstractGGAPIDTOObject<Entity> implements IGGAPIHiddenableDTO {
 

@@ -19,21 +19,22 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPICrudOperation;
+import com.garganttua.api.core.GGAPIDomainable;
+import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.GGAPIReadOutputMode;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.filter.GGAPIGeolocFilter;
+import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.sort.GGAPISort;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.events.GGAPIEvent;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.security.authorization.BasicGGAPIAuthorization;
-import com.garganttua.api.security.authorization.IGGAPIAuthorization;
-import com.garganttua.api.spec.GGAPICrudAccess;
-import com.garganttua.api.spec.GGAPICrudOperation;
-import com.garganttua.api.spec.GGAPIDomainable;
-import com.garganttua.api.spec.GGAPIEntityException;
-import com.garganttua.api.spec.GGAPIReadOutputMode;
-import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
-import com.garganttua.api.spec.filter.GGAPILiteral;
-import com.garganttua.api.spec.sort.GGAPISort;
+import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
+import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -77,9 +78,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected boolean DELETE_ALL_AUTHORITY = false;
 	protected boolean COUNT_AUTHORITY = false;
 
-	protected abstract List<IGGAPIAuthorization> createCustomAuthorizations();
+	protected abstract List<IGGAPIAccessRule> createCustomAuthorizations();
 
-	private ArrayList<IGGAPIAuthorization> authorizations;
+	private ArrayList<IGGAPIAccessRule> accessRules;
 
 	@Autowired
 	@Setter
@@ -103,58 +104,71 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	protected Optional<IGGAPIController<Entity, Dto>> controller;
 
 	@Override
-	public List<IGGAPIAuthorization> createAuthorizations() {
-		if (this.authorizations == null) {
-			this.authorizations = new ArrayList<IGGAPIAuthorization>();
+	public List<IGGAPIAccessRule> createAccessRules() {
+		if (this.accessRules == null) {
+			this.accessRules = new ArrayList<IGGAPIAccessRule>();
 
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase(),
-					this.GET_ALL_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.read_all)
-							: null,
-					HttpMethod.GET, this.GET_ALL_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase(),
-					this.CREATION_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.create_one)
-							: null,
-					HttpMethod.POST, this.CREATION_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase(),
-					this.DELETE_ALL_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.delete_all)
-							: null,
-					HttpMethod.DELETE, this.DELETE_ALL_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/count",
-					this.COUNT_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.count)
-							: null,
-					HttpMethod.GET, this.COUNT_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/*",
-					this.GET_ONE_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.read_one)
-							: null,
-					HttpMethod.GET, this.GET_ONE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/*",
-					this.UPDATE_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.update_one)
-							: null,
-					HttpMethod.PATCH, this.UPDATE_ACCESS));
-			this.authorizations.add(new BasicGGAPIAuthorization("/" + this.domain.toLowerCase() + "/*",
-					this.DELETE_ONE_AUTHORITY == true
-							? BasicGGAPIAuthorization.getAuthorization(this.domain.toLowerCase(),
-									GGAPICrudOperation.delete_one)
-							: null,
-					HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
+			if( this.ALLOW_GET_ALL )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase(),
+						this.GET_ALL_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.read_all)
+								: null,
+						HttpMethod.GET, this.GET_ALL_ACCESS));
+			
+			if( this.ALLOW_CREATION )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase(),
+						this.CREATION_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.create_one)
+								: null,
+						HttpMethod.POST, this.CREATION_ACCESS));
+			
+			if( this.ALLOW_DELETE_ALL )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase(),
+						this.DELETE_ALL_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.delete_all)
+								: null,
+						HttpMethod.DELETE, this.DELETE_ALL_ACCESS));
+			
+			if( this.ALLOW_COUNT )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase() + "/count",
+						this.COUNT_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.count)
+								: null,
+						HttpMethod.GET, this.COUNT_ACCESS));
+			
+			if( this.ALLOW_GET_ONE )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase() + "/*",
+						this.GET_ONE_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.read_one)
+								: null,
+						HttpMethod.GET, this.GET_ONE_ACCESS));
+			
+			if( this.ALLOW_UPDATE )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase() + "/*",
+						this.UPDATE_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.update_one)
+								: null,
+						HttpMethod.PATCH, this.UPDATE_ACCESS));
+			
+			if( this.ALLOW_DELETE_ONE )
+				this.accessRules.add(new BasicGGAPIAccessRule("/" + this.domain.toLowerCase() + "/*",
+						this.DELETE_ONE_AUTHORITY == true
+								? BasicGGAPIAccessRule.getAuthority(this.domain.toLowerCase(),
+										GGAPICrudOperation.delete_one)
+								: null,
+						HttpMethod.DELETE, this.DELETE_ONE_ACCESS));
 
 			if (this.createCustomAuthorizations() != null) {
-				this.authorizations.addAll(this.createCustomAuthorizations());
+				this.accessRules.addAll(this.createCustomAuthorizations());
 			}
 		}
-		return authorizations;
+		return accessRules;
 	}
 
 	/**
@@ -164,11 +178,11 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> createEntity(String entity__, String tenantId, String ownerId) {
+	public ResponseEntity<?> createEntity(IGGAPICaller caller, String entity__) {
 		ResponseEntity<?> response = null;
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.create_one);
 		event.setEntityClass(this.entityClass.getName());
 		try {
@@ -178,7 +192,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 					Entity entity = (Entity) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(entity__.getBytes(), this.entityClass);
 
 					event.setIn(entity);
-					entity = this.controller.get().createEntity(tenantId, ownerId, entity);
+					entity = this.controller.get().createEntity(caller, entity);
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
@@ -218,11 +232,11 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> getEntities(String tenantId, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
-			String filterString, String sortString, String geolocString, String ownerId) {
+	public ResponseEntity<?> getEntities(IGGAPICaller caller, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
+			String filterString, String sortString, String geolocString) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.read_all);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -262,7 +276,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				}
 
 				try {
-					entities = this.controller.get().getEntityList(tenantId, ownerId, pageSize, pageIndex, filter, sort, geoloc, mode);
+					entities = this.controller.get().getEntityList(caller, pageSize, pageIndex, filter, sort, geoloc, mode);
 				} catch (GGAPIEntityException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -280,7 +294,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				if (pageSize > 0) {
 					long totalCount = 0;
 					try {
-						totalCount = this.controller.get().getEntityTotalCount(tenantId, ownerId, filter);
+						totalCount = this.controller.get().getEntityTotalCount(caller, filter);
 					} catch (GGAPIEntityException e) {
 //						event.setException(e);
 						event.setExceptionMessage(e.getMessage());
@@ -324,10 +338,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getEntity(String tenantId, String uuid, String ownerId) {
+	public ResponseEntity<?> getEntity(IGGAPICaller caller, String uuid) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.read_one);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -339,7 +353,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			if (this.ALLOW_GET_ONE) {
 				Entity entity;
 				try {
-					entity = this.controller.get().getEntity(tenantId, ownerId, uuid);
+					entity = this.controller.get().getEntity(caller, uuid);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
 				} catch (GGAPIEntityException e) {
@@ -375,10 +389,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> updateEntity(String uuid, String entity__, String tenantId, String ownerId) {
+	public ResponseEntity<?> updateEntity(IGGAPICaller caller, String uuid, String entity__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.update_one);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -393,7 +407,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 					Entity entity = (Entity) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(entity__.getBytes(), this.entityClass);
 					entity.setUuid(uuid);
 					event.setIn(entity);
-					Entity updatedEntity = this.controller.get().updateEntity(tenantId, ownerId, entity);
+					Entity updatedEntity = this.controller.get().updateEntity(caller, entity);
 					response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
@@ -432,10 +446,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteEntity(String uuid, String tenantId, String ownerId) {
+	public ResponseEntity<?> deleteEntity(IGGAPICaller caller, String uuid) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.delete_one);
 		event.setEntityClass(this.entityClass.getName());
 		Map<String, String> params = new HashMap<String, String>();
@@ -446,7 +460,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					this.controller.get().deleteEntity(tenantId, ownerId, uuid);
+					this.controller.get().deleteEntity(caller, uuid);
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (GGAPIEntityException e) {
@@ -483,10 +497,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteAll(String tenantId, String ownerId) {
+	public ResponseEntity<?> deleteAll(IGGAPICaller caller) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.delete_all);
 		event.setEntityClass(this.entityClass.getName());
 		try {
@@ -494,7 +508,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					this.controller.get().deleteEntities(tenantId, ownerId);
+					this.controller.get().deleteEntities(caller);
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (GGAPIEntityException e) {
@@ -532,10 +546,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getCount(String tenantId, String ownerId) {
+	public ResponseEntity<?> getCount(IGGAPICaller caller) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
-		event.setTenantId(tenantId);
-		event.setOwnerId(ownerId);
+		event.setTenantId(caller.getTenantId());
+		event.setOwnerId(caller.getOwnerId());
 		event.setOperation(GGAPICrudOperation.count);
 		event.setEntityClass(this.entityClass.getName());
 		try {
@@ -543,7 +557,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					long count = this.controller.get().getEntityTotalCount(tenantId, ownerId, null);
+					long count = this.controller.get().getEntityTotalCount(caller, null);
 					response = new ResponseEntity<>(count, HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					event.setOutCount(count);
@@ -574,42 +588,6 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				this.eventPublisher.get().publishEvent(event);
 			}
 		}
-	}
-
-	@Override
-	public ResponseEntity<?> createEntity(String entity, String userId) {
-		return this.createEntity(entity, this.magicTenantId, userId);
-	}
-
-	@Override
-	public ResponseEntity<?> getEntities(GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
-			String filterString, String sortString, String geolocString, String userId) {
-		return this.getEntities(this.magicTenantId, mode, pageSize, pageIndex, filterString, sortString, geolocString, userId);
-	}
-
-	@Override
-	public ResponseEntity<?> getEntity(String uuid, String userId) {
-		return this.getEntity(this.magicTenantId, uuid, userId);
-	}
-
-	@Override
-	public ResponseEntity<?> updateEntity(String uuid, String entity, String userId) {
-		return this.updateEntity(uuid, entity, this.magicTenantId, userId);
-	}
-
-	@Override
-	public ResponseEntity<?> deleteEntity(String uuid, String userId) {
-		return this.deleteEntity(uuid, this.magicTenantId, userId);
-	}
-
-	@Override
-	public ResponseEntity<?> deleteAll(String userId) {
-		return this.deleteAll(this.magicTenantId, userId);
-	}
-
-	@Override
-	public ResponseEntity<?> getCount(String userId) {
-		return this.getCount(this.magicTenantId, userId);
 	}
 
 	/**

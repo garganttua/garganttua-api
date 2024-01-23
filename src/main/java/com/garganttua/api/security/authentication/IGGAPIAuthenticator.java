@@ -7,7 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntity;
 
 public interface IGGAPIAuthenticator extends UserDetails, IGGAPIEntity {
 	

@@ -9,14 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.GGAPIObjectsHelper;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.repository.GGAPIEngineRepository;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.GGAPIObjectsHelper;
-import com.garganttua.api.spec.IGGAPIEntity;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 	@Autowired
 	private GGAPIObjectsHelper helper;
 	
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
 	private Map<String, IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> repositories = new HashMap<String, IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
@@ -66,9 +66,8 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 			} else {
 				repo = new GGAPIEngineRepository();
 			}
-			repo.setDomain(ddomain.getDomain());
+			repo.setDomain(ddomain);
 			repo.setDao((IGGAPIDAORepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>) dao);
-			repo.setMagicTenantId(this.magicTenantId);
 			
 			this.repositories.put(ddomain.domain(), repo);
 

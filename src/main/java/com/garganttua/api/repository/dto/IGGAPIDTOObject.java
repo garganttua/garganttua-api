@@ -3,7 +3,7 @@
  *******************************************************************************/
 package com.garganttua.api.repository.dto;
 
-import com.garganttua.api.spec.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntity;
 
 public interface IGGAPIDTOObject<Entity extends IGGAPIEntity> {
 	

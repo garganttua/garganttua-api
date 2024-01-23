@@ -5,15 +5,16 @@ package com.garganttua.api.repository;
 
 import java.util.List;
 
+import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.IGGAPIDomainable;
+import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.filter.GGAPIGeolocFilter;
+import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.sort.GGAPISort;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.GGAPIEntityException;
-import com.garganttua.api.spec.IGGAPIDomainable;
-import com.garganttua.api.spec.IGGAPIEntity;
-import com.garganttua.api.spec.filter.GGAPIGeolocFilter;
-import com.garganttua.api.spec.filter.GGAPILiteral;
-import com.garganttua.api.spec.sort.GGAPISort;
 
 /**
  * 
@@ -23,30 +24,28 @@ import com.garganttua.api.spec.sort.GGAPISort;
  */
 public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIDomainable<Entity, Dto>, IGGAPIEngineObject{
 
-	boolean doesExist(String tenantId, String ownerId, Entity entity);
+	boolean doesExist(IGGAPICaller caller, Entity entity);
 
-	List<Entity> getEntities(String tenantId, String ownerId, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc);
+	List<Entity> getEntities(IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc);
 
-	void save(String tenantId, String ownerId, Entity entity);
+	void save(IGGAPICaller caller, Entity entity);
 
-	Entity update(String tenantId, String ownerId, Entity entity);
+	Entity update(IGGAPICaller caller, Entity entity);
 
-	Entity getOneById(String tenantId, String ownerId, String id);
+	Entity getOneById(IGGAPICaller caller, String id);
 
-	void delete(String tenantId, String ownerId, Entity entity);
+	void delete(IGGAPICaller caller, Entity entity);
 
-	boolean doesExist(String tenantId, String ownerId, String uuid);
+	boolean doesExist(IGGAPICaller caller, String uuid);
 	
-	boolean doesExist(String tenantId, String ownerId, String uuid, String[] fieldNames, String[] fieldValues) throws GGAPIEntityException;
+//	boolean doesExist(IGGAPICaller caller, String uuid, String[] fieldNames, String[] fieldValues) throws GGAPIEntityException;
 
-	Entity getOneByUuid(String tenantId, String ownerId, String uuid);
+	Entity getOneByUuid(IGGAPICaller caller, String uuid);
 
-	long getCount(String tenantId, String ownerId, GGAPILiteral filter);
+	long getCount(IGGAPICaller caller, GGAPILiteral filter);
 
 	void setDao(IGGAPIDAORepository<Entity, Dto> dao);
 
 	String getTenant(Entity entity);
-	
-	void setMagicTenantId(String magicTenantId);
 
 }

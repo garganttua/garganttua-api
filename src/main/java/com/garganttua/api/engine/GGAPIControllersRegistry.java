@@ -14,13 +14,12 @@ import com.garganttua.api.business.IGGAPIBusiness;
 import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.controller.GGAPIEngineController;
 import com.garganttua.api.controller.IGGAPIController;
+import com.garganttua.api.core.GGAPIObjectsHelper;
+import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.garganttua.api.spec.GGAPIObjectsHelper;
-import com.garganttua.api.spec.IGGAPIEntity;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,7 @@ public class GGAPIControllersRegistry implements IGGAPIControllersRegistry {
 	@Autowired
 	private GGAPIObjectsHelper helper;
 	
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
 	private Map<String, IGGAPIController<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> controllers = new HashMap<String, IGGAPIController<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
@@ -66,7 +65,7 @@ public class GGAPIControllersRegistry implements IGGAPIControllersRegistry {
 				controller = new GGAPIEngineController();
 			}
 			
-			controller.setDomain(ddomain.getDomain());
+			controller.setDomain(ddomain);
 			
 			Optional<IGGAPIRepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>> repoObj = Optional.ofNullable(repo);
 			Optional<IGGAPIBusiness<IGGAPIEntity>> businessObj = this.getBusiness(ddomain);
@@ -75,9 +74,6 @@ public class GGAPIControllersRegistry implements IGGAPIControllersRegistry {
 			controller.setRepository(repoObj);
 			controller.setConnector(connectorObj);
 			controller.setBusiness(businessObj);
-			controller.setTenant(ddomain.tenantEntity());
-			controller.setOwnedEntity(ddomain.ownedEntity());
-			controller.setUnicity(ddomain.unicity());
 			
 			this.controllers.put(ddomain.domain(), controller);
 			

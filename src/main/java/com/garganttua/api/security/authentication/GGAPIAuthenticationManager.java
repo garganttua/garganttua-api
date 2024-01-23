@@ -46,7 +46,7 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 	@Value("${com.garganttua.api.security.authentication.mode}")
 	private GGAPIAuthenticationMode authenticationMode;
 	
-	@Value("${com.garganttua.api.magicTenantId}")
+	@Value("${com.garganttua.api.superTenantId}")
 	protected String magicTenantId;
 	
 	@Autowired
