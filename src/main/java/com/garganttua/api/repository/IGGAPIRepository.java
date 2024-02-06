@@ -42,7 +42,7 @@ public interface IGGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	Entity getOneByUuid(IGGAPICaller caller, String uuid);
 
-	long getCount(IGGAPICaller caller, GGAPILiteral filter);
+	long getCount(IGGAPICaller caller, GGAPILiteral filter, GGAPIGeolocFilter geoloc);
 
 	void setDao(IGGAPIDAORepository<Entity, Dto> dao);
 

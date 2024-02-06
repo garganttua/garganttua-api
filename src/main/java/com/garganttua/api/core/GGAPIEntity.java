@@ -98,5 +98,7 @@ public @interface GGAPIEntity {
 	boolean ownedEntity() default false;
 
 	boolean showTenantId() default false;
+
+	GGAPIDuplication duplication() default GGAPIDuplication.fail;
 	
 }

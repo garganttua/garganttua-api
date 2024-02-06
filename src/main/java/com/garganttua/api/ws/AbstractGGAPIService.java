@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.controller.IGGAPIController;
@@ -178,7 +179,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> createEntity(IGGAPICaller caller, String entity__) {
+	public ResponseEntity<?> createEntity(IGGAPICaller caller, String entity__, String customParameters__) {
 		ResponseEntity<?> response = null;
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
@@ -188,11 +189,16 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		try {
 			if (this.ALLOW_CREATION) {
 				try {
-
+					Map<String, String> customParameters = null;
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
+					}
+					
 					Entity entity = (Entity) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(entity__.getBytes(), this.entityClass);
 
 					event.setIn(entity);
-					entity = this.controller.get().createEntity(caller, entity);
+					entity = this.controller.get().createEntity(caller, entity, customParameters);
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
@@ -233,7 +239,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	@Override
 	@SuppressWarnings("unchecked")
 	public ResponseEntity<?> getEntities(IGGAPICaller caller, GGAPIReadOutputMode mode, Integer pageSize, Integer pageIndex,
-			String filterString, String sortString, String geolocString) {
+			String filterString, String sortString, String geolocString, String customParameters__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
@@ -256,6 +262,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				GGAPILiteral filter = null;
 				GGAPISort sort = null;
 				GGAPIGeolocFilter geoloc = null;
+				Map<String, String> customParameters = null;
 				try {
 					if (filterString != null && !filterString.isEmpty()) {
 						filter = mapper.readValue(filterString, GGAPILiteral.class);
@@ -265,6 +272,10 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 					}
 					if (geolocString != null && !geolocString.isEmpty()) {
 						geoloc = mapper.readValue(geolocString, GGAPIGeolocFilter.class);
+					}
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
 					}
 				} catch (JsonProcessingException e) {
 //					event.setException(e);
@@ -276,7 +287,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				}
 
 				try {
-					entities = this.controller.get().getEntityList(caller, pageSize, pageIndex, filter, sort, geoloc, mode);
+					entities = this.controller.get().getEntityList(caller, pageSize, pageIndex, filter, sort, geoloc, mode, customParameters);
 				} catch (GGAPIEntityException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -294,7 +305,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				if (pageSize > 0) {
 					long totalCount = 0;
 					try {
-						totalCount = this.controller.get().getEntityTotalCount(caller, filter);
+						totalCount = this.controller.get().getEntityTotalCount(caller, filter, geoloc, customParameters);
 					} catch (GGAPIEntityException e) {
 //						event.setException(e);
 						event.setExceptionMessage(e.getMessage());
@@ -338,7 +349,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getEntity(IGGAPICaller caller, String uuid) {
+	public ResponseEntity<?> getEntity(IGGAPICaller caller, String uuid, String customParameters__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
@@ -353,7 +364,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 			if (this.ALLOW_GET_ONE) {
 				Entity entity;
 				try {
-					entity = this.controller.get().getEntity(caller, uuid);
+					Map<String, String> customParameters = null;
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
+					}
+					entity = this.controller.get().getEntity(caller, uuid, customParameters);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
 				} catch (GGAPIEntityException e) {
@@ -389,7 +405,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> updateEntity(IGGAPICaller caller, String uuid, String entity__) {
+	public ResponseEntity<?> updateEntity(IGGAPICaller caller, String uuid, String entity__, String customParameters__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
@@ -405,9 +421,14 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				try {
 
 					Entity entity = (Entity) new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false).readValue(entity__.getBytes(), this.entityClass);
+					Map<String, String> customParameters = null;
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
+					}
 					entity.setUuid(uuid);
 					event.setIn(entity);
-					Entity updatedEntity = this.controller.get().updateEntity(caller, entity);
+					Entity updatedEntity = this.controller.get().updateEntity(caller, entity, customParameters);
 					response = new ResponseEntity<>(updatedEntity, HttpStatus.OK);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
@@ -446,7 +467,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteEntity(IGGAPICaller caller, String uuid) {
+	public ResponseEntity<?> deleteEntity(IGGAPICaller caller, String uuid, String customParameters__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
@@ -460,7 +481,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					this.controller.get().deleteEntity(caller, uuid);
+					Map<String, String> customParameters = null;
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
+					}
+					this.controller.get().deleteEntity(caller, uuid, customParameters);
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (GGAPIEntityException e) {
@@ -497,7 +523,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> deleteAll(IGGAPICaller caller) {
+	public ResponseEntity<?> deleteAll(IGGAPICaller caller, String customParameters__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
@@ -508,7 +534,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					this.controller.get().deleteEntities(caller);
+					Map<String, String> customParameters = null;
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
+					}
+					this.controller.get().deleteEntities(caller, customParameters);
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (GGAPIEntityException e) {
@@ -546,7 +577,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 	 * @return
 	 */
 	@Override
-	public ResponseEntity<?> getCount(IGGAPICaller caller) {
+	public ResponseEntity<?> getCount(IGGAPICaller caller, String customParameters__) {
 		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
@@ -557,7 +588,12 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 				ResponseEntity<?> response = null;
 
 				try {
-					long count = this.controller.get().getEntityTotalCount(caller, null);
+					Map<String, String> customParameters = null;
+					if( customParameters__ != null  && ! customParameters__.isEmpty()) {
+						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
+						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
+					}
+					long count = this.controller.get().getEntityTotalCount(caller, null, null, customParameters);
 					response = new ResponseEntity<>(count, HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					event.setOutCount(count);

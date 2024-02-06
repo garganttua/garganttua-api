@@ -56,10 +56,7 @@ public class GGAPITenantFilter extends GGAPIFilter {
 			
 			String tenantId = ((HttpServletRequest) request).getHeader(this.tenantIdHeaderName);
 			String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
-			
-//			=> changer : si anonyme mais que tenantId et resquested sont transmis alors on peut voir les enitty hidden
-//					=> si anonyme mais que pas de tenantId ni requersted, alors on ne voit pas les entity hidden
-			
+
 			if( (tenantId == null || tenantId.isEmpty()) && (accessRule != null && accessRule.getAccess() != GGAPICrudAccess.anonymous) ) {
 				throw new IOException("No header "+this.tenantIdHeaderName+" found");
 			}
@@ -78,7 +75,7 @@ public class GGAPITenantFilter extends GGAPIFilter {
 					superCaller.setTenantId(this.superTenantId);
 					superCaller.setRequestedTenantId(tenantId);
 
-					IGGAPITenant tenant = this.tenantsController.get().getEntity(superCaller, tenantId);
+					IGGAPITenant tenant = this.tenantsController.get().getEntity(superCaller, tenantId, null);
 					caller.setSuperTenant(tenant.isSuperTenant());
 				} catch (GGAPIEntityException e) {
 					throw new IOException(e);

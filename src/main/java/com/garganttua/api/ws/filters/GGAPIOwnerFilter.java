@@ -65,7 +65,7 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 							GGAPICaller superCaller = new GGAPICaller();
 							superCaller.setSuperTenant(true);
 							superCaller.setTenantId(this.superTenantId);
-							IGGAPIOwner owner = this.ownersController.get().getEntity(superCaller, ownerId);
+							IGGAPIOwner owner = this.ownersController.get().getEntity(superCaller, ownerId, null);
 							caller.setOwnerId(owner.getOwnerId());
 							caller.setSuperOwner(owner.isSuperOnwer());
 						} catch (GGAPIEntityException e) {

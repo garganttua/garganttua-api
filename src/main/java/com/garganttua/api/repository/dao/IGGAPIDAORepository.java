@@ -23,6 +23,6 @@ public interface IGGAPIDAORepository<Entity extends IGGAPIEntity, Dto extends IG
 
 	void delete(Dto object);
 	
-	long count(GGAPILiteral filter);
+	long count(GGAPILiteral filter, GGAPIGeolocFilter geoloc);
 
 }

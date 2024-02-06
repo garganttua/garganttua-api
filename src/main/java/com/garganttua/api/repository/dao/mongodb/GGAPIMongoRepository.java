@@ -3,6 +3,8 @@ package com.garganttua.api.repository.dao.mongodb;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
@@ -13,6 +15,7 @@ import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeospatialIndex;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.TextCriteria;
 
 import com.garganttua.api.core.GGAPIDomainable;
 import com.garganttua.api.core.IGGAPIEntity;
@@ -23,6 +26,7 @@ import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.mongodb.client.model.Filters;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -50,10 +54,19 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		List<Dto> results = new ArrayList<>();
 
 		Query query = new Query();
-
+	
 		if (filter != null) {
 			Criteria criteria = GGAPIMongoRepository.getCriteriaFromFilter(filter);
-			query.addCriteria(criteria);
+			if( criteria != null ) {
+				query.addCriteria(criteria);	
+			}
+			
+			String textCriteriaString = GGAPIMongoRepository.getTextCriteriaFromFilter(filter);
+
+			if( textCriteriaString != null ) {
+				TextCriteria textCriteria = TextCriteria.forDefaultLanguage().matchingPhrase(textCriteriaString);
+				query.addCriteria(textCriteria);
+			}
 		}
 		
 		if (geoloc != null) {
@@ -75,11 +88,25 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 			query.with(Sort.by(direction, sort.getFieldName()));
 		}
 		if( filter != null ) {
-			log.debug("		[domain ["+this.dynamicDomain.domain()+"]] Finding objects using filter "+filter.toString());
+			log.debug("		[domain ["+this.dynamicDomain.domain()+"]] Finding objects using "+query.toString());
 		}
 		results = this.mongo.find(query, this.dtoClass);
 
 		return results;
+	}
+
+	private static String getTextCriteriaFromFilter(GGAPILiteral filter) {
+		if( filter.getName().equals(GGAPILiteral.OPERATOR_TEXT) ) {
+			return (String) filter.getValue();
+		} else if( !GGAPILiteral.isFinal(filter) ){
+			for(GGAPILiteral sub: filter.getLiterals() ) {
+				String text = getTextCriteriaFromFilter(sub);
+				if( text != null && !text.isEmpty() ) {
+					return text;
+				}
+			}
+		}
+		return null;
 	}
 
 	private static Criteria getCriteriaFromGeolocFilter(GGAPIGeolocFilter geoloc, String geolocField) {
@@ -112,26 +139,35 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		Criteria criteria = null;
 		
 		List<Criteria> criterias = new ArrayList<Criteria>();
-		List<String> values = new ArrayList<String>();
+		List<Object> values = new ArrayList<Object>();
 		
 		switch (literal.getName()) {
 		case GGAPILiteral.OPERATOR_OR:
 			for( GGAPILiteral subliteral: literal.getLiterals() ) {
-				criterias.add(getCriteriaFromFilter(subliteral));
+				Criteria crit = getCriteriaFromFilter(subliteral);
+				if( crit != null )
+					criterias.add(crit);
 			}
-			criteria = new Criteria().orOperator(criterias);
+			if( criterias.size() > 0 )
+				criteria = new Criteria().orOperator(criterias);
 			break;
 		case GGAPILiteral.OPERATOR_AND:
 			for( GGAPILiteral subliteral: literal.getLiterals() ) {
-				criterias.add(getCriteriaFromFilter(subliteral));
+				Criteria crit = getCriteriaFromFilter(subliteral);
+				if( crit != null )
+					criterias.add(crit);
 			}
-			criteria = new Criteria().andOperator(criterias);
+			if( criterias.size() > 0 )
+				criteria = new Criteria().andOperator(criterias);
 			break;
 		case GGAPILiteral.OPERATOR_NOR:
 			for( GGAPILiteral subliteral: literal.getLiterals() ) {
-				criterias.add(getCriteriaFromFilter(subliteral));
+				Criteria crit = getCriteriaFromFilter(subliteral);
+				if( crit != null )
+					criterias.add(crit);
 			}
-			criteria = new Criteria().norOperator(criterias);
+			if( criterias.size() > 0 )
+				criteria = new Criteria().norOperator(criterias);
 			break;
 		case GGAPILiteral.OPERATOR_FIELD:
 			
@@ -139,40 +175,40 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 			
 			switch(subLiteral.getName()) {
 			case GGAPILiteral.OPERATOR_EQUAL:
-				criteria = Criteria.where(literal.getValue()).is(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).is(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_NOT_EQUAL:
-				criteria = Criteria.where(literal.getValue()).ne(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).ne(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_GREATER_THAN:
-				criteria = Criteria.where(literal.getValue()).gt(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).gt(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_GREATER_THAN_EXCLUSIVE:
-				criteria = Criteria.where(literal.getValue()).gte(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).gte(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_LOWER_THAN:
-				criteria = Criteria.where(literal.getValue()).lt(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).lt(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_LOWER_THAN_EXCLUSIVE:
-				criteria = Criteria.where(literal.getValue()).lte(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).lte(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_REGEX:
-				criteria = Criteria.where(literal.getValue()).regex(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().toString()).regex(subLiteral.getValue().toString());
 				break;
 			case GGAPILiteral.OPERATOR_IN:
-				for( GGAPILiteral subliteral: literal.getLiterals() ) {
+				for( GGAPILiteral subliteral: subLiteral.getLiterals() ) {
 					values.add(subliteral.getValue());
 				}
-				criteria = Criteria.where(literal.getValue()).in(values);
+				criteria = Criteria.where(literal.getValue().toString()).in(values);
 				break;
 			case GGAPILiteral.OPERATOR_NOT_IN:
 				for( GGAPILiteral subliteral: literal.getLiterals() ) {
 					values.add(subliteral.getValue());
 				}
-				criteria = Criteria.where(literal.getValue()).nin(values);
+				criteria = Criteria.where(literal.getValue().toString()).nin(values);
 				break;
 			case GGAPILiteral.OPERATOR_EMPTY:
-				criteria = Criteria.where(literal.getValue()).isNullValue();
+				criteria = Criteria.where(literal.getValue().toString()).isNullValue();
 				break;
 			}
 			break;
@@ -187,13 +223,28 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	}
 
 	@Override
-	public long count(GGAPILiteral filter) {
+	public long count(GGAPILiteral filter, GGAPIGeolocFilter geoloc) {
 		
 		Query query = new Query();
 
 		if (filter != null) {
 			Criteria criteria = GGAPIMongoRepository.getCriteriaFromFilter(filter);
-			query.addCriteria(criteria);
+			if( criteria != null ) {
+				query.addCriteria(criteria);	
+			}
+			
+			String textCriteriaString = GGAPIMongoRepository.getTextCriteriaFromFilter(filter);
+
+			if( textCriteriaString != null ) {
+				TextCriteria textCriteria = TextCriteria.forDefaultLanguage().matchingPhrase(textCriteriaString);
+				query.addCriteria(textCriteria);
+			}
+		}
+		
+		if (geoloc != null) {
+			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, this.dynamicDomain.geolocalized());
+			if( criteria != null)
+				query.addCriteria(criteria);
 		}
 		
 		return this.mongo.count(query, this.dtoClass);

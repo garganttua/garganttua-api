@@ -38,6 +38,7 @@ public class GGAPILiteral {
 	public static final String OPERATOR_AND = OPERATOR_PREFIX + "and";
 	public static final String OPERATOR_OR = OPERATOR_PREFIX + "or";
 	public static final String OPERATOR_NOR = OPERATOR_PREFIX + "nor";
+	public static final String OPERATOR_TEXT = OPERATOR_PREFIX + "text";
 
 	private static List<String> finalOperators = new ArrayList<String>();
 	
@@ -58,7 +59,7 @@ public class GGAPILiteral {
 	private String name;
 
 	@JsonInclude(Include.NON_NULL)
-	private String value;
+	private Object value;
 
 	@JsonInclude(Include.NON_NULL)
 	private List<GGAPILiteral> literals;
@@ -68,76 +69,98 @@ public class GGAPILiteral {
 			return;
 		}
 		
-		if (!literal.name.startsWith(OPERATOR_PREFIX)) {
+		if (literal.name != null && !literal.name.startsWith(OPERATOR_PREFIX)) {
 			throw new GGAPILiteralException("Invalid literal name, should start with $");
 		}
-		switch (literal.name) {
-		case OPERATOR_EQUAL:
-		case OPERATOR_NOT_EQUAL:
-		case OPERATOR_GREATER_THAN:
-		case OPERATOR_GREATER_THAN_EXCLUSIVE:
-		case OPERATOR_LOWER_THAN:
-		case OPERATOR_LOWER_THAN_EXCLUSIVE:
-		case OPERATOR_REGEX:
-			if (literal.value == null || literal.value.isEmpty()) {
-				throw new GGAPILiteralException("Value cannot be null with literal of type "+literal.name);
-			}
-			if (literal.literals != null && !literal.literals.isEmpty()) {
-				throw new GGAPILiteralException("Literal of type "+literal.name+" does not accept sub literals");
-			}
-			break;
-		case OPERATOR_IN:
-		case OPERATOR_NOT_IN:
-			if (literal.value != null && !literal.value.isEmpty()) {
-				throw new GGAPILiteralException("Value must be null with literal of type "+literal.name);
-			}
-			if (literal.literals == null || literal.literals.size() < 2) {
-				throw new GGAPILiteralException("Literal of type "+literal.name+" needs at least 2 sub literals");
-			}
-			for( GGAPILiteral sub: literal.literals) {
-				if( sub.name != null && !sub.name.isEmpty() ) {
-					throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literal with a name");
+		if( literal.name != null ) {
+			switch (literal.name) {
+			case OPERATOR_EQUAL:
+			case OPERATOR_NOT_EQUAL:
+			case OPERATOR_GREATER_THAN:
+			case OPERATOR_GREATER_THAN_EXCLUSIVE:
+			case OPERATOR_LOWER_THAN:
+			case OPERATOR_LOWER_THAN_EXCLUSIVE:
+			case OPERATOR_REGEX:
+				if (literal.value == null ) {
+					throw new GGAPILiteralException("Value cannot be null with literal of type "+literal.name);
 				}
-				if( sub.value == null || sub.value.isEmpty() ) {
-					throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literal without value");
+				if (literal.literals != null && !literal.literals.isEmpty()) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" does not accept sub literals");
 				}
-				if (sub.literals != null || sub.literals.size() > 0) {
-					throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literals with sub literals");
+				break;
+			case OPERATOR_IN:
+			case OPERATOR_NOT_IN:
+				if (literal.value != null ) {
+					throw new GGAPILiteralException("Value must be null with literal of type "+literal.name);
 				}
+				if (literal.literals == null || literal.literals.size() < 1) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" needs at least 1 sub literals");
+				}
+				for( GGAPILiteral sub: literal.literals) {
+					if( sub.name != null && !sub.name.isEmpty() ) {
+						throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literal with a name");
+					}
+					if( sub.value == null ) {
+						throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literal without value");
+					}
+					if (sub.literals != null && sub.literals.size() > 0) {
+						throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literals with sub literals");
+					}
+				}
+				
+				break;
+			case OPERATOR_TEXT:
+				if (literal.value == null ) {
+					throw new GGAPILiteralException("Value must not be null with literal of type "+literal.name);
+				}
+				if (literal.literals == null || literal.literals.size() < 1) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" needs at least 1 sub literals");
+				}
+				for( GGAPILiteral sub: literal.literals) {
+					if( sub.name != null && !sub.name.isEmpty() && !sub.name.equals(OPERATOR_FIELD) ) {
+						throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literal other than $field");
+					}
+					if( sub.value == null ) {
+						throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literal without value");
+					}
+					if (sub.literals != null && sub.literals.size() > 0) {
+						throw new GGAPILiteralException("Literal of type "+literal.name+" cannot have sub literals with sub literals");
+					}
+				}
+				
+				break;
+			case OPERATOR_EMPTY:
+				if (literal.value != null ) {
+					throw new GGAPILiteralException("Value must be null with literal of type "+literal.name);
+				}
+				if (literal.literals != null && !literal.literals.isEmpty()) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" does not accept sub literals");
+				}
+				break;
+			case OPERATOR_OR:
+			case OPERATOR_AND:
+			case OPERATOR_NOR:
+				if (literal.value != null ) {
+					throw new GGAPILiteralException("Value must be null with literal of type "+literal.name);
+				}
+				if (literal.literals == null || literal.literals.size() < 2) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" needs at least 2 sub literals");
+				}
+				break;
+			case OPERATOR_FIELD:
+				if (literal.value == null ) {
+					throw new GGAPILiteralException("Value cannot be null with literal of type "+literal.name);
+				}
+				if (literal.literals != null && literal.literals.size() > 1) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" needs 0 or 1 sub literals");
+				}
+				if( literal.literals!=null && literal.literals.size() == 1 && !isFinal(literal.literals.get(0)) ) {
+					throw new GGAPILiteralException("Literal of type "+literal.name+" needs exactly 1 sub literals of type equals, not equals, greater than, greater than exclusive, lower than, lower than exclusive, regex, empty, in or not in.");
+				}
+				break;
+			default:
+				throw new GGAPILiteralException("Invalid literal name " + literal.name);
 			}
-			
-			break;
-		case OPERATOR_EMPTY:
-			if (literal.value != null && !literal.value.isEmpty()) {
-				throw new GGAPILiteralException("Value must be null with literal of type "+literal.name);
-			}
-			if (literal.literals != null && !literal.literals.isEmpty()) {
-				throw new GGAPILiteralException("Literal of type "+literal.name+" does not accept sub literals");
-			}
-			break;
-		case OPERATOR_OR:
-		case OPERATOR_AND:
-		case OPERATOR_NOR:
-			if (literal.value != null && !literal.value.isEmpty()) {
-				throw new GGAPILiteralException("Value must be null with literal of type "+literal.name);
-			}
-			if (literal.literals == null || literal.literals.size() < 2) {
-				throw new GGAPILiteralException("Literal of type "+literal.name+" needs at least 2 sub literals");
-			}
-			break;
-		case OPERATOR_FIELD:
-			if (literal.value == null || literal.value.isEmpty()) {
-				throw new GGAPILiteralException("Value cannot be null with literal of type "+literal.name);
-			}
-			if (literal.literals == null || literal.literals.size() == 0) {
-				throw new GGAPILiteralException("Literal of type "+literal.name+" needs exactly 1 sub literals");
-			}
-			if( !finalOperators.contains(literal.getLiterals().get(0).getName()) ) {
-				throw new GGAPILiteralException("Literal of type "+literal.name+" needs exactly 1 sub literals of type equals, not equals, greater than, greater than exclusive, lower than, lower than exclusive, regex, empty, in or not in.");
-			}
-			break;
-		default:
-			throw new GGAPILiteralException("Invalid literal name " + literal.name);
 		}
 
 		if (literal.literals != null) {
@@ -151,7 +174,20 @@ public class GGAPILiteral {
 		}
 	}
 
+	public static boolean isFinal(GGAPILiteral literal) {
+		return finalOperators.contains(literal.getName());
+	}
+
 	static public GGAPILiteral getFilterForTestingFieldEquality(String fieldName, String fieldvalue) {
+		GGAPILiteral equalsToRequestedTenantId = new GGAPILiteral(GGAPILiteral.OPERATOR_EQUAL, fieldvalue, null);
+		List<GGAPILiteral> fieldTenantIdLiterals = new ArrayList<GGAPILiteral>();
+		fieldTenantIdLiterals.add(equalsToRequestedTenantId);
+		
+		GGAPILiteral fieldTenantId = new GGAPILiteral(GGAPILiteral.OPERATOR_FIELD, fieldName, fieldTenantIdLiterals);
+		return fieldTenantId;
+	}
+	
+	public static GGAPILiteral getFilterForTestingFieldEquality(String fieldName, boolean fieldvalue) {
 		GGAPILiteral equalsToRequestedTenantId = new GGAPILiteral(GGAPILiteral.OPERATOR_EQUAL, fieldvalue, null);
 		List<GGAPILiteral> fieldTenantIdLiterals = new ArrayList<GGAPILiteral>();
 		fieldTenantIdLiterals.add(equalsToRequestedTenantId);
@@ -170,5 +206,6 @@ public class GGAPILiteral {
 		return "";
 		
 	}
+
 
 }

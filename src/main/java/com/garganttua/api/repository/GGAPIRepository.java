@@ -32,11 +32,11 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 	private IGGAPIEngine engine;
 
 	@Override
-    public long getCount(IGGAPICaller caller, GGAPILiteral filter) {
+    public long getCount(IGGAPICaller caller, GGAPILiteral filter, GGAPIGeolocFilter geoloc) {
     	log.debug("	[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Get Total Count, Filter {}", caller.getRequestedTenantId(), this.domain, filter);
     	long totalCount = 0;
     	
-    	totalCount = this.daoRepository.count(getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, filter));
+    	totalCount = this.daoRepository.count(getFilterFromCallerInfosAndDomainInfos(caller, this.dynamicDomain, filter), geoloc);
     	
     	return totalCount;
     }
@@ -230,7 +230,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			} else if( !domain.publicEntity() && domain.hiddenable() ) {
 				if( shared != null && !shared.isEmpty() ) {
 					GGAPILiteral shareFieldFilter = GGAPILiteral.getFilterForTestingFieldEquality(shared, requestedTenantId);
-					GGAPILiteral visibleFilter = GGAPILiteral.getFilterForTestingFieldEquality("visible", "true");
+					GGAPILiteral visibleFilter = GGAPILiteral.getFilterForTestingFieldEquality("visible", true);
 					List<GGAPILiteral> andList = new ArrayList<GGAPILiteral>();
 					andList.add(shareFieldFilter);
 					andList.add(visibleFilter);
@@ -250,7 +250,7 @@ public class GGAPIRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 						andLiterals.add(tenantIdFilter);
 				}
 			} else if( domain.publicEntity() && domain.hiddenable() ) {
-				GGAPILiteral visibleFilter = GGAPILiteral.getFilterForTestingFieldEquality("visible", "true");
+				GGAPILiteral visibleFilter = GGAPILiteral.getFilterForTestingFieldEquality("visible", true);
 				andLiterals.add(visibleFilter);
 			} 
 		}

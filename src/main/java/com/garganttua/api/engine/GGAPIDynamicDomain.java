@@ -3,6 +3,7 @@ package com.garganttua.api.engine;
 import java.util.Arrays;
 
 import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIDuplication;
 import com.garganttua.api.core.IGGAPIDomain;
 import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.repository.dao.GGAPIDao;
@@ -51,7 +52,8 @@ public record GGAPIDynamicDomain(
 		boolean showTenantId, 
 		boolean ownedEntity, 
 		boolean ownerEntity, 
-		boolean authenticatorEntity) {
+		boolean authenticatorEntity,
+		GGAPIDuplication duplication) {
 	
 	@Override
 	public String toString() {
@@ -63,14 +65,14 @@ public record GGAPIDynamicDomain(
 	        "count_access [%s], creation_authority [%s], read_all_authority [%s], read_one_authority [%s], " +
 	        "update_one_authority [%s], delete_one_authority [%s], delete_all_authority [%s], count_authority [%s], " +
 	        "hiddenable [%s], publicEntity [%s], shared [%s], geolocalized [%s], tenantEntity [%s], unicity [%s], " +
-	        "mandatory [%s], showTenantId [%s], ownedEntity [%s], ownerEntity [%s], authenticatorEntity [%s]]",
+	        "mandatory [%s], showTenantId [%s], ownedEntity [%s], ownerEntity [%s], authenticatorEntity [%s], duplication [%s]]",
 	        domain, entityClass, dtoClass, db, ws, controller, business, event, connector, repo, dao, allow_creation,
 	        allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
 	        creation_access, read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
 	        count_access, creation_authority, read_all_authority, read_one_authority, update_one_authority,
 	        delete_one_authority, delete_all_authority, count_authority, hiddenable, publicEntity, shared, geolocalized,
 	        tenantEntity, arrayToString(unicity), arrayToString(mandatory), showTenantId, ownedEntity, ownerEntity,
-	        authenticatorEntity
+	        authenticatorEntity, duplication
 	    );
 	}
 

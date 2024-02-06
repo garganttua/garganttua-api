@@ -213,31 +213,31 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		if (ddomain.allow_read_all()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, service,
 					service.getClass().getMethod("getEntities",IGGAPICaller.class, GGAPIReadOutputMode.class, Integer.class,
-							Integer.class, String.class, String.class, String.class));
+							Integer.class, String.class, String.class, String.class, String.class));
 		}
 		if (ddomain.allow_delete_all()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, service,
-					service.getClass().getMethod("deleteAll", IGGAPICaller.class));
+					service.getClass().getMethod("deleteAll", IGGAPICaller.class, String.class));
 		}
 		if (ddomain.allow_creation()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, service,
-					service.getClass().getMethod("createEntity", IGGAPICaller.class, String.class));
+					service.getClass().getMethod("createEntity", IGGAPICaller.class, String.class, String.class));
 		}
 		if (ddomain.allow_count()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, service,
-					service.getClass().getMethod("getCount", IGGAPICaller.class));
+					service.getClass().getMethod("getCount", IGGAPICaller.class, String.class));
 		}
 		if (ddomain.allow_read_one()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, service,
-					service.getClass().getMethod("getEntity", IGGAPICaller.class, String.class));
+					service.getClass().getMethod("getEntity", IGGAPICaller.class, String.class, String.class));
 		}
 		if (ddomain.allow_update_one()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, service,
-					service.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class, String.class));
+					service.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, String.class));
 		}
 		if (ddomain.allow_delete_one()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, service,
-					service.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class));
+					service.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class, String.class));
 		}
 
 		if (service.getCustomServices() != null) {

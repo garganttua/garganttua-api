@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIDuplication;
 import com.garganttua.api.core.GGAPIEntity;
 import com.garganttua.api.core.GGAPIEntityHelper;
 import com.garganttua.api.core.GGAPIObjectsHelper;
@@ -170,6 +171,7 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 		boolean ownedEntity = entityAnnotation.ownedEntity();
 		
 		boolean showTenantId = entityAnnotation.showTenantId();
+		GGAPIDuplication duplication = entityAnnotation.duplication();
 		
 		boolean owner = false;
 		boolean authenticator = false;
@@ -220,7 +222,7 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 				read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
 				count_access, creation_authority, read_all_authority, read_one_authority,
 				update_one_authority, delete_one_authority, delete_all_authority, count_authority,
-				hiddenable, publicEntity, shared, geolocalized, tenant, unicity, mandatory, showTenantId, ownedEntity, owner, authenticator);
+				hiddenable, publicEntity, shared, geolocalized, tenant, unicity, mandatory, showTenantId, ownedEntity, owner, authenticator, duplication);
 	}
 	
 	@Override

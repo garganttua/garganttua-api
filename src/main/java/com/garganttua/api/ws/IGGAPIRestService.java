@@ -1,6 +1,7 @@
 package com.garganttua.api.ws;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,8 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 	List<IGGAPIAccessRule> createAccessRules();
 
 	@RequestMapping(value = "", method = RequestMethod.POST)
-	ResponseEntity<?> createEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @RequestBody(required = true) String entity);
+	ResponseEntity<?> createEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @RequestBody(required = true) String entity,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 	
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	ResponseEntity<?> getEntities(
@@ -38,22 +40,28 @@ public interface IGGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGA
 			@RequestParam(name = "pageIndex", defaultValue = "0") Integer pageIndex,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
-			@RequestParam(name = "geoloc", defaultValue = "") String geolocString);
+			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.GET)
-	ResponseEntity<?> getEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid);
+	ResponseEntity<?> getEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 	
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.PATCH)
-	ResponseEntity<?> updateEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity);
+	ResponseEntity<?> updateEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 
 	@RequestMapping(value = "/{uuid}", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid);
+	ResponseEntity<?> deleteEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 	
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
-	ResponseEntity<?> deleteAll(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller);
+	ResponseEntity<?> deleteAll(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 	
 	@RequestMapping(value = "/count", method = RequestMethod.GET)
-	ResponseEntity<?> getCount(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller);
+	ResponseEntity<?> getCount(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+			@RequestParam(name = "params", defaultValue = "") String customParameters);
 	
 	void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
 			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,

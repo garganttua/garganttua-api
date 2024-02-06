@@ -49,7 +49,7 @@ public class GGAPIEntityLoginPasswordAuthenticationProvider implements IGGAPIAut
 			GGAPICaller caller = new GGAPICaller();
 			caller.setTenantId(this.superTenantId);
 			caller.setSuperTenant(true);
-			List<IGGAPILoginPasswordAuthenticationEntity> entities = (List<IGGAPILoginPasswordAuthenticationEntity>) this.controller.getEntityList(caller, 0, 0, filter, null, null, GGAPIReadOutputMode.full);
+			List<IGGAPILoginPasswordAuthenticationEntity> entities = (List<IGGAPILoginPasswordAuthenticationEntity>) this.controller.getEntityList(caller, 0, 0, filter, null, null, GGAPIReadOutputMode.full, null);
 			
 			if( entities.size() < 1 ) {
 				throw new UsernameNotFoundException("Login "+login+" not found");
