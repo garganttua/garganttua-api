@@ -6,7 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
-import com.garganttua.api.security.authorization.GGAPIAuthorityVerifier;
+import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
 import com.garganttua.api.security.owners.GGAPIOwnerVerifier;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
 
@@ -19,7 +19,8 @@ public interface IGGAPISecurity {
 	Optional<GGAPITenantVerifier> getTenantVerifier();
 	
 	Optional<GGAPIOwnerVerifier> getOwnerVerifier();
-	
-	Optional<GGAPIAuthorityVerifier> getAuthorityVerifier();
+
+	Optional<IGGAPIAuthorizationManager> getAuthorizationManager();
+
 
 }

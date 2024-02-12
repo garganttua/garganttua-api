@@ -9,7 +9,7 @@ import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.repository.dao.GGAPIDao;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 
-public record GGAPIDynamicDomain(
+public record GGAPIDynamicDomain (
 		String domain,
 		Class<? extends IGGAPIEntity> entityClass, 
 		Class<? extends IGGAPIDTOObject<? extends IGGAPIEntity>> dtoClass, 
@@ -18,7 +18,6 @@ public record GGAPIDynamicDomain(
 		String controller,
 		String business, 
 		String event,
-		String connector,
 		String repo,
 		String dao, 
 		boolean allow_creation,
@@ -59,14 +58,14 @@ public record GGAPIDynamicDomain(
 	public String toString() {
 		return String.format(
 			"[domain [%s], entityClass [%s], dtoClass [%s], db [%s], ws [%s], controller [%s], business [%s], " +
-	        "event [%s], connector [%s], repo [%s], dao [%s], allow_creation [%s], allow_read_all [%s], allow_read_one [%s], " +
+	        "event [%s], repo [%s], dao [%s], allow_creation [%s], allow_read_all [%s], allow_read_one [%s], " +
 	        "allow_update_one [%s], allow_delete_one [%s], allow_delete_all [%s], allow_count [%s], creation_access [%s], " +
 	        "read_all_access [%s], read_one_access [%s], update_one_access [%s], delete_one_access [%s], delete_all_access [%s], " +
 	        "count_access [%s], creation_authority [%s], read_all_authority [%s], read_one_authority [%s], " +
 	        "update_one_authority [%s], delete_one_authority [%s], delete_all_authority [%s], count_authority [%s], " +
 	        "hiddenable [%s], publicEntity [%s], shared [%s], geolocalized [%s], tenantEntity [%s], unicity [%s], " +
 	        "mandatory [%s], showTenantId [%s], ownedEntity [%s], ownerEntity [%s], authenticatorEntity [%s], duplication [%s]]",
-	        domain, entityClass, dtoClass, db, ws, controller, business, event, connector, repo, dao, allow_creation,
+	        domain, entityClass, dtoClass, db, ws, controller, business, event/*, connector*/, repo, dao, allow_creation,
 	        allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
 	        creation_access, read_all_access, read_one_access, update_one_access, delete_one_access, delete_all_access,
 	        count_access, creation_authority, read_all_authority, read_one_authority, update_one_authority,

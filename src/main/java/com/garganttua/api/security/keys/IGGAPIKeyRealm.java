@@ -9,5 +9,7 @@ public interface IGGAPIKeyRealm {
 	String getName();
 	
 	String getAlgo();
+	
+	boolean equals(IGGAPIKeyRealm object);
 
 }

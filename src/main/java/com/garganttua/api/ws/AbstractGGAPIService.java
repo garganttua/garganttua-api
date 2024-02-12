@@ -204,7 +204,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
 				} catch (GGAPIEntityException e) {
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							this.getHttpErrorCodeFromEntityExceptionCode(e));
+							e.getHttpErrorCode());
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
@@ -292,9 +292,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+					event.setHttpReturnedCode(e.getHttpErrorCode().value());
 					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							this.getHttpErrorCodeFromEntityExceptionCode(e));
+							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -310,9 +310,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //						event.setException(e);
 						event.setExceptionMessage(e.getMessage());
 						event.setExceptionCode(e.getCode());
-						event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+						event.setHttpReturnedCode(e.getHttpErrorCode().value());
 						return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-								this.getHttpErrorCodeFromEntityExceptionCode(e));
+								e.getHttpErrorCode());
 					} catch (Exception e) {
 //						event.setException(e);
 						event.setExceptionMessage(e.getMessage());
@@ -376,9 +376,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+					event.setHttpReturnedCode(e.getHttpErrorCode().value());
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							this.getHttpErrorCodeFromEntityExceptionCode(e));
+							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -436,9 +436,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+					event.setHttpReturnedCode(e.getHttpErrorCode().value());
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							this.getHttpErrorCodeFromEntityExceptionCode(e));
+							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -493,7 +493,7 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+					event.setHttpReturnedCode(e.getHttpErrorCode().value());
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), HttpStatus.NOT_ACCEPTABLE);
 				} catch (Exception e) {
 //					event.setException(e);
@@ -546,9 +546,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+					event.setHttpReturnedCode(e.getHttpErrorCode().value());
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							this.getHttpErrorCodeFromEntityExceptionCode(e));
+							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -601,9 +601,9 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(this.getHttpErrorCodeFromEntityExceptionCode(e).value());
+					event.setHttpReturnedCode(e.getHttpErrorCode().value());
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							this.getHttpErrorCodeFromEntityExceptionCode(e));
+							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -626,21 +626,6 @@ public abstract class AbstractGGAPIService<Entity extends IGGAPIEntity, Dto exte
 		}
 	}
 
-	/**
-	 * 
-	 * @param e
-	 * @return
-	 */
-	protected HttpStatus getHttpErrorCodeFromEntityExceptionCode(GGAPIEntityException e) {
-		switch (e.getCode()) {
-		default:
-		case GGAPIEntityException.BAD_REQUEST:
-			return HttpStatus.BAD_REQUEST;
-		case GGAPIEntityException.ENTITY_NOT_FOUND:
-			return HttpStatus.NOT_FOUND;
-		}
-	}
-	
 	@Override
 	public void allow(boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
 			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all,

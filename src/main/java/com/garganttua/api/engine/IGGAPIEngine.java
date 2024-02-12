@@ -8,6 +8,7 @@ import com.garganttua.api.engine.accessors.IGGAPITenantsControllerAccessor;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.security.IGGAPISecurity;

@@ -47,9 +47,7 @@ public class GGAPITenantVerifier extends OncePerRequestFilter {
 				throw new IOException("Authentifed user's tenant ["
 						+ authentifiedTenantId + "] is not super tenant and cannot access to other tenant");
 			}
-
 		}
-		
 		filterChain.doFilter(request, response);
 	}
 

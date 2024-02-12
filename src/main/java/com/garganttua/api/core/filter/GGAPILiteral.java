@@ -207,5 +207,9 @@ public class GGAPILiteral {
 		
 	}
 
+	public static GGAPILiteral and(GGAPILiteral ...filters) {
+		return new GGAPILiteral(GGAPILiteral.OPERATOR_AND, null, List.of(filters));
+	}
+
 
 }

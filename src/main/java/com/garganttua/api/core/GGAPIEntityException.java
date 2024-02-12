@@ -3,6 +3,8 @@
  *******************************************************************************/
 package com.garganttua.api.core;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Getter;
 
 @Getter
@@ -42,5 +44,20 @@ public class GGAPIEntityException extends Exception {
 	public static final int UNKNOWN_ERROR = 3;
 	public static final int CONNECTOR_ERROR = 4;
 	public static final int ENTITY_ALREADY_EXISTS = 5;
+
+	/**
+	 * 
+	 * @param e
+	 * @return
+	 */
+	public HttpStatus getHttpErrorCode() {
+		switch (code) {
+		default:
+		case GGAPIEntityException.BAD_REQUEST:
+			return HttpStatus.BAD_REQUEST;
+		case GGAPIEntityException.ENTITY_NOT_FOUND:
+			return HttpStatus.NOT_FOUND;
+		}
+	}
 
 }

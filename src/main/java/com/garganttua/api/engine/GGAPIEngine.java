@@ -11,6 +11,7 @@ import com.garganttua.api.engine.accessors.IGGAPITenantsControllerAccessor;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.security.IGGAPISecurity;
@@ -94,7 +95,6 @@ public class GGAPIEngine implements IGGAPIEngine {
 		this.controllersRegistry.getControllers().forEach(controller -> {
 			controller.setEngine(self);
 			controller.getBusiness().ifPresent(business -> {business.setEngine(self);});
-			controller.getConnector().ifPresent(connector -> {connector.setEngine(self);});
 		});
 		
 		this.servicesRegistry.getServices().forEach(service -> {

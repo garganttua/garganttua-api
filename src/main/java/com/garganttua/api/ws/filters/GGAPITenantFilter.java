@@ -21,6 +21,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service("tenantFilter")
 public class GGAPITenantFilter extends GGAPIFilter {
@@ -48,7 +49,7 @@ public class GGAPITenantFilter extends GGAPIFilter {
 		GGAPICaller caller = this.getCaller(request);
 		IGGAPIAccessRule accessRule = caller.getAccessRule();
 		
-		if( caller.getTenantId() == null) {
+		if( accessRule != null && caller.getTenantId() == null) {
 			
 			if( accessRule != null && accessRule.getAccess() == GGAPICrudAccess.anonymous ) {
 				caller.setAnonymous(true);
@@ -58,7 +59,10 @@ public class GGAPITenantFilter extends GGAPIFilter {
 			String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
 
 			if( (tenantId == null || tenantId.isEmpty()) && (accessRule != null && accessRule.getAccess() != GGAPICrudAccess.anonymous) ) {
-				throw new IOException("No header "+this.tenantIdHeaderName+" found");
+				((HttpServletResponse) response).setStatus(400);
+				response.getWriter().write("No header "+this.tenantIdHeaderName+" found");
+				response.getWriter().flush();
+				return;
 			}
 		
 			caller.setTenantId(tenantId);
@@ -78,7 +82,10 @@ public class GGAPITenantFilter extends GGAPIFilter {
 					IGGAPITenant tenant = this.tenantsController.get().getEntity(superCaller, tenantId, null);
 					caller.setSuperTenant(tenant.isSuperTenant());
 				} catch (GGAPIEntityException e) {
-					throw new IOException(e);
+					((HttpServletResponse) response).setStatus(e.getHttpErrorCode().value());
+					response.getWriter().write(e.getMessage());
+					response.getWriter().flush();
+					return;
 				}
 			} 
 			this.setRequestedTenantId(caller, accessRule);

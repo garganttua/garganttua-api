@@ -1,7 +1,5 @@
 package com.garganttua.api.security.keys;
 
-import com.garganttua.api.engine.GGAPIEngineException;
-
 import io.jsonwebtoken.SignatureAlgorithm;
 
 public class GGAPIKeyRealms {
@@ -15,7 +13,7 @@ public class GGAPIKeyRealms {
 		case HS256:
 		case HS384:
 		case HS512:
-			keyRealm = new GGAPISymetricKeyRealm(name, ciphering);
+			keyRealm = new GGAPISymetricKeyRealm(name, algo, ciphering);
 			break;
 		case ES256:
 		case ES384:
@@ -26,7 +24,7 @@ public class GGAPIKeyRealms {
 		case RS256:
 		case RS384:
 		case RS512:
-			keyRealm = new GGAPIAsymetricKeyRealm(name, unciphering, ciphering);
+			keyRealm = new GGAPIAsymetricKeyRealm(name, algo, unciphering, ciphering);
 			break;
 		}
 		return keyRealm;
@@ -57,6 +55,11 @@ public class GGAPIKeyRealms {
 			break;
 		}
 		return keyRealm;
+	}
+
+
+	public static boolean areEquals(IGGAPIKeyRealm alreadyExists, IGGAPIKeyRealm realm) {
+		return alreadyExists.equals(realm);
 	}
 
 }

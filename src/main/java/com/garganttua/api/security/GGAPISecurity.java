@@ -15,8 +15,6 @@ import org.springframework.stereotype.Service;
 import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
-import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
-import com.garganttua.api.security.authorization.GGAPIAuthorityVerifier;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
 import com.garganttua.api.security.owners.GGAPIOwnerVerifier;
@@ -56,9 +54,9 @@ public class GGAPISecurity implements IGGAPISecurity {
 	@Autowired
 	private Optional<GGAPIOwnerVerifier> ownerVerifier;
 	
-	@Autowired
-	@Getter
-	private Optional<GGAPIAuthorityVerifier> authorityVerifier;
+//	@Autowired
+//	@Getter
+//	private Optional<GGAPIAuthorityVerifier> authorityVerifier;
 	
 	@Autowired 
 	private GGAPIDynamicDomainFilter ddomainFilter;
@@ -73,10 +71,10 @@ public class GGAPISecurity implements IGGAPISecurity {
 	private Optional<OpenAPI> openApi;
 	
 	@Value("${com.garganttua.api.security.cors.enabled}")
-	private boolean cors = true;
+	private boolean cors = false;
 	
 	@Value("${com.garganttua.api.security.csrf.enabled}")
-	private boolean csrf = true;
+	private boolean csrf = false;
 
 	@Override
 	@Bean
@@ -131,14 +129,19 @@ public class GGAPISecurity implements IGGAPISecurity {
 				http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier.get(), AuthorizationFilter.class);
 			}
 		
-			if( this.authorityVerifier.isPresent() ) {
-				http.authorizeHttpRequests().and().addFilterAfter(this.authorityVerifier.get(), AuthorizationFilter.class);
-			}
+//			if( this.authorityVerifier.isPresent() ) {
+//				http.authorizeHttpRequests().and().addFilterAfter(this.authorityVerifier.get(), AuthorizationFilter.class);
+//			}
 		
 		
 			return http.build();
 		} catch (Exception e) {
 			throw new GGAPISecurityException(e);
 		}
+	}
+
+	@Override
+	public Optional<IGGAPIAuthorizationManager> getAuthorizationManager() {
+		return this.authorizationManager;
 	}
 }

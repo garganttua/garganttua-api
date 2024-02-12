@@ -8,4 +8,6 @@ public interface IGGAPIAuthorizationManager {
 
 	HttpSecurity configureFilterChain(HttpSecurity http) throws GGAPISecurityException;
 
+	IGGAPIAuthorizationProvider getAuthorizationProvider();
+	
 }

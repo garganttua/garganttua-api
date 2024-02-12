@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +22,12 @@ import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.GGAPIAuthenticationMode;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationRequest;
+import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.security.authentication.modes.loginpassword.GGAPILoginPasswordAuthenticationRequest;
 import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
-import com.garganttua.api.security.authorization.token.GGAPIToken;
+import com.garganttua.api.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.ws.GGAPIErrorObject;
 
@@ -36,7 +38,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @ConditionalOnProperty(name = "com.garganttua.api.security.authentication", havingValue = "enabled", matchIfMissing = true)
 public class GGAPIAuthenticationRestService {
-	
+		
 	@Value("${com.garganttua.api.security.authentication.mode}")
 	private GGAPIAuthenticationMode authenticationMode;
 	
@@ -51,7 +53,7 @@ public class GGAPIAuthenticationRestService {
     public ResponseEntity<?> authenticate(@RequestBody GGAPILoginPasswordAuthenticationRequest authenticationRequest) {
        
 		Authentication authentication = this.getAuthentication(authenticationRequest);
-
+		
 		try {
 			authentication = this.authenticationManager.authenticate(authentication);
 		} catch (Exception e) {
@@ -63,11 +65,17 @@ public class GGAPIAuthenticationRestService {
         	GGAPIToken authorization;
 			try {
 				authorization = this.authorizationProvider.getAuthorization(authentication);
+				
 			} catch (GGAPIKeyExpiredException | GGAPIEngineException e) {
 				return new ResponseEntity<>("Error during authorization creation", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
-        	
-        	return new ResponseEntity<>(authorization.getToken(), HttpStatus.CREATED);
+
+        	return ResponseEntity.ok()
+                    .header(
+                            HttpHeaders.AUTHORIZATION,
+                            new String(authorization.getToken())
+                        )
+                        .body(((IGGAPIAuthenticator) authentication.getPrincipal()).getEntity());
         	
         } else {
         	return new ResponseEntity<>(new GGAPIErrorObject("Authentication failed"), HttpStatus.BAD_REQUEST);

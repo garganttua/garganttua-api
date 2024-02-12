@@ -63,7 +63,7 @@ public @interface GGAPIEntity {
 	
 	String ws() default "";
 	
-	String connector() default "";
+//	String connector() default "";
 
 	String repository() default "";
 	

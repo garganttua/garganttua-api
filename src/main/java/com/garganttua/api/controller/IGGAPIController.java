@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.garganttua.api.business.IGGAPIBusiness;
-import com.garganttua.api.connector.IGGAPIConnector;
 import com.garganttua.api.core.GGAPIEntityException;
 import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
@@ -40,11 +39,13 @@ public interface IGGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAP
 
 	public void setRepository(Optional<IGGAPIRepository<Entity, Dto>> repository);
 
-	public void setConnector(Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> connector);
+//	public void setConnector(Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> connector);
 
 	public void setBusiness(Optional<IGGAPIBusiness<Entity>> businessObj);
 
-	Optional<IGGAPIBusiness<Entity>> getBusiness();
+	public Optional<IGGAPIBusiness<Entity>> getBusiness();
+//
+//	public Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> getConnector();
 
-	Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> getConnector();
+	public String getTenant(IGGAPIEntity entity);
 }

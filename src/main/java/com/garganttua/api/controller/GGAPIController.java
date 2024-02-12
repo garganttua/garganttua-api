@@ -8,13 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import com.garganttua.api.business.IGGAPIBusiness;
-import com.garganttua.api.connector.GGAPIConnectorException;
-import com.garganttua.api.connector.IGGAPIConnector;
-import com.garganttua.api.connector.IGGAPIConnector.GGAPIConnectorOperation;
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.GGAPIDomainable;
 import com.garganttua.api.core.GGAPIDuplication;
@@ -32,6 +27,9 @@ import com.garganttua.api.core.sort.GGAPISort;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.security.GGAPISecurityException;
+import com.garganttua.api.security.IGGAPISecurity;
+import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -62,10 +60,6 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 	@Setter
 	@Getter
-	protected Optional<IGGAPIConnector<Entity, List<Entity>, Dto>> connector;
-
-	@Setter
-	@Getter
 	protected Optional<IGGAPIBusiness<Entity>> business;
 
 	@Setter
@@ -83,26 +77,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			entity = this.business.get().beforeGetOne(caller, entity, customParameters);
 		}
 
-		if (this.connector.isPresent()) {
-
-			try {
-
-				entity = this.entityFactory.newInstance(uuid);
-
-				Future<Entity> entityResponse = this.connector.get().requestEntity(caller.getRequestedTenantId(), entity,
-						GGAPIConnectorOperation.READ);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
-				}
-
-				entity = entityResponse.get();
-			} catch (Exception e) {
-				log.error("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Error during getting entity with Uuid " + uuid, e);
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-			}
-
-		} else if (this.repository.isPresent()) {
+		if (this.repository.isPresent()) {
 			entity = this.repository.get().getOneByUuid(caller, uuid);
 		}
 
@@ -127,6 +102,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 				if (entity.getUuid() == null || entity.getUuid().isEmpty()) {
 					entity.setUuid(UUID.randomUUID().toString());
 				} 
+				((GGAPICaller) caller).setRequestedTenantId(entity.getUuid());
 			} else {
 				entity.setUuid(caller.getRequestedTenantId());
 			}
@@ -140,6 +116,20 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		log.info("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Creating entity with uuid {}",
 				entity.getUuid());
 
+		if( this.dynamicDomain.authenticatorEntity()) {
+			Optional<IGGAPISecurity> security = this.engine.getSecurity();
+			if( security.isPresent() ) {
+				Optional<IGGAPIAuthenticationManager> authenticationManager = security.get().getAuthenticationManager();
+				if( authenticationManager.isPresent() ) {
+					try {
+						entity = authenticationManager.get().applySecurityOnAuthenticatorEntity(entity);
+					} catch (GGAPISecurityException e) {
+						throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, "Error durnig applying security on entity", e);
+					}
+				}
+			}
+		}
+		
 		if( this.dynamicDomain.ownedEntity() ) {
 			if( caller.getOwnerId() != null && !caller.getOwnerId().isEmpty()) {
 				((IGGAPIOwnedEntity) entity).setOwnerId(caller.getOwnerId());
@@ -156,22 +146,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			entity = this.business.get().beforeCreate(caller, entity, customParameters);
 		}
 
-		if (this.connector.isPresent()) {
-			try {
-
-				Future<Entity> entityResponse = this.connector.get().requestEntity(caller.getRequestedTenantId(), entity,
-						GGAPIConnectorOperation.CREATE);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
-				}
-
-				entity = entityResponse.get();
-			} catch (Exception e) {
-				log.error("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Error during creating entity with Uuid " + entity.getUuid(), e);
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-			}
-		} else if (this.repository.isPresent()) {
+		if (this.repository.isPresent()) {
 
 			if (this.repository.get().doesExist(caller, entity)) {
 				
@@ -239,53 +214,40 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 		}
 
 		ArrayList<String> entityUuids = new ArrayList<String>();
-
 		List<Entity> entities = null;
+		List<?> listToReturn = null;
 		
 		if (this.business.isPresent()) {
 			entities = this.business.get().beforeGetList(caller, entities, customParameters);
 		}
 
-		if (this.connector.isPresent()) {
-			try {
-
-				Future<List<Entity>> entityResponse = this.connector.get().requestList(caller.getRequestedTenantId(), null,
-						GGAPIConnectorOperation.READ);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
-				}
-
-				entities = entityResponse.get();
-			} catch (Exception e) {
-				log.error("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Error during getting entity list ", e);
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-			}
-		} else if (this.repository.isPresent()) {
+		if (this.repository.isPresent()) {
 			entities = this.repository.get().getEntities(caller, pageSize, pageIndex, filter, sort, geoloc);
 		}
 
 		switch (mode) {
 		case full -> {
-			return entities;
+			listToReturn = entities;
 		}
 		case id -> {
 			entities.forEach(e -> {
 				entityUuids.add(e.getId());
 			});
+			listToReturn = entityUuids;
 		}
 		case uuid -> {
 			entities.forEach(e -> {
 				entityUuids.add(e.getUuid());
 			});
+			listToReturn = entityUuids;
 		}
 		}
 		
 		if (this.business.isPresent()) {
-			entities = this.business.get().afterGetList(caller, entities, customParameters);
+			listToReturn = this.business.get().afterGetList(caller, listToReturn, customParameters);
 		}
 
-		return entityUuids;
+		return listToReturn;
 	}
 
 	@Override
@@ -297,22 +259,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			entity = this.business.get().beforeUpdate(caller, entity, customParameters);
 		}
 
-		if (this.connector.isPresent()) {
-			try {
-
-				Future<Entity> entityResponse = this.connector.get().requestEntity(caller.getRequestedTenantId(), entity,
-						GGAPIConnectorOperation.UPDATE);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
-				}
-
-				entity = entityResponse.get();
-			} catch (Exception e) {
-				log.error("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Error during updating entity ", e);
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-			}
-		} else if (this.repository.isPresent()) {
+		if (this.repository.isPresent()) {
 			if (!this.repository.get().doesExist(caller, entity)) {
 				log.warn(
 						"[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Entity with uuid " + entity.getUuid() + " does not exists");
@@ -389,22 +336,7 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 			entity = this.business.get().beforeDelete(caller, entity, customParameters);
 		}
 
-		if (this.connector.isPresent()) {
-			try {
-
-				Future<Entity> entityResponse = this.connector.get().requestEntity(caller.getRequestedTenantId(), entity,
-						GGAPIConnectorOperation.DELETE);
-
-				while (!entityResponse.isDone()) {
-					Thread.sleep(250);
-				}
-
-				entity = entityResponse.get();
-			} catch (Exception e) {
-				log.error("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Error during updating entity ", e);
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-			}
-		} else if (this.repository.isPresent()) {
+		if (this.repository.isPresent()) {
 			this.repository.get().delete(caller, entity);
 		}
 
@@ -431,20 +363,18 @@ public class GGAPIController<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOO
 
 	@Override
 	public long getEntityTotalCount(IGGAPICaller caller, GGAPILiteral filter, GGAPIGeolocFilter geoloc, Map<String, String> customParameters) throws GGAPIEntityException {
-		if (this.connector.isPresent()) {
-			try {
-				Future<List<Entity>> list = this.connector.get().requestList(caller.getRequestedTenantId(), null, null);
-				while (!list.isDone()) {
-					Thread.sleep(250);
-				}
-				return list.get().size();
-			} catch (InterruptedException | ExecutionException | GGAPIConnectorException e) {
-				log.error("[domain ["+this.dynamicDomain.domain()+"]] "+caller.toString()+" Error during updating entity ", e);
-				throw new GGAPIEntityException(GGAPIEntityException.CONNECTOR_ERROR, e);
-			}
-		} else if (this.repository.isPresent()) {
+		if (this.repository.isPresent()) {
 			return this.repository.get().getCount(caller, filter, geoloc);
 		}
 		return 0;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public String getTenant(IGGAPIEntity entity) {
+		if( this.repository.isPresent() ) {
+			return this.repository.get().getTenant((Entity) entity);
+		}
+		return null;
 	}
 }

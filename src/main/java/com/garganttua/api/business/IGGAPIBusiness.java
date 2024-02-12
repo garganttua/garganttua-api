@@ -28,7 +28,7 @@ public interface IGGAPIBusiness<Entity extends IGGAPIEntity> extends IGGAPIEngin
 
 	List<Entity> beforeGetList(IGGAPICaller caller, List<Entity> entities, Map<String, String> customParameters) throws GGAPIEntityException;
 
-	List<Entity> afterGetList(IGGAPICaller caller, List<Entity> entities, Map<String, String> customParameters) throws GGAPIEntityException;
+	List<?> afterGetList(IGGAPICaller caller, List<?> entities, Map<String, String> customParameters) throws GGAPIEntityException;
 
 
 }

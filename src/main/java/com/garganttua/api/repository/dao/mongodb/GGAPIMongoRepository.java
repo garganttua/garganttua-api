@@ -175,40 +175,40 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 			
 			switch(subLiteral.getName()) {
 			case GGAPILiteral.OPERATOR_EQUAL:
-				criteria = Criteria.where(literal.getValue().toString()).is(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).is(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_NOT_EQUAL:
-				criteria = Criteria.where(literal.getValue().toString()).ne(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).ne(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_GREATER_THAN:
-				criteria = Criteria.where(literal.getValue().toString()).gt(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).gt(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_GREATER_THAN_EXCLUSIVE:
-				criteria = Criteria.where(literal.getValue().toString()).gte(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).gte(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_LOWER_THAN:
-				criteria = Criteria.where(literal.getValue().toString()).lt(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).lt(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_LOWER_THAN_EXCLUSIVE:
-				criteria = Criteria.where(literal.getValue().toString()).lte(subLiteral.getValue());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).lte(subLiteral.getValue());
 				break;
 			case GGAPILiteral.OPERATOR_REGEX:
-				criteria = Criteria.where(literal.getValue().toString()).regex(subLiteral.getValue().toString());
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).regex(subLiteral.getValue().toString());
 				break;
 			case GGAPILiteral.OPERATOR_IN:
 				for( GGAPILiteral subliteral: subLiteral.getLiterals() ) {
 					values.add(subliteral.getValue());
 				}
-				criteria = Criteria.where(literal.getValue().toString()).in(values);
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).in(values);
 				break;
 			case GGAPILiteral.OPERATOR_NOT_IN:
 				for( GGAPILiteral subliteral: literal.getLiterals() ) {
 					values.add(subliteral.getValue());
 				}
-				criteria = Criteria.where(literal.getValue().toString()).nin(values);
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).nin(values);
 				break;
 			case GGAPILiteral.OPERATOR_EMPTY:
-				criteria = Criteria.where(literal.getValue().toString()).isNullValue();
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).isNullValue();
 				break;
 			}
 			break;

@@ -24,7 +24,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(false);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, true, null, null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, true, null, null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -39,7 +39,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(true);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, null, null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null,  null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, null, null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -56,7 +56,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId(null);
 		caller.setSuperTenant(true);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, null, null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, null, null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -71,7 +71,7 @@ public class GGAPIRepositoryTest {
 		caller.setSuperTenant(false);
 		caller.setAnonymous(true);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, null, null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, null, null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -85,7 +85,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(false);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, "shareField", null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, "shareField", null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -102,7 +102,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(true);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, "shareField", null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, false, false, "shareField", null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -120,7 +120,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(false);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, false, "shareField", null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, false, "shareField", null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -137,7 +137,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(false);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, false, null, null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, false, null, null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		
@@ -154,7 +154,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(false);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, false, "shareField", null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, false, "shareField", null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral otherfilterequal = new GGAPILiteral(GGAPILiteral.OPERATOR_EQUAL, "test", null);
 		List<GGAPILiteral> l = new ArrayList<GGAPILiteral>();
@@ -177,7 +177,7 @@ public class GGAPIRepositoryTest {
 		caller.setRequestedTenantId("0");
 		caller.setSuperTenant(false);
 		
-		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, true, null, null, false, null, null, false, false, false, false, null);
+		GGAPIDynamicDomain domain = new GGAPIDynamicDomain(null, null, null, null, null, null, null, null, null, null, false, false, false, false, false, false, false, null, null, null, null, null, null, null, false, false, false, false, false, false, false, true, true, null, null, false, null, null, false, false, false, false, null);
 		
 		GGAPILiteral filter = GGAPIRepository.getFilterFromCallerInfosAndDomainInfos(caller, domain, null);
 		

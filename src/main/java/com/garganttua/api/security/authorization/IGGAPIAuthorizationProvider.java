@@ -3,9 +3,9 @@ package com.garganttua.api.security.authorization;
 import org.springframework.security.core.Authentication;
 
 import com.garganttua.api.engine.GGAPIEngineException;
-import com.garganttua.api.security.authorization.token.GGAPIToken;
-import com.garganttua.api.security.authorization.token.jwt.GGAPITokenExpired;
-import com.garganttua.api.security.authorization.token.jwt.GGAPITokenNotFoundException;
+import com.garganttua.api.security.authorization.tokens.GGAPIToken;
+import com.garganttua.api.security.authorization.tokens.jwt.GGAPITokenExpired;
+import com.garganttua.api.security.authorization.tokens.jwt.GGAPITokenNotFoundException;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
 
 public interface IGGAPIAuthorizationProvider {

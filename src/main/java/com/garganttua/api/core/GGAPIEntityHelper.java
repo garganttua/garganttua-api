@@ -30,7 +30,7 @@ public class GGAPIEntityHelper {
 		return (IGGAPIEntityFactory<T>) GGAPIEntityHelper.getOneInstance(clazz).getFactory();
 	}
 
-	public static <T extends IGGAPIEntity> Object getFieldValue(Class<T> clazz, String fieldName, T entity) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+	public static Object getFieldValue(Class<?> clazz, String fieldName, Object entity) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 		Field field = null; 
 		
 		if( (fieldName.equals("id") || fieldName.equals("uuid") ) && (entity instanceof AbstractGGAPIEntity) ) {
@@ -47,6 +47,23 @@ public class GGAPIEntityHelper {
 		field.setAccessible(false);
 
 		return value;
+	}
+	
+	public static void setFieldValue(Class<?> clazz, String fieldName, Object entity, Object fieldValue) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+		Field field = null; 
+		
+		if( (fieldName.equals("id") || fieldName.equals("uuid") ) && (entity instanceof AbstractGGAPIEntity) ) {
+			field = AbstractGGAPIEntity.class.getDeclaredField(fieldName);
+		} 
+		
+		if( field == null ) {
+			field = clazz.getDeclaredField(fieldName);
+		}
+		
+		field.setAccessible(true);
+		field.set(entity, fieldValue);
+		
+		field.setAccessible(false);
 	}
 
 }

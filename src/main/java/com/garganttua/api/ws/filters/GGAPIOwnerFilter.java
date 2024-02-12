@@ -21,6 +21,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service("ownerFilter")
 public class GGAPIOwnerFilter extends GGAPIFilter {
@@ -53,7 +54,10 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 			
 			if( accessRule != null && accessRule.getAccess() == GGAPICrudAccess.owner ) {
 				if( ownerId == null || ownerId.isEmpty() ) {
-					throw new IOException("No header "+this.ownerIdHeaderName+" found");
+					((HttpServletResponse) response).setStatus(400);
+					response.getWriter().write("No header "+this.ownerIdHeaderName+" found");
+					response.getWriter().flush();
+					return;
 				}
 			}
 			
@@ -69,7 +73,10 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 							caller.setOwnerId(owner.getOwnerId());
 							caller.setSuperOwner(owner.isSuperOnwer());
 						} catch (GGAPIEntityException e) {
-							throw new IOException(e);
+							((HttpServletResponse) response).setStatus(e.getHttpErrorCode().value());
+							response.getWriter().write(e.getMessage());
+							response.getWriter().flush();
+							return;
 						}
 				} else {
 					if( ownerId.equals(this.superOwnerId) ) {

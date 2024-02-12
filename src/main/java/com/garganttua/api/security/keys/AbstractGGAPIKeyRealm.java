@@ -2,8 +2,6 @@ package com.garganttua.api.security.keys;
 
 import java.util.Date;
 
-import io.jsonwebtoken.SignatureAlgorithm;
-
 public abstract class AbstractGGAPIKeyRealm implements IGGAPIKeyRealm {
 	
 	public AbstractGGAPIKeyRealm() {
@@ -42,4 +40,17 @@ public abstract class AbstractGGAPIKeyRealm implements IGGAPIKeyRealm {
 	}
 
 	protected abstract GGAPIKey getUncipheringKey_();
+	
+	@Override
+	public boolean equals(IGGAPIKeyRealm object) {
+		try {
+			return this.getAlgo().equals(((IGGAPIKeyRealm) object).getAlgo()) &&
+					this.getName().equals(((IGGAPIKeyRealm) object).getName()) && 
+					this.getCipheringKey().equals(((IGGAPIKeyRealm) object).getCipheringKey()) &&
+					this.getUncipheringKey().equals(((IGGAPIKeyRealm) object).getUncipheringKey());
+		} catch (GGAPIKeyExpiredException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
 }
