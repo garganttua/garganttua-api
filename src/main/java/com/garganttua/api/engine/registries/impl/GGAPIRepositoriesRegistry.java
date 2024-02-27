@@ -34,7 +34,7 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
-	private Map<String, IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> repositories = new HashMap<String, IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
+	private Map<String, IGGAPIRepository> repositories = new HashMap<String, IGGAPIRepository>();
 	
 	@Autowired
 	private IGGAPIDynamicDomainsRegistry dynamicDomains;
@@ -43,44 +43,43 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 	private IGGAPIDaosRegistry daosRegistry;
 
 	@Override
-	public IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getRepository(String name) {
+	public IGGAPIRepository getRepository(String name) {
 		return this.repositories.get(name);
 	}
 
-	@SuppressWarnings("unchecked")
 	@PostConstruct
 	private void init() throws GGAPIEngineException {
 
 		log.info("Creating Repositories ...");
 		for( GGAPIDynamicDomain ddomain: this.dynamicDomains.getDynamicDomains() ){
 			
-			IGGAPIDAORepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> dao = (IGGAPIDAORepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>) daosRegistry.getDao(ddomain.domain());
+			IGGAPIDAORepository dao = daosRegistry.getDao(ddomain.domain);
 			
 			if( dao == null ) {
-				throw new GGAPIEngineException("DAO "+ddomain.domain()+" not found");
+				throw new GGAPIEngineException("DAO "+ddomain.domain+" not found");
 			}
 			
-			String repo__ = ddomain.repo();
+			String repo__ = ddomain.repo;
 			
-			IGGAPIRepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> repo = null;
+			IGGAPIRepository repo = null;
 			
 			if (repo__ != null && !repo__.isEmpty()) {
 				repo = helper.getObjectFromConfiguration(repo__, IGGAPIRepository.class);
 			} else {
 				repo = new GGAPIEngineRepository();
 			}
-			repo.setDomain(ddomain);
-			repo.setDao((IGGAPIDAORepository<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>) dao);
-			
-			this.repositories.put(ddomain.domain(), repo);
 
-			log.info("	Repository added [domain {}]", ddomain.domain());
+			repo.setDao(dao);
+			
+			this.repositories.put(ddomain.domain, repo);
+
+			log.info("	Repository added [domain {}]", ddomain.domain);
 			
 		}
 	}
 
 	@Override
-	public List<IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> getRepositories() {
-		return new ArrayList<IGGAPIRepository<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>(this.repositories.values());
+	public List<IGGAPIRepository> getRepositories() {
+		return new ArrayList<IGGAPIRepository>(this.repositories.values());
 	}
 }

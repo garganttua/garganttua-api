@@ -1,17 +1,8 @@
 package com.garganttua.api.core;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 
 public class GGAPIEntityHelper {
-	
-	public static <T extends IGGAPIEntity> T getOneInstance(Class<T> clazz) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		Constructor<T> constructor;
-		constructor = (Constructor<T>) clazz.getConstructor();
-		T entity = (T) constructor.newInstance();
-		return entity;
-	}
 	
 	public static <T extends IGGAPIEntity> String getDomain(Class<T> entity) {
 		
@@ -23,11 +14,6 @@ public class GGAPIEntityHelper {
 		}
 		
 		return domain;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static <T extends IGGAPIEntity> IGGAPIEntityFactory<T> getFactory(Class<T> clazz) throws NoSuchMethodException, SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
-		return (IGGAPIEntityFactory<T>) GGAPIEntityHelper.getOneInstance(clazz).getFactory();
 	}
 
 	public static Object getFieldValue(Class<?> clazz, String fieldName, Object entity) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {

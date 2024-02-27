@@ -5,8 +5,6 @@ import java.util.Collection;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
-import com.garganttua.api.core.IGGAPIEntity;
-
 public class GGAPIEntityAuthentication implements Authentication {
 
 	private static final long serialVersionUID = -4068108823963678087L;

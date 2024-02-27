@@ -1,11 +1,16 @@
 package com.garganttua.api.security.keys.managers.mongo;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.api.core.AbstractGGAPIEntity;
 import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.core.GGAPIEntity;
-import com.garganttua.api.core.IGGAPIEntity;
-import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.IGGAPIEntityDeleteMethod;
+import com.garganttua.api.core.IGGAPIEntitySaveMethod;
+import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.keys.GGAPIKey;
 
 import lombok.Getter;
@@ -57,22 +62,6 @@ public class GGAPIKeyRealmEntity extends AbstractGGAPIEntity {
 		this.algorithm = algorithm;
 		this.cipheringKey = cipheringKey;
 		this.uncipheringKey = uncipheringKey;
-	}
-
-	@Override
-	public IGGAPIEntityFactory<? extends IGGAPIEntity> getFactory() {
-		return new IGGAPIEntityFactory<IGGAPIEntity>() {
-
-			@Override
-			public IGGAPIEntity newInstance() {
-				return new GGAPIKeyRealmEntity();
-			}
-
-			@Override
-			public IGGAPIEntity newInstance(String uuid) {
-				return new GGAPIKeyRealmEntity(uuid, null, null, null, null);
-			}
-		};
 	}
 
 }

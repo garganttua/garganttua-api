@@ -4,18 +4,18 @@ import java.io.IOException;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.IGGAPIEntityFactory;
 import com.garganttua.api.core.IGGAPIOwner;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -35,24 +35,28 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 	@Value(value = "${com.garganttua.api.superTenantId:0}")
 	private String superTenantId = "0";
 
-	private Optional<IGGAPIController<IGGAPIOwner, ? extends IGGAPIDTOObject<IGGAPIOwner>>> ownersController;
-	
+	private Optional<GGAPIDynamicDomain> ownersDomain;
+
+	private IGGAPIEntityFactory factory;
+
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		super.setEngine(engine);
-		this.ownersController = Optional.ofNullable(this.engine.getOwnerControllerAccessor().getOwnersController());
+		this.ownersDomain = Optional.ofNullable(this.engine.getOwnerDomain());
+		this.factory = this.engine.getEntityFactory();
 	}
 	
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		super.doFilter(request, response, chain);
 		GGAPICaller caller = this.getCaller(request);
+		GGAPIDynamicDomain domain = this.getDomain(request);
 		
 		if( caller.getOwnerId() == null ) {
 			IGGAPIAccessRule accessRule = caller.getAccessRule();
 			String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
 			
-			if( accessRule != null && accessRule.getAccess() == GGAPICrudAccess.owner ) {
+			if( (accessRule != null && accessRule.getAccess() == GGAPICrudAccess.owner) || (domain != null && domain.ownedEntity && (accessRule.getHttpMethod() == HttpMethod.POST || accessRule.getHttpMethod() == HttpMethod.PATCH)  ) ) {
 				if( ownerId == null || ownerId.isEmpty() ) {
 					((HttpServletResponse) response).setStatus(400);
 					response.getWriter().write("No header "+this.ownerIdHeaderName+" found");
@@ -64,12 +68,9 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 			if( ownerId != null && !ownerId.isEmpty() ) {
 				caller.setOwnerId(ownerId);
 					
-				if( this.ownersController.isPresent() ) {
+				if( this.ownersDomain.isPresent() ) {
 						try {
-							GGAPICaller superCaller = new GGAPICaller();
-							superCaller.setSuperTenant(true);
-							superCaller.setTenantId(this.superTenantId);
-							IGGAPIOwner owner = this.ownersController.get().getEntity(superCaller, ownerId, null);
+							IGGAPIOwner owner = this.factory.getEntityFromRepository(this.ownersDomain.get(), caller, null, ownerId);
 							caller.setOwnerId(owner.getOwnerId());
 							caller.setSuperOwner(owner.isSuperOnwer());
 						} catch (GGAPIEntityException e) {

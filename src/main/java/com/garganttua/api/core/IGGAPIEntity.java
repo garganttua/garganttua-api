@@ -3,7 +3,14 @@
  *******************************************************************************/
 package com.garganttua.api.core;
 
+import java.util.Map;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.garganttua.api.engine.GGAPIEngineException;
+import com.garganttua.api.engine.IGGAPIEngine;
+import com.garganttua.api.repository.IGGAPIRepository;
+import com.garganttua.api.security.IGGAPISecurity;
 
 /**
  * 
@@ -30,7 +37,25 @@ public interface IGGAPIEntity {
 	
 	void setUuid(String uuid); 
 	
-	@JsonIgnore
-	IGGAPIEntityFactory<? extends IGGAPIEntity> getFactory();
 	
+	
+	void setGotFromRepository(boolean gotFromRepository);
+	
+	boolean isGotFromRepository();
+	
+	
+	
+	void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIEntityException, GGAPIEngineException;
+	
+	void delete(IGGAPICaller caller, Map<String, String> parameters) throws GGAPIEntityException, GGAPIEngineException;
+	
+
+	
+
+	void setRepository(IGGAPIRepository repository);
+	
+	void setSaveMethod(IGGAPIEntitySaveMethod saveMethod);
+
+	void setDeleteMethod(IGGAPIEntityDeleteMethod deleteMethod);
+
 }

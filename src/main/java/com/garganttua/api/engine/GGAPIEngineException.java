@@ -10,6 +10,10 @@ public class GGAPIEngineException extends Exception {
 		super(e);
 	}
 
+	public GGAPIEngineException(String string, Exception e) {
+		super(string, e);
+	}
+
 	/**
 	 * 
 	 */

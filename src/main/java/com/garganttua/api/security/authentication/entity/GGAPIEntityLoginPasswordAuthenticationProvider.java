@@ -7,14 +7,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.GGAPIEntityException;
 import com.garganttua.api.core.GGAPIEntityHelper;
-import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.IGGAPIEntityWithTenant;
 import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
 
@@ -22,19 +22,21 @@ public class GGAPIEntityLoginPasswordAuthenticationProvider implements IGGAPIAut
 
 	private String superTenantId;
 	private String loginField;
-	private IGGAPIController<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> controller;
 	private String passwordField;
 	private String authoritiesField;
 	private String isAccountNonExpiredField;
 	private String isAccountNonLockedField;
 	private String isCredentialsNonExpiredField;
 	private String isEnabledField;
+	private IGGAPIEntityFactory factory;
+	private GGAPIDynamicDomain domain;
  
 	public GGAPIEntityLoginPasswordAuthenticationProvider (
-			IGGAPIController<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> controller, String superTenantId,
+			GGAPIDynamicDomain domain, IGGAPIEntityFactory factory, String superTenantId,
 			String isAccountNonExpiredField, String isAccountNonLockedField, String isCredentialsNonExpiredField,
 			String isEnabledField, String loginField, String passwordField, String authoritiesField) {
-		this.controller = controller;
+		this.domain = domain;
+		this.factory = factory;
 		this.superTenantId = superTenantId;
 		this.isAccountNonExpiredField = isAccountNonExpiredField;
 		this.isAccountNonLockedField = isAccountNonLockedField;
@@ -63,13 +65,15 @@ public class GGAPIEntityLoginPasswordAuthenticationProvider implements IGGAPIAut
 			GGAPICaller caller = new GGAPICaller();
 			caller.setTenantId(this.superTenantId);
 			caller.setSuperTenant(true);
-			List<? extends IGGAPIEntity> entities = (List<? extends IGGAPIEntity>) this.controller.getEntityList(caller, 0, 0, filter, null, null, GGAPIReadOutputMode.full, null);
+			
+			
+			List<? extends IGGAPIEntity> entities = this.factory.getEntitiesFromRepository(this.domain, caller, 0, 0, filter, null, null, null);
 			
 			if( entities.size() < 1 ) {
 				throw new UsernameNotFoundException("Login "+login+" not found");
 			}
-
-			userDetails = getAuthenticatorFromEntity(this.controller.getTenant(entities.get(0)), this.controller.getEntityClass(), entities.get(0));
+			
+			userDetails = getAuthenticatorFromEntity(((IGGAPIEntityWithTenant) entities.get(0)).getTenantId(), entities.get(0).getClass(), entities.get(0));
 			
 		} catch (GGAPIEntityException | NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 			throw new UsernameNotFoundException(e.getMessage());

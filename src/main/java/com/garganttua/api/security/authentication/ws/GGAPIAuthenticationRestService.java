@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.GGAPIAuthenticationMode;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationRequest;
@@ -66,16 +67,14 @@ public class GGAPIAuthenticationRestService {
 			try {
 				authorization = this.authorizationProvider.getAuthorization(authentication);
 				
-			} catch (GGAPIKeyExpiredException | GGAPIEngineException e) {
+			} catch (GGAPIKeyExpiredException | GGAPIEngineException | GGAPIEntityException e) {
 				return new ResponseEntity<>("Error during authorization creation", HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 
-        	return ResponseEntity.ok()
-                    .header(
-                            HttpHeaders.AUTHORIZATION,
-                            new String(authorization.getToken())
-                        )
-                        .body(((IGGAPIAuthenticator) authentication.getPrincipal()).getEntity());
+        	return ResponseEntity.created(null)
+                    .header(HttpHeaders.AUTHORIZATION,"Bearer "+new String(authorization.getToken()))
+                    .header("Access-Control-Expose-Headers", "Authorization")
+                    .body(((IGGAPIAuthenticator) authentication.getPrincipal()).getEntity());
         	
         } else {
         	return new ResponseEntity<>(new GGAPIErrorObject("Authentication failed"), HttpStatus.BAD_REQUEST);

@@ -1,18 +1,19 @@
 package com.garganttua.api.ws;
 
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo.BuilderConfiguration;
-
-import io.swagger.v3.oas.models.OpenAPI;
+import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 
 public interface IGGAPICustomService {
 
 	String getMethodName();
 
 	Class<?>[] getParameters();
+	
+	String getPath();
+	
+	String getAuthority();
+	
+	IGGAPIAccessRule getAccessRule();
 
-	void setOpenApi(OpenAPI openAPI);
-
-	RequestMappingInfo getRequestMappingInfos(BuilderConfiguration options);
+	String getDescription();
 
 }

@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.IGGAPIEntityFactory;
 import com.garganttua.api.core.IGGAPITenant;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 
 import jakarta.servlet.FilterChain;
@@ -35,12 +35,15 @@ public class GGAPITenantFilter extends GGAPIFilter {
 	@Value(value = "${com.garganttua.api.superTenantId:0}")
 	private String superTenantId = "0";
 
-	private Optional<IGGAPIController<IGGAPITenant, ? extends IGGAPIDTOObject<IGGAPITenant>>> tenantsController;
-	
+	private Optional<GGAPIDynamicDomain> tenantsDomain;
+
+	private IGGAPIEntityFactory factory;
+
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		super.setEngine(engine);
-		this.tenantsController = Optional.ofNullable(this.engine.getTenantsControllerAccessor().getTenantsController());
+		this.tenantsDomain = Optional.ofNullable(this.engine.getTenantDomain());
+		this.factory = this.engine.getEntityFactory();
 	}
 	
 	@Override
@@ -66,21 +69,29 @@ public class GGAPITenantFilter extends GGAPIFilter {
 			}
 		
 			caller.setTenantId(tenantId);
-			caller.setRequestedTenantId(requestedtenantId);			
+			if( requestedtenantId != null && !requestedtenantId.isEmpty() ) {
+				caller.setRequestedTenantId(requestedtenantId);	
+			} else {
+				caller.setRequestedTenantId(tenantId);
+			}
 			
 			if( tenantId != null && tenantId.equals(this.superTenantId) ) {
 				caller.setSuperTenant(true);
 			}
 			
-			if( this.tenantsController.isPresent() && tenantId != null) {
+			if( this.tenantsDomain.isPresent() && tenantId != null) {
 				try {
 					GGAPICaller superCaller = new GGAPICaller();
-					superCaller.setSuperTenant(true);
-					superCaller.setTenantId(this.superTenantId);
-					superCaller.setRequestedTenantId(tenantId);
-
-					IGGAPITenant tenant = this.tenantsController.get().getEntity(superCaller, tenantId, null);
+					superCaller.setTenantId(tenantId);
+					
+					IGGAPITenant tenant = this.factory.getEntityFromRepository(this.tenantsDomain.get(), superCaller, null, caller.getTenantId());
 					caller.setSuperTenant(tenant.isSuperTenant());
+					
+					if( !caller.getTenantId().equals(caller.getRequestedTenantId()) ) {
+						superCaller.setTenantId(requestedtenantId);
+						this.factory.getEntityFromRepository(this.tenantsDomain.get(), superCaller, null, caller.getRequestedTenantId());
+					}
+					
 				} catch (GGAPIEntityException e) {
 					((HttpServletResponse) response).setStatus(e.getHttpErrorCode().value());
 					response.getWriter().write(e.getMessage());
@@ -107,5 +118,4 @@ public class GGAPITenantFilter extends GGAPIFilter {
             }
         }
     }
-
 }

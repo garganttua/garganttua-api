@@ -13,12 +13,18 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
+import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
+import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
 import com.garganttua.api.security.owners.GGAPIOwnerVerifier;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
+import com.garganttua.api.ws.IGGAPIRestService;
 import com.garganttua.api.ws.filters.GGAPIDynamicDomainFilter;
 import com.garganttua.api.ws.filters.GGAPIOwnerFilter;
 import com.garganttua.api.ws.filters.GGAPITenantFilter;
@@ -26,6 +32,7 @@ import com.garganttua.api.ws.filters.GGAPITenantFilter;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import io.swagger.v3.oas.models.OpenAPI;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +52,12 @@ public class GGAPISecurity implements IGGAPISecurity {
 	
 	@Autowired
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
+	
+	@Autowired
+	private IGGAPIDynamicDomainsRegistry dDomainsRegistry;
+	
+	@Autowired
+	private IGGAPIServicesRegistry servicesRegistry;
 
 	@Getter
 	@Autowired
@@ -53,11 +66,7 @@ public class GGAPISecurity implements IGGAPISecurity {
 	@Getter
 	@Autowired
 	private Optional<GGAPIOwnerVerifier> ownerVerifier;
-	
-//	@Autowired
-//	@Getter
-//	private Optional<GGAPIAuthorityVerifier> authorityVerifier;
-	
+		
 	@Autowired 
 	private GGAPIDynamicDomainFilter ddomainFilter;
 	
@@ -75,6 +84,17 @@ public class GGAPISecurity implements IGGAPISecurity {
 	
 	@Value("${com.garganttua.api.security.csrf.enabled}")
 	private boolean csrf = false;
+	
+	@PostConstruct
+	private void init() {
+		GGAPIDynamicDomain domain = this.dDomainsRegistry.getAuthenticatorDomain();
+		if( domain != null ) {
+			IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> s = this.servicesRegistry.getService(domain.domain);
+			if( s != null ) {
+				s.setSecurity(Optional.of(this));
+			}
+		}
+	}
 
 	@Override
 	@Bean
@@ -128,12 +148,7 @@ public class GGAPISecurity implements IGGAPISecurity {
 			if( this.ownerVerifier.isPresent() ) {
 				http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier.get(), AuthorizationFilter.class);
 			}
-		
-//			if( this.authorityVerifier.isPresent() ) {
-//				http.authorizeHttpRequests().and().addFilterAfter(this.authorityVerifier.get(), AuthorizationFilter.class);
-//			}
-		
-		
+
 			return http.build();
 		} catch (Exception e) {
 			throw new GGAPISecurityException(e);

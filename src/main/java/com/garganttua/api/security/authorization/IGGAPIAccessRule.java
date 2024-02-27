@@ -15,5 +15,4 @@ public interface IGGAPIAccessRule {
 	String toString();
 	
 	GGAPICrudAccess getAccess();
-
 }

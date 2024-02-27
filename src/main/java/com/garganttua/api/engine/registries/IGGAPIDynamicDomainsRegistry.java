@@ -13,5 +13,11 @@ public interface IGGAPIDynamicDomainsRegistry {
 	GGAPIDynamicDomain getDomain(HttpServletRequest request);
 
 	GGAPIDynamicDomain getDomain(String string);
+	
+	GGAPIDynamicDomain getAuthenticatorDomain();
+	
+	GGAPIDynamicDomain getOwnerDomain();
+	
+	GGAPIDynamicDomain getTenantDomain();
 
 }

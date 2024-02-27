@@ -74,10 +74,11 @@ public class GGAPISymetricKeyRealm extends AbstractGGAPIKeyRealm {
 	@Override
 	public boolean equals(IGGAPIKeyRealm object) {
 		try {
-			return this.getAlgo().equals(((IGGAPIKeyRealm) object).getAlgo()) &&
+			boolean result = this.getAlgo().equals(((IGGAPIKeyRealm) object).getAlgo()) &&
 					this.getName().equals(((IGGAPIKeyRealm) object).getName()) && 
 					this.getCipheringKey().equals(((IGGAPIKeyRealm) object).getCipheringKey()) &&
 					this.getUncipheringKey().equals(((IGGAPIKeyRealm) object).getUncipheringKey());
+			return result;
 		} catch (GGAPIKeyExpiredException e) {
 			e.printStackTrace();
 			return false;

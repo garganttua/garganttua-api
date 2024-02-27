@@ -20,8 +20,6 @@ public interface IGGAPIDTOObject<Entity extends IGGAPIEntity> {
 	 * @param object
 	 */
 	public void update(IGGAPIDTOObject<Entity> object);
-	
-	public IGGAPIDTOFactory<Entity, ? extends IGGAPIDTOObject<Entity>> getFactory();
 
 	public String getUuid();
 

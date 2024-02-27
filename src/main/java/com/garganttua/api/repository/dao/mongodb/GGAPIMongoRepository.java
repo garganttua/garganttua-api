@@ -3,21 +3,16 @@ package com.garganttua.api.repository.dao.mongodb;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.bson.Document;
-import org.bson.conversions.Bson;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Shape;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
-import org.springframework.data.mongodb.core.index.GeospatialIndex;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 
-import com.garganttua.api.core.GGAPIDomainable;
 import com.garganttua.api.core.IGGAPIEntity;
 import com.garganttua.api.core.filter.GGAPIGeolocFilter;
 import com.garganttua.api.core.filter.GGAPILiteral;
@@ -26,13 +21,12 @@ import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
-import com.mongodb.client.model.Filters;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends GGAPIDomainable<Entity, Dto> implements IGGAPIDAORepository<Entity, Dto> {
+public class GGAPIMongoRepository implements IGGAPIDAORepository {
 
 	protected MongoTemplate mongo;
 
@@ -44,14 +38,14 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	}
 	
 	@Override
-	public Dto save(Dto object) {
+	public <Dto extends IGGAPIDTOObject<? extends IGGAPIEntity>> Dto save(Dto object) {
 		return this.mongo.save(object);
 	}
 	
 	@Override
-	public List<Dto> find(Pageable pageable, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
+	public List<? extends IGGAPIDTOObject<? extends IGGAPIEntity>> find(GGAPIDynamicDomain domain, Pageable pageable, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc) {
 		
-		List<Dto> results = new ArrayList<>();
+		List<? extends IGGAPIDTOObject<? extends IGGAPIEntity>> results = new ArrayList<>();
 
 		Query query = new Query();
 	
@@ -70,7 +64,7 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		}
 		
 		if (geoloc != null) {
-			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, this.dynamicDomain.geolocalized());
+			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, domain.geolocalized);
 			if( criteria != null)
 				query.addCriteria(criteria);
 		}
@@ -88,9 +82,9 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 			query.with(Sort.by(direction, sort.getFieldName()));
 		}
 		if( filter != null ) {
-			log.debug("		[domain ["+this.dynamicDomain.domain()+"]] Finding objects using "+query.toString());
+			log.debug("		[domain ["+domain.domain+"]] Finding objects using "+query.toString());
 		}
-		results = this.mongo.find(query, this.dtoClass);
+		results = this.mongo.find(query, domain.dtoClass);
 
 		return results;
 	}
@@ -218,12 +212,12 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 	}
 
 	@Override
-	public void delete(Dto object) {
+	public <Dto extends IGGAPIDTOObject<? extends IGGAPIEntity>> void delete(Dto object) {
 		this.mongo.remove(object);
 	}
 
 	@Override
-	public long count(GGAPILiteral filter, GGAPIGeolocFilter geoloc) {
+	public long count(GGAPIDynamicDomain domain, GGAPILiteral filter, GGAPIGeolocFilter geoloc) {
 		
 		Query query = new Query();
 
@@ -242,21 +236,26 @@ public class GGAPIMongoRepository<Entity extends IGGAPIEntity, Dto extends IGGAP
 		}
 		
 		if (geoloc != null) {
-			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, this.dynamicDomain.geolocalized());
+			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, domain.geolocalized);
 			if( criteria != null)
 				query.addCriteria(criteria);
 		}
 		
-		return this.mongo.count(query, this.dtoClass);
+		return this.mongo.count(query, domain.dtoClass);
 	}
 
+//	@Override
+//	public void setDomain(GGAPIDynamicDomain domain) {
+//		
+//		String geolocField = domain.geolocalized;
+//		if( geolocField != null && !geolocField.isEmpty())
+//			this.mongo.indexOps(domain.dtoClass).ensureIndex( new GeospatialIndex(geolocField).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+//	}
+
 	@Override
-	public void setDomain(GGAPIDynamicDomain domain) {
-		super.setDomain(domain);
+	public void init(List<GGAPIDynamicDomain> domains) {
+		// TODO Auto-generated method stub
 		
-		String geolocField = domain.geolocalized();
-		if( geolocField != null && !geolocField.isEmpty())
-			this.mongo.indexOps(this.domainObj.getDtoClass()).ensureIndex( new GeospatialIndex(geolocField).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
 	}
 	
 }

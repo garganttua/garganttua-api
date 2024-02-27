@@ -69,16 +69,4 @@ public class GGAPITokenDTO extends AbstractGGAPIDTOObject<GGAPIToken>{
 		this.signingKeyId = ((GGAPITokenDTO) object).signingKeyId;
 	}
 
-	@Override
-	public IGGAPIDTOFactory<GGAPIToken, GGAPITokenDTO> getFactory() {
-		return new IGGAPIDTOFactory<GGAPIToken, GGAPITokenDTO>() {
-
-			@Override
-			public GGAPITokenDTO newInstance(String tenantId, GGAPIToken entity) {
-				return new GGAPITokenDTO(tenantId, entity);
-			}
-		};
-	}
-
-
 }

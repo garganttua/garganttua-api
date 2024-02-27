@@ -57,13 +57,7 @@ public @interface GGAPIEntity {
 
 	boolean count_authority() default false;
 	
-	String controller() default "";
-	
-	String business() default "";
-	
 	String ws() default "";
-	
-//	String connector() default "";
 
 	String repository() default "";
 	
@@ -98,7 +92,5 @@ public @interface GGAPIEntity {
 	boolean ownedEntity() default false;
 
 	boolean showTenantId() default false;
-
-	GGAPIDuplication duplication() default GGAPIDuplication.fail;
 	
 }

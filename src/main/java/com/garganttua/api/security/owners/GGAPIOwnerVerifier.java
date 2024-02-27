@@ -35,13 +35,13 @@ public class GGAPIOwnerVerifier extends OncePerRequestFilter {
 			 
 			IGGAPIAuthenticator principal = (IGGAPIAuthenticator) auth.getPrincipal();
 			String authentifiedOwnerId = principal.getUuid();
+			String ownerId = caller.getOwnerId();
 
-			String requestedOwnerId = caller.getOwnerId();
-
-			if (!authentifiedOwnerId.equals(requestedOwnerId) && !caller.isSuperOwner()) {
-				throw new IOException("Requested OwnerId [" + requestedOwnerId + "] and authentifed user's OwnerId ["
+			if (!authentifiedOwnerId.equals(ownerId) && !caller.isSuperOwner()) {
+				throw new IOException("Requested OwnerId [" + ownerId + "] and authentifed user's OwnerId ["
 						+ authentifiedOwnerId + "] do not match");
 			}
+			
 		}
 		
 		filterChain.doFilter(request, response);

@@ -35,6 +35,10 @@ public class GGAPIEntityException extends Exception {
 		this.code = code;
 	}
 
+	public GGAPIEntityException(String string, Exception e) {
+		super(string, e);
+	}
+
 	/**
 	 * 
 	 */
@@ -44,6 +48,7 @@ public class GGAPIEntityException extends Exception {
 	public static final int UNKNOWN_ERROR = 3;
 	public static final int CONNECTOR_ERROR = 4;
 	public static final int ENTITY_ALREADY_EXISTS = 5;
+	public static final int INTERNAL_ERROR = 6;
 
 	/**
 	 * 
@@ -53,6 +58,7 @@ public class GGAPIEntityException extends Exception {
 	public HttpStatus getHttpErrorCode() {
 		switch (code) {
 		default:
+			return HttpStatus.INTERNAL_SERVER_ERROR;
 		case GGAPIEntityException.BAD_REQUEST:
 			return HttpStatus.BAD_REQUEST;
 		case GGAPIEntityException.ENTITY_NOT_FOUND:

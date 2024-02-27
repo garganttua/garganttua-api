@@ -50,16 +50,4 @@ public class GGAPIKeyRealmDTO extends AbstractGGAPIDTOObject<GGAPIKeyRealmEntity
 		this.uncipheringKey = ((GGAPIKeyRealmDTO) object).uncipheringKey;
 	}
 
-	@Override
-	public IGGAPIDTOFactory<GGAPIKeyRealmEntity, GGAPIKeyRealmDTO> getFactory() {
-		return new IGGAPIDTOFactory<GGAPIKeyRealmEntity, GGAPIKeyRealmDTO>() {
-			
-			@Override
-			public GGAPIKeyRealmDTO newInstance(String tenantId, GGAPIKeyRealmEntity entity) {
-				return new GGAPIKeyRealmDTO(tenantId, entity);
-			}
-		};
-	}
-
-
 }

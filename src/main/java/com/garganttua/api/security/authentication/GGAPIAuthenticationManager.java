@@ -22,14 +22,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.controller.IGGAPIController;
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.GGAPIEntityException;
 import com.garganttua.api.core.GGAPIEntityHelper;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.IGGAPIEntity;
-import com.garganttua.api.engine.accessors.IGGAPIAuthenticatorAccessor;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.security.GGAPISecurityException;
 import com.garganttua.api.security.authentication.dao.GGAPIDaoAuthenticationProvider;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
@@ -59,12 +59,15 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 	@Value("${com.garganttua.api.superTenantId}")
 	protected String magicTenantId;
 	
-	@Autowired
-	private IGGAPIAuthenticatorAccessor authenticatorAccessor;
-
 	private IGGAPIAuthenticationProvider provider;
+	
+	@Autowired
+	private IGGAPIDynamicDomainsRegistry dDomainsRegistry;
+	
+	@Autowired
+	private IGGAPIEntityFactory factory;
 
-	private IGGAPIController<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> controller;
+	private GGAPIDynamicDomain domain;
 
 	public Optional<PasswordEncoder> getPasswordEncoder() {
 		PasswordEncoder encoder = null;
@@ -80,8 +83,9 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 	
 	@Bean
 	public AuthenticationProvider authenticationProvider() throws GGAPISecurityException {
+		
+		this.domain = dDomainsRegistry.getAuthenticatorDomain();
 		this.provider = null;
-		this.controller = this.authenticatorAccessor.getAuthenticatorController();	
 		
 		switch(this.authenticationType) {
 		default:
@@ -110,7 +114,7 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 
 	private IGGAPIAuthenticationProvider entityAuthenticator() throws GGAPISecurityException {					
 		
-		Class<IGGAPIEntity> authenticator = this.authenticatorAccessor.getAuthenticator();
+		Class<? extends IGGAPIEntity> authenticator = this.domain.entityClass;
 				
 		if( authenticator != null ) {
 			String authoritiesField = GGAPIAuthenticationManager.checkAnnotationIsPresent(authenticator, GGAPIAuthenticatorAuthorities.class, GGAPIAuthenticationManager.getListStringType());
@@ -126,7 +130,7 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 					String passwordField = GGAPIAuthenticationManager.checkAnnotationIsPresent(authenticator, GGAPIAuthenticatorPassword.class,  String.class);
 					
 					provider = new GGAPIDaoAuthenticationProvider();
-					((DaoAuthenticationProvider) provider).setUserDetailsService(new GGAPIEntityLoginPasswordAuthenticationProvider(this.controller, this.magicTenantId, isAccountNonExpiredField, isAccountNonLockedField, isCredentialsNonExpiredField, isEnabledField, loginField, passwordField, authoritiesField));
+					((DaoAuthenticationProvider) provider).setUserDetailsService(new GGAPIEntityLoginPasswordAuthenticationProvider(this.domain, this.factory, this.magicTenantId, isAccountNonExpiredField, isAccountNonLockedField, isCredentialsNonExpiredField, isEnabledField, loginField, passwordField, authoritiesField));
 					((DaoAuthenticationProvider) provider).setPasswordEncoder(this.getPasswordEncoder().get());
 					break;
 			}
@@ -258,11 +262,26 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 
 	@Override
 	public IGGAPIAuthenticator getAuthenticatorFromOwnerId(String tenantId, String ownerId) throws GGAPIEntityException {
+		IGGAPIAuthenticator authenticator = null;
+		
+		switch(this.authenticationType) {
+		default:
+		case dao:
+			authenticator = getAuthenticatorFromEntity(tenantId, ownerId);
+			break;
+		case entity:
+			authenticator = getAuthenticatorFromEntity(tenantId, ownerId);
+			break;
+		}
+
+		return authenticator;
+	}
+
+	private IGGAPIAuthenticator getAuthenticatorFromEntity(String tenantId, String entityUuid) throws GGAPIEntityException {
+		IGGAPIAuthenticator authenticator;
 		IGGAPICaller caller = new GGAPICaller();
-		IGGAPIEntity entity = this.controller.getEntity(caller, ownerId, null);
-		
-		IGGAPIAuthenticator authenticator = this.provider.getAuthenticatorFromEntity(tenantId, entity);
-		
+		IGGAPIEntity entity = this.factory.getEntityFromRepository(this.domain, caller, null, entityUuid);
+		authenticator = ((GGAPIDaoAuthenticationProvider) this.provider).getAuthenticatorFromEntity(tenantId, entity);
 		return authenticator;
 	}
 }

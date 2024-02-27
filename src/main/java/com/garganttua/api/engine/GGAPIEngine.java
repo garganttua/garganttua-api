@@ -3,18 +3,18 @@ package com.garganttua.api.engine;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.engine.accessors.IGGAPIAuthenticatorAccessor;
-import com.garganttua.api.engine.accessors.IGGAPIOwnersControllerAccessor;
-import com.garganttua.api.engine.accessors.IGGAPITenantsControllerAccessor;
+import com.garganttua.api.core.GGAPIEntityFactory;
+import com.garganttua.api.core.IGGAPIEntityFactory;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
-import com.garganttua.api.engine.registries.IGGAPIControllersRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
-import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
 import com.garganttua.api.ws.filters.GGAPIDynamicDomainFilter;
 import com.garganttua.api.ws.filters.GGAPIOwnerFilter;
@@ -26,8 +26,14 @@ import lombok.Getter;
 /**
  * This object to gives access to all objects created by the API Framework
  */
-@Service
+@Service(value = "GGAPIEngine")
 public class GGAPIEngine implements IGGAPIEngine {
+	
+	@Autowired
+	protected ApplicationContext context;
+	
+    @Autowired
+    private Environment environment;
 	
 	@Autowired 
 	@Getter
@@ -43,27 +49,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 	
 	@Autowired
 	@Getter
-	private IGGAPIControllersRegistry controllersRegistry;
-	
-	@Autowired
-	@Getter
 	private IGGAPIServicesRegistry servicesRegistry;
-	
-	@Autowired
-	@Getter
-	private IGGAPIAuthenticatorAccessor authenticatorAccessor;
-	
-	@Autowired
-	@Getter
-	private IGGAPITenantsControllerAccessor tenantsControllerAccessor;
-	
-	@Autowired
-	@Getter
-	private IGGAPIOwnersControllerAccessor ownerControllerAccessor;
-	
-	@Autowired
-	@Getter
-	private Optional<IGGAPISecurity> security;
 	
 	@Autowired
 	private GGAPIDynamicDomainFilter ddomainFilter;
@@ -81,8 +67,13 @@ public class GGAPIEngine implements IGGAPIEngine {
 	@Getter
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 	
+	@Getter
+	private IGGAPIEntityFactory entityFactory = new GGAPIEntityFactory();
+	
 	@PostConstruct
 	private void injectSelfInEngineObjects() {
+		this.entityFactory.setRepositoriesRegistry(this.repositoriesRegistry);
+		
 		IGGAPIEngine self = this;
 		this.daosRegistry.getDaos().forEach(dao -> {
 			dao.setEngine(self);
@@ -91,12 +82,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 		this.repositoriesRegistry.getRepositories().forEach(repo -> {
 			repo.setEngine(self);
 		});
-		
-		this.controllersRegistry.getControllers().forEach(controller -> {
-			controller.setEngine(self);
-			controller.getBusiness().ifPresent(business -> {business.setEngine(self);});
-		});
-		
+
 		this.servicesRegistry.getServices().forEach(service -> {
 			service.setEngine(self);
 			service.getEventPublisher().ifPresent( ePublisher -> {ePublisher.setEngine(self);});
@@ -109,6 +95,29 @@ public class GGAPIEngine implements IGGAPIEngine {
 		this.authoritiesWS.ifPresent( ws -> {
 			ws.setEngine(self);
 		});
+		
+		this.entityFactory.setSpringContext(this.context);
+		this.entityFactory.setEnvironment(this.environment);
+	}
+
+	@Bean
+	private IGGAPIEntityFactory factory() {
+		return this.entityFactory;
+	}
+	
+	@Override
+	public GGAPIDynamicDomain getAuthenticatorDomain() {
+		return this.dynamicDomainsRegistry.getAuthenticatorDomain();
+	}
+
+	@Override
+	public GGAPIDynamicDomain getOwnerDomain() {
+		return this.dynamicDomainsRegistry.getOwnerDomain();
+	}
+
+	@Override
+	public GGAPIDynamicDomain getTenantDomain() {
+		return this.dynamicDomainsRegistry.getTenantDomain();
 	}
 
 }

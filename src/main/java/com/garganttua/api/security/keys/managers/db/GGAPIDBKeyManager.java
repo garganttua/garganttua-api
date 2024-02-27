@@ -2,6 +2,8 @@ package com.garganttua.api.security.keys.managers.db;
 
 import java.util.Optional;
 
+import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.keys.GGAPIKey;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.security.keys.IGGAPIKeyManager;
@@ -15,7 +17,7 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 	private Optional<IGGAPIDBKeyKeeper> keyKeeper;
 
 	@Override
-	public GGAPIKey getKeyForCiphering(String realm) throws GGAPIKeyExpiredException {
+	public GGAPIKey getKeyForCiphering(String realm) throws GGAPIKeyExpiredException, GGAPIEngineException {
 		IGGAPIKeyRealm realm_ = this.keyKeeper.get().getRealm(realm);
 		if( realm_ != null ) {
 			return realm_.getCipheringKey();
@@ -24,7 +26,7 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 	}
 
 	@Override
-	public GGAPIKey getKeyForUnciphering(String realm) throws GGAPIKeyExpiredException {
+	public GGAPIKey getKeyForUnciphering(String realm) throws GGAPIKeyExpiredException, GGAPIEngineException {
 		IGGAPIKeyRealm realm_ = this.keyKeeper.get().getRealm(realm);
 		if( realm_ != null ) {
 			return realm_.getUncipheringKey();
@@ -39,17 +41,17 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 	}
 
 	@Override
-	public void createRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException {
+	public void createRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException, GGAPIEntityException, GGAPIEngineException {
 		this.keyKeeper.get().createRealm(realm);
 	}
 
 	@Override
-	public IGGAPIKeyRealm getRealm(String realm) throws GGAPIKeyExpiredException {
+	public IGGAPIKeyRealm getRealm(String realm) throws GGAPIKeyExpiredException, GGAPIEngineException {
 		return this.keyKeeper.get().getRealm(realm);
 	}
 
 	@Override
-	public void updateRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException {
+	public void updateRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException, GGAPIEntityException, GGAPIEngineException {
 		this.keyKeeper.get().update(realm);
 	}
 

@@ -3,6 +3,7 @@ package com.garganttua.api.ws.filters;
 import java.io.IOException;
 
 import com.garganttua.api.core.GGAPICaller;
+import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
@@ -31,6 +32,10 @@ public class GGAPIFilter implements Filter, IGGAPIEngineObject {
 	
 	protected GGAPICaller getCaller(ServletRequest request) {
 		return (GGAPICaller) request.getAttribute(GGAPICallerManager.CALLER_ATTRIBUTE_NAME);
+	}
+	
+	protected GGAPIDynamicDomain getDomain(ServletRequest request) {
+		return this.engine.getDynamicDomainsRegistry().getDomain((HttpServletRequest) request);
 	}
 
 }

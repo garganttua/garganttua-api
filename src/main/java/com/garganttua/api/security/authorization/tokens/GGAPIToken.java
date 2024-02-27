@@ -2,13 +2,15 @@ package com.garganttua.api.security.authorization.tokens;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.api.core.AbstractGGAPIEntity;
 import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.core.GGAPIEntity;
-import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.IGGAPIEntityWithTenant;
 
 import lombok.Getter;
@@ -102,23 +104,6 @@ public class GGAPIToken extends AbstractGGAPIEntity implements IGGAPIToken, IGGA
 	}
 
 	@Override
-	public IGGAPIEntityFactory<GGAPIToken> getFactory() {
-		return new IGGAPIEntityFactory<GGAPIToken>() {
-
-			@Override
-			public GGAPIToken newInstance() {
-				return new GGAPIToken();
-			}
-
-			@Override
-			public GGAPIToken newInstance(String uuid) {
-				return new GGAPIToken(null, uuid, null, null, null, null, null, null);
-			}
-		};
-	}
-
-
-	@Override
 	@JsonIgnore
 	public String getTenantId() {
 		return this.tenantId;
@@ -130,5 +115,4 @@ public class GGAPIToken extends AbstractGGAPIEntity implements IGGAPIToken, IGGA
 	public void setTenantId(String tenantId) {
 		this.tenantId = tenantId;	
 	}
-
 }
