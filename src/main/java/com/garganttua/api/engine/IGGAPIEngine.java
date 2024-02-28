@@ -1,11 +1,14 @@
 package com.garganttua.api.engine;
 
-import com.garganttua.api.core.IGGAPIEntityFactory;
+import java.util.Optional;
+
+import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
+import com.garganttua.api.security.IGGAPISecurity;
 
 public interface IGGAPIEngine {
 	
@@ -26,4 +29,5 @@ public interface IGGAPIEngine {
 	GGAPIDynamicDomain getOwnerDomain();
 	
 	GGAPIDynamicDomain getTenantDomain();
+	
 }

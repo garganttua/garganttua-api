@@ -3,8 +3,8 @@ package com.garganttua.api.repository.dto;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
-import com.garganttua.api.core.GGAPIEntityException;
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 

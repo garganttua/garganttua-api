@@ -5,9 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.api.core.GGAPICrudOperation;
-import com.garganttua.api.core.IGGAPIEntity;
-import com.garganttua.api.ws.GGAPIErrorObject;
+import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
+import com.garganttua.api.service.GGAPIErrorObject;
+import com.garganttua.api.service.GGAPIServiceMethod;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,7 +19,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GGAPIEvent<Entity extends IGGAPIEntity> {
 
-	private GGAPICrudOperation operation;
+	private GGAPIServiceMethod method;
+	
+	private IGGAPICaller caller;
+	
+	private String endPoint;
 	
 	private Date inDate = new Date();
 	

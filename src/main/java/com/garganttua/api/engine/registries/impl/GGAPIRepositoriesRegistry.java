@@ -9,10 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.GGAPIObjectsHelper;
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
+import com.garganttua.api.engine.GGAPIObjectsHelper;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;

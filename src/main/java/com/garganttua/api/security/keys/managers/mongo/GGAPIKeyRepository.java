@@ -1,7 +1,7 @@
 package com.garganttua.api.security.keys.managers.mongo;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.repository.GGAPIRepository;

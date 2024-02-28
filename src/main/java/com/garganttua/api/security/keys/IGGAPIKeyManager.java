@@ -1,6 +1,6 @@
 package com.garganttua.api.security.keys;
 
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIEngineException;
 
 public interface IGGAPIKeyManager {

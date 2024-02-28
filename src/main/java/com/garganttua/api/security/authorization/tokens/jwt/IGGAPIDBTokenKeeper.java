@@ -1,6 +1,6 @@
 package com.garganttua.api.security.authorization.tokens.jwt;
 
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authorization.tokens.GGAPIToken;
 

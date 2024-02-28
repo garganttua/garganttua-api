@@ -2,26 +2,27 @@ package com.garganttua.api.engine;
 
 import java.util.Arrays;
 
-import com.garganttua.api.core.GGAPICrudAccess;
-import com.garganttua.api.core.GGAPIEntity;
-import com.garganttua.api.core.GGAPIEntityHelper;
-import com.garganttua.api.core.GGAPIObjectsHelper;
-import com.garganttua.api.core.GGAPIOwner;
-import com.garganttua.api.core.GGAPITenant;
-import com.garganttua.api.core.IGGAPIEntity;
-import com.garganttua.api.core.IGGAPIEntityWithTenant;
-import com.garganttua.api.core.IGGAPIHiddenableEntity;
-import com.garganttua.api.core.IGGAPIOwnedEntity;
-import com.garganttua.api.core.IGGAPIOwner;
-import com.garganttua.api.core.IGGAPITenant;
+import com.garganttua.api.core.GGAPIServiceAccess;
+import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityOwner;
+import com.garganttua.api.core.entity.annotations.GGAPITenant;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntityWithTenant;
+import com.garganttua.api.core.entity.interfaces.IGGAPIHiddenableEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIOwnedEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIOwner;
+import com.garganttua.api.core.entity.interfaces.IGGAPITenant;
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.repository.dao.GGAPIDao;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.repository.dto.IGGAPIHiddenableDTO;
 import com.garganttua.api.security.authentication.GGAPIAuthenticator;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @AllArgsConstructor
+@Slf4j
 public class GGAPIDynamicDomain {
 		public String domain;
 		public Class<? extends IGGAPIEntity> entityClass;
@@ -38,13 +39,13 @@ public class GGAPIDynamicDomain {
 		public boolean allow_delete_one;
 		public boolean allow_delete_all; 
 		public boolean allow_count;
-		public GGAPICrudAccess creation_access;
-		public GGAPICrudAccess read_all_access; 
-		public GGAPICrudAccess read_one_access;
-		public GGAPICrudAccess update_one_access;
-		public GGAPICrudAccess delete_one_access;
-		public GGAPICrudAccess delete_all_access;
-		public GGAPICrudAccess count_access;
+		public GGAPIServiceAccess creation_access;
+		public GGAPIServiceAccess read_all_access; 
+		public GGAPIServiceAccess read_one_access;
+		public GGAPIServiceAccess update_one_access;
+		public GGAPIServiceAccess delete_one_access;
+		public GGAPIServiceAccess delete_all_access;
+		public GGAPIServiceAccess count_access;
 		public boolean creation_authority;
 		public boolean read_all_authority;
 		public boolean read_one_authority;
@@ -91,6 +92,9 @@ public class GGAPIDynamicDomain {
 		
 	 @SuppressWarnings("unchecked")
 	 static public GGAPIDynamicDomain fromEntityClass(Class<?> clazz) throws GGAPIEngineException {
+		 if( log.isDebugEnabled() ) {
+			 log.debug("Getting dynamic domain from class "+clazz.getName());
+		 }
 		Class<IGGAPIDTOObject<IGGAPIEntity>> dtoClass = null;
 		GGAPIObjectsHelper.isImplementingInterface(clazz, IGGAPIEntity.class);
 		
@@ -117,13 +121,13 @@ public class GGAPIDynamicDomain {
 		boolean allow_delete_all = entityAnnotation.allow_delete_all();
 		boolean allow_count = entityAnnotation.allow_count();
 
-		GGAPICrudAccess creation_access = entityAnnotation.creation_access();
-		GGAPICrudAccess read_all_access = entityAnnotation.read_all_access();
-		GGAPICrudAccess read_one_access = entityAnnotation.read_one_access();
-		GGAPICrudAccess update_one_access = entityAnnotation.update_one_access();
-		GGAPICrudAccess delete_one_access = entityAnnotation.delete_one_access();
-		GGAPICrudAccess delete_all_access = entityAnnotation.delete_all_access();
-		GGAPICrudAccess count_access = entityAnnotation.count_access();
+		GGAPIServiceAccess creation_access = entityAnnotation.creation_access();
+		GGAPIServiceAccess read_all_access = entityAnnotation.read_all_access();
+		GGAPIServiceAccess read_one_access = entityAnnotation.read_one_access();
+		GGAPIServiceAccess update_one_access = entityAnnotation.update_one_access();
+		GGAPIServiceAccess delete_one_access = entityAnnotation.delete_one_access();
+		GGAPIServiceAccess delete_all_access = entityAnnotation.delete_all_access();
+		GGAPIServiceAccess count_access = entityAnnotation.count_access();
 
 		boolean creation_authority = entityAnnotation.creation_authority();
 		boolean read_all_authority = entityAnnotation.read_all_authority();
@@ -155,7 +159,7 @@ public class GGAPIDynamicDomain {
 		try {
 			dtoClass.getConstructor(String.class, entityClass);
 		} catch (NoSuchMethodException | SecurityException e) {
-			throw new GGAPIEngineException("The DTO Class must delaclare a constructor with parameters (String tenantId, Entity entity)", e);
+			throw new GGAPIEngineException("The DTO Class "+dtoClass.getName()+" must declare a constructor with parameters (java.lang.String tenantId, "+entityClass+" entity)", e);
 		}
 		
 		if (clazz.isAnnotationPresent(GGAPITenant.class) ) {
@@ -163,7 +167,7 @@ public class GGAPIDynamicDomain {
 			tenant = true;
 		}
 
-		if (clazz.isAnnotationPresent(GGAPIOwner.class) ) {
+		if (clazz.isAnnotationPresent(GGAPIEntityOwner.class) ) {
 			GGAPIObjectsHelper.isImplementingInterface(clazz, IGGAPIOwner.class);
 			owner = true;
 		}

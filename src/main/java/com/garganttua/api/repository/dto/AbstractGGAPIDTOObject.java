@@ -3,13 +3,11 @@
  *******************************************************************************/
 package com.garganttua.api.repository.dto;
 
-import javax.swing.text.html.parser.Entity;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 
 import lombok.Data;
 
@@ -19,18 +17,20 @@ import lombok.Data;
  *
  * @param <Entity>
  */
-@SuppressWarnings("hiding")
 @Data
-public abstract class AbstractGGAPIDTOObject<Entity extends IGGAPIEntity> implements IGGAPIDTOObject<Entity> {
+public abstract class AbstractGGAPIDTOObject<Entity extends IGGAPIEntity> /*implements IGGAPIDTOObject<Entity> */{
 	
 	@Id
 	@Indexed(unique=true)
+	@GGAPIDtoUuid
 	protected String uuid;
 	
 	@Field
+	@GGAPIDtoId
 	protected String id;
 	
 	@Field
+	@GGAPIDtoTenantId
 	protected String tenantId;
 	
 	protected Entity convert(Entity entity) {

@@ -1,8 +1,7 @@
 package com.garganttua.api.security.authorization;
 
-import org.springframework.http.HttpMethod;
-
-import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIServiceAccess;
+import com.garganttua.api.service.GGAPIServiceMethod;
 
 public interface IGGAPIAccessRule {
 	
@@ -10,9 +9,9 @@ public interface IGGAPIAccessRule {
 	
 	String getAuthority();
 	
-	HttpMethod getHttpMethod();
+	GGAPIServiceMethod getMethod();
 	
 	String toString();
 	
-	GGAPICrudAccess getAccess();
+	GGAPIServiceAccess getAccess();
 }

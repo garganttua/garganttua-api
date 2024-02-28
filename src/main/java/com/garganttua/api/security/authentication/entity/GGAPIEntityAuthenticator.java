@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
 
 import lombok.AllArgsConstructor;

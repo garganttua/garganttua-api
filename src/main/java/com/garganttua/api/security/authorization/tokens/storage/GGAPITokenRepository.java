@@ -3,7 +3,7 @@ package com.garganttua.api.security.authorization.tokens.storage;
 import java.util.List;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;

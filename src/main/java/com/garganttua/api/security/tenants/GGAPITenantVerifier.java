@@ -8,11 +8,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.garganttua.api.core.GGAPICrudAccess;
+import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
-import com.garganttua.api.ws.filters.GGAPICallerManager;
+import com.garganttua.api.service.rest.filters.GGAPICallerManager;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -30,7 +30,7 @@ public class GGAPITenantVerifier extends OncePerRequestFilter {
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerManager.CALLER_ATTRIBUTE_NAME);
 		IGGAPIAccessRule rule = caller.getAccessRule();
 
-		if ( rule != null && rule.getAccess() == GGAPICrudAccess.tenant ) {
+		if ( rule != null && rule.getAccess() == GGAPIServiceAccess.tenant ) {
 			Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 			 
 			IGGAPIAuthenticator principal = (IGGAPIAuthenticator) auth.getPrincipal();

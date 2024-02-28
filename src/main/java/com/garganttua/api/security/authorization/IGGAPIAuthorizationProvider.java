@@ -2,7 +2,7 @@ package com.garganttua.api.security.authorization;
 
 import org.springframework.security.core.Authentication;
 
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.security.authorization.tokens.jwt.GGAPITokenExpired;

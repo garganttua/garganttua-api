@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.security.core.Authentication;
 
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 
 public interface IGGAPIAuthenticator {
 	

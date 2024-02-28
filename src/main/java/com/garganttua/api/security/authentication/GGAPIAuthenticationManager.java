@@ -23,11 +23,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.GGAPIEntityException;
-import com.garganttua.api.core.GGAPIEntityHelper;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.IGGAPIEntity;
-import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.security.GGAPISecurityException;
@@ -280,7 +281,7 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 	private IGGAPIAuthenticator getAuthenticatorFromEntity(String tenantId, String entityUuid) throws GGAPIEntityException {
 		IGGAPIAuthenticator authenticator;
 		IGGAPICaller caller = new GGAPICaller();
-		IGGAPIEntity entity = this.factory.getEntityFromRepository(this.domain, caller, null, entityUuid);
+		IGGAPIEntity entity = this.factory.getEntityFromRepository(this.domain, caller, null, GGAPIEntityIdentifier.UUID, entityUuid);
 		authenticator = ((GGAPIDaoAuthenticationProvider) this.provider).getAuthenticatorFromEntity(tenantId, entity);
 		return authenticator;
 	}

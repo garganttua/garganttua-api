@@ -8,17 +8,18 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.GGAPIEntityFactory;
-import com.garganttua.api.core.IGGAPIEntityFactory;
+import com.garganttua.api.core.entity.factory.GGAPIEntityFactory;
+import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
+import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
-import com.garganttua.api.ws.filters.GGAPIDynamicDomainFilter;
-import com.garganttua.api.ws.filters.GGAPIOwnerFilter;
-import com.garganttua.api.ws.filters.GGAPITenantFilter;
+import com.garganttua.api.service.rest.filters.GGAPIDynamicDomainFilter;
+import com.garganttua.api.service.rest.filters.GGAPIOwnerFilter;
+import com.garganttua.api.service.rest.filters.GGAPITenantFilter;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;

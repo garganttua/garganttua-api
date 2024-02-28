@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Pageable;
 
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.core.filter.GGAPIGeolocFilter;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.sort.GGAPISort;

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICrudOperation;
@@ -15,12 +14,12 @@ import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
 import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
-import com.garganttua.api.ws.GGAPICustomServiceBuilder;
-import com.garganttua.api.ws.IGGAPICustomService;
-import com.garganttua.api.ws.IGGAPIRestService;
+import com.garganttua.api.service.GGAPICustomServiceBuilder;
+import com.garganttua.api.service.GGAPIServiceMethod;
+import com.garganttua.api.service.IGGAPICustomService;
+import com.garganttua.api.service.IGGAPIService;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,35 +47,10 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 	}
 	
 	@Override
-	public IGGAPIAccessRule getAccessRule(HttpServletRequest request) {
-		String methodStr = request.getMethod();
-
-		HttpMethod method = null;
-		String uri = request.getRequestURI();
-
-		switch (methodStr) {
-		case "GET":
-			method = HttpMethod.GET;
-			break;
-		case "POST":
-			method = HttpMethod.POST;
-			break;
-		case "PATCH":
-			method = HttpMethod.PATCH;
-			break;
-		case "DELETE":
-			method = HttpMethod.DELETE;
-			break;
-		}
-		String uriTotest = uri;
-		String[] uriParts = uri.split("/");
-		
-		if (uriParts.length > 2) {
-			uriTotest = "/" + uriParts[1] + "/*";
-		}
+	public IGGAPIAccessRule getAccessRule(GGAPIServiceMethod method, String endpoint) {
 
 		for (IGGAPIAccessRule auth : this.accessRules) {
-			if (auth.getEndpoint().equals(uriTotest) && auth.getHttpMethod() == method) {
+			if (auth.getEndpoint().equals(endpoint) && auth.getMethod() == method) {
 				return auth;
 			}
 		}
@@ -84,7 +58,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 		return null;
 	}
 	
-	private List<IGGAPIAccessRule> createAccessRules(IGGAPIRestService<?,?> service) {
+	private List<IGGAPIAccessRule> createAccessRules(IGGAPIService<?,?> service) {
 		GGAPIDynamicDomain domain = service.getDynamicDomain();
 		if( domain.allow_read_all )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase(),
@@ -92,7 +66,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.read_all)
 							: null,
-					HttpMethod.GET, domain.read_all_access));
+							GGAPIServiceMethod.READ, domain.read_all_access));
 		
 		if( domain.allow_creation )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase(),
@@ -100,7 +74,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.create_one)
 							: null,
-					HttpMethod.POST, domain.creation_access));
+							GGAPIServiceMethod.CREATE, domain.creation_access));
 		
 		if( domain.allow_delete_all )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase(),
@@ -108,7 +82,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.delete_all)
 							: null,
-					HttpMethod.DELETE, domain.delete_all_access));
+							GGAPIServiceMethod.DELETE, domain.delete_all_access));
 		
 		if( domain.allow_count )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase() + "/count",
@@ -116,7 +90,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.count)
 							: null,
-					HttpMethod.GET, domain.count_access));
+							GGAPIServiceMethod.READ, domain.count_access));
 		
 		if( domain.allow_read_one )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase() + "/*",
@@ -124,7 +98,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.read_one)
 							: null,
-					HttpMethod.GET, domain.read_one_access));
+							GGAPIServiceMethod.READ, domain.read_one_access));
 		
 		if( domain.allow_update_one )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase() + "/*",
@@ -132,7 +106,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.update_one)
 							: null,
-					HttpMethod.PATCH, domain.update_one_access));
+							GGAPIServiceMethod.PARTIAL_UPDATE, domain.update_one_access));
 		
 		if( domain.allow_delete_one )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase() + "/*",
@@ -140,7 +114,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							? BasicGGAPIAccessRule.getAuthority(domain.domain.toLowerCase(),
 									GGAPICrudOperation.delete_one)
 							: null,
-					HttpMethod.DELETE, domain.delete_one_access));
+							GGAPIServiceMethod.DELETE, domain.delete_one_access));
 		
 		List<IGGAPICustomService> customServices = GGAPICustomServiceBuilder.buildGGAPIServices(service.getClass());
 		customServices.forEach( cService -> {

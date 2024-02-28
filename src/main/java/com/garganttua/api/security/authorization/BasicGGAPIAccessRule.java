@@ -1,9 +1,8 @@
 package com.garganttua.api.security.authorization;
 
-import org.springframework.http.HttpMethod;
-
-import com.garganttua.api.core.GGAPICrudAccess;
 import com.garganttua.api.core.GGAPICrudOperation;
+import com.garganttua.api.core.GGAPIServiceAccess;
+import com.garganttua.api.service.GGAPIServiceMethod;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,12 +13,12 @@ public class BasicGGAPIAccessRule implements IGGAPIAccessRule {
 
 	private String endpoint;
 	private String authority; 
-	private HttpMethod httpMethod;
-	private GGAPICrudAccess access;
+	private GGAPIServiceMethod method;
+	private GGAPIServiceAccess access;
 	
 	@Override
 	public String toString() {	
-		return "[endpoint ["+this.endpoint+"] access ["+this.access+"] authorization ["+this.authority+"] httpMethod ["+this.httpMethod+"]]";
+		return "[endpoint ["+this.endpoint+"] access ["+this.access+"] authorization ["+this.authority+"] method ["+this.method+"]]";
 	}
 	
 	public static String getAuthority(String domain, GGAPICrudOperation operation) {

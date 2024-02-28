@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,8 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.core.GGAPICrudAccess;
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.GGAPIServiceAccess;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.GGAPIAuthenticationMode;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationRequest;
@@ -30,7 +29,8 @@ import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
-import com.garganttua.api.ws.GGAPIErrorObject;
+import com.garganttua.api.service.GGAPIErrorObject;
+import com.garganttua.api.service.GGAPIServiceMethod;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -95,13 +95,6 @@ public class GGAPIAuthenticationRestService {
 			break;
 		}
 		return authentication;
-	}
-	
-	public List<IGGAPIAccessRule> getCustomAuthorizations() {
-		List<IGGAPIAccessRule> auths = new ArrayList<IGGAPIAccessRule>();
-		auths.add(new BasicGGAPIAccessRule("/authenticate", "authenticate", HttpMethod.POST, GGAPICrudAccess.anonymous));
-
-		return auths;
 	}
 
 }

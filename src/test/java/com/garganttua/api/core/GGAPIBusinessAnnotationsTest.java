@@ -8,9 +8,13 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 
-import com.garganttua.api.core.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurity;
@@ -29,30 +33,7 @@ public class GGAPIBusinessAnnotationsTest {
 				
 			}
 
-			@Override
-			public String getId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setId(String id) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public String getUuid() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setUuid(String uuid) {
-				// TODO Auto-generated method stub
-				
-			}
-
+			
 			@Override
 			public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security)
 					throws GGAPIEntityException, GGAPIEngineException {
@@ -102,8 +83,7 @@ public class GGAPIBusinessAnnotationsTest {
 			 GGAPIBusinessAnnotations.hasAnnotation(testC.class, GGAPIEntityAfterGet.class);
 		 });
 		 
-		 assertEquals(6, exception.getCode());
-		 assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpErrorCode());
+		 assertEquals(GGAPIEntityException.ENTITY_DEFINITION_ERROR, exception.getCode());
 	}
 	
 	@Test()
@@ -112,31 +92,7 @@ public class GGAPIBusinessAnnotationsTest {
 		class testC  implements IGGAPIEntity {
 			
 			@GGAPIEntityAfterGet
-			private void test( int i, long a) {
-				
-			}
-
-			@Override
-			public String getId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setId(String id) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public String getUuid() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setUuid(String uuid) {
-				// TODO Auto-generated method stub
+			private void test( int i, long a ) {
 				
 			}
 
@@ -189,9 +145,8 @@ public class GGAPIBusinessAnnotationsTest {
 			 GGAPIBusinessAnnotations.hasAnnotation(testC.class, GGAPIEntityAfterGet.class);
 		 });
 		 
-		 assertEquals(6, exception.getCode());
-		 assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpErrorCode());	
-	}
+		 assertEquals(GGAPIEntityException.ENTITY_DEFINITION_ERROR, exception.getCode(), exception.getCode());
+			}
 	
 	@Test()
 	public void testAnnotatedMethodParameter2() {
@@ -203,29 +158,6 @@ public class GGAPIBusinessAnnotationsTest {
 				
 			}
 
-			@Override
-			public String getId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setId(String id) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public String getUuid() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setUuid(String uuid) {
-				// TODO Auto-generated method stub
-				
-			}
 
 			@Override
 			public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security)
@@ -276,8 +208,7 @@ public class GGAPIBusinessAnnotationsTest {
 			 GGAPIBusinessAnnotations.hasAnnotation(testC.class, GGAPIEntityAfterGet.class);
 		 });
 		 
-		 assertEquals(6, exception.getCode());
-		 assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getHttpErrorCode());
+		 assertEquals(GGAPIEntityException.ENTITY_DEFINITION_ERROR, exception.getCode());
 
 	}
 	
@@ -291,29 +222,6 @@ public class GGAPIBusinessAnnotationsTest {
 				
 			}
 
-			@Override
-			public String getId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setId(String id) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public String getUuid() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setUuid(String uuid) {
-				// TODO Auto-generated method stub
-				
-			}
 
 			@Override
 			public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security)
@@ -373,30 +281,6 @@ public class GGAPIBusinessAnnotationsTest {
 			@GGAPIEntityAfterGet
 			private void test( IGGAPICaller caller, Map<String, String> map ) {
 				i++;
-			}
-
-			@Override
-			public String getId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setId(String id) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public String getUuid() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setUuid(String uuid) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
@@ -467,29 +351,6 @@ public class GGAPIBusinessAnnotationsTest {
 				i++;
 			}
 
-			@Override
-			public String getId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setId(String id) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public String getUuid() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setUuid(String uuid) {
-				// TODO Auto-generated method stub
-				
-			}
 
 			@Override
 			public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security)

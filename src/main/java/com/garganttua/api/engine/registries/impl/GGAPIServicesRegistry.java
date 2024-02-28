@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -16,23 +17,24 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.pattern.PathPatternParser;
 
 import com.garganttua.api.core.GGAPICrudOperation;
-import com.garganttua.api.core.GGAPIEntity;
-import com.garganttua.api.core.GGAPIObjectsHelper;
 import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
+import com.garganttua.api.engine.GGAPIObjectsHelper;
 import com.garganttua.api.engine.GGAPIOpenAPIHelper;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
-import com.garganttua.api.ws.GGAPICustomServiceBuilder;
-import com.garganttua.api.ws.GGAPIRestService;
-import com.garganttua.api.ws.IGGAPICustomService;
-import com.garganttua.api.ws.IGGAPIRestService;
+import com.garganttua.api.service.GGAPICustomServiceBuilder;
+import com.garganttua.api.service.IGGAPICustomService;
+import com.garganttua.api.service.IGGAPIService;
+import com.garganttua.api.service.rest.GGAPIRestService;
+import com.garganttua.api.service.rest.GGAPIServiceMethodToHttpMethodBinder;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -60,20 +62,20 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	
 	private GGAPIOpenAPIHelper openApiHelper = new GGAPIOpenAPIHelper();
 
-	private Map<String, IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices = new HashMap<String, IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
+	private Map<String, IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices = new HashMap<String, IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
 
 	@Autowired
 	private IGGAPIDynamicDomainsRegistry dynamicDomains;
 
 	@Override
-	public IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getService(
+	public IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getService(
 			String name) {
 		return this.restServices.get(name);
 	}
 
 	@Override
-	public List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> getServices() {
-		List<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> services = new ArrayList<IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
+	public List<IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> getServices() {
+		List<IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> services = new ArrayList<IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
 		this.restServices.forEach((k, v) -> {
 			services.add(v);
 		});
@@ -89,9 +91,9 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 
 			String ws__ = ddomain.ws;
 
-			IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service;
+			IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service;
 			if (ws__ != null && !ws__.isEmpty()) {
-				service = helper.getObjectFromConfiguration(ws__, IGGAPIRestService.class);
+				service = helper.getObjectFromConfiguration(ws__, IGGAPIService.class);
 			} else {
 				service = new GGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>();
 			}
@@ -126,7 +128,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void setOpenApiDocumentation(IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, GGAPIDynamicDomain ddomain, String baseUrl, List<IGGAPICustomService> customServices) throws IOException {
+	private void setOpenApiDocumentation(IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, GGAPIDynamicDomain ddomain, String baseUrl, List<IGGAPICustomService> customServices) throws IOException {
 		if( this.openApi.isPresent() ) {
 		
 			Class<? extends IGGAPIEntity> entityClass = ddomain.entityClass;
@@ -183,7 +185,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	}
 
 	private void createRequestMappings(GGAPIDynamicDomain ddomain,
-			IGGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, String baseUrl, List<IGGAPICustomService> customServices)
+			IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, String baseUrl, List<IGGAPICustomService> customServices)
 			throws NoSuchMethodException {
 		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
 		options.setPatternParser(new PathPatternParser());
@@ -234,8 +236,9 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		}
 
 		for (IGGAPICustomService cservice : customServices) {
-			this.requestMappingHandlerMapping.registerMapping(
-				RequestMappingInfo.paths(cservice.getAccessRule().getEndpoint()).methods(RequestMethod.resolve(cservice.getAccessRule().getHttpMethod())).options(options).build(), 
+			HttpMethod method = GGAPIServiceMethodToHttpMethodBinder.fromServiceMethod(cservice.getAccessRule().getMethod());
+			this.requestMappingHandlerMapping.registerMapping(	
+				RequestMappingInfo.paths(cservice.getAccessRule().getEndpoint()).methods(RequestMethod.resolve(method)).options(options).build(), 
 				service, 
 				service.getClass().getMethod(cservice.getMethodName(), cservice.getParameters())
 			);

@@ -6,7 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.garganttua.api.core.GGAPIEntityException;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticator;

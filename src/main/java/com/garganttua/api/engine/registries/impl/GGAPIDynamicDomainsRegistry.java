@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.GGAPIEntity;
 import com.garganttua.api.core.IGGAPIDomain;
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
@@ -46,7 +46,7 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 	@Getter
 	private List<GGAPIDynamicDomain> dynamicDomains;
 
-	private boolean onwerFound;
+	private boolean onwerFound = false;
 	
 	@Bean 
 	public List<IGGAPIDomain<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>> domains(){
@@ -102,6 +102,11 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 			for (Class<?> clazz : entities__) {
 				
 				GGAPIDynamicDomain dynamicDomain = GGAPIDynamicDomain.fromEntityClass(clazz);
+				
+				if( dynamicDomain == null ) {
+					log.warn("Found entity "+clazz.getName()+" with annotation @GGAPIEntity, but unable to retrieve the corespounding dynamic domain. Ignoring");
+					continue;
+				}
 
 				if (dynamicDomain.tenantEntity && !tenantFound) {
 					tenantFound = true;
@@ -119,10 +124,8 @@ public class GGAPIDynamicDomainsRegistry implements IGGAPIDynamicDomainsRegistry
 				
 				if( !this.onwerFound && dynamicDomain.ownerEntity) {
 					this.onwerFound = true;
-				} else {
-					if( this.onwerFound ) {
-						throw new GGAPIEngineException("More than one owner entity found");
-					}
+				} else if( this.onwerFound && dynamicDomain.ownerEntity ) {
+					throw new GGAPIEngineException("More than one owner entity found");
 				}
 				
 				if( !this.securityEnabled.equals("enabled") && dynamicDomain.domain.equals(GGAPIKeyRealmEntity.domain) ) {

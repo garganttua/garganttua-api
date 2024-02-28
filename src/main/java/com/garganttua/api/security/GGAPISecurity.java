@@ -6,14 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.GGAPICrudAccess;
-import com.garganttua.api.core.IGGAPIEntity;
+import com.garganttua.api.core.GGAPIServiceAccess;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
@@ -24,10 +25,11 @@ import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
 import com.garganttua.api.security.owners.GGAPIOwnerVerifier;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
-import com.garganttua.api.ws.IGGAPIRestService;
-import com.garganttua.api.ws.filters.GGAPIDynamicDomainFilter;
-import com.garganttua.api.ws.filters.GGAPIOwnerFilter;
-import com.garganttua.api.ws.filters.GGAPITenantFilter;
+import com.garganttua.api.service.IGGAPIService;
+import com.garganttua.api.service.rest.GGAPIServiceMethodToHttpMethodBinder;
+import com.garganttua.api.service.rest.filters.GGAPIDynamicDomainFilter;
+import com.garganttua.api.service.rest.filters.GGAPIOwnerFilter;
+import com.garganttua.api.service.rest.filters.GGAPITenantFilter;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
@@ -89,7 +91,7 @@ public class GGAPISecurity implements IGGAPISecurity {
 	private void init() {
 		GGAPIDynamicDomain domain = this.dDomainsRegistry.getAuthenticatorDomain();
 		if( domain != null ) {
-			IGGAPIRestService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> s = this.servicesRegistry.getService(domain.domain);
+			IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> s = this.servicesRegistry.getService(domain.domain);
 			if( s != null ) {
 				s.setSecurity(Optional.of(this));
 			}
@@ -117,15 +119,17 @@ public class GGAPISecurity implements IGGAPISecurity {
 
 				log.info("Applying security configuration {}", a);
 				
-				if( a.getAccess() == GGAPICrudAccess.authenticated || a.getAccess() == GGAPICrudAccess.tenant || a.getAccess() == GGAPICrudAccess.owner ) {
+				HttpMethod method = GGAPIServiceMethodToHttpMethodBinder.fromServiceMethod(a.getMethod());
+				
+				if( a.getAccess() == GGAPIServiceAccess.authenticated || a.getAccess() == GGAPIServiceAccess.tenant || a.getAccess() == GGAPIServiceAccess.owner ) {
 					if( a.getAuthority() != null && !a.getAuthority().isEmpty() ) {
-						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).hasAnyAuthority(a.getAuthority()).and().authorizeHttpRequests();
+						http.authorizeHttpRequests().requestMatchers(method, a.getEndpoint()).hasAnyAuthority(a.getAuthority()).and().authorizeHttpRequests();
 					} else {
-						http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).authenticated().and().authorizeHttpRequests();
+						http.authorizeHttpRequests().requestMatchers(method, a.getEndpoint()).authenticated().and().authorizeHttpRequests();
 					}
 
-				} else if( a.getAccess() == GGAPICrudAccess.anonymous){
-					http.authorizeHttpRequests().requestMatchers(a.getHttpMethod(), a.getEndpoint()).permitAll().and().authorizeHttpRequests();
+				} else if( a.getAccess() == GGAPIServiceAccess.anonymous){
+					http.authorizeHttpRequests().requestMatchers(method, a.getEndpoint()).permitAll().and().authorizeHttpRequests();
 				}
 			}
 

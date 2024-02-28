@@ -2,16 +2,13 @@ package com.garganttua.api.security.authorization.tokens;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.garganttua.api.core.AbstractGGAPIEntity;
-import com.garganttua.api.core.GGAPICrudAccess;
-import com.garganttua.api.core.GGAPIEntity;
-import com.garganttua.api.core.GGAPIEntityException;
-import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.IGGAPIEntityWithTenant;
+import com.garganttua.api.core.GGAPIServiceAccess;
+import com.garganttua.api.core.entity.AbstractGGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.core.entity.interfaces.IGGAPIEntityWithTenant;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,11 +24,11 @@ import lombok.NoArgsConstructor;
 		allow_delete_all = true,
 		allow_delete_one = true,
 		allow_count = true,
-		read_one_access = GGAPICrudAccess.tenant,
-		read_all_access = GGAPICrudAccess.tenant,
-		delete_all_access = GGAPICrudAccess.tenant,
-		delete_one_access = GGAPICrudAccess.tenant,
-		count_access = GGAPICrudAccess.tenant,
+		read_one_access = GGAPIServiceAccess.tenant,
+		read_all_access = GGAPIServiceAccess.tenant,
+		delete_all_access = GGAPIServiceAccess.tenant,
+		delete_one_access = GGAPIServiceAccess.tenant,
+		count_access = GGAPIServiceAccess.tenant,
 		read_all_authority = true,
 		read_one_authority = true,
 		delete_all_authority = true, 
