@@ -8,7 +8,7 @@ import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 
 public class GGAPIEntityHelper {
 	
-	public static <T extends IGGAPIEntity> String getDomain(Class<T> entity) {
+	public static String getDomain(Class<?> entity) {
 		
 		String domain;
 		try {

@@ -1,4 +1,4 @@
-package com.garganttua.api.core;
+package com.garganttua.api.core.tools;
 
 import java.lang.reflect.Field;
 
@@ -10,11 +10,11 @@ public class GGAPIFieldAccessManager implements AutoCloseable {
 	public GGAPIFieldAccessManager(Field field) {
 		this.field = field;
 		this.originalAccessibility = field.isAccessible();
-		field.setAccessible(true);
+		this.field.setAccessible(true);
 	}
 
 	@Override
 	public void close() {
-		field.setAccessible(originalAccessibility);
+		this.field.setAccessible(originalAccessibility);
 	}
 }

@@ -2,7 +2,6 @@ package com.garganttua.api.core.entity;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,16 +22,19 @@ import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurity;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-public class AbstractGGAPIEntity {
+public class GenericGGAPIEntity {
 	
 	@JsonProperty
 	@GGAPIEntityUuid
+	@Setter
 	protected String uuid;
 	
 	@JsonProperty
 	@GGAPIEntityId
+	@Setter
 	protected String id;
 	
 	@JsonIgnore
@@ -40,24 +42,15 @@ public class AbstractGGAPIEntity {
 
 	@JsonIgnore
 	@GGAPIEntitySaveMethodProvider
-	transient protected IGGAPIEntitySaveMethod saveMethod;
+	protected IGGAPIEntitySaveMethod saveMethod;
 
 	@JsonIgnore
 	@GGAPIEntityDeleteMethodProvider
-	transient protected IGGAPIEntityDeleteMethod deleteMethod;
+	protected IGGAPIEntityDeleteMethod deleteMethod;
 	
 	@JsonIgnore
 	@GGAPIEntityRepository
-	transient protected IGGAPIRepository repository;
-
-	public AbstractGGAPIEntity(String uuid, String id) {
-		this.uuid = uuid;
-		this.id = id;
-	}
-	
-	public AbstractGGAPIEntity() {
-		this.uuid = UUID.randomUUID().toString();	
-	}
+	protected IGGAPIRepository repository;
 
 	@GGAPIEntitySaveMethod
 	public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIEntityException, GGAPIEngineException {

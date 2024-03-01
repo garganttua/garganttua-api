@@ -16,7 +16,6 @@ import org.springframework.core.env.Environment;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.core.GGAPIFieldAccessManager;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations;
 import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
@@ -27,6 +26,7 @@ import com.garganttua.api.core.entity.methods.GGAPIEntitySaveMethod;
 import com.garganttua.api.core.filter.GGAPIGeolocFilter;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.sort.GGAPISort;
+import com.garganttua.api.core.tools.GGAPIFieldAccessManager;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
@@ -55,7 +55,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends IGGAPIEntity> T getEntityFromJson(GGAPIDynamicDomain domain, Map<String, String> customParameters, byte[] json) throws GGAPIEntityException, GGAPIEngineException {
+	public <T> T getEntityFromJson(GGAPIDynamicDomain domain, Map<String, String> customParameters, byte[] json) throws GGAPIEntityException, GGAPIEngineException {
 		if( domain == null ) {
 			throw new GGAPIEntityException("Domain is null");
 		}
@@ -73,7 +73,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory {
 	}
 	
 	@Override
-	public <T extends IGGAPIEntity> T prepareNewEntity(Map<String, String> customParameters, T entity) throws GGAPIEntityException, GGAPIEngineException {
+	public <T> T prepareNewEntity(Map<String, String> customParameters, T entity) throws GGAPIEntityException, GGAPIEngineException {
 		if( entity == null ) {
 			throw new GGAPIEntityException("Uuid is null");
 		}
@@ -89,7 +89,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory {
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends IGGAPIEntity> T getEntityFromRepository(GGAPIDynamicDomain domain, IGGAPICaller caller, Map<String, String> customParameters, GGAPIEntityIdentifier identifier , String uuid) throws GGAPIEntityException {
+	public <T> T getEntityFromRepository(GGAPIDynamicDomain domain, IGGAPICaller caller, Map<String, String> customParameters, GGAPIEntityIdentifier identifier , String uuid) throws GGAPIEntityException {
 		if( domain == null ) {
 			throw new GGAPIEntityException("Domain is null");
 		}
@@ -127,7 +127,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory {
 	}
 
 	@Override
-	public <T extends IGGAPIEntity> List<T> getEntitiesFromRepository(GGAPIDynamicDomain domain, IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc, Map<String, String> customParameters) throws GGAPIEntityException{
+	public <T> List<T> getEntitiesFromRepository(GGAPIDynamicDomain domain, IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc, Map<String, String> customParameters) throws GGAPIEntityException{
 		if( domain == null ) {
 			throw new GGAPIEntityException("Domain is null");
 		}
@@ -147,7 +147,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory {
 		return entities;
 	}
 
-	private <T extends IGGAPIEntity> void executeAfterGetProcedure(GGAPIDynamicDomain domain, IGGAPICaller caller, Map<String, String> customParameters, T entity, IGGAPIRepository repository) throws GGAPIEntityException {
+	private <T> void executeAfterGetProcedure(GGAPIDynamicDomain domain, IGGAPICaller caller, Map<String, String> customParameters, T entity, IGGAPIRepository repository) throws GGAPIEntityException {
 		this.setEntityMethodsAndFields(repository, customParameters, domain, entity);
 		try {
 			GGAPIBusinessAnnotations.hasAnnotationAndInvoke(entity.getClass(), GGAPIEntityAfterGet.class, entity, caller, customParameters);
@@ -160,7 +160,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory {
 		}
 	}
 	
-	private <T extends IGGAPIEntity> void setEntityMethodsAndFields(IGGAPIRepository repository, Map<String, String> customParameters, GGAPIDynamicDomain domain, T entity) throws GGAPIEntityException {
+	private <T> void setEntityMethodsAndFields(IGGAPIRepository repository, Map<String, String> customParameters, GGAPIDynamicDomain domain, T entity) throws GGAPIEntityException {
 		entity.setRepository(repository);
 		entity.setSaveMethod(new GGAPIEntitySaveMethod());
 		entity.setDeleteMethod(new GGAPIEntityDeleteMethod());

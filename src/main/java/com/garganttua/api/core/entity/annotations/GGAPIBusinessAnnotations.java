@@ -11,10 +11,9 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
 
-import com.garganttua.api.core.GGAPIMethodAccessManager;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
+import com.garganttua.api.core.tools.GGAPIMethodAccessManager;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -87,7 +86,7 @@ public class GGAPIBusinessAnnotations {
 		return false;
 	}
 
-	public static void hasAnnotationAndInvoke(Class<? extends IGGAPIEntity> type, Class<?> searchAnnotation, IGGAPIEntity entity, IGGAPICaller caller, Map<String, String> map) throws GGAPIEntityException {
+	public static void hasAnnotationAndInvoke(Class<?> type, Class<?> searchAnnotation, Object entity, IGGAPICaller caller, Map<String, String> map) throws GGAPIEntityException {
 		Method method = hasAnnotation(type, searchAnnotation);
 		
 		if( method != null ) {

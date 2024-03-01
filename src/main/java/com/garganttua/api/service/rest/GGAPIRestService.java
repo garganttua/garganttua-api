@@ -37,7 +37,6 @@ import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.events.GGAPIEvent;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.service.GGAPIErrorObject;
 import com.garganttua.api.service.GGAPIServiceEntityPage;
@@ -54,7 +53,7 @@ import lombok.Setter;
  *
  * @param <Entity>
  */
-public class GGAPIRestService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> implements IGGAPIService<Entity, Dto> {
+public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto> {
 
 	protected static final String SUCCESSFULLY_DELETED = "Ressource has been successfully deleted";
 

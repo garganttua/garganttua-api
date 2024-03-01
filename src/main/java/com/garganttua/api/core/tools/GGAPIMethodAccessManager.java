@@ -1,4 +1,4 @@
-package com.garganttua.api.core;
+package com.garganttua.api.core.tools;
 
 import java.lang.reflect.Method;
 
@@ -10,11 +10,11 @@ public class GGAPIMethodAccessManager implements AutoCloseable {
 	public GGAPIMethodAccessManager(Method method) {
 		this.method = method;
 		this.originalAccessibility = method.isAccessible();
-		method.setAccessible(true);
+		this.method.setAccessible(true);
 	}
 
 	@Override
 	public void close() {
-		method.setAccessible(originalAccessibility);
+		this.method.setAccessible(originalAccessibility);
 	}
 }

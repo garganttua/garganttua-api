@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.service.GGAPIErrorObject;
 import com.garganttua.api.service.GGAPIServiceMethod;
 
@@ -17,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GGAPIEvent<Entity extends IGGAPIEntity> {
+public class GGAPIEvent<Entity> {
 
 	private GGAPIServiceMethod method;
 	

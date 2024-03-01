@@ -7,14 +7,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDynamicDomain;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.IGGAPISecurity;
 
-public interface IGGAPIService<Entity extends IGGAPIEntity, Dto extends IGGAPIDTOObject<Entity>> extends IGGAPIEngineObject {
+public interface IGGAPIService<Entity, Dto> extends IGGAPIEngineObject {
 
 	ResponseEntity<?> createEntity(IGGAPICaller caller, String entity,
 			String customParameters);
