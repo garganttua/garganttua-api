@@ -14,16 +14,17 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Service("dynamicDomainFilter")
-public class GGAPIDynamicDomainFilter extends GGAPIFilter {
+public class GGAPIDomainFilter extends GGAPIFilter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		super.doFilter(request, response, chain);
 		GGAPICaller caller = this.getCaller(request);
-		GGAPIDomain ddomain = this.engine.getDynamicDomainsRegistry().getDomain(((HttpServletRequest)request));
+		GGAPIDomain ddomain = this.getDomain(((HttpServletRequest)request));
 
 		caller.setDomain(ddomain);
 		
 		chain.doFilter(request, response);
 	}
+	
 }

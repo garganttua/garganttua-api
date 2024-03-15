@@ -27,11 +27,12 @@ import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.sort.GGAPISort;
 import com.garganttua.api.engine.GGAPIDomain;
-import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.events.GGAPIEvent;
 import com.garganttua.api.events.IGGAPIEventPublisher;
@@ -77,21 +78,22 @@ public class GGAPIRestService implements IGGAPIService {
 	protected IGGAPIEngine engine;
 
 	@Getter
-	private GGAPIDomain dynamicDomain;
+	private GGAPIDomain domain;
 
-	protected IGGAPIEntityFactory<Object> factory;
+	@Setter
+	protected IGGAPIEntityFactory<?> factory;
 
 	@Setter
 	protected Optional<IGGAPISecurity> security = Optional.empty();
 
 	public void setEngine(IGGAPIEngine engine) {
 		this.engine = engine;
-		this.factory = this.engine.getEntityFactory();
+		this.security = engine.getSecurity();
 	}
 	
 	@Override
-	public void setDynamicDomain(GGAPIDomain ddomain) {
-		this.dynamicDomain = ddomain;
+	public void setDomain(GGAPIDomain ddomain) {
+		this.domain = ddomain;
 		this.ALLOW_CREATION = ddomain.allow_creation;
 		this.ALLOW_GET_ALL = ddomain.allow_read_all;
 		this.ALLOW_GET_ONE = ddomain.allow_read_one;
@@ -133,15 +135,14 @@ public class GGAPIRestService implements IGGAPIService {
 						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
 						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
 					}
-					Object entity = this.factory.getEntityFromJson(this.dynamicDomain, customParameters, entity__.getBytes());
+					Object entity = this.factory.getEntityFromJson(customParameters, entity__.getBytes());
 					event.setIn(entity);
-					entity.save(caller, customParameters, this.security);
+					GGAPIEntityHelper.save(entity, caller, customParameters, this.security);
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
 				} catch (GGAPIEntityException e) {
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							e.getHttpErrorCode());
+					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
@@ -175,7 +176,7 @@ public class GGAPIRestService implements IGGAPIService {
 		event.setCaller(caller);
 		event.setMethod(method);
 		event.setEndPoint(caller.getAccessRule().getEndpoint());
-		event.setEntityClass(this.dynamicDomain.entityClass.getName());
+		event.setEntityClass(this.domain.entity.getValue0().getName());
 		event.setInParams(params);
 		return event;
 	}
@@ -196,7 +197,6 @@ public class GGAPIRestService implements IGGAPIService {
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
 			@RequestParam(name = "params", defaultValue = "") String customParameters__) {
 
-		
 		Map<String, String> customParameters = null;
 		try {
 			customParameters = getCustomParametersFromString(customParameters__);
@@ -247,14 +247,7 @@ public class GGAPIRestService implements IGGAPIService {
 				}
 
 				try {
-					entities = this.factory.getEntitiesFromRepository(this.dynamicDomain, caller, pageSize, pageIndex, filter, sort, customParameters);
-				} catch (GGAPIEntityException e) {
-//					event.setException(e);
-					event.setExceptionMessage(e.getMessage());
-					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(e.getHttpErrorCode().value());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							e.getHttpErrorCode());
+					entities = this.factory.getEntitiesFromRepository(caller, pageSize, pageIndex, filter, sort, customParameters);
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -263,14 +256,14 @@ public class GGAPIRestService implements IGGAPIService {
 				}
 
 				if (pageSize > 0) {
-					long totalCount = this.factory.countEntities(this.dynamicDomain, caller, filter, geoloc, customParameters);
+					long totalCount = this.factory.countEntities(caller, filter, customParameters);
 
 					GGAPIServiceEntityPage page = new GGAPIServiceEntityPage(totalCount, ((List<Object>) entities));
-					event.setOutList((List<?>) entities);
+					event.setOutList((List<Object>) entities);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					return new ResponseEntity<>(page, HttpStatus.OK);
 				} else {
-					event.setOutList((List<?>) entities);
+					event.setOutList((List<Object>) entities);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					return new ResponseEntity<>(entities, HttpStatus.OK);
 				}
@@ -279,6 +272,12 @@ public class GGAPIRestService implements IGGAPIService {
 				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
 
+		} catch (GGAPIFactoryException e) {
+//			event.setException(e);
+			event.setExceptionMessage(e.getMessage());
+			event.setExceptionCode(e.getCode());
+			event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 		} finally {
 			if (this.eventPublisher.isPresent()) {
 				event.setOutDate(new Date());
@@ -318,16 +317,9 @@ public class GGAPIRestService implements IGGAPIService {
 			if (this.ALLOW_GET_ONE) {
 				Object entity;
 				try {
-					entity = this.factory.getEntityFromRepository(dynamicDomain, caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
+					entity = this.factory.getEntityFromRepository(caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
-				} catch (GGAPIEntityException e) {
-//					event.setException(e);
-					event.setExceptionMessage(e.getMessage());
-					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(e.getHttpErrorCode().value());
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -379,11 +371,11 @@ public class GGAPIRestService implements IGGAPIService {
 			if (this.ALLOW_UPDATE) {
 				try {
 
-					Object entity = this.factory.getEntityFromJson(this.dynamicDomain, customParameters, entity__.getBytes());
+					Object entity = this.factory.getEntityFromJson(customParameters, entity__.getBytes());
 					
-					entity.setUuid(uuid);
+					GGAPIEntityHelper.setUuid(entity, uuid);
 					event.setIn(entity);
-					entity.save(caller, customParameters, this.security);
+					GGAPIEntityHelper.save(entity, caller, customParameters, this.security);
 					
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
@@ -392,9 +384,8 @@ public class GGAPIRestService implements IGGAPIService {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(e.getHttpErrorCode().value());
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							e.getHttpErrorCode());
+					event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
+					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -460,9 +451,8 @@ public class GGAPIRestService implements IGGAPIService {
 				ResponseEntity<?> response = null;
 
 				try {					
-					Object entity = this.factory.getEntityFromRepository(this.dynamicDomain, caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
-					
-					entity.delete(caller, customParameters);
+					Object entity = this.factory.getEntityFromRepository(caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
+					GGAPIEntityHelper.delete(entity, caller, customParameters);
 					
 					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
@@ -470,7 +460,7 @@ public class GGAPIRestService implements IGGAPIService {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(e.getHttpErrorCode().value());
+					event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
 					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), HttpStatus.NOT_ACCEPTABLE);
 				} catch (Exception e) {
 //					event.setException(e);
@@ -524,7 +514,7 @@ public class GGAPIRestService implements IGGAPIService {
 		
 		try {
 			if (this.ALLOW_DELETE_ALL) {
-				ResponseEntity<?> response = null;
+				ResponseEntity<?> response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
 				
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
@@ -544,25 +534,19 @@ public class GGAPIRestService implements IGGAPIService {
 				}
 
 				try {
-					final Map<String, String> cp = customParameters;
-					this.factory.getEntitiesFromRepository(this.dynamicDomain, caller, 0, 0, filter, sort, customParameters).forEach(entity ->{
+					List<?> entities = this.factory.getEntitiesFromRepository(caller, 0, 0, filter, sort, customParameters);
+					for( Object entity: entities ) {
 						try {
-							entity.delete(caller, cp);
-						} catch (GGAPIEntityException | GGAPIEngineException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							GGAPIEntityHelper.delete(entity, caller, customParameters);
+						} catch (GGAPIEntityException e) {
+//							event.setException(e);
+							event.setExceptionMessage(e.getMessage());
+							event.setExceptionCode(e.getCode());
+							event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
+							response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 						}
-					});
-					
-					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+					}
 					event.setHttpReturnedCode(HttpStatus.OK.value());
-				} catch (GGAPIEntityException e) {
-//					event.setException(e);
-					event.setExceptionMessage(e.getMessage());
-					event.setExceptionCode(e.getCode());
-					event.setHttpReturnedCode(e.getHttpErrorCode().value());
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
-							e.getHttpErrorCode());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -620,7 +604,6 @@ public class GGAPIRestService implements IGGAPIService {
 				
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
-				GGAPISort sort = null;
 				try {
 					if (filterString != null && !filterString.isEmpty()) {
 						filter = mapper.readValue(filterString, GGAPILiteral.class);
@@ -636,7 +619,7 @@ public class GGAPIRestService implements IGGAPIService {
 							HttpStatus.BAD_REQUEST);
 				}
 
-				long count = this.factory.countEntities(this.dynamicDomain, caller, filter, customParameters);
+				long count = this.factory.countEntities(caller, filter, customParameters);
 				response = new ResponseEntity<>(count, HttpStatus.OK);
 				event.setHttpReturnedCode(HttpStatus.OK.value());
 				event.setOutCount(count);
@@ -647,6 +630,12 @@ public class GGAPIRestService implements IGGAPIService {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
 				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
 			}
+		} catch (GGAPIFactoryException e) {
+//			event.setException(e);
+			event.setExceptionMessage(e.getMessage());
+			event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					HttpStatus.INTERNAL_SERVER_ERROR);
 		} finally {
 			if (this.eventPublisher.isPresent()) {
 				event.setOutDate(new Date());
@@ -654,4 +643,5 @@ public class GGAPIRestService implements IGGAPIService {
 			}
 		}
 	}
+
 }

@@ -147,7 +147,7 @@ public class GGAPIDomain {
 				}
 			}
 		}
-
+		
 		boolean allow_creation = entityAnnotation.allow_creation();
 		boolean allow_read_all = entityAnnotation.allow_read_all();
 		boolean allow_read_one = entityAnnotation.allow_read_one();

@@ -14,6 +14,11 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
+import com.garganttua.api.repository.dao.GGAPIDao;
+import com.garganttua.api.security.authorization.GGAPITokenProviderType;
+import com.garganttua.api.security.authorization.tokens.GGAPIToken;
+import com.garganttua.api.security.keys.GGAPIKeyManagerType;
+import com.garganttua.api.security.keys.managers.mongo.GGAPIKeyRealmEntity;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -26,14 +31,14 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 	@Value("${com.garganttua.api.engine.packages}")
 	protected String[] scanPackages;
 	
-//	@Value("${com.garganttua.api.security.key.manager.type:inmemory}")
-//	protected GGAPIKeyManagerType keyManagerType;
-//	
-//	@Value("${com.garganttua.api.security.authorization.tokens.provider}")
-//	protected GGAPITokenProviderType tokenProviderType;
-//	
-//	@Value("${com.garganttua.api.security:disabled}")
-//	protected String securityEnabled;
+	@Value("${com.garganttua.api.security.key.manager.type:inmemory}")
+	protected GGAPIKeyManagerType keyManagerType;
+	
+	@Value("${com.garganttua.api.security.authorization.tokens.provider}")
+	protected GGAPITokenProviderType tokenProviderType;
+	
+	@Value("${com.garganttua.api.security:disabled}")
+	protected String securityEnabled;
 	
 	@Getter
 	private List<GGAPIDomain> domains;
@@ -63,20 +68,20 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 						log.warn("Found entity "+clazz.getName()+" with annotation @GGAPIEntity, but unable to retrieve the corespounding dynamic domain. Ignoring");
 						continue;
 					}
-					
+							
 					if (domain.entity.getValue1().tenantEntity() && !tenantFound) {
 						tenantFound = true;
 					} else if (domain.entity.getValue1().tenantEntity() && !tenantFound) {
 						throw new GGAPIEngineException("There are more than one entity declared as tenantEntity.");
 					}
 					
-//					if( dynamicDomain.entityInfos.domain().equals(GGAPIKeyRealmEntity.domain) && this.keyManagerType == GGAPIKeyManagerType.mongo ) {
-//						dynamicDomain.db = GGAPIDao.mongo;
-//					}
-//					
-//					if( dynamicDomain.entityInfos.domain().equals(GGAPIToken.domain) && this.tokenProviderType == GGAPITokenProviderType.mongo ) {
-//						dynamicDomain.db = GGAPIDao.mongo;
-//					}
+					if( this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIKeyRealmEntity.domain) && this.keyManagerType == GGAPIKeyManagerType.mongo ) {
+//						domain.dto.db = GGAPIDao.MONGO;
+					}
+					
+					if( this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIToken.domain) && this.tokenProviderType == GGAPITokenProviderType.mongo ) {
+//						dynamicDomain.db = GGAPIDao.MONGO;
+					}
 					
 					if( !this.onwerFound && domain.entity.getValue1().ownerEntity()) {
 						this.onwerFound = true;
@@ -84,18 +89,23 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 						throw new GGAPIEngineException("More than one owner entity found");
 					}
 					
-//					if( !this.securityEnabled.equals("enabled") && dynamicDomain.entityInfos.domain().equals(GGAPIKeyRealmEntity.domain) ) {
-//						continue;
-//					}
-//					if( !this.securityEnabled.equals("enabled") && dynamicDomain.entityInfos.domain().equals(GGAPIToken.domain) ) {
-//						continue;
-//					}
-//					if( dynamicDomain.entityInfos.domain().equals(GGAPIKeyRealmEntity.domain) && this.keyManagerType != GGAPIKeyManagerType.mongo ) {
-//						continue;
-//					} 
-//					if( dynamicDomain.entityInfos.domain().equals(GGAPIToken.domain) && this.tokenProviderType != GGAPITokenProviderType.mongo ) {
-//						continue;
-//					}
+					if( !this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIKeyRealmEntity.domain) ) {
+						continue;
+					}
+					if( !this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIToken.domain) ) {
+						continue;
+					}
+					if( domain.entity.getValue1().domain().equals(GGAPIKeyRealmEntity.domain) && this.keyManagerType != GGAPIKeyManagerType.mongo ) {
+						continue;
+					} 
+					if( domain.entity.getValue1().equals(GGAPIToken.domain) && this.tokenProviderType != GGAPITokenProviderType.mongo ) {
+						continue;
+					}
+					
+					if( domain.dtos.size() == 0 ) {
+						log.error("No class annotated with @GGAPIDto found for entity "+clazz.getName());
+						throw new GGAPIDtoException("No class annotated with @GGAPIDto found for entity "+clazz.getName());
+					}
 					
 					this.domains.add(domain);
 					
@@ -106,20 +116,6 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 			}
 		}
 	}
-	
-//	@Override
-//	public GGAPIDynamicDomain getDomain(HttpServletRequest request) {
-//		String uri = request.getRequestURI();
-//
-//		String[] uriParts = uri.split("/");
-//		
-//		for (GGAPIDynamicDomain ddomain : this.dynamicDomains) {
-//			if (ddomain.entityInfos.domain().toLowerCase().equals(uriParts[1])) {
-//				return ddomain;
-//			}
-//		}
-//		return null;
-//	}
 
 	@Override
 	public GGAPIDomain getDomain(String domain) {

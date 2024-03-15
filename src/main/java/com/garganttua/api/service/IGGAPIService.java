@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.events.IGGAPIEventPublisher;
@@ -46,11 +47,9 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 
 	void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 
-	Optional<IGGAPIEventPublisher> getEventPublisher();
-
-	void setDynamicDomain(GGAPIDomain ddomain);
+	void setDomain(GGAPIDomain ddomain);
 	
-	GGAPIDomain getDynamicDomain();
+	void setFactory(IGGAPIEntityFactory<?> factory);
 	
 	void setSecurity(Optional<IGGAPISecurity> security);
 

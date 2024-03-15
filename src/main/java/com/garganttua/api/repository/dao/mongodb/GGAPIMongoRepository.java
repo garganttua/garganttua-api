@@ -2,6 +2,7 @@ package com.garganttua.api.repository.dao.mongodb;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -34,6 +35,10 @@ public class GGAPIMongoRepository implements IGGAPIDAORepository<Object> {
 	@Setter
 	private Class<Object> dtoClass;
 	
+	public GGAPIMongoRepository(MongoTemplate mongo) {
+		this.mongo = mongo;
+	}
+
 	public void setMongoTemplate(MongoTemplate mongo) {
 		this.mongo = mongo;
 	}

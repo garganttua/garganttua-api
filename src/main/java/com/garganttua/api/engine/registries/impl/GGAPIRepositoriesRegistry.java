@@ -78,7 +78,7 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 			
 			this.repositories.put(ddomain.entity.getValue1().domain(), repo);
 
-			log.info("	Repository added [domain {}]", ddomain.entity.getValue1().domain());
+			log.info("	Repository added [domain {}, repo {}]", ddomain.entity.getValue1().domain(), repo);
 		}
 	}
 

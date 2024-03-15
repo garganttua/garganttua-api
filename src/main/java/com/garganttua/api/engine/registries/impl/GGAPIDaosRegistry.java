@@ -63,7 +63,7 @@ public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 						dao = null;
 						break;
 					case GGAPIDao.MONGO:
-						dao = new GGAPIMongoRepository();
+						dao = new GGAPIMongoRepository(this.mongo.get());
 						break;
 					default:
 						dao = this.helper.getObjectFromConfiguration(db, IGGAPIDAORepository.class);
@@ -73,6 +73,8 @@ public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 				
 				dao.setDomain(domain);
 				dao.setDtoClass((Class<Object>) dto.getValue0());
+				
+				daos.add(new Pair<Class<?>, IGGAPIDAORepository<?>>(dto.getValue0(), dao));
 				
 				log.info("	DAO added [domain {}, dao {}]", domain.entity.getValue1().domain(), db);
 			}
@@ -91,7 +93,7 @@ public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 		this.daos.forEach((k,v) -> {
 			daos.addAll(v);
 		});
-		return null;
+		return daos;
 	}
 
 }

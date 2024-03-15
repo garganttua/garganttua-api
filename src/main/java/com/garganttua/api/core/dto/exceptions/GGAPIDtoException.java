@@ -10,6 +10,10 @@ public class GGAPIDtoException extends Exception {
 		this.code = code;
 	}
 
+	public GGAPIDtoException(String string) {
+		super(string);
+	}
+
 	public GGAPIDtoException(Exception e) {
 		super(e);
 	}

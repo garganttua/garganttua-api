@@ -70,8 +70,10 @@ public class GGAPIFilter implements Filter, IGGAPIEngineObject {
 		return (GGAPICaller) request.getAttribute(GGAPICallerManager.CALLER_ATTRIBUTE_NAME);
 	}
 	
-	protected GGAPIDomain getDomain(ServletRequest request) {
-		return this.engine.getDynamicDomainsRegistry().getDomain((HttpServletRequest) request);
+	protected GGAPIDomain getDomain(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		String[] uriParts = uri.split("/");
+		return this.engine.getDomainsRegistry().getDomain(uriParts[1]);
 	}
 
 	@Override

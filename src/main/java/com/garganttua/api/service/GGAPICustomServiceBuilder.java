@@ -4,8 +4,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.http.HttpMethod;
-
 import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 

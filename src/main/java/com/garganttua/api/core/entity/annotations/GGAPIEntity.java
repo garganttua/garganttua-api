@@ -62,29 +62,4 @@ public @interface GGAPIEntity {
 	String eventPublisher() default "";
 
 	String domain();
-	
-//	boolean publicEntity() default false;
-//	
-//	boolean hiddenAble() default false;
-//	
-//	/**
-//	 * Sharing field 
-//	 * @return
-//	 */
-//	String shared() default "";
-//	
-//	/**
-//	 * Refers to a GeoJson field
-//	 * @return
-//	 */
-//	String geolocialized() default "";
-//	
-//	String[] unicity() default {};
-//	
-//	String[] mandatory() default {};
-//	
-//	boolean ownedEntity() default false;
-//
-//	boolean showTenantId() default false;
-	
 }

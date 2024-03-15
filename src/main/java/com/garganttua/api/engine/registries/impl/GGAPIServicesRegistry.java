@@ -20,15 +20,15 @@ import com.garganttua.api.core.GGAPICrudOperation;
 import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.GGAPIObjectsHelper;
 import com.garganttua.api.engine.GGAPIOpenAPIHelper;
 import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
+import com.garganttua.api.engine.registries.IGGAPIFactoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.service.GGAPICustomServiceBuilder;
 import com.garganttua.api.service.IGGAPICustomService;
@@ -62,83 +62,78 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	
 	private GGAPIOpenAPIHelper openApiHelper = new GGAPIOpenAPIHelper();
 
-	private Map<String, IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices = new HashMap<String, IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
+	private Map<String, IGGAPIService> services = new HashMap<String, IGGAPIService>();
 
 	@Autowired
-	private IGGAPIDomainsRegistry dynamicDomains;
+	private IGGAPIDomainsRegistry domains;
+	
+	@Autowired
+	private IGGAPIFactoriesRegistry factories;
 
 	@Override
-	public IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getService(
-			String name) {
-		return this.restServices.get(name);
+	public IGGAPIService getService( String name) {
+		return this.services.get(name);
 	}
 
 	@Override
-	public List<IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> getServices() {
-		List<IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> services = new ArrayList<IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
-		this.restServices.forEach((k, v) -> {
-			services.add(v);
-		});
-		return services;
+	public List<IGGAPIService> getServices() {
+		return new ArrayList<IGGAPIService>(this.services.values());
 	}
 
-	@SuppressWarnings("unchecked")
 	@PostConstruct
 	private void init() throws GGAPIEngineException {
 
 		log.info("Creating Rest Services ...");
-		for (GGAPIDomain ddomain : this.dynamicDomains.getDynamicDomains()) {
+		for (GGAPIDomain domain : this.domains.getDomains()) {
 
-			String ws__ = ddomain.ws;
+			String ws__ = domain.ws;
 
-			IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service;
+			IGGAPIService service;
 			if (ws__ != null && !ws__.isEmpty()) {
 				service = helper.getObjectFromConfiguration(ws__, IGGAPIService.class);
 			} else {
-				service = new GGAPIRestService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>>();
+				service = new GGAPIRestService();
 			}
 			
 			List<IGGAPICustomService> customServices = GGAPICustomServiceBuilder.buildGGAPIServices(service.getClass());
 			
-			Optional<IGGAPIEventPublisher<IGGAPIEntity>> eventObj = this.getEventPublisher(ddomain);
-			service.setDynamicDomain(ddomain);
-			service.setEventPublisher(eventObj);
-
-			String baseUrl = "/" + ddomain.domain.toLowerCase();
+			service.setDomain(domain);
+			service.setEventPublisher(this.getEventPublisher(domain));
+			service.setFactory(this.factories.getFactory(domain.entity.getValue1().domain()));
+			
+			String baseUrl = "/" + domain.entity.getValue1().domain().toLowerCase();
 			
 			try {
-				this.createRequestMappings(ddomain, service, baseUrl, customServices);
-				this.setOpenApiDocumentation(service, ddomain, baseUrl, customServices);
+				this.createRequestMappings(domain, service, baseUrl, customServices);
+				this.setOpenApiDocumentation(service, domain, baseUrl, customServices);
 			} catch (NoSuchMethodException | IOException e) {
 				throw new GGAPIEngineException(e);
 			}
 
-			this.restServices.put(ddomain.domain, service);
+			this.services.put(domain.entity.getValue1().domain(), service);
 			
-			log.info("	Rest Service added [domain {}]", ddomain.domain);
+			log.info("	Service added [domain {}, service {}]", domain.entity.getValue1().domain(), service);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private Optional<IGGAPIEventPublisher<IGGAPIEntity>> getEventPublisher(GGAPIDomain ddomain) throws GGAPIEngineException {
-		if( ddomain.event != null && !ddomain.event.isEmpty() ) {
-			return Optional.ofNullable(this.helper.getObjectFromConfiguration(ddomain.event, IGGAPIEventPublisher.class));
+	private Optional<IGGAPIEventPublisher> getEventPublisher(GGAPIDomain domain) throws GGAPIEngineException {
+		if( domain.event != null && !domain.event.isEmpty() ) {
+			return Optional.ofNullable(this.helper.getObjectFromConfiguration(domain.event, IGGAPIEventPublisher.class));
 		}
 		return Optional.ofNullable(null);
 	}
 
-	@SuppressWarnings("unchecked")
-	private void setOpenApiDocumentation(IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, GGAPIDomain ddomain, String baseUrl, List<IGGAPICustomService> customServices) throws IOException {
+	private void setOpenApiDocumentation(IGGAPIService service, GGAPIDomain domain, String baseUrl, List<IGGAPICustomService> customServices) throws IOException {
 		if( this.openApi.isPresent() ) {
 		
-			Class<? extends IGGAPIEntity> entityClass = ddomain.entityClass;
+			Class<?> entityClass = domain.entity.getValue0();
 		
-			Tag tag = new Tag().name("Domain " + ddomain.domain.toLowerCase()).description("Public Entity ["+ddomain.publicEntity+"] Shared Entity ["+(ddomain.shared.isEmpty()?"false":ddomain.shared)+"] Hiddenable Entity ["+ddomain.hiddenable+"] Geolocalized ["+(ddomain.geolocalized.isEmpty()?"false":ddomain.geolocalized)+"]");
+			Tag tag = new Tag().name("Domain " + domain.entity.getValue1().domain().toLowerCase()).description("Public Entity ["+domain.entity.getValue1().publicEntity()+"] Shared Entity ["+(domain.entity.getValue1().sharedEntity()?"false":domain.entity.getValue1().shareFieldName())+"] Hiddenable Entity ["+domain.entity.getValue1().hiddenableEntity()+"] Geolocalized ["+(domain.entity.getValue1().geolocalizedEntity()?"false":domain.entity.getValue1().locationFieldName())+"]");
 			this.openApi.get().addTagsItem(tag);
 
-			GGAPIEntity entityAnnotation = ((Class<IGGAPIEntity>) entityClass).getAnnotation(GGAPIEntity.class);
+			GGAPIEntity entityAnnotation = entityClass.getAnnotation(GGAPIEntity.class);
 
-			OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(ddomain.domain.toLowerCase(), entityClass.getSimpleName(), entityAnnotation.openApiSchemas());
+			OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.entity.getValue1().domain().toLowerCase(), entityClass.getSimpleName(), entityAnnotation.openApiSchemas());
 			PathItem pathItemBase = new PathItem();
 			PathItem pathItemCount = new PathItem();
 			PathItem pathItemUuid = new PathItem();
@@ -148,32 +143,32 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 			this.openApi.get().getComponents().addSchemas("SortQuery", templateOpenApi.getComponents().getSchemas().get("SortQuery"));
 			this.openApi.get().getComponents().addSchemas("FilterQuery", templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
 		
-			if (ddomain.allow_read_all) {
-				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+ddomain.read_all_access+"] - Authority ["+(ddomain.read_all_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.read_all))+"]")));
+			if (domain.allow_read_all) {
+				this.openApi.get().path(baseUrl, pathItemBase.get(templateOpenApi.getPaths().get(baseUrl).getGet().description("Access : ["+domain.read_all_access+"] - Authority ["+(domain.read_all_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.read_all))+"]")));
 			}
-			if (ddomain.allow_delete_all) {
-				this.openApi.get().path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+ddomain.delete_all_access+"] - Authority ["+(ddomain.delete_all_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
+			if (domain.allow_delete_all) {
+				this.openApi.get().path(baseUrl, pathItemBase.delete(templateOpenApi.getPaths().get(baseUrl).getDelete().description("Access : ["+domain.delete_all_access+"] - Authority ["+(domain.delete_all_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.delete_all))+"]")));
 			}
-			if (ddomain.allow_creation) {
-				this.openApi.get().path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+ddomain.creation_access+"] - Authority ["+(ddomain.creation_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.create_one))+"]")));
+			if (domain.allow_creation) {
+				this.openApi.get().path(baseUrl, pathItemBase.post(templateOpenApi.getPaths().get(baseUrl).getPost().description("Access : ["+domain.creation_access+"] - Authority ["+(domain.creation_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.create_one))+"]")));
 			}
-			if (ddomain.allow_count) {
-				this.openApi.get().path(baseUrl + "/count", pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+ddomain.count_access+"] - Authority ["+(ddomain.count_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.count))+"]")));
+			if (domain.allow_count) {
+				this.openApi.get().path(baseUrl + "/count", pathItemCount.get(templateOpenApi.getPaths().get(baseUrl + "/count").getGet().description("Access : ["+domain.count_access+"] - Authority ["+(domain.count_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.count))+"]")));
 			}
-			if (ddomain.allow_read_one) {
-				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+ddomain.read_one_access+"] - Authority ["+(ddomain.read_one_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.read_one))+"]")));
+			if (domain.allow_read_one) {
+				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.get(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet().description("Access : ["+domain.read_one_access+"] - Authority ["+(domain.read_one_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.read_one))+"]")));
 			}
-			if (ddomain.allow_update_one) {
-				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+ddomain.update_one_access+"] - Authority ["+(ddomain.update_one_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.update_one))+"]")));
+			if (domain.allow_update_one) {
+				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.patch(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch().description("Access : ["+domain.update_one_access+"] - Authority ["+(domain.update_one_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.update_one))+"]")));
 			}
-			if (ddomain.allow_delete_one) {
-				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+ddomain.delete_one_access+"] - Authority ["+(ddomain.delete_one_authority==false?"none":BasicGGAPIAccessRule.getAuthority(ddomain.domain.toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
+			if (domain.allow_delete_one) {
+				this.openApi.get().path(baseUrl + "/{uuid}", pathItemUuid.delete(templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete().description("Access : ["+domain.delete_one_access+"] - Authority ["+(domain.delete_one_authority==false?"none":BasicGGAPIAccessRule.getAuthority(domain.entity.getValue1().domain().toLowerCase(), GGAPICrudOperation.delete_one))+"]")));
 			}
 		
 			for( IGGAPICustomService cservice: customServices ) {
 				PathItem pathItem = new PathItem();
 				Operation operation = new Operation();
-				pathItem.post(operation).getPost().addTagsItem("Domain "+ddomain.domain).description(cservice.getDescription());
+				pathItem.post(operation).getPost().addTagsItem("Domain "+domain.entity.getValue1().domain()).description(cservice.getDescription());
 
 				this.openApi.get().path(cservice.getPath(), pathItem);
 			}
@@ -185,7 +180,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	}
 
 	private void createRequestMappings(GGAPIDomain ddomain,
-			IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, String baseUrl, List<IGGAPICustomService> customServices)
+			IGGAPIService service, String baseUrl, List<IGGAPICustomService> customServices)
 			throws NoSuchMethodException {
 		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
 		options.setPatternParser(new PathPatternParser());
@@ -208,11 +203,11 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		if (ddomain.allow_read_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, service,
 					service.getClass().getMethod("getEntities",IGGAPICaller.class, GGAPIReadOutputMode.class, Integer.class,
-							Integer.class, String.class, String.class, String.class, String.class));
+							Integer.class, String.class, String.class, String.class));
 		}
 		if (ddomain.allow_delete_all) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, service,
-					service.getClass().getMethod("deleteAll", IGGAPICaller.class,  String.class, String.class, String.class));
+					service.getClass().getMethod("deleteAll", IGGAPICaller.class,  String.class, String.class));
 		}
 		if (ddomain.allow_creation) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, service,
@@ -220,7 +215,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		}
 		if (ddomain.allow_count) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, service,
-					service.getClass().getMethod("getCount", IGGAPICaller.class, String.class, String.class, String.class));
+					service.getClass().getMethod("getCount", IGGAPICaller.class, String.class, String.class));
 		}
 		if (ddomain.allow_read_one) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, service,

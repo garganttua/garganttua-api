@@ -1,17 +1,19 @@
 package com.garganttua.api.core.entity.tools;
 
-import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.Optional;
 
+import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.GGAPIEntityInfos;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
-import com.garganttua.api.core.tools.GGAPIFieldAccessManager;
 import com.garganttua.api.core.tools.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.tools.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.repository.IGGAPIRepository;
+import com.garganttua.api.security.IGGAPISecurity;
 
 public class GGAPIEntityHelper {
 	
@@ -24,6 +26,27 @@ public class GGAPIEntityHelper {
 		}
 		
 		return domain;
+	}
+	
+	public static void save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		
+		try {
+			GGAPIObjectReflectionHelper.invokeMethod(entity, infos.saveMethodName(), caller, parameters, security);
+		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			throw new GGAPIEntityException(e);
+		}
+	}
+	
+	
+	public static void delete(Object entity, IGGAPICaller caller, Map<String, String> parameters) throws GGAPIEntityException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		
+		try {
+			GGAPIObjectReflectionHelper.invokeMethod(entity, infos.deleteMethodName(), caller, parameters);
+		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			throw new GGAPIEntityException(e);
+		}
 	}
 
 	public static void setUuid(Object entity, String uuid) throws GGAPIEntityException {
@@ -62,7 +85,7 @@ public class GGAPIEntityHelper {
 		} 
 	}
 
-	public static void setSaveMethod(Object entity, IGGAPIEntitySaveMethod method) throws GGAPIEntityException {
+	public static void setSaveMethod(Object entity, IGGAPIEntitySaveMethod<?> method) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
 			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.saveProviderFieldName(), method);
@@ -71,7 +94,7 @@ public class GGAPIEntityHelper {
 		} 
 	}
 
-	public static void setDeleteMethod(Object entity, IGGAPIEntityDeleteMethod method) throws GGAPIEntityException {
+	public static void setDeleteMethod(Object entity, IGGAPIEntityDeleteMethod<?> method) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
 			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.deleteProviderFieldName(), method);
@@ -117,19 +140,19 @@ public class GGAPIEntityHelper {
 		} 
 	}
 
-	public static IGGAPIEntitySaveMethod getSaveMethodProvider(Object entity) throws GGAPIEntityException {
+	public static IGGAPIEntitySaveMethod<?> getSaveMethodProvider(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIEntitySaveMethod) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.saveProviderFieldName());
+			return (IGGAPIEntitySaveMethod<?>) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.saveProviderFieldName());
 		} catch (GGAPIObjectReflectionHelperExcpetion e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
 
-	public static IGGAPIEntityDeleteMethod getDeleteMethodProvider(Object entity) throws GGAPIEntityException {
+	public static IGGAPIEntityDeleteMethod<?> getDeleteMethodProvider(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIEntityDeleteMethod) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.deleteProviderFieldName());
+			return (IGGAPIEntityDeleteMethod<?>) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.deleteProviderFieldName());
 		} catch (GGAPIObjectReflectionHelperExcpetion e) {
 			throw new GGAPIEntityException(e);
 		} 

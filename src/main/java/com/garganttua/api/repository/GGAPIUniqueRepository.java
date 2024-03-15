@@ -19,8 +19,10 @@ import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.entity.updater.GGAPIEntityUpdaterException;
 import com.garganttua.api.core.entity.updater.IGGAPIEntityUpdater;
 import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.filter.mapper.GGAPIFilterMapper;
 import com.garganttua.api.core.filter.mapper.GGAPILiteralMapperException;
 import com.garganttua.api.core.filter.mapper.IGGAPIFilterMapper;
+import com.garganttua.api.core.mapper.GGAPIMapper;
 import com.garganttua.api.core.mapper.GGAPIMapperException;
 import com.garganttua.api.core.mapper.IGGAPIMapper;
 import com.garganttua.api.core.sort.GGAPISort;
@@ -38,10 +40,10 @@ public class GGAPIUniqueRepository implements IGGAPIRepository<Object> {
 	private IGGAPIDAORepository<Object> daoRepository;
 	
 	@Setter
-	private IGGAPIFilterMapper filterMapper;
+	private IGGAPIFilterMapper filterMapper = new GGAPIFilterMapper();
 	
 	@Setter
-	private IGGAPIMapper entityMapper;
+	private IGGAPIMapper entityMapper = new GGAPIMapper();
 	
 	@Setter
 	private IGGAPIEntityUpdater<Object> entityUpdater;

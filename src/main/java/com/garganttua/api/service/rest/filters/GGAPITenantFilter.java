@@ -9,13 +9,15 @@ import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
-import com.garganttua.api.core.entity.interfaces.IGGAPITenant;
+import com.garganttua.api.core.tools.GGAPIObjectReflectionHelper;
+import com.garganttua.api.core.tools.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
+import com.garganttua.api.service.rest.GGAPIHttpErrorCodeTranslator;
 import com.garganttua.api.service.rest.GGAPIServiceMethodToHttpMethodBinder;
 
 import jakarta.servlet.FilterChain;
@@ -39,13 +41,15 @@ public class GGAPITenantFilter extends GGAPIFilter {
 
 	private Optional<GGAPIDomain> tenantsDomain;
 
-	private IGGAPIEntityFactory<Object> factory;
+	private IGGAPIEntityFactory<?> factory;
 
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		super.setEngine(engine);
 		this.tenantsDomain = Optional.ofNullable(this.engine.getTenantDomain());
-		this.factory = this.engine.getEntityFactory();
+		if( this.tenantsDomain.isPresent() ) {
+			this.factory = this.engine.getFactoriesRegistry().getFactory(this.tenantsDomain.get().entity.getValue1().domain());
+		}
 	}
 	
 	@Override
@@ -86,16 +90,16 @@ public class GGAPITenantFilter extends GGAPIFilter {
 					GGAPICaller superCaller = new GGAPICaller();
 					superCaller.setTenantId(tenantId);
 					
-					IGGAPITenant tenant = this.factory.getEntityFromRepository(this.tenantsDomain.get(), superCaller, null, GGAPIEntityIdentifier.UUID, caller.getTenantId());
-					caller.setSuperTenant(tenant.isSuperTenant());
+					Object tenant = this.factory.getEntityFromRepository(caller, null, GGAPIEntityIdentifier.UUID, tenantId);
+					caller.setSuperTenant((boolean) GGAPIObjectReflectionHelper.getObjectFieldValue(tenant, this.tenantsDomain.get().entity.getValue1().superTenantFieldName()));
 					
 					if( !caller.getTenantId().equals(caller.getRequestedTenantId()) ) {
 						superCaller.setTenantId(requestedtenantId);
-						this.factory.getEntityFromRepository(this.tenantsDomain.get(), superCaller, null, GGAPIEntityIdentifier.UUID, caller.getRequestedTenantId());
+						this.factory.getEntityFromRepository(caller, null, GGAPIEntityIdentifier.UUID, caller.getRequestedTenantId());
 					}
 					
-				} catch (GGAPIEntityException e) {
-					((HttpServletResponse) response).setStatus(e.getHttpErrorCode().value());
+				} catch (GGAPIFactoryException | GGAPIObjectReflectionHelperExcpetion e) {
+					((HttpServletResponse) response).setStatus(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
 					response.getWriter().write(e.getMessage());
 					response.getWriter().flush();
 					return;

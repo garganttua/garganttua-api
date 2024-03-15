@@ -27,7 +27,7 @@ import com.garganttua.api.security.owners.GGAPIOwnerVerifier;
 import com.garganttua.api.security.tenants.GGAPITenantVerifier;
 import com.garganttua.api.service.IGGAPIService;
 import com.garganttua.api.service.rest.GGAPIServiceMethodToHttpMethodBinder;
-import com.garganttua.api.service.rest.filters.GGAPIDynamicDomainFilter;
+import com.garganttua.api.service.rest.filters.GGAPIDomainFilter;
 import com.garganttua.api.service.rest.filters.GGAPIOwnerFilter;
 import com.garganttua.api.service.rest.filters.GGAPITenantFilter;
 
@@ -70,7 +70,7 @@ public class GGAPISecurity implements IGGAPISecurity {
 	private Optional<GGAPIOwnerVerifier> ownerVerifier;
 		
 	@Autowired 
-	private GGAPIDynamicDomainFilter ddomainFilter;
+	private GGAPIDomainFilter ddomainFilter;
 	
 	@Autowired
 	private GGAPITenantFilter tenantFilter;

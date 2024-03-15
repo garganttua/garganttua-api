@@ -5,8 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-
 public class GGAPIObjectReflectionHelper {
 	
 	public static Constructor<?> getConstructorWithNoParams(Class<?> classs){
@@ -80,6 +78,20 @@ public class GGAPIObjectReflectionHelper {
 		} catch (IllegalArgumentException | IllegalAccessException e) {
 			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get field "+fieldName+" of object "+entity.getClass().getName(), e);
 		}
+	}
+
+	public static Object invokeMethod(Object entity, String methodName, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
+		Method method = GGAPIObjectReflectionHelper.getMethod(entity.getClass(), methodName);
+		
+		if( method == null ) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get method "+methodName+" of object "+entity.getClass().getName());
+		}
+		
+		try( GGAPIMethodAccessManager manager = new GGAPIMethodAccessManager(method) ){
+			return method.invoke(entity, args);
+		} catch (IllegalAccessException | InvocationTargetException e) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot invoke method "+methodName+" of object "+entity.getClass().getName(), e);
+		} 
 	}
 
 }

@@ -11,8 +11,9 @@ import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIFactoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
+import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
-import com.garganttua.api.service.rest.filters.GGAPIDynamicDomainFilter;
+import com.garganttua.api.service.rest.filters.GGAPIDomainFilter;
 import com.garganttua.api.service.rest.filters.GGAPIOwnerFilter;
 import com.garganttua.api.service.rest.filters.GGAPITenantFilter;
 
@@ -49,7 +50,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 	private IGGAPIFactoriesRegistry factoriesRegistry;
 	
 	@Autowired
-	private GGAPIDynamicDomainFilter ddomainFilter;
+	private GGAPIDomainFilter ddomainFilter;
 	
 	@Autowired
 	private GGAPITenantFilter tenantFilter;
@@ -63,9 +64,9 @@ public class GGAPIEngine implements IGGAPIEngine {
 	@Autowired
 	@Getter
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
-	
-//	@Getter
-//	private IGGAPIEntityFactory entityFactory = new GGAPIEntityFactory();
+
+	@Autowired
+	private Optional<IGGAPISecurity> security;
 	
 	public GGAPIEngine() {
 		log.info("============================================");
@@ -79,7 +80,6 @@ public class GGAPIEngine implements IGGAPIEngine {
 	
 	@PostConstruct
 	private void init() {
-//		this.entityFactory.setRepositoriesRegistry(this.repositoriesRegistry);
 		
 		IGGAPIEngine self = this;
 		this.daosRegistry.getDaos().forEach(dao -> {
@@ -91,7 +91,7 @@ public class GGAPIEngine implements IGGAPIEngine {
 		});
 
 		this.servicesRegistry.getServices().forEach(service -> {
-//			service.setEngine(self);
+			service.setEngine(self);
 //			service.getEventPublisher().ifPresent( ePublisher -> {ePublisher.setEngine(self);});
 		});
 		
@@ -106,20 +106,8 @@ public class GGAPIEngine implements IGGAPIEngine {
 		this.authoritiesWS.ifPresent( ws -> {
 			ws.setEngine(self);
 		});
-		
-//		this.entityFactory.setSpringContext(this.context);
-//		this.entityFactory.setEnvironment(this.environment);
+
 	}
-//
-//	@Bean
-//	private IGGAPIEntityFactory factory() {
-//		return this.entityFactory;
-//	}
-	
-//	@Override
-//	public GGAPIDynamicDomain getAuthenticatorDomain() {
-//		return this.dynamicDomainsRegistry.getAuthenticatorDomain();
-//	}
 
 	@Override
 	public GGAPIDomain getOwnerDomain() {
@@ -131,10 +119,8 @@ public class GGAPIEngine implements IGGAPIEngine {
 		return this.domainsRegistry.getTenantDomain();
 	}
 
-//	@Override
-//	public IGGAPIEntityFactory<?> getEntityFactory() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
+	@Override
+	public Optional<IGGAPISecurity> getSecurity() {
+		return this.security;
+	}
 }
