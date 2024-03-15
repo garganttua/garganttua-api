@@ -2,8 +2,8 @@ package com.garganttua.api.events;
 
 import com.garganttua.api.engine.IGGAPIEngineObject;
 
-public interface IGGAPIEventPublisher<Entity> extends IGGAPIEngineObject{
+public interface IGGAPIEventPublisher extends IGGAPIEngineObject{
 	
-	public void publishEvent(GGAPIEvent<Entity> event);
+	public void publishEvent(GGAPIEvent event);
 		
 }

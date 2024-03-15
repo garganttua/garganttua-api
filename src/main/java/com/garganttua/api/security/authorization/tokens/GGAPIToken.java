@@ -6,16 +6,16 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.entity.AbstractGGAPIEntity;
+import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntityWithTenant;
+import com.garganttua.api.security.authorization.tokens.storage.GGAPITokenDTO;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @GGAPIEntity(
 		domain = GGAPIToken.domain, 
-		dto = "com.garganttua.api.security.authorization.tokens.storage.GGAPITokenDTO",
+		dto = {GGAPITokenDTO.class},
 		repository = "class:com.garganttua.api.security.authorization.tokens.storage.GGAPITokenRepository",
 		allow_creation = false,
 		allow_read_one = true, 
@@ -37,7 +37,7 @@ import lombok.NoArgsConstructor;
 )
 @NoArgsConstructor
 @Getter
-public class GGAPIToken extends AbstractGGAPIEntity implements IGGAPIToken, IGGAPIEntityWithTenant{
+public class GGAPIToken extends GenericGGAPIEntity implements IGGAPIToken {
 	
 	public static final String domain = "access-tokens";
 	
@@ -63,7 +63,8 @@ public class GGAPIToken extends AbstractGGAPIEntity implements IGGAPIToken, IGGA
 	private String tenantId;
 	
 	public GGAPIToken(String tenantId, String uuid, String ownerId, Date creationDate, Date expirationDate, List<String> authorities, byte[] token, String signingKeyId) {
-		super(uuid, uuid);
+		this.uuid = uuid;
+		this.id = uuid;
 		this.tenantId = tenantId;
 		this.ownerId = ownerId;
 		this.creationDate = creationDate;
@@ -98,18 +99,5 @@ public class GGAPIToken extends AbstractGGAPIEntity implements IGGAPIToken, IGGA
 	@Override
 	public String toString() {
 		return this.uuid+":"+this.ownerId+":"+this.signingKeyId+":"+this.creationDate+":"+this.expirationDate+":"+this.token;
-	}
-
-	@Override
-	@JsonIgnore
-	public String getTenantId() {
-		return this.tenantId;
-	}
-
-
-	@Override
-	@JsonIgnore
-	public void setTenantId(String tenantId) {
-		this.tenantId = tenantId;	
 	}
 }

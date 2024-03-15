@@ -13,10 +13,9 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.core.entity.interfaces.IGGAPIOwner;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
-import com.garganttua.api.service.rest.GGAPIServiceMethodToHttpMethodBinder;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -37,22 +36,23 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 	@Value(value = "${com.garganttua.api.superTenantId:0}")
 	private String superTenantId = "0";
 
-	private Optional<GGAPIDynamicDomain> ownersDomain;
+	private Optional<GGAPIDomain> ownersDomain;
 
-	private IGGAPIEntityFactory factory;
+	private IGGAPIEntityFactory<Object> factory;
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		super.setEngine(engine);
 		this.ownersDomain = Optional.ofNullable(this.engine.getOwnerDomain());
-		this.factory = this.engine.getEntityFactory();
+		this.factory = (IGGAPIEntityFactory<Object>) this.engine.getEntityFactory();
 	}
 	
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		super.doFilter(request, response, chain);
 		GGAPICaller caller = this.getCaller(request);
-		GGAPIDynamicDomain domain = this.getDomain(request);
+		GGAPIDomain domain = this.getDomain(request);
 		
 		if( caller.getOwnerId() == null ) {
 			IGGAPIAccessRule accessRule = caller.getAccessRule();

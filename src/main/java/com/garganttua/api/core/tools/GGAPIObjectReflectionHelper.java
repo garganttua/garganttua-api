@@ -2,7 +2,10 @@ package com.garganttua.api.core.tools;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 
 public class GGAPIObjectReflectionHelper {
 	
@@ -36,6 +39,47 @@ public class GGAPIObjectReflectionHelper {
 			return getMethod(objectClass.getSuperclass(), methodName);
 		}
 		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <destination> destination instanciateNewObject(Class<?> clazz) throws GGAPIObjectReflectionHelperExcpetion {
+		Constructor<?> ctor = GGAPIObjectReflectionHelper.getConstructorWithNoParams(clazz);
+		if( ctor != null ) {
+			try( GGAPIConstructorAccessManager accessor = new GGAPIConstructorAccessManager(ctor) ){
+				return (destination) ctor.newInstance();
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				throw new GGAPIObjectReflectionHelperExcpetion(e);
+			}
+		}
+		throw new GGAPIObjectReflectionHelperExcpetion("Class "+clazz+" does not have constructor with no params");
+	}
+	
+	static public void setObjectFieldValue(Object entity, String fieldName, Object value) throws GGAPIObjectReflectionHelperExcpetion {
+		Field field = GGAPIObjectReflectionHelper.getField(entity.getClass(), fieldName);
+		
+		if( field == null ) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot set field "+fieldName+" of object "+entity.getClass().getName()+" with value "+value);
+		}
+		
+		try( GGAPIFieldAccessManager manager = new GGAPIFieldAccessManager(field) ){
+			field.set(entity, value);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot set field "+fieldName+" of object "+entity.getClass().getName()+" with value "+value, e);
+		}
+	}
+	
+	public static Object getObjectFieldValue(Object entity, String fieldName) throws GGAPIObjectReflectionHelperExcpetion {
+		Field field = GGAPIObjectReflectionHelper.getField(entity.getClass(), fieldName);
+		if( field == null ) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get field "+fieldName+" of object "+entity.getClass().getName());
+		}
+		
+		try( GGAPIFieldAccessManager manager = new GGAPIFieldAccessManager(field) ){
+			return field.get(entity);
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get field "+fieldName+" of object "+entity.getClass().getName(), e);
+		}
 	}
 
 }

@@ -2,7 +2,7 @@ package com.garganttua.api.core;
 
 import java.util.List;
 
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 
 public interface IGGAPICaller {
@@ -17,7 +17,7 @@ public interface IGGAPICaller {
 	
 	boolean isSuperOwner();
 	
-	GGAPIDynamicDomain getDomain();
+	GGAPIDomain getDomain();
 
 	IGGAPIAccessRule getAccessRule();
 	

@@ -5,15 +5,14 @@ import java.util.Optional;
 
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
-import com.garganttua.api.engine.GGAPIEngineException;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurity;
 
 @FunctionalInterface
-public interface IGGAPIEntitySaveMethod {
+public interface IGGAPIEntitySaveMethod<Entity>  {
 
-	<Entity> void save(GGAPIDynamicDomain domain, IGGAPIRepository repository, IGGAPICaller caller, Optional<IGGAPISecurity> security, Map<String, String> parameters, Entity entity)
-			throws GGAPIEntityException, GGAPIEngineException;
+	void save(IGGAPICaller caller, Map<String, String> parameters, Entity entity)
+			throws GGAPIEntityException;
 	
 }

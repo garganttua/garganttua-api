@@ -15,7 +15,6 @@ public class GeolocTest {
 	public void test() throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		
-		
 		Point point = new Point(47.310342, 5.062565);
 		
 		System.out.println(mapper.writeValueAsString(point));
@@ -29,10 +28,7 @@ public class GeolocTest {
 		org.geojson.Point point2 = mapper.readValue(pointString, org.geojson.Point.class);
 		
 		System.out.println(mapper.writeValueAsString(point2));
-		
-		
-		
-		
+
 	}
 
 }

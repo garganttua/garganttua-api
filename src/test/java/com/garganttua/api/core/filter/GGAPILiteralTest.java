@@ -4,7 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.regex.Pattern;
 
+import org.geojson.GeoJsonObject;
+import org.geojson.Point;
 import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 public class GGAPILiteralTest {
 	
@@ -207,6 +215,27 @@ public class GGAPILiteralTest {
 		GGAPILiteral filter = lit.andOperator(lit2).orOperator(lit3, lit4);
 		
 		assertEquals("{\"name\":\"$or\",\"literals\":[{\"name\":\"$field\",\"value\":\"fieldName\",\"literals\":[{\"name\":\"$eq\",\"value\":\"fieldValue\"}]},{\"name\":\"$field\",\"value\":\"fieldName\",\"literals\":[{\"name\":\"$eq\",\"value\":\"fieldValue\"}]},{\"name\":\"$and\",\"literals\":[{\"name\":\"$field\",\"value\":\"fieldName\",\"literals\":[{\"name\":\"$eq\",\"value\":\"fieldValue\"}]},{\"name\":\"$field\",\"value\":\"fieldName\",\"literals\":[{\"name\":\"$eq\",\"value\":\"fieldValue\"}]}]}]}", filter.toString());
+		
+	}
+	
+	@Test
+	public void testGeoloc() throws JsonMappingException, JsonProcessingException, GGAPILiteralException {
+		String geoString = "{"
+				+ "  \"type\": \"Feature\","
+				+ "  \"properties\": {"
+				+ "    \"radius\": 443.0003055263856"
+				+ "  },"
+				+ "  \"geometry\": { \"type\": \"Point\", \"coordinates\": [-74.008317, 40.72251] }"
+				+ "}";
+		GeoJsonObject object = new ObjectMapper().readValue(geoString , GeoJsonObject.class);
+		
+		GGAPILiteral lit = GGAPILiteral.geolocWithin("fieldName", object);
+		
+		GGAPILiteral.validate(lit);
+		
+		String geoString2 = lit.toString();
+		
+		GGAPILiteral lit2 = new ObjectMapper().readValue(geoString2 , GGAPILiteral.class);
 		
 	}
 	

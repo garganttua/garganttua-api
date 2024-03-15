@@ -10,10 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
-import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 import com.garganttua.api.security.GGAPISecurityException;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
 import com.garganttua.api.security.authorization.bearer.GGAPIBearerAuthorizationValidator;

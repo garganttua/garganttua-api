@@ -1,5 +1,6 @@
 package com.garganttua.api.repository.dao;
 
-public enum GGAPIDao {
-	mongo, fs
+public class GGAPIDao {
+	public static final String MONGO = "mongo";
+	public static final String FS = "fs";
 }

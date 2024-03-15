@@ -5,14 +5,11 @@ package com.garganttua.api.repository;
 
 import java.util.List;
 
+import org.javatuples.Pair;
+
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
-import com.garganttua.api.core.filter.GGAPIGeolocFilter;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.sort.GGAPISort;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
-import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 
@@ -22,28 +19,30 @@ import com.garganttua.api.repository.dao.IGGAPIDAORepository;
  *
  * @param <Entity>
  */
-public interface IGGAPIRepository extends IGGAPIEngineObject {
+public interface IGGAPIRepository<Entity> extends IGGAPIEngineObject {
 
-	<Entity extends IGGAPIEntity> boolean doesExist(IGGAPICaller caller, Entity entity) throws GGAPIEngineException;
+	boolean doesExist(IGGAPICaller caller, Entity entity) throws GGAPIRepositoryException;
 
-	<Entity extends IGGAPIEntity> List<Entity> getEntities(GGAPIDynamicDomain domain, IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort, GGAPIGeolocFilter geoloc);
+	List<Entity> getEntities(IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter, GGAPISort sort) throws GGAPIRepositoryException;
 
-	<Entity extends IGGAPIEntity> void save(IGGAPICaller caller, Entity entity) throws GGAPIEntityException, GGAPIEngineException;
+	void save(IGGAPICaller caller, Entity entity) throws GGAPIRepositoryException;
 
-	<Entity extends IGGAPIEntity> Entity update(IGGAPICaller caller, Entity entity) throws GGAPIEntityException, GGAPIEngineException;
+	Entity update(IGGAPICaller caller, Entity entity) throws GGAPIRepositoryException;
 
-	<Entity extends IGGAPIEntity> Entity getOneById(GGAPIDynamicDomain domain, IGGAPICaller caller, String id);
+	Entity getOneById(IGGAPICaller caller, String id) throws GGAPIRepositoryException;
 
-	<Entity extends IGGAPIEntity> void delete(IGGAPICaller caller, Entity entity) throws GGAPIEntityException, GGAPIEngineException;
+	void delete(IGGAPICaller caller, Entity entity) throws GGAPIRepositoryException;
 
-	boolean doesExist(GGAPIDynamicDomain domain, IGGAPICaller caller, String uuid);
+	boolean doesExist(IGGAPICaller caller, String uuid) throws GGAPIRepositoryException;
 	
-	<Entity extends IGGAPIEntity> Entity getOneByUuid(GGAPIDynamicDomain domain, IGGAPICaller caller, String uuid);
+	Entity getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIRepositoryException;
 
-	long getCount(GGAPIDynamicDomain domain, IGGAPICaller caller, GGAPILiteral filter, GGAPIGeolocFilter geoloc);
+	long getCount(IGGAPICaller caller, GGAPILiteral filter) throws GGAPIRepositoryException;
 
-	void setDao(IGGAPIDAORepository dao);
+	String getTenant(Entity entity) throws GGAPIRepositoryException;
 
-	<Entity extends IGGAPIEntity> String getTenant(Entity entity) throws GGAPIEngineException;
+	void setDaos(List<Pair<Class<?>, IGGAPIDAORepository<?>>> daos);
 
+	
+	
 }

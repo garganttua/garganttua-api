@@ -14,7 +14,7 @@ import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityWithTenant;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
 
@@ -29,10 +29,10 @@ public class GGAPIEntityLoginPasswordAuthenticationProvider implements IGGAPIAut
 	private String isCredentialsNonExpiredField;
 	private String isEnabledField;
 	private IGGAPIEntityFactory factory;
-	private GGAPIDynamicDomain domain;
+	private GGAPIDomain domain;
  
 	public GGAPIEntityLoginPasswordAuthenticationProvider (
-			GGAPIDynamicDomain domain, IGGAPIEntityFactory factory, String superTenantId,
+			GGAPIDomain domain, IGGAPIEntityFactory factory, String superTenantId,
 			String isAccountNonExpiredField, String isAccountNonLockedField, String isCredentialsNonExpiredField,
 			String isEnabledField, String loginField, String passwordField, String authoritiesField) {
 		this.domain = domain;

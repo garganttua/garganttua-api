@@ -26,11 +26,11 @@ import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
-import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
+import com.garganttua.api.engine.GGAPIDomain;
+import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.security.GGAPISecurityException;
 import com.garganttua.api.security.authentication.dao.GGAPIDaoAuthenticationProvider;
 import com.garganttua.api.security.authentication.dao.IGGAPIAuthenticationUserMapper;
@@ -63,12 +63,12 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 	private IGGAPIAuthenticationProvider provider;
 	
 	@Autowired
-	private IGGAPIDynamicDomainsRegistry dDomainsRegistry;
+	private IGGAPIDomainsRegistry dDomainsRegistry;
 	
 	@Autowired
 	private IGGAPIEntityFactory factory;
 
-	private GGAPIDynamicDomain domain;
+	private GGAPIDomain domain;
 
 	public Optional<PasswordEncoder> getPasswordEncoder() {
 		PasswordEncoder encoder = null;
@@ -115,7 +115,7 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 
 	private IGGAPIAuthenticationProvider entityAuthenticator() throws GGAPISecurityException {					
 		
-		Class<? extends IGGAPIEntity> authenticator = this.domain.entityClass;
+		Class<?> authenticator = this.domain.entityClass;
 				
 		if( authenticator != null ) {
 			String authoritiesField = GGAPIAuthenticationManager.checkAnnotationIsPresent(authenticator, GGAPIAuthenticatorAuthorities.class, GGAPIAuthenticationManager.getListStringType());
@@ -234,35 +234,36 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 	}
 
 	@Override
-	public <Entity extends IGGAPIEntity> Entity applySecurityOnAuthenticatorEntity(Entity entity) throws GGAPISecurityException {
-		switch(this.authenticationType) {
-		default:
-		case dao:
-			break;
-		case entity:
-			switch(this.authenticationMode) {
+	public Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPISecurityException {
+		if( domain.authenticatorEntity ) {
+			switch(this.authenticationType) {
 			default:
-			case loginpassword:
-				String passwordField = GGAPIAuthenticationManager.checkAnnotationIsPresent(entity.getClass(), GGAPIAuthenticatorPassword.class,  String.class);
-				String password;
-				try {
-					password = (String) GGAPIEntityHelper.getFieldValue(entity.getClass(), passwordField, entity);
-					String encodedPassword = this.getPasswordEncoder().get().encode(password);
-					GGAPIEntityHelper.setFieldValue(entity.getClass(), passwordField, entity, encodedPassword);
-				} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-						| IllegalAccessException e) {
-					throw new GGAPISecurityException(e);
+			case dao:
+				break;
+			case entity:
+				switch(this.authenticationMode) {
+				default:
+				case loginpassword:
+					String passwordField = GGAPIAuthenticationManager.checkAnnotationIsPresent(entity.getClass(), GGAPIAuthenticatorPassword.class,  String.class);
+					String password;
+					try {
+						password = GGAPIEntityHelper.getEntityFieldValue(entity, passwordField);
+						String encodedPassword = this.getPasswordEncoder().get().encode(password);
+						GGAPIEntityHelper.setEntityFieldValue(entity, passwordField, encodedPassword);
+					} catch (SecurityException | IllegalArgumentException
+							| GGAPIEntityException e) {
+						throw new GGAPISecurityException(e);
+					}
+					break;
 				}
 				break;
 			}
-			break;
 		}
-		
 		return entity;
 	}
 
 	@Override
-	public IGGAPIAuthenticator getAuthenticatorFromOwnerId(String tenantId, String ownerId) throws GGAPIEntityException {
+	public IGGAPIAuthenticator getAuthenticatorFromOwnerId(String tenantId, String ownerId) throws GGAPIEntityException, GGAPIFactoryException {
 		IGGAPIAuthenticator authenticator = null;
 		
 		switch(this.authenticationType) {
@@ -278,10 +279,10 @@ public class GGAPIAuthenticationManager implements IGGAPIAuthenticationManager {
 		return authenticator;
 	}
 
-	private IGGAPIAuthenticator getAuthenticatorFromEntity(String tenantId, String entityUuid) throws GGAPIEntityException {
+	private IGGAPIAuthenticator getAuthenticatorFromEntity(String tenantId, String entityUuid) throws GGAPIEntityException, GGAPIFactoryException {
 		IGGAPIAuthenticator authenticator;
 		IGGAPICaller caller = new GGAPICaller();
-		IGGAPIEntity entity = this.factory.getEntityFromRepository(this.domain, caller, null, GGAPIEntityIdentifier.UUID, entityUuid);
+		Object entity = this.factory.getEntityFromRepository(this.domain, caller, null, GGAPIEntityIdentifier.UUID, entityUuid);
 		authenticator = ((GGAPIDaoAuthenticationProvider) this.provider).getAuthenticatorFromEntity(tenantId, entity);
 		return authenticator;
 	}

@@ -6,15 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.repository.dao.GGAPIDao;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface GGAPIEntity {
-
-	String dto();
-
-	GGAPIDao db() default GGAPIDao.mongo;
 	
 	boolean allow_creation() default true;
 
@@ -62,8 +57,6 @@ public @interface GGAPIEntity {
 
 	String repository() default "";
 	
-	String dao() default "";
-
 	String openApiSchemas() default "";
 	
 	String eventPublisher() default "";

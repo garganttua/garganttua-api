@@ -1,6 +1,8 @@
 package com.garganttua.api.core;
 
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import java.util.List;
+
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 
 import lombok.Getter;
@@ -34,7 +36,7 @@ public class GGAPICaller implements IGGAPICaller {
 
 	@Getter
 	@Setter
-	private GGAPIDynamicDomain domain;
+	private GGAPIDomain domain;
 	
 	@Getter
 	@Setter
@@ -45,6 +47,12 @@ public class GGAPICaller implements IGGAPICaller {
 		return String.format(
 				"[tenantId [%s], requestedTenantId [%s], ownerId [%s], superTenant [%s], superOwner [%s], accessRule [%s], anonymous [%s]]",
 				tenantId, requestedTenantId, ownerId, superTenant, superOwner, accessRule, anonymous);
+	}
+
+	@Override
+	public List<String> getAuthorities() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

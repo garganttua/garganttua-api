@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.security.IGGAPISecurity;
 
-public interface IGGAPIService<Entity, Dto> extends IGGAPIEngineObject {
+public interface IGGAPIService extends IGGAPIEngineObject {
 
 	ResponseEntity<?> createEntity(IGGAPICaller caller, String entity,
 			String customParameters);
@@ -24,7 +24,6 @@ public interface IGGAPIService<Entity, Dto> extends IGGAPIEngineObject {
 			Integer pageIndex,
 			String filterString,
 			String sortString, 
-			String geolocString,
 			String customParameters);
 
 	ResponseEntity<?> getEntity(IGGAPICaller caller, String uuid,
@@ -38,22 +37,20 @@ public interface IGGAPIService<Entity, Dto> extends IGGAPIEngineObject {
 	ResponseEntity<?> deleteAll(
 			IGGAPICaller caller,
 			String filterString,
-			String geolocString,
 			String customParameters);
 	
 	ResponseEntity<?> getCount(
 			IGGAPICaller caller,
 			String filterString,
-			String geolocString,
 			String customParameters);
 
-	void setEventPublisher(Optional<IGGAPIEventPublisher<Entity>> eventObj);
+	void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 
-	Optional<IGGAPIEventPublisher<Entity>> getEventPublisher();
+	Optional<IGGAPIEventPublisher> getEventPublisher();
 
-	void setDynamicDomain(GGAPIDynamicDomain ddomain);
+	void setDynamicDomain(GGAPIDomain ddomain);
 	
-	GGAPIDynamicDomain getDynamicDomain();
+	GGAPIDomain getDynamicDomain();
 	
 	void setSecurity(Optional<IGGAPISecurity> security);
 

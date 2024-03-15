@@ -6,7 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
+import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
 import com.garganttua.api.security.GGAPISecurityException;
 
 public interface IGGAPIAuthenticationManager {
@@ -15,8 +15,8 @@ public interface IGGAPIAuthenticationManager {
 
 	Optional<PasswordEncoder> getPasswordEncoder();
 
-	<Entity extends IGGAPIEntity> Entity applySecurityOnAuthenticatorEntity(Entity entity) throws GGAPISecurityException;
+	Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPISecurityException;
 	
-	IGGAPIAuthenticator getAuthenticatorFromOwnerId(String tenantId, String ownerId) throws GGAPIEntityException;
+	IGGAPIAuthenticator getAuthenticatorFromOwnerId(String tenantId, String ownerId) throws GGAPIEntityException, GGAPIFactoryException;
 	
 }

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.geojson.GeoJsonObject;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,6 +32,8 @@ public class GGAPILiteral {
 	public static final String OPERATOR_REGEX = OPERATOR_PREFIX + "regex";
 	public static final String OPERATOR_EMPTY = OPERATOR_PREFIX + "empty";
 	public static final String OPERATOR_TEXT = OPERATOR_PREFIX + "text";
+	public static final String OPERATOR_GEOLOC = OPERATOR_PREFIX + "geoWithin";
+	public static final String OPERATOR_GEOLOC_SPHERE = OPERATOR_PREFIX + "geoWithinSphere";
 	
 	public static final String OPERATOR_IN = OPERATOR_PREFIX + "in";
 	public static final String OPERATOR_NOT_IN = OPERATOR_PREFIX + "nin";
@@ -37,6 +41,8 @@ public class GGAPILiteral {
 	public static final String OPERATOR_AND = OPERATOR_PREFIX + "and";
 	public static final String OPERATOR_OR = OPERATOR_PREFIX + "or";
 	public static final String OPERATOR_NOR = OPERATOR_PREFIX + "nor";
+
+	public static final String CIRCLE_RADIUS = "radius";
 
 	private static List<String> finalOperators = new ArrayList<String>();
 	
@@ -51,6 +57,8 @@ public class GGAPILiteral {
 		finalOperators.add(OPERATOR_EMPTY);
 		finalOperators.add(OPERATOR_IN);
 		finalOperators.add(OPERATOR_NOT_IN);
+		finalOperators.add(OPERATOR_GEOLOC);
+		finalOperators.add(OPERATOR_GEOLOC_SPHERE);
 	}
 	
 	@JsonInclude(Include.NON_NULL)
@@ -84,6 +92,8 @@ public class GGAPILiteral {
 			switch (literal.name) {
 			case OPERATOR_EQUAL:
 			case OPERATOR_NOT_EQUAL:
+			case OPERATOR_GEOLOC:
+			case OPERATOR_GEOLOC_SPHERE:
 			case OPERATOR_GREATER_THAN:
 			case OPERATOR_GREATER_THAN_EXCLUSIVE:
 			case OPERATOR_LOWER_THAN:
@@ -163,7 +173,7 @@ public class GGAPILiteral {
 					throw new GGAPILiteralException("Literal of type "+literal.name+" needs 0 or 1 sub literals");
 				}
 				if( literal.literals!=null && literal.literals.size() == 1 && !isFinal(literal.literals.get(0)) ) {
-					throw new GGAPILiteralException("Literal of type "+literal.name+" needs exactly 1 sub literals of type equals, not equals, greater than, greater than exclusive, lower than, lower than exclusive, regex, empty, in or not in.");
+					throw new GGAPILiteralException("Literal of type "+literal.name+" needs exactly 1 sub literals of type equals, not equals, greater than, greater than exclusive, lower than, lower than exclusive, regex, empty, in, not in, geoWithin or geoWithinSphere.");
 				}
 				break;
 			default:
@@ -310,5 +320,11 @@ public class GGAPILiteral {
 		}
 	}
 
-
+	public static GGAPILiteral geolocWithin(String fieldName, GeoJsonObject object) {
+		return operator(GGAPILiteral.OPERATOR_GEOLOC, fieldName, object);
+	}
+	
+	public static GGAPILiteral geolocWithinSphere(String fieldName, GeoJsonObject object) {
+		return operator(GGAPILiteral.OPERATOR_GEOLOC_SPHERE, fieldName, object);
+	}
 }

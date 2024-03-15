@@ -13,7 +13,7 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.core.entity.interfaces.IGGAPITenant;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.service.rest.GGAPIServiceMethodToHttpMethodBinder;
@@ -37,9 +37,9 @@ public class GGAPITenantFilter extends GGAPIFilter {
 	@Value(value = "${com.garganttua.api.superTenantId:0}")
 	private String superTenantId = "0";
 
-	private Optional<GGAPIDynamicDomain> tenantsDomain;
+	private Optional<GGAPIDomain> tenantsDomain;
 
-	private IGGAPIEntityFactory factory;
+	private IGGAPIEntityFactory<Object> factory;
 
 	@Override
 	public void setEngine(IGGAPIEngine engine) {

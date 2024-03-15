@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICrudOperation;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
@@ -59,7 +59,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 	}
 	
 	private List<IGGAPIAccessRule> createAccessRules(IGGAPIService<?,?> service) {
-		GGAPIDynamicDomain domain = service.getDynamicDomain();
+		GGAPIDomain domain = service.getDynamicDomain();
 		if( domain.allow_read_all )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.domain.toLowerCase(),
 					domain.read_all_authority == true

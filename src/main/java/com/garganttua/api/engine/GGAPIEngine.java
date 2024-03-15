@@ -3,19 +3,14 @@ package com.garganttua.api.engine;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.entity.factory.GGAPIEntityFactory;
-import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
-import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
+import com.garganttua.api.engine.registries.IGGAPIFactoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
-import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.security.authentication.ws.GGAPIAuthoritiesRestService;
 import com.garganttua.api.service.rest.filters.GGAPIDynamicDomainFilter;
 import com.garganttua.api.service.rest.filters.GGAPIOwnerFilter;
@@ -23,22 +18,19 @@ import com.garganttua.api.service.rest.filters.GGAPITenantFilter;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * This object to gives access to all objects created by the API Framework
  */
 @Service(value = "GGAPIEngine")
+@Slf4j
 public class GGAPIEngine implements IGGAPIEngine {
-	
-	@Autowired
-	protected ApplicationContext context;
-	
-    @Autowired
-    private Environment environment;
+
 	
 	@Autowired 
 	@Getter
-	private IGGAPIDynamicDomainsRegistry dynamicDomainsRegistry;
+	private IGGAPIDomainsRegistry domainsRegistry;
 	
 	@Autowired
 	@Getter
@@ -51,6 +43,10 @@ public class GGAPIEngine implements IGGAPIEngine {
 	@Autowired
 	@Getter
 	private IGGAPIServicesRegistry servicesRegistry;
+	
+	@Autowired
+	@Getter
+	private IGGAPIFactoriesRegistry factoriesRegistry;
 	
 	@Autowired
 	private GGAPIDynamicDomainFilter ddomainFilter;
@@ -68,16 +64,26 @@ public class GGAPIEngine implements IGGAPIEngine {
 	@Getter
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 	
-	@Getter
-	private IGGAPIEntityFactory entityFactory = new GGAPIEntityFactory();
+//	@Getter
+//	private IGGAPIEntityFactory entityFactory = new GGAPIEntityFactory();
+	
+	public GGAPIEngine() {
+		log.info("============================================");
+		log.info("======                                ======");
+		log.info("====== Starting Garganttua API Engine ======");
+		log.info("======                                ======");
+		log.info("============================================");
+		log.info("Version: {}", this.getClass().getPackage().getImplementationVersion());
+		log.info("== BOOTING ENGINE ==");
+	}
 	
 	@PostConstruct
-	private void injectSelfInEngineObjects() {
-		this.entityFactory.setRepositoriesRegistry(this.repositoriesRegistry);
+	private void init() {
+//		this.entityFactory.setRepositoriesRegistry(this.repositoriesRegistry);
 		
 		IGGAPIEngine self = this;
 		this.daosRegistry.getDaos().forEach(dao -> {
-			dao.setEngine(self);
+			dao.getValue1().setEngine(self);
 		});
 		
 		this.repositoriesRegistry.getRepositories().forEach(repo -> {
@@ -85,8 +91,12 @@ public class GGAPIEngine implements IGGAPIEngine {
 		});
 
 		this.servicesRegistry.getServices().forEach(service -> {
-			service.setEngine(self);
-			service.getEventPublisher().ifPresent( ePublisher -> {ePublisher.setEngine(self);});
+//			service.setEngine(self);
+//			service.getEventPublisher().ifPresent( ePublisher -> {ePublisher.setEngine(self);});
+		});
+		
+		this.factoriesRegistry.getFactories().forEach( factory -> {
+			factory.setEngine(self);
 		});
 		
 		this.ddomainFilter.setEngine(self);
@@ -97,28 +107,34 @@ public class GGAPIEngine implements IGGAPIEngine {
 			ws.setEngine(self);
 		});
 		
-		this.entityFactory.setSpringContext(this.context);
-		this.entityFactory.setEnvironment(this.environment);
+//		this.entityFactory.setSpringContext(this.context);
+//		this.entityFactory.setEnvironment(this.environment);
 	}
-
-	@Bean
-	private IGGAPIEntityFactory factory() {
-		return this.entityFactory;
-	}
+//
+//	@Bean
+//	private IGGAPIEntityFactory factory() {
+//		return this.entityFactory;
+//	}
 	
+//	@Override
+//	public GGAPIDynamicDomain getAuthenticatorDomain() {
+//		return this.dynamicDomainsRegistry.getAuthenticatorDomain();
+//	}
+
 	@Override
-	public GGAPIDynamicDomain getAuthenticatorDomain() {
-		return this.dynamicDomainsRegistry.getAuthenticatorDomain();
+	public GGAPIDomain getOwnerDomain() {
+		return this.domainsRegistry.getOwnerDomain();
 	}
 
 	@Override
-	public GGAPIDynamicDomain getOwnerDomain() {
-		return this.dynamicDomainsRegistry.getOwnerDomain();
+	public GGAPIDomain getTenantDomain() {
+		return this.domainsRegistry.getTenantDomain();
 	}
 
-	@Override
-	public GGAPIDynamicDomain getTenantDomain() {
-		return this.dynamicDomainsRegistry.getTenantDomain();
-	}
+//	@Override
+//	public IGGAPIEntityFactory<?> getEntityFactory() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 }

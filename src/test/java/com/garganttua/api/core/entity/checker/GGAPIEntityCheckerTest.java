@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterCreate;
 import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterDelete;
@@ -35,6 +36,7 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityDeleteMethodProvider;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityGeolocalized;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityGotFromRepository;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityHidden;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityHiddenable;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityId;
@@ -55,7 +57,7 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityTenant;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
-import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.EntityClassInfos;
+import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.GGAPIEntityInfos;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
@@ -90,7 +92,7 @@ public class GGAPIEntityCheckerTest {
 		
 		@GGAPIEntity(
 				domain = "", 
-				dto = ""
+				dto = {}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -110,7 +112,7 @@ public class GGAPIEntityCheckerTest {
 		
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = ""
+				dto = {}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -126,26 +128,6 @@ public class GGAPIEntityCheckerTest {
 	}
 	
 	@Test
-	public void testEntityWithInvalidDto() {
-		
-		@GGAPIEntity(
-				domain = "entity", 
-				dto = "com.dto"
-		)
-		class Entity {
-			@GGAPIEntityUuid
-			private String tuuid;
-		}
-		
-		GGAPIEntityException exception = assertThrows(GGAPIEntityException.class, () -> {
-			GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		 });
-		
-		assertEquals("Provided Dto class is not found for entity "+Entity.class, exception.getMessage());
-		assertEquals(GGAPIEntityException.ENTITY_DEFINITION_ERROR, exception.getCode());
-	}
-	
-	@Test
 	public void testEntityWithValidDto() {
 		
 		class Dto {
@@ -154,7 +136,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity  extends GenericGGAPIEntity{
 			public Entity() {
@@ -180,7 +162,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityTenant
 		class Entity  extends GenericGGAPIEntity {
@@ -207,7 +189,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityTenant(superTenant = "superTenant")
 		class Entity  extends GenericGGAPIEntity{
@@ -239,7 +221,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityTenant(tenantId = "uuid", superTenant = "superTenant")
 		class Entity  extends GenericGGAPIEntity{
@@ -269,7 +251,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityTenant()
 		class Entity  extends GenericGGAPIEntity{
@@ -301,7 +283,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityTenant(tenantId = "uuid")
 		class Entity  extends GenericGGAPIEntity{
@@ -335,7 +317,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner
 		class Entity  extends GenericGGAPIEntity{
@@ -362,7 +344,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner(superOwner = "superOwner")
 		class Entity  extends GenericGGAPIEntity{
@@ -395,7 +377,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner(ownerId = "uuid", superOwner = "superOwner")
 		class Entity  extends GenericGGAPIEntity {
@@ -412,6 +394,8 @@ public class GGAPIEntityCheckerTest {
 			
 			@GGAPIEntityId
 			private String id;
+			@GGAPIEntityGotFromRepository
+			private boolean t;
 		}
 		
 		assertDoesNotThrow(() -> {
@@ -428,7 +412,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner()
 		class Entity  extends GenericGGAPIEntity{
@@ -460,7 +444,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity{
@@ -492,7 +476,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -517,7 +501,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -543,7 +527,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -572,13 +556,15 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
 				
 			}
 			private String uuid;
+			@GGAPIEntityGotFromRepository
+			private boolean t;
 			
 		}
 		
@@ -596,7 +582,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
@@ -606,6 +592,8 @@ public class GGAPIEntityCheckerTest {
 			private String uuid;
 			@GGAPIEntityId
 			private String id;
+			@GGAPIEntityGotFromRepository
+			private boolean t;
 			
 		}
 		
@@ -624,7 +612,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -652,13 +640,14 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
 				
 			}
 			private String uuid;
+			
 			
 		}
 		
@@ -676,7 +665,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
@@ -700,7 +689,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -730,7 +719,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -763,7 +752,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -793,7 +782,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -828,7 +817,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -871,7 +860,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -915,7 +904,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -959,7 +948,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -1003,7 +992,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -1046,7 +1035,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -1090,7 +1079,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			
@@ -1136,7 +1125,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityHiddenable
 		class Entity extends GenericGGAPIEntity {
@@ -1161,7 +1150,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityHiddenable(hidden = "hidden")
 		class Entity extends GenericGGAPIEntity {
@@ -1186,7 +1175,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityHiddenable(hidden = "hidden")
 		class Entity extends GenericGGAPIEntity {
@@ -1212,7 +1201,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityHiddenable(hidden = "hidden")
 		class Entity extends GenericGGAPIEntity {
@@ -1233,7 +1222,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityGeolocalized
 		class Entity extends GenericGGAPIEntity {
@@ -1258,7 +1247,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1283,7 +1272,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1309,7 +1298,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1338,14 +1327,15 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
 				
 			}
-			
+			@GGAPIEntityGotFromRepository
+			private boolean t;
 			Point location;
 		}
 		assertDoesNotThrow(() -> {
@@ -1362,7 +1352,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 
@@ -1412,7 +1402,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 
@@ -1462,7 +1452,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 
@@ -1511,7 +1501,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 			
@@ -1563,7 +1553,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -1612,7 +1602,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -1663,7 +1653,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		class Entity {
 
@@ -1713,7 +1703,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner
 		@GGAPIEntityOwned
@@ -1738,7 +1728,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwned
 		class Entity  extends GenericGGAPIEntity{
@@ -1762,7 +1752,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwned(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1787,7 +1777,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwned(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1811,7 +1801,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner
 		class Entity  extends GenericGGAPIEntity{
@@ -1840,7 +1830,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityOwner(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity{
@@ -1868,7 +1858,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityShared
 		class Entity  extends GenericGGAPIEntity{
@@ -1892,7 +1882,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityShared(share = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1917,7 +1907,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityShared(share = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1939,7 +1929,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityShared
 		class Entity  extends GenericGGAPIEntity{
@@ -1968,7 +1958,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity(
 				domain = "entity", 
-				dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"
+				dto = {Dto.class}
 		)
 		@GGAPIEntityShared(share = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1994,7 +1984,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2069,6 +2059,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2084,10 +2075,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2118,7 +2109,8 @@ public class GGAPIEntityCheckerTest {
 				null, 
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -2133,7 +2125,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2209,6 +2201,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2224,10 +2217,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2258,7 +2251,8 @@ public class GGAPIEntityCheckerTest {
 				null, 
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -2273,7 +2267,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2347,6 +2341,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2366,10 +2361,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2400,7 +2395,8 @@ public class GGAPIEntityCheckerTest {
 				null, 
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 	}
@@ -2414,7 +2410,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2489,6 +2485,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2508,10 +2505,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2542,7 +2539,8 @@ public class GGAPIEntityCheckerTest {
 				null, 
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -2557,7 +2555,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2632,6 +2630,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2651,10 +2650,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2685,7 +2684,8 @@ public class GGAPIEntityCheckerTest {
 				null, 
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -2700,7 +2700,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2775,6 +2775,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2794,10 +2795,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2828,7 +2829,8 @@ public class GGAPIEntityCheckerTest {
 				null, 
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -2843,7 +2845,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2919,6 +2921,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -2938,10 +2941,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -2972,7 +2975,8 @@ public class GGAPIEntityCheckerTest {
 				"afterGet",
 				null,
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -2987,7 +2991,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3063,6 +3067,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -3082,10 +3087,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -3116,7 +3121,8 @@ public class GGAPIEntityCheckerTest {
 				null,
 				"afterGet",
 				null,
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -3131,7 +3137,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3205,6 +3211,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -3224,10 +3231,10 @@ public class GGAPIEntityCheckerTest {
 
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -3258,7 +3265,8 @@ public class GGAPIEntityCheckerTest {
 				null,
 				null,				
 				"afterGet",
-				new HashMap<String, String>());
+				new HashMap<String, String>(), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -3273,7 +3281,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3356,6 +3364,7 @@ public class GGAPIEntityCheckerTest {
 			private boolean enabled = true;
 			
 			@GGAPIEntitySuperTenant
+			@GGAPIEntityGotFromRepository
 			private boolean superTenant;
 			
 			@GGAPIEntitySuperOwner
@@ -3372,10 +3381,10 @@ public class GGAPIEntityCheckerTest {
 		
 		}
 		
-		EntityClassInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
-		EntityClassInfos expectedResult = new EntityClassInfos(
+		GGAPIEntityInfos result = GGAPIEntityCheckerTest.checker.checkEntityClass(Entity.class);
+		GGAPIEntityInfos expectedResult = new GGAPIEntityInfos(
 				"tenants",
-				Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto"),
+				List.of(Class.forName("com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto")),
 				"uuid", 
 				"id", 
 				"saveMethod", 
@@ -3406,7 +3415,8 @@ public class GGAPIEntityCheckerTest {
 				null,
 				null,				
 				null,
-				Maps.newHashMap("superOwner", "test"));
+				Maps.newHashMap("superOwner", "test"), 
+				"superTenant");
 		
 		assertEquals(expectedResult, result);
 		
@@ -3421,7 +3431,7 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.entity.checker.GGAPIEntityCheckerTest$1Dto",
+			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3518,7 +3528,7 @@ public class GGAPIEntityCheckerTest {
 	public void testGenericEntity() {
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = "com.garganttua.api.core.dto.GenericGGAPIDTOObject"
+			dto = {GenericGGAPIDto.class}
 		)
 		class Entity extends GenericGGAPIEntity {
 

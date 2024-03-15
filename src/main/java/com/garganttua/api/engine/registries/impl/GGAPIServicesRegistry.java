@@ -21,11 +21,11 @@ import com.garganttua.api.core.GGAPIReadOutputMode;
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.GGAPIObjectsHelper;
 import com.garganttua.api.engine.GGAPIOpenAPIHelper;
-import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.events.IGGAPIEventPublisher;
 import com.garganttua.api.repository.dto.IGGAPIDTOObject;
@@ -65,7 +65,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	private Map<String, IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>> restServices = new HashMap<String, IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>>>();
 
 	@Autowired
-	private IGGAPIDynamicDomainsRegistry dynamicDomains;
+	private IGGAPIDomainsRegistry dynamicDomains;
 
 	@Override
 	public IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> getService(
@@ -87,7 +87,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	private void init() throws GGAPIEngineException {
 
 		log.info("Creating Rest Services ...");
-		for (GGAPIDynamicDomain ddomain : this.dynamicDomains.getDynamicDomains()) {
+		for (GGAPIDomain ddomain : this.dynamicDomains.getDynamicDomains()) {
 
 			String ws__ = ddomain.ws;
 
@@ -120,7 +120,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Optional<IGGAPIEventPublisher<IGGAPIEntity>> getEventPublisher(GGAPIDynamicDomain ddomain) throws GGAPIEngineException {
+	private Optional<IGGAPIEventPublisher<IGGAPIEntity>> getEventPublisher(GGAPIDomain ddomain) throws GGAPIEngineException {
 		if( ddomain.event != null && !ddomain.event.isEmpty() ) {
 			return Optional.ofNullable(this.helper.getObjectFromConfiguration(ddomain.event, IGGAPIEventPublisher.class));
 		}
@@ -128,7 +128,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 	}
 
 	@SuppressWarnings("unchecked")
-	private void setOpenApiDocumentation(IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, GGAPIDynamicDomain ddomain, String baseUrl, List<IGGAPICustomService> customServices) throws IOException {
+	private void setOpenApiDocumentation(IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, GGAPIDomain ddomain, String baseUrl, List<IGGAPICustomService> customServices) throws IOException {
 		if( this.openApi.isPresent() ) {
 		
 			Class<? extends IGGAPIEntity> entityClass = ddomain.entityClass;
@@ -184,7 +184,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		}
 	}
 
-	private void createRequestMappings(GGAPIDynamicDomain ddomain,
+	private void createRequestMappings(GGAPIDomain ddomain,
 			IGGAPIService<IGGAPIEntity, IGGAPIDTOObject<IGGAPIEntity>> service, String baseUrl, List<IGGAPICustomService> customServices)
 			throws NoSuchMethodException {
 		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();

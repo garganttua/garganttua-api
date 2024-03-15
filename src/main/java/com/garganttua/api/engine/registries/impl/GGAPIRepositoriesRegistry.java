@@ -5,21 +5,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.GGAPIObjectsHelper;
 import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
-import com.garganttua.api.engine.registries.IGGAPIDynamicDomainsRegistry;
+import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
-import com.garganttua.api.repository.GGAPIEngineRepository;
+import com.garganttua.api.repository.GGAPIMultipleRepository;
+import com.garganttua.api.repository.GGAPIUniqueRepository;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -34,16 +34,16 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 	@Value("${com.garganttua.api.superTenantId}")
 	private String magicTenantId;
 	
-	private Map<String, IGGAPIRepository> repositories = new HashMap<String, IGGAPIRepository>();
+	private Map<String, IGGAPIRepository<?>> repositories = new HashMap<String, IGGAPIRepository<?>>();
 	
 	@Autowired
-	private IGGAPIDynamicDomainsRegistry dynamicDomains;
+	private IGGAPIDomainsRegistry domains;
 	
 	@Autowired
 	private IGGAPIDaosRegistry daosRegistry;
 
 	@Override
-	public IGGAPIRepository getRepository(String name) {
+	public IGGAPIRepository<?> getRepository(String name) {
 		return this.repositories.get(name);
 	}
 
@@ -51,35 +51,39 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 	private void init() throws GGAPIEngineException {
 
 		log.info("Creating Repositories ...");
-		for( GGAPIDynamicDomain ddomain: this.dynamicDomains.getDynamicDomains() ){
+		for( GGAPIDomain ddomain: this.domains.getDomains() ){
 			
-			IGGAPIDAORepository dao = daosRegistry.getDao(ddomain.domain);
+			List<Pair<Class<?>, IGGAPIDAORepository<?>>> dao = daosRegistry.getDao(ddomain.entity.getValue1().domain());
 			
 			if( dao == null ) {
-				throw new GGAPIEngineException("DAO "+ddomain.domain+" not found");
+				throw new GGAPIEngineException("DAO "+ddomain.entity.getValue1().domain()+" not found");
 			}
 			
 			String repo__ = ddomain.repo;
 			
-			IGGAPIRepository repo = null;
+			IGGAPIRepository<?> repo = null;
 			
 			if (repo__ != null && !repo__.isEmpty()) {
 				repo = helper.getObjectFromConfiguration(repo__, IGGAPIRepository.class);
 			} else {
-				repo = new GGAPIEngineRepository();
+				if(ddomain.dtos.size() == 1) {
+					repo = new GGAPIUniqueRepository();
+				} else {
+					repo = new GGAPIMultipleRepository();
+				}
 			}
 
-			repo.setDao(dao);
+			repo.setDaos(dao);
+			repo.setDomain(ddomain);
 			
-			this.repositories.put(ddomain.domain, repo);
+			this.repositories.put(ddomain.entity.getValue1().domain(), repo);
 
-			log.info("	Repository added [domain {}]", ddomain.domain);
-			
+			log.info("	Repository added [domain {}]", ddomain.entity.getValue1().domain());
 		}
 	}
 
 	@Override
-	public List<IGGAPIRepository> getRepositories() {
-		return new ArrayList<IGGAPIRepository>(this.repositories.values());
+	public List<IGGAPIRepository<?>> getRepositories() {
+		return new ArrayList<IGGAPIRepository<?>>(this.repositories.values());
 	}
 }

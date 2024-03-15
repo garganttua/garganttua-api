@@ -41,28 +41,10 @@ public class GGAPIEntityException extends Exception {
 	 * 
 	 */
 	private static final long serialVersionUID = 8581388689485492204L;
-//	public static final int ENTITY_NOT_FOUND = 1;
-//	public static final int BAD_REQUEST = 2;
-//	public static final int UNKNOWN_ERROR = 3;
-//	public static final int CONNECTOR_ERROR = 4;
-//	public static final int ENTITY_ALREADY_EXISTS = 5;
-//	public static final int INTERNAL_ERROR = 6;
 	public static final int ENTITY_DEFINITION_ERROR = 1;
-
-//	/**
-//	 * 
-//	 * @param e
-//	 * @return
-//	 */
-//	public HttpStatus getHttpErrorCode() {
-//		switch (code) {
-//		default:
-//			return HttpStatus.INTERNAL_SERVER_ERROR;
-//		case GGAPIEntityException.BAD_REQUEST:
-//			return HttpStatus.BAD_REQUEST;
-//		case GGAPIEntityException.ENTITY_NOT_FOUND:
-//			return HttpStatus.NOT_FOUND;
-//		}
-//	}
-
+	public static final int SET_FIELD_VALUE = 0;
+	public static final int DELETION_ERROR = 2;
+	public static final int ENTITY_ALREADY_EXISTS = 3;
+	public static final int BAD_REQUEST = 4;
+	public static final int UNKNOWN_ERROR = 6;
 }

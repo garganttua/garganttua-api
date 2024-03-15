@@ -1,4 +1,4 @@
-package com.garganttua.api.core.dto.annotations;
+package com.garganttua.api.core.entity.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,12 +7,6 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface GGAPIDtoFieldMapping {
-
-	String entityField();
-
-	String fromMethod() default "";
-
-	String toMethod() default "";
+public @interface GGAPIEntityGotFromRepository {
 
 }

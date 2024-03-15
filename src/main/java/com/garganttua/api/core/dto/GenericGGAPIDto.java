@@ -7,7 +7,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.core.dto.annotations.GGAPIDtoFieldMapping;
+import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
+import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
 
 import lombok.Data;
 
@@ -18,17 +19,18 @@ import lombok.Data;
  * @param <Entity>
  */
 @Data
-public class GenericGGAPIDTOObject {
+public class GenericGGAPIDto {
 	
 	@Id
 	@Indexed(unique=true)
-	@GGAPIDtoFieldMapping(entityField = "uuid")
+	@GGAPIFieldMappingRule(sourceFieldAddress = "uuid")
 	protected String uuid;
 	
 	@Field
-	@GGAPIDtoFieldMapping(entityField = "id")
+	@GGAPIFieldMappingRule(sourceFieldAddress = "id")
 	protected String id;
 	
 	@Field
+	@GGAPIDtoTenantId
 	protected String tenantId;
 }

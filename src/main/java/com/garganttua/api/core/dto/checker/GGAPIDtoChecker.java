@@ -1,204 +1,95 @@
 package com.garganttua.api.core.dto.checker;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.api.core.dto.annotations.GGAPIDtoFieldMapping;
-import com.garganttua.api.core.dto.annotations.GGAPIDtoObjectMapping;
+import com.garganttua.api.core.dto.annotations.GGAPIDto;
+import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
-import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
-import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.EntityClassInfos;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelper;
 
 public class GGAPIDtoChecker {
-	
-	public static final String OBJECT_MAPPING_RULE = "OBJECT_MAPPING";
 
-	public record DtoClassInfos(
-			Map<String, DtoFieldMapping> mappings
-	) {
+	public record GGAPIDtoInfos(String db, String tenantIdFieldName) {
 		@Override
-	    public String toString() {
-	        return "DtoClassValidationResult{" +
-	               "mappings=" + mappings +
-	               '}';
-	    }
-
-	    @Override
-	    public boolean equals(Object obj) {
-	        if (this == obj) {
-	            return true;
-	        }
-	        if (obj == null || getClass() != obj.getClass()) {
-	            return false;
-	        }
-	        DtoClassInfos that = (DtoClassInfos) obj;
-	        return Objects.equals(mappings, that.mappings);
-	    }
-
-	    @Override
-	    public int hashCode() {
-	        return Objects.hash(mappings);
-	    }
-	}
-	
-	public record DtoFieldMapping (
-		String entityFieldName,
-		String fromEntityMethod,
-		String toEntityMethod
-	) {
-	    @Override
-	    public String toString() {
-	        return String.format("DtoFieldMapping{entityField='%s', fromEntityMethod='%s', toEntityMethod='%s'}",
-	                             entityFieldName, fromEntityMethod, toEntityMethod);
-	    }
-
-	    @Override
-	    public boolean equals(Object obj) {
-	        if (this == obj) {
-	            return true;
-	        }
-	        if (obj == null || getClass() != obj.getClass()) {
-	            return false;
-	        }
-	        DtoFieldMapping that = (DtoFieldMapping) obj;
-	        return Objects.equals(entityFieldName, that.entityFieldName) &&
-	               Objects.equals(fromEntityMethod, that.fromEntityMethod) &&
-	               Objects.equals(toEntityMethod, that.toEntityMethod);
-	    }
-
-	    @Override
-	    public int hashCode() {
-	        return Objects.hash(entityFieldName, fromEntityMethod, toEntityMethod);
-	    }
-	}
-	
-	public DtoClassInfos checkDtoClass(Class<?> dtoClass, Class<?> entityClass) throws GGAPIDtoException {
-		
-		EntityClassInfos entityInfos = null;
-		try {
-			entityInfos = new GGAPIEntityChecker().checkEntityClass(entityClass);
-		} catch (GGAPIEntityException e) {
-			throw new GGAPIDtoException(GGAPIDtoException.ENTITY_DEFINITION_ERROR, e);
+		public String toString() {
+			return "GGAPIDtoInfos{tenantIdFieldName='" + tenantIdFieldName + "', db='" + db + "'}";
 		}
-		return this.checkDtoClass(dtoClass, entityClass, entityInfos);
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			GGAPIDtoInfos that = (GGAPIDtoInfos) o;
+			return Objects.equals(tenantIdFieldName, that.tenantIdFieldName) &&
+					Objects.equals(db, that.db);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(tenantIdFieldName)*Objects.hash(db);
+		}
 	}
-	
-	public DtoClassInfos checkDtoClass(Class<?> dtoClass, Class<?> entityClass, EntityClassInfos infos) throws GGAPIDtoException {
-		Map<String, DtoFieldMapping> mappings = new HashMap<String, GGAPIDtoChecker.DtoFieldMapping>();
 
-		if( !dtoClass.isAnnotationPresent(GGAPIDtoObjectMapping.class) ) {
-			mappings = this.getMappings(mappings, dtoClass, entityClass);	
-			
-			this.checkMappingForField(mappings, infos.uuidFieldName(), dtoClass);
-			this.checkMappingForField(mappings, infos.idFieldName(), dtoClass);
-			
-			if( infos.tenantEntity() ) {
-				this.checkMappingForField(mappings, infos.tenantIdFieldName(), dtoClass);
-				this.checkMappingForField(mappings, infos.superTenantFieldName(), dtoClass);
-			}
-			if( infos.ownerEntity() ) {
-				this.checkMappingForField(mappings, infos.ownerIdFieldName(), dtoClass);
-				this.checkMappingForField(mappings, infos.superOnwerIdFieldName(), dtoClass);
-			}
-			if( infos.ownedEntity() ) {
-				this.checkMappingForField(mappings, infos.ownerIdFieldName(), dtoClass);
-			}
+	public static List<GGAPIDtoInfos> checkDtos(List<Class<?>> dtoClasss) throws GGAPIDtoException {
+		List<GGAPIDtoInfos> dtoinfos = new ArrayList<GGAPIDtoInfos>();
+		for (Class<?> dtoClass : dtoClasss) {
+			dtoinfos.add(GGAPIDtoChecker.checkDto(dtoClass));
+		}
+		return dtoinfos;
+	}
 
-	        if( infos.hiddenableEntity() ) {
-	        	this.checkMappingForField(mappings, infos.hiddenFieldName(), dtoClass);
+	public static GGAPIDtoInfos checkDto(Class<?> dtoClass) throws GGAPIDtoException {
+
+		GGAPIDto annotation = dtoClass.getDeclaredAnnotation(GGAPIDto.class);
+		
+		if( annotation == null ) {
+			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
+					"Dto " + dtoClass + " does is not annotated with @GGAPIDto");
+		}
+		
+		String tenantIdFieldName = GGAPIDtoChecker.getFieldNameAnnotatedWithAndCheckType(dtoClass,
+				GGAPIDtoTenantId.class, String.class);
+
+		if (tenantIdFieldName == null || tenantIdFieldName.isEmpty()) {
+			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
+					"Dto " + dtoClass + " does not have any field annotated with @GGAPIDtoTenantId");
+		}
+
+		return new GGAPIDtoInfos(annotation.db(), tenantIdFieldName);
+	}
+
+	private static String getFieldNameAnnotatedWithAndCheckType(Class<?> dtoClass,
+			Class<? extends Annotation> annotationClass, Class<?> fieldClass) throws GGAPIDtoException {
+		String fieldName = null;
+		for (Field field : dtoClass.getDeclaredFields()) {
+			if (field.isAnnotationPresent(annotationClass)) {
+				if (fieldName != null && !fieldName.isEmpty()) {
+					throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
+							"Dto " + dtoClass + " has more than one field annotated with " + annotationClass);
+				}
+				if (field.getType().equals(fieldClass)) {
+					fieldName = field.getName();
+				} else {
+					throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
+							"Dto " + dtoClass + " has field " + field.getName() + " with wrong type "
+									+ field.getType().getName() + ", should be " + fieldClass);
+				}
 			}
-	        if( infos.geolocalizedEntity() ) {
-	        	this.checkMappingForField(mappings, infos.locationFieldName(), dtoClass);
-			}
-	        if( infos.sharedEntity() ) {
-	        	this.checkMappingForField(mappings, infos.shareFieldName(), dtoClass);
-			}
+		}
+
+		if (dtoClass.getSuperclass() != null && fieldName == null) {
+			return GGAPIDtoChecker.getFieldNameAnnotatedWithAndCheckType(dtoClass.getSuperclass(), annotationClass,
+					fieldClass);
 		} else {
-			mappings = this.getObjectMapping(mappings, dtoClass, dtoClass.getDeclaredAnnotation(GGAPIDtoObjectMapping.class), entityClass);
-		}
-
-		return new DtoClassInfos(mappings);
-	}
-
-	private Map<String, DtoFieldMapping> getObjectMapping(Map<String, DtoFieldMapping> mappings, Class<?> dtoClass, GGAPIDtoObjectMapping annotation, Class<?> entityClass) throws GGAPIDtoException {
-		this.checkObjectMethod(annotation.fromMethod(), entityClass, dtoClass);
-		this.checkObjectMethod(annotation.toMethod(), entityClass, dtoClass);
-		mappings.put(GGAPIDtoChecker.OBJECT_MAPPING_RULE, new DtoFieldMapping(null, annotation.fromMethod(), annotation.toMethod()));
-		return mappings;
-	}
-
-	private void checkObjectMethod(String methodName, Class<?> entityClass, Class<?> dtoClass) throws GGAPIDtoException {
-		try {
-			dtoClass.getDeclaredMethod(methodName, entityClass);
-		} catch (NoSuchMethodException | SecurityException e) {
-			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,"Dto " + dtoClass + " does not have method "+methodName+"("+entityClass+")" );
+			return fieldName;
 		}
 	}
 
-	private void checkMappingForField(Map<String, DtoFieldMapping> mappings, String searchField, Class<?> dtoClass) throws GGAPIDtoException {
-		boolean found = false;
-		for(DtoFieldMapping mapping: mappings.values()) {
-			if( mapping.entityFieldName().equals(searchField) ) {
-				found = true;
-				break;
-			}
-		}
-		if( !found ) {
-			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,"Dto " + dtoClass + " does not have mapping rule for "+searchField+" entity field");
-		}
-	}
-
-	private Map<String, DtoFieldMapping> getMappings(Map<String, DtoFieldMapping> mappings, Class<?> dtoClass, Class<?> entityClass) throws GGAPIDtoException {
-		
-		for( Field dtoField: dtoClass.getDeclaredFields() ) {
-			if( dtoField.isAnnotationPresent(GGAPIDtoFieldMapping.class) ) {
-				String fieldName = dtoField.getName();
-				GGAPIDtoFieldMapping annotation = dtoField.getAnnotation(GGAPIDtoFieldMapping.class);
-				
-				if( annotation.entityField().isEmpty()  ) {
-					throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,"Dto " + dtoClass + " field "+dtoField.getName()+ " does not have entityField defined");
-				}
-				
-				Field entityField = GGAPIObjectReflectionHelper.getField(entityClass, annotation.entityField());
-				if( !annotation.entityField().isEmpty() && (annotation.fromMethod().isEmpty() || annotation.toMethod().isEmpty())) {
-					this.checkFieldsType(dtoField, entityField, dtoClass);
-				}
-				if( !annotation.fromMethod().isEmpty() ) {
-					this.checkFieldMethod(annotation.fromMethod(), entityField, dtoField, dtoClass);
-				}
-				if( !annotation.toMethod().isEmpty() ) {
-					this.checkFieldMethod(annotation.toMethod(), dtoField, entityField, dtoClass);
-				}
-				mappings.put(fieldName, new DtoFieldMapping(annotation.entityField(), annotation.fromMethod(), annotation.toMethod()));
-			}
-		}
-		
-		if( dtoClass.getSuperclass() != null ) {
-			return this.getMappings(mappings, dtoClass.getSuperclass(), entityClass);
-		}
-		return mappings;
-	}
-
-	private void checkFieldMethod(String methodName, Field fromField, Field toField, Class<?> dtoClass) throws GGAPIDtoException {
-		try {
-			Method method = dtoClass.getDeclaredMethod(methodName, fromField.getType());
-			if( !method.getReturnType().equals(toField.getType()) ) {
-				throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,"Dto " + dtoClass + " does not have method "+toField.getGenericType()+" "+methodName+"("+fromField.getGenericType()+")" );
-			}
-		} catch (NoSuchMethodException | SecurityException e) {
-			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,"Dto " + dtoClass + " does not have method "+toField.getGenericType()+" "+methodName+"("+fromField.getGenericType()+")" );
-		}
-	}
-
-	private void checkFieldsType(Field dtoField, Field entityField, Class<?> dtoClass) throws GGAPIDtoException {
-		if( !entityField.getType().equals(dtoField.getType()) ) {
-			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,"Dto " + dtoClass + " field "+dtoField.getName()+" must be of type "+ entityField.getType());
-		}
+	public static GGAPIDtoInfos checkDto(Object dto) throws GGAPIDtoException {
+		return GGAPIDtoChecker.checkDto(dto.getClass());
 	}
 
 }

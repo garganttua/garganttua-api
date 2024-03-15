@@ -2,8 +2,9 @@ package com.garganttua.api.security.keys.managers.mongo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.entity.AbstractGGAPIEntity;
+import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.security.keys.GGAPIKey;
 
 import lombok.Getter;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 
 @GGAPIEntity(
 		domain = GGAPIKeyRealmEntity.domain, 
-		dto = "com.garganttua.api.security.keys.managers.mongo.GGAPIKeyRealmDTO",
+		dto = {GGAPIKeyRealmDTO.class},
 		repository = "class:com.garganttua.api.security.keys.managers.mongo.GGAPIKeyRepository",
 		allow_creation = true,
 		allow_read_one = true, 
@@ -31,27 +32,29 @@ import lombok.NoArgsConstructor;
 		read_one_authority = true,
 		delete_all_authority = true, 
 		delete_one_authority = true,
-		count_authority = true,
-		unicity = {"id"},
-		mandatory = {"algorithm", "cipheringKey", "uncipheringKey"}
+		count_authority = true
 )
 @NoArgsConstructor
 @Getter
-public class GGAPIKeyRealmEntity extends AbstractGGAPIEntity {
+public class GGAPIKeyRealmEntity extends GenericGGAPIEntity {
 	
 	public static final String domain = "key-realms";
 	
 	@JsonInclude
+	@GGAPIEntityMandatory
 	private String algorithm;
 	
 	@JsonInclude
+	@GGAPIEntityMandatory
 	private GGAPIKey cipheringKey;
 	
 	@JsonInclude
+	@GGAPIEntityMandatory
 	private GGAPIKey uncipheringKey;
 	
 	GGAPIKeyRealmEntity(String uuid, String id, String algorithm, GGAPIKey cipheringKey, GGAPIKey uncipheringKey){
-		super(uuid, id);
+		this.uuid = uuid;
+		this.id = id;
 		this.algorithm = algorithm;
 		this.cipheringKey = cipheringKey;
 		this.uncipheringKey = uncipheringKey;

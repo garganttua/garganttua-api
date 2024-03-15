@@ -6,8 +6,8 @@ import com.garganttua.api.repository.IGGAPIRepository;
 
 public interface IGGAPIRepositoriesRegistry {
 	
-	IGGAPIRepository getRepository(String name);
+	IGGAPIRepository<?> getRepository(String name);
 
-	List<IGGAPIRepository> getRepositories();
+	List<IGGAPIRepository<?>> getRepositories();
 
 }

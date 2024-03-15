@@ -10,5 +10,7 @@ import java.lang.annotation.Target;
 public @interface GGAPIEntityAuthorizeUpdate {
 
 	String authority() default "";
+	
+	String updateMethod() default "";
 
 }

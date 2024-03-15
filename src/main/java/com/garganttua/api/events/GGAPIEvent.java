@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GGAPIEvent<Entity> {
+public class GGAPIEvent {
 
 	private GGAPIServiceMethod method;
 	
@@ -32,15 +32,15 @@ public class GGAPIEvent<Entity> {
 	
 	private Map<String, String> inParams = new HashMap<String, String>();
 	
-	private Entity in; 
+	private Object in; 
 	
-	private Entity out; 
+	private Object out; 
 	
 	private String entityClass;
 	
 	private long outCount;
 	
-	private List<Entity> outList;
+	private List<Object> outList;
 	
 	private GGAPIErrorObject errorObject;
 	

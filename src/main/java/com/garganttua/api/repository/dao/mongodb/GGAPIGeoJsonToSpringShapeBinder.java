@@ -16,7 +16,7 @@ import org.geojson.Polygon;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Shape;
 
-import com.garganttua.api.core.filter.GGAPIGeolocFilter;
+import com.garganttua.api.core.filter.GGAPILiteral;
 
 public class GGAPIGeoJsonToSpringShapeBinder implements GeoJsonObjectVisitor<Shape> {
 
@@ -41,7 +41,7 @@ public class GGAPIGeoJsonToSpringShapeBinder implements GeoJsonObjectVisitor<Sha
 	public Shape visit(Feature geoJsonObject) {
 	
 		Point point = (Point) geoJsonObject.getGeometry();
-		double radius = geoJsonObject.getProperty(GGAPIGeolocFilter.CIRCLE_RADIUS);
+		double radius = geoJsonObject.getProperty(GGAPILiteral.CIRCLE_RADIUS);
 		double y = point.getCoordinates().getLatitude();
 		double x = point.getCoordinates().getLongitude();
 		

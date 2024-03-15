@@ -5,7 +5,7 @@ import java.util.List;
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.repository.GGAPIRepository;
 import com.garganttua.api.security.authorization.tokens.GGAPIToken;
@@ -22,7 +22,7 @@ public class GGAPITokenRepository extends GGAPIRepository implements IGGAPIDBTok
 		caller.setRequestedTenantId(example.getTenantId());
 		
 		if( example.getUuid() != null && !example.getUuid().isEmpty() ) {
-			return this.getOneByUuid(GGAPIDynamicDomain.fromEntityClass(GGAPIToken.class), caller, example.getId());
+			return this.getOneByUuid(GGAPIDomain.fromEntityClass(GGAPIToken.class), caller, example.getId());
 		} else {
 			return this.findOneByOwnerId(caller, example);
 		}
@@ -51,7 +51,7 @@ public class GGAPITokenRepository extends GGAPIRepository implements IGGAPIDBTok
 
 		GGAPILiteral andFilter = GGAPILiteral.eq("ownerId", token.getOwnerId()).andOperator(GGAPILiteral.eq("tenantId", token.getTenantId()));
 
-		List<GGAPIToken> entities = this.getEntities(GGAPIDynamicDomain.fromEntityClass(GGAPIToken.class), caller, 0, 0, andFilter, null, null);
+		List<GGAPIToken> entities = this.getEntities(GGAPIDomain.fromEntityClass(GGAPIToken.class), caller, 0, 0, andFilter, null, null);
 		return entities.size()>0?entities.get(0):null;
 		
 	}

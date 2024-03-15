@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -20,7 +20,7 @@ public class GGAPIDynamicDomainFilter extends GGAPIFilter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		super.doFilter(request, response, chain);
 		GGAPICaller caller = this.getCaller(request);
-		GGAPIDynamicDomain ddomain = this.engine.getDynamicDomainsRegistry().getDomain(((HttpServletRequest)request));
+		GGAPIDomain ddomain = this.engine.getDynamicDomainsRegistry().getDomain(((HttpServletRequest)request));
 
 		caller.setDomain(ddomain);
 		

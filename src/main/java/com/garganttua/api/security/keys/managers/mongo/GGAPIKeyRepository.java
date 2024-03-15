@@ -2,7 +2,7 @@ package com.garganttua.api.security.keys.managers.mongo;
 
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.repository.GGAPIRepository;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
@@ -24,7 +24,7 @@ public class GGAPIKeyRepository extends GGAPIRepository implements IGGAPIDBKeyKe
 		caller.setTenantId(this.superTenantId);
 		caller.setRequestedTenantId(this.superTenantId);
 		caller.setSuperTenant(true);
-		GGAPIKeyRealmEntity realm = this.getOneByUuid(GGAPIDynamicDomain.fromEntityClass(GGAPIKeyRealmEntity.class), caller, realmStr);
+		GGAPIKeyRealmEntity realm = this.getOneByUuid(GGAPIDomain.fromEntityClass(GGAPIKeyRealmEntity.class), caller, realmStr);
 		if( realm != null) {
 			return GGAPIKeyRealms.createRealm(realmStr, realm.getAlgorithm(), realm.getCipheringKey(), realm.getUncipheringKey());
 		}

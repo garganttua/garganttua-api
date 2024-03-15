@@ -28,11 +28,9 @@ import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
-import com.garganttua.api.core.filter.GGAPIGeolocFilter;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.sort.GGAPISort;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.events.GGAPIEvent;
@@ -51,9 +49,9 @@ import lombok.Setter;
  * 
  * @author J.Colombet
  *
- * @param <Entity>
+ * @param <?>
  */
-public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto> {
+public class GGAPIRestService implements IGGAPIService {
 
 	protected static final String SUCCESSFULLY_DELETED = "Ressource has been successfully deleted";
 
@@ -71,7 +69,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 	@Autowired
 	@Setter
 	@Getter
-	protected Optional<IGGAPIEventPublisher<Entity>> eventPublisher;
+	protected Optional<IGGAPIEventPublisher> eventPublisher;
 	
 	@Setter
 	protected String magicTenantId;
@@ -79,9 +77,9 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 	protected IGGAPIEngine engine;
 
 	@Getter
-	private GGAPIDynamicDomain dynamicDomain;
+	private GGAPIDomain dynamicDomain;
 
-	protected IGGAPIEntityFactory factory;
+	protected IGGAPIEntityFactory<Object> factory;
 
 	@Setter
 	protected Optional<IGGAPISecurity> security = Optional.empty();
@@ -92,7 +90,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 	}
 	
 	@Override
-	public void setDynamicDomain(GGAPIDynamicDomain ddomain) {
+	public void setDynamicDomain(GGAPIDomain ddomain) {
 		this.dynamicDomain = ddomain;
 		this.ALLOW_CREATION = ddomain.allow_creation;
 		this.ALLOW_GET_ALL = ddomain.allow_read_all;
@@ -119,14 +117,14 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		} catch (JsonProcessingException e) {
 			Map<String, String> customs = new HashMap<String, String>();
 			customs.put("body",entity__);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.CREATE, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.CREATE, customs);
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
 			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
 					HttpStatus.BAD_REQUEST);
 		}
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.CREATE, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.CREATE, customParameters);
 		
 		try {
 			if (this.ALLOW_CREATION) {
@@ -135,7 +133,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 						TypeReference<Map<String, String>> typeRef = new TypeReference<Map<String,String>>() {};
 						customParameters = new ObjectMapper().readValue(customParameters__, typeRef);
 					}
-					Entity entity = this.factory.getEntityFromJson(this.dynamicDomain, customParameters, entity__.getBytes());
+					Object entity = this.factory.getEntityFromJson(this.dynamicDomain, customParameters, entity__.getBytes());
 					event.setIn(entity);
 					entity.save(caller, customParameters, this.security);
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
@@ -170,8 +168,8 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		}
 	}
 
-	protected GGAPIEvent<Entity> prepareEvent(IGGAPICaller caller, GGAPIServiceMethod method, Map<String, String> params) {
-		GGAPIEvent<Entity> event = new GGAPIEvent<Entity>();
+	protected GGAPIEvent prepareEvent(IGGAPICaller caller, GGAPIServiceMethod method, Map<String, String> params) {
+		GGAPIEvent event = new GGAPIEvent();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
 		event.setCaller(caller);
@@ -196,7 +194,6 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 			@RequestParam(name = "pageIndex", defaultValue = "0") Integer pageIndex,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "sort", defaultValue = "") String sortString, 
-			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
 			@RequestParam(name = "params", defaultValue = "") String customParameters__) {
 
 		
@@ -210,8 +207,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 			customs.put("pageIndex", pageIndex.toString());
 			customs.put("filterString", filterString);
 			customs.put("sortString", sortString);
-			customs.put("geolocString", geolocString);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customs);
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
@@ -223,8 +219,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		customParameters.put("pageIndex", pageIndex.toString());
 		customParameters.put("filterString", filterString);
 		customParameters.put("sortString", sortString);
-		customParameters.put("geolocString", geolocString);
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
 		
 		try {
 			if (this.ALLOW_GET_ALL) {
@@ -234,16 +229,12 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
 				GGAPISort sort = null;
-				GGAPIGeolocFilter geoloc = null;
 				try {
 					if (filterString != null && !filterString.isEmpty()) {
 						filter = mapper.readValue(filterString, GGAPILiteral.class);
 					}
 					if (sortString != null && !sortString.isEmpty()) {
 						sort = mapper.readValue(sortString, GGAPISort.class);
-					}
-					if (geolocString != null && !geolocString.isEmpty()) {
-						geoloc = mapper.readValue(geolocString, GGAPIGeolocFilter.class);
 					}
 					customParameters = getCustomParametersFromString(customParameters__);
 				} catch (JsonProcessingException e) {
@@ -256,7 +247,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 				}
 
 				try {
-					entities = this.factory.getEntitiesFromRepository(this.dynamicDomain, caller, pageSize, pageIndex, filter, sort, geoloc, customParameters);
+					entities = this.factory.getEntitiesFromRepository(this.dynamicDomain, caller, pageSize, pageIndex, filter, sort, customParameters);
 				} catch (GGAPIEntityException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -275,11 +266,11 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 					long totalCount = this.factory.countEntities(this.dynamicDomain, caller, filter, geoloc, customParameters);
 
 					GGAPIServiceEntityPage page = new GGAPIServiceEntityPage(totalCount, ((List<Object>) entities));
-					event.setOutList((List<Entity>) entities);
+					event.setOutList((List<?>) entities);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					return new ResponseEntity<>(page, HttpStatus.OK);
 				} else {
-					event.setOutList((List<Entity>) entities);
+					event.setOutList((List<?>) entities);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 					return new ResponseEntity<>(entities, HttpStatus.OK);
 				}
@@ -312,7 +303,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		} catch (JsonProcessingException e) {
 			Map<String, String> customs = new HashMap<String, String>();
 			customs.put("uuid", uuid);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customs);
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
@@ -320,12 +311,12 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("uuid", uuid);
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
 		try {
 			ResponseEntity<?> response = null;
 
 			if (this.ALLOW_GET_ONE) {
-				Entity entity;
+				Object entity;
 				try {
 					entity = this.factory.getEntityFromRepository(dynamicDomain, caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
@@ -373,7 +364,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 			Map<String, String> customs = new HashMap<String, String>();
 			customs.put("uuid", uuid);
 			customs.put("body",entity__);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.PARTIAL_UPDATE, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.PARTIAL_UPDATE, customs);
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
@@ -381,14 +372,14 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("uuid", uuid);
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.PARTIAL_UPDATE, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.PARTIAL_UPDATE, customParameters);
 		try {
 			ResponseEntity<?> response = null;
 
 			if (this.ALLOW_UPDATE) {
 				try {
 
-					Entity entity = this.factory.getEntityFromJson(this.dynamicDomain, customParameters, entity__.getBytes());
+					Object entity = this.factory.getEntityFromJson(this.dynamicDomain, customParameters, entity__.getBytes());
 					
 					entity.setUuid(uuid);
 					event.setIn(entity);
@@ -454,7 +445,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		} catch (JsonProcessingException e) {
 			Map<String, String> customs = new HashMap<String, String>();
 			customs.put("uuid", uuid);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customs);
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
@@ -462,14 +453,14 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("uuid", uuid);
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customParameters);
 		
 		try {
 			if (this.ALLOW_DELETE_ONE) {
 				ResponseEntity<?> response = null;
 
 				try {					
-					IGGAPIEntity entity = this.factory.getEntityFromRepository(this.dynamicDomain, caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
+					Object entity = this.factory.getEntityFromRepository(this.dynamicDomain, caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 					
 					entity.delete(caller, customParameters);
 					
@@ -512,7 +503,6 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 	@RequestMapping(value = "", method = RequestMethod.DELETE)
 	public ResponseEntity<?> deleteAll(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
-			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
 			@RequestParam(name = "params", defaultValue = "") String customParameters__) {
 		
 		Map<String, String> customParameters = null;
@@ -521,9 +511,8 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		} catch (JsonProcessingException e) {
 			Map<String, String> customs = new HashMap<String, String>();
 			customs.put("filter", filterString);
-			customs.put("geoloc", geolocString);
 			customs.put("customs", customParameters__);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customs);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
 			this.eventPublisher.get().publishEvent(event);
@@ -531,8 +520,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("filter", filterString);
-		customParameters.put("geoloc", geolocString);
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.DELETE, customParameters);
 		
 		try {
 			if (this.ALLOW_DELETE_ALL) {
@@ -541,15 +529,11 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
 				GGAPISort sort = null;
-				GGAPIGeolocFilter geoloc = null;
 				try {
 					if (filterString != null && !filterString.isEmpty()) {
 						filter = mapper.readValue(filterString, GGAPILiteral.class);
 					}
-					if (geolocString != null && !geolocString.isEmpty()) {
-						geoloc = mapper.readValue(geolocString, GGAPIGeolocFilter.class);
-					}
-					
+				
 				} catch (JsonProcessingException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
@@ -561,7 +545,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 
 				try {
 					final Map<String, String> cp = customParameters;
-					this.factory.getEntitiesFromRepository(this.dynamicDomain, caller, 0, 0, filter, sort, geoloc, customParameters).forEach(entity ->{
+					this.factory.getEntitiesFromRepository(this.dynamicDomain, caller, 0, 0, filter, sort, customParameters).forEach(entity ->{
 						try {
 							entity.delete(caller, cp);
 						} catch (GGAPIEntityException | GGAPIEngineException e) {
@@ -611,7 +595,6 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 	public ResponseEntity<?> getCount(
 			@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
-			@RequestParam(name = "geoloc", defaultValue = "") String geolocString,
 			@RequestParam(name = "params", defaultValue = "") String customParameters__) {
 		
 		Map<String, String> customParameters = null;
@@ -620,9 +603,8 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 		} catch (JsonProcessingException e) {
 			Map<String, String> customs = new HashMap<String, String>();
 			customs.put("filter", filterString);
-			customs.put("geoloc", geolocString);
 			customs.put("customs", customParameters__);
-			GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customs);
+			GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customs);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
 			this.eventPublisher.get().publishEvent(event);
@@ -630,8 +612,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("filter", filterString);
-		customParameters.put("geoloc", geolocString);
-		GGAPIEvent<Entity> event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
+		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
 		
 		try {
 			if (this.ALLOW_COUNT) {
@@ -640,13 +621,9 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
 				GGAPISort sort = null;
-				GGAPIGeolocFilter geoloc = null;
 				try {
 					if (filterString != null && !filterString.isEmpty()) {
 						filter = mapper.readValue(filterString, GGAPILiteral.class);
-					}
-					if (geolocString != null && !geolocString.isEmpty()) {
-						geoloc = mapper.readValue(geolocString, GGAPIGeolocFilter.class);
 					}
 					customParameters = getCustomParametersFromString(customParameters__);
 					event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
@@ -659,7 +636,7 @@ public class GGAPIRestService<Entity, Dto> implements IGGAPIService<Entity, Dto>
 							HttpStatus.BAD_REQUEST);
 				}
 
-				long count = this.factory.countEntities(this.dynamicDomain, caller, filter, geoloc, customParameters);
+				long count = this.factory.countEntities(this.dynamicDomain, caller, filter, customParameters);
 				response = new ResponseEntity<>(count, HttpStatus.OK);
 				event.setHttpReturnedCode(HttpStatus.OK.value());
 				event.setOutCount(count);

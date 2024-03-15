@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.springframework.http.HttpMethod;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.engine.GGAPIDynamicDomain;
+import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.engine.IGGAPIEngineObject;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
@@ -70,8 +70,12 @@ public class GGAPIFilter implements Filter, IGGAPIEngineObject {
 		return (GGAPICaller) request.getAttribute(GGAPICallerManager.CALLER_ATTRIBUTE_NAME);
 	}
 	
-	protected GGAPIDynamicDomain getDomain(ServletRequest request) {
+	protected GGAPIDomain getDomain(ServletRequest request) {
 		return this.engine.getDynamicDomainsRegistry().getDomain((HttpServletRequest) request);
+	}
+
+	@Override
+	public void setDomain(GGAPIDomain domain) {
 	}
 
 }
