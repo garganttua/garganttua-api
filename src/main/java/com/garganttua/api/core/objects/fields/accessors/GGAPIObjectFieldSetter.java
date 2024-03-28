@@ -62,6 +62,9 @@ public class GGAPIObjectFieldSetter {
 			if (object == null) {
 				throw new GGAPIObjectQueryException("object is null");
 			}
+			if( !object.getClass().isAssignableFrom(this.clazz) ) {
+				throw new GGAPIObjectQueryException("object is not of type "+this.clazz);
+			}
 
 			if (this.fields.size() == 1) {
 				Field field = (Field) this.fields.get(0);

@@ -90,12 +90,8 @@ public class GGAPIObjectReflectionHelper {
 		}
 	}
 
-	public static Object invokeMethod(Object object, String methodName, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
-		Method method = GGAPIObjectReflectionHelper.getMethod(object.getClass(), methodName);
-		
-		if( method == null ) {
-			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get method "+methodName+" of object "+object.getClass().getName());
-		}
+	public static Object invokeMethod(Object object, String methodName, Method method, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
+		GGAPIObjectReflectionHelper.checkMethodAndParams(method, args);
 		
 		try( GGAPIMethodAccessManager manager = new GGAPIMethodAccessManager(method) ){
 			return method.invoke(object, args);
@@ -104,6 +100,11 @@ public class GGAPIObjectReflectionHelper {
 		} 
 	}
 	
+	public static void checkMethodAndParams(Method method, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
+		// TODO Auto-generated method stub
+		
+	}
+
 	public static <K, V> Map<K, V> newHashMapOf(Class<K> keyType, Class<V> valueType) {
 		return new HashMap<K, V>();
 	}

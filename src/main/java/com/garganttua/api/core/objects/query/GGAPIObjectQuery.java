@@ -13,6 +13,7 @@ import com.garganttua.api.core.objects.fields.GGAPIFields;
 import com.garganttua.api.core.objects.fields.GGAPIFieldsException;
 import com.garganttua.api.core.objects.fields.accessors.GGAPIObjectFieldGetter;
 import com.garganttua.api.core.objects.fields.accessors.GGAPIObjectFieldSetter;
+import com.garganttua.api.core.objects.methods.GGAPIObjectMethodInvoker;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 
@@ -312,6 +313,6 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 		}
 
 		List<Object> field = this.find(methodAddress);
-		return new GGAPIObjectMethodInvoker(object.getClass(), field, methodAddress).invoke(args);
+		return new GGAPIObjectMethodInvoker(object.getClass(), field, methodAddress).invoke(object, args);
 	}
 }
