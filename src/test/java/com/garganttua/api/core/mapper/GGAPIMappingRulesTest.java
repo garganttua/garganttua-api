@@ -80,62 +80,49 @@ class GGAPIMappingRulesTest {
 		
 		List<GGAPIMappingRule> rules = GGAPIMappingRules.parse(Destination.class);
 		
-		assertEquals(8, rules.size());
+		assertEquals(7, rules.size());
 		
-		assertEquals("field", rules.get(0).sourceFieldAddress());
-		assertNull(rules.get(0).fromSourceMethod());
-		assertEquals(String.class, rules.get(0).destinationField().getType());
-		assertEquals( Destination.class, rules.get(0).destinationClass());
+		assertEquals("field", rules.get(0).sourceFieldAddress().toString());
+		assertEquals("field", rules.get(0).destinationFieldAddress().toString());
+		assertNull(rules.get(0).fromSourceMethodAddress());
+		assertEquals(Destination.class, rules.get(0).destinationClass());
 		
-		assertEquals("inner", rules.get(1).sourceFieldAddress());
-		assertEquals("inner.inner", rules.get(1).destinationFieldAddress());
-		assertNull(rules.get(1).fromSourceMethod());
-		assertEquals(String.class, rules.get(1).destinationField().getType());
+		assertEquals("inner", rules.get(1).sourceFieldAddress().toString());
+		assertEquals("list.inner", rules.get(1).destinationFieldAddress().toString());
+		assertNull(rules.get(1).fromSourceMethodAddress());
 		assertEquals(Inner.class, rules.get(1).destinationClass());
 		
-		assertEquals("inner", rules.get(2).sourceFieldAddress());
-		assertEquals("list.inner", rules.get(2).destinationFieldAddress());
-		assertNull(rules.get(2).fromSourceMethod());
-		assertEquals(String.class, rules.get(2).destinationField().getType());
+		assertEquals("inner", rules.get(2).sourceFieldAddress().toString());
+		assertEquals("map1.#value.inner", rules.get(2).destinationFieldAddress().toString());
+		assertNull(rules.get(2).fromSourceMethodAddress());
 		assertEquals(Inner.class, rules.get(2).destinationClass());
 		
-		assertEquals("inner", rules.get(3).sourceFieldAddress());
-		assertEquals("map1.value.inner", rules.get(3).destinationFieldAddress());
-		assertNull(rules.get(3).fromSourceMethod());
-		assertEquals(String.class, rules.get(3).destinationField().getType());
+		assertEquals("inner", rules.get(3).sourceFieldAddress().toString());
+		assertEquals("map2.#key.inner", rules.get(3).destinationFieldAddress().toString());
+		assertNull(rules.get(3).fromSourceMethodAddress());
 		assertEquals(Inner.class, rules.get(3).destinationClass());
 		
-		assertEquals("inner", rules.get(4).sourceFieldAddress());
-		assertEquals("map2.key.inner", rules.get(4).destinationFieldAddress());
-		assertNull(rules.get(4).fromSourceMethod());
-		assertEquals(String.class, rules.get(4).destinationField().getType());
+		assertEquals("inner", rules.get(4).sourceFieldAddress().toString());
+		assertEquals("set.inner", rules.get(4).destinationFieldAddress().toString());
+		assertNull(rules.get(4).fromSourceMethodAddress());
 		assertEquals(Inner.class, rules.get(4).destinationClass());
 		
-		assertEquals("inner", rules.get(5).sourceFieldAddress());
-		assertEquals("set.inner", rules.get(5).destinationFieldAddress());
-		assertNull(rules.get(5).fromSourceMethod());
-		assertEquals(String.class, rules.get(5).destinationField().getType());
+		assertEquals("inner", rules.get(5).sourceFieldAddress().toString());
+		assertEquals("collection.inner", rules.get(5).destinationFieldAddress().toString());
+		assertNull(rules.get(5).fromSourceMethodAddress());
 		assertEquals(Inner.class, rules.get(5).destinationClass());
 		
-		assertEquals("inner", rules.get(6).sourceFieldAddress());
-		assertEquals("collection.inner", rules.get(6).destinationFieldAddress());
-		assertNull(rules.get(6).fromSourceMethod());
-		assertEquals(String.class, rules.get(6).destinationField().getType());
-		assertEquals(Inner.class, rules.get(6).destinationClass());
-		
-		assertEquals("parent", rules.get(7).sourceFieldAddress());
-		assertEquals("parent", rules.get(7).destinationFieldAddress());
-		assertNull(rules.get(7).fromSourceMethod());
-		assertEquals(String.class, rules.get(7).destinationField().getType());
-		assertEquals(Parent.class, rules.get(7).destinationClass());
-		
+		assertEquals("parent", rules.get(6).sourceFieldAddress().toString());
+		assertEquals("parent", rules.get(6).destinationFieldAddress().toString());
+		assertNull(rules.get(6).fromSourceMethodAddress());
+		assertEquals(Parent.class, rules.get(6).destinationClass());
 	}
 	
 	@Test
 	public void testMappingRuleOnObject() throws GGAPIMappingRuleException {
 		List<GGAPIMappingRule> rules = GGAPIMappingRules.parse(Destination2.class);
 		
-		assertEquals(2, rules.size());
+		assertEquals(3, rules.size());
 	}
 	
 }

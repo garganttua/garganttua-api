@@ -57,6 +57,7 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
+import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurity;
 
@@ -68,38 +69,38 @@ public class GGAPIEntityChecker {
 	
 	public record GGAPIEntityInfos (
 			String domain,
-	        String uuidFieldName,
-	        String idFieldName,
-	        String saveProviderFieldName,
-	        String deleteProviderFieldName,
+	        GGAPIObjectAddress uuidFieldAddress,
+	        GGAPIObjectAddress idFieldAddress,
+	        GGAPIObjectAddress saveProviderFieldAddress,
+	        GGAPIObjectAddress deleteProviderFieldAddress,
 	        boolean tenantEntity,
 	        boolean ownerEntity,
 	        boolean ownedEntity,
-	        String tenantIdFieldName,
-	        String superTenantFieldName,
-	        String ownerIdFieldName,
-	        String superOnwerIdFieldName,
-	        String saveMethodName,
-	        String deleteMethodName,
+	        GGAPIObjectAddress tenantIdFieldAddress,
+	        GGAPIObjectAddress superTenantFieldAddress,
+	        GGAPIObjectAddress ownerIdFieldAddress,
+	        GGAPIObjectAddress superOnwerIdFieldAddress,
+	        GGAPIObjectAddress saveMethodAddress,
+	        GGAPIObjectAddress deleteMethodAddress,
 	        boolean publicEntity,
 	        boolean hiddenableEntity,
-	        String hiddenFieldName,
+	        GGAPIObjectAddress hiddenFieldAddress,
 	        boolean geolocalizedEntity,
-	        String locationFieldName,
+	        GGAPIObjectAddress locationFieldAddress,
 	        boolean sharedEntity,
-	        String shareFieldName,
-	        String repositoryFieldName,
+	        GGAPIObjectAddress shareFieldAddress,
+	        GGAPIObjectAddress repositoryFieldAddress,
 	        List<String> mandatoryFields,
 	        List<String> unicityFields,
-	        String afterGetMethodName,
-	        String beforeCreateMethodName, 
-	        String afterCreateMethodName, 
-	        String beforeUpdateMethodName, 
-	        String afterUpdateMethodName, 
-	        String beforeDeleteMethodName, 
-	        String afterDeleteMethodName, 
+	        GGAPIObjectAddress afterGetMethodAddress,
+	        GGAPIObjectAddress beforeCreateMethodAddress, 
+	        GGAPIObjectAddress afterCreateMethodAddress, 
+	        GGAPIObjectAddress beforeUpdateMethodAddress, 
+	        GGAPIObjectAddress afterUpdateMethodAddress, 
+	        GGAPIObjectAddress beforeDeleteMethodAddress, 
+	        GGAPIObjectAddress afterDeleteMethodAddress, 
 	        Map<String, String> updateAuthorizations,
-	        String gotFromRepositoryFieldName
+	        GGAPIObjectAddress gotFromRepositoryFieldAddress
 	) {
 		@Override
 		public boolean equals(Object obj) {
@@ -108,39 +109,39 @@ public class GGAPIEntityChecker {
 
 		    GGAPIEntityInfos other = (GGAPIEntityInfos) obj;
 
-		    return Objects.equals(uuidFieldName, other.uuidFieldName) &&
+		    return Objects.equals(uuidFieldAddress, other.uuidFieldAddress) &&
 		    		Objects.equals(domain, other.domain) &&
-		            Objects.equals(idFieldName, other.idFieldName) &&
-		            Objects.equals(saveProviderFieldName, other.saveProviderFieldName) &&
-		            Objects.equals(deleteProviderFieldName, other.deleteProviderFieldName) &&
+		            Objects.equals(idFieldAddress, other.idFieldAddress) &&
+		            Objects.equals(saveProviderFieldAddress, other.saveProviderFieldAddress) &&
+		            Objects.equals(deleteProviderFieldAddress, other.deleteProviderFieldAddress) &&
 		            tenantEntity == other.tenantEntity &&
 		            ownerEntity == other.ownerEntity &&
 		            ownedEntity == other.ownedEntity &&
-		            Objects.equals(tenantIdFieldName, other.tenantIdFieldName) &&
-		            Objects.equals(superTenantFieldName, other.superTenantFieldName) &&
-		            Objects.equals(ownerIdFieldName, other.ownerIdFieldName) &&
-		            Objects.equals(superOnwerIdFieldName, other.superOnwerIdFieldName) &&
-		            Objects.equals(saveMethodName, other.saveMethodName) &&
-		            Objects.equals(deleteMethodName, other.deleteMethodName) &&
+		            Objects.equals(tenantIdFieldAddress, other.tenantIdFieldAddress) &&
+		            Objects.equals(superTenantFieldAddress, other.superTenantFieldAddress) &&
+		            Objects.equals(ownerIdFieldAddress, other.ownerIdFieldAddress) &&
+		            Objects.equals(superOnwerIdFieldAddress, other.superOnwerIdFieldAddress) &&
+		            Objects.equals(saveMethodAddress, other.saveMethodAddress) &&
+		            Objects.equals(deleteMethodAddress, other.deleteMethodAddress) &&
 		            publicEntity == other.publicEntity &&
 		            hiddenableEntity == other.hiddenableEntity &&
-		            Objects.equals(hiddenFieldName, other.hiddenFieldName) &&
+		            Objects.equals(hiddenFieldAddress, other.hiddenFieldAddress) &&
 		            geolocalizedEntity == other.geolocalizedEntity &&
-		            Objects.equals(locationFieldName, other.locationFieldName) &&
+		            Objects.equals(locationFieldAddress, other.locationFieldAddress) &&
 		            sharedEntity == other.sharedEntity &&
-		            Objects.equals(shareFieldName, other.shareFieldName) &&
-		            Objects.equals(repositoryFieldName, other.repositoryFieldName) &&
+		            Objects.equals(shareFieldAddress, other.shareFieldAddress) &&
+		            Objects.equals(repositoryFieldAddress, other.repositoryFieldAddress) &&
 		            Objects.equals(mandatoryFields, other.mandatoryFields) &&
 		            Objects.equals(unicityFields, other.unicityFields) &&
-		            Objects.equals(afterGetMethodName, other.afterGetMethodName) &&
-		            Objects.equals(beforeCreateMethodName, other.beforeCreateMethodName) &&
-		            Objects.equals(afterCreateMethodName, other.afterCreateMethodName) &&
-		            Objects.equals(beforeUpdateMethodName, other.beforeUpdateMethodName) &&
-		            Objects.equals(afterUpdateMethodName, other.afterUpdateMethodName) &&
-		            Objects.equals(beforeDeleteMethodName, other.beforeDeleteMethodName) &&
-		            Objects.equals(afterDeleteMethodName, other.afterDeleteMethodName) &&
+		            Objects.equals(afterGetMethodAddress, other.afterGetMethodAddress) &&
+		            Objects.equals(beforeCreateMethodAddress, other.beforeCreateMethodAddress) &&
+		            Objects.equals(afterCreateMethodAddress, other.afterCreateMethodAddress) &&
+		            Objects.equals(beforeUpdateMethodAddress, other.beforeUpdateMethodAddress) &&
+		            Objects.equals(afterUpdateMethodAddress, other.afterUpdateMethodAddress) &&
+		            Objects.equals(beforeDeleteMethodAddress, other.beforeDeleteMethodAddress) &&
+		            Objects.equals(afterDeleteMethodAddress, other.afterDeleteMethodAddress) &&
 		            Objects.equals(updateAuthorizations, other.updateAuthorizations) &&
-		            Objects.equals(gotFromRepositoryFieldName, other.gotFromRepositoryFieldName);
+		            Objects.equals(gotFromRepositoryFieldAddress, other.gotFromRepositoryFieldAddress);
 		}
 	}
 
@@ -150,17 +151,17 @@ public class GGAPIEntityChecker {
 		}
 		GGAPIEntity annotation = entityClass.getDeclaredAnnotation(GGAPIEntity.class);
 		String domain = GGAPIEntityChecker.checkDomainInAnnotation(annotation, entityClass);
-		String uuidFieldName = GGAPIEntityChecker.checkUuidAnnotationPresentAndFieldHasGoodType(entityClass);
-		String idFieldName = GGAPIEntityChecker.checkIdAnnotationPresentAndFieldHasGoodType(entityClass);
-		String saveProviderFieldName = GGAPIEntityChecker.checkSaveProviderAnnotationPresentAndFieldHasGoodType(entityClass);
-		String deleteProviderFieldName = GGAPIEntityChecker.checkDeleteProviderAnnotationPresentAndFieldHasGoodType(entityClass);
+		String uuidFieldAddress = GGAPIEntityChecker.checkUuidAnnotationPresentAndFieldHasGoodType(entityClass);
+		String idFieldAddress = GGAPIEntityChecker.checkIdAnnotationPresentAndFieldHasGoodType(entityClass);
+		String saveProviderFieldAddress = GGAPIEntityChecker.checkSaveProviderAnnotationPresentAndFieldHasGoodType(entityClass);
+		String deleteProviderFieldAddress = GGAPIEntityChecker.checkDeleteProviderAnnotationPresentAndFieldHasGoodType(entityClass);
 		boolean tenantEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityTenant.class);
-		String tenantIdFieldName = null;
-		String superTenantFieldName = null;
+		String tenantIdFieldAddress = null;
+		String superTenantFieldAddress = null;
 		
 		if( tenantEntity ) {
-			tenantIdFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityTenantId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).tenantId(), String.class, GGAPIEntityTenantId.class);
-			superTenantFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperTenant.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).superTenant(), boolean.class, GGAPIEntitySuperTenant.class);
+			tenantIdFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityTenantId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).tenantId(), String.class, GGAPIEntityTenantId.class);
+			superTenantFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperTenant.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).superTenant(), boolean.class, GGAPIEntitySuperTenant.class);
 		}
 		
 		boolean ownerEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityOwner.class);
@@ -170,41 +171,41 @@ public class GGAPIEntityChecker {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" Cannot be owner and owned at the same time");
 		}
 		
-		String ownerIdFieldName = null;
-		String superOnwerIdFieldName = null;
+		String ownerIdFieldAddress = null;
+		String superOnwerIdFieldAddress = null;
 		if( ownerEntity ) {
-			ownerIdFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityOwnerId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityOwner.class).ownerId(), String.class, GGAPIEntityOwnerId.class);
-			superOnwerIdFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperOwner.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityOwner.class).superOwner(), boolean.class, GGAPIEntitySuperOwner.class);	
+			ownerIdFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityOwnerId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityOwner.class).ownerId(), String.class, GGAPIEntityOwnerId.class);
+			superOnwerIdFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperOwner.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityOwner.class).superOwner(), boolean.class, GGAPIEntitySuperOwner.class);	
 		}
 		
 		if( ownedEntity ) {
-			ownerIdFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityOwnerId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityOwned.class).ownerId(), String.class, GGAPIEntityOwnerId.class);
+			ownerIdFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityOwnerId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityOwned.class).ownerId(), String.class, GGAPIEntityOwnerId.class);
 		}
 		
-		String saveMethodName = GGAPIEntityChecker.checkSaveMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass);
-		String deleteMethodName = GGAPIEntityChecker.checkDeleteMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass);
+		String saveMethodAddress = GGAPIEntityChecker.checkSaveMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass);
+		String deleteMethodAddress = GGAPIEntityChecker.checkDeleteMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass);
 		
 		boolean publicEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityPublic.class);
 		
 		boolean hiddenableEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityHiddenable.class);
-		String hiddenFieldName = null;
+		String hiddenFieldAddress = null;
 		if( hiddenableEntity ) {
-			hiddenFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityHidden.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityHiddenable.class).hidden(), boolean.class, GGAPIEntityHidden.class);
+			hiddenFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityHidden.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityHiddenable.class).hidden(), boolean.class, GGAPIEntityHidden.class);
 		}
 		
 		boolean geolocalizedEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityGeolocalized.class);
-		String locationFieldName = null;
+		String locationFieldAddress = null;
 		if( geolocalizedEntity ) {
-			locationFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityLocation.class, Point.class), entityClass.getDeclaredAnnotation(GGAPIEntityGeolocalized.class).location(), Point.class, GGAPIEntityLocation.class);
+			locationFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityLocation.class, Point.class), entityClass.getDeclaredAnnotation(GGAPIEntityGeolocalized.class).location(), Point.class, GGAPIEntityLocation.class);
 		}
 		
 		boolean sharedEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityShared.class);
-		String shareFieldName = null;
+		String shareFieldAddress = null;
 		if( sharedEntity ) {
-			shareFieldName = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityShare.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityShared.class).share(), String.class, GGAPIEntityShare.class);
+			shareFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityShare.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityShared.class).share(), String.class, GGAPIEntityShare.class);
 		}
 		
-		String repositoryFieldName = GGAPIEntityChecker.checkRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);
+		String repositoryFieldAddress = GGAPIEntityChecker.checkRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);
 		
 		List<String> mandatoryFields = new ArrayList<String>();
 		mandatoryFields = GGAPIEntityChecker.getFieldsWithAnnotation(mandatoryFields, entityClass, GGAPIEntityMandatory.class);
@@ -224,33 +225,33 @@ public class GGAPIEntityChecker {
 				
 		updateAuthorizations = GGAPIEntityChecker.getFieldAuthorizedForUpdate(entityClass, updateAuthorizations);
 		
-		String gotFromReposiotryFieldName = GGAPIEntityChecker.checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);;
+		String gotFromReposiotryFieldAddress = GGAPIEntityChecker.checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);;
 		
 		GGAPIEntityChecker.checkConstructor(entityClass);
 		
 		return new GGAPIEntityInfos(
 				domain, 
-				uuidFieldName, 
-				idFieldName, 
-				saveProviderFieldName, 
-				deleteProviderFieldName, 
+				uuidFieldAddress, 
+				idFieldAddress, 
+				saveProviderFieldAddress, 
+				deleteProviderFieldAddress, 
 				tenantEntity, 
 				ownerEntity, 
 				ownedEntity, 
-		        tenantIdFieldName,
-		        superTenantFieldName,
-		        ownerIdFieldName,
-		        superOnwerIdFieldName,
-				saveMethodName, 
-				deleteMethodName, 
+		        tenantIdFieldAddress,
+		        superTenantFieldAddress,
+		        ownerIdFieldAddress,
+		        superOnwerIdFieldAddress,
+				saveMethodAddress, 
+				deleteMethodAddress, 
 				publicEntity, 
 				hiddenableEntity, 
-				hiddenFieldName, 
+				hiddenFieldAddress, 
 				geolocalizedEntity, 
-				locationFieldName, 
+				locationFieldAddress, 
 				sharedEntity, 
-				shareFieldName, 
-				repositoryFieldName, 
+				shareFieldAddress, 
+				repositoryFieldAddress, 
 				mandatoryFields, 
 				unicityFields,
 				afterGetm==null?null:afterGetm.getName(),
@@ -261,7 +262,7 @@ public class GGAPIEntityChecker {
 				beforeDeletem==null?null:beforeDeletem.getName(),
 				afterDeletem==null?null:afterDeletem.getName(),
 				updateAuthorizations,
-				gotFromReposiotryFieldName);
+				gotFromReposiotryFieldAddress);
 	}
 
 	private static List<Pair<Class<?>, GGAPIDtoInfos>> checkDtos(List<Class<?>> dtoClasss) throws GGAPIEntityException {
@@ -277,11 +278,11 @@ public class GGAPIEntityChecker {
 	}
 
 	private static String checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
-		String fieldName = GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityGotFromRepository.class, boolean.class);
-		if( fieldName == null ) {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityGotFromRepository.class, boolean.class);
+		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field annotated with @GGAPIEntityGotFromRepository");
 		}
-		return fieldName; 
+		return fieldAddress; 
 	}
 
 	private static void checkConstructor(Class<?> entityClass) throws GGAPIEntityException {
@@ -324,9 +325,9 @@ public class GGAPIEntityChecker {
 		
 		for( Field field: entityClass.getDeclaredFields() ) {
 			if( field.isAnnotationPresent(annotation) ) {
-				String name = field.getName();
-				if( !fields.contains(name) ) {
-					fields.add(name);
+				String Address = field.getName();
+				if( !fields.contains(Address) ) {
+					fields.add(Address);
 				}
 			};
 		}
@@ -349,65 +350,65 @@ public class GGAPIEntityChecker {
 	}
 
 	private static String checkDeleteMethodAnnotationAndMethodParamsHaveGoodTypes(Class<?> entityClass) throws GGAPIEntityException {
-		String methodName = null;
+		String methodAddress = null;
 		for( Method method : entityClass.getDeclaredMethods() ) {
 			if( method.isAnnotationPresent(GGAPIEntityDeleteMethod.class)) {
-				if( methodName != null && !methodName.isEmpty() ) {
+				if( methodAddress != null && !methodAddress.isEmpty() ) {
 					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has more than one method annotated with "+GGAPIEntityDeleteMethod.class);
 				}
-				methodName = method.getName();
+				methodAddress = method.getName();
 				Type[] parameters = method.getGenericParameterTypes();
 				if( !parameters[0].equals(IGGAPICaller.class) ) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodName+" but parameter 0 is not of type "+IGGAPICaller.class);
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodAddress+" but parameter 0 is not of type "+IGGAPICaller.class);
 				}
 				if( !isMapOfString(parameters[1]) ) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodName+" but parameter 1 is not of type java.lang.Map<java.lang.String,java.lang.String>");
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodAddress+" but parameter 1 is not of type java.lang.Map<java.lang.String,java.lang.String>");
 				}
 			}
 		}
 		
-		if( methodName == null && entityClass.getSuperclass() != null ) {
-			methodName = GGAPIEntityChecker.checkDeleteMethodAnnotationAndMethodParamsHaveGoodTypes( entityClass.getSuperclass() );
+		if( methodAddress == null && entityClass.getSuperclass() != null ) {
+			methodAddress = GGAPIEntityChecker.checkDeleteMethodAnnotationAndMethodParamsHaveGoodTypes( entityClass.getSuperclass() );
 		}
 		
-		if( methodName == null || methodName.isEmpty() ) {
+		if( methodAddress == null || methodAddress.isEmpty() ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have method annotated with @GGAPIEntityDeleteMethod");
 		}
 		
-		return methodName;
+		return methodAddress;
 	}
 
 	private static String checkSaveMethodAnnotationAndMethodParamsHaveGoodTypes(Class<?> entityClass) throws GGAPIEntityException {
-		String methodName = null;
+		String methodAddress = null;
 		for( Method method : entityClass.getDeclaredMethods() ) {
 			if( method.isAnnotationPresent(GGAPIEntitySaveMethod.class)) {
 				
-				if( methodName != null && !methodName.isEmpty() ) {
+				if( methodAddress != null && !methodAddress.isEmpty() ) {
 					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has more than one method annotated with "+GGAPIEntitySaveMethod.class);
 				}
-				methodName = method.getName();
+				methodAddress = method.getName();
 				Type[] parameters = method.getGenericParameterTypes();
 				if( !parameters[0].equals(IGGAPICaller.class) ) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodName+" but parameter 0 is not of type "+IGGAPICaller.class);
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodAddress+" but parameter 0 is not of type "+IGGAPICaller.class);
 				}
 				if( !isMapOfString(parameters[1]) ) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodName+" but parameter 1 is not of type java.lang.Map<java.lang.String,java.lang.String>");
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodAddress+" but parameter 1 is not of type java.lang.Map<java.lang.String,java.lang.String>");
 				}
 				if( !isOptionalIGGAPISecurity(parameters[2]) ) {
-					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodName+" but parameter 2 is not of type Optional<IGGAPISecurity>");
+					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has method "+methodAddress+" but parameter 2 is not of type Optional<IGGAPISecurity>");
 				}
 			}
 		}
 		
-		if( methodName == null && entityClass.getSuperclass() != null ) {
-			methodName = GGAPIEntityChecker.checkSaveMethodAnnotationAndMethodParamsHaveGoodTypes( entityClass.getSuperclass() );
+		if( methodAddress == null && entityClass.getSuperclass() != null ) {
+			methodAddress = GGAPIEntityChecker.checkSaveMethodAnnotationAndMethodParamsHaveGoodTypes( entityClass.getSuperclass() );
 		}
 		
-		if( methodName == null || methodName.isEmpty() ) {
+		if( methodAddress == null || methodAddress.isEmpty() ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have method annotated with @GGAPIEntitySaveMethod");
 		}
 		
-		return methodName;
+		return methodAddress;
 	}
 	
 	private static boolean isOptionalIGGAPISecurity(Type type) {
@@ -443,88 +444,88 @@ public class GGAPIEntityChecker {
 	}
 
 	private static String checkDeleteProviderAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
-		String fieldName = GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityDeleteMethodProvider.class, IGGAPIEntityDeleteMethod.class);
-		if( fieldName == null ) {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityDeleteMethodProvider.class, IGGAPIEntityDeleteMethod.class);
+		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field annotated with @GGAPIEntityDeleteMethodProvider");
 		}
-		return fieldName; 
+		return fieldAddress; 
 	}
 
 	private static String checkSaveProviderAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
-		String fieldName = GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntitySaveMethodProvider.class, IGGAPIEntitySaveMethod.class);
-		if( fieldName == null ) {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntitySaveMethodProvider.class, IGGAPIEntitySaveMethod.class);
+		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field annotated with @GGAPIEntitySaveMethodProvider");
 		}
-		return fieldName;
+		return fieldAddress;
 	}
 
 	private static String checkIdAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
-		String fieldName = GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityId.class, String.class);
-		if( fieldName == null ) {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityId.class, String.class);
+		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field annotated with @GGAPIEntityId");
 		}
-		return fieldName; 
+		return fieldAddress; 
 	} 
 	
 	private static String checkRepositoryAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
-		String fieldName = GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityRepository.class, IGGAPIRepository.class);
-		if( fieldName == null ) {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityRepository.class, IGGAPIRepository.class);
+		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field annotated with @GGAPIEntityRepository");
 		}
-		return fieldName; 
+		return fieldAddress; 
 	} 
 	
 	private static String checkUuidAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
-		String fieldName = GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass, GGAPIEntityUuid.class, String.class);
-		if( fieldName == null ) {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityUuid.class, String.class);
+		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field annotated with @GGAPIEntityUuid");
 		}
-		return fieldName; 
+		return fieldAddress; 
 	} 
 
-	private static String checkAnnotationOrField(Class<?> entityClass, String fieldName, String annotationFieldName, Class<?> fieldType, Class<? extends Annotation> annotationClass)
+	private static String checkAnnotationOrField(Class<?> entityClass, String fieldAddress, String annotationFieldAddress, Class<?> fieldType, Class<? extends Annotation> annotationClass)
 			throws GGAPIEntityException {
-		if( annotationFieldName.isEmpty() && fieldName == null ) {
+		if( annotationFieldAddress.isEmpty() && fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have any field value or field annotated with "+annotationClass.getName());
 		}
-		if( !annotationFieldName.isEmpty() ) {
-			GGAPIEntityChecker.checkFieldExistsAndIsOfType(entityClass, annotationFieldName, fieldType);
+		if( !annotationFieldAddress.isEmpty() ) {
+			GGAPIEntityChecker.checkFieldExistsAndIsOfType(entityClass, annotationFieldAddress, fieldType);
 		}
-		return annotationFieldName.isEmpty()?fieldName:annotationFieldName;
+		return annotationFieldAddress.isEmpty()?fieldAddress:annotationFieldAddress;
 	}
 
-	private static String checkFieldExistsAndIsOfType(Class<?> entityClass, String fieldName, Class<?> fieldType) throws GGAPIEntityException {
+	private static String checkFieldExistsAndIsOfType(Class<?> entityClass, String fieldAddress, Class<?> fieldType) throws GGAPIEntityException {
 		try {
-			Field field = entityClass.getDeclaredField(fieldName);
+			Field field = entityClass.getDeclaredField(fieldAddress);
 			if( !field.getType().equals(fieldType) ) {
-				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has field "+fieldName+" with wrong type "+field.getType()+", should be "+fieldType);
+				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has field "+fieldAddress+" with wrong type "+field.getType()+", should be "+fieldType);
 			} else {
-				return fieldName;
+				return fieldAddress;
 			}
 		} catch (NoSuchFieldException | SecurityException e) {
-			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have field "+fieldName);
+			throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" does not have field "+fieldAddress);
 		}
 	}
 
-	private static String getFieldNameAnnotatedWithAndCheckType(Class<?> entityClass, Class<? extends Annotation> annotationClass, Class<?> fieldClass) throws GGAPIEntityException {
-		String fieldName = null;
+	private static String getFieldAddressAnnotatedWithAndCheckType(Class<?> entityClass, Class<? extends Annotation> annotationClass, Class<?> fieldClass) throws GGAPIEntityException {
+		String fieldAddress = null;
 		for( Field field: entityClass.getDeclaredFields() ) {
 			if( field.isAnnotationPresent(annotationClass) ) {
-				if( fieldName != null && !fieldName.isEmpty() ) {
+				if( fieldAddress != null && !fieldAddress.isEmpty() ) {
 					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has more than one field annotated with "+annotationClass);
 				}
 				if( field.getType().equals(fieldClass) ) {
-					fieldName = field.getName();
+					fieldAddress = field.getName();
 				} else {
 					throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Entity "+entityClass+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
 				}
 			}
 		}
 
-		if( entityClass.getSuperclass() != null && fieldName == null ) {
-			return GGAPIEntityChecker.getFieldNameAnnotatedWithAndCheckType(entityClass.getSuperclass(), annotationClass, fieldClass);
+		if( entityClass.getSuperclass() != null && fieldAddress == null ) {
+			return GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass.getSuperclass(), annotationClass, fieldClass);
 		} else {
-			return fieldName;
+			return fieldAddress;
 		}
 	}
 	

@@ -3,8 +3,8 @@ package com.garganttua.api.core.dto.tools;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelper;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelperExcpetion;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 
 public class GGAPIDtoHelper {
 	

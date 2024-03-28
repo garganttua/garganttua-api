@@ -1,16 +1,15 @@
 package com.garganttua.api.core.mapper.rules;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Objects;
 
+import com.garganttua.api.core.objects.GGAPIObjectAddress;
+
 public record GGAPIMappingRule (
-		String sourceFieldAddress,
-		String destinationFieldAddress,
-		Field destinationField, 
+		GGAPIObjectAddress sourceFieldAddress,
+		GGAPIObjectAddress destinationFieldAddress,
 		Class<?> destinationClass,
-		Method fromSourceMethod,
-		Method toSourceMethod
+		GGAPIObjectAddress fromSourceMethodAddress,
+		GGAPIObjectAddress toSourceMethodAddress
 	){
 
     @Override
@@ -18,10 +17,9 @@ public record GGAPIMappingRule (
         return "GGAPIMappingRule{" +
                 "sourceFieldAddress='" + sourceFieldAddress + '\'' +
                 ", destinationFieldAddress='" + destinationFieldAddress + '\'' +
-                ", destinationField=" + destinationField +
                 ", destinationClass=" + destinationClass +
-                ", fromSourceMethod=" + fromSourceMethod +
-                ", toSourceMethod=" + toSourceMethod +
+                ", fromSourceMethod=" + fromSourceMethodAddress +
+                ", toSourceMethod=" + toSourceMethodAddress +
                 '}';
     }
 
@@ -32,15 +30,14 @@ public record GGAPIMappingRule (
         GGAPIMappingRule that = (GGAPIMappingRule) o;
         return Objects.equals(sourceFieldAddress, that.sourceFieldAddress) &&
                 Objects.equals(destinationFieldAddress, that.destinationFieldAddress) &&
-                Objects.equals(destinationField, that.destinationField) &&
                 Objects.equals(destinationClass, that.destinationClass) &&
-                Objects.equals(fromSourceMethod, that.fromSourceMethod) &&
-                Objects.equals(toSourceMethod, that.toSourceMethod);
+                Objects.equals(fromSourceMethodAddress, that.fromSourceMethodAddress) &&
+                Objects.equals(toSourceMethodAddress, that.toSourceMethodAddress);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sourceFieldAddress, destinationFieldAddress, destinationField, destinationClass, fromSourceMethod, toSourceMethod);
+        return Objects.hash(sourceFieldAddress, destinationFieldAddress, destinationClass, fromSourceMethodAddress, toSourceMethodAddress);
     }
 
 }

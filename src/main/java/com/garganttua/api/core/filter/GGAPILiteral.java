@@ -2,7 +2,9 @@ package com.garganttua.api.core.filter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.geojson.GeoJsonObject;
@@ -13,6 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class GGAPILiteral {
@@ -65,6 +68,7 @@ public class GGAPILiteral {
 	private String name;
 
 	@JsonInclude(Include.NON_NULL)
+	@Setter
 	private Object value;
 
 	@JsonInclude(Include.NON_NULL)
@@ -79,6 +83,39 @@ public class GGAPILiteral {
 		this.value = value;
 		this.literals = subs;
 	}
+	
+	public void removeSubLiteral(GGAPILiteral child) {
+        if (literals != null) {
+            Iterator<GGAPILiteral> iterator = literals.iterator();
+            while (iterator.hasNext()) {
+                GGAPILiteral current = iterator.next();
+                if (current.equals(child)) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+    }
+	
+	public void replaceSubLiteral(GGAPILiteral actual, GGAPILiteral futur) {
+        if (literals != null && actual != null && futur != null) {
+            replaceSubLiteral(literals, actual, futur);
+        }
+    }
+
+    private void replaceSubLiteral(List<GGAPILiteral> literals, GGAPILiteral actual, GGAPILiteral futur) {
+        for (int i = 0; i < literals.size(); i++) {
+            GGAPILiteral subLiteral = literals.get(i);
+            if (subLiteral.equals(actual)) {
+                literals.set(i, futur);
+            } else {
+                List<GGAPILiteral> subLiterals = subLiteral.getLiterals();
+                if (subLiterals != null) {
+                    replaceSubLiteral(subLiterals, actual, futur);
+                }
+            }
+        }
+    }
 
 	public static void validate(GGAPILiteral literal) throws GGAPILiteralException {
 		if( literal == null ) {
@@ -327,4 +364,50 @@ public class GGAPILiteral {
 	public static GGAPILiteral geolocWithinSphere(String fieldName, GeoJsonObject object) {
 		return operator(GGAPILiteral.OPERATOR_GEOLOC_SPHERE, fieldName, object);
 	}
+	
+	public GGAPILiteral clone() {
+        GGAPILiteral clonedLiteral = new GGAPILiteral();
+        clonedLiteral.name = this.name;
+        clonedLiteral.value = this.value != null ? cloneObject(this.value) : null;
+        clonedLiteral.literals = cloneLiteralsList(this.literals);
+        return clonedLiteral;
+    }
+
+    private Object cloneObject(Object obj) {
+        try {
+            String jsonString = mapper.writeValueAsString(obj);
+            return mapper.readValue(jsonString, obj.getClass());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private List<GGAPILiteral> cloneLiteralsList(List<GGAPILiteral> literalsList) {
+        if (literalsList == null) {
+            return null;
+        }
+        List<GGAPILiteral> clonedList = new ArrayList<>();
+        for (GGAPILiteral literal : literalsList) {
+            clonedList.add(literal.clone());
+        }
+        return clonedList;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GGAPILiteral that = (GGAPILiteral) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(value, that.value) &&
+                Objects.equals(literals, that.literals);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, value, literals);
+    }
+
+	
 }

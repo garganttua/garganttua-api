@@ -1,5 +1,6 @@
 package com.garganttua.api.core.entity.tools;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -10,8 +11,11 @@ import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.GGAPIEntityInfo
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelper;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelperExcpetion;
+import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurity;
 
@@ -30,10 +34,9 @@ public class GGAPIEntityHelper {
 	
 	public static void save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		
 		try {
-			GGAPIObjectReflectionHelper.invokeMethod(entity, infos.saveMethodName(), caller, parameters, security);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		}
 	}
@@ -41,10 +44,9 @@ public class GGAPIEntityHelper {
 	
 	public static void delete(Object entity, IGGAPICaller caller, Map<String, String> parameters) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		
 		try {
-			GGAPIObjectReflectionHelper.invokeMethod(entity, infos.deleteMethodName(), caller, parameters);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).invoke(infos.deleteMethodAddress(), caller, parameters);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		}
 	}
@@ -52,8 +54,8 @@ public class GGAPIEntityHelper {
 	public static void setUuid(Object entity, String uuid) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.uuidFieldName(), uuid);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).setValue(infos.uuidFieldAddress(), uuid);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -61,8 +63,8 @@ public class GGAPIEntityHelper {
 	public static void setId(Object entity, String id) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.idFieldName(), id);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).setValue(infos.idFieldAddress(), id);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -70,8 +72,8 @@ public class GGAPIEntityHelper {
 	public static void setRepository(Object entity, IGGAPIRepository<Object> repository) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.repositoryFieldName(), repository);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).setValue(infos.repositoryFieldAddress(), repository);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -79,8 +81,8 @@ public class GGAPIEntityHelper {
 	public static void setGotFromRepository(Object entity, boolean b) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.gotFromRepositoryFieldName(), b);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).setValue(infos.gotFromRepositoryFieldAddress(), b);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -88,8 +90,8 @@ public class GGAPIEntityHelper {
 	public static void setSaveMethod(Object entity, IGGAPIEntitySaveMethod<?> method) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.saveProviderFieldName(), method);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).setValue(infos.saveProviderFieldAddress(), method);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -97,8 +99,8 @@ public class GGAPIEntityHelper {
 	public static void setDeleteMethod(Object entity, IGGAPIEntityDeleteMethod<?> method) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGAPIObjectReflectionHelper.setObjectFieldValue(entity, infos.deleteProviderFieldName(), method);
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			new GGAPIObjectQuery(entity).setValue(infos.deleteProviderFieldAddress(), method);
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -106,8 +108,8 @@ public class GGAPIEntityHelper {
 	public static String getUuid(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (String) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.uuidFieldName());
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			return (String) new GGAPIObjectQuery(entity).getValue(infos.uuidFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -115,8 +117,8 @@ public class GGAPIEntityHelper {
 	public static String getId(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (String) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.idFieldName());
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			return (String) new GGAPIObjectQuery(entity).getValue( infos.idFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -125,8 +127,8 @@ public class GGAPIEntityHelper {
 	public static IGGAPIRepository<Object> getRepository(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIRepository<Object>) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.repositoryFieldName());
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			return (IGGAPIRepository<Object>) new GGAPIObjectQuery(entity).getValue(infos.repositoryFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -134,8 +136,8 @@ public class GGAPIEntityHelper {
 	public static boolean isGotFromRepository(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (boolean) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.gotFromRepositoryFieldName());
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			return (boolean) new GGAPIObjectQuery(entity).getValue(infos.gotFromRepositoryFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -143,8 +145,8 @@ public class GGAPIEntityHelper {
 	public static IGGAPIEntitySaveMethod<?> getSaveMethodProvider(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIEntitySaveMethod<?>) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.saveProviderFieldName());
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			return (IGGAPIEntitySaveMethod<?>) new GGAPIObjectQuery(entity).getValue(infos.saveProviderFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
 	}
@@ -152,9 +154,40 @@ public class GGAPIEntityHelper {
 	public static IGGAPIEntityDeleteMethod<?> getDeleteMethodProvider(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIEntityDeleteMethod<?>) GGAPIObjectReflectionHelper.getObjectFieldValue(entity, infos.deleteProviderFieldName());
-		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			return (IGGAPIEntityDeleteMethod<?>) new GGAPIObjectQuery(entity).getValue(infos.deleteProviderFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
+	}
+
+	public static Object newInstance(Class<?> entityClass) throws GGAPIEntityException {
+		try {
+			return GGAPIObjectReflectionHelper.instanciateNewObject(entityClass);
+		} catch (GGAPIObjectReflectionHelperExcpetion e) {
+			throw new GGAPIEntityException(e);
+		}
+	}
+
+	public static Object newExampleInstance(Class<?> clazz, GGAPILiteral filter) throws GGAPIEntityException {
+		Object object = newInstance(clazz);	
+		GGAPIEntityHelper.setObjectValuesFromFilter(object, filter);
+		return object;
+	}
+
+	private static void setObjectValuesFromFilter(Object object, GGAPILiteral filter) throws GGAPIEntityException {
+		if( filter.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
+			String fieldAddress = (String) filter.getValue();
+			Object fieldValue = filter.getLiterals().get(0).getValue();
+			
+			try {
+				new GGAPIObjectQuery(object).setValue(fieldAddress, List.of(fieldValue));
+			} catch (GGAPIObjectQueryException e) {
+				throw new GGAPIEntityException(e);
+			}
+		} else {
+			for( GGAPILiteral sub: filter.getLiterals() ) {
+				setObjectValuesFromFilter(object, sub);
+			}
+		}
 	}
 }

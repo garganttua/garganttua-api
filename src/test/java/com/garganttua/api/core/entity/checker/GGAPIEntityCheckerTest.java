@@ -91,8 +91,7 @@ public class GGAPIEntityCheckerTest {
 	public void testEntityWithNoDomain() {
 		
 		@GGAPIEntity(
-				domain = "", 
-				dto = {}
+				domain = ""
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -111,8 +110,7 @@ public class GGAPIEntityCheckerTest {
 	public void testEntityWithNoDto() {
 		
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -135,8 +133,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity  extends GenericGGAPIEntity{
 			public Entity() {
@@ -161,8 +158,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityTenant
 		class Entity  extends GenericGGAPIEntity {
@@ -188,8 +184,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityTenant(superTenant = "superTenant")
 		class Entity  extends GenericGGAPIEntity{
@@ -220,8 +215,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityTenant(tenantId = "uuid", superTenant = "superTenant")
 		class Entity  extends GenericGGAPIEntity{
@@ -250,8 +244,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityTenant()
 		class Entity  extends GenericGGAPIEntity{
@@ -282,8 +275,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityTenant(tenantId = "uuid")
 		class Entity  extends GenericGGAPIEntity{
@@ -316,8 +308,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner
 		class Entity  extends GenericGGAPIEntity{
@@ -343,8 +334,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner(superOwner = "superOwner")
 		class Entity  extends GenericGGAPIEntity{
@@ -376,8 +366,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner(ownerId = "uuid", superOwner = "superOwner")
 		class Entity  extends GenericGGAPIEntity {
@@ -411,8 +400,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner()
 		class Entity  extends GenericGGAPIEntity{
@@ -443,8 +431,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity{
@@ -475,8 +462,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 
@@ -500,8 +486,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 
@@ -526,8 +511,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 
@@ -555,8 +539,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
@@ -581,8 +564,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
@@ -611,8 +593,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 
@@ -639,8 +620,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
@@ -664,8 +644,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 			public Entity() {
@@ -688,9 +667,8 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
-		)
+				domain = "entity"
+				)
 		class Entity {
 			@GGAPIEntityUuid
 			String uuid;
@@ -718,8 +696,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -751,8 +728,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -781,8 +757,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -816,8 +791,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -859,8 +833,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -903,8 +876,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -947,8 +919,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -991,8 +962,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -1034,8 +1004,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			@GGAPIEntityUuid
@@ -1078,8 +1047,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			
@@ -1124,8 +1092,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityHiddenable
 		class Entity extends GenericGGAPIEntity {
@@ -1149,8 +1116,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityHiddenable(hidden = "hidden")
 		class Entity extends GenericGGAPIEntity {
@@ -1174,8 +1140,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityHiddenable(hidden = "hidden")
 		class Entity extends GenericGGAPIEntity {
@@ -1200,8 +1165,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityHiddenable(hidden = "hidden")
 		class Entity extends GenericGGAPIEntity {
@@ -1221,8 +1185,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityGeolocalized
 		class Entity extends GenericGGAPIEntity {
@@ -1246,8 +1209,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1271,8 +1233,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1297,8 +1258,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1326,8 +1286,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityGeolocalized(location = "location")
 		class Entity extends GenericGGAPIEntity {
@@ -1351,8 +1310,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 
@@ -1401,8 +1359,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 
@@ -1451,8 +1408,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity extends GenericGGAPIEntity {
 
@@ -1500,8 +1456,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 			
@@ -1552,9 +1507,8 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
-		)
+				domain = "entity"
+				)
 		class Entity {
 
 			@GGAPIEntityUuid
@@ -1601,8 +1555,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 
@@ -1652,8 +1605,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		class Entity {
 
@@ -1702,8 +1654,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner
 		@GGAPIEntityOwned
@@ -1727,8 +1678,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwned
 		class Entity  extends GenericGGAPIEntity{
@@ -1751,8 +1701,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwned(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1776,8 +1725,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwned(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1800,8 +1748,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner
 		class Entity  extends GenericGGAPIEntity{
@@ -1829,8 +1776,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityOwner(ownerId = "uuid")
 		class Entity  extends GenericGGAPIEntity{
@@ -1857,8 +1803,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityShared
 		class Entity  extends GenericGGAPIEntity{
@@ -1881,8 +1826,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityShared(share = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1906,8 +1850,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityShared(share = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1928,8 +1871,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityShared
 		class Entity  extends GenericGGAPIEntity{
@@ -1957,8 +1899,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity(
-				domain = "entity", 
-				dto = {Dto.class}
+				domain = "entity"
 		)
 		@GGAPIEntityShared(share = "uuid")
 		class Entity  extends GenericGGAPIEntity {
@@ -1983,8 +1924,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity (
-			domain = "tenants", 
-			dto = {Dto.class},
+			domain = "tenants",
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2124,8 +2064,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity (
-			domain = "tenants", 
-			dto = {Dto.class},
+			domain = "tenants",
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2267,7 +2206,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2410,7 +2348,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2555,7 +2492,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2700,7 +2636,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2845,7 +2780,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -2991,7 +2925,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3136,8 +3069,7 @@ public class GGAPIEntityCheckerTest {
 		}
 
 		@GGAPIEntity (
-			domain = "tenants", 
-			dto = {Dto.class},
+			domain = "tenants",
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3281,7 +3213,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3431,7 +3362,6 @@ public class GGAPIEntityCheckerTest {
 
 		@GGAPIEntity (
 			domain = "tenants", 
-			dto = {Dto.class},
 			creation_access = GGAPIServiceAccess.anonymous,
 			count_access = GGAPIServiceAccess.tenant,
 			delete_one_access = GGAPIServiceAccess.tenant,
@@ -3527,8 +3457,7 @@ public class GGAPIEntityCheckerTest {
 	@Test
 	public void testGenericEntity() {
 		@GGAPIEntity (
-			domain = "tenants", 
-			dto = {GenericGGAPIDto.class}
+			domain = "tenants"
 		)
 		class Entity extends GenericGGAPIEntity {
 

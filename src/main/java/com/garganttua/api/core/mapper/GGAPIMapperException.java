@@ -1,6 +1,6 @@
 package com.garganttua.api.core.mapper;
 
-import com.garganttua.api.core.mapper.fieldFinder.GGAPIFieldFinderException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 
 import lombok.Getter;
 
@@ -34,7 +34,7 @@ public class GGAPIMapperException extends Exception {
 		this.code = code;
 	}
 
-	public GGAPIMapperException(String message, GGAPIFieldFinderException e) {
+	public GGAPIMapperException(String message, GGAPIObjectQueryException e) {
 		super(message, e);
 	}
 

@@ -7,6 +7,8 @@ import java.lang.reflect.Field;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
+
 class SuperClass {
 	Long superField;
 }

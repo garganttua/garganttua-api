@@ -17,14 +17,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 
-@GGAPIEntity(domain = "test", dto = GenericDto.class)
+@GGAPIEntity(domain = "test")
 class GenericEntity extends GenericGGAPIEntity {
 	@Getter
 	@Setter
 	long longField;
 }
 
-@GGAPIEntity(domain = "test", dto = GenericDtoWithObjectMapping.class)
+@GGAPIEntity(domain = "test")
 class GenericEntityWithObjectMapping extends GenericGGAPIEntity {
 	@Getter
 	@Setter
@@ -32,7 +32,7 @@ class GenericEntityWithObjectMapping extends GenericGGAPIEntity {
 }
 
 
-@GGAPIEntity(domain = "test", dto = {GenericDtoWithObjectMapping.class})
+@GGAPIEntity(domain = "test")
 class GenericEntityFromTwoDtos extends GenericGGAPIEntity {
 	@Getter
 	@Setter

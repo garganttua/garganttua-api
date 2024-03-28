@@ -13,7 +13,7 @@ import java.util.Map;
 
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.tools.GGAPIMethodAccessManager;
+import com.garganttua.api.core.objects.utils.GGAPIMethodAccessManager;
 
 import lombok.extern.slf4j.Slf4j;
 

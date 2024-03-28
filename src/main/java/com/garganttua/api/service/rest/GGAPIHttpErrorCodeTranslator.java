@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelperExcpetion;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 
 public class GGAPIHttpErrorCodeTranslator {
 

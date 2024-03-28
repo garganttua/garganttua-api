@@ -3,9 +3,9 @@ package com.garganttua.api.core.mapper.rules;
 import java.lang.reflect.Field;
 
 import com.garganttua.api.core.mapper.IGGAPIMappingRuleExecutor;
-import com.garganttua.api.core.tools.GGAPIFieldAccessManager;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelper;
-import com.garganttua.api.core.tools.GGAPIObjectReflectionHelperExcpetion;
+import com.garganttua.api.core.objects.utils.GGAPIFieldAccessManager;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
+import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 
 public class GGAPISimpleFieldMappingExecutor implements IGGAPIMappingRuleExecutor {
 

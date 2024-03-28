@@ -1,4 +1,4 @@
-package com.garganttua.api.core.tools;
+package com.garganttua.api.core.objects.utils;
 
 import java.lang.reflect.Method;
 

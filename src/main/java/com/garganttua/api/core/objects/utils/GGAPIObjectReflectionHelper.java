@@ -1,9 +1,15 @@
-package com.garganttua.api.core.tools;
+package com.garganttua.api.core.objects.utils;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Vector;
 
 public class GGAPIObjectReflectionHelper {
 	
@@ -22,7 +28,7 @@ public class GGAPIObjectReflectionHelper {
 			}
 		}
 		if( objectClass.getSuperclass() != null ) {
-			return getField(objectClass.getSuperclass(), fieldName);
+			return GGAPIObjectReflectionHelper.getField(objectClass.getSuperclass(), fieldName);
 		}
 		return null;
 	}
@@ -53,17 +59,16 @@ public class GGAPIObjectReflectionHelper {
 		throw new GGAPIObjectReflectionHelperExcpetion("Class "+clazz+" does not have constructor with no params");
 	}
 	
-	static public void setObjectFieldValue(Object entity, String fieldName, Object value) throws GGAPIObjectReflectionHelperExcpetion {
-		Field field = GGAPIObjectReflectionHelper.getField(entity.getClass(), fieldName);
-		
+	static public void setObjectFieldValue(Object entity, Field field, Object value) throws GGAPIObjectReflectionHelperExcpetion {
+	
 		if( field == null ) {
-			throw new GGAPIObjectReflectionHelperExcpetion("Cannot set field "+fieldName+" of object "+entity.getClass().getName()+" with value "+value);
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot set null field of object "+entity.getClass().getName()+" with value "+value);
 		}
 		
 		try( GGAPIFieldAccessManager manager = new GGAPIFieldAccessManager(field) ){
 			field.set(entity, value);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
-			throw new GGAPIObjectReflectionHelperExcpetion("Cannot set field "+fieldName+" of object "+entity.getClass().getName()+" with value "+value, e);
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot set field "+field.getName()+" of object "+entity.getClass().getName()+" with value "+value, e);
 		}
 	}
 	
@@ -73,6 +78,11 @@ public class GGAPIObjectReflectionHelper {
 			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get field "+fieldName+" of object "+entity.getClass().getName());
 		}
 		
+		return getObjectFieldValue(entity, fieldName, field);
+	}
+
+	public static Object getObjectFieldValue(Object entity, String fieldName, Field field)
+			throws GGAPIObjectReflectionHelperExcpetion {
 		try( GGAPIFieldAccessManager manager = new GGAPIFieldAccessManager(field) ){
 			return field.get(entity);
 		} catch (IllegalArgumentException | IllegalAccessException e) {
@@ -80,18 +90,38 @@ public class GGAPIObjectReflectionHelper {
 		}
 	}
 
-	public static Object invokeMethod(Object entity, String methodName, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
-		Method method = GGAPIObjectReflectionHelper.getMethod(entity.getClass(), methodName);
+	public static Object invokeMethod(Object object, String methodName, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
+		Method method = GGAPIObjectReflectionHelper.getMethod(object.getClass(), methodName);
 		
 		if( method == null ) {
-			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get method "+methodName+" of object "+entity.getClass().getName());
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot get method "+methodName+" of object "+object.getClass().getName());
 		}
 		
 		try( GGAPIMethodAccessManager manager = new GGAPIMethodAccessManager(method) ){
-			return method.invoke(entity, args);
+			return method.invoke(object, args);
 		} catch (IllegalAccessException | InvocationTargetException e) {
-			throw new GGAPIObjectReflectionHelperExcpetion("Cannot invoke method "+methodName+" of object "+entity.getClass().getName(), e);
+			throw new GGAPIObjectReflectionHelperExcpetion("Cannot invoke method "+methodName+" of object "+object.getClass().getName(), e);
 		} 
+	}
+	
+	public static <K, V> Map<K, V> newHashMapOf(Class<K> keyType, Class<V> valueType) {
+		return new HashMap<K, V>();
+	}
+
+	public static <K> ArrayList<K> newArrayListOf(Class<K> type) {
+		return new ArrayList<K>();
+	}
+
+	public static <K> HashSet<K> newHashSetOf(Class<K> type) {
+		return new HashSet<K>();
+	}
+
+	public static <K> LinkedList<K> newLinkedlistOf(Class<K> type) {
+		return new LinkedList<K>();
+	}
+
+	public static <K> Vector<K>  newVectorOf(Class<?> type) {
+		return new Vector<K>();
 	}
 
 }

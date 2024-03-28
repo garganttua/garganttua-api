@@ -1,4 +1,4 @@
-package com.garganttua.api.core.tools;
+package com.garganttua.api.core.objects.utils;
 
 public class GGAPIObjectReflectionHelperExcpetion extends Exception {
 
