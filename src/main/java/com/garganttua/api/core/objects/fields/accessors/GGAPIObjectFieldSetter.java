@@ -111,10 +111,6 @@ public class GGAPIObjectFieldSetter {
 			this.doIfIsArray(object, value, fieldIndex, fieldNameIndex, isLastIteration, field, nextField, temp);
 			this.doIfIsMap(object, value, fieldIndex, fieldNameIndex, isLastIteration, field, nextField, temp);
 		} else {
-			if (temp == null) {
-				temp = GGAPIObjectReflectionHelper.instanciateNewObject(field.getType());
-				GGAPIObjectReflectionHelper.setObjectFieldValue(object, field, temp);
-			}
 			if (isLastIteration) {
 				GGAPIObjectReflectionHelper.setObjectFieldValue(temp, nextField, value);
 			} else {

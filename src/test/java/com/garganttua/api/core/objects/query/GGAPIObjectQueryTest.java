@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -17,8 +17,10 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 class TestClass extends ParentClass {
 	
 	private String field;
@@ -270,6 +272,25 @@ public class GGAPIObjectQueryTest {
 		String returned = (String) query.invoke("testMethod", "salut");
 		
 		assertEquals("salut", returned);
+	}	
+	
+	@SuppressWarnings("unchecked")
+	@Test
+	void testInvokesMethodInList() throws GGAPIObjectQueryException {
+		TestClass c = new TestClass();
+		List<InnerClass> list = new ArrayList<InnerClass>();
+		list.add(new InnerClass());
+		list.add(new InnerClass());
+		list.add(new InnerClass());
+		c.setList(list);
+
+		IGGAPIObjectQuery query = new GGAPIObjectQuery(c);
+		
+		List<String> returned = (List<String>) query.invoke("list.testMethodInInner", "salut");
+		
+		assertEquals("salut", returned.get(0));
+		assertEquals("salut", returned.get(1));
+		assertEquals("salut", returned.get(2));
 	}	
 	
 }
