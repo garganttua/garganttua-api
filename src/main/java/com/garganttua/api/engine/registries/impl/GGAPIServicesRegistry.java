@@ -28,7 +28,6 @@ import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIFactoriesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.events.IGGAPIEventPublisher;
-import com.garganttua.api.security.IGGAPISecurity;
 import com.garganttua.api.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.service.GGAPICustomServiceBuilder;
 import com.garganttua.api.service.IGGAPICustomService;
@@ -128,7 +127,7 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 		
 			Class<?> entityClass = domain.entity.getValue0();
 		
-			Tag tag = new Tag().name("Domain " + domain.entity.getValue1().domain().toLowerCase()).description("Public Entity ["+domain.entity.getValue1().publicEntity()+"] Shared Entity ["+(domain.entity.getValue1().sharedEntity()?"false":domain.entity.getValue1().shareFieldName())+"] Hiddenable Entity ["+domain.entity.getValue1().hiddenableEntity()+"] Geolocalized ["+(domain.entity.getValue1().geolocalizedEntity()?"false":domain.entity.getValue1().locationFieldName())+"]");
+			Tag tag = new Tag().name("Domain " + domain.entity.getValue1().domain().toLowerCase()).description("Public Entity ["+domain.entity.getValue1().publicEntity()+"] Shared Entity ["+(domain.entity.getValue1().sharedEntity()?"false":domain.entity.getValue1().shareFieldAddress())+"] Hiddenable Entity ["+domain.entity.getValue1().hiddenableEntity()+"] Geolocalized ["+(domain.entity.getValue1().geolocalizedEntity()?"false":domain.entity.getValue1().locationFieldAddress())+"]");
 			this.openApi.get().addTagsItem(tag);
 
 			GGAPIEntity entityAnnotation = entityClass.getAnnotation(GGAPIEntity.class);

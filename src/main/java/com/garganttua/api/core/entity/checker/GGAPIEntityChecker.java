@@ -58,6 +58,8 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
+import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.security.IGGAPISecurity;
 
@@ -102,6 +104,7 @@ public class GGAPIEntityChecker {
 	        Map<String, String> updateAuthorizations,
 	        GGAPIObjectAddress gotFromRepositoryFieldAddress
 	) {
+		
 		@Override
 		public boolean equals(Object obj) {
 		    if (this == obj) return true;
@@ -228,41 +231,46 @@ public class GGAPIEntityChecker {
 		String gotFromReposiotryFieldAddress = GGAPIEntityChecker.checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);;
 		
 		GGAPIEntityChecker.checkConstructor(entityClass);
-		
-		return new GGAPIEntityInfos(
-				domain, 
-				uuidFieldAddress, 
-				idFieldAddress, 
-				saveProviderFieldAddress, 
-				deleteProviderFieldAddress, 
-				tenantEntity, 
-				ownerEntity, 
-				ownedEntity, 
-		        tenantIdFieldAddress,
-		        superTenantFieldAddress,
-		        ownerIdFieldAddress,
-		        superOnwerIdFieldAddress,
-				saveMethodAddress, 
-				deleteMethodAddress, 
-				publicEntity, 
-				hiddenableEntity, 
-				hiddenFieldAddress, 
-				geolocalizedEntity, 
-				locationFieldAddress, 
-				sharedEntity, 
-				shareFieldAddress, 
-				repositoryFieldAddress, 
-				mandatoryFields, 
-				unicityFields,
-				afterGetm==null?null:afterGetm.getName(),
-				beforeCreatem==null?null:beforeCreatem.getName(),
-				afterCreatem==null?null:afterCreatem.getName(),
-				beforeUpdatem==null?null:beforeUpdatem.getName(),
-				afterUpdatem==null?null:afterUpdatem.getName(),
-				beforeDeletem==null?null:beforeDeletem.getName(),
-				afterDeletem==null?null:afterDeletem.getName(),
-				updateAuthorizations,
-				gotFromReposiotryFieldAddress);
+
+		try {
+			GGAPIObjectQuery q = new GGAPIObjectQuery(entityClass);
+			return new GGAPIEntityInfos (
+					domain, 
+					q.address(uuidFieldAddress), 
+					q.address(idFieldAddress), 
+					q.address(saveProviderFieldAddress), 
+					q.address(deleteProviderFieldAddress), 
+					tenantEntity, 
+					ownerEntity, 
+					ownedEntity, 
+					tenantIdFieldAddress==null?null:q.address(tenantIdFieldAddress),
+					superTenantFieldAddress==null?null:q.address(superTenantFieldAddress),
+					ownerIdFieldAddress==null?null:q.address(ownerIdFieldAddress),
+					superOnwerIdFieldAddress==null?null:q.address(superOnwerIdFieldAddress),
+					q.address(saveMethodAddress), 
+					q.address(deleteMethodAddress), 
+					publicEntity, 
+					hiddenableEntity, 
+					hiddenFieldAddress==null?null:q.address(hiddenFieldAddress), 
+					geolocalizedEntity, 
+					locationFieldAddress==null?null:q.address(locationFieldAddress), 
+					sharedEntity, 
+					shareFieldAddress==null?null:q.address(shareFieldAddress), 
+					q.address(repositoryFieldAddress), 
+					mandatoryFields, 
+					unicityFields,
+					afterGetm==null?null:q.address(afterGetm.getName()),
+					beforeCreatem==null?null:q.address(beforeCreatem.getName()),
+					afterCreatem==null?null:q.address(afterCreatem.getName()),
+					beforeUpdatem==null?null:q.address(beforeUpdatem.getName()),
+					afterUpdatem==null?null:q.address(afterUpdatem.getName()),
+					beforeDeletem==null?null:q.address(beforeDeletem.getName()),
+					afterDeletem==null?null:q.address(afterDeletem.getName()),
+					updateAuthorizations,
+					q.address(gotFromReposiotryFieldAddress));
+		} catch (GGAPIObjectQueryException e) {
+			throw new GGAPIEntityException(e);
+		}
 	}
 
 	private static List<Pair<Class<?>, GGAPIDtoInfos>> checkDtos(List<Class<?>> dtoClasss) throws GGAPIEntityException {

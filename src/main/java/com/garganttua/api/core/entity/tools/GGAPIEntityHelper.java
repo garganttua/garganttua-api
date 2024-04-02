@@ -180,7 +180,7 @@ public class GGAPIEntityHelper {
 			Object fieldValue = filter.getLiterals().get(0).getValue();
 			
 			try {
-				new GGAPIObjectQuery(object).setValue(fieldAddress, List.of(fieldValue));
+				new GGAPIObjectQuery(object).setValue(fieldAddress, fieldValue);
 			} catch (GGAPIObjectQueryException e) {
 				throw new GGAPIEntityException(e);
 			}

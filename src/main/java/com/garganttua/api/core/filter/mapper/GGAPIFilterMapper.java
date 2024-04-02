@@ -113,5 +113,4 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 		}
 		return filter;
 	}
-
 }
