@@ -18,6 +18,8 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.engine.GGAPIDomain;
@@ -127,10 +129,9 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 			Object entity) throws GGAPIEntityException {
 		if( domain.entity.getValue1().ownedEntity() ) {
 			if( caller.getOwnerId() != null && !caller.getOwnerId().isEmpty()) {
-				new GGAPIEntityChecker();
 				try {
-					GGAPIObjectReflectionHelper.setObjectFieldValue(entity, GGAPIEntityChecker.checkEntity(entity).ownerIdFieldName(), caller.getOwnerId());
-				} catch (GGAPIObjectReflectionHelperExcpetion | GGAPIEntityException e) {
+					GGAPIObjectQueryFactory.objectQuery(entity).setValue(GGAPIEntityChecker.checkEntity(entity).ownerIdFieldAddress(), caller.getOwnerId());
+				} catch (GGAPIEntityException | GGAPIObjectQueryException e) {
 					throw new GGAPIEntityException(e);
 				}
 			} else {

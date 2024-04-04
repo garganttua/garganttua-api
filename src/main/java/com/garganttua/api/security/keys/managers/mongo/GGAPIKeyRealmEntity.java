@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 
 @GGAPIEntity(
 		domain = GGAPIKeyRealmEntity.domain, 
-		dto = {GGAPIKeyRealmDTO.class},
 		repository = "class:com.garganttua.api.security.keys.managers.mongo.GGAPIKeyRepository",
 		allow_creation = true,
 		allow_read_one = true, 

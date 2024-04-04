@@ -2,11 +2,10 @@ package com.garganttua.api.security.keys.managers.db;
 
 import java.util.Optional;
 
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.engine.GGAPIEngineException;
 import com.garganttua.api.security.keys.GGAPIKey;
 import com.garganttua.api.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.security.keys.IGGAPIKeyManager;
+import com.garganttua.api.security.keys.GGAPIKeyManagerException;
 import com.garganttua.api.security.keys.IGGAPIKeyRealm;
 
 import lombok.Setter;
@@ -17,21 +16,31 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 	private Optional<IGGAPIDBKeyKeeper> keyKeeper;
 
 	@Override
-	public GGAPIKey getKeyForCiphering(String realm) throws GGAPIKeyExpiredException, GGAPIEngineException {
-		IGGAPIKeyRealm realm_ = this.keyKeeper.get().getRealm(realm);
-		if( realm_ != null ) {
-			return realm_.getCipheringKey();
+	public GGAPIKey getKeyForCiphering(String realm) throws GGAPIKeyManagerException {
+		IGGAPIKeyRealm realm_;
+		try {
+			realm_ = this.keyKeeper.get().getRealm(realm);
+			if( realm_ != null ) {
+				return realm_.getCipheringKey();
+			}
+			return null;
+		} catch (GGAPIDBKeyKeeperException | GGAPIKeyExpiredException e) {
+			throw new GGAPIKeyManagerException(e);
 		}
-		return null;
 	}
 
 	@Override
-	public GGAPIKey getKeyForUnciphering(String realm) throws GGAPIKeyExpiredException, GGAPIEngineException {
-		IGGAPIKeyRealm realm_ = this.keyKeeper.get().getRealm(realm);
-		if( realm_ != null ) {
-			return realm_.getUncipheringKey();
+	public GGAPIKey getKeyForUnciphering(String realm) throws GGAPIKeyManagerException {
+		IGGAPIKeyRealm realm_;
+		try {
+			realm_ = this.keyKeeper.get().getRealm(realm);
+			if( realm_ != null ) {
+				return realm_.getUncipheringKey();
+			}
+			return null;
+		} catch (GGAPIDBKeyKeeperException | GGAPIKeyExpiredException e) {
+			throw new GGAPIKeyManagerException(e);
 		}
-		return null;
 	}
 
 	@Override
@@ -41,18 +50,30 @@ public class GGAPIDBKeyManager implements IGGAPIKeyManager {
 	}
 
 	@Override
-	public void createRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException, GGAPIEntityException, GGAPIEngineException {
-		this.keyKeeper.get().createRealm(realm);
+	public void createRealm(IGGAPIKeyRealm realm) throws GGAPIKeyManagerException {
+		try {
+			this.keyKeeper.get().createRealm(realm);
+		} catch (GGAPIDBKeyKeeperException e) {
+			throw new GGAPIKeyManagerException(e);
+		}
 	}
 
 	@Override
-	public IGGAPIKeyRealm getRealm(String realm) throws GGAPIKeyExpiredException, GGAPIEngineException {
-		return this.keyKeeper.get().getRealm(realm);
+	public IGGAPIKeyRealm getRealm(String realm) throws GGAPIKeyManagerException {
+		try {
+			return this.keyKeeper.get().getRealm(realm);
+		} catch (GGAPIDBKeyKeeperException e) {
+			throw new GGAPIKeyManagerException(e);
+		}
 	}
 
 	@Override
-	public void updateRealm(IGGAPIKeyRealm realm) throws GGAPIKeyExpiredException, GGAPIEntityException, GGAPIEngineException {
-		this.keyKeeper.get().update(realm);
+	public void updateRealm(IGGAPIKeyRealm realm) throws GGAPIKeyManagerException {
+		try {
+			this.keyKeeper.get().update(realm);
+		} catch (GGAPIDBKeyKeeperException e) {
+			throw new GGAPIKeyManagerException(e);
+		}
 	}
 
 }

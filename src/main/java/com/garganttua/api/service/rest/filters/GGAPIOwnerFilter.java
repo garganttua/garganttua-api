@@ -12,8 +12,9 @@ import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
-import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
-import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
+import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.IGGAPIEngine;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
@@ -78,9 +79,10 @@ public class GGAPIOwnerFilter extends GGAPIFilter {
 				if( this.ownersDomain.isPresent() ) {
 						try {
 							Object owner = this.factory.getEntityFromRepository(caller, null, GGAPIEntityIdentifier.UUID, ownerId);
-							caller.setOwnerId((String) GGAPIObjectReflectionHelper.getObjectFieldValue(owner, this.ownersDomain.get().entity.getValue1().ownerIdFieldName()));
-							caller.setSuperOwner((boolean) GGAPIObjectReflectionHelper.getObjectFieldValue(owner, this.ownersDomain.get().entity.getValue1().superOnwerIdFieldName()));
-						} catch ( GGAPIFactoryException | GGAPIObjectReflectionHelperExcpetion e) {
+							IGGAPIObjectQuery q = GGAPIObjectQueryFactory.objectQuery(this.ownersDomain.get().entity.getValue0(), owner);
+							caller.setOwnerId((String) q.getValue(this.ownersDomain.get().entity.getValue1().ownerIdFieldAddress()));
+							caller.setSuperOwner((boolean) q.getValue(this.ownersDomain.get().entity.getValue1().superOnwerIdFieldAddress()));
+						} catch ( GGAPIFactoryException | GGAPIObjectQueryException e) {
 							((HttpServletResponse) response).setStatus(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
 							response.getWriter().write(e.getMessage());
 							response.getWriter().flush();

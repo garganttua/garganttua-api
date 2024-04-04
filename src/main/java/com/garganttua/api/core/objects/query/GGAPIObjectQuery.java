@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -25,7 +24,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 	private Class<?> objectClass;
 	private Object object;
 
-	public GGAPIObjectQuery(Class<?> objectClass) throws GGAPIObjectQueryException {
+	protected GGAPIObjectQuery(Class<?> objectClass) throws GGAPIObjectQueryException {
 		if( objectClass == null ) {
 			throw new GGAPIObjectQueryException("class is null");
 		}
@@ -37,7 +36,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 		}
 	}
 	
-	public GGAPIObjectQuery(Object object) throws GGAPIObjectQueryException {
+	protected GGAPIObjectQuery(Object object) throws GGAPIObjectQueryException {
 		if( object == null ) {
 			throw new GGAPIObjectQueryException("object is null");
 		}
@@ -45,7 +44,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 		this.objectClass = object.getClass();
 	}
 	
-	public GGAPIObjectQuery(Class<?> objectClass, Object object) throws GGAPIObjectQueryException {
+	protected GGAPIObjectQuery(Class<?> objectClass, Object object) throws GGAPIObjectQueryException {
 		if( object == null ) {
 			throw new GGAPIObjectQueryException("object is null");
 		}
@@ -197,10 +196,12 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 							}
 						}
 					} else {
-						GGAPIObjectAddress a = this.address(f.getType(), elementName, address.isEmpty() ? f.getName()
-								: address + GGAPIObjectAddress.ELEMENT_SEPARATOR + f.getName());
-						if (a != null) {
-							return a;
+						if( !f.getType().isEnum() ) {
+							GGAPIObjectAddress a = this.address(f.getType(), elementName, address.isEmpty() ? f.getName()
+									: address + GGAPIObjectAddress.ELEMENT_SEPARATOR + f.getName());
+							if (a != null) {
+								return a;
+							}
 						}
 					}
 				}

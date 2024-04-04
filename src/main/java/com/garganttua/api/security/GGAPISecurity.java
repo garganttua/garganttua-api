@@ -14,12 +14,11 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntity;
 import com.garganttua.api.engine.GGAPIDomain;
 import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIServicesRegistry;
-import com.garganttua.api.repository.dto.IGGAPIDTOObject;
+import com.garganttua.api.security.authentication.GGAPIAuthenticator;
 import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
 import com.garganttua.api.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.security.authorization.IGGAPIAuthorizationManager;
@@ -89,13 +88,22 @@ public class GGAPISecurity implements IGGAPISecurity {
 	
 	@PostConstruct
 	private void init() {
-		GGAPIDomain domain = this.dDomainsRegistry.getAuthenticatorDomain();
+		GGAPIDomain domain = this.getAuthenticatorDomain();
 		if( domain != null ) {
-			IGGAPIService<? extends IGGAPIEntity, ? extends IGGAPIDTOObject<? extends IGGAPIEntity>> s = this.servicesRegistry.getService(domain.domain);
+			IGGAPIService s = this.servicesRegistry.getService(domain.entity.getValue1().domain());
 			if( s != null ) {
 				s.setSecurity(Optional.of(this));
 			}
 		}
+	}
+
+	private GGAPIDomain getAuthenticatorDomain() {
+		for( GGAPIDomain domain: this.dDomainsRegistry.getDomains() ) {
+			if( domain.entity.getValue0().getAnnotation(GGAPIAuthenticator.class) != null ) {
+				return domain;
+			}
+		}
+		return null;
 	}
 
 	@Override

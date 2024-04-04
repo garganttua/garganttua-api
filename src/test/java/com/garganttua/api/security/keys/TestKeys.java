@@ -1,7 +1,5 @@
 package com.garganttua.api.security.keys;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.security.KeyPair;
 
 import javax.crypto.SecretKey;
@@ -19,7 +17,6 @@ class TestKeys {
 	void test() {
 		
 //		 byte[] keyByte = Decoders.BASE64.decode(SECRET);
-		 
 		 
 		SecretKey key1 = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 		System.out.println(Encoders.BASE64.encode(key1.getEncoded()));

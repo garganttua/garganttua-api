@@ -17,7 +17,7 @@ import com.garganttua.api.engine.registries.IGGAPIDaosRegistry;
 import com.garganttua.api.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.repository.GGAPIMultipleRepository;
-import com.garganttua.api.repository.GGAPIUniqueRepository;
+import com.garganttua.api.repository.GGAPISimpleRepository;
 import com.garganttua.api.repository.IGGAPIRepository;
 import com.garganttua.api.repository.dao.IGGAPIDAORepository;
 
@@ -67,7 +67,7 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 				repo = helper.getObjectFromConfiguration(repo__, IGGAPIRepository.class);
 			} else {
 				if(ddomain.dtos.size() == 1) {
-					repo = new GGAPIUniqueRepository();
+					repo = new GGAPISimpleRepository();
 				} else {
 					repo = new GGAPIMultipleRepository();
 				}

@@ -33,4 +33,5 @@ public class GenericGGAPIDto {
 	@Field
 	@GGAPIDtoTenantId
 	protected String tenantId;
+
 }

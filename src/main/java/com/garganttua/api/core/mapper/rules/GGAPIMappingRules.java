@@ -17,6 +17,7 @@ import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.fields.GGAPIFields;
 import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -89,11 +90,11 @@ public class GGAPIMappingRules {
 		
 		try {
 			if( mappingDirection == GGAPIMappingDirection.REGULAR ) {
-				sourceField = new GGAPIObjectQuery(source.getClass()).find(rule.sourceFieldAddress());
-				destinationField = new GGAPIObjectQuery(destinationClass).find(rule.destinationFieldAddress());
+				sourceField = GGAPIObjectQueryFactory.objectQuery(source.getClass()).find(rule.sourceFieldAddress());
+				destinationField = GGAPIObjectQueryFactory.objectQuery(destinationClass).find(rule.destinationFieldAddress());
 			} else {
-				sourceField = new GGAPIObjectQuery(source.getClass()).find(rule.destinationFieldAddress());
-				destinationField = new GGAPIObjectQuery(destinationClass).find(rule.sourceFieldAddress());
+				sourceField = GGAPIObjectQueryFactory.objectQuery(source.getClass()).find(rule.destinationFieldAddress());
+				destinationField = GGAPIObjectQueryFactory.objectQuery(destinationClass).find(rule.sourceFieldAddress());
 			}
 			
 //			if( ((Field) sourceField.get(sourceField.size()-1).getValue0()).getType().equals(((Field) destinationField.get(destinationField.size()-1).getValue0()).getType()) ) {

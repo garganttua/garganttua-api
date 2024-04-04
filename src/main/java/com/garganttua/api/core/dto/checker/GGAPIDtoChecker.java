@@ -9,13 +9,17 @@ import java.util.Objects;
 import com.garganttua.api.core.dto.annotations.GGAPIDto;
 import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
+import com.garganttua.api.core.objects.GGAPIObjectAddress;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
+import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 
 public class GGAPIDtoChecker {
 
-	public record GGAPIDtoInfos(String db, String tenantIdFieldName) {
+	public record GGAPIDtoInfos(String db, GGAPIObjectAddress tenantIdFieldAddress) {
 		@Override
 		public String toString() {
-			return "GGAPIDtoInfos{tenantIdFieldName='" + tenantIdFieldName + "', db='" + db + "'}";
+			return "GGAPIDtoInfos{tenantIdFieldName='" + tenantIdFieldAddress + "', db='" + db + "'}";
 		}
 
 		@Override
@@ -23,13 +27,13 @@ public class GGAPIDtoChecker {
 			if (this == o) return true;
 			if (o == null || getClass() != o.getClass()) return false;
 			GGAPIDtoInfos that = (GGAPIDtoInfos) o;
-			return Objects.equals(tenantIdFieldName, that.tenantIdFieldName) &&
+			return Objects.equals(tenantIdFieldAddress, that.tenantIdFieldAddress) &&
 					Objects.equals(db, that.db);
 		}
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(tenantIdFieldName)*Objects.hash(db);
+			return Objects.hash(tenantIdFieldAddress)*Objects.hash(db);
 		}
 	}
 
@@ -57,8 +61,13 @@ public class GGAPIDtoChecker {
 			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
 					"Dto " + dtoClass + " does not have any field annotated with @GGAPIDtoTenantId");
 		}
-
-		return new GGAPIDtoInfos(annotation.db(), tenantIdFieldName);
+		IGGAPIObjectQuery q;
+		try {
+			q = GGAPIObjectQueryFactory.objectQuery(dtoClass);
+			return new GGAPIDtoInfos(annotation.db(), q.address(tenantIdFieldName));
+		} catch (GGAPIObjectQueryException e) {
+			throw new GGAPIDtoException(e);
+		}
 	}
 
 	private static String getFieldNameAnnotatedWithAndCheckType(Class<?> dtoClass,

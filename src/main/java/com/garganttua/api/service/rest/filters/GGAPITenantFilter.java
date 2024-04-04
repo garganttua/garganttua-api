@@ -12,6 +12,8 @@ import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
 import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.engine.GGAPIDomain;
@@ -91,14 +93,16 @@ public class GGAPITenantFilter extends GGAPIFilter {
 					superCaller.setTenantId(tenantId);
 					
 					Object tenant = this.factory.getEntityFromRepository(caller, null, GGAPIEntityIdentifier.UUID, tenantId);
-					caller.setSuperTenant((boolean) GGAPIObjectReflectionHelper.getObjectFieldValue(tenant, this.tenantsDomain.get().entity.getValue1().superTenantFieldName()));
+					
+					
+					caller.setSuperTenant((boolean) GGAPIObjectQueryFactory.objectQuery(tenant).getValue(this.tenantsDomain.get().entity.getValue1().superTenantFieldAddress()));
 					
 					if( !caller.getTenantId().equals(caller.getRequestedTenantId()) ) {
 						superCaller.setTenantId(requestedtenantId);
 						this.factory.getEntityFromRepository(caller, null, GGAPIEntityIdentifier.UUID, caller.getRequestedTenantId());
 					}
 					
-				} catch (GGAPIFactoryException | GGAPIObjectReflectionHelperExcpetion e) {
+				} catch (GGAPIFactoryException | GGAPIObjectQueryException e) {
 					((HttpServletResponse) response).setStatus(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
 					response.getWriter().write(e.getMessage());
 					response.getWriter().flush();

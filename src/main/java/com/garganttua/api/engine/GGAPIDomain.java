@@ -25,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIDomain {
 	
+	public String domain;
+	
 	public Pair<Class<?>, GGAPIEntityInfos> entity;
 	public List<Pair<Class<?>, GGAPIDtoInfos>> dtos;
 	public String ws;
@@ -97,7 +99,8 @@ public class GGAPIDomain {
 	    @Override
 	    public String toString() {
 	        return "GGAPIDomain{" +
-	                "entity=" + entity +
+	        		"domain=" + domain +
+	                ", entity=" + entity +
 	                ", dtos=" + dtos +
 	                ", ws='" + ws + '\'' +
 	                ", event='" + event + '\'' +
@@ -176,7 +179,7 @@ public class GGAPIDomain {
 		String event = entityAnnotation.eventPublisher();
 		String repo = entityAnnotation.repository();
 
-		return new GGAPIDomain(new Pair<Class<?>, GGAPIEntityInfos> (entityClass, infos), dtos, ws, event, repo, allow_creation,
+		return new GGAPIDomain(infos.domain(), new Pair<Class<?>, GGAPIEntityInfos> (entityClass, infos), dtos, ws, event, repo, allow_creation,
 				allow_read_all, allow_read_one, allow_update_one, allow_delete_one, allow_delete_all, allow_count,
 				creation_access, read_all_access, read_one_access, update_one_access, delete_one_access,
 				delete_all_access, count_access, creation_authority, read_all_authority, read_one_authority,

@@ -56,7 +56,7 @@ public class GGAPIObjectReflectionHelper {
 				throw new GGAPIObjectReflectionHelperExcpetion(e);
 			}
 		}
-		throw new GGAPIObjectReflectionHelperExcpetion("Class "+clazz+" does not have constructor with no params");
+		throw new GGAPIObjectReflectionHelperExcpetion("Class "+clazz.getSimpleName()+" does not have constructor with no params");
 	}
 	
 	static public void setObjectFieldValue(Object entity, Field field, Object value) throws GGAPIObjectReflectionHelperExcpetion {

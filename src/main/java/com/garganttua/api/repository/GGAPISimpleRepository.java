@@ -35,7 +35,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GGAPIUniqueRepository implements IGGAPIRepository<Object> {
+public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 
 	private IGGAPIDAORepository<Object> daoRepository;
 	
@@ -73,7 +73,7 @@ public class GGAPIUniqueRepository implements IGGAPIRepository<Object> {
 		log.debug("	[domain ["+this.domain.entity.getValue1().domain()+"]] "+caller.toString()+" Checking if entity with uuid {} exists.", caller.getRequestedTenantId(), domain);
 
 		try {
-			GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.entity.getValue1().uuidFieldName(), uuid));
+			GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.entity.getValue1().uuidFieldAddress().toString(), uuid));
 			List<Pair<Class<?>, GGAPILiteral>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 			
 			List<?> dto= this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
@@ -165,7 +165,7 @@ public class GGAPIUniqueRepository implements IGGAPIRepository<Object> {
 	@Override
 	public Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIRepositoryException {
 		log.debug("	[domain ["+this.domain.entity.getValue1().domain()+"]] "+caller.toString()+" Looking for object with uuid "+uuid, caller.getRequestedTenantId(), this.domain);
-		GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.entity.getValue1().uuidFieldName(), uuid));
+		GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.entity.getValue1().uuidFieldAddress().toString(), uuid));
 
 		try {
 			List<Pair<Class<?>, GGAPILiteral>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
@@ -186,7 +186,7 @@ public class GGAPIUniqueRepository implements IGGAPIRepository<Object> {
 	@Override
 	public Object getOneById(IGGAPICaller caller, String id) throws GGAPIRepositoryException {
 		log.debug("	[domain ["+this.domain.entity.getValue1().domain()+"]] "+caller.toString()+" Looking for object with id "+id, caller.getRequestedTenantId(), this.domain);
-		GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getIdFilter(this.domain.entity.getValue1().idFieldName(), id));
+		GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getIdFilter(this.domain.entity.getValue1().idFieldAddress().toString(), id));
 		try {
 			List<Pair<Class<?>, GGAPILiteral>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 			List<?> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
@@ -219,7 +219,7 @@ public class GGAPIUniqueRepository implements IGGAPIRepository<Object> {
 		caller.setSuperTenant(true);
 		
 		try {
-			GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.entity.getValue1().uuidFieldName(), GGAPIEntityHelper.getUuid(entity)));
+			GGAPILiteral filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.entity.getValue1().uuidFieldAddress().toString(), GGAPIEntityHelper.getUuid(entity)));
 			List<Pair<Class<?>, GGAPILiteral>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 			List<?> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
 			if( dto.size() >= 1 ){

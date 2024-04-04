@@ -1,6 +1,5 @@
 package com.garganttua.api.core.entity.tools;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -12,8 +11,8 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.repository.IGGAPIRepository;
@@ -35,7 +34,7 @@ public class GGAPIEntityHelper {
 	public static void save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);
+			GGAPIObjectQueryFactory.objectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		}
@@ -45,7 +44,7 @@ public class GGAPIEntityHelper {
 	public static void delete(Object entity, IGGAPICaller caller, Map<String, String> parameters) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).invoke(infos.deleteMethodAddress(), caller, parameters);
+			GGAPIObjectQueryFactory.objectQuery(entity).invoke(infos.deleteMethodAddress(), caller, parameters);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		}
@@ -54,7 +53,7 @@ public class GGAPIEntityHelper {
 	public static void setUuid(Object entity, String uuid) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).setValue(infos.uuidFieldAddress(), uuid);
+			GGAPIObjectQueryFactory.objectQuery(entity).setValue(infos.uuidFieldAddress(), uuid);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -63,7 +62,7 @@ public class GGAPIEntityHelper {
 	public static void setId(Object entity, String id) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).setValue(infos.idFieldAddress(), id);
+			GGAPIObjectQueryFactory.objectQuery(entity).setValue(infos.idFieldAddress(), id);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -72,7 +71,7 @@ public class GGAPIEntityHelper {
 	public static void setRepository(Object entity, IGGAPIRepository<Object> repository) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).setValue(infos.repositoryFieldAddress(), repository);
+			GGAPIObjectQueryFactory.objectQuery(entity).setValue(infos.repositoryFieldAddress(), repository);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -81,7 +80,7 @@ public class GGAPIEntityHelper {
 	public static void setGotFromRepository(Object entity, boolean b) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).setValue(infos.gotFromRepositoryFieldAddress(), b);
+			GGAPIObjectQueryFactory.objectQuery(entity).setValue(infos.gotFromRepositoryFieldAddress(), b);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -90,7 +89,7 @@ public class GGAPIEntityHelper {
 	public static void setSaveMethod(Object entity, IGGAPIEntitySaveMethod<?> method) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).setValue(infos.saveProviderFieldAddress(), method);
+			GGAPIObjectQueryFactory.objectQuery(entity).setValue(infos.saveProviderFieldAddress(), method);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -99,7 +98,7 @@ public class GGAPIEntityHelper {
 	public static void setDeleteMethod(Object entity, IGGAPIEntityDeleteMethod<?> method) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			new GGAPIObjectQuery(entity).setValue(infos.deleteProviderFieldAddress(), method);
+			GGAPIObjectQueryFactory.objectQuery(entity).setValue(infos.deleteProviderFieldAddress(), method);
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -108,7 +107,7 @@ public class GGAPIEntityHelper {
 	public static String getUuid(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (String) new GGAPIObjectQuery(entity).getValue(infos.uuidFieldAddress());
+			return (String) GGAPIObjectQueryFactory.objectQuery(entity).getValue(infos.uuidFieldAddress());
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -117,7 +116,7 @@ public class GGAPIEntityHelper {
 	public static String getId(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (String) new GGAPIObjectQuery(entity).getValue( infos.idFieldAddress());
+			return (String) GGAPIObjectQueryFactory.objectQuery(entity).getValue( infos.idFieldAddress());
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -127,7 +126,7 @@ public class GGAPIEntityHelper {
 	public static IGGAPIRepository<Object> getRepository(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIRepository<Object>) new GGAPIObjectQuery(entity).getValue(infos.repositoryFieldAddress());
+			return (IGGAPIRepository<Object>) GGAPIObjectQueryFactory.objectQuery(entity).getValue(infos.repositoryFieldAddress());
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -136,7 +135,7 @@ public class GGAPIEntityHelper {
 	public static boolean isGotFromRepository(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (boolean) new GGAPIObjectQuery(entity).getValue(infos.gotFromRepositoryFieldAddress());
+			return (boolean) GGAPIObjectQueryFactory.objectQuery(entity).getValue(infos.gotFromRepositoryFieldAddress());
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -145,7 +144,7 @@ public class GGAPIEntityHelper {
 	public static IGGAPIEntitySaveMethod<?> getSaveMethodProvider(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIEntitySaveMethod<?>) new GGAPIObjectQuery(entity).getValue(infos.saveProviderFieldAddress());
+			return (IGGAPIEntitySaveMethod<?>) GGAPIObjectQueryFactory.objectQuery(entity).getValue(infos.saveProviderFieldAddress());
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -154,7 +153,7 @@ public class GGAPIEntityHelper {
 	public static IGGAPIEntityDeleteMethod<?> getDeleteMethodProvider(Object entity) throws GGAPIEntityException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			return (IGGAPIEntityDeleteMethod<?>) new GGAPIObjectQuery(entity).getValue(infos.deleteProviderFieldAddress());
+			return (IGGAPIEntityDeleteMethod<?>) GGAPIObjectQueryFactory.objectQuery(entity).getValue(infos.deleteProviderFieldAddress());
 		} catch (GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		} 
@@ -180,7 +179,7 @@ public class GGAPIEntityHelper {
 			Object fieldValue = filter.getLiterals().get(0).getValue();
 			
 			try {
-				new GGAPIObjectQuery(object).setValue(fieldAddress, fieldValue);
+				GGAPIObjectQueryFactory.objectQuery(object).setValue(fieldAddress, fieldValue);
 			} catch (GGAPIObjectQueryException e) {
 				throw new GGAPIEntityException(e);
 			}

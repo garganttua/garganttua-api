@@ -17,6 +17,7 @@ import com.garganttua.api.core.mapper.rules.GGAPIMappingRules;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.engine.GGAPIDomain;
 
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,7 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 			String fieldAddress = (String) filter.getValue();
 			Object value = null;
 			try {
-				value = new GGAPIObjectQuery(dtoExample.getClass()).getValue(dtoExample, fieldAddress);
+				value = GGAPIObjectQueryFactory.objectQuery(dtoExample.getClass()).getValue(dtoExample, fieldAddress);
 			} catch (GGAPIObjectQueryException e) {
 				throw new GGAPILiteralMapperException(e);
 			}

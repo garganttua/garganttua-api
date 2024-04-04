@@ -10,13 +10,13 @@ public class GGAPIRepositoryFilterTools {
 		String requestedTenantId = caller.getRequestedTenantId(); 
 		String ownerId = caller.getOwnerId();
 		boolean superTenant = caller.isSuperTenant();
-		String shared = domain.entity.getValue1().shareFieldName();
+		String shared = domain.entity.getValue1().shareFieldAddress().toString();
 		
 		GGAPILiteral and = GGAPILiteral.and();
 		GGAPILiteral tenantIdFilter = requestedTenantId==null?null:GGAPILiteral.eq("tenantId", requestedTenantId);
 		GGAPILiteral shareFieldFilter = GGAPILiteral.eq(shared, requestedTenantId);
-		GGAPILiteral visibleFilter = GGAPILiteral.eq(domain.entity.getValue1().hiddenFieldName(), true);
-		GGAPILiteral ownerIdFilter = ownerId==null?null:GGAPILiteral.eq(domain.entity.getValue1().ownerIdFieldName(), ownerId);
+		GGAPILiteral visibleFilter = GGAPILiteral.eq(domain.entity.getValue1().hiddenFieldAddress().toString(), true);
+		GGAPILiteral ownerIdFilter = ownerId==null?null:GGAPILiteral.eq(domain.entity.getValue1().ownerIdFieldAddress().toString(), ownerId);
 		
 		if( filter != null ) {
 			and.andOperator(filter);
