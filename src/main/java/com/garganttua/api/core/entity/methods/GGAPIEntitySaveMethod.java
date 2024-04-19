@@ -8,67 +8,92 @@ import java.util.UUID;
 
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterCreate;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterUpdate;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeUpdate;
+import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
+import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
-import com.garganttua.api.engine.GGAPIDomain;
-import com.garganttua.api.repository.GGAPIRepositoryException;
-import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.security.GGAPISecurityException;
-import com.garganttua.api.security.IGGAPISecurity;
-import com.garganttua.api.security.authentication.IGGAPIAuthenticationManager;
+import com.garganttua.api.core.repository.GGAPIRepositoryException;
+import com.garganttua.api.core.repository.IGGAPIRepository;
+import com.garganttua.api.core.security.GGAPISecurityException;
+import com.garganttua.api.core.security.IGGAPISecurity;
+import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationManager;
 
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@AllArgsConstructor
 public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	
 	private GGAPIDomain domain;
 	private IGGAPIRepository<Object> repository;
 	private Optional<IGGAPISecurity> security;
+	private GGAPIObjectAddress afterUpdateMethodAddress;
+	private GGAPIObjectAddress beforeUpdateMethodAddress;
+	private GGAPIObjectAddress afterCreateMethodAddress;
+	private GGAPIObjectAddress beforeCreateMethodAddress;
+	private IGGAPIObjectQuery objectQuery;
 	
+	public GGAPIEntitySaveMethod(GGAPIDomain domain, IGGAPIRepository<Object> repository, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
+		this.domain = domain;
+		this.repository = repository;
+		this.security = security;
+		
+		this.beforeCreateMethodAddress = this.domain.entity.getValue1().beforeCreateMethodAddress();
+		this.afterCreateMethodAddress = this.domain.entity.getValue1().afterCreateMethodAddress();
+		this.beforeUpdateMethodAddress = this.domain.entity.getValue1().beforeCreateMethodAddress();
+		this.afterUpdateMethodAddress = this.domain.entity.getValue1().afterCreateMethodAddress();
+		
+		try {
+			this.objectQuery = GGAPIObjectQueryFactory.objectQuery(domain.entity.getValue0());
+		} catch (GGAPIObjectQueryException e) {
+			throw new GGAPIEntityException(e);
+		}
+	}
+
 	@Override
 	public void save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIEntityException {
 		if( domain == null ) {
-			throw new GGAPIEntityException("Domain is null");
+			throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "Domain is null");
 		}
 		if( caller == null ) {
-			throw new GGAPIEntityException("Caller is null");
+			throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "Caller is null");
 		}
 		if( repository == null ) {
-			throw new GGAPIEntityException("Repository is null");
+			throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "Repository is null");
 		}
 		if( entity == null ) {
-			throw new GGAPIEntityException("Entity is null");
+			throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "Entity is null");
 		}
 
 		try {
 			if( repository.doesExist(caller, entity) ) {
-				GGAPIBusinessAnnotations.hasAnnotationAndInvoke(entity.getClass(), GGAPIEntityBeforeUpdate.class, entity, caller, parameters);
+				if( this.beforeUpdateMethodAddress != null ) {
+					this.objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, parameters);
+				}
 				this.updateEntity(caller, parameters, entity);
-				GGAPIBusinessAnnotations.hasAnnotationAndInvoke(entity.getClass(), GGAPIEntityAfterUpdate.class, entity, caller, parameters);
+				if( this.afterUpdateMethodAddress != null ) {
+					this.objectQuery.invoke(entity, this.afterUpdateMethodAddress, caller, parameters);
+				}
 			} else {
-				GGAPIBusinessAnnotations.hasAnnotationAndInvoke(entity.getClass(), GGAPIEntityBeforeCreate.class, entity, caller, parameters);
+				if( this.beforeCreateMethodAddress != null ) {
+					this.objectQuery.invoke(entity, this.beforeCreateMethodAddress, caller, parameters);
+				}
 				this.createEntity(caller, parameters, entity);
-				GGAPIBusinessAnnotations.hasAnnotationAndInvoke(entity.getClass(), GGAPIEntityAfterCreate.class, entity, caller, parameters);
+				if( this.afterCreateMethodAddress != null ) {
+					this.objectQuery.invoke(entity, this.afterCreateMethodAddress, caller, parameters);
+				}
 			}
-		} catch (GGAPIRepositoryException e) {
+		} catch (GGAPIRepositoryException | GGAPIObjectQueryException e) {
 			throw new GGAPIEntityException(e);
 		}
-
 	}
 	
 	private void updateEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIEntityException {
@@ -89,7 +114,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 			List<Entity> entities = this.checkUnicityFields(domain, repository, caller, entity, domain.entity.getValue1().unicityFields() );
 			if( entities.size() != 1 && !GGAPIEntityHelper.getUuid(entities.get(0)).equals(GGAPIEntityHelper.getUuid(entity))) {
 				log.warn("[domain ["+domain.entity.getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists");
-				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists");
+				throw new GGAPIEntityException(GGAPICoreExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists");
 			}
 		}
 	}
@@ -120,7 +145,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		if( domain.entity.getValue1().unicityFields() != null && domain.entity.getValue1().unicityFields().size() > 0) {
 			if( this.checkUnicityFields(domain, repository, caller, entity, domain.entity.getValue1().unicityFields()).size() > 0 ) {
 				log.warn("[domain ["+domain.entity.getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists");
-				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists");
+				throw new GGAPIEntityException(GGAPICoreExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists");
 			}
 		}
 	}
@@ -135,7 +160,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 					throw new GGAPIEntityException(e);
 				}
 			} else {
-				throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, "No ownerId provided");
+				throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "No ownerId provided");
 			}
 		}
 	}
@@ -147,7 +172,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				try {
 					entity = authenticationManager.get().applySecurityOnAuthenticatorEntity(entity);
 				} catch (GGAPISecurityException e) {
-					throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, "Error durnig applying security on entity", e);
+					throw new GGAPIEntityException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Error durnig applying security on entity", e);
 				}
 			}
 		}
@@ -179,9 +204,9 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				Object value = GGAPIObjectReflectionHelper.getObjectFieldValue(entity, field);
 				
 				if( value == null ) {
-					throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, "Field "+field+" is mandatory");
+					throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "Field "+field+" is mandatory");
 				} else if( value.toString().isEmpty() ){
-					throw new GGAPIEntityException(GGAPIEntityException.BAD_REQUEST, "Field "+field+" is mandatory");
+					throw new GGAPIEntityException(GGAPICoreExceptionCode.BAD_REQUEST, "Field "+field+" is mandatory");
 				}
 			} catch (SecurityException | IllegalArgumentException | GGAPIObjectReflectionHelperExcpetion e) {
 				throw new GGAPIEntityException(e);
@@ -217,8 +242,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 
 		} catch (SecurityException | IllegalArgumentException | GGAPIRepositoryException | GGAPIObjectReflectionHelperExcpetion e) {
 			log.error("[domain ["+domain.entity.getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);
-			throw new GGAPIEntityException(GGAPIEntityException.UNKNOWN_ERROR, e.getMessage(), e);
+			throw new GGAPIEntityException(GGAPICoreExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
 		}
 	}
-
 }

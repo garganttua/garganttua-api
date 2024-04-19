@@ -6,10 +6,12 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityDeleteMethodProvider;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityGotFromRepository;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityId;
+import com.garganttua.api.core.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityRepository;
 import com.garganttua.api.core.entity.annotations.GGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.annotations.GGAPIEntitySaveMethodProvider;
@@ -17,9 +19,8 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
-import com.garganttua.api.engine.GGAPIEngineException;
-import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.security.IGGAPISecurity;
+import com.garganttua.api.core.repository.IGGAPIRepository;
+import com.garganttua.api.core.security.IGGAPISecurity;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,11 +31,13 @@ public class GenericGGAPIEntity {
 	@JsonProperty
 	@GGAPIEntityUuid
 	@Setter
+	@GGAPIEntityMandatory
 	protected String uuid;
 	
 	@JsonProperty
 	@GGAPIEntityId
 	@Setter
+	@GGAPIEntityMandatory
 	protected String id;
 	
 	@JsonIgnore

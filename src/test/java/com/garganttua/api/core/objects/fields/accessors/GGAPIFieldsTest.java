@@ -36,7 +36,6 @@ public class GGAPIFieldsTest {
 		ArrayList<String> list5 = (ArrayList<String>) list4;
 		
 		System.out.println(list5.get(0));
-		System.out.println(list5.get(1));
 	}
 
 	

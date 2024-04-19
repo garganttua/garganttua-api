@@ -1,23 +1,22 @@
 package com.garganttua.api.core.dto.exceptions;
 
-public class GGAPIDtoException extends Exception {
+import com.garganttua.api.core.exceptions.GGAPICoreException;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
+
+public class GGAPIDtoException extends GGAPICoreException {
+
+	public GGAPIDtoException(GGAPICoreExceptionCode code, String message, Exception exception) {
+		super(code, message, exception);
+	}
+	
+	public GGAPIDtoException(GGAPICoreExceptionCode code, String message) {
+		super(code, message);
+	}
+	
+	public GGAPIDtoException(Exception exception) {
+		super(exception);
+	}
 
 	private static final long serialVersionUID = 4914275250821928797L;
-	private int code;
-
-	public GGAPIDtoException(int code, String string) {
-		super(string);
-		this.code = code;
-	}
-
-	public GGAPIDtoException(String string) {
-		super(string);
-	}
-
-	public GGAPIDtoException(Exception e) {
-		super(e);
-	}
-
-	public static final int DTO_DEFINITION_ERROR = 0;
-
+	
 }

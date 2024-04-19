@@ -1,9 +1,12 @@
 package com.garganttua.api.core.objects.query;
 
-public class GGAPIObjectQueryException extends Exception {
+import com.garganttua.api.core.exceptions.GGAPICoreException;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 
-	public GGAPIObjectQueryException(String string) {
-		super(string);
+public class GGAPIObjectQueryException extends GGAPICoreException {
+
+	public GGAPIObjectQueryException(GGAPICoreExceptionCode code, String string) {
+		super(code, string);
 	}
 
 	public GGAPIObjectQueryException(Exception e) {

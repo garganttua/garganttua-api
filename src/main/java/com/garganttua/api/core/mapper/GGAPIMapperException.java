@@ -1,42 +1,22 @@
 package com.garganttua.api.core.mapper;
 
-import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.exceptions.GGAPICoreException;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 
-import lombok.Getter;
-
-public class GGAPIMapperException extends Exception {
+public class GGAPIMapperException extends GGAPICoreException {
 
 	private static final long serialVersionUID = 3629256996026750672L;
-	public static final int ENTITY_DEFINITION_ERROR = 0;
-	public static final int DTO_DEFINITION_ERROR = 1;
-	public static final int DTO_INSTANCIATION_ERROR = 2;
-	public static final int DIRECT_FIELD_MAPPING = 3;
-	public static final int MAPPING = 4;
-	public static final int ENTITY_INSTANCIATION_ERROR = 5;
-	public static final int OBJECT_MAPPING = 6;
-	public static final int METHOD_FIELD_MAPPING = 7;
+
+	public GGAPIMapperException(GGAPICoreExceptionCode code, String message, Exception exception) {
+		super(code, message, exception);
+	}
 	
-	@Getter
-	private int code;
-
-	public GGAPIMapperException(int code, Exception e) {
-		super(e);
-		this.code = code;
+	public GGAPIMapperException(GGAPICoreExceptionCode code, String message) {
+		super(code, message);
 	}
-
-	public GGAPIMapperException(int code, String string, Exception e) {
-		super(string, e);
-		this.code = code;
+	
+	public GGAPIMapperException(Exception exception) {
+		super(exception);
 	}
-
-	public GGAPIMapperException(int code, String string) {
-		super(string);
-		this.code = code;
-	}
-
-	public GGAPIMapperException(String message, GGAPIObjectQueryException e) {
-		super(message, e);
-	}
-
 
 }

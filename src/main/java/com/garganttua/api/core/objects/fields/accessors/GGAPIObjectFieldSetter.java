@@ -179,7 +179,7 @@ public class GGAPIObjectFieldSetter {
 						collectionTarget = Arrays.copyOf(collectionTarget, collectionTarget.length + nbToCreate);
 					}
 					for (int i = 0; i < nbToCreate; i++) {
-						collectionTarget[collectionTarget.length + i - 1] = GGAPIObjectReflectionHelper
+						collectionTarget[collectionTarget.length + i - 2] = GGAPIObjectReflectionHelper
 								.instanciateNewObject(listObjectType);
 					}
 

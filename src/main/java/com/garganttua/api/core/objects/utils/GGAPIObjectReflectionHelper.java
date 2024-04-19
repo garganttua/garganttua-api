@@ -101,8 +101,16 @@ public class GGAPIObjectReflectionHelper {
 	}
 	
 	public static void checkMethodAndParams(Method method, Object ...args) throws GGAPIObjectReflectionHelperExcpetion {
-		// TODO Auto-generated method stub
+		if( method.getParameterCount() != args.length ) {
+			throw new GGAPIObjectReflectionHelperExcpetion("Method "+method.getName()+" needs "+method.getParameterCount()+" "+method.getParameterTypes()+" but "+args.length+" have been provided : "+args);
+		}
 		
+		Class<?>[] params = method.getParameterTypes();
+		for( int i = 0; i < args.length; i++ ) {
+			if( !params[i].isAssignableFrom(args[i].getClass()) ) {
+				throw new GGAPIObjectReflectionHelperExcpetion("Method "+method.getName()+" needs parameter "+i+" to be of type "+params[i]+", not "+args[i].getClass());
+			}
+		}
 	}
 
 	public static <K, V> Map<K, V> newHashMapOf(Class<K> keyType, Class<V> valueType) {

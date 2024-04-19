@@ -1,7 +1,7 @@
 package com.garganttua.api.core.entity.updater;
 
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.engine.GGAPIDomain;
+import com.garganttua.api.core.engine.GGAPIDomain;
 
 public class GGAPIEntityUpdater implements IGGAPIEntityUpdater<Object> {
 	

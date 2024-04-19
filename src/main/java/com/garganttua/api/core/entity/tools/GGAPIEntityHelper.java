@@ -15,9 +15,12 @@ import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
-import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.security.IGGAPISecurity;
+import com.garganttua.api.core.repository.IGGAPIRepository;
+import com.garganttua.api.core.security.IGGAPISecurity;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GGAPIEntityHelper {
 	
 	public static String getDomain(Class<?> entity) {
@@ -181,12 +184,23 @@ public class GGAPIEntityHelper {
 			try {
 				GGAPIObjectQueryFactory.objectQuery(object).setValue(fieldAddress, fieldValue);
 			} catch (GGAPIObjectQueryException e) {
-				throw new GGAPIEntityException(e);
+				if( log.isDebugEnabled() ) {
+					log.warn("Unable to set value "+fieldValue+" to object "+object+" with address "+fieldAddress, e);
+				}
 			}
 		} else {
 			for( GGAPILiteral sub: filter.getLiterals() ) {
-				setObjectValuesFromFilter(object, sub);
+				GGAPIEntityHelper.setObjectValuesFromFilter(object, sub);
 			}
+		}
+	}
+
+	public static String getTenantId(Object entity) throws GGAPIEntityException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		try {
+			return (String) GGAPIObjectQueryFactory.objectQuery(entity).getValue(infos.tenantIdFieldAddress());
+		} catch (GGAPIObjectQueryException e) {
+			throw new GGAPIEntityException(e);
 		}
 	}
 }

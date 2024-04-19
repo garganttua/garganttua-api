@@ -9,11 +9,15 @@ import java.util.Objects;
 import com.garganttua.api.core.dto.annotations.GGAPIDto;
 import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GGAPIDtoChecker {
 
 	public record GGAPIDtoInfos(String db, GGAPIObjectAddress tenantIdFieldAddress) {
@@ -46,20 +50,23 @@ public class GGAPIDtoChecker {
 	}
 
 	public static GGAPIDtoInfos checkDto(Class<?> dtoClass) throws GGAPIDtoException {
-
+		if (log.isDebugEnabled()) {
+			log.debug("Checking dto infos from class " + dtoClass.getName());
+		}
+		
 		GGAPIDto annotation = dtoClass.getDeclaredAnnotation(GGAPIDto.class);
 		
 		if( annotation == null ) {
-			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
-					"Dto " + dtoClass + " does is not annotated with @GGAPIDto");
+			throw new GGAPIDtoException(GGAPICoreExceptionCode.DTO_DEFINITION,
+					"Dto " + dtoClass.getSimpleName() + " is not annotated with @GGAPIDto");
 		}
 		
 		String tenantIdFieldName = GGAPIDtoChecker.getFieldNameAnnotatedWithAndCheckType(dtoClass,
 				GGAPIDtoTenantId.class, String.class);
 
 		if (tenantIdFieldName == null || tenantIdFieldName.isEmpty()) {
-			throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
-					"Dto " + dtoClass + " does not have any field annotated with @GGAPIDtoTenantId");
+			throw new GGAPIDtoException(GGAPICoreExceptionCode.DTO_DEFINITION,
+					"Dto " + dtoClass.getSimpleName() + " does not have any field annotated with @GGAPIDtoTenantId");
 		}
 		IGGAPIObjectQuery q;
 		try {
@@ -76,14 +83,14 @@ public class GGAPIDtoChecker {
 		for (Field field : dtoClass.getDeclaredFields()) {
 			if (field.isAnnotationPresent(annotationClass)) {
 				if (fieldName != null && !fieldName.isEmpty()) {
-					throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
-							"Dto " + dtoClass + " has more than one field annotated with " + annotationClass);
+					throw new GGAPIDtoException(GGAPICoreExceptionCode.DTO_DEFINITION,
+							"Dto " + dtoClass.getSimpleName() + " has more than one field annotated with " + annotationClass);
 				}
 				if (field.getType().equals(fieldClass)) {
 					fieldName = field.getName();
 				} else {
-					throw new GGAPIDtoException(GGAPIDtoException.DTO_DEFINITION_ERROR,
-							"Dto " + dtoClass + " has field " + field.getName() + " with wrong type "
+					throw new GGAPIDtoException(GGAPICoreExceptionCode.DTO_DEFINITION,
+							"Dto " + dtoClass.getSimpleName() + " has field " + field.getName() + " with wrong type "
 									+ field.getType().getName() + ", should be " + fieldClass);
 				}
 			}

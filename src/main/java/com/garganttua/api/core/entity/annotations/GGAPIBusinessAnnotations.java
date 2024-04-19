@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -13,7 +12,7 @@ import java.util.Map;
 
 import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.objects.utils.GGAPIMethodAccessManager;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,15 +55,13 @@ public class GGAPIBusinessAnnotations {
 					
 					Type[] parameters = method.getGenericParameterTypes();
 					if( parameters.length != 2 ) {
-						throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "The method "+method.getName()+" of entity of type "+type.getName()+" must have two parameters (IGGAPICaller, Map<String,String>");
+						throw new GGAPIEntityException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "The method "+method.getName()+" of entity of type "+type.getName()+" must have two parameters (IGGAPICaller, Map<String,String>");
 					}
-					
 					if( !parameters[0].equals(IGGAPICaller.class) ) {
-						throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "The method "+method.getName()+" of entity of type "+type.getName()+" must have two parameters (IGGAPICaller, Map<String,String>");
+						throw new GGAPIEntityException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "The method "+method.getName()+" of entity of type "+type.getName()+" must have two parameters (IGGAPICaller, Map<String,String>");
 					}
-
 					if( !isMapOfString(parameters[1])) {
-						throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "The method "+method.getName()+" of entity of type "+type.getName()+" must have two parameters (IGGAPICaller, Map<String,String>");
+						throw new GGAPIEntityException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "The method "+method.getName()+" of entity of type "+type.getName()+" must have two parameters (IGGAPICaller, Map<String,String>");
 					}
 					return method;
 				}
@@ -85,21 +82,5 @@ public class GGAPIBusinessAnnotations {
 		}
 		return false;
 	}
-
-	public static void hasAnnotationAndInvoke(Class<?> type, Class<?> searchAnnotation, Object entity, IGGAPICaller caller, Map<String, String> map) throws GGAPIEntityException {
-		Method method = hasAnnotation(type, searchAnnotation);
-		
-		if( method != null ) {
-			try (GGAPIMethodAccessManager accessManager = new GGAPIMethodAccessManager(method)) {
-				method.invoke(entity, caller, map);
-			} catch (IllegalAccessException | InvocationTargetException e) {
-				if( log.isDebugEnabled() ) {
-					log.warn("Unable to run the method "+method.getName()+" of entity of type "+type.getName(), e);
-				}
-				throw new GGAPIEntityException(GGAPIEntityException.ENTITY_DEFINITION_ERROR, "Unable to run the method "+method.getName()+" of entity of type "+type.getName(), e);
-			} 
-		}
-	}
-
 }
 

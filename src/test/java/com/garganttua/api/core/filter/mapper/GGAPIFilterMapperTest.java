@@ -5,18 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 
 import org.javatuples.Pair;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.core.dto.annotations.GGAPIDto;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
+import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
-import com.garganttua.api.engine.GGAPIDomain;
 
 @GGAPIEntity(
 	domain = "test"
@@ -34,13 +33,6 @@ class Dto extends GenericGGAPIDto {
 
 public class GGAPIFilterMapperTest {
 	
-	private static GGAPIFilterMapper mapper;
-
-	@BeforeAll
-	public static void init() {
-		GGAPIFilterMapperTest.mapper = new GGAPIFilterMapper();
-	}
-	
 	@Test
 	public void testUniqueDtoForEntity() throws GGAPIEntityException, GGAPILiteralMapperException, GGAPIDtoException {
 		Entity entity = new Entity();
@@ -55,7 +47,7 @@ public class GGAPIFilterMapperTest {
 		
 		GGAPILiteral expectedFilterForDto = GGAPILiteral.eq("mappingInDto", "toto");
 		
-		List<Pair<Class<?>, GGAPILiteral>> filters = GGAPIFilterMapperTest.mapper.map(domain, filter);
+		List<Pair<Class<?>, GGAPILiteral>> filters = new GGAPIFilterMapper().map(domain, filter);
 		
 		assertEquals(1, filters.size());
 		assertEquals(expectedFilterForDto, filters.get(0).getValue1());
@@ -74,10 +66,9 @@ public class GGAPIFilterMapperTest {
 		
 		GGAPILiteral filter = GGAPILiteral.eq("fieldNotMapped", "toto");
 		
-		List<Pair<Class<?>, GGAPILiteral>> filters = GGAPIFilterMapperTest.mapper.map(domain, filter);
+		List<Pair<Class<?>, GGAPILiteral>> filters = new GGAPIFilterMapper().map(domain, filter);
 		
-		assertEquals(1, filters.size());
-		assertEquals(null, filters.get(0).getValue1());
+		assertEquals(0, filters.size());
 	}
 	
 	@Test
@@ -97,7 +88,7 @@ public class GGAPIFilterMapperTest {
 		GGAPILiteral filter3 = GGAPILiteral.eq("mappingInDto", "toto");
 		GGAPILiteral expectedFilterForDto = GGAPILiteral.and(filter3);
 		
-		List<Pair<Class<?>, GGAPILiteral>> filters = GGAPIFilterMapperTest.mapper.map(domain, entityFilter);
+		List<Pair<Class<?>, GGAPILiteral>> filters = new GGAPIFilterMapper().map(domain, entityFilter);
 		
 		assertEquals(1, filters.size());
 		assertEquals(expectedFilterForDto, filters.get(0).getValue1());

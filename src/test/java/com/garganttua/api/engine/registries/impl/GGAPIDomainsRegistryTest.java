@@ -4,12 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.dao.GGAPIDao;
 import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.core.dto.annotations.GGAPIDto;
+import com.garganttua.api.core.engine.GGAPIEngineException;
+import com.garganttua.api.core.engine.registries.impl.GGAPIDomainsRegistry;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
-import com.garganttua.api.engine.GGAPIEngineException;
-import com.garganttua.api.repository.dao.GGAPIDao;
 
 @GGAPIEntity(domain = "test")
 class TestEntity extends GenericGGAPIEntity {

@@ -1,7 +1,11 @@
 package com.garganttua.api.core.mapper;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Collection;
 import java.util.List;
@@ -73,6 +77,56 @@ class Destination2 extends Parent {
 
 }
 
+class DestinationWithMappingfromFieldThatDoesntExist{
+	
+	@GGAPIFieldMappingRule(sourceFieldAddress = "notExists")
+	private String field;
+
+}
+
+class Source {
+	private int field;
+}
+
+class DestinationWithIncorrectFromMethod{
+	
+	@GGAPIFieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from")
+	private String field;
+	
+	public String from(String field) {
+		return "";
+	}
+}
+
+class DestinationWithIncorrectToMethod{
+	@GGAPIFieldMappingRule(sourceFieldAddress = "field", toSourceMethod = "to")
+	private String field;
+	
+	public String to(String field) {
+		return "";
+	}
+}
+
+class DestinationWithNoToMethod{
+	@GGAPIFieldMappingRule(sourceFieldAddress = "field", toSourceMethod = "to")
+	private String field;
+
+}
+
+class CorrectDestination {
+	
+	@GGAPIFieldMappingRule(sourceFieldAddress = "field", fromSourceMethod = "from", toSourceMethod = "to")
+	private String field;
+	
+	public String from(int field) {
+		return "";
+		
+	}
+	public int to(String field) {
+		return 1;
+	}
+}
+
 class GGAPIMappingRulesTest {
 	
 	@Test
@@ -123,6 +177,50 @@ class GGAPIMappingRulesTest {
 		List<GGAPIMappingRule> rules = GGAPIMappingRules.parse(Destination2.class);
 		
 		assertEquals(3, rules.size());
+	}
+	
+	@Test
+	public void testValidate() throws GGAPIMappingRuleException {
+		List<GGAPIMappingRule> rules = GGAPIMappingRules.parse(CorrectDestination.class);
+		assertEquals(1, rules.size());
+		
+		assertDoesNotThrow(() -> {
+			GGAPIMappingRules.validate(Source.class, rules);
+		});
+		
+		List<GGAPIMappingRule> rules2 = GGAPIMappingRules.parse(DestinationWithMappingfromFieldThatDoesntExist.class);
+		assertEquals(1, rules2.size());
+
+		GGAPIMappingRuleException exception = assertThrows( GGAPIMappingRuleException.class , () -> GGAPIMappingRules.validate(Destination2.class, rules2));
+		
+		assertNotNull(exception);
+		assertEquals("com.garganttua.api.core.objects.query.GGAPIObjectQueryException: Object element notExists not found in class class java.lang.Object", exception.getMessage());
+	
+		List<GGAPIMappingRule> rules3 = GGAPIMappingRules.parse(DestinationWithIncorrectFromMethod.class);
+		assertEquals(1, rules3.size());
+	
+		GGAPIMappingRuleException exception2 = assertThrows( GGAPIMappingRuleException.class , () -> GGAPIMappingRules.validate(Source.class, rules3));
+		
+		assertNotNull(exception2);
+		assertEquals("Invalid method from of class DestinationWithIncorrectFromMethod : parameter must be of type int", exception2.getMessage());
+
+		List<GGAPIMappingRule> rules4 = GGAPIMappingRules.parse(DestinationWithIncorrectToMethod.class);
+		assertEquals(1, rules4.size());
+	
+		GGAPIMappingRuleException exception3 = assertThrows( GGAPIMappingRuleException.class , () -> GGAPIMappingRules.validate(Source.class, rules4));
+		
+		assertNotNull(exception3);
+		assertEquals("Invalid method to of class DestinationWithIncorrectToMethod : return type must be int", exception3.getMessage());
+		
+		List<GGAPIMappingRule> rules5 = GGAPIMappingRules.parse(DestinationWithNoToMethod.class);
+		assertEquals(1, rules5.size());
+	
+		GGAPIMappingRuleException exception4 = assertThrows( GGAPIMappingRuleException.class , () -> GGAPIMappingRules.validate(Source.class, rules5));
+		
+		assertNotNull(exception4);
+		assertEquals("com.garganttua.api.core.objects.query.GGAPIObjectQueryException: Object element to not found in class class java.lang.Object", exception4.getMessage());
+		
+	
 	}
 	
 }

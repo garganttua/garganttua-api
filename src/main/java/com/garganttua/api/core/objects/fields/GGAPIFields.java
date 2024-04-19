@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 
@@ -115,9 +116,6 @@ public class GGAPIFields {
 		if( Collection.class.isAssignableFrom(field.getType()) ) {
 			return GGAPIObjectReflectionHelper.newVectorOf(GGAPIFields.getGenericType(field, 0));
 		}
-		throw new GGAPIFieldsException("Unable to instanciate object of type "+field.getType().getSimpleName());
+		throw new GGAPIFieldsException(GGAPICoreExceptionCode.INSTANCIATION_ERROR, "Unable to instanciate object of type "+field.getType().getSimpleName());
 	}
-
-	
-
 }

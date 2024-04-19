@@ -1,6 +1,8 @@
 package com.garganttua.api.core.mapper.rules;
 
-public class GGAPIMappingRuleExecutorException extends Exception {
+import com.garganttua.api.core.exceptions.GGAPICoreException;
+
+public class GGAPIMappingRuleExecutorException extends GGAPICoreException {
 
 	public GGAPIMappingRuleExecutorException(Exception e) {
 		super(e);

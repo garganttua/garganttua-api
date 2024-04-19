@@ -32,6 +32,7 @@ public class GenericGGAPIDto {
 	
 	@Field
 	@GGAPIDtoTenantId
+	@GGAPIFieldMappingRule(sourceFieldAddress = "tenantId")
 	protected String tenantId;
 
 }

@@ -12,7 +12,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.engine.registries.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterCreate;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterDelete;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterUpdate;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeDelete;
+import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeUpdate;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticator;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAccountNonExpired;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAccountNonLocked;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAuthorities;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorCredentialsNonExpired;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorEnabled;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorLogin;
+import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorPassword;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityGeolocalized;
@@ -34,22 +50,6 @@ import com.garganttua.api.core.entity.annotations.GGAPIEntityTenant;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterCreate;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterDelete;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterUpdate;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeDelete;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeUpdate;
-import com.garganttua.api.engine.registries.IGGAPIAccessRulesRegistry;
-import com.garganttua.api.security.authentication.GGAPIAuthenticator;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonExpired;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorAccountNonLocked;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorAuthorities;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorCredentialsNonExpired;
-import com.garganttua.api.security.authentication.GGAPIAuthenticatorEnabled;
-import com.garganttua.api.security.authentication.modes.loginpassword.GGAPIAuthenticatorLogin;
-import com.garganttua.api.security.authentication.modes.loginpassword.GGAPIAuthenticatorPassword;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -95,9 +95,9 @@ import lombok.Setter;
 	@GGAPIEntityPublic 
 	@GGAPIEntityShared
 	class TestValidationResult  extends GenericGGAPIEntity {
-		public TestValidationResult() {
-			
-		}
+//		public TestValidationResult() {
+//			
+//		}
 		@GGAPIEntityUuid
 		@GGAPIEntityOwnerId
 		@GGAPIEntityTenantId
@@ -190,9 +190,9 @@ import lombok.Setter;
 	@GGAPIEntityPublic 
 	@GGAPIEntityShared
 	class TestValidationResult2 extends GenericGGAPIEntity {
-		public TestValidationResult2() {
-			
-		}
+//		public TestValidationResult2() {
+//			
+//		}
 
 		@GGAPIEntityUuid
 		@GGAPIEntityOwnerId
@@ -491,9 +491,9 @@ class TestAnnotationEntityUuid extends GenericGGAPIEntity {
 )
 @GGAPIEntityOwner(ownerId = "uuid", superOwner = "superOwner")
 class TestOwnerEntityWithFieldValue  extends GenericGGAPIEntity {
-	public TestOwnerEntityWithFieldValue() {
-		
-	}
+//	public TestOwnerEntityWithFieldValue() {
+//		
+//	}
 	
 	private String uuid;
 	
@@ -512,9 +512,9 @@ class TestOwnerEntityWithFieldValue  extends GenericGGAPIEntity {
 		domain = "entity"
 )
 class TestAnnotationEntityUuidFromSuperClass extends GenericGGAPIEntity {
-	public TestAnnotationEntityUuidFromSuperClass() {
-		
-	}
+//	public TestAnnotationEntityUuidFromSuperClass() {
+//		
+//	}
 	private String uuid;
 	@GGAPIEntityGotFromRepository
 	private boolean t;
@@ -526,9 +526,9 @@ class TestAnnotationEntityUuidFromSuperClass extends GenericGGAPIEntity {
 )
 @GGAPIEntityGeolocalized(location = "location")
 class TestAnnotationGeolocalized extends GenericGGAPIEntity {
-	public TestAnnotationGeolocalized() {
-		
-	}
+//	public TestAnnotationGeolocalized() {
+//		
+//	}
 	@GGAPIEntityGotFromRepository
 	private boolean t;
 	Point location;
@@ -547,9 +547,9 @@ class TestAnnotationOwnedAndOwner extends GenericGGAPIEntity{
 		domain = "entity"
 )
 class TestAnnotationEntityIdFromSuperClass extends GenericGGAPIEntity {
-	public TestAnnotationEntityIdFromSuperClass() {
-		
-	}
+//	public TestAnnotationEntityIdFromSuperClass() {
+//		
+//	}
 	private String uuid;
 }
 
@@ -558,9 +558,9 @@ class TestAnnotationEntityIdFromSuperClass extends GenericGGAPIEntity {
 )
 @GGAPIEntityOwned(ownerId = "uuid")
 class TestOwnedEntityWithFieldValue  extends GenericGGAPIEntity {
-	public TestOwnedEntityWithFieldValue() {
-		
-	}
+//	public TestOwnedEntityWithFieldValue() {
+//		
+//	}
 	private String uuid;
 }
 
@@ -568,9 +568,9 @@ class TestOwnedEntityWithFieldValue  extends GenericGGAPIEntity {
 		domain = "entity"
 )
 class TestAnnotationEntityId extends GenericGGAPIEntity {
-	public TestAnnotationEntityId() {
-		
-	}
+//	public TestAnnotationEntityId() {
+//		
+//	}
 }
 
 @GGAPIEntity(
@@ -578,9 +578,9 @@ class TestAnnotationEntityId extends GenericGGAPIEntity {
 )
 @GGAPIEntityTenant(tenantId = "uuid", superTenant = "superTenant")
 class TestTenantEntityWithFieldValue  extends GenericGGAPIEntity{
-	public TestTenantEntityWithFieldValue() {
-		
-	}
+//	public TestTenantEntityWithFieldValue() {
+//		
+//	}
 	private String uuid;
 	
 	private boolean superTenant;
@@ -595,9 +595,9 @@ class TestTenantEntityWithFieldValue  extends GenericGGAPIEntity{
 )
 @GGAPIEntityOwner(superOwner = "superOwner")
 class TestOwnerEntityWithAnnotatedField  extends GenericGGAPIEntity{
-	public TestOwnerEntityWithAnnotatedField() {
-		
-	}
+//	public TestOwnerEntityWithAnnotatedField() {
+//		
+//	}
 	@GGAPIEntityOwnerId
 	private String uuid;
 	
@@ -615,9 +615,9 @@ class TestOwnerEntityWithAnnotatedField  extends GenericGGAPIEntity{
 )
 @GGAPIEntityTenant(superTenant = "superTenant")
 class TestTenantEntityWithAnnotatedField  extends GenericGGAPIEntity{
-	public TestTenantEntityWithAnnotatedField() {
-		
-	}
+//	public TestTenantEntityWithAnnotatedField() {
+//		
+//	}
 	@GGAPIEntityTenantId
 	private String uuid;
 	

@@ -9,12 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.objects.GGAPIObjectAddress;
-
 public class GGAPIObjectAddressTest {
 	
     @Test
-    public void testValidAddressCreation() {
+    public void testValidAddressCreation() throws GGAPIObjectAddressException {
         GGAPIObjectAddress address = new GGAPIObjectAddress("field1.field2.field3");
         assertNotNull(address);
         assertEquals(3, address.length());
@@ -24,13 +22,13 @@ public class GGAPIObjectAddressTest {
     }
 
     @Test
-    public void testAddressToString() {
+    public void testAddressToString() throws GGAPIObjectAddressException {
         GGAPIObjectAddress address = new GGAPIObjectAddress("field1.field2.field3");
         assertEquals("field1.field2.field3", address.toString());
     }
 
     @Test
-    public void testHashCodeAndEquals() {
+    public void testHashCodeAndEquals() throws GGAPIObjectAddressException {
         GGAPIObjectAddress address1 = new GGAPIObjectAddress("field1.field2.field3");
         GGAPIObjectAddress address2 = new GGAPIObjectAddress("field1.field2.field3");
         GGAPIObjectAddress address3 = new GGAPIObjectAddress("field1.field2.field4");
@@ -50,7 +48,7 @@ public class GGAPIObjectAddressTest {
     }
 
     @Test
-    public void testOutOfBoundsIndex() {
+    public void testOutOfBoundsIndex() throws GGAPIObjectAddressException {
         GGAPIObjectAddress address = new GGAPIObjectAddress("field1.field2.field3");
         assertThrows(IllegalArgumentException.class, () -> address.getElement(-1));
         assertThrows(IllegalArgumentException.class, () -> address.getElement(3));

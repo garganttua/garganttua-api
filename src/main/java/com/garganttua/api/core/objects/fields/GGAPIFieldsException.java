@@ -1,17 +1,20 @@
 package com.garganttua.api.core.objects.fields;
 
-public class GGAPIFieldsException extends Exception {
+import com.garganttua.api.core.exceptions.GGAPICoreException;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
+
+public class GGAPIFieldsException extends GGAPICoreException {
 
 	public GGAPIFieldsException(Exception e) {
 		super(e);
 	}
 
-	public GGAPIFieldsException(String string, Exception e) {
-		super(string, e);
+	public GGAPIFieldsException(GGAPICoreExceptionCode code, String string, Exception e) {
+		super(code, string, e);
 	}
 
-	public GGAPIFieldsException(String string) {
-		super(string);
+	public GGAPIFieldsException(GGAPICoreExceptionCode code, String string) {
+		super(code, string);
 	}
 
 	private static final long serialVersionUID = -709424867520967955L;

@@ -4,9 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.engine.IGGAPIEngineObject;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.sort.GGAPISort;
-import com.garganttua.api.engine.IGGAPIEngineObject;
 
 public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
 

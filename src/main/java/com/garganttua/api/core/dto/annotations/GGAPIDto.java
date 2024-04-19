@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.repository.dao.GGAPIDao;
+import com.garganttua.api.core.dao.GGAPIDao;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

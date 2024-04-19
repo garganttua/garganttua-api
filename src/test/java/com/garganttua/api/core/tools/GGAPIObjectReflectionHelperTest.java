@@ -51,7 +51,7 @@ public class GGAPIObjectReflectionHelperTest {
 		});
 		
 		assertThatException().isThrownBy(()-> {
-			GGAPIObjectReflectionHelper.checkMethodAndParams(method, "string", new SuperClass());			
+			GGAPIObjectReflectionHelper.checkMethodAndParams(method, 12L, new SuperClass());			
 		});
 	}
 	

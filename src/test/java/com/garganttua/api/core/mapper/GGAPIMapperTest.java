@@ -2,14 +2,14 @@ package com.garganttua.api.core.mapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
 import com.garganttua.api.core.mapper.annotations.GGAPIObjectMappingRule;
 
@@ -97,15 +97,7 @@ class GenericDtoWithObjectMapping extends GenericGGAPIDto {
 }
 
 public class GGAPIMapperTest {
-	
-	private static GGAPIMapper mapper;
-	
 
-	@BeforeAll
-	public static void init() throws GGAPIEntityException {
-		GGAPIMapperTest.mapper = new GGAPIMapper();
-	}
-	
 	@Test
 	public void testRegularFieldMapping() throws GGAPIMapperException {
 		
@@ -113,7 +105,7 @@ public class GGAPIMapperTest {
 		entity.setUuid("uuid");
 		entity.setId("id");
 		
-		GenericGGAPIDto dest = GGAPIMapperTest.mapper.map(entity, GenericGGAPIDto.class);
+		GenericGGAPIDto dest = new GGAPIMapper().configure(GGAPIMapperConfigurationItem.FAIL_ON_ERROR, false).map(entity, GenericGGAPIDto.class);
 		
 		assertNotNull(dest);
 		assertEquals("uuid", dest.getUuid());
@@ -128,11 +120,22 @@ public class GGAPIMapperTest {
 		dto.setUuid("uuid");
 		dto.setId("id");
 		
-		GenericGGAPIEntity dest = GGAPIMapperTest.mapper.map(dto, GenericGGAPIEntity.class);
+		GenericGGAPIEntity dest = new GGAPIMapper().configure(GGAPIMapperConfigurationItem.FAIL_ON_ERROR, false).map(dto, GenericGGAPIEntity.class);
 		
 		assertNotNull(dest);
 		assertEquals("uuid", dest.getUuid());
 		assertEquals("id", dest.getId());
 		
+	}
+	
+	@Test
+	public void testMappingConfigurationNotFailOnError() {
+		GenericGGAPIEntity entity = new GenericGGAPIEntity();
+		entity.setUuid("uuid");
+		entity.setId("id");
+		
+		assertThrows(GGAPIMapperException.class, () -> {
+			new GGAPIMapper().configure(GGAPIMapperConfigurationItem.FAIL_ON_ERROR, true).map(entity, GenericGGAPIDto.class);
+		});
 	}
 }

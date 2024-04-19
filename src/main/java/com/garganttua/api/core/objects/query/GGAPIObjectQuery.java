@@ -7,7 +7,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
+import com.garganttua.api.core.objects.GGAPIObjectAddressException;
 import com.garganttua.api.core.objects.fields.GGAPIFields;
 import com.garganttua.api.core.objects.fields.GGAPIFieldsException;
 import com.garganttua.api.core.objects.fields.accessors.GGAPIObjectFieldGetter;
@@ -26,7 +28,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 
 	protected GGAPIObjectQuery(Class<?> objectClass) throws GGAPIObjectQueryException {
 		if( objectClass == null ) {
-			throw new GGAPIObjectQueryException("class is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "class is null");
 		}
 		this.objectClass = objectClass;
 		try {
@@ -38,7 +40,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 	
 	protected GGAPIObjectQuery(Object object) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "object is null");
 		}
 		this.object = object;
 		this.objectClass = object.getClass();
@@ -46,13 +48,13 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 	
 	protected GGAPIObjectQuery(Class<?> objectClass, Object object) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "object is null");
 		}
 		if( objectClass == null ) {
-			throw new GGAPIObjectQueryException("class is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "class is null");
 		}
 		if( this.object.getClass().isAssignableFrom(this.objectClass) ) {
-			throw new GGAPIObjectQueryException("Provided class "+objectClass+" and object "+object.getClass()+" do not match");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Provided class "+objectClass+" and object "+object.getClass()+" do not match");
 		}
 		this.object = object;
 		this.objectClass = objectClass;
@@ -60,7 +62,11 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 
 	@Override
 	public List<Object> find(String fieldAddress) throws GGAPIObjectQueryException {
-		return this.find(new GGAPIObjectAddress(fieldAddress));
+		try {
+			return this.find(new GGAPIObjectAddress(fieldAddress));
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 
 	@Override
@@ -80,12 +86,11 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 		}
 
 		if (clazz == null || index >= address.length()) {
-			throw new GGAPIObjectQueryException(
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.OBJECT_NOT_FOUND,
 					"Object element " + address.getElement(index) + " not found in class " + clazz);
 		}
 
 		Field field = GGAPIObjectReflectionHelper.getField(clazz, address.getElement(index));
-
 
 		Method method = null;
 		if (index == address.length() - 1 && field == null) {
@@ -114,7 +119,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 						Class<?> genericType = GGAPIFields.getGenericType(field, 0);
 						return this.findRecursively(genericType, address, index + 2, list);
 					} else {
-						throw new GGAPIObjectQueryException("Field " + address.getElement(index)
+						throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.VALUE_OR_KEY_NOT_IN_ADDRESS, "Field " + address.getElement(index)
 								+ " is a map, so address must indicate key or value");
 					}
 
@@ -126,11 +131,11 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 			list.add(method);
 			return list;
 		} else if (field != null && method != null) {
-			throw new GGAPIObjectQueryException(
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.FIELD_METHOD_SAME_NAME, 
 					"Object element " + address.getElement(index) + " is also a field and a method in " + clazz);
 		}
 
-		throw new GGAPIObjectQueryException (
+		throw new GGAPIObjectQueryException (GGAPICoreExceptionCode.OBJECT_NOT_FOUND, 
 				"Object element " + address.getElement(index) + " not found in class " + clazz);
 	}
 
@@ -139,10 +144,10 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 		if (log.isDebugEnabled()) {
 			log.debug("Looking for object element " + elementName + " in " + objectClass);
 		}
-		return this.address(this.objectClass, elementName, "");
+		return this.address(this.objectClass, elementName, null);
 	}
 
-	private GGAPIObjectAddress address(Class<?> objectClass, String elementName, String address) {
+	private GGAPIObjectAddress address(Class<?> objectClass, String elementName, GGAPIObjectAddress address) throws GGAPIObjectQueryException {
 		if (log.isDebugEnabled()) {
 			log.debug("Looking for object element " + elementName + " in " + objectClass + " address " + address);
 		}
@@ -150,65 +155,121 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 		try {
 			field = objectClass.getDeclaredField(elementName);
 		} catch (NoSuchFieldException | SecurityException e) {
-
+			
 		}
 
 		Method method = GGAPIObjectReflectionHelper.getMethod(objectClass, elementName);
 
-		if (method != null) {
-			return new GGAPIObjectAddress(address.isEmpty()?elementName:address + "." + elementName);
+		try {
+			if (method != null) {
+				return new GGAPIObjectAddress(address==null?elementName:address + "." + elementName);
+			}
+			if (field != null) {
+				return new GGAPIObjectAddress(address==null?elementName:address + "." + elementName);
+			}
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
 		}
-		if (field != null) {
-			return new GGAPIObjectAddress(address.isEmpty()?elementName:address + "." + elementName);
+		if( objectClass.getSuperclass() != null ) {
+			address =  this.address(objectClass.getSuperclass(), elementName, address);
+			if( address != null ) {
+				return address;
+			}
 		}
 		if (field == null && method == null) {
 
 			for (Field f : objectClass.getDeclaredFields()) {
 				if (GGAPIFields.isNotPrimitive(f.getType())) {
-					if (Collection.class.isAssignableFrom(f.getType())) {
-						Class<?> t = GGAPIFields.getGenericType(f, 0);
-						GGAPIObjectAddress a = this.address(t, elementName, address.isEmpty() ? f.getName()
-								: address + GGAPIObjectAddress.ELEMENT_SEPARATOR + f.getName());
-						if (a != null) {
+					try {
+						GGAPIObjectAddress a = null;
+						a = this.doIfIsCollection(f, elementName, address);
+						if( a != null )
 							return a;
-						}
-					} else if (Map.class.isAssignableFrom(f.getType())) {
-						Class<?> keyClass = GGAPIFields.getGenericType(f, 0);
-						Class<?> valueClass = GGAPIFields.getGenericType(f, 1);
-						if (GGAPIFields.isNotPrimitive(keyClass)) {
-							GGAPIObjectAddress a = this.address(keyClass, elementName,
-									(address.isEmpty() ? f.getName()
-											: address + GGAPIObjectAddress.ELEMENT_SEPARATOR + f.getName())
-											+ GGAPIObjectAddress.ELEMENT_SEPARATOR
-											+ GGAPIObjectAddress.MAP_KEY_INDICATOR);
-							if (a != null) {
-								return a;
-							}
-						}
-						if (GGAPIFields.isNotPrimitive(valueClass)) {
-							GGAPIObjectAddress a = this.address(valueClass, elementName,
-									(address.isEmpty() ? f.getName()
-											: address + GGAPIObjectAddress.ELEMENT_SEPARATOR + f.getName())
-											+ GGAPIObjectAddress.ELEMENT_SEPARATOR
-											+ GGAPIObjectAddress.MAP_VALUE_INDICATOR);
-							if (a != null) {
-								return a;
-							}
-						}
-					} else {
-						if( !f.getType().isEnum() ) {
-							GGAPIObjectAddress a = this.address(f.getType(), elementName, address.isEmpty() ? f.getName()
-									: address + GGAPIObjectAddress.ELEMENT_SEPARATOR + f.getName());
-							if (a != null) {
-								return a;
-							}
-						}
+						a = this.doIfIsMap(f, elementName, address);
+						if( a != null )
+							return a;
+						a = this.doIfIsArray(f, elementName, address);
+						if( a != null )
+							return a;
+						a = this.doIfNotEnum(f, elementName, address);
+						if( a != null )
+							return a;
+					} catch (GGAPIObjectAddressException e) {
+						log.warn("Error occured during processing, ignoring", e);
 					}
 				}
 			}
 		}
-		if( objectClass.getSuperclass() != null ) {
-			return this.address(objectClass.getSuperclass(), elementName, address);
+		return null;
+	}
+	
+	private GGAPIObjectAddress doIfIsMap(Field f, String elementName, GGAPIObjectAddress address) throws GGAPIObjectAddressException, GGAPIObjectQueryException {
+		if (Map.class.isAssignableFrom(f.getType())) {
+			Class<?> keyClass = GGAPIFields.getGenericType(f, 0);
+			Class<?> valueClass = GGAPIFields.getGenericType(f, 1);
+			if (GGAPIFields.isNotPrimitive(keyClass)) {
+				GGAPIObjectAddress keyAddress = null;
+				if( address == null ) {
+					keyAddress = new GGAPIObjectAddress(f.getName());
+					keyAddress.addElement(GGAPIObjectAddress.MAP_KEY_INDICATOR);
+				} else {
+					keyAddress = address.clone();
+					keyAddress.addElement(f.getName());
+					keyAddress.addElement(GGAPIObjectAddress.MAP_KEY_INDICATOR);
+				}
+				GGAPIObjectAddress a = this.address(keyClass, elementName, keyAddress);
+				if (a != null) {
+					return a;
+				}
+			}
+			if (GGAPIFields.isNotPrimitive(valueClass)) {
+				GGAPIObjectAddress valueAddress = null;
+				if( address == null ) {
+					valueAddress = new GGAPIObjectAddress(f.getName());
+					valueAddress.addElement(GGAPIObjectAddress.MAP_VALUE_INDICATOR);
+				} else {
+					valueAddress = address.clone();
+					valueAddress.addElement(f.getName());
+					valueAddress.addElement(GGAPIObjectAddress.MAP_VALUE_INDICATOR);
+				}
+				GGAPIObjectAddress a = this.address(valueClass, elementName, valueAddress);	
+				if (a != null) {
+					return a;
+				}
+			}
+		}
+		return null;
+	}
+	
+	private GGAPIObjectAddress doIfIsArray(Field f, String elementName, GGAPIObjectAddress address) throws GGAPIObjectAddressException, GGAPIObjectQueryException {
+	    if (f.getType().isArray()) {
+	        final Class<?> componentType = f.getType().getComponentType();
+	        final GGAPIObjectAddress newAddress = address == null ? new GGAPIObjectAddress(f.getName())
+	                : address.addElement(f.getName());
+	        return this.address(componentType, elementName, newAddress);
+	    }
+	    return null;
+	}
+
+	private GGAPIObjectAddress doIfIsCollection(Field f, String elementName, GGAPIObjectAddress address) throws GGAPIObjectAddressException, GGAPIObjectQueryException {
+		if (Collection.class.isAssignableFrom(f.getType())) {
+			final Class<?> t = GGAPIFields.getGenericType(f, 0);
+			final GGAPIObjectAddress a = this.address(t, elementName, address==null ? new GGAPIObjectAddress(f.getName())
+					: address.addElement(f.getName()));
+			if (a != null) {
+				return a;
+			}
+		} 
+		return null;
+	}
+	
+	private GGAPIObjectAddress doIfNotEnum(Field f, String elementName, GGAPIObjectAddress address) throws GGAPIObjectAddressException, GGAPIObjectQueryException {
+		if( !f.getType().isEnum() ) {
+			GGAPIObjectAddress a = this.address(f.getType(), elementName, address==null ? new GGAPIObjectAddress(f.getName())
+					: address.addElement(f.getName()));
+			if (a != null) {
+				return a;
+			}
 		}
 		return null;
 	}
@@ -216,15 +277,19 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 	@Override
 	public Object setValue(Object object, String fieldAddress, Object fieldValue) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("Object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Object is null");
 		}
-		return this.setValue(object, new GGAPIObjectAddress(fieldAddress), fieldValue);
+		try {
+			return this.setValue(object, new GGAPIObjectAddress(fieldAddress), fieldValue);
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 
 	@Override
 	public Object setValue(Object object, GGAPIObjectAddress fieldAddress, Object fieldValue) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("Object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Object is null");
 		}
 		List<Object> field = this.find(fieldAddress);
 		return new GGAPIObjectFieldSetter(object.getClass(), field, fieldAddress).setValue(object, fieldValue);
@@ -233,15 +298,19 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 	@Override
 	public Object getValue(Object object, String fieldAddress) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("Object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Object is null");
 		}
-		return this.getValue(object, new GGAPIObjectAddress(fieldAddress));
+		try {
+			return this.getValue(object, new GGAPIObjectAddress(fieldAddress));
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 	
 	@Override
 	public Object getValue(Object object, GGAPIObjectAddress fieldAddress) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("Object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Object is null");
 		}
 		List<Object> field = this.find(fieldAddress);
 		return new GGAPIObjectFieldGetter(object.getClass(), field, fieldAddress).getValue(object);
@@ -249,12 +318,20 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 
 	@Override
 	public Object setValue(String fieldAddress, Object fieldValue) throws GGAPIObjectQueryException {
-		return this.setValue(new GGAPIObjectAddress(fieldAddress), fieldValue);
+		try {
+			return this.setValue(new GGAPIObjectAddress(fieldAddress), fieldValue);
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 
 	@Override
 	public Object getValue(String fieldAddress) throws GGAPIObjectQueryException {
-		return this.getValue(new GGAPIObjectAddress(fieldAddress));
+		try {
+			return this.getValue(new GGAPIObjectAddress(fieldAddress));
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 
 	@Override
@@ -294,12 +371,20 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 
 	@Override
 	public Object fieldValueStructure(String address) throws GGAPIObjectQueryException {
-		return this.fieldValueStructure(new GGAPIObjectAddress(address));
+		try {
+			return this.fieldValueStructure(new GGAPIObjectAddress(address));
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 
 	@Override
 	public Object invoke(String methodAddress, Object... args) throws GGAPIObjectQueryException {
-		return this.invoke(this.object, new GGAPIObjectAddress(methodAddress), args);
+		try {
+			return this.invoke(this.object, new GGAPIObjectAddress(methodAddress), args);
+		} catch (GGAPIObjectAddressException e) {
+			throw new GGAPIObjectQueryException(e);
+		}
 	}
 
 	@Override
@@ -310,7 +395,7 @@ public class GGAPIObjectQuery implements IGGAPIObjectQuery {
 	@Override
 	public Object invoke(Object object, GGAPIObjectAddress methodAddress, Object... args) throws GGAPIObjectQueryException {
 		if( object == null ) {
-			throw new GGAPIObjectQueryException("Object is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "Object is null");
 		}
 
 		List<Object> field = this.find(methodAddress);

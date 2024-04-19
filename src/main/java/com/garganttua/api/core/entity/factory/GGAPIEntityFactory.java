@@ -18,20 +18,22 @@ import org.springframework.core.env.Environment;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
+import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.engine.IGGAPIEngine;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.methods.GGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.methods.GGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.objects.GGAPIObjectAddress;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
+import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 import com.garganttua.api.core.objects.utils.GGAPIFieldAccessManager;
+import com.garganttua.api.core.repository.GGAPIRepositoryException;
+import com.garganttua.api.core.repository.IGGAPIRepository;
+import com.garganttua.api.core.security.IGGAPISecurity;
 import com.garganttua.api.core.sort.GGAPISort;
-import com.garganttua.api.engine.GGAPIDomain;
-import com.garganttua.api.engine.IGGAPIEngine;
-import com.garganttua.api.repository.GGAPIRepositoryException;
-import com.garganttua.api.repository.IGGAPIRepository;
-import com.garganttua.api.security.IGGAPISecurity;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -54,19 +56,30 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	
 	private Environment environment;
 	
-	private Optional<IGGAPISecurity> security;
+	@Setter
+	private Optional<IGGAPISecurity> security = Optional.empty();
+
+	private IGGAPIObjectQuery objectQuery;
+
+	private GGAPIObjectAddress afterGetMethodAddress;
 	
-	public GGAPIEntityFactory(GGAPIDomain domain, IGGAPIRepository<Object> repository, ApplicationContext springContext, Environment environment) {
+	public GGAPIEntityFactory(GGAPIDomain domain, IGGAPIRepository<Object> repository, ApplicationContext springContext, Environment environment) throws GGAPIFactoryException {
 		this.domain = domain;
 		this.repository = repository;
 		this.springContext = springContext;
 		this.environment = environment;
+		this.afterGetMethodAddress = this.domain.entity.getValue1().afterGetMethodAddress();
+		try {
+			this.objectQuery = GGAPIObjectQueryFactory.objectQuery(domain.entity.getValue0());
+		} catch (GGAPIObjectQueryException e) {
+			throw new GGAPIFactoryException(GGAPIFactoryException.BAD_ENTITY, e);
+		}
 	}
 
 	@Override
 	public Object getEntityFromJson(Map<String, String> customParameters, byte[] json) throws GGAPIFactoryException {
 		if( this.domain == null ) {
-			throw new GGAPIFactoryException("this.domain is null");
+			throw new GGAPIFactoryException("domain is null");
 		}
 		if( json == null ) {
 			throw new GGAPIFactoryException("Json is null");
@@ -154,7 +167,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		} catch (GGAPIRepositoryException e) {
 			throw new GGAPIFactoryException(e);
 		}
-		for( Object entity: entities ) {
+		for( Object entity: entities) {
 			try {
 				this.executeAfterGetProcedure(caller, customParameters, entity, this.repository);
 				GGAPIEntityHelper.setGotFromRepository(entity, true);
@@ -169,8 +182,10 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	private void executeAfterGetProcedure(IGGAPICaller caller, Map<String, String> customParameters, Object entity, IGGAPIRepository<Object> repository) throws GGAPIFactoryException {
 		this.setEntityMethodsAndFields(this.repository, customParameters, this.domain, entity);
 		try {
-			GGAPIBusinessAnnotations.hasAnnotationAndInvoke(entity.getClass(), GGAPIEntityAfterGet.class, entity, caller, customParameters);
-		} catch (GGAPIEntityException e) {
+			if( this.afterGetMethodAddress != null ) {
+				this.objectQuery.invoke(entity, this.afterGetMethodAddress, caller, customParameters);
+			}
+		} catch (GGAPIObjectQueryException e) {
 			try {
 				log.warn("[Domain ["+this.domain.entity.getValue1().domain()+"]] "+caller.toString()+" Error during processing AfterGet Method on entity with uuid "+GGAPIEntityHelper.getUuid(entity));
 			} catch (GGAPIEntityException e1) {

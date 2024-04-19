@@ -3,9 +3,6 @@ package com.garganttua.api.core.objects.fields.accessors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +11,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
+import com.garganttua.api.core.objects.GGAPIObjectAddressException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 
@@ -44,7 +42,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 
 	@Test
-	public void testSetLong() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetLong() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "l"));
@@ -61,7 +59,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetString() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetString() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "s"));
@@ -78,7 +76,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValueInInner() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValueInInner() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
@@ -95,7 +93,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValueInInnerWithDepth6() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValueInInnerWithDepth6() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException , GGAPIObjectAddressException{
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
@@ -105,7 +103,7 @@ public class GGAPIObjectFieldSetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "l"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.inner.inner.inner.l");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.inner.inner.inner.l", false);
 		
 		GGAPIObjectFieldSetter setter = new GGAPIObjectFieldSetter(ObjectTest.class, fieldInfos, address);
  
@@ -116,7 +114,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValuesInList() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValuesInList() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
@@ -136,14 +134,14 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValuesInListDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValuesInListDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "l"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("innersInList.innersInList.l");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("innersInList.innersInList.l", false);
 		
 		GGAPIObjectFieldSetter setter = new GGAPIObjectFieldSetter(ObjectTest.class, fieldInfos, address);
 
@@ -160,7 +158,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValuesInSetDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValuesInSetDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInSet"));
@@ -183,7 +181,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValuesInArrayDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValuesInArrayDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInArray"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));
@@ -206,7 +204,7 @@ public class GGAPIObjectFieldSetterTest {
 	}
 	
 	@Test
-	public void testSetValuesInMapDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException {
+	public void testSetValuesInMapDepth2() throws GGAPIObjectQueryException, NoSuchMethodException, SecurityException, GGAPIObjectAddressException {
 		List<Object> fieldInfos = new ArrayList<Object>();
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInMap"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "innersInList"));

@@ -13,6 +13,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
+import com.garganttua.api.core.objects.GGAPIObjectAddressException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 
@@ -59,7 +60,7 @@ public class GGAPIObjectFieldGetterTest {
     }
 	
 	@Test
-	public void testGetValueOfField() throws GGAPIObjectQueryException {
+	public void testGetValueOfField() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 		
 		ObjectTest o = this.createNestedObject(1);
 		
@@ -75,7 +76,7 @@ public class GGAPIObjectFieldGetterTest {
 	}
 	
 	@Test
-	public void testGetValueOfFieldOfInner() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldOfInner() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 		
 		ObjectTest o = this.createNestedObject(2);
 		
@@ -93,7 +94,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetValueOfFieldOfInnerInList() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldOfInnerInList() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 		
 		ObjectTest o = this.createNestedObject(2);
 		
@@ -112,7 +113,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetValueOfFieldOfInnerInKeyOfMap() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldOfInnerInKeyOfMap() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 		
 		ObjectTest o = this.createNestedObject(2);
 		
@@ -131,7 +132,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetValueOfFieldOfInnerInValueOfMap() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldOfInnerInValueOfMap() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 		
 		ObjectTest o = this.createNestedObject(2);
 		
@@ -149,7 +150,7 @@ public class GGAPIObjectFieldGetterTest {
 	}
 	
 	@Test
-	public void testGetValueOfFieldOfInnerInInner() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldOfInnerInInner() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = this.createNestedObject(3);
 		
@@ -158,7 +159,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.i");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.i", false);
 		GGAPIObjectFieldGetter getter = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 		
 		Object value = getter.getValue(o);
@@ -167,7 +168,7 @@ public class GGAPIObjectFieldGetterTest {
 	}
 	
 	@Test
-	public void testGetValueOfFieldDepth6() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldDepth6() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = this.createNestedObject(6);
 		
@@ -179,7 +180,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.inner.inner.inner.i");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.inner.inner.inner.i", false);
 		GGAPIObjectFieldGetter getter = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 		
 		Object value = getter.getValue(o);
@@ -192,7 +193,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos2.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos2.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address2 = new GGAPIObjectAddress("inner.inner.inner.i");
+		GGAPIObjectAddress address2 = new GGAPIObjectAddress("inner.inner.inner.i", false);
 		GGAPIObjectFieldGetter getter2 = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos2, address2);
 		
 		Object value2 = getter2.getValue(o);
@@ -201,7 +202,7 @@ public class GGAPIObjectFieldGetterTest {
 	}
 	
 	@Test
-	public void testGetValueOfFieldInInnerMapDepth6() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldInInnerMapDepth6() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = this.createNestedObject(6);
 		
@@ -213,7 +214,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.innerInMap.#key.inner.inner.inner.i");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.innerInMap.#key.inner.inner.inner.i", false);
 		GGAPIObjectFieldGetter getter = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 		
 		Object value = getter.getValue(o);
@@ -224,7 +225,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetValueOfFieldInListDepth6() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldInListDepth6() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = this.createNestedObject(6);
 		
@@ -236,7 +237,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.innersInList.inner.inner.i");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.innersInList.inner.inner.i", false);
 		GGAPIObjectFieldGetter getter = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 		
 		Object value = getter.getValue(o);
@@ -247,7 +248,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetValueOfFieldInMapDepth6() throws GGAPIObjectQueryException {
+	public void testGetValueOfFieldInMapDepth6() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = this.createNestedObject(6);
 		
@@ -259,7 +260,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.inner.innersInMap.#key.inner.i");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.inner.inner.innersInMap.#key.inner.i", false);
 		GGAPIObjectFieldGetter getter = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 		
 		Object value = getter.getValue(o);
@@ -270,7 +271,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void testGetValueDepth6ComplexInner() throws GGAPIObjectQueryException {
+	public void testGetValueDepth6ComplexInner() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = this.createNestedObject(6);
 		
@@ -282,7 +283,7 @@ public class GGAPIObjectFieldGetterTest {
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "inner"));
 		fieldInfos.add(GGAPIObjectReflectionHelper.getField(ObjectTest.class, "i"));
 		
-		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.innersInList.innersInArray.innersInMap.#value.inner.i");
+		GGAPIObjectAddress address = new GGAPIObjectAddress("inner.innersInList.innersInArray.innersInMap.#value.inner.i", false);
 		GGAPIObjectFieldGetter getter = new GGAPIObjectFieldGetter(ObjectTest.class, fieldInfos, address);
 		
 		Object value = getter.getValue(o);
@@ -292,7 +293,7 @@ public class GGAPIObjectFieldGetterTest {
 	}
 
 	@Test
-	public void testGetNullValue() throws GGAPIObjectQueryException {
+	public void testGetNullValue() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = new ObjectTest(null, 0, null, 0, 0, null, null, null);
 		
@@ -308,7 +309,7 @@ public class GGAPIObjectFieldGetterTest {
 	
 
 	@Test
-	public void testGetNullValueFromNullInner() throws GGAPIObjectQueryException {
+	public void testGetNullValueFromNullInner() throws GGAPIObjectQueryException, GGAPIObjectAddressException {
 
 		ObjectTest o = new ObjectTest(null, 0, null, 0, 0, null, null, null);
 		

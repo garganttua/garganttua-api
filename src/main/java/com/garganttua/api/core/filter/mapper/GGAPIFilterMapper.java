@@ -6,26 +6,27 @@ import java.util.List;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
+import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.mapper.GGAPIMapper;
+import com.garganttua.api.core.mapper.GGAPIMapperConfigurationItem;
 import com.garganttua.api.core.mapper.GGAPIMapperException;
 import com.garganttua.api.core.mapper.rules.GGAPIMappingRule;
 import com.garganttua.api.core.mapper.rules.GGAPIMappingRuleException;
 import com.garganttua.api.core.mapper.rules.GGAPIMappingRules;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
-import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
+import com.garganttua.api.core.objects.GGAPIObjectAddressException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
-import com.garganttua.api.engine.GGAPIDomain;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 	
-	private GGAPIMapper mapper = new GGAPIMapper();
+	private GGAPIMapper mapper = new GGAPIMapper().configure(GGAPIMapperConfigurationItem.FAIL_ON_ERROR, false);
 
 	@Override
 	public List<Pair<Class<?>, GGAPILiteral>> map(GGAPIDomain domain, GGAPILiteral filter) throws GGAPILiteralMapperException {
@@ -42,8 +43,10 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 					log.debug("Creating new filter from filter {} with rules {}", filter, mappingRules);
 				}
 				GGAPILiteral mappedFilter = this.map(mappingRules, filter.clone(), null);
-				filters.add(new Pair<Class<?>, GGAPILiteral>(destinationClass.getValue0(), mappedFilter));
-			} catch (GGAPIMappingRuleException e) {
+				if( mappedFilter != null ) {
+					filters.add(new Pair<Class<?>, GGAPILiteral>(destinationClass.getValue0(), mappedFilter));
+				}
+			} catch (GGAPIMappingRuleException | GGAPIObjectAddressException e) {
 				throw new GGAPILiteralMapperException(e);
 			}
 		}
@@ -75,12 +78,12 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 			filter.getLiterals().get(0).setValue(value);
 		} else {
 			for( GGAPILiteral sub: filter.getLiterals() ) {
-				setCorrespondingValuesToFilter(sub, dtoExample);
+				this.setCorrespondingValuesToFilter(sub, dtoExample);
 			}
 		}
 	}
 
-	private GGAPILiteral map(List<GGAPIMappingRule> mappingRules, GGAPILiteral filter, GGAPILiteral parent) {
+	private GGAPILiteral map(List<GGAPIMappingRule> mappingRules, GGAPILiteral filter, GGAPILiteral parent) throws GGAPIObjectAddressException {
 		
 		if( filter.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
 			String fieldAddress = (String) filter.getValue();

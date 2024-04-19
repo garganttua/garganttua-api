@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.fields.GGAPIFields;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
@@ -26,13 +27,13 @@ public class GGAPIObjectMethodInvoker {
 	public GGAPIObjectMethodInvoker(Class<?> clazz, List<Object> fields,
 			GGAPIObjectAddress address) throws GGAPIObjectQueryException {
 		if (clazz == null) {
-			throw new GGAPIObjectQueryException("class is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "class is null");
 		}
 		if (fields == null) {
-			throw new GGAPIObjectQueryException("fields is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "fields is null");
 		}
 		if (address == null) {
-			throw new GGAPIObjectQueryException("address is null");
+			throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "address is null");
 		}
 
 		this.clazz = clazz;
@@ -47,10 +48,10 @@ public class GGAPIObjectMethodInvoker {
 			}
 			
 			if (object == null) {
-				throw new GGAPIObjectQueryException("object is null");
+				throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "object is null");
 			}
 			if( !object.getClass().isAssignableFrom(this.clazz) ) {
-				throw new GGAPIObjectQueryException("object is not of type "+this.clazz);
+				throw new GGAPIObjectQueryException(GGAPICoreExceptionCode.UNKNOWN_ERROR, "object is not of type "+this.clazz);
 			}
 			
 			if( this.fields.size() == 1 ) {

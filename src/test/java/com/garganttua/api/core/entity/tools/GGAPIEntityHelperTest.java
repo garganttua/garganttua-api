@@ -10,18 +10,18 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.IGGAPICaller;
+import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.engine.GGAPIEngineException;
+import com.garganttua.api.core.engine.IGGAPIEngine;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.repository.GGAPIRepositoryException;
+import com.garganttua.api.core.repository.IGGAPIRepository;
 import com.garganttua.api.core.sort.GGAPISort;
-import com.garganttua.api.engine.GGAPIDomain;
-import com.garganttua.api.engine.GGAPIEngineException;
-import com.garganttua.api.engine.IGGAPIEngine;
-import com.garganttua.api.repository.GGAPIRepositoryException;
-import com.garganttua.api.repository.IGGAPIRepository;
 
 @GGAPIEntity(domain = "test")
 class GenericEntity extends GenericGGAPIEntity {
@@ -44,24 +44,19 @@ public class GGAPIEntityHelperTest {
 		GGAPIEntityHelper.setDeleteMethod(entity, new IGGAPIEntityDeleteMethod<Object>() {
 
 			@Override
-			public void delete(IGGAPICaller caller, Map parameters, Object entity)
+			public void delete(IGGAPICaller caller, Map<String, String> parameters, Object entity)
 					throws GGAPIEntityException, GGAPIEngineException {
 				// TODO Auto-generated method stub
 				
 			}
-
-			
-			
 		});
 		GGAPIEntityHelper.setSaveMethod(entity, new IGGAPIEntitySaveMethod<Object>() {
 
 			@Override
-			public void save(IGGAPICaller caller, Map parameters, Object entity) throws GGAPIEntityException {
+			public void save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIEntityException {
 				// TODO Auto-generated method stub
 				
 			}
-
-			
 		});
 		GGAPIEntityHelper.setId(entity, "id");
 		GGAPIEntityHelper.setUuid(entity, "uuid");
@@ -86,7 +81,7 @@ public class GGAPIEntityHelperTest {
 			}
 
 			@Override
-			public List getEntities(IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter,
+			public List<Object> getEntities(IGGAPICaller caller, int pageSize, int pageIndex, GGAPILiteral filter,
 					GGAPISort sort) throws GGAPIRepositoryException {
 				// TODO Auto-generated method stub
 				return null;

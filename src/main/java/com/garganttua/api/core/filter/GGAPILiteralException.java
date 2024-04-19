@@ -1,9 +1,12 @@
 package com.garganttua.api.core.filter;
 
-public class GGAPILiteralException extends Exception {
+import com.garganttua.api.core.exceptions.GGAPICoreException;
+import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 
-	public GGAPILiteralException(String string) {
-		super(string);
+public class GGAPILiteralException extends GGAPICoreException {
+
+	public GGAPILiteralException(GGAPICoreExceptionCode code, String message) {
+		super(code, message);
 	}
 
 	/**
