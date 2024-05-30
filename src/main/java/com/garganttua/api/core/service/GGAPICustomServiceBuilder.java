@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.garganttua.api.core.security.authorization.BasicGGAPIAccessRule;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.service.GGAPICustomService;
+import com.garganttua.api.spec.service.IGGAPICustomService;
 
 public class GGAPICustomServiceBuilder {
 

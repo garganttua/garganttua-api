@@ -8,10 +8,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.garganttua.api.core.engine.IGGAPIEngine;
 import com.garganttua.api.core.security.keys.managers.db.GGAPIDBKeyManager;
 import com.garganttua.api.core.security.keys.managers.db.IGGAPIDBKeyKeeper;
 import com.garganttua.api.core.security.keys.managers.inmemory.GGAPIInMemoryKeyManager;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 
 @Configuration
 @ConditionalOnProperty(name = "com.garganttua.api.security.key.manager", havingValue = "enabled", matchIfMissing = false)

@@ -1,8 +1,9 @@
 package com.garganttua.api.core.security.authorization;
 
-import com.garganttua.api.core.GGAPICrudOperation;
-import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.GGAPICrudOperation;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.service.GGAPIServiceMethod;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

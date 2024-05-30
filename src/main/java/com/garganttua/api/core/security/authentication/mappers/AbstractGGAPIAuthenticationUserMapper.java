@@ -4,7 +4,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.garganttua.api.core.security.GGAPISecurityException;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
 public abstract class AbstractGGAPIAuthenticationUserMapper<UserEntity extends IGGAPIAuthenticator> implements IGGAPIAuthenticationUserMapper {
 

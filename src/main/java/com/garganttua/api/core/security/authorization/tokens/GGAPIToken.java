@@ -5,9 +5,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.security.IGGAPIToken;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

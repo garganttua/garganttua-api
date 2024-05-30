@@ -23,25 +23,26 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.IGGAPIEngine;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
-import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
-import com.garganttua.api.core.events.GGAPIEvent;
-import com.garganttua.api.core.events.IGGAPIEventPublisher;
-import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.core.security.IGGAPISecurity;
 import com.garganttua.api.core.service.GGAPIErrorObject;
-import com.garganttua.api.core.service.GGAPIReadOutputMode;
 import com.garganttua.api.core.service.GGAPIServiceEntityPage;
-import com.garganttua.api.core.service.GGAPIServiceMethod;
-import com.garganttua.api.core.service.IGGAPIService;
-import com.garganttua.api.core.sort.GGAPISort;
 import com.garganttua.api.services.rest.filters.GGAPICallerManager;
+import com.garganttua.api.spec.GGAPICoreException;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.dao.GGAPISort;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.event.GGAPIEvent;
+import com.garganttua.api.spec.event.IGGAPIEventPublisher;
+import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.service.GGAPIReadOutputMode;
+import com.garganttua.api.spec.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.service.IGGAPIService;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -123,7 +124,7 @@ public class GGAPIRestService implements IGGAPIService {
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		GGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.CREATE, customParameters);
@@ -141,8 +142,8 @@ public class GGAPIRestService implements IGGAPIService {
 					response = new ResponseEntity<>(entity, HttpStatus.CREATED);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				} catch (GGAPIEntityException e) {
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
+				} catch (GGAPICoreException e) {
+					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setExceptionCode(e.getCode().getCode());
@@ -151,12 +152,12 @@ public class GGAPIRestService implements IGGAPIService {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.UNKNOWN_ERROR.getCode()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			} else {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				response = new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				response = new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
 
 			return response;
@@ -211,7 +212,7 @@ public class GGAPIRestService implements IGGAPIService {
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("mode", mode.toString());
@@ -242,16 +243,16 @@ public class GGAPIRestService implements IGGAPIService {
 					event.setExceptionMessage(e.getMessage());
 					event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 					return new ResponseEntity<>(
-							new GGAPIErrorObject("Error parsing request param : " + e.getMessage()),
+							new GGAPIErrorObject("Error parsing request param : " + e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 							HttpStatus.BAD_REQUEST);
 				}
 
 				try {
 					entities = this.factory.getEntitiesFromRepository(caller, pageSize, pageIndex, filter, sort, customParameters);
-				} catch (Exception e) {
+				} catch (GGAPIFactoryException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
@@ -269,15 +270,15 @@ public class GGAPIRestService implements IGGAPIService {
 				}
 
 			} else {
-				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
 
-		} catch (GGAPIFactoryException e) {
+		} catch (GGAPICoreException e) {
 //			event.setException(e);
 			event.setExceptionMessage(e.getMessage());
-			event.setExceptionCode(e.getCode());
+			event.setExceptionCode(e.getCode().getCode());
 			event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 		} finally {
 			if (this.eventPublisher.isPresent()) {
 				event.setOutDate(new Date());
@@ -306,7 +307,7 @@ public class GGAPIRestService implements IGGAPIService {
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("uuid", uuid);
@@ -320,16 +321,16 @@ public class GGAPIRestService implements IGGAPIService {
 					entity = this.factory.getEntityFromRepository(caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
-				} catch (Exception e) {
+				} catch (GGAPICoreException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
 					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			} else {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
 			return response;
 		} finally {
@@ -360,7 +361,7 @@ public class GGAPIRestService implements IGGAPIService {
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("uuid", uuid);
@@ -380,23 +381,23 @@ public class GGAPIRestService implements IGGAPIService {
 					response = new ResponseEntity<>(entity, HttpStatus.OK);
 					event.setOut(entity);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
-				} catch (GGAPIEntityException e) {
+				} catch (GGAPICoreException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
-					event.setExceptionCode(e.getCode());
+					event.setExceptionCode(e.getCode().getCode());
 					event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
+					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
-					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					event.setHttpReturnedCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.UNKNOWN_ERROR.getCode()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
 			} else {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				response = new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				response = new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
 
 			return response;
@@ -440,7 +441,7 @@ public class GGAPIRestService implements IGGAPIService {
 			this.eventPublisher.get().publishEvent(event);
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("uuid", uuid);
@@ -454,19 +455,19 @@ public class GGAPIRestService implements IGGAPIService {
 					Object entity = this.factory.getEntityFromRepository(caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 					GGAPIEntityHelper.delete(entity, caller, customParameters);
 					
-					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+					response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED, GGAPIErrorObject.NO_ERROR_CODE), HttpStatus.OK);
 					event.setHttpReturnedCode(HttpStatus.OK.value());
-				} catch (GGAPIEntityException e) {
+				} catch (GGAPICoreException e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
-					event.setExceptionCode(e.getCode());
+					event.setExceptionCode(e.getCode().getCode());
 					event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
-					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), HttpStatus.NOT_ACCEPTABLE);
+					response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()), HttpStatus.NOT_ACCEPTABLE);
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
-					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					event.setHttpReturnedCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.UNKNOWN_ERROR.getCode()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
@@ -474,7 +475,7 @@ public class GGAPIRestService implements IGGAPIService {
 
 			} else {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
 		} finally {
 			if (this.eventPublisher.isPresent()) {
@@ -506,7 +507,7 @@ public class GGAPIRestService implements IGGAPIService {
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
 			this.eventPublisher.get().publishEvent(event);
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("filter", filterString);
@@ -514,7 +515,7 @@ public class GGAPIRestService implements IGGAPIService {
 		
 		try {
 			if (this.ALLOW_DELETE_ALL) {
-				ResponseEntity<?> response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED), HttpStatus.OK);
+				ResponseEntity<?> response = new ResponseEntity<>(new GGAPIErrorObject(SUCCESSFULLY_DELETED, GGAPIErrorObject.NO_ERROR_CODE), HttpStatus.OK);
 				
 				ObjectMapper mapper = new ObjectMapper();
 				GGAPILiteral filter = null;
@@ -529,7 +530,7 @@ public class GGAPIRestService implements IGGAPIService {
 					event.setExceptionMessage(e.getMessage());
 					event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 					return new ResponseEntity<>(
-							new GGAPIErrorObject("Error parsing request param : " + e.getMessage()),
+							new GGAPIErrorObject("Error parsing request param : " + e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 							HttpStatus.BAD_REQUEST);
 				}
 
@@ -538,20 +539,20 @@ public class GGAPIRestService implements IGGAPIService {
 					for( Object entity: entities ) {
 						try {
 							GGAPIEntityHelper.delete(entity, caller, customParameters);
-						} catch (GGAPIEntityException e) {
+						} catch (GGAPICoreException e) {
 //							event.setException(e);
 							event.setExceptionMessage(e.getMessage());
-							event.setExceptionCode(e.getCode());
+							event.setExceptionCode(e.getCode().getCode());
 							event.setHttpReturnedCode(GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e).value());
-							response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
+							response = new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()), GGAPIHttpErrorCodeTranslator.getHttpErrorCode(e));
 						}
 					}
 					event.setHttpReturnedCode(HttpStatus.OK.value());
 				} catch (Exception e) {
 //					event.setException(e);
 					event.setExceptionMessage(e.getMessage());
-					event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+					event.setHttpReturnedCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+					return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.UNKNOWN_ERROR.getCode()),
 							HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 
@@ -559,7 +560,7 @@ public class GGAPIRestService implements IGGAPIService {
 
 			} else {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
 		} finally {
 			if (this.eventPublisher.isPresent()) {
@@ -592,7 +593,7 @@ public class GGAPIRestService implements IGGAPIService {
 			event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 			event.setOutDate(new Date());
 			this.eventPublisher.get().publishEvent(event);
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 					HttpStatus.BAD_REQUEST);
 		}
 		customParameters.put("filter", filterString);
@@ -615,7 +616,7 @@ public class GGAPIRestService implements IGGAPIService {
 					event.setExceptionMessage(e.getMessage());
 					event.setHttpReturnedCode(HttpStatus.BAD_REQUEST.value());
 					return new ResponseEntity<>(
-							new GGAPIErrorObject("Error parsing request param : " + e.getMessage()),
+							new GGAPIErrorObject("Error parsing request param : " + e.getMessage(), GGAPICoreExceptionCode.BAD_REQUEST.getCode()),
 							HttpStatus.BAD_REQUEST);
 				}
 
@@ -628,13 +629,13 @@ public class GGAPIRestService implements IGGAPIService {
 
 			} else {
 				event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED), HttpStatus.NOT_IMPLEMENTED);
+				return new ResponseEntity<>(new GGAPIErrorObject(NOT_IMPLEMENTED, GGAPICoreExceptionCode.CORE_GENERIC_CODE.getCode()), HttpStatus.NOT_IMPLEMENTED);
 			}
-		} catch (GGAPIFactoryException e) {
+		} catch (GGAPICoreException e) {
 //			event.setException(e);
 			event.setExceptionMessage(e.getMessage());
-			event.setHttpReturnedCode(HttpStatus.NOT_IMPLEMENTED.value());
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()),
+			event.setHttpReturnedCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), e.getCode().getCode()),
 					HttpStatus.INTERNAL_SERVER_ERROR);
 		} finally {
 			if (this.eventPublisher.isPresent()) {

@@ -7,8 +7,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
-import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
+import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
+import com.garganttua.tooling.objects.mapper.annotations.GGAPIFieldMappingRule;
 
 import lombok.Data;
 

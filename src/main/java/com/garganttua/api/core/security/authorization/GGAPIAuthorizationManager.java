@@ -10,14 +10,16 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.engine.registries.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.core.security.GGAPISecurityException;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationManager;
 import com.garganttua.api.core.security.authorization.bearer.GGAPIBearerAuthorizationValidator;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.core.security.authorization.tokens.jwt.GGAPIJwtDBTokenProvider;
 import com.garganttua.api.core.security.authorization.tokens.jwt.GGAPIJwtTokenProvider;
-import com.garganttua.api.core.security.authorization.tokens.jwt.IGGAPIDBTokenKeeper;
+import com.garganttua.api.spec.engine.IGGAPIRepositoriesRegistry;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationProvider;
+import com.garganttua.api.spec.security.IGGAPIDBTokenKeeper;
 
 import lombok.Getter;
 

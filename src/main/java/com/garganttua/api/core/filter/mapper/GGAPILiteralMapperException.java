@@ -1,6 +1,6 @@
 package com.garganttua.api.core.filter.mapper;
 
-import com.garganttua.api.core.exceptions.GGAPICoreException;
+import com.garganttua.api.spec.GGAPICoreException;
 
 public class GGAPILiteralMapperException extends GGAPICoreException {
 

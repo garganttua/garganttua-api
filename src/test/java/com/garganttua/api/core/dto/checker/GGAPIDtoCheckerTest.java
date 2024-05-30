@@ -8,10 +8,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.dto.annotations.GGAPIDto;
-import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
+import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
 
 
 public class GGAPIDtoCheckerTest {

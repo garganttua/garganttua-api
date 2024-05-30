@@ -7,18 +7,18 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.GGAPICrudOperation;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.registries.IGGAPIAccessRulesRegistry;
-import com.garganttua.api.core.engine.registries.IGGAPIDomainsRegistry;
-import com.garganttua.api.core.engine.registries.IGGAPIServicesRegistry;
 import com.garganttua.api.core.security.authentication.ws.GGAPIAuthoritiesRestService;
 import com.garganttua.api.core.security.authorization.BasicGGAPIAccessRule;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.core.service.GGAPICustomServiceBuilder;
-import com.garganttua.api.core.service.GGAPIServiceMethod;
-import com.garganttua.api.core.service.IGGAPICustomService;
-import com.garganttua.api.core.service.IGGAPIService;
+import com.garganttua.api.spec.GGAPICrudOperation;
+import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
+import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.service.IGGAPICustomService;
+import com.garganttua.api.spec.service.IGGAPIService;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;

@@ -8,15 +8,15 @@ import java.util.Set;
 import org.javatuples.Pair;
 import org.reflections.Reflections;
 
-import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.dto.annotations.GGAPIDto;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.GGAPIEntityInfos;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

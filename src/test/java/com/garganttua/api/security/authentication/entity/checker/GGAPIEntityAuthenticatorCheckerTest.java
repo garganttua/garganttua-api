@@ -8,8 +8,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationMode;
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticator;
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorAccountNonExpired;
@@ -22,6 +20,8 @@ import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIA
 import com.garganttua.api.core.security.authentication.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.core.security.authentication.entity.checker.GGAPIEntityAuthenticatorException;
 import com.garganttua.api.core.security.authentication.entity.checker.GGAPIEntityAuthenticatorChecker.GGAPIAuthenticatorInfos;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 
 public class GGAPIEntityAuthenticatorCheckerTest {
 	

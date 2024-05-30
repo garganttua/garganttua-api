@@ -12,6 +12,8 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.dao.GGAPILiteralException;
 
 
 public class GGAPILiteralTest {

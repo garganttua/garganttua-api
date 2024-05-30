@@ -16,7 +16,7 @@ import org.geojson.Polygon;
 import org.springframework.data.geo.Circle;
 import org.springframework.data.geo.Shape;
 
-import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.spec.dao.GGAPILiteral;
 
 public class GGAPIGeoJsonToSpringShapeBinder implements GeoJsonObjectVisitor<Shape> {
 

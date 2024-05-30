@@ -8,10 +8,10 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.mapper.GGAPIMapper;
-import com.garganttua.api.core.mapper.GGAPIMapperException;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.core.security.authorization.tokens.storage.GGAPITokenDTO;
+import com.garganttua.tooling.objects.mapper.GGAPIMapper;
+import com.garganttua.tooling.objects.mapper.GGAPIMapperException;
 
 public class GGAPITokenMappingTest {
 	

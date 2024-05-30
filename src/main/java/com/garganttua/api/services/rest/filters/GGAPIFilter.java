@@ -6,10 +6,10 @@ import org.springframework.http.HttpMethod;
 
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.IGGAPIEngine;
-import com.garganttua.api.core.engine.IGGAPIEngineObject;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.services.rest.GGAPIServiceMethodToHttpMethodBinder;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.engine.IGGAPIEngineObject;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;

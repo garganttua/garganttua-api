@@ -1,7 +1,7 @@
 package com.garganttua.api.core.dto.exceptions;
 
-import com.garganttua.api.core.exceptions.GGAPICoreException;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.GGAPICoreException;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
 
 public class GGAPIDtoException extends GGAPICoreException {
 

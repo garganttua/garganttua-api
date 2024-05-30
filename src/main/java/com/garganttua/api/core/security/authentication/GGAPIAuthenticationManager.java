@@ -18,13 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
-import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.objects.query.GGAPIObjectQuery;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
@@ -46,6 +42,13 @@ import com.garganttua.api.core.security.authentication.mappers.GGAPIEntityLoginP
 import com.garganttua.api.core.security.authentication.mappers.IGGAPIAuthenticationUserMapper;
 import com.garganttua.api.core.security.authentication.providers.dao.GGAPIDaoAuthenticationProvider;
 import com.garganttua.api.core.security.authentication.tools.GGAPIAuthenticationPasswordEncoder;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationProvider;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
 import lombok.extern.slf4j.Slf4j;
 

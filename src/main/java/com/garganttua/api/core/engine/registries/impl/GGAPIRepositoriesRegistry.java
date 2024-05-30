@@ -10,16 +10,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.dao.IGGAPIDAORepository;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.engine.GGAPIObjectsHelper;
-import com.garganttua.api.core.engine.registries.IGGAPIDaosRegistry;
-import com.garganttua.api.core.engine.registries.IGGAPIDomainsRegistry;
-import com.garganttua.api.core.engine.registries.IGGAPIRepositoriesRegistry;
-import com.garganttua.api.core.repository.IGGAPIRepository;
 import com.garganttua.api.repositories.GGAPIMultipleRepository;
 import com.garganttua.api.repositories.GGAPISimpleRepository;
+import com.garganttua.api.spec.dao.IGGAPIDAORepository;
+import com.garganttua.api.spec.engine.IGGAPIDaosRegistry;
+import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.engine.IGGAPIRepositoriesRegistry;
+import com.garganttua.api.spec.repository.IGGAPIRepository;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

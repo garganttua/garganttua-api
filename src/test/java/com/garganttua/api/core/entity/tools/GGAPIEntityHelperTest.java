@@ -9,19 +9,19 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
-import com.garganttua.api.core.engine.IGGAPIEngine;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
-import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
-import com.garganttua.api.core.repository.IGGAPIRepository;
-import com.garganttua.api.core.sort.GGAPISort;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.dao.GGAPISort;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.repository.IGGAPIRepository;
 
 @GGAPIEntity(domain = "test")
 class GenericEntity extends GenericGGAPIEntity {

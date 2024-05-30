@@ -3,11 +3,11 @@ package com.garganttua.api.core.security.authorization.tokens.storage;
 import java.util.List;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
-import com.garganttua.api.core.security.authorization.tokens.jwt.IGGAPIDBTokenKeeper;
 import com.garganttua.api.repositories.GGAPISimpleRepository;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.security.IGGAPIDBTokenKeeper;
 
 public class GGAPITokenRepository extends GGAPISimpleRepository implements IGGAPIDBTokenKeeper {
 

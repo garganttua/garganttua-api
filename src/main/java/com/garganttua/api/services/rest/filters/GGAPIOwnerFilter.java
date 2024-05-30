@@ -8,17 +8,17 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.IGGAPIEngine;
-import com.garganttua.api.core.entity.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
-import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.services.rest.GGAPIHttpErrorCodeTranslator;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

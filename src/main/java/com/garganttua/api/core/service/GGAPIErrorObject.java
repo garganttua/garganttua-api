@@ -11,6 +11,8 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class GGAPIErrorObject {
+	
+	public static int NO_ERROR_CODE = 0;
 
 	private String message;
 	

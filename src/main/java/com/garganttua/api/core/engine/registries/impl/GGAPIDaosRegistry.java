@@ -13,14 +13,14 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.dao.GGAPIDao;
-import com.garganttua.api.core.dao.IGGAPIDAORepository;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.engine.GGAPIObjectsHelper;
-import com.garganttua.api.core.engine.registries.IGGAPIDaosRegistry;
-import com.garganttua.api.core.engine.registries.IGGAPIDomainsRegistry;
 import com.garganttua.api.daos.mongodb.GGAPIMongoRepository;
+import com.garganttua.api.spec.dao.IGGAPIDAORepository;
+import com.garganttua.api.spec.engine.IGGAPIDaosRegistry;
+import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

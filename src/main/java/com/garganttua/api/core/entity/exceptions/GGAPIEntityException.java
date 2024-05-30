@@ -3,8 +3,8 @@
  *******************************************************************************/
 package com.garganttua.api.core.entity.exceptions;
 
-import com.garganttua.api.core.exceptions.GGAPICoreException;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.GGAPICoreException;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
 
 import lombok.Getter;
 

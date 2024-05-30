@@ -8,11 +8,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
 import com.garganttua.api.services.rest.filters.GGAPICallerManager;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

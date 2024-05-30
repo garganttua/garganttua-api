@@ -3,7 +3,7 @@ package com.garganttua.api.core.security.authentication.mappers;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
 public interface IGGAPIAuthenticationUserMapper extends UserDetailsService {
 

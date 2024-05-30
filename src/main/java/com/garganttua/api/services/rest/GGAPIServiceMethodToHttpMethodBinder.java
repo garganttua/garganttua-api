@@ -2,7 +2,7 @@ package com.garganttua.api.services.rest;
 
 import org.springframework.http.HttpMethod;
 
-import com.garganttua.api.core.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.service.GGAPIServiceMethod;
 
 public class GGAPIServiceMethodToHttpMethodBinder {
 	

@@ -8,14 +8,14 @@ import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.dto.GenericGGAPIDto;
-import com.garganttua.api.core.dto.annotations.GGAPIDto;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.core.mapper.annotations.GGAPIFieldMappingRule;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.tooling.objects.mapper.annotations.GGAPIFieldMappingRule;
 
 @GGAPIEntity(
 	domain = "test"

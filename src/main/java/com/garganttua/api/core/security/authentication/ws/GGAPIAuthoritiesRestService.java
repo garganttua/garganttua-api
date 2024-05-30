@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.IGGAPIEngine;
-import com.garganttua.api.core.engine.IGGAPIEngineObject;
 import com.garganttua.api.core.security.authorization.BasicGGAPIAccessRule;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
-import com.garganttua.api.core.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.engine.IGGAPIEngineObject;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.service.GGAPIServiceMethod;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Setter;

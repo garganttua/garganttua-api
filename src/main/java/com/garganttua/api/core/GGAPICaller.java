@@ -3,7 +3,8 @@ package com.garganttua.api.core;
 import java.util.List;
 
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
 
 import lombok.Getter;
 import lombok.Setter;

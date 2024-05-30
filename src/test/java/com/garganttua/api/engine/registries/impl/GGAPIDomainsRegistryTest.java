@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.dao.GGAPIDao;
 import com.garganttua.api.core.dto.GenericGGAPIDto;
-import com.garganttua.api.core.dto.annotations.GGAPIDto;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.engine.registries.impl.GGAPIDomainsRegistry;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 
 @GGAPIEntity(domain = "test")
 class TestEntity extends GenericGGAPIEntity {

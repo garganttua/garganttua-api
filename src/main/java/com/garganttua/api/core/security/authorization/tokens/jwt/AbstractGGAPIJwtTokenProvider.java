@@ -17,9 +17,7 @@ import org.springframework.security.core.Authentication;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationProviderException;
-import com.garganttua.api.core.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.core.security.keys.GGAPIKey;
 import com.garganttua.api.core.security.keys.GGAPIKeyExpiration;
@@ -29,6 +27,8 @@ import com.garganttua.api.core.security.keys.GGAPIKeyRealms;
 import com.garganttua.api.core.security.keys.GGAPIKeyRenewal;
 import com.garganttua.api.core.security.keys.IGGAPIKeyManager;
 import com.garganttua.api.core.security.keys.IGGAPIKeyRealm;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationProvider;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

@@ -9,17 +9,17 @@ import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
-import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.core.mapper.GGAPIMapper;
-import com.garganttua.api.core.mapper.GGAPIMapperConfigurationItem;
-import com.garganttua.api.core.mapper.GGAPIMapperException;
-import com.garganttua.api.core.mapper.rules.GGAPIMappingRule;
-import com.garganttua.api.core.mapper.rules.GGAPIMappingRuleException;
-import com.garganttua.api.core.mapper.rules.GGAPIMappingRules;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.GGAPIObjectAddressException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.tooling.objects.mapper.GGAPIMapper;
+import com.garganttua.tooling.objects.mapper.GGAPIMapperConfigurationItem;
+import com.garganttua.tooling.objects.mapper.GGAPIMapperException;
+import com.garganttua.tooling.objects.mapper.rules.GGAPIMappingRule;
+import com.garganttua.tooling.objects.mapper.rules.GGAPIMappingRuleException;
+import com.garganttua.tooling.objects.mapper.rules.GGAPIMappingRules;
 
 import lombok.extern.slf4j.Slf4j;
 

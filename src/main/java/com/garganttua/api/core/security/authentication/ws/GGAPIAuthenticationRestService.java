@@ -1,8 +1,5 @@
 package com.garganttua.api.core.security.authentication.ws;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,21 +14,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.core.GGAPIServiceAccess;
-import com.garganttua.api.core.engine.GGAPIEngineException;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationMode;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationRequest;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.core.security.authentication.ws.requests.GGAPILoginPasswordAuthenticationRequest;
-import com.garganttua.api.core.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationProviderException;
-import com.garganttua.api.core.security.authorization.IGGAPIAccessRule;
-import com.garganttua.api.core.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
-import com.garganttua.api.core.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.core.service.GGAPIErrorObject;
-import com.garganttua.api.core.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationRequest;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationProvider;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -59,7 +50,7 @@ public class GGAPIAuthenticationRestService {
 		try {
 			authentication = this.authenticationManager.authenticate(authentication);
 		} catch (Exception e) {
-			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage()), HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(new GGAPIErrorObject(e.getMessage(), GGAPICoreExceptionCode.FAILED_AUTHENTICATION.getCode()), HttpStatus.BAD_REQUEST);
 		}
 		
         if (authentication.isAuthenticated()) {
@@ -78,7 +69,7 @@ public class GGAPIAuthenticationRestService {
                     .body(((IGGAPIAuthenticator) authentication.getPrincipal()).getEntity());
         	
         } else {
-        	return new ResponseEntity<>(new GGAPIErrorObject("Authentication failed"), HttpStatus.BAD_REQUEST);
+        	return new ResponseEntity<>(new GGAPIErrorObject("Authentication failed", GGAPICoreExceptionCode.FAILED_AUTHENTICATION.getCode()), HttpStatus.BAD_REQUEST);
           
         }
     }

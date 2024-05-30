@@ -6,13 +6,13 @@ import java.util.Date;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.mapper.GGAPIMapper;
-import com.garganttua.api.core.mapper.GGAPIMapperConfigurationItem;
-import com.garganttua.api.core.mapper.GGAPIMapperException;
 import com.garganttua.api.core.security.keys.GGAPIKey;
 import com.garganttua.api.core.security.keys.GGAPIKeyRealmDTO;
 import com.garganttua.api.core.security.keys.GGAPIKeyRealmEntity;
 import com.garganttua.api.core.security.keys.GGAPIKeyType;
+import com.garganttua.tooling.objects.mapper.GGAPIMapper;
+import com.garganttua.tooling.objects.mapper.GGAPIMapperConfigurationItem;
+import com.garganttua.tooling.objects.mapper.GGAPIMapperException;
 
 public class GGAPIKeyRealmMappingTest {
 

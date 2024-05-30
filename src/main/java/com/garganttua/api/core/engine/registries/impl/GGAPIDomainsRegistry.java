@@ -11,14 +11,14 @@ import org.springframework.stereotype.Service;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
-import com.garganttua.api.core.engine.registries.IGGAPIDomainsRegistry;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.security.authorization.GGAPITokenProviderType;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.core.security.keys.GGAPIKeyManagerType;
 import com.garganttua.api.core.security.keys.GGAPIKeyRealmEntity;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service(value = "dynamicDomainsRegistry")
 public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 	
-	@Value("${com.garganttua.api.engine.packages}")
+	@Value("${com.garganttua.api.engine.scanPackages}")
 	protected String[] scanPackages;
 	
 	@Value("${com.garganttua.api.security.key.manager.type:inmemory}")

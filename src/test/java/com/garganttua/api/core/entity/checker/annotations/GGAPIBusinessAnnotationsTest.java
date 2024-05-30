@@ -8,10 +8,10 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.IGGAPICaller;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations;
-import com.garganttua.api.core.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations;
+import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
 
 import lombok.Getter;
 

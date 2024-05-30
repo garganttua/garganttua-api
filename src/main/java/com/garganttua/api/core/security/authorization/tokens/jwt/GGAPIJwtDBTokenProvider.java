@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationProviderException;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
+import com.garganttua.api.spec.security.IGGAPIDBTokenKeeper;
 
 public class GGAPIJwtDBTokenProvider extends AbstractGGAPIJwtTokenProvider {
 

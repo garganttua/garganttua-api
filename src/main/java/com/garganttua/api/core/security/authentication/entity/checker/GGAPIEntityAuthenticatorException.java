@@ -1,8 +1,8 @@
 package com.garganttua.api.core.security.authentication.entity.checker;
 
-import com.garganttua.api.core.exceptions.GGAPICoreException;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
+import com.garganttua.api.spec.GGAPICoreException;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
 
 public class GGAPIEntityAuthenticatorException extends GGAPICoreException {
 

@@ -1,6 +1,6 @@
 package com.garganttua.api.core.security.authentication.ws.requests;
 
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationRequest;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationRequest;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

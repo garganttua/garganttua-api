@@ -3,9 +3,9 @@ package com.garganttua.api.core.security.authentication.providers.dao;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationProvider;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.core.security.authentication.mappers.IGGAPIAuthenticationUserMapper;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationProvider;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
 public class GGAPIDaoAuthenticationProvider extends DaoAuthenticationProvider implements IGGAPIAuthenticationProvider {
 

@@ -20,6 +20,7 @@ import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIA
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorEnabled;
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorLogin;
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticatorPassword;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -83,7 +84,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		GGAPIAuthenticator annotation = entityAuthenticatorClass.getDeclaredAnnotation(GGAPIAuthenticator.class);
 		
 		if( annotation == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR,
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName() + " is not annotated with @GGAPIAuthenticator");
 		}
 		
@@ -113,14 +114,14 @@ public class GGAPIEntityAuthenticatorChecker {
 					loginFieldName==null?null:q.address(loginFieldName), 
 					passwordFieldName==null?null:q.address(passwordFieldName));
 		} catch (GGAPIObjectQueryException e) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, e);
+			throw new GGAPIEntityAuthenticatorException(e);
 		}
 	}
 	
 	private static String checkAuthoritiesAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorAuthorities.class, List.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAutorities");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAutorities");
 		}
 		return fieldAddress; 
 	}
@@ -128,7 +129,7 @@ public class GGAPIEntityAuthenticatorChecker {
 	private static String checkPasswordAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorPassword.class, String.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorPassword");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorPassword");
 		}
 		return fieldAddress; 
 	}
@@ -136,7 +137,7 @@ public class GGAPIEntityAuthenticatorChecker {
 	private static String checkLoginAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorLogin.class, String.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorLogin");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorLogin");
 		}
 		return fieldAddress; 
 	}
@@ -144,7 +145,7 @@ public class GGAPIEntityAuthenticatorChecker {
 	private static String checkEnabledAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorEnabled.class, boolean.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorEnabled");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorEnabled");
 		}
 		return fieldAddress; 
 	}
@@ -152,7 +153,7 @@ public class GGAPIEntityAuthenticatorChecker {
 	private static String checkCredentialsNonLockedAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorCredentialsNonExpired.class, boolean.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorCredentialsNonExpired");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorCredentialsNonExpired");
 		}
 		return fieldAddress; 
 	}
@@ -160,7 +161,7 @@ public class GGAPIEntityAuthenticatorChecker {
 	private static String checkAccountNonLockedAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorAccountNonLocked.class, boolean.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAccountNonLocked");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAccountNonLocked");
 		}
 		return fieldAddress; 
 	}
@@ -168,7 +169,7 @@ public class GGAPIEntityAuthenticatorChecker {
 	private static String checkAccountNonExpiredAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIEntityAuthenticatorException {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorAccountNonExpired.class, boolean.class);
 		if( fieldAddress == null ) {
-			throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAccountNonExpired");
+			throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAccountNonExpired");
 		}
 		return fieldAddress; 
 	}
@@ -178,12 +179,12 @@ public class GGAPIEntityAuthenticatorChecker {
 		for( Field field: entityAuthenticatorClass.getDeclaredFields() ) {
 			if( field.isAnnotationPresent(annotationClass) ) {
 				if( fieldAddress != null && !fieldAddress.isEmpty() ) {
-					throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" has more than one field annotated with "+annotationClass);
+					throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" has more than one field annotated with "+annotationClass);
 				}
 				if( field.getType().equals(fieldClass) ) {
 					fieldAddress = field.getName();
 				} else {
-					throw new GGAPIEntityAuthenticatorException(GGAPIEntityAuthenticatorException.ENTITY_DEFINITION_ERROR, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
+					throw new GGAPIEntityAuthenticatorException(GGAPICoreExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
 				}
 			}
 		}

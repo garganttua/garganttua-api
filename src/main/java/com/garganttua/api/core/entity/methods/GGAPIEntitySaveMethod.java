@@ -7,14 +7,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
-import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
@@ -22,10 +19,13 @@ import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelper;
 import com.garganttua.api.core.objects.utils.GGAPIObjectReflectionHelperExcpetion;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
-import com.garganttua.api.core.repository.IGGAPIRepository;
 import com.garganttua.api.core.security.GGAPISecurityException;
-import com.garganttua.api.core.security.IGGAPISecurity;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.repository.IGGAPIRepository;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.security.IGGAPISecurity;
 
 import lombok.extern.slf4j.Slf4j;
 

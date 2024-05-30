@@ -6,14 +6,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.api.core.dto.annotations.GGAPIDto;
-import com.garganttua.api.core.dto.annotations.GGAPIDtoTenantId;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -2,7 +2,6 @@ package com.garganttua.api.daos.mongodb;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -12,11 +11,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 
-import com.garganttua.api.core.dao.IGGAPIDAORepository;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.IGGAPIEngine;
-import com.garganttua.api.core.filter.GGAPILiteral;
-import com.garganttua.api.core.sort.GGAPISort;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.dao.GGAPISort;
+import com.garganttua.api.spec.dao.IGGAPIDAORepository;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;

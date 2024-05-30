@@ -1,7 +1,7 @@
 package com.garganttua.api.core.security;
 
-import com.garganttua.api.core.exceptions.GGAPICoreException;
-import com.garganttua.api.core.exceptions.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.GGAPICoreException;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
 
 public class GGAPISecurityException extends GGAPICoreException {
 

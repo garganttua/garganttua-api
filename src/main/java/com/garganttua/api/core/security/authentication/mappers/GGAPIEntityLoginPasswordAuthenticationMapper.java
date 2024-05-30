@@ -11,14 +11,14 @@ import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
-import com.garganttua.api.core.entity.factory.IGGAPIEntityFactory;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
-import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.core.security.authentication.entity.GGAPIEntityAuthentication;
 import com.garganttua.api.core.security.authentication.entity.GGAPIEntityAuthenticator;
 import com.garganttua.api.core.security.authentication.entity.tools.GGAPIEntityAuthenticatorHelper;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
 public class GGAPIEntityLoginPasswordAuthenticationMapper implements IGGAPIAuthenticationUserMapper {
 

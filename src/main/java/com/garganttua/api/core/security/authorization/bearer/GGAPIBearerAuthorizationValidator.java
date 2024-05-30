@@ -9,15 +9,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticationManager;
-import com.garganttua.api.core.security.authentication.IGGAPIAuthenticator;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorityVerifier;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationProviderException;
-import com.garganttua.api.core.security.authorization.IGGAPIAuthorizationProvider;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.core.security.authorization.tokens.jwt.GGAPITokenExpired;
 import com.garganttua.api.core.security.authorization.tokens.jwt.GGAPITokenNotFoundException;
 import com.garganttua.api.core.security.keys.GGAPIKeyExpiredException;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthenticator;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationProvider;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

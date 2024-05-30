@@ -1,10 +1,10 @@
 package com.garganttua.api.core.security.keys;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.garganttua.api.core.GGAPIServiceAccess;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntity;
-import com.garganttua.api.core.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

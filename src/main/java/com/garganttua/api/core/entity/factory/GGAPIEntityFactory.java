@@ -17,23 +17,26 @@ import org.springframework.core.env.Environment;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.core.IGGAPICaller;
 import com.garganttua.api.core.engine.GGAPIDomain;
-import com.garganttua.api.core.engine.IGGAPIEngine;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.methods.GGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.methods.GGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
-import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryException;
 import com.garganttua.api.core.objects.query.GGAPIObjectQueryFactory;
 import com.garganttua.api.core.objects.query.IGGAPIObjectQuery;
 import com.garganttua.api.core.objects.utils.GGAPIFieldAccessManager;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
-import com.garganttua.api.core.repository.IGGAPIRepository;
-import com.garganttua.api.core.security.IGGAPISecurity;
-import com.garganttua.api.core.sort.GGAPISort;
+import com.garganttua.api.spec.GGAPICoreExceptionCode;
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.dao.GGAPILiteral;
+import com.garganttua.api.spec.dao.GGAPISort;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.repository.IGGAPIRepository;
+import com.garganttua.api.spec.security.IGGAPISecurity;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -72,7 +75,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		try {
 			this.objectQuery = GGAPIObjectQueryFactory.objectQuery(domain.entity.getValue0());
 		} catch (GGAPIObjectQueryException e) {
-			throw new GGAPIFactoryException(GGAPIFactoryException.BAD_ENTITY, e);
+			throw new GGAPIFactoryException(e);
 		}
 	}
 
@@ -90,7 +93,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			GGAPIEntityHelper.setGotFromRepository( entity, false );
 			return entity;
 		} catch (IOException | GGAPIEntityException e) {
-			throw new GGAPIFactoryException(GGAPIFactoryException.BAD_ENTITY, e);
+			throw new GGAPIFactoryException(e);
 		}
 	}
 	
@@ -106,7 +109,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			
 			return entity;
 		} catch (GGAPIEntityException e) {
-			throw new GGAPIFactoryException(GGAPIFactoryException.BAD_ENTITY, e);
+			throw new GGAPIFactoryException(e);
 		}
 	}
 	
@@ -137,7 +140,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			
 			if( entity == null ) {
 				log.warn("[Domain ["+this.domain.entity.getValue1().domain()+"]] "+caller.toString()+" Entity with Uuid " + uuid + " not found");
-				throw new GGAPIFactoryException(GGAPIFactoryException.BAD_ENTITY, "Entity does not exist");
+				throw new GGAPIFactoryException(GGAPICoreExceptionCode.GENERIC_FACTORY_EXCEPTION, "Entity does not exist");
 			}
 
 			GGAPIEntityHelper.setRepository( entity, repository );
@@ -230,7 +233,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
                     bean = this.springContext.getBean(field.getType());
                 }
                 if (bean == null) {
-                    throw new GGAPIFactoryException(GGAPIFactoryException.ENTITY_INJECTION_ERROR, "Bean not found for field: " + field.getName());
+                    throw new GGAPIFactoryException(GGAPICoreExceptionCode.INJECTION_ERROR, "Bean not found for field: " + field.getName());
                 }
 
                 try (GGAPIFieldAccessManager accessManager = new GGAPIFieldAccessManager(field)) {
@@ -239,7 +242,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 					if( log.isDebugEnabled() ) {
 						log.warn("Field  "+field.getName()+" of entity of type "+entity.getClass().getName()+" cannot be set", e);
 					}
-					throw new GGAPIFactoryException(GGAPIFactoryException.ENTITY_INJECTION_ERROR, "Field  "+field.getName()+" of entity of type "+entity.getClass().getName()+" cannot be set", e);
+					throw new GGAPIFactoryException(GGAPICoreExceptionCode.INJECTION_ERROR, "Field  "+field.getName()+" of entity of type "+entity.getClass().getName()+" cannot be set", e);
 				}
             } else if (field.isAnnotationPresent(Value.class)) {
                 String value = field.getAnnotation(Value.class).value();
@@ -247,7 +250,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
                     String propertyName = value.substring(2, value.length() - 1);
                     String propertyValue = this.environment.getProperty(propertyName);
                     if( propertyValue == null ) {
-                    	throw new GGAPIFactoryException(GGAPIFactoryException.ENTITY_INJECTION_ERROR, "Value not found: " + propertyName);
+                    	throw new GGAPIFactoryException(GGAPICoreExceptionCode.INJECTION_ERROR, "Value not found: " + propertyName);
                     }
                     try (GGAPIFieldAccessManager accessManager = new GGAPIFieldAccessManager(field)) {
     					field.set(entity, propertyValue);
@@ -255,10 +258,10 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
     					if( log.isDebugEnabled() ) {
     						log.warn("Field  "+field.getName()+" of entity of type "+entity.getClass().getName()+" cannot be set", e);
     					}
-    					throw new GGAPIFactoryException(GGAPIFactoryException.ENTITY_INJECTION_ERROR, "Field  "+field.getName()+" of entity of type "+entity.getClass().getName()+" cannot be set", e);
+    					throw new GGAPIFactoryException(GGAPICoreExceptionCode.INJECTION_ERROR, "Field  "+field.getName()+" of entity of type "+entity.getClass().getName()+" cannot be set", e);
     				}
                 } else {
-                	 throw new GGAPIFactoryException(GGAPIFactoryException.ENTITY_INJECTION_ERROR, "Malformed value annotation: " + field.getName());
+                	 throw new GGAPIFactoryException(GGAPICoreExceptionCode.INJECTION_ERROR, "Malformed value annotation: " + field.getName());
                 }
             }
         }
