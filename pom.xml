@@ -35,7 +35,7 @@
 	</distributionManagement>
 
 	<properties>
-		<spring.version>3.0.5</spring.version>
+<!--		<spring.version>3.0.5</spring.version>-->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -81,12 +81,7 @@
 <!--			<version>1</version>-->
 <!--		</dependency>-->
 
-<!--		<dependency>-->
-<!--			<groupId>org.junit.jupiter</groupId>-->
-<!--			<artifactId>junit-jupiter-engine</artifactId>-->
-<!--			<version>5.9.1</version>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
+
 
 <!--		<dependency>-->
 <!--			<groupId>org.springdoc</groupId>-->
@@ -154,25 +149,7 @@
 <!--			<version>8.0.0.Final</version>-->
 <!--		</dependency>-->
 
-<!--		<dependency>-->
-<!--			<groupId>org.reflections</groupId>-->
-<!--			<artifactId>reflections</artifactId>-->
-<!--			<version>0.10.2</version>-->
-<!--			<exclusions>-->
-<!--				<exclusion>-->
-<!--					<groupId>org.slf4j</groupId>-->
-<!--					<artifactId>slf4j-api</artifactId>-->
-<!--				</exclusion>-->
-<!--				<exclusion>-->
-<!--					<groupId>org.slf4j</groupId>-->
-<!--					<artifactId>slf4j-simple</artifactId>-->
-<!--				</exclusion>-->
-<!--				<exclusion>-->
-<!--					<groupId>org.jboss</groupId>-->
-<!--					<artifactId>jboss-vfs</artifactId>-->
-<!--				</exclusion>-->
-<!--			</exclusions>-->
-<!--		</dependency>-->
+		
 	</dependencies>
 
 	<build>
