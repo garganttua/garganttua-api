@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.spec.dao.GGAPILiteral;
 
 public class GGAPIRepositoryTest {

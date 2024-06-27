@@ -12,9 +12,9 @@ import org.springframework.data.domain.Pageable;
 
 import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.dao.GGAPIDaoException;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
 import com.garganttua.api.core.dto.tools.GGAPIDtoHelper;
-import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.entity.updater.GGAPIEntityUpdaterException;

@@ -1,14 +1,12 @@
 package com.garganttua.api.spec.engine;
 
-import java.util.List;
+import java.util.Set;
 
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 
 public interface IGGAPIDomainsRegistry {
 
-	List<IGGAPIDomain> getDomains();
-
-//	GGAPIDynamicDomain getDomain(HttpServletRequest request);
+	Set<IGGAPIDomain> getDomains();
 
 	IGGAPIDomain getDomain(String string);
 	

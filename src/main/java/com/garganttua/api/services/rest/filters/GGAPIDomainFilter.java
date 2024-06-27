@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.springframework.http.HttpMethod;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.services.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.engine.IGGAPIEngineObject;

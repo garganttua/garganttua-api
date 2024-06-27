@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.security.authentication.ws.GGAPIAuthoritiesRestService;
 import com.garganttua.api.services.rest.filters.GGAPIDomainFilter;
 import com.garganttua.api.services.rest.filters.GGAPIOwnerFilter;

@@ -19,8 +19,6 @@ import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker.GGAPIEntityInfos;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntityDeleteMethod;
-import com.garganttua.api.core.entity.interfaces.IGGAPIEntitySaveMethod;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.objects.GGAPIObjectAddressException;
 import com.garganttua.api.spec.IGGAPICaller;
@@ -43,6 +41,8 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityShared;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenant;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
+import com.garganttua.api.spec.entity.annotations.IGGAPIEntityDeleteMethod;
+import com.garganttua.api.spec.entity.annotations.IGGAPIEntitySaveMethod;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurity;
 

@@ -16,7 +16,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.engine.GGAPIObjectsHelper;
 import com.garganttua.api.core.security.authorization.BasicGGAPIAccessRule;

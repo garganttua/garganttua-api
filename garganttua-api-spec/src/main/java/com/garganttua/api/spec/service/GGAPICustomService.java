@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.spec.GGAPIServiceAccess;
+import com.garganttua.api.spec.security.GGAPIServiceAccess;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

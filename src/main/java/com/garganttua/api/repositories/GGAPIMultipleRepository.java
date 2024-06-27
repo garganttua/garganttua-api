@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
 import com.garganttua.api.spec.IGGAPICaller;
 import com.garganttua.api.spec.dao.GGAPILiteral;

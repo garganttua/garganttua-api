@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.factory.GGAPIEntityFactory;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;

@@ -21,7 +21,7 @@
 			<artifactId>garganttua-objects-mapper</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-
+		
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-reflection</artifactId>
@@ -29,30 +29,11 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections</artifactId>
-			<version>0.10.2</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-api</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.slf4j</groupId>
-					<artifactId>slf4j-simple</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.jboss</groupId>
-					<artifactId>jboss-vfs</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		
-		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>5.9.1</version>
 			<scope>test</scope>
 		</dependency>
+
 	</dependencies>
 </project>

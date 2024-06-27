@@ -7,9 +7,9 @@ import java.util.List;
 import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
-import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.dao.GGAPILiteral;

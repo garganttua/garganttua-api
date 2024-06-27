@@ -11,7 +11,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.spec.dao.GGAPILiteral;
 import com.garganttua.api.spec.dao.GGAPISort;
 import com.garganttua.api.spec.dao.IGGAPIDAORepository;

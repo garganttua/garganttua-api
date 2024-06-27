@@ -1,6 +1,5 @@
 package com.garganttua.api.spec.security;
 
-import com.garganttua.api.spec.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.GGAPIServiceMethod;
 
 public interface IGGAPIAccessRule {

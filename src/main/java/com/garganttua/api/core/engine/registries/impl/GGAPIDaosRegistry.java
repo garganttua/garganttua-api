@@ -13,8 +13,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.dao.GGAPIDao;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
-import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.engine.GGAPIObjectsHelper;
 import com.garganttua.api.daos.mongodb.GGAPIMongoRepository;

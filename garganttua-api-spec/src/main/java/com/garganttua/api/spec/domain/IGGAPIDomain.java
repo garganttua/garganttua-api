@@ -1,5 +1,38 @@
 package com.garganttua.api.spec.domain;
 
+import java.util.List;
+
+import org.javatuples.Pair;
+
+import com.garganttua.api.spec.dto.GGAPIDtoInfos;
+import com.garganttua.api.spec.entity.GGAPIEntityInfos;
+
 public interface IGGAPIDomain {
+
+	String getDomain();
+
+	Pair<Class<?>, GGAPIEntityInfos> getEntity();
+
+	List<Pair<Class<?>, GGAPIDtoInfos>> getDtos();
+
+	String[] getInterfaces();
+
+	String[] getDaos();
+
+	String getEvent();
+
+	boolean isAllowCreation();
+
+	boolean isAllowReadAll();
+
+	boolean isAllowReadOne();
+
+	boolean isAllowUpdateOne();
+
+	boolean isAllowDeleteOne();
+
+	boolean isAllowDeleteAll();
+
+	boolean isAllowCount();
 
 }

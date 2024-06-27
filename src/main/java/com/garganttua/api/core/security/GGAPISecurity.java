@@ -13,7 +13,7 @@ import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticator;
 import com.garganttua.api.core.security.authentication.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.owners.GGAPIOwnerVerifier;

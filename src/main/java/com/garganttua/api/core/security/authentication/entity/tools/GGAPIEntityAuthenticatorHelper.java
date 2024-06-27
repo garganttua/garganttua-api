@@ -2,7 +2,7 @@ package com.garganttua.api.core.security.authentication.entity.tools;
 
 import java.util.List;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;
 import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticator;
 import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;

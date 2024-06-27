@@ -17,7 +17,7 @@ import org.springframework.core.env.Environment;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.methods.GGAPIEntityDeleteMethod;
 import com.garganttua.api.core.entity.methods.GGAPIEntitySaveMethod;

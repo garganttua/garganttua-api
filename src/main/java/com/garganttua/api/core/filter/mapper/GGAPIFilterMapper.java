@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker.GGAPIDtoInfos;
-import com.garganttua.api.core.engine.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.objects.GGAPIObjectAddress;

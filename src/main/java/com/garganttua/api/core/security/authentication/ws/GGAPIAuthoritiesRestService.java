@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.core.engine.GGAPIDomain;
+import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.security.authorization.BasicGGAPIAccessRule;
 import com.garganttua.api.spec.GGAPIServiceAccess;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
