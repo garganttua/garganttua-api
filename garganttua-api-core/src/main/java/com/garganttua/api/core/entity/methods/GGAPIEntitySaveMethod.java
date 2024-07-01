@@ -7,10 +7,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.api.core.GGAPICaller;
-import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
+import com.garganttua.api.core.pageable.GGAPIPageable;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.IGGAPICaller;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	
-	private GGAPIDomain domain;
+	private IGGAPIDomain domain;
 	private IGGAPIRepository<Object> repository;
 	private Optional<IGGAPISecurity> security;
 	private GGObjectAddress afterUpdateMethodAddress;
@@ -39,7 +39,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private GGObjectAddress beforeCreateMethodAddress;
 	private IGGObjectQuery objectQuery;
 	
-	public GGAPIEntitySaveMethod(GGAPIDomain domain, IGGAPIRepository<Object> repository, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
 		this.domain = domain;
 		this.repository = repository;
 		this.security = security;
@@ -228,12 +228,12 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				}
 			}
 
-			List<Entity> entities = repository.getEntities(superCaller, 0, 0, literal, null);
+			List<Entity> entities = repository.getEntities(superCaller, GGAPIPageable.getPage(0,0), literal, null);
 
 			return entities;
 
 		} catch (GGReflectionException e) {
-//			log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);
+			log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);
 			throw new GGAPIEntityException(GGAPIExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
 		}
 	}

@@ -1,41 +1,63 @@
 package com.garganttua.api.spec.event;
 
+import java.util.Date;
+import java.util.Map;
+
+import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
+import com.garganttua.api.spec.service.IGGAPIServiceResponse;
+
 public interface IGGAPIEvent {
 
-//	private GGAPIServiceMethod method;
-//	
-//	private IGGAPICaller caller;
-//	
-//	private String endPoint;
-//	
-//	private Date inDate = new Date();
-//	
-//	private Date outDate; 
-//	
-//	private int exceptionCode; 
-//	
-//	private Map<String, String> inParams = new HashMap<String, String>();
-//	
-//	private Object in; 
-//	
-//	private Object out; 
-//	
-//	private String entityClass;
-//	
-//	private long outCount;
-//	
-//	private List<Object> outList;
-//	
-//	private GGAPIErrorObject errorObject;
-//	
-//	private String tenantId; 
-//	
-//	private String ownerId; 
-//	
-//	private Exception exception;
-//	
-//	private String exceptionMessage;
-//	
-//	private int httpReturnedCode;
+	GGAPIServiceMethod getMethod();
+    void setMethod(GGAPIServiceMethod method);
+
+    Date getInDate();
+    void setInDate(Date inDate);
+
+    Date getOutDate();
+    void setOutDate(Date outDate);
+
+    int getExceptionCode();
+    void setExceptionCode(int exceptionCode);
+
+    Map<String, String> getInParams();
+    void setInParams(Map<String, String> inParams);
+
+    Object getIn();
+    void setIn(Object in);
+
+    Object getOut();
+    void setOut(Object out);
+
+    IGGAPICaller getCaller();
+    void setCaller(IGGAPICaller caller);
+
+    String getTenantId();
+    void setTenantId(String tenantId);
+
+    String getOwnerId();
+    void setOwnerId(String ownerId);
+
+    String getUserId();
+    void setUserId(String userId);
+
+    Exception getException();
+    void setException(Exception exception);
+
+    String getExceptionMessage();
+    void setExceptionMessage(String exceptionMessage);
+
+    GGAPIServiceResponseCode getCode();
+    void setCode(GGAPIServiceResponseCode code);
+
+    String getEntityClass();
+    void setEntityClass(String entityClass);
+
+    String getEndPoint();
+    void setEndPoint(String endPoint);
+    
+    IGGAPIServiceResponse toServiceResponse();
 	
 }

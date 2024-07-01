@@ -17,8 +17,6 @@ public interface IGGAPIDomain {
 
 	String[] getInterfaces();
 
-	String[] getDaos();
-
 	String getEvent();
 
 	boolean isAllowCreation();

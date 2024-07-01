@@ -8,6 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface GGAPIDto {
-	String db();	
+	String db() default "gg:FsDao";	
 	Class<?> entityClass();
 }

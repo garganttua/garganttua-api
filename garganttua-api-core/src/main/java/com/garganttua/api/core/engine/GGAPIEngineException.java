@@ -1,19 +1,21 @@
 package com.garganttua.api.core.engine;
 
-public class GGAPIEngineException extends Exception {
+import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIExceptionCode;
 
-	public GGAPIEngineException(String string) {
-		super(string);
+public class GGAPIEngineException extends GGAPIException {
+
+	public GGAPIEngineException(GGAPIExceptionCode code, String message, Exception exception) {
+		super(code, message, exception);
 	}
-
-	public GGAPIEngineException(Exception e) {
-		super(e);
+	
+	public GGAPIEngineException(GGAPIExceptionCode code, String message) {
+		super(code, message);
 	}
-
-	public GGAPIEngineException(String string, Exception e) {
-		super(string, e);
+	
+	public GGAPIEngineException(Exception exception) {
+		super(exception);
 	}
-
 	/**
 	 * 
 	 */

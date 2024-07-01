@@ -95,11 +95,7 @@
 		<!--			<version>1.18.26</version>-->
 		<!--		</dependency>-->
 
-		<!--		<dependency>-->
-		<!--			<groupId>javax.inject</groupId>-->
-		<!--			<artifactId>javax.inject</artifactId>-->
-		<!--			<version>1</version>-->
-		<!--		</dependency>-->
+
 
 
 		<!--		<dependency>-->
@@ -208,7 +204,6 @@
 		<module>garganttua-api-spring</module>
 		<module>garganttua-api-spring-security</module>
 		<module>garganttua-api-spring-rest</module>
-		<module>garganttua-api-dao-mongo</module>
-		<module>garganttua-api-dao-fs</module>
+		<module>garganttua-api-dao-spring-mongo</module>
 	</modules>
 </project>

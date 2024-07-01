@@ -10,15 +10,15 @@ import com.garganttua.api.spec.event.IGGAPIEventPublisher;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
+import com.garganttua.api.spec.security.IGGAPISecurity;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
 public interface IGGAPIService extends IGGAPIEngineObject {
 
-	Object createEntity(IGGAPICaller caller, String entityAsString,
-			String customParameters);
+	IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity,
+			Map<String, String> customParameters);
 		
-	Object getEntities(
+	IGGAPIServiceResponse getEntities(
 			IGGAPICaller caller, 
 			GGAPIReadOutputMode mode,
 			IGGAPIPageable pageable,
@@ -26,20 +26,20 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 			IGGAPISort sortString, 
 			Map<String, String> customParameters);
 
-	Object getEntity(IGGAPICaller caller, String uuid,
+	IGGAPIServiceResponse getEntity(IGGAPICaller caller, String uuid,
 			Map<String, String> customParameters);
 	
-	Object updateEntity(IGGAPICaller caller, String uuid, Object entityAsString,
+	IGGAPIServiceResponse updateEntity(IGGAPICaller caller, String uuid, Object entity,
 			Map<String, String> customParameters);
 
-	Object deleteEntity(IGGAPICaller caller, String uuid, Map<String, String> customParameters);
+	IGGAPIServiceResponse deleteEntity(IGGAPICaller caller, String uuid, Map<String, String> customParameters);
 	
-	Object deleteAll(
+	IGGAPIServiceResponse deleteAll(
 			IGGAPICaller caller,
 			IGGAPIFilter filter,
 			Map<String, String> customParameters);
 	
-	Object getCount(
+	IGGAPIServiceResponse getCount(
 			IGGAPICaller caller,
 			IGGAPIFilter filter,
 			Map<String, String> customParameters);
@@ -48,8 +48,8 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 
 	void setDomain(IGGAPIDomain ddomain);
 	
-	void setFactory(IGGAPIEntityFactory<?> factory);
+	void setFactory(IGGAPIEntityFactory<Object> factory);
 	
-	void setSecurity(Optional<IGGAPISecurityEngine> security);
+	void setSecurity(Optional<IGGAPISecurity> security);
 
 }

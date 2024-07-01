@@ -8,13 +8,14 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
 
 public class GGAPIDomainFactoryTest {
 
 	@Test
-	public void testGetDomains() {
+	public void testGetDomains() throws GGAPIException {
 		GGAPIDomainsFactory df = new GGAPIDomainsFactory(List.of("com"));
 		Collection<IGGAPIDomain> domains = df.getDomains();
 		
@@ -23,12 +24,11 @@ public class GGAPIDomainFactoryTest {
 	}
 	
 	@Test
-	public void testGetDomainsRegistry() {
+	public void testGetDomainsRegistry() throws GGAPIException {
 		GGAPIDomainsFactory df = new GGAPIDomainsFactory(List.of("com"));
 		IGGAPIDomainsRegistry reg = df.getRegistry();
 		
 		assertNotNull(reg);
 		assertNotNull(reg.getDomains());
-		
 	}
 }

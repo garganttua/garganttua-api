@@ -2,12 +2,12 @@ package com.garganttua.api.core.entity.methods;
 
 import java.util.Map;
 
-import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.reflection.GGObjectAddress;
@@ -15,16 +15,18 @@ import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
 
-//@Slf4j
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GGAPIEntityDeleteMethod implements IGGAPIEntityDeleteMethod<Object> {
 
-	private GGAPIDomain domain;
+	private IGGAPIDomain domain;
 	private IGGAPIRepository<Object> repository;
 	private IGGObjectQuery objectQuery;
 	private GGObjectAddress beforeDeleteMethodAddress;
 	private GGObjectAddress afterDeleteMethodAddress;
 	
-	public GGAPIEntityDeleteMethod(GGAPIDomain domain, IGGAPIRepository<Object> repository) throws GGAPIException {
+	public GGAPIEntityDeleteMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
 		this.beforeDeleteMethodAddress = this.domain.getEntity().getValue1().beforeDeleteMethodAddress();
@@ -49,7 +51,7 @@ public class GGAPIEntityDeleteMethod implements IGGAPIEntityDeleteMethod<Object>
 					this.objectQuery.invoke(entity, this.afterDeleteMethodAddress, caller, parameters);
 				}
 			} else {
-//				log.error("[domain ["+domain.entity.getValue1().domain()+"]] "+caller.toString()+" Error during entity deletion ");
+				log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during entity deletion ");
 				throw new GGAPIEntityException(GGAPIExceptionCode.DELETION_ERROR, "Error during entity "+GGAPIEntityHelper.getUuid(entity)+" deletion");
 			}
 		} catch (GGReflectionException e) {

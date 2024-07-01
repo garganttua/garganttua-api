@@ -3,7 +3,9 @@ package com.garganttua.api.spec.engine;
 import java.util.Optional;
 
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 
 public interface IGGAPIEngine {

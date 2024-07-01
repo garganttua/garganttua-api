@@ -108,7 +108,6 @@ public class GGAPIDomain implements IGGAPIDomain {
 					}
 				});
 			} catch (ClassNotFoundException | IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

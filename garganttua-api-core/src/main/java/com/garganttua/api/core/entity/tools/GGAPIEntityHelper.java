@@ -12,6 +12,7 @@ import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPILiteral;
+import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurity;
 import com.garganttua.reflection.GGReflectionException;
@@ -170,13 +171,13 @@ public class GGAPIEntityHelper {
 		}
 	}
 
-	public static Object newExampleInstance(Class<?> clazz, GGAPILiteral filter) throws GGAPIException {
+	public static Object newExampleInstance(Class<?> clazz, IGGAPIFilter filter) throws GGAPIException {
 		Object object = newInstance(clazz);	
 		GGAPIEntityHelper.setObjectValuesFromFilter(object, filter);
 		return object;
 	}
 
-	private static void setObjectValuesFromFilter(Object object, GGAPILiteral filter) throws GGAPIException {
+	private static void setObjectValuesFromFilter(Object object, IGGAPIFilter filter) throws GGAPIException {
 		if( filter.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
 			String fieldAddress = (String) filter.getValue();
 			Object fieldValue = filter.getLiterals().get(0).getValue();
@@ -189,7 +190,7 @@ public class GGAPIEntityHelper {
 				}
 			}
 		} else {
-			for( GGAPILiteral sub: filter.getLiterals() ) {
+			for( IGGAPIFilter sub: filter.getLiterals() ) {
 				GGAPIEntityHelper.setObjectValuesFromFilter(object, sub);
 			}
 		}

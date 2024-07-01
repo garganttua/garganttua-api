@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
+import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
@@ -25,13 +26,19 @@ public class GGAPIDomainsFactory {
 	private boolean onwerFound = false;
 	private Set<IGGAPIDomain>  domains;
 
-	public GGAPIDomainsFactory(List<String> packages) {
+	public GGAPIDomainsFactory(List<String> packages) throws GGAPIEngineException {
 		this.packages = packages;
+		this.collectDomains();
 	}
 
 	public Collection<IGGAPIDomain> getDomains() {
-		if( this.domains != null ) {
-			return this.domains;
+		return this.domains;
+	}
+	
+	private void collectDomains() throws GGAPIEngineException {
+		log.info("Collecting Domains ...");
+		if( this.packages == null ) {
+			throw new GGAPIEngineException(GGAPIExceptionCode.CORE_GENERIC_CODE, "No packages");
 		}
 		
 		this.domains = new HashSet<IGGAPIDomain>();
@@ -50,7 +57,6 @@ public class GGAPIDomainsFactory {
 				e.printStackTrace();
 			}
 		});	
-		return domains;
 	}
 
 	private GGAPIDomain processAnnotatedEntity(Class<?> annotatedClass) throws GGAPIException {
@@ -104,10 +110,6 @@ public class GGAPIDomainsFactory {
 	}
 
 	public IGGAPIDomainsRegistry getRegistry() {
-		if( this.domains == null ) {
-			this.getDomains();
-		}
-		
 		return new GGAPIDomainsRegistry(this.domains);
 	}
 
