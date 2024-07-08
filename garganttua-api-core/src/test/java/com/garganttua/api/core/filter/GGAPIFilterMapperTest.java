@@ -18,7 +18,7 @@ import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
 
 @GGAPIEntity(
-	domain = "test"
+	domain = "test", interfaces = { "gg:test" }
 )
 class Entity extends GenericGGAPIEntity {
 	

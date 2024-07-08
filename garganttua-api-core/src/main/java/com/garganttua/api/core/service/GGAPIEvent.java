@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.event.IGGAPIEvent;
 import com.garganttua.api.spec.service.GGAPIServiceMethod;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
@@ -42,19 +43,14 @@ public class GGAPIEvent implements IGGAPIEvent {
 	
 	private String userId; 
 	
-	private Exception exception;
+	private IGGAPIDomain domain;
 	
 	private String exceptionMessage;
 	
 	private GGAPIServiceResponseCode code;
-	
-	private String entityClass;
-	
-	private String endPoint;
 
 	@Override
 	public IGGAPIServiceResponse toServiceResponse() {
 		return new GGAPIServiceResponse(out, code);
 	}
-
 }

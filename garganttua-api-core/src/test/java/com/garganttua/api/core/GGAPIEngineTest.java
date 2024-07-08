@@ -19,8 +19,8 @@ public class GGAPIEngineTest {
 	
 	@Test
 	public void test() throws GGAPIException {
-		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(List.of("com"));
-		IGGAPIEngine engine = GGApiBuilder.builder().setInjector(null).setPropertyLoader(null).setSecurity(null).setPackages(List.of("com")).setBeanLoader(l).build().init().start();
+		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
+		IGGAPIEngine engine = GGApiBuilder.builder().setPropertyLoader(null).setSecurity(null).setPackages(List.of("com")).setBeanLoader(l).build().init().start();
 		
 		assertNotNull(engine.getDomainsRegistry());
 	}
@@ -28,7 +28,7 @@ public class GGAPIEngineTest {
 	
 	@Test
 	public void testNoPackages() throws GGAPIException {
-		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(List.of("com"));
+		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
 
 		GGAPIException exception = assertThrows(GGAPIException.class, () -> {
 			GGApiBuilder.builder().setBeanLoader(l).build().init();

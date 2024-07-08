@@ -14,4 +14,6 @@ public interface IGGAPIServiceInfos {
 
 	String getDescription();
 
+	GGAPIServiceMethod getMethod();
+
 }

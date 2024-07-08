@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIException;
@@ -25,7 +26,9 @@ import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GGAPIService implements IGGAPIService {
 	
 	@FunctionalInterface
@@ -38,7 +41,7 @@ public class GGAPIService implements IGGAPIService {
 	@Setter
 	protected IGGAPIDomain domain;
 	@Setter
-	protected Optional<IGGAPIEventPublisher> eventPublisher;
+	protected Optional<IGGAPIEventPublisher> eventPublisher = Optional.empty();
 	@Setter
 	protected IGGAPIEntityFactory<Object> factory;
 	@Setter
@@ -57,10 +60,9 @@ public class GGAPIService implements IGGAPIService {
 		GGAPIEvent event = new GGAPIEvent();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
+		event.setDomain(this.domain);
 		event.setCaller(caller);
 		event.setMethod(method);
-		event.setEndPoint(caller.getAccessRule().getEndpoint());
-		event.setEntityClass(this.domain.getEntity().getValue0().getName());
 		event.setInParams(params);
 		return event;
 	}
@@ -69,9 +71,10 @@ public class GGAPIService implements IGGAPIService {
 	public IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity, Map<String, String> customParameters) {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(entity);
-			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity);
+			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, null);
 			GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
 			event.setOut(preparedEntity);
+			event.setCode(GGAPIServiceResponseCode.CREATED);
 			return event;
 		};
 		
@@ -92,15 +95,47 @@ public class GGAPIService implements IGGAPIService {
 				customParameters.put("sortString", sort.toString());
 			
 			List<Object> entities = this.factory.getEntitiesFromRepository(caller, pageable, filter, sort, customParameters);
+			List<Object> finalEntityList = null;
+			
+			switch(mode) {
+			case id:
+				finalEntityList = entities.stream().map( entity -> {
+					try {
+						return GGAPIEntityHelper.getId(entity);
+					} catch (GGAPIException e) {
+						if( log.isDebugEnabled() ) {
+							log.warn("Error : ",e);
+						}
+					}
+					return null;
+				}).collect(Collectors.toList());
+				break;
+			case uuid:
+				finalEntityList = entities.stream().map( entity -> {
+					try {
+						return GGAPIEntityHelper.getUuid(entity);
+					} catch (GGAPIException e) {
+						if( log.isDebugEnabled() ) {
+							log.warn("Error : ",e);
+						}
+					}
+					return null;
+				}).collect(Collectors.toList());
+				break;
+			default:
+			case full:
+				finalEntityList = entities;
+				break;
+			}
 			
 			if( pageable != null && pageable.getPageSize() != 0 ) {
 				long totalCount = this.factory.countEntities(caller, filter, customParameters);
-				GGAPIPage page = new GGAPIPage(totalCount, ((List<Object>) entities));
+				GGAPIPage page = new GGAPIPage(totalCount, ((List<Object>) finalEntityList));
 				event.setOut(page);
 			} else {
-				event.setOut(entities);
+				event.setOut(finalEntityList);
 			}
-			
+			event.setCode(GGAPIServiceResponseCode.OK);
 			return event;
 		};
 		
@@ -113,6 +148,7 @@ public class GGAPIService implements IGGAPIService {
 			event.setIn(GGAPIEntityIdentifier.UUID+":"+uuid);
 			Object entity = this.factory.getEntityFromRepository(caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 			event.setOut(entity);
+			event.setCode(GGAPIServiceResponseCode.OK);
 			return event;
 		};
 		
@@ -124,9 +160,10 @@ public class GGAPIService implements IGGAPIService {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(entity);
 			customParameters.put("uuid", uuid);
-			GGAPIEntityHelper.setUuid(entity, uuid);
-			GGAPIEntityHelper.save(entity, caller, customParameters, this.security);
+			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, uuid);
+			GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
 			event.setOut(entity);
+			event.setCode(GGAPIServiceResponseCode.UPDATED);
 			return event;
 		};
 		
@@ -140,6 +177,7 @@ public class GGAPIService implements IGGAPIService {
 			Object entity = this.factory.getEntityFromRepository(caller, customParameters, GGAPIEntityIdentifier.UUID, uuid);
 			GGAPIEntityHelper.delete(entity, caller, customParameters);
 			event.setOut(entity);
+			event.setCode(GGAPIServiceResponseCode.DELETED);
 			return event;
 		};
 		
@@ -150,12 +188,13 @@ public class GGAPIService implements IGGAPIService {
 	public IGGAPIServiceResponse deleteAll(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(filter);
-			customParameters.put("filter", filter.toString());
+			if( filter != null )
+				customParameters.put("filter", filter.toString());
 			List<?> entities = this.factory.getEntitiesFromRepository(caller, null, filter, null, customParameters);
 			for( Object entity: entities ) {
 					GGAPIEntityHelper.delete(entity, caller, customParameters);
 			}
-
+			event.setCode(GGAPIServiceResponseCode.DELETED);
 			return event;
 		};
 		
@@ -166,6 +205,7 @@ public class GGAPIService implements IGGAPIService {
 	public IGGAPIServiceResponse getCount(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) {
 		IGGAPIServiceCommand command = (event) -> {
 			long totalCount = this.factory.countEntities(caller, filter, customParameters);
+			event.setCode(GGAPIServiceResponseCode.OK);
 			event.setOut(totalCount);
 			return event;
 		};
@@ -177,17 +217,29 @@ public class GGAPIService implements IGGAPIService {
 		IGGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
 		try {
 			if (allowed.isAllowed()) {
-				try {
-					event = command.execute(event);
-					event.setCode(GGAPIServiceResponseCode.OK);
-				} catch (GGAPIException e) {
-					event.setExceptionMessage(e.getMessage());
-					event.setExceptionCode(e.getCode().getCode());
-					event.setCode(GGAPIServiceResponseCode.SERVER_ERROR);
-				} catch (Exception e) {
-					event.setExceptionMessage(e.getMessage());
-					event.setOut(new String("Unexpected internal server error"));
-					event.setCode(GGAPIServiceResponseCode.SERVER_ERROR);
+				
+				if( !this.checkTenantIdIsPresent(caller) ) {
+					event.setOut("TenantId not provided");
+					event.setCode(GGAPIServiceResponseCode.CLIENT_ERROR);
+				} else {
+					try {
+						event = command.execute(event);
+					} catch (GGAPIException e) {
+						if( log.isDebugEnabled() ) {
+							log.warn("Error ",e);
+						}
+						event.setExceptionMessage(e.getMessage());
+						event.setOut(e.getMessage());
+						event.setExceptionCode(e.getCode().getCode());
+						event.setCode(GGAPIServiceResponseCode.fromExceptionCode(e));
+					} catch (Exception e) {
+						if( log.isDebugEnabled() ) {
+							log.warn("Error ",e);
+						}
+						event.setExceptionMessage(e.getMessage());
+						event.setOut(e.getMessage());
+						event.setCode(GGAPIServiceResponseCode.SERVER_ERROR);
+					}
 				}
 			} else {
 				event.setCode(GGAPIServiceResponseCode.NOT_AVAILABLE);
@@ -201,6 +253,12 @@ public class GGAPIService implements IGGAPIService {
 			}
 		}
 		return event.toServiceResponse();
+	}
+
+	private boolean checkTenantIdIsPresent(IGGAPICaller caller) {
+		if( !caller.isAnonymous() && (caller.getTenantId() == null || caller.getTenantId().isEmpty()) )
+			return false;
+		return true;
 	}
 
 }

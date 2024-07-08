@@ -17,7 +17,6 @@ import lombok.Data;
 @Data
 public class GenericGGAPIDto {
 	
-
 	@GGFieldMappingRule(sourceFieldAddress = "uuid")
 	protected String uuid;
 	
@@ -25,7 +24,5 @@ public class GenericGGAPIDto {
 	protected String id;
 	
 	@GGAPIDtoTenantId
-	@GGFieldMappingRule(sourceFieldAddress = "tenantId")
 	protected String tenantId;
-
 }

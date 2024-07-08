@@ -1,9 +1,46 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.garganttua</groupId>
-    <artifactId>garganttua-api</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
-  </parent>
-  <artifactId>garganttua-api-spring</artifactId>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api</artifactId>
+		<version>2.0.0-SNAPSHOT</version>
+	</parent>
+	<packaging>pom</packaging>
+	<artifactId>garganttua-api-spring</artifactId>
+
+	<properties>
+		<spring.version>3.0.5</spring.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>	
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-core</artifactId>
+			<version>2.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+			<version>${spring.version}</version>
+		</dependency>
+	</dependencies>
+	
+	<modules>
+<!--		<module>garganttua-api-spring-security</module>-->
+		<module>garganttua-api-interface-spring-rest</module>
+		<module>garganttua-api-interface-spring-rest-swagger</module>
+		<module>garganttua-api-dao-spring-mongo</module>
+		<module>garganttua-api-spring-core</module>
+	</modules>
 </project>

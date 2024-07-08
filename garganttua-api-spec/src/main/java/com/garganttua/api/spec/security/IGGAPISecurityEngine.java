@@ -1,6 +1,9 @@
 package com.garganttua.api.spec.security;
 
 import java.util.Optional;
+import java.util.Set;
+
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 
 public interface IGGAPISecurityEngine {
 
@@ -13,6 +16,8 @@ public interface IGGAPISecurityEngine {
 	Optional<IGGAPIOwnerVerifier> getOwnerVerifier();
 
 	Optional<IGGAPIAuthorizationManager> getAuthorizationManager();
+
+	void init(Set<IGGAPIDomain> domains);
 
 
 }

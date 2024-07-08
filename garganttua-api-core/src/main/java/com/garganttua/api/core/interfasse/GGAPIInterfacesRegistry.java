@@ -1,0 +1,31 @@
+package com.garganttua.api.core.interfasse;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.garganttua.api.spec.interfasse.IGGAPIInterface;
+import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
+
+public class GGAPIInterfacesRegistry implements IGGAPIInterfacesRegistry {
+
+	private Map<String, List<IGGAPIInterface>> interfaces;
+
+	public GGAPIInterfacesRegistry(Map<String, List<IGGAPIInterface>> interfaces) {
+		this.interfaces = interfaces;
+	}
+
+	@Override
+	public List<IGGAPIInterface> getInterfaces(String name) {
+		return this.interfaces.get(name);
+	}
+
+	@Override
+	public List<IGGAPIInterface> getInterfaces() {
+		List<IGGAPIInterface> list = new ArrayList<IGGAPIInterface>();
+		this.interfaces.values().parallelStream().forEach(interfaces -> {
+			list.addAll(interfaces);
+		});	
+		return list ;
+	}
+}

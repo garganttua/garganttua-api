@@ -24,7 +24,6 @@ import com.garganttua.api.spec.security.IGGAPISecurity;
 import com.garganttua.api.spec.sort.IGGAPISort;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -52,9 +51,6 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	
 	@Setter
 	private IGGAPIRepository<Object> repository;
-
-	@Setter
-	private IGGBeanLoader beanLoader;
 	
 	@Setter
 	private IGGInjector injector;
@@ -74,14 +70,13 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	}
 
 	@Override
-	public Object prepareNewEntity(Map<String, String> customParameters, Object entity) throws GGAPIException {
+	public Object prepareNewEntity(Map<String, String> customParameters, Object entity, String uuid) throws GGAPIException {
 		if( entity == null ) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "Entity is null");
 		}
 		try {
 			GGAPIEntityHelper.setGotFromRepository( entity, false );
-			GGAPIEntityHelper.setUuid(entity, null);
-			GGAPIEntityHelper.setRepository( entity, this.repository );
+			GGAPIEntityHelper.setUuid(entity, uuid);
 			this.setEntityMethodsAndFields(repository, customParameters, this.domain, entity);
 			
 			return entity;
@@ -116,11 +111,12 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		
 		if( entity == null ) {
 			log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with Uuid " + uuid + " not found");
-			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "Entity does not exist");
+			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Entity does not exist");
 		}
 
 		GGAPIEntityHelper.setRepository( entity, repository );
 		this.executeAfterGetProcedure(caller, customParameters, entity, repository);
+		this.setEntityMethodsAndFields(repository, customParameters, this.domain, entity);
 		GGAPIEntityHelper.setGotFromRepository(entity, true);
 		return entity;
 	}
@@ -141,6 +137,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		for( Object entity: entities) {
 			this.executeAfterGetProcedure(caller, customParameters, entity, this.repository);
 			GGAPIEntityHelper.setGotFromRepository(entity, true);
+			this.setEntityMethodsAndFields(repository, customParameters, this.domain, entity);
 		}
 		return entities;
 	}
@@ -177,11 +174,13 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	}
 	
 	private void injectDependenciesAndValues(Object entity) throws GGAPIException {
-		try {
-			this.injector.injectBeans(entity);
-			this.injector.injectProperties(entity);
-		} catch (GGReflectionException e) {
-			throw new GGAPIEngineException(e);
+		if( this.injector != null ) {
+			try {
+				this.injector.injectBeans(entity);
+				this.injector.injectProperties(entity);
+			} catch (GGReflectionException e) {
+				throw new GGAPIEngineException(e);
+			}
 		}
     }
 

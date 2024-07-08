@@ -20,6 +20,7 @@ public enum GGAPIExceptionCode {
 	ENTITY_ALREADY_EXISTS			(105),
 	BAD_REQUEST						(106),
 	INVOKE_METHOD					(107),
+	ENTITY_NOT_FOUND				(108), 
 	
 	//Dto error codes
 	DTO_DEFINITION					(110),
@@ -57,7 +58,7 @@ public enum GGAPIExceptionCode {
 	KEY_ERROR						(221), 
 	
 	// Authentication error codes
-	FAILED_AUTHENTICATION			(230), 
+	FAILED_AUTHENTICATION			(230),
 	
 	
 	;

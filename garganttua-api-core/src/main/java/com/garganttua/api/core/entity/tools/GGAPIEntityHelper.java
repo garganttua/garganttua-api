@@ -40,17 +40,25 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);
 		} catch (GGReflectionException e) {
+			GGAPIEntityHelper.processException(e);
+		}
+	}
+
+	private static void processException(GGReflectionException e) throws GGAPIException, GGAPIEntityException {
+		GGAPIException apiException = GGAPIException.findFirstInException(e);
+		if( apiException != null ) {
+			throw apiException;
+		} else {
 			throw new GGAPIEntityException(e);
 		}
 	}
-	
 	
 	public static void delete(Object entity, IGGAPICaller caller, Map<String, String> parameters) throws GGAPIException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
 			GGObjectQueryFactory.objectQuery(entity).invoke(infos.deleteMethodAddress(), caller, parameters);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		}
 	}
 
@@ -59,7 +67,7 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.uuidFieldAddress(), uuid);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
 	}
 	
@@ -68,7 +76,7 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.idFieldAddress(), id);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
 	}
 
@@ -77,7 +85,7 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.repositoryFieldAddress(), repository);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
 	}
 	
@@ -86,7 +94,7 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.gotFromRepositoryFieldAddress(), b);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
 	}
 
@@ -95,7 +103,7 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.saveProviderFieldAddress(), method);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
 	}
 
@@ -104,7 +112,7 @@ public class GGAPIEntityHelper {
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.deleteProviderFieldAddress(), method);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
 	}
 	
@@ -113,8 +121,10 @@ public class GGAPIEntityHelper {
 		try {
 			return (String) GGObjectQueryFactory.objectQuery(entity).getValue(infos.uuidFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
-		} 
+			GGAPIEntityHelper.processException(e);
+		}
+		// Should never be reached
+		return null; 
 	}
 	
 	public static String getId(Object entity) throws GGAPIException {
@@ -122,8 +132,10 @@ public class GGAPIEntityHelper {
 		try {
 			return (String) GGObjectQueryFactory.objectQuery(entity).getValue( infos.idFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
+		// Should never be reached
+		return null; 
 	}
 
 	@SuppressWarnings("unchecked")
@@ -132,8 +144,10 @@ public class GGAPIEntityHelper {
 		try {
 			return (IGGAPIRepository<Object>) GGObjectQueryFactory.objectQuery(entity).getValue(infos.repositoryFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
+		// Should never be reached
+		return null; 
 	}
 	
 	public static boolean isGotFromRepository(Object entity) throws GGAPIException {
@@ -141,8 +155,10 @@ public class GGAPIEntityHelper {
 		try {
 			return (boolean) GGObjectQueryFactory.objectQuery(entity).getValue(infos.gotFromRepositoryFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
+		// Should never be reached
+		return false; 
 	}
 
 	public static IGGAPIEntitySaveMethod<?> getSaveMethodProvider(Object entity) throws GGAPIException {
@@ -150,8 +166,10 @@ public class GGAPIEntityHelper {
 		try {
 			return (IGGAPIEntitySaveMethod<?>) GGObjectQueryFactory.objectQuery(entity).getValue(infos.saveProviderFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
+		// Should never be reached
+		return null; 
 	}
 
 	public static IGGAPIEntityDeleteMethod<?> getDeleteMethodProvider(Object entity) throws GGAPIException {
@@ -159,16 +177,20 @@ public class GGAPIEntityHelper {
 		try {
 			return (IGGAPIEntityDeleteMethod<?>) GGObjectQueryFactory.objectQuery(entity).getValue(infos.deleteProviderFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		} 
+		// Should never be reached
+		return null; 
 	}
 
 	public static Object newInstance(Class<?> entityClass) throws GGAPIException {
 		try {
 			return GGObjectReflectionHelper.instanciateNewObject(entityClass);
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		}
+		// Should never be reached
+		return null; 
 	}
 
 	public static Object newExampleInstance(Class<?> clazz, IGGAPIFilter filter) throws GGAPIException {
@@ -178,6 +200,9 @@ public class GGAPIEntityHelper {
 	}
 
 	private static void setObjectValuesFromFilter(Object object, IGGAPIFilter filter) throws GGAPIException {
+		if( filter == null ) {
+			return;
+		}
 		if( filter.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
 			String fieldAddress = (String) filter.getValue();
 			Object fieldValue = filter.getLiterals().get(0).getValue();
@@ -201,7 +226,9 @@ public class GGAPIEntityHelper {
 		try {
 			return (String) GGObjectQueryFactory.objectQuery(entity).getValue(infos.tenantIdFieldAddress());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			GGAPIEntityHelper.processException(e);
 		}
+		// Should never be reached
+		return null; 
 	}
 }

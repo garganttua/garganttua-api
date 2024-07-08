@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.security.annotations;
 
-import com.garganttua.api.spec.security.GGAPIServiceAccess;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 public @interface GGEntitySecurity {
 	

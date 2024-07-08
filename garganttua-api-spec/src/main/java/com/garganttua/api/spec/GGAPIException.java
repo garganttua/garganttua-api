@@ -27,4 +27,15 @@ public abstract class GGAPIException extends Exception {
 			this.code = GGAPIExceptionCode.UNKNOWN_ERROR;
 		}
 	}
+
+	public static GGAPIException findFirstInException(Exception exception) {
+        Throwable cause = exception.getCause();
+        while (cause != null) {
+            if (cause instanceof GGAPIException) {
+                return (GGAPIException) cause;
+            }
+            cause = cause.getCause();
+        }
+        return null;
+	}
 }

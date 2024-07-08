@@ -10,7 +10,6 @@ import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
-import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
@@ -19,13 +18,11 @@ public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
 
 	List<Entity> getEntitiesFromRepository(IGGAPICaller caller, IGGAPIPageable pageable, IGGAPIFilter filter, IGGAPISort sort, Map<String, String> customParameters) throws GGAPIException;
 
-	Entity prepareNewEntity(Map<String, String> customParameters, Entity entity) throws GGAPIException;
+	Entity prepareNewEntity(Map<String, String> customParameters, Entity entity, String uuid) throws GGAPIException;
 
 	long countEntities(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) throws GGAPIException;
 	
 	void setRepository(IGGAPIRepository<Object> repo);
-	
-	void setBeanLoader(IGGBeanLoader beanLoader);
 
 	void setPropertyLoader(IGGPropertyLoader propertyLoader);
 

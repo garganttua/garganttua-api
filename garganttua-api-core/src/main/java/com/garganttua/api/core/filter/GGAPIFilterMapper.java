@@ -35,8 +35,13 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 		}
 		
 		List<Pair<Class<?>, IGGAPIFilter>> filters = new ArrayList<Pair<Class<?>,IGGAPIFilter>>();
-		
+
 		for( Pair<Class<?>, GGAPIDtoInfos> destinationClass: domain.getDtos() ) {
+			if( filter == null ) {
+				filters.add(new Pair<Class<?>, IGGAPIFilter>(destinationClass.getValue0(), null));
+				continue;
+			}
+			
 			List<GGMappingRule> mappingRules = null;
 			try {
 				mappingRules = GGMappingRules.parse(destinationClass.getValue0());
@@ -46,7 +51,8 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 			if( log.isDebugEnabled() ) {
 				log.debug("Creating new filter from filter {} with rules {}", filter, mappingRules);
 			}
-			IGGAPIFilter mappedFilter = this.map(mappingRules, filter.clone(), null);
+
+			IGGAPIFilter mappedFilter = this.map(mappingRules, filter, null);
 			if( mappedFilter != null ) {
 				filters.add(new Pair<Class<?>, IGGAPIFilter>(destinationClass.getValue0(), mappedFilter));
 			}
@@ -68,6 +74,9 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 	}
 
 	private void setCorrespondingValuesToFilter(IGGAPIFilter filter, Object dtoExample) throws GGAPIException {
+		if( filter == null ) {	
+			return;
+		}
 		if( filter.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
 			String fieldAddress = (String) filter.getValue();
 			Object value = null;
@@ -85,9 +94,12 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 	}
 
 	private IGGAPIFilter map(List<GGMappingRule> mappingRules, IGGAPIFilter filter, IGGAPIFilter parent) throws GGAPIException {
-		
-		if( filter.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
-			String fieldAddress = (String) filter.getValue();
+		if( filter == null ) {
+			return null;
+		}
+		IGGAPIFilter filterCloned = filter.clone();
+		if( filterCloned.getName().equals(GGAPILiteral.OPERATOR_FIELD) ) {
+			String fieldAddress = (String) filterCloned.getValue();
 			if( log.isDebugEnabled() ) {
 				log.debug("Looking for coresponding mapping rule for field with address {}", fieldAddress);
 			}
@@ -95,7 +107,7 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 			for( GGMappingRule rule: mappingRules ) {
 				try {
 					if( rule.sourceFieldAddress().equals(new GGObjectAddress(fieldAddress)) ) {
-						filter.setValue(rule.destinationFieldAddress().toString());
+						filterCloned.setValue(rule.destinationFieldAddress().toString());
 						found = true;
 						break;
 					}
@@ -104,22 +116,22 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 				}
 			}
 			if( !found && parent != null ) {
-				parent.removeSubLiteral(filter);
+				parent.removeSubLiteral(filterCloned);
 				return null;
 			} else if( !found ) {
 				return null;
 			}
 		} else {
 			if( log.isDebugEnabled() ) {
-				log.debug("Parsing sub literals of {}", filter.getName());
+				log.debug("Parsing sub literals of {}", filterCloned.getName());
 			}
-			for( IGGAPIFilter literal: filter.clone().getLiterals()) {
-				IGGAPIFilter mappedFilter = this.map(mappingRules, literal.clone(), filter);
+			for( IGGAPIFilter literal: filterCloned.clone().getLiterals()) {
+				IGGAPIFilter mappedFilter = this.map(mappingRules, literal.clone(), filterCloned);
 				if( mappedFilter != null ) {
-					filter.replaceSubLiteral(literal, mappedFilter);
+					filterCloned.replaceSubLiteral(literal, mappedFilter);
 				}
 			}
 		}
-		return filter;
+		return filterCloned;
 	}
 }

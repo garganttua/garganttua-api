@@ -20,7 +20,6 @@ import com.garganttua.api.spec.IGGAPICaller;
 import com.garganttua.api.spec.dao.IGGAPIDao;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
@@ -104,8 +103,10 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 		List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 		objects = this.daoRepository.find(pageable, dtoFilters.get(0).getValue1(), sort);
 		try {
-			for( Object object: objects) {
-				entities.add(this.entityMapper.map(object, this.domain.getEntity().getValue0()));
+			if( objects != null ) {
+				for( Object object: objects) {
+					entities.add(this.entityMapper.map(object, this.domain.getEntity().getValue0()));
+				}
 			}
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
@@ -133,7 +134,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 			if( storedObject != null ){
 				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Updating entity with uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
 				
-				this.entityUpdater.update(caller, storedObject, entity);
+				this.entityUpdater.update(caller, storedObject, entity, this.domain.getEntity().getValue1().updateAuthorizations());
 				this.daoRepository.save(storedObject);
 				return this.entityMapper.map(storedObject, this.domain.getEntity().getValue0());
 			

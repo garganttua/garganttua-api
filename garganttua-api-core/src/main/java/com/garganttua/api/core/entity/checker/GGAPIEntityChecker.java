@@ -60,14 +60,15 @@ import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
 
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-//@Slf4j
+@Slf4j
 public class GGAPIEntityChecker {
 	
 	public static GGAPIEntityInfos checkEntityClass(Class<?> entityClass) throws GGAPIException {
-//		if (log.isDebugEnabled()) {
-//			log.debug("Checking entity infos from class " + entityClass.getName());
-//		}
+		if (log.isDebugEnabled()) {
+			log.debug("Checking entity infos from class " + entityClass.getName());
+		}
 		GGAPIEntity annotation = entityClass.getDeclaredAnnotation(GGAPIEntity.class);
 		
 		if( annotation == null ) {

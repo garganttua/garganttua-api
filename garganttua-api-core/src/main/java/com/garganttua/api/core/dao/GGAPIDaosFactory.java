@@ -39,7 +39,7 @@ public class GGAPIDaosFactory {
 
 	@SuppressWarnings({ "unchecked" })
 	private void collectDaos() throws GGReflectionException {
-		log.info("Creating DAOs ...");
+		log.info("*** Creating Daos ...");
 		for( IGGAPIDomain domain: this.domains ){
 			ArrayList<Pair<Class<?>, IGGAPIDao<?>>> domainDaos = new ArrayList<Pair<Class<?>, IGGAPIDao<?>>>();
 			List<Pair<Class<?>, GGAPIDtoInfos>> domainDtos = domain.getDtos();
@@ -54,7 +54,7 @@ public class GGAPIDaosFactory {
 				
 				domainDaos.add(new Pair<Class<?>, IGGAPIDao<?>>(dto.getValue0(), dao));
 				
-				log.info("	DAO added [domain {}, dao {}]", domain.getEntity().getValue1().domain(), db);
+				log.info("	Dao added [domain {}, dao {}]", domain.getEntity().getValue1().domain(), db);
 			}
 
 			this.daos.put(domain.getEntity().getValue1().domain(), domainDaos);

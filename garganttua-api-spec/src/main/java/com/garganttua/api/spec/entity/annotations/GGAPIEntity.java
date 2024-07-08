@@ -23,11 +23,7 @@ public @interface GGAPIEntity {
 
 	boolean allow_count() default true;
 	
-	String[] interfaces() default {};
-
-	String[] daos() default {};
-	
-	String openApiSchemas() default "";
+	String[] interfaces();
 	
 	String eventPublisher() default "";
 

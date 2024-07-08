@@ -5,27 +5,40 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.javatuples.Pair;
+
 import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
 import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
 public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 
-	private Map<String, IGGAPIService> services = new HashMap<String, IGGAPIService>();
+	private Map<String, Pair<IGGAPIService, List<IGGAPIServiceInfos>>> services = new HashMap<String, Pair<IGGAPIService, List<IGGAPIServiceInfos>>>();
 
-	public GGAPIServicesRegistry(Map<String, IGGAPIService> services) {
+	public GGAPIServicesRegistry(Map<String, Pair<IGGAPIService, List<IGGAPIServiceInfos>>> services) {
 		this.services = services;
 	}
 
 	@Override
-	public IGGAPIService getService( String name) {
-		return this.services.get(name);
+	public IGGAPIService getService(String domain) {
+		return this.services.get(domain).getValue0();
+	}
+	
+	@Override
+	public List<IGGAPIServiceInfos> getServiceInfos(String domain){
+		return this.services.get(domain).getValue1();
 	}
 
 	@Override
 	public List<IGGAPIService> getServices() {
-		return new ArrayList<IGGAPIService>(this.services.values());
+		ArrayList<IGGAPIService> servicesList = new ArrayList<IGGAPIService>();
+		this.services.values().parallelStream().forEach(pair -> {
+			servicesList.add(pair.getValue0());
+		});
+
+		return servicesList;
 	}
-//	
+	
 //	private Optional<IGGAPIEventPublisher> getEventPublisher(GGAPIDomain domain) throws GGAPIEngineException {
 //		if( domain.event != null && !domain.event.isEmpty() ) {
 //			return Optional.ofNullable(this.helper.getObjectFromConfiguration(domain.event, IGGAPIEventPublisher.class));
@@ -89,65 +102,6 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 //		}
 //	}
 //
-//	private void createRequestMappings(GGAPIDomain ddomain,
-//			IGGAPIService service, String baseUrl, List<IGGAPICustomService> customServices)
-//			throws NoSuchMethodException {
-//		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
-//		options.setPatternParser(new PathPatternParser());
-//
-//		RequestMappingInfo requestMappingInfoGetAll = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.GET)
-//				.options(options).build();
-//		RequestMappingInfo requestMappingInfoDeleteAll = RequestMappingInfo.paths(baseUrl)
-//				.methods(RequestMethod.DELETE).options(options).build();
-//		RequestMappingInfo requestMappingInfoCreate = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.POST)
-//				.options(options).build();
-//		RequestMappingInfo requestMappingInfoCount = RequestMappingInfo.paths(baseUrl + "/count")
-//				.methods(RequestMethod.GET).options(options).build();
-//		RequestMappingInfo requestMappingInfoGetOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
-//				.methods(RequestMethod.GET).options(options).build();
-//		RequestMappingInfo requestMappingInfoUpdate = RequestMappingInfo.paths(baseUrl + "/{uuid}")
-//				.methods(RequestMethod.PATCH).options(options).build();
-//		RequestMappingInfo requestMappingInfoDeleteOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
-//				.methods(RequestMethod.DELETE).options(options).build();
-//
-//		if (ddomain.allow_read_all) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, service,
-//					service.getClass().getMethod("getEntities",IGGAPICaller.class, GGAPIReadOutputMode.class, Integer.class,
-//							Integer.class, String.class, String.class, String.class));
-//		}
-//		if (ddomain.allow_delete_all) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, service,
-//					service.getClass().getMethod("deleteAll", IGGAPICaller.class,  String.class, String.class));
-//		}
-//		if (ddomain.allow_creation) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, service,
-//					service.getClass().getMethod("createEntity", IGGAPICaller.class, String.class, String.class));
-//		}
-//		if (ddomain.allow_count) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, service,
-//					service.getClass().getMethod("getCount", IGGAPICaller.class, String.class, String.class));
-//		}
-//		if (ddomain.allow_read_one) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, service,
-//					service.getClass().getMethod("getEntity", IGGAPICaller.class, String.class, String.class));
-//		}
-//		if (ddomain.allow_update_one) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, service,
-//					service.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, String.class));
-//		}
-//		if (ddomain.allow_delete_one) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, service,
-//					service.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class, String.class));
-//		}
-//
-//		for (IGGAPICustomService cservice : customServices) {
-//			HttpMethod method = GGAPIServiceMethodToHttpMethodBinder.fromServiceMethod(cservice.getAccessRule().getMethod());
-//			this.requestMappingHandlerMapping.registerMapping(	
-//				RequestMappingInfo.paths(cservice.getAccessRule().getEndpoint()).methods(RequestMethod.resolve(method)).options(options).build(), 
-//				service, 
-//				service.getClass().getMethod(cservice.getMethodName(), cservice.getParameters())
-//			);
-//		}
-//	}
+
 
 }

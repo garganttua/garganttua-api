@@ -1,10 +1,11 @@
 package com.garganttua.api.spec.updater;
 
-import com.garganttua.api.spec.GGAPIException;
+import java.util.Map;
+
 import com.garganttua.api.spec.IGGAPICaller;
 
 public interface IGGAPIEntityUpdater<Entity> {
 
-	Entity update(IGGAPICaller caller, Entity storedObject, Entity newObject) throws GGAPIException;
+	Entity update(IGGAPICaller caller, Object storedEntity, Object updatedEntity, Map<String, String> updateAuthorizations);
 
 }

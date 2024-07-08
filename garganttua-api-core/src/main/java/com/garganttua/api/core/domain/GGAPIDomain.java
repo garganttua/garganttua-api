@@ -9,6 +9,7 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
+import com.garganttua.api.core.security.entity.GGAPIEntitySecurityInfos;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
@@ -32,9 +33,9 @@ public class GGAPIDomain implements IGGAPIDomain {
 	@Getter
 	private List<Pair<Class<?>, GGAPIDtoInfos>> dtos;
 	@Getter
-	private String[] interfaces;
+	private GGAPIEntitySecurityInfos security;
 	@Getter
-	private String[] daos;
+	private String[] interfaces;
 	@Getter
 	private String event;
 	@Getter
@@ -63,20 +64,20 @@ public class GGAPIDomain implements IGGAPIDomain {
 				&& allowReadOne == that.allowReadOne && allowUpdateOne == that.allowUpdateOne
 				&& allowDeleteOne == that.allowDeleteOne && allowDeleteAll == that.allowDeleteAll
 				&& allowCount == that.allowCount && Objects.equals(entity, that.entity)
-				&& Objects.equals(dtos, that.dtos) && Objects.equals(interfaces, that.interfaces)
-				&& Objects.equals(event, that.event) && Objects.equals(daos, that.daos);
+				&& Objects.equals(dtos, that.dtos) && Objects.equals(security, that.security) && Objects.equals(interfaces, that.interfaces)
+				&& Objects.equals(event, that.event);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(entity, dtos, interfaces, event, daos, allowCreation, allowReadAll, allowReadOne,
+		return Objects.hash(entity, dtos, security, interfaces, event, allowCreation, allowReadAll, allowReadOne,
 				allowUpdateOne, allowDeleteOne, allowDeleteAll, allowCount);
 	}
 
 	@Override
 	public String toString() {
-		return "GGAPIDomain{" + "domain=" + domain + ", entity=" + entity + ", dtos=" + dtos + ", ws='" + interfaces
-				+ '\'' + ", event='" + event + '\'' + ", repo='" + daos + '\'' + ", allow_creation=" + allowCreation
+		return "GGAPIDomain{" + "domain=" + domain + ", entity=" + entity + ", dtos=" + dtos + ", security= "+security+", interfaces='" + interfaces
+				+ '\'' + ", event='" + event + '\'' + ", allow_creation=" + allowCreation
 				+ ", allow_read_all=" + allowReadAll + ", allow_read_one=" + allowReadOne + ", allow_update_one="
 				+ allowUpdateOne + ", allow_delete_one=" + allowDeleteOne + ", allow_delete_all=" + allowDeleteAll
 				+ ", allow_count=" + allowCount + '}';
@@ -121,11 +122,10 @@ public class GGAPIDomain implements IGGAPIDomain {
 		boolean allow_count = entityAnnotation.allow_count();
 
 		String event = entityAnnotation.eventPublisher();
-		String[] daos = entityAnnotation.daos();
 		String[] interfaces = entityAnnotation.interfaces();
 
-		return new GGAPIDomain(infos.domain(), new Pair<Class<?>, GGAPIEntityInfos>(entityClass, infos), dtos,
-				interfaces, daos, event, allow_creation, allow_read_all, allow_read_one, allow_update_one,
+		return new GGAPIDomain(infos.domain(), new Pair<Class<?>, GGAPIEntityInfos>(entityClass, infos), dtos, null,
+				interfaces, event, allow_creation, allow_read_all, allow_read_one, allow_update_one,
 				allow_delete_one, allow_delete_all, allow_count);
 	}
 }

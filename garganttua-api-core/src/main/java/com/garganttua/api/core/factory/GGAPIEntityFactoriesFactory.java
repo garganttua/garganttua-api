@@ -23,7 +23,7 @@ public class GGAPIEntityFactoriesFactory {
 	}
 
 	private void collectFactories() throws GGAPIException {
-		log.info("Creating Factories ...");
+		log.info("*** Creating Factories ...");
 
 		for( IGGAPIDomain domain: this.domains ) {
 			IGGAPIEntityFactory<Object> factory = new GGAPIEntityFactory(domain);
@@ -36,5 +36,4 @@ public class GGAPIEntityFactoriesFactory {
 	public IGGAPIFactoriesRegistry getRegistry() {
 		return new GGAPIFactoriesRegistry(this.factories);
 	}
-
 }

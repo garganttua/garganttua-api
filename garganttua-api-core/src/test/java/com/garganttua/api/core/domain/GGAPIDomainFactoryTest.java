@@ -20,7 +20,7 @@ public class GGAPIDomainFactoryTest {
 		Collection<IGGAPIDomain> domains = df.getDomains();
 		
 		assertNotNull(domains);
-		assertEquals(1, domains.size());
+		assertEquals(2, domains.size());
 	}
 	
 	@Test

@@ -108,8 +108,8 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		if( domain.getEntity().getValue1().unicityFields() != null && domain.getEntity().getValue1().unicityFields().size() > 0) {
 			List<Entity> entities = this.checkUnicityFields(domain, repository, caller, entity, domain.getEntity().getValue1().unicityFields() );
 			if( entities.size() != 1 && !GGAPIEntityHelper.getUuid(entities.get(0)).equals(GGAPIEntityHelper.getUuid(entity))) {
-				log.warn("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists");
-				throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists");
+				log.warn("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
+				throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
 			}
 		}
 	}
@@ -136,8 +136,8 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 			IGGAPICaller caller, Entity entity) throws GGAPIException {
 		if( domain.getEntity().getValue1().unicityFields() != null && domain.getEntity().getValue1().unicityFields().size() > 0) {
 			if( this.checkUnicityFields(domain, repository, caller, entity, domain.getEntity().getValue1().unicityFields()).size() > 0 ) {
-				log.warn("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists");
-				throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists");
+				log.warn("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
+				throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
 			}
 		}
 	}

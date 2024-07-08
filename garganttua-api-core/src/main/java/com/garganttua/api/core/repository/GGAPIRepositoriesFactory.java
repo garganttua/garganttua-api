@@ -23,7 +23,7 @@ public class GGAPIRepositoriesFactory {
 	}
 
 	private void collectRepository() {
-		log.info("Creating Repositories ...");
+		log.info("*** Creating Repositories ...");
 		for( IGGAPIDomain ddomain: this.domains ){
 		
 			IGGAPIRepository<Object> repo;

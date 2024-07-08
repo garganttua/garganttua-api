@@ -35,7 +35,6 @@
 	</distributionManagement>
 
 	<properties>
-		<!--		<spring.version>3.0.5</spring.version>-->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -63,19 +62,6 @@
 
 		<!--		<dependency>-->
 		<!--			<groupId>org.springframework.boot</groupId>-->
-		<!--			<artifactId>spring-boot-starter-data-mongodb</artifactId>-->
-		<!--			<version>${spring.version}</version>-->
-		<!--			<scope>provided</scope>-->
-		<!--		</dependency>-->
-
-		<!--		<dependency>-->
-		<!--			<groupId>org.springframework.boot</groupId>-->
-		<!--			<artifactId>spring-boot-starter-web</artifactId>-->
-		<!--			<version>${spring.version}</version>-->
-		<!--		</dependency>-->
-
-		<!--		<dependency>-->
-		<!--			<groupId>org.springframework.boot</groupId>-->
 		<!--			<artifactId>spring-boot-starter-security</artifactId>-->
 		<!--			<version>${spring.version}</version>-->
 		<!--			<scope>provided</scope>-->
@@ -98,24 +84,9 @@
 
 
 
-		<!--		<dependency>-->
-		<!--			<groupId>org.springdoc</groupId>-->
-		<!--			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>-->
-		<!--			<version>2.2.0</version>-->
-		<!--		</dependency>-->
 
-		<!--		<dependency>-->
-		<!--			<groupId>io.swagger.parser.v3</groupId>-->
-		<!--			<artifactId>swagger-parser-v3</artifactId>-->
-		<!--			<version>2.1.16</version>-->
-		<!--		</dependency>-->
 
-		<!--bugfix -->
-		<!--		<dependency>-->
-		<!--			<groupId>jakarta.xml.bind</groupId>-->
-		<!--			<artifactId>jakarta.xml.bind-api</artifactId>-->
-		<!--			<version>4.0.1</version>-->
-		<!--		</dependency>-->
+
 
 		<!--		<dependency>-->
 		<!--			<groupId>io.jsonwebtoken</groupId>-->
@@ -135,11 +106,7 @@
 		<!--			<version>0.11.5</version>-->
 		<!--		</dependency>-->
 
-		<!--		<dependency>-->
-		<!--			<groupId>com.github.spullara.mustache.java</groupId>-->
-		<!--			<artifactId>compiler</artifactId>-->
-		<!--			<version>0.9.10</version>-->
-		<!--		</dependency>-->
+
 
 		<!--		<dependency>-->
 		<!--			<groupId>de.grundid.opendatalab</groupId>-->
@@ -153,16 +120,7 @@
 		<!--			</exclusions>-->
 		<!--		</dependency>-->
 
-		<!-- BugFix : having 500 internal error code when requesting swagger-ui -->
-		<!-- The API throws an exception : java.lang.ClassNotFoundException:
-		jakarta.validation.constraints.Min -->
-		<!-- When building a domain by extending objects and creating beans -->
-		<!-- The bug is not present for dynamic domains -->
-		<!--		<dependency>-->
-		<!--			<groupId>org.hibernate.validator</groupId>-->
-		<!--			<artifactId>hibernate-validator</artifactId>-->
-		<!--			<version>8.0.0.Final</version>-->
-		<!--		</dependency>-->
+
 
 
 	</dependencies>
@@ -199,11 +157,9 @@
 	</build>
 
 	<modules>
-		<module>garganttua-api-core</module>
 		<module>garganttua-api-spec</module>
+		<module>garganttua-api-core</module>
+		<module>garganttua-api-core-security</module>
 		<module>garganttua-api-spring</module>
-		<module>garganttua-api-spring-security</module>
-		<module>garganttua-api-spring-rest</module>
-		<module>garganttua-api-dao-spring-mongo</module>
 	</modules>
 </project>

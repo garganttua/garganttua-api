@@ -36,7 +36,7 @@ public class GGAPIDomainsFactory {
 	}
 	
 	private void collectDomains() throws GGAPIEngineException {
-		log.info("Collecting Domains ...");
+		log.info("*** Collecting Domains ...");
 		if( this.packages == null ) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.CORE_GENERIC_CODE, "No packages");
 		}

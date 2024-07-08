@@ -1,25 +1,32 @@
 package com.garganttua.api.core.engine;
 
 import java.util.List;
-import java.util.Optional;
+
+import org.javatuples.Pair;
 
 import com.garganttua.api.core.dao.GGAPIDaosFactory;
 import com.garganttua.api.core.domain.GGAPIDomainsFactory;
 import com.garganttua.api.core.factory.GGAPIEntityFactoriesFactory;
+import com.garganttua.api.core.interfasse.GGAPIInterfacesFactory;
 import com.garganttua.api.core.repository.GGAPIRepositoriesFactory;
+import com.garganttua.api.core.service.GGAPIServicesFactory;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.dao.IGGAPIDao;
 import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.engine.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.interfasse.IGGAPIInterface;
+import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
+import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.beans.IGGBeanLoader;
-import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,28 +34,62 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGApiEngine implements IGGAPIEngine {
 
-	private IGGAPISecurity provider;
+	private IGGAPISecurityEngine security;
 	private IGGBeanLoader loader;
 	private IGGAPIDomainsRegistry domainRegistry;
 	private List<String> packages;
 	private IGGAPIDaosRegistry daosRegistry;
 	private IGGAPIRepositoriesRegistry repositoriesRegistry;
-	private IGGInjector injector;
 	private IGGPropertyLoader propLoader;
 	private IGGAPIFactoriesRegistry factoriesRegistry;
+	private IGGAPIServicesRegistry servicesRegistry;
+	private IGGAPIInterfacesRegistry interfacesRegistry;
 
-	protected GGApiEngine(IGGAPISecurity provider, IGGBeanLoader loader, List<String> packages, IGGInjector injector, IGGPropertyLoader propLoader) {
-		this.provider = provider;
+	protected GGApiEngine(IGGAPISecurityEngine security, IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader) {
+		this.security = security;
 		this.loader = loader;
 		this.packages = packages;
-		this.injector = injector;
 		this.propLoader = propLoader;
 	}
 
 	@Override
 	public IGGAPIEngine start() throws GGAPIException {
 		log.info("== START GGAPI ENGINE ==");
+		
+		log.info("Assembling domains");
+		
+		this.domainRegistry.getDomains().forEach(domain -> {
+			this.assemblyDomain(domain);
+		});
+		
+		log.info("Starting interfaces");
+		
+		for( IGGAPIInterface interfasse: this.interfacesRegistry.getInterfaces() ) {
+			log.info("*** Starting interface "+interfasse);
+			interfasse.start();
+		};
+
 		return this;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void assemblyDomain(IGGAPIDomain domain) {
+		String domainName = domain.getDomain();
+		log.info("*** Assembling domain "+domainName);
+		
+		List<Pair<Class<?>, IGGAPIDao<?>>> daos = this.daosRegistry.getDao(domainName);
+		IGGAPIRepository<Object> repository = (IGGAPIRepository<Object>) this.repositoriesRegistry.getRepository(domainName);
+		IGGAPIEntityFactory<Object> factory = (IGGAPIEntityFactory<Object>) this.factoriesRegistry.getFactory(domainName);
+		IGGAPIService service = this.servicesRegistry.getService(domainName);
+		List<IGGAPIServiceInfos> serviceInfos = this.servicesRegistry.getServiceInfos(domainName);
+		List<IGGAPIInterface> interfaces = this.interfacesRegistry.getInterfaces(domainName);
+		
+		repository.setDaos(daos);
+		factory.setRepository(repository);
+		service.setFactory(factory);
+		interfaces.forEach(interfasse -> {
+			interfasse.setService(service, serviceInfos);
+		});
 	}
 
 	@Override
@@ -82,13 +123,18 @@ public class GGApiEngine implements IGGAPIEngine {
 		log.info("============================================");
 		log.info("Version: {}", this.getClass().getPackage().getImplementationVersion());
 		log.info("== INIT GGAPI ENGINE ==");
+		log.info("Collecting domains");
 		
 		this.domainRegistry = new GGAPIDomainsFactory(this.packages).getRegistry();
-		this.daosRegistry =  new GGAPIDaosFactory(this.domainRegistry.getDomains(), loader).getRegistry();
+		
+		this.security.init(this.domainRegistry.getDomains());
+
+		this.daosRegistry =  new GGAPIDaosFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.repositoriesRegistry = new GGAPIRepositoriesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains()).getRegistry();
-		
-		
+		this.servicesRegistry = new GGAPIServicesFactory(this.domainRegistry.getDomains()).getRegistry();
+		this.interfacesRegistry = new GGAPIInterfacesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
+
 		return this;
 	}
 
@@ -109,36 +155,31 @@ public class GGApiEngine implements IGGAPIEngine {
 
 	@Override
 	public IGGAPIFactoriesRegistry getFactoriesRegistry() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.factoriesRegistry;
 	}
 
 	@Override
 	public IGGAPIServicesRegistry getServicesRegistry() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.servicesRegistry;
 	}
-
+	
 	@Override
-	public IGGAPIAccessRulesRegistry getAccessRulesRegistry() {
-		// TODO Auto-generated method stub
-		return null;
+	public IGGAPIInterfacesRegistry getInterfacesRegistry() {
+		return this.interfacesRegistry;
 	}
 
 	@Override
 	public IGGAPIDomain getOwnerDomain() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.domainRegistry.getOwnerDomain();
 	}
 
 	@Override
 	public IGGAPIDomain getTenantDomain() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.domainRegistry.getTenantDomain();
 	}
 
 	@Override
-	public Optional<IGGAPISecurityEngine> getSecurity() {
-		return Optional.empty();
+	public IGGAPISecurityEngine getSecurity() {
+		return this.security;
 	}
 }

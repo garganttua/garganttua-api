@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.service.GGAPIServiceMethod;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
@@ -43,21 +44,15 @@ public interface IGGAPIEvent {
     String getUserId();
     void setUserId(String userId);
 
-    Exception getException();
-    void setException(Exception exception);
-
     String getExceptionMessage();
     void setExceptionMessage(String exceptionMessage);
 
     GGAPIServiceResponseCode getCode();
     void setCode(GGAPIServiceResponseCode code);
-
-    String getEntityClass();
-    void setEntityClass(String entityClass);
-
-    String getEndPoint();
-    void setEndPoint(String endPoint);
     
     IGGAPIServiceResponse toServiceResponse();
+    
+	IGGAPIDomain getDomain();
+	void setDomain(IGGAPIDomain domain);
 	
 }

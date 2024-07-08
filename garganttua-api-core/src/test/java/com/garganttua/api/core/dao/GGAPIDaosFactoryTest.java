@@ -18,7 +18,7 @@ public class GGAPIDaosFactoryTest {
 
 	@Test
 	public void test() throws GGAPIException {
-		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(List.of("com"));
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, List.of("com"));
 		GGAPIDomainsFactory dof = new GGAPIDomainsFactory(List.of("com"));
 		Collection<IGGAPIDomain> domains = dof.getDomains();
 		
