@@ -58,14 +58,14 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	@Setter
 	private IGGPropertyLoader propertyLoader;
 
-	public GGAPIEntityFactory(IGGAPIDomain domain) throws GGAPIEngineException {
+	public GGAPIEntityFactory(IGGAPIDomain domain) throws GGAPIException {
 		this.domain = domain;
 
 		this.afterGetMethodAddress = this.domain.getEntity().getValue1().afterGetMethodAddress();
 		try {
 			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEngineException(e);
+			GGAPIEntityFactory.processException(e);
 		}
 	}
 
@@ -81,7 +81,9 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			
 			return entity;
 		} catch (GGAPIEntityException e) {
-			throw new GGAPIEngineException(e);
+			GGAPIEntityFactory.processException(e);
+			//should be never reached
+			return null;
 		}
 	}
 	
@@ -157,7 +159,9 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			if(log.isDebugEnabled()) {
 				log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" The error :", e);
 			}
-			throw new GGAPIEngineException(e);
+			GGAPIEntityFactory.processException(e);
+			//should be never reached
+			return;
 		}
 	}
 	
@@ -179,13 +183,24 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 				this.injector.injectBeans(entity);
 				this.injector.injectProperties(entity);
 			} catch (GGReflectionException e) {
-				throw new GGAPIEngineException(e);
+				GGAPIEntityFactory.processException(e);
+				//should be never reached
+				return ;
 			}
 		}
     }
 
 	@Override
 	public void setEngine(IGGAPIEngine engine) {	
+	}
+	
+	private static void processException(Exception e) throws GGAPIException, GGAPIEntityException {
+		GGAPIException apiException = GGAPIException.findFirstInException(e);
+		if( apiException != null ) {
+			throw apiException;
+		} else {
+			throw new GGAPIEntityException(e);
+		}
 	}
 
 }

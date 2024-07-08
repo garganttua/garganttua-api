@@ -28,7 +28,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.tags.Tag;
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -54,9 +53,16 @@ public class GGAPIInterfaceSpringRestSwagger {
 	@PostConstruct
 	private void init() {
 		
+		Info infos = this.openApi.getInfo();
+		String description = infos.getDescription() 
+				+ "<br>"
+				+ "<br>The configured <b>Super Tenant ID</b> is : "+superTenantId
+				+ "<br>The configured <b>Super Owner ID</b> is : "+superOwnerId;
+		infos.description(description);
+		
 		this.engine.getDomainsRegistry().getDomains().stream().forEach(domain -> {
 			IGGAPIService service = this.engine.getServicesRegistry().getService(domain.getDomain());
-			
+
 			try {
 				this.setOpenApiDocumentation(service, domain, "/"+domain.getDomain(), List.of());
 			} catch (Exception e) {
@@ -141,13 +147,6 @@ public class GGAPIInterfaceSpringRestSwagger {
 //
 //				this.openApi.get().path(cservice.getPath(), pathItem);
 //			}
-
-		Info infos = this.openApi.getInfo();
-		String description = infos.getDescription() 
-				+ "<br>"
-				+ "<br>The configured <b>Super Tenant ID</b> is : "+superTenantId
-				+ "<br>The configured <b>Super Owner ID</b> is : "+superOwnerId;
-		infos.description(description);
 	}
 	
 	private String test(Class<?> clazz) {

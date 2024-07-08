@@ -1,4 +1,4 @@
-# Garganttua API Spring Parent
+# Garganttua API Spring Core
 
 
 
@@ -10,7 +10,8 @@ Custom services not supported yet
 ## Properties 
 
 Available configuration properties : 
-* 
+* com.garganttua.api.spring.scanPackages
+* spring.profiles.default
 
 
 

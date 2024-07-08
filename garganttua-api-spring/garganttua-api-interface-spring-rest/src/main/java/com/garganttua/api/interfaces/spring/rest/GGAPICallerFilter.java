@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.GGAPICaller;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
@@ -33,19 +34,19 @@ public class GGAPICallerFilter implements Filter {
 
 	public static final String CALLER_ATTRIBUTE_NAME = "caller";
 
-	@Value(value = "${com.garganttua.api.spring.rest.tenantIdHeaderName:tenantId}")
+	@Value(value = "${com.garganttua.api.interface.spring.rest.ownerIdHeaderName:ownerId}")
 	private String tenantIdHeaderName = "tenantId";
 
-	@Value(value = "${com.garganttua.api.spring.rest.requestedTenantIdHeaderName:requestedTenantId}")
+	@Value(value = "${com.garganttua.api.interface.spring.rest.requestedTenantIdHeaderName:requestedTenantId}")
 	private String requestedTenantIdHeaderName = "requestedTenantId";
 
-	@Value(value = "${com.garganttua.api.spring.rest.ownerIdHeaderName:ownerId}")
+	@Value(value = "${com.garganttua.api.interface.spring.rest.ownerIdHeaderName:ownerId}")
 	private String ownerIdHeaderName = "ownerId";
 
-	@Value(value = "${com.garganttua.api.spring.rest.superOnwerId:0}")
+	@Value(value = "${com.garganttua.api.interface.spring.rest.superOnwerId:0}")
 	private String superOwnerId = "0";
 
-	@Value(value = "${com.garganttua.api.spring.rest.superTenantId:0}")
+	@Value(value = "${com.garganttua.api.interface.spring.rest.superTenantId:0}")
 	private String superTenantId = "0";
 
 	@Autowired
@@ -114,15 +115,31 @@ public class GGAPICallerFilter implements Filter {
 				response.getWriter().flush();
 				return false;
 			} catch (GGReflectionException e) {
-				GGAPIServiceResponse responseObject = new GGAPIServiceResponse(e.getMessage(), GGAPIServiceResponseCode.NOT_FOUND);
-				ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
 				
-				String json = new ObjectMapper().writeValueAsString(responseEntity.getBody());
-				
-				response.setStatus(responseEntity.getStatusCode().value());
-				response.setContentType("application/json");
-				response.getWriter().write(json);
-				response.getWriter().flush();
+				GGAPIException apiException = GGAPIException.findFirstInException(e);
+				if( apiException != null ) {
+					GGAPIServiceResponse responseObject = new GGAPIServiceResponse(apiException.getMessage(), GGAPIServiceResponseCode.NOT_FOUND);
+					ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
+					
+					String json = new ObjectMapper().writeValueAsString(responseEntity.getBody());
+					
+					response.setStatus(responseEntity.getStatusCode().value());
+					response.setContentType("application/json");
+					response.getWriter().write(json);
+					response.getWriter().flush();
+					return false;
+				} else {
+					GGAPIServiceResponse responseObject = new GGAPIServiceResponse(e.getMessage(), GGAPIServiceResponseCode.SERVER_ERROR);
+					ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
+					
+					String json = new ObjectMapper().writeValueAsString(responseEntity.getBody());
+					
+					response.setStatus(responseEntity.getStatusCode().value());
+					response.setContentType("application/json");
+					response.getWriter().write(json);
+					response.getWriter().flush();
+					return false;
+				}
 			}
 		}
 

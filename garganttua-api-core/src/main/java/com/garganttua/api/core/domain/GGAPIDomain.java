@@ -85,7 +85,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 
 	static public GGAPIDomain fromEntityClass(Class<?> clazz, List<String> scanPackages) throws GGAPIException {
 		if (log.isDebugEnabled()) {
-			log.debug("Getting dynamic domain from class " + clazz.getName());
+			log.debug("Getting domain from class " + clazz.getName());
 		}
 		Class<?> entityClass = clazz;
 		List<Pair<Class<?>, GGAPIDtoInfos>> dtos = new ArrayList<Pair<Class<?>, GGAPIDtoInfos>>();

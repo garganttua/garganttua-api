@@ -46,7 +46,11 @@ public class GGAPIDomainsFactory {
 		this.packages.parallelStream().forEach(package_ -> {
 			try {
 				List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_, GGAPIEntity.class);
+				if( log.isDebugEnabled() )
+					log.debug("Found "+annotatedClasses.size()+" domains");
 				annotatedClasses.forEach( annotatedClass -> {
+					if( log.isDebugEnabled() )
+						log.debug("processing annotated entity "+annotatedClass.getSimpleName());
 					try {
 						domains.add(processAnnotatedEntity(annotatedClass));
 					} catch (GGAPIException e) {
