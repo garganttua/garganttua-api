@@ -10,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
+import org.springframework.data.mongodb.core.index.GeospatialIndex;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
@@ -21,6 +23,7 @@ import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.sort.IGGAPISort;
+import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 
@@ -258,9 +261,11 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 	@Override
 	public void setDomain(IGGAPIDomain domain) {
 		this.domain = domain;
-//		String geolocField = domain.geolocalized;
-//		if( geolocField != null && !geolocField.isEmpty())
-//			this.mongo.indexOps(domain.dtoClass).ensureIndex( new GeospatialIndex(geolocField).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+		if( domain.getEntity().getValue1().geolocalizedEntity() ) {
+			GGObjectAddress geolocField = domain.getEntity().getValue1().locationFieldAddress();
+			if( geolocField != null )
+				this.mongo.indexOps(this.dtoClass).ensureIndex( new GeospatialIndex(geolocField.getFields()[geolocField.getFields().length-1]).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+		};
 	}
 	
 }

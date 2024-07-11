@@ -3,14 +3,19 @@ package com.garganttua.api.core.domain;
 import java.util.Set;
 
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 
 	@Getter
 	private Set<IGGAPIDomain> domains;
+	
+	@Setter
+	private IGGAPIEngine engine;
 
 	public GGAPIDomainsRegistry(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
@@ -44,6 +49,10 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 			}
 		}
 		return null;
+	}
+
+	@Override
+	public void setDomain(IGGAPIDomain domain) {
 	}
 
 }

@@ -8,11 +8,15 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.spec.dao.IGGAPIDao;
 import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+
+import lombok.Setter;
 
 public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 
 	private Map<String, List<Pair<Class<?>, IGGAPIDao<?>>>> daos;
-
+	
 	public GGAPIDaosRegistry(Map<String, List<Pair<Class<?>, IGGAPIDao<?>>>> daos) {
 		this.daos = daos;
 	}
@@ -29,5 +33,18 @@ public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 			daos.addAll(v);
 		});
 		return daos;
+	}
+
+	@Override
+	public void setDomain(IGGAPIDomain domain) {
+	}
+
+	@Override
+	public void setEngine(IGGAPIEngine engine) {
+		this.daos.values().parallelStream().forEach(list -> {
+			list.parallelStream().forEach(pair -> {
+				pair.getValue1().setEngine(engine);
+			});
+		});
 	}
 }

@@ -2,7 +2,9 @@ package com.garganttua.api.spec.interfasse;
 
 import java.util.List;
 
-public interface IGGAPIInterfacesRegistry {
+import com.garganttua.api.spec.engine.IGGAPIEngineObject;
+
+public interface IGGAPIInterfacesRegistry extends IGGAPIEngineObject {
 	
 	List<IGGAPIInterface> getInterfaces(String name);
 

@@ -9,13 +9,14 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
-import com.garganttua.api.core.security.entity.GGAPIEntitySecurityInfos;
+import com.garganttua.api.security.core.entity.checker.GGAPIEntitySecurityChecker;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.AllArgsConstructor;
@@ -92,6 +93,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 
 		GGAPIEntity entityAnnotation = clazz.getAnnotation(GGAPIEntity.class);
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntityClass(entityClass);
+		GGAPIEntitySecurityInfos securityInfos = GGAPIEntitySecurityChecker.checkEntityClass(entityClass);
 
 		for (String pack : scanPackages) {
 			List<Class<?>> annotatedClasses;
@@ -124,7 +126,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 		String event = entityAnnotation.eventPublisher();
 		String[] interfaces = entityAnnotation.interfaces();
 
-		return new GGAPIDomain(infos.domain(), new Pair<Class<?>, GGAPIEntityInfos>(entityClass, infos), dtos, null,
+		return new GGAPIDomain(infos.domain(), new Pair<Class<?>, GGAPIEntityInfos>(entityClass, infos), dtos, securityInfos,
 				interfaces, event, allow_creation, allow_read_all, allow_read_one, allow_update_one,
 				allow_delete_one, allow_delete_all, allow_count);
 	}

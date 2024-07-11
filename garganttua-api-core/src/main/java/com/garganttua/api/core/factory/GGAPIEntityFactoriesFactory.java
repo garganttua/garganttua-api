@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 
 import lombok.extern.slf4j.Slf4j;
 

@@ -23,14 +23,13 @@ import com.garganttua.api.interfaces.spring.rest.GGAPIDomainFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIOwnerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPITenantFilter;
 import com.garganttua.api.spec.GGAPIServiceAccess;
-import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
-import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
-import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
-import com.garganttua.api.spec.security.IGGAPIAccessRule;
-import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
+import com.com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.service.IGGAPIServicesRegistryyport com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
 import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
 import com.garganttua.api.spec.security.IGGAPISecurity;
 import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;

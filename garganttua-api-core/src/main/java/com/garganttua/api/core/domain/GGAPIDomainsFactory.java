@@ -12,7 +12,7 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
@@ -61,6 +61,10 @@ public class GGAPIDomainsFactory {
 				e.printStackTrace();
 			}
 		});	
+		
+		if( !this.tenantFound ) {
+			throw new GGAPIEngineException(GGAPIExceptionCode.CORE_GENERIC_CODE, "No tenant entity found !");
+		}
 	}
 
 	private GGAPIDomain processAnnotatedEntity(Class<?> annotatedClass) throws GGAPIException {
@@ -71,9 +75,9 @@ public class GGAPIDomainsFactory {
 			return null;
 		}
 				
-		if (domain.getEntity().getValue1().tenantEntity() && !tenantFound) {
-			tenantFound = true;
-		} else if (domain.getEntity().getValue1().tenantEntity() && !tenantFound) {
+		if (domain.getEntity().getValue1().tenantEntity() && !this.tenantFound) {
+			this.tenantFound = true;
+		} else if (domain.getEntity().getValue1().tenantEntity() && !this.tenantFound) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "There are more than one entity declared as tenantEntity.");
 		}
 		
@@ -108,7 +112,7 @@ public class GGAPIDomainsFactory {
 			log.error("No class annotated with @GGAPIDto found for entity "+annotatedClass.getName());
 			throw new GGAPIDtoException(GGAPIExceptionCode.NO_DTO_FOUND, "No class annotated with @GGAPIDto found for entity "+annotatedClass.getName());
 		}
-		
+
 		log.info("	Dynamic Domain Added "+domain.toString());
 		return domain;
 	}

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.domain.GGAPIDomainsFactory;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
+import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
 public class GGAPIServicesFactoryTest {
 

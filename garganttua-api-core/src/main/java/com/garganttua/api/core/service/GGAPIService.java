@@ -11,6 +11,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 import com.garganttua.api.spec.event.IGGAPIEvent;
 import com.garganttua.api.spec.event.IGGAPIEventPublisher;
 import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
@@ -46,6 +47,8 @@ public class GGAPIService implements IGGAPIService {
 	protected IGGAPIEntityFactory<Object> factory;
 	@Setter
 	protected Optional<IGGAPISecurity> security;
+	
+	private IGGAPIDomain tenantsDomain;
 
 	public GGAPIService(IGGAPIDomain domain) {
 		this.domain = domain;
@@ -54,6 +57,7 @@ public class GGAPIService implements IGGAPIService {
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		this.engine = engine;
+		this.tenantsDomain = this.engine.getTenantDomain();
 	}
 	
 	protected IGGAPIEvent prepareEvent(IGGAPICaller caller, GGAPIServiceMethod method, Map<String, String> params) {
@@ -71,6 +75,12 @@ public class GGAPIService implements IGGAPIService {
 	public IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity, Map<String, String> customParameters) {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(entity);
+			
+			//Particular case : if the entity to be created if a tenant entity, set tenantId to null in order to generated a new tenantId
+			if( caller.getDomain().getDomain().equals(this.tenantsDomain.getDomain()) ){
+				caller.deleteTenantId();
+				caller.deleteRequestedTenantId();
+			}
 			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, null);
 			GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
 			event.setOut(preparedEntity);

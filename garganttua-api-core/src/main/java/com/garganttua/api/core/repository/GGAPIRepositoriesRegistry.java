@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
+
+import lombok.Setter;
 
 public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 
@@ -27,6 +31,16 @@ public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 			repos.add(v);
 		});
 		return repos;
+	}
+
+	public void setDomain(IGGAPIDomain domain) {
+	}
+
+	@Override
+	public void setEngine(IGGAPIEngine engine) {
+		this.repositories.values().parallelStream().forEach(repo -> {
+			repo.setEngine(engine);
+		});
 	}
 
 }

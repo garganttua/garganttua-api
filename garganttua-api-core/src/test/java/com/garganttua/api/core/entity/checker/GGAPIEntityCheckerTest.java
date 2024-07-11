@@ -1,32 +1,29 @@
 package com.garganttua.api.core.entity.checker;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethod;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethodProvider;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityGeolocalized;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityHidden;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityHiddenable;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityLocation;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwner;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityRepository;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethod;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethodProvider;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityShare;
-
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIExceptionCode;
 
 public class GGAPIEntityCheckerTest {
+	
+	@Test
+	public void testGeolocEntity() throws GGAPIException {
+		
+		GGAPIEntityException exception = assertThrows(GGAPIEntityException.class, () -> {
+			GGAPIEntityChecker.checkEntityClass(GeolocEntity.class);
+		});
+		assertEquals("Entity GeolocEntity has field test with wrong type class java.lang.String, should be class org.geojson.Point",
+				exception.getMessage());
+		assertEquals(GGAPIExceptionCode.ENTITY_DEFINITION, exception.getCode());
+	}
+	
+	
+	
 //
 //	@Test
 //	public void testEntityWithNoDomain() {

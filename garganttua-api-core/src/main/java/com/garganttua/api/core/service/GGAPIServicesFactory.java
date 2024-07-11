@@ -8,9 +8,9 @@ import java.util.Map;
 import org.javatuples.Pair;
 
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
+import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
 import lombok.extern.slf4j.Slf4j;
 

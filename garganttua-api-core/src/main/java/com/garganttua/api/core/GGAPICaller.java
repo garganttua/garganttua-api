@@ -54,4 +54,14 @@ public class GGAPICaller implements IGGAPICaller {
 				tenantId, requestedTenantId, ownerId, superTenant, superOwner, accessRule, anonymous);
 	}
 
+	@Override
+	public void deleteTenantId() {
+		this.tenantId = null;
+	}
+
+	@Override
+	public void deleteRequestedTenantId() {
+		this.requestedTenantId = null;
+	}
+
 }

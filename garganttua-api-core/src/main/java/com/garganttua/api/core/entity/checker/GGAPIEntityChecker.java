@@ -1,6 +1,5 @@
 package com.garganttua.api.core.entity.checker;
 
-import java.awt.Point;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.geojson.Point;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;

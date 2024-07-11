@@ -2,7 +2,7 @@ package com.garganttua.api.core.engine;
 
 import java.util.List;
 
-import com.garganttua.api.core.security.engine.GGAPISecurityEngine;
+import com.garganttua.api.security.core.engine.GGAPISecurityEngine;
 import com.garganttua.api.spec.engine.IGGAPIBuilder;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;

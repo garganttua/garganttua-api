@@ -2,7 +2,9 @@ package com.garganttua.api.spec.repository;
 
 import java.util.List;
 
-public interface IGGAPIRepositoriesRegistry {
+import com.garganttua.api.spec.engine.IGGAPIEngineObject;
+
+public interface IGGAPIRepositoriesRegistry extends IGGAPIEngineObject {
 	
 	IGGAPIRepository<?> getRepository(String domain);
 

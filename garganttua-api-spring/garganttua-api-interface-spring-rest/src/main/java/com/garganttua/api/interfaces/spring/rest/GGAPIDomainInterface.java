@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.interfaces.spring.rest.old.GGAPICallerManager;
 import com.garganttua.api.spec.IGGAPICaller;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
@@ -36,7 +35,7 @@ public class GGAPIDomainInterface {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> createEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @RequestBody(required = true) String entity,
+	public ResponseEntity<?> createEntity(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @RequestBody(required = true) String entity,
 			@RequestParam(name = "params", defaultValue = "") String customParameters) {
 
 		Object entityObject = null;
@@ -62,7 +61,7 @@ public class GGAPIDomainInterface {
 	
 	@SuppressWarnings("unchecked")
 	public ResponseEntity<?> getEntities(
-			@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, 
+			@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, 
 			@RequestParam(name = "mode", defaultValue = "full") GGAPIReadOutputMode mode,
 			@RequestParam(name = "pageSize", defaultValue = "0") Integer pageSize,
 			@RequestParam(name = "pageIndex", defaultValue = "0") Integer pageIndex,
@@ -97,7 +96,7 @@ public class GGAPIDomainInterface {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> getEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid,
+	public ResponseEntity<?> getEntity(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid,
 			@RequestParam(name = "params", defaultValue = "") String customParameters) {
 		IGGAPIServiceResponse response = null;
 		Map<String, String> customParametersMap = new HashMap<String, String>();
@@ -118,7 +117,7 @@ public class GGAPIDomainInterface {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> updateEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity,
+	public ResponseEntity<?> updateEntity(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity,
 			@RequestParam(name = "params", defaultValue = "") String customParameters) {
 		IGGAPIServiceResponse response = null;
 		Map<String, String> customParametersMap = new HashMap<String, String>();
@@ -141,7 +140,7 @@ public class GGAPIDomainInterface {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> deleteEntity(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid,
+	public ResponseEntity<?> deleteEntity(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, @PathVariable(name = "uuid") String uuid,
 			@RequestParam(name = "params", defaultValue = "") String customParameters) {
 		IGGAPIServiceResponse response = null;
 		Map<String, String> customParametersMap = new HashMap<String, String>();
@@ -162,7 +161,7 @@ public class GGAPIDomainInterface {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> deleteAll(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+	public ResponseEntity<?> deleteAll(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "params", defaultValue = "") String customParameters) {
 		IGGAPIServiceResponse response = null;
@@ -187,7 +186,7 @@ public class GGAPIDomainInterface {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> getCount(@RequestAttribute(name=GGAPICallerManager.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+	public ResponseEntity<?> getCount(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
 			@RequestParam(name = "filter", defaultValue = "") String filterString,
 			@RequestParam(name = "params", defaultValue = "") String customParameters) {
 		IGGAPIServiceResponse response = null;

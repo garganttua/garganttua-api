@@ -23,12 +23,6 @@ public class GGAPIMultipleRepository implements IGGAPIRepository<Object> {
 	}
 
 	@Override
-	public void setDomain(IGGAPIDomain domain) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public boolean doesExist(IGGAPICaller caller, Object entity) throws GGAPIException {
 		// TODO Auto-generated method stub
 		return false;
@@ -91,6 +85,12 @@ public class GGAPIMultipleRepository implements IGGAPIRepository<Object> {
 
 	@Override
 	public void setDaos(List<Pair<Class<?>, IGGAPIDao<?>>> daos) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setDomain(IGGAPIDomain domain) {
 		// TODO Auto-generated method stub
 		
 	}

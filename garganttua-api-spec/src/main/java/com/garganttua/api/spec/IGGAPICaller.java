@@ -24,4 +24,8 @@ public interface IGGAPICaller {
 	boolean isAnonymous();
 	
 	List<String> getAuthorities();
+
+	void deleteTenantId();
+
+	void deleteRequestedTenantId();
 }

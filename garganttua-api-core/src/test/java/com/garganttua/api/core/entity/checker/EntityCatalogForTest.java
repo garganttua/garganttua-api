@@ -1,47 +1,20 @@
 package com.garganttua.api.core.entity.checker;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
-import org.geojson.Point;
-
-import com.garganttua.api.spec.IGGAPICaller;
-import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
+import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityGeolocalized;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityGotFromRepository;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityHidden;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityHiddenable;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityLocation;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwner;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityPublic;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityShare;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityShared;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperOwner;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperTenant;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenant;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterCreate;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterDelete;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterUpdate;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeDelete;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeUpdate;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-//
+@GGAPIEntity(
+		domain = "test", 
+		interfaces = { "" }		
+)
+@GGAPIEntityGeolocalized(location = "test")
+class GeolocEntity extends GenericGGAPIEntity {
+	private String test;
+}
+
+
+
 //@GGAPIEntity (
 //		domain = "tenants"
 //	)

@@ -108,17 +108,7 @@
 
 
 
-		<!--		<dependency>-->
-		<!--			<groupId>de.grundid.opendatalab</groupId>-->
-		<!--			<artifactId>geojson-jackson</artifactId>-->
-		<!--			<version>1.14</version>-->
-		<!--			<exclusions>-->
-		<!--				<exclusion>-->
-		<!--					<groupId>com.fasterxml.jackson.core</groupId>-->
-		<!--					<artifactId>jackson-core</artifactId>-->
-		<!--				</exclusion>-->
-		<!--			</exclusions>-->
-		<!--		</dependency>-->
+
 
 
 

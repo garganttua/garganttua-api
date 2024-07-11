@@ -14,11 +14,10 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.dao.IGGAPIDao;
 import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.engine.IGGAPIFactoriesRegistry;
-import com.garganttua.api.spec.engine.IGGAPIServicesRegistry;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
@@ -26,6 +25,7 @@ import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
+import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
@@ -61,6 +61,14 @@ public class GGApiEngine implements IGGAPIEngine {
 		this.domainRegistry.getDomains().forEach(domain -> {
 			this.assemblyDomain(domain);
 		});
+		
+		log.info("Injecting engine");
+		this.daosRegistry.setEngine(this);
+		this.domainRegistry.setEngine(this);
+		this.factoriesRegistry.setEngine(this);
+		this.interfacesRegistry.setEngine(this);
+		this.repositoriesRegistry.setEngine(this);
+		this.servicesRegistry.setEngine(this);
 		
 		log.info("Starting interfaces");
 		

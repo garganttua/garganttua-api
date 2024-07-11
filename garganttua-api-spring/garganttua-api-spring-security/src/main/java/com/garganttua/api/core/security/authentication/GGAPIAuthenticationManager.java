@@ -43,7 +43,7 @@ import com.garganttua.api.core.security.authentication.mappers.IGGAPIAuthenticat
 import com.garganttua.api.core.security.authentication.providers.dao.GGAPIDaoAuthenticationProvider;
 import com.garganttua.api.core.security.authentication.tools.GGAPIAuthenticationPasswordEncoder;
 import com.garganttua.api.spec.IGGAPICaller;
-import com.garganttua.api.spec.engine.IGGAPIDomainsRegistry;
+import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
