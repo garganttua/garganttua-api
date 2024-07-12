@@ -11,7 +11,7 @@ import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.beans.annotation.GGBean;
 
 @GGBean(name = "test")
-public class TestInterface implements IGGAPIInterface{
+public class TestInterface implements IGGAPIInterface {
 
 	@Override
 	public void setEngine(IGGAPIEngine engine) {

@@ -8,7 +8,6 @@ import com.garganttua.api.spec.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethodProvider;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityEngine;
@@ -18,6 +17,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityRepository;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethod;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethodProvider;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperTenant;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
@@ -27,11 +27,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class GenericGGAPIEntity {
+public class GenericGGAPITenantEntity {
 	
 	@GGAPIEntityUuid
 	@Setter
 	@GGAPIEntityMandatory
+	@GGAPIEntityTenantId
 	protected String uuid;
 	
 	@GGAPIEntityId
@@ -40,18 +41,17 @@ public class GenericGGAPIEntity {
 	protected String id;
 	
 	@Setter
-	@GGAPIEntityTenantId
-	@GGAPIEntityAuthorizeUpdate(authority = "entity-tenant-update")
-	protected String tenantId;
+	@GGAPIEntitySuperTenant
+	protected boolean superTenant;
 	
 	@GGAPIEntityGotFromRepository
 	private boolean gotFromRepository;
 
 	@GGAPIEntitySaveMethodProvider
-	protected IGGAPIEntitySaveMethod<GenericGGAPIEntity> saveMethod;
+	protected IGGAPIEntitySaveMethod<GenericGGAPITenantEntity> saveMethod;
 
 	@GGAPIEntityDeleteMethodProvider
-	protected IGGAPIEntityDeleteMethod<GenericGGAPIEntity> deleteMethod;
+	protected IGGAPIEntityDeleteMethod<GenericGGAPITenantEntity> deleteMethod;
 	
 	@GGAPIEntityRepository
 	protected IGGAPIRepository<Object> repository;

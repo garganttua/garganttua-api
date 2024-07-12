@@ -33,7 +33,9 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service("callerFilter")
 public class GGAPICallerFilter implements Filter {
 
@@ -80,7 +82,7 @@ public class GGAPICallerFilter implements Filter {
 	}
 
 	@Override
-	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException {
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		GGAPICaller caller = new GGAPICaller();
 
 		String tenantId = ((HttpServletRequest) request).getHeader(this.tenantIdHeaderName);
@@ -101,17 +103,20 @@ public class GGAPICallerFilter implements Filter {
 			request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
 			chain.doFilter(request, response);
 		} catch (IOException | ServletException e) {
-			GGAPIServiceResponse responseObject = new GGAPIServiceResponse(e.getMessage(),
-					GGAPIServiceResponseCode.SERVER_ERROR);
-			ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
-
-			String json = new ObjectMapper().writeValueAsString(responseEntity.getBody());
-
-			((HttpServletResponse) response).setStatus(responseEntity.getStatusCode().value());
-			response.setContentType("application/json");
-			((HttpServletResponse) response).getWriter().write(json);
-			((HttpServletResponse) response).getWriter().flush();
-			return;
+			if( log.isDebugEnabled() ) {
+				log.warn("Error : ", e);
+			}
+			throw e;
+//			GGAPIServiceResponse responseObject = new GGAPIServiceResponse(e.getMessage(),
+//					GGAPIServiceResponseCode.SERVER_ERROR);
+//			ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
+//
+//			String json = new ObjectMapper().writeValueAsString(responseEntity.getBody());
+//
+//			((HttpServletResponse) response).setStatus(responseEntity.getStatusCode().value());
+//			response.setContentType("application/json");
+//			((HttpServletResponse) response).getWriter().write(json);
+//			((HttpServletResponse) response).getWriter().flush();
 		}
 	}
 

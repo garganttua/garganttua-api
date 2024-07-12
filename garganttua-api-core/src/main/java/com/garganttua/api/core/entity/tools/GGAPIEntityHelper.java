@@ -7,6 +7,7 @@ import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
@@ -84,6 +85,15 @@ public class GGAPIEntityHelper {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
 			GGObjectQueryFactory.objectQuery(entity).setValue(infos.repositoryFieldAddress(), repository);
+		} catch (GGReflectionException e) {
+			GGAPIEntityHelper.processException(e);
+		} 
+	}
+	
+	public static void setEngine(Object entity, IGGAPIEngine engine) throws GGAPIException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		try {
+			GGObjectQueryFactory.objectQuery(entity).setValue(infos.engineFieldAddress(), engine);
 		} catch (GGReflectionException e) {
 			GGAPIEntityHelper.processException(e);
 		} 
@@ -231,4 +241,14 @@ public class GGAPIEntityHelper {
 		// Should never be reached
 		return null; 
 	}
+
+	public static void setTenantId(Object entity, String tenantId) throws GGAPIException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		try {
+			GGObjectQueryFactory.objectQuery(entity).setValue(infos.tenantIdFieldAddress(), tenantId);
+		} catch (GGReflectionException e) {
+			GGAPIEntityHelper.processException(e);
+		} 
+	}
+
 }

@@ -39,7 +39,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private GGObjectAddress beforeCreateMethodAddress;
 	private IGGObjectQuery objectQuery;
 	
-	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, Optional<IGGAPISecurity> security) throws GGAPIEntityException {
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, Optional<IGGAPISecurity> security) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
 		this.security = security;
@@ -52,7 +52,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		try {
 			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			this.processException(e);
+			
+			//Should never be reached
+			return;
 		}
 	}
 
@@ -90,7 +93,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				}
 			}
 		} catch (GGReflectionException e) {
-			throw new GGAPIEntityException(e);
+			this.processException(e);
+			
+			//Should never be reached
+			return;
 		}
 	}
 	
@@ -149,7 +155,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				try {
 					GGObjectQueryFactory.objectQuery(entity).setValue(GGAPIEntityChecker.checkEntity(entity).ownerIdFieldAddress(), caller.getOwnerId());
 				} catch (GGReflectionException e) {
-					throw new GGAPIEntityException(e);
+					this.processException(e);
+					
+					//Should never be reached
+					return;
 				}
 			} else {
 				throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "No ownerId provided");
@@ -189,7 +198,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 	
-	protected void checkMandatoryFields(List<String> mandatory, Object entity) throws GGAPIEntityException {
+	protected void checkMandatoryFields(List<String> mandatory, Object entity) throws GGAPIException {
 		
 		for( String field: mandatory ) {
 			try {
@@ -201,7 +210,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 					throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "Field "+field+" is mandatory");
 				}
 			} catch (IllegalArgumentException | GGReflectionException e) {
-				throw new GGAPIEntityException(e);
+				this.processException(e);
+				
+				//Should never be reached
+				return;
 			}
 		}
 	}
@@ -234,6 +246,18 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 
 		} catch (GGReflectionException e) {
 			log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);
+			this.processException(e);
+			
+			//Should never be reached
+			return null;
+		}
+	}
+	
+	private void processException(Exception e) throws GGAPIException {
+		GGAPIException apiException = GGAPIException.findFirstInException(e);
+		if( apiException != null ) {
+			throw apiException;
+		} else {
 			throw new GGAPIEntityException(GGAPIExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
 		}
 	}

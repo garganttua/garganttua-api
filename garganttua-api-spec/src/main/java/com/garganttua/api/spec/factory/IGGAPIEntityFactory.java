@@ -18,7 +18,7 @@ public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
 
 	List<Entity> getEntitiesFromRepository(IGGAPICaller caller, IGGAPIPageable pageable, IGGAPIFilter filter, IGGAPISort sort, Map<String, String> customParameters) throws GGAPIException;
 
-	Entity prepareNewEntity(Map<String, String> customParameters, Entity entity, String uuid) throws GGAPIException;
+	Entity prepareNewEntity(Map<String, String> customParameters, Entity entity, String uuid, String tenantId) throws GGAPIException;
 
 	long countEntities(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) throws GGAPIException;
 	

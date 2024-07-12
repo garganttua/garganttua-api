@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
@@ -32,12 +34,14 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethodProvider;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityEngine;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityGeolocalized;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityGotFromRepository;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityHidden;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityHiddenable;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityLocation;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatories;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwner;
@@ -52,6 +56,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperOwner;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperTenant;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenant;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicities;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
@@ -89,6 +94,8 @@ public class GGAPIEntityChecker {
 		if( tenantEntity ) {
 			tenantIdFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityTenantId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).tenantId(), String.class, GGAPIEntityTenantId.class);
 			superTenantFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperTenant.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).superTenant(), boolean.class, GGAPIEntitySuperTenant.class);
+		} else {
+			tenantIdFieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityTenantId.class, String.class);
 		}
 		
 		boolean ownerEntity = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIEntityOwner.class);
@@ -133,12 +140,16 @@ public class GGAPIEntityChecker {
 		}
 		
 		String repositoryFieldAddress = GGAPIEntityChecker.checkRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);
+		String engineFieldAddress = GGAPIEntityChecker.checkEngineAnnotationPresentAndFieldHasGoodType(entityClass);
 		
 		List<String> mandatoryFields = new ArrayList<String>();
 		mandatoryFields = GGAPIEntityChecker.getFieldsWithAnnotation(mandatoryFields, entityClass, GGAPIEntityMandatory.class);
+		mandatoryFields.addAll(GGAPIEntityChecker.checkMandatoriesAnnotationPresent(entityClass));
 		
 		List<String> unicityFields = new ArrayList<String>();
 		unicityFields = GGAPIEntityChecker.getFieldsWithAnnotation(unicityFields, entityClass, GGAPIEntityUnicity.class);
+		unicityFields.addAll(GGAPIEntityChecker.checkUnicitiesAnnotationPresent(entityClass));
+		
 		
 		Method afterGetm = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityAfterGet.class);
 		Method beforeCreatem = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityBeforeCreate.class);
@@ -181,6 +192,7 @@ public class GGAPIEntityChecker {
 					sharedEntity, 
 					shareFieldAddress==null?null:q.address(shareFieldAddress), 
 					q.address(repositoryFieldAddress), 
+					q.address(engineFieldAddress), 
 					mandatoryFields, 
 					unicityFields,
 					afterGetm==null?null:q.address(afterGetm.getName()),
@@ -195,6 +207,30 @@ public class GGAPIEntityChecker {
 		} catch (GGReflectionException e) {
 			throw new GGAPIEntityException(e);
 		}
+	}
+
+	private static Collection<String> checkUnicitiesAnnotationPresent(Class<?> entityClass) {
+		List<String> unicities = new ArrayList<String>();
+		GGAPIEntityUnicities annotation = entityClass.getDeclaredAnnotation(GGAPIEntityUnicities.class);
+		
+		if( annotation != null ) {
+			String[] unicities__ = annotation.unicities();
+			unicities = List.of(unicities__);
+		}
+		
+		return unicities;
+	}
+
+	private static Collection<String> checkMandatoriesAnnotationPresent(Class<?> entityClass) {
+		List<String> mandatories = new ArrayList<String>();
+		GGAPIEntityMandatories annotation = entityClass.getDeclaredAnnotation(GGAPIEntityMandatories.class);
+		
+		if( annotation != null ) {
+			String[] mandatories__ = annotation.mandatories();
+			mandatories = List.of(mandatories__);
+		}
+		
+		return mandatories;
 	}
 
 	private static String checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
@@ -391,6 +427,14 @@ public class GGAPIEntityChecker {
 		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityRepository.class, IGGAPIRepository.class);
 		if( fieldAddress == null ) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" does not have any field annotated with @GGAPIEntityRepository");
+		}
+		return fieldAddress; 
+	} 
+	
+	private static String checkEngineAnnotationPresentAndFieldHasGoodType(Class<?> entityClass) throws GGAPIEntityException {
+		String fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityEngine.class, IGGAPIEngine.class);
+		if( fieldAddress == null ) {
+			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" does not have any field annotated with @GGAPIEntityEngine");
 		}
 		return fieldAddress; 
 	} 

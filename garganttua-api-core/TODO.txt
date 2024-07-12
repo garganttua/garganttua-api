@@ -1,0 +1,1 @@
+1/ Create annotations @GGAPIEntityMandatories and GGAPIEntityUnicities for types (class) in order to declare as mandatory or unical inherited fields.

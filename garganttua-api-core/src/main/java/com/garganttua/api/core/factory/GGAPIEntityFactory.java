@@ -58,6 +58,8 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	@Setter
 	private IGGPropertyLoader propertyLoader;
 
+	private IGGAPIEngine engine;
+
 	public GGAPIEntityFactory(IGGAPIDomain domain) throws GGAPIException {
 		this.domain = domain;
 
@@ -70,14 +72,15 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	}
 
 	@Override
-	public Object prepareNewEntity(Map<String, String> customParameters, Object entity, String uuid) throws GGAPIException {
+	public Object prepareNewEntity(Map<String, String> customParameters, Object entity, String uuid, String tenantId) throws GGAPIException {
 		if( entity == null ) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "Entity is null");
 		}
 		try {
 			GGAPIEntityHelper.setGotFromRepository( entity, false );
 			GGAPIEntityHelper.setUuid(entity, uuid);
-			this.setEntityMethodsAndFields(repository, customParameters, this.domain, entity);
+			GGAPIEntityHelper.setTenantId(entity, tenantId);
+			this.setEntityMethodsAndFields(customParameters, this.domain, entity);
 			
 			return entity;
 		} catch (GGAPIEntityException e) {
@@ -113,12 +116,12 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		
 		if( entity == null ) {
 			log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with Uuid " + uuid + " not found");
-			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Entity does not exist");
+			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Entity [Uuid: "+uuid+", Type: "+this.domain.getEntity().getValue0().getSimpleName()+"] does not exist");
 		}
 
 		GGAPIEntityHelper.setRepository( entity, repository );
 		this.executeAfterGetProcedure(caller, customParameters, entity, repository);
-		this.setEntityMethodsAndFields(repository, customParameters, this.domain, entity);
+		this.setEntityMethodsAndFields(customParameters, this.domain, entity);
 		GGAPIEntityHelper.setGotFromRepository(entity, true);
 		return entity;
 	}
@@ -139,13 +142,13 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		for( Object entity: entities) {
 			this.executeAfterGetProcedure(caller, customParameters, entity, this.repository);
 			GGAPIEntityHelper.setGotFromRepository(entity, true);
-			this.setEntityMethodsAndFields(repository, customParameters, this.domain, entity);
+			this.setEntityMethodsAndFields(customParameters, this.domain, entity);
 		}
 		return entities;
 	}
 
 	private void executeAfterGetProcedure(IGGAPICaller caller, Map<String, String> customParameters, Object entity, IGGAPIRepository<Object> repository) throws GGAPIException {
-		this.setEntityMethodsAndFields(this.repository, customParameters, this.domain, entity);
+		this.setEntityMethodsAndFields(customParameters, this.domain, entity);
 		try {
 			if( this.afterGetMethodAddress != null ) {
 				this.objectQuery.invoke(entity, this.afterGetMethodAddress, caller, customParameters);
@@ -165,10 +168,11 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		}
 	}
 	
-	private <T> void setEntityMethodsAndFields(IGGAPIRepository<Object> repository, Map<String, String> customParameters, IGGAPIDomain domain, T entity) throws GGAPIException{
+	private <T> void setEntityMethodsAndFields(Map<String, String> customParameters, IGGAPIDomain domain, T entity) throws GGAPIException{
 		GGAPIEntityHelper.setRepository(entity, this.repository );
-		GGAPIEntityHelper.setSaveMethod(entity, new GGAPIEntitySaveMethod(this.domain, repository, security));
-		GGAPIEntityHelper.setDeleteMethod(entity, new GGAPIEntityDeleteMethod(this.domain, repository));
+		GGAPIEntityHelper.setEngine(entity, this.engine );
+		GGAPIEntityHelper.setSaveMethod(entity, new GGAPIEntitySaveMethod(this.domain, this.repository, this.security));
+		GGAPIEntityHelper.setDeleteMethod(entity, new GGAPIEntityDeleteMethod(this.domain, this.repository));
 		this.injectDependenciesAndValues(entity);
 	}
 
@@ -191,7 +195,8 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
     }
 
 	@Override
-	public void setEngine(IGGAPIEngine engine) {	
+	public void setEngine(IGGAPIEngine engine) {
+		this.engine = engine;	
 	}
 	
 	private static void processException(Exception e) throws GGAPIException, GGAPIEntityException {

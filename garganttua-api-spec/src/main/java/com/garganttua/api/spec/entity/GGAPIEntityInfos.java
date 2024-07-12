@@ -29,6 +29,7 @@ public record GGAPIEntityInfos (
         boolean sharedEntity,
         GGObjectAddress shareFieldAddress,
         GGObjectAddress repositoryFieldAddress,
+        GGObjectAddress engineFieldAddress,
         List<String> mandatoryFields,
         List<String> unicityFields,
         GGObjectAddress afterGetMethodAddress,
@@ -71,6 +72,7 @@ public record GGAPIEntityInfos (
 	            sharedEntity == other.sharedEntity &&
 	            Objects.equals(shareFieldAddress, other.shareFieldAddress) &&
 	            Objects.equals(repositoryFieldAddress, other.repositoryFieldAddress) &&
+	            Objects.equals(engineFieldAddress, other.engineFieldAddress) &&
 	            Objects.equals(mandatoryFields, other.mandatoryFields) &&
 	            Objects.equals(unicityFields, other.unicityFields) &&
 	            Objects.equals(afterGetMethodAddress, other.afterGetMethodAddress) &&
