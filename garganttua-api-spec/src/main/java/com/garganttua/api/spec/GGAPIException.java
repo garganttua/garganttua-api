@@ -2,7 +2,7 @@ package com.garganttua.api.spec;
 
 import lombok.Getter;
 
-public abstract class GGAPIException extends Exception {
+public class GGAPIException extends Exception {
 
 	private static final long serialVersionUID = 7855765591949705798L;
 	
@@ -37,5 +37,14 @@ public abstract class GGAPIException extends Exception {
             cause = cause.getCause();
         }
         return null;
+	}
+	
+	public static void processException(Exception e) throws GGAPIException {
+		GGAPIException apiException = GGAPIException.findFirstInException(e);
+		if( apiException != null ) {
+			throw apiException;
+		} else {
+			throw new GGAPIException(GGAPIExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
+		}
 	}
 }

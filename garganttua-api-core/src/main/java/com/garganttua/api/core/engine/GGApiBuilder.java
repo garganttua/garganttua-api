@@ -20,6 +20,8 @@ public class GGApiBuilder implements IGGAPIBuilder {
 	private IGGBeanLoader loader;
 	private List<String> packages;
 	private IGGPropertyLoader propLoader;
+	private String superTenantId = "0";
+	private String superOwnerId = "0";
 
 	@Override
 	public IGGAPIBuilder setSecurity(IGGAPISecurityEngine security) {
@@ -40,7 +42,7 @@ public class GGApiBuilder implements IGGAPIBuilder {
 			this.security = new GGAPISecurityEngine();
 		}
 		
-		return new GGApiEngine(this.security, this.loader, this.packages, this.propLoader);
+		return new GGApiEngine(this.security, this.loader, this.packages, this.propLoader, this.superTenantId, this.superOwnerId);
 	}
 
 	@Override
@@ -52,6 +54,18 @@ public class GGApiBuilder implements IGGAPIBuilder {
 	@Override
 	public IGGAPIBuilder setPropertyLoader(IGGPropertyLoader loader) {
 		propLoader = loader;
+		return this;
+	}
+
+	@Override
+	public IGGAPIBuilder superTenantId(String superTenantId) {
+		this.superTenantId = superTenantId;
+		return this;
+	}
+
+	@Override
+	public IGGAPIBuilder superOwnerId(String superOwnerId) {
+		this.superOwnerId = superOwnerId;
 		return this;
 	}
 

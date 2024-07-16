@@ -28,4 +28,16 @@ public interface IGGAPICaller {
 	void deleteTenantId();
 
 	void deleteRequestedTenantId();
+
+	void setAnonymous(boolean b);
+
+	void setTenantId(String tenantId);
+
+	void setRequestedTenantId(String requestedtenantId);
+
+	void setSuperTenant(boolean value);
+
+	void setOwnerId(String ownerId);
+
+	void setSuperOwner(boolean value);
 }

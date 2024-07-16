@@ -1,6 +1,7 @@
 package com.garganttua.api.core.engine;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.javatuples.Pair;
 
@@ -8,6 +9,8 @@ import com.garganttua.api.core.dao.GGAPIDaosFactory;
 import com.garganttua.api.core.domain.GGAPIDomainsFactory;
 import com.garganttua.api.core.factory.GGAPIEntityFactoriesFactory;
 import com.garganttua.api.core.interfasse.GGAPIInterfacesFactory;
+import com.garganttua.api.core.interfasse.filter.GGAPIOwnerFilter;
+import com.garganttua.api.core.interfasse.filter.GGAPITenantFilter;
 import com.garganttua.api.core.repository.GGAPIRepositoriesFactory;
 import com.garganttua.api.core.service.GGAPIServicesFactory;
 import com.garganttua.api.spec.GGAPIException;
@@ -20,6 +23,8 @@ import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
+import com.garganttua.api.spec.interfasse.filter.IGGAPIOwnerFilter;
+import com.garganttua.api.spec.interfasse.filter.IGGAPITenantFilter;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
@@ -44,12 +49,18 @@ public class GGApiEngine implements IGGAPIEngine {
 	private IGGAPIFactoriesRegistry factoriesRegistry;
 	private IGGAPIServicesRegistry servicesRegistry;
 	private IGGAPIInterfacesRegistry interfacesRegistry;
+	private IGGAPITenantFilter tenantFilter;
+	private IGGAPIOwnerFilter ownerFilter;
+	private String superTenantId = "0";
+	private String superOwnerId = "0";
 
-	protected GGApiEngine(IGGAPISecurityEngine security, IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader) {
+	protected GGApiEngine(IGGAPISecurityEngine security, IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader, String superTenantId, String superOwnerId) {
 		this.security = security;
 		this.loader = loader;
 		this.packages = packages;
 		this.propLoader = propLoader;
+		this.superTenantId = superTenantId;
+		this.superOwnerId = superOwnerId;
 	}
 
 	@Override
@@ -98,6 +109,20 @@ public class GGApiEngine implements IGGAPIEngine {
 		interfaces.forEach(interfasse -> {
 			interfasse.setService(service, serviceInfos);
 		});
+		
+		log.info("*** Creating tenant filter");
+		this.tenantFilter = new GGAPITenantFilter(this.getTenantDomain(),
+				this.factoriesRegistry.getFactory(this.getTenantDomain().getEntity().getValue1().domain()), 
+				this.superTenantId);
+		
+		log.info("*** Creating owner filter");
+		Optional<IGGAPIDomain> ownerDomain = Optional.ofNullable(this.getOwnerDomain());
+		IGGAPIEntityFactory<?> ownersFactory = null;
+		if( ownerDomain.isPresent() ) {
+			ownersFactory = this.factoriesRegistry.getFactory(ownerDomain.get().getEntity().getValue1().domain());
+		}
+		
+		this.ownerFilter = new GGAPIOwnerFilter(ownerDomain, ownersFactory, this.superOwnerId);
 	}
 
 	@Override
@@ -189,5 +214,15 @@ public class GGApiEngine implements IGGAPIEngine {
 	@Override
 	public IGGAPISecurityEngine getSecurity() {
 		return this.security;
+	}
+
+	@Override
+	public IGGAPITenantFilter getTenantFilter() {
+		return this.tenantFilter;
+	}
+
+	@Override
+	public IGGAPIOwnerFilter getOwnerFilter() {
+		return this.ownerFilter;
 	}
 }

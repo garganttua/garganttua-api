@@ -17,5 +17,9 @@ public interface IGGAPIBuilder {
 	IGGAPIEngine build();
 
 	IGGAPIBuilder setPropertyLoader(IGGPropertyLoader loader);
+	
+	IGGAPIBuilder superTenantId(String superTenantId);
+	
+	IGGAPIBuilder superOwnerId(String superOwnerId);
 
 }

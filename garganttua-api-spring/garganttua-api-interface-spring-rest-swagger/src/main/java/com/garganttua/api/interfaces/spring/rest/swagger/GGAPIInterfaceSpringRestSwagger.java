@@ -28,6 +28,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.tags.Tag;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,10 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIInterfaceSpringRestSwagger {
 	
-	@Value(value = "${com.garganttua.api.spring.rest.superOnwerId:0}")
+	@Value(value = "${com.garganttua.api.spring.superOwnerId:0}")
 	private String superOwnerId = "0";
 	
-	@Value(value = "${com.garganttua.api.spring.rest.superTenantId:0}")
+	@Value(value = "${com.garganttua.api.spring.superTenantId:0}")
 	private String superTenantId = "0";
 	
 	@Autowired
@@ -156,7 +157,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			.forMethods()
 			.withRequiredCheck(method -> method.getAnnotationConsideringFieldAndGetter(NotNull.class) != null);
 		configBuilder.forFields()
-//		  	.withRequiredCheck(field -> field.getAnnotationConsideringFieldAndGetter(Nullable.class) == null)
+		  	.withRequiredCheck(field -> field.getAnnotationConsideringFieldAndGetter(Nullable.class) == null)
 		  	.withRequiredCheck(field -> field.getAnnotationConsideringFieldAndGetter(GGAPIEntityMandatory.class) != null)
 		  	.withArrayUniqueItemsResolver(scope -> scope.getType().getErasedType() == (List.class) ? true : null);
 		SchemaGeneratorConfig config = configBuilder

@@ -6,6 +6,8 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
+import com.garganttua.api.spec.interfasse.filter.IGGAPIOwnerFilter;
+import com.garganttua.api.spec.interfasse.filter.IGGAPITenantFilter;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
@@ -39,5 +41,9 @@ public interface IGGAPIEngine {
 	IGGAPIEngine init() throws GGAPIException;
 
 	IGGAPIInterfacesRegistry getInterfacesRegistry();
+	
+	IGGAPITenantFilter getTenantFilter();
+	
+	IGGAPIOwnerFilter getOwnerFilter();
 	
 }
