@@ -82,8 +82,8 @@ public class GGAPIService implements IGGAPIService {
 				caller.deleteRequestedTenantId();
 			}
 			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, null, caller.getRequestedTenantId());
-			GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
-			event.setOut(preparedEntity);
+			Object createdEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
+			event.setOut(createdEntity);
 			event.setCode(GGAPIServiceResponseCode.CREATED);
 			return event;
 		};
@@ -171,8 +171,8 @@ public class GGAPIService implements IGGAPIService {
 			event.setIn(entity);
 			customParameters.put("uuid", uuid);
 			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, uuid, caller.getRequestedTenantId());
-			GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
-			event.setOut(entity);
+			Object udpatedEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
+			event.setOut(udpatedEntity);
 			event.setCode(GGAPIServiceResponseCode.UPDATED);
 			return event;
 		};

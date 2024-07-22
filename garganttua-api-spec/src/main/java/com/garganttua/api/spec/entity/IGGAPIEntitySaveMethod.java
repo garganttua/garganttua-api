@@ -8,7 +8,7 @@ import com.garganttua.api.spec.IGGAPICaller;
 @FunctionalInterface
 public interface IGGAPIEntitySaveMethod<Entity>  {
 
-	void save(IGGAPICaller caller, Map<String, String> parameters, Entity entity)
+	Object save(IGGAPICaller caller, Map<String, String> parameters, Entity entity)
 			throws GGAPIException;
 	
 }

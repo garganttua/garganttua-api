@@ -8,6 +8,7 @@ import com.garganttua.api.spec.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethodProvider;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityEngine;
@@ -38,10 +39,12 @@ public class GenericGGAPITenantEntity {
 	@GGAPIEntityId
 	@Setter
 	@GGAPIEntityMandatory
+	@GGAPIEntityAuthorizeUpdate
 	protected String id;
 	
 	@Setter
 	@GGAPIEntitySuperTenant
+	@GGAPIEntityAuthorizeUpdate(authority = "super-tenant-update")
 	protected boolean superTenant;
 	
 	@GGAPIEntityGotFromRepository
@@ -60,8 +63,8 @@ public class GenericGGAPITenantEntity {
 	protected IGGAPIEngine engine;
 
 	@GGAPIEntitySaveMethod
-	public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
-		this.saveMethod.save(caller, parameters, this);
+	public Object save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
+		return this.saveMethod.save(caller, parameters, this);
 	}
 
 	@GGAPIEntityDeleteMethod

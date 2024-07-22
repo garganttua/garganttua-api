@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.garganttua.api.core.updater.GGAPIEntityUpdater;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
@@ -27,6 +28,8 @@ public class GGAPIEntityFactoriesFactory {
 
 		for( IGGAPIDomain domain: this.domains ) {
 			IGGAPIEntityFactory<Object> factory = new GGAPIEntityFactory(domain);
+			factory.setEntityUpdater(new GGAPIEntityUpdater());
+			
 			this.factories.put(domain.getEntity().getValue1().domain(), factory);
 			
 			log.info("	Factory added [domain {}, factory {}]", domain.getEntity().getValue1().domain(), factory);

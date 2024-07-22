@@ -19,6 +19,7 @@ import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -38,10 +39,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private GGObjectAddress afterCreateMethodAddress;
 	private GGObjectAddress beforeCreateMethodAddress;
 	private IGGObjectQuery objectQuery;
+	private IGGAPIEntityUpdater<Object> entityUpdater;
 	
-	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, Optional<IGGAPISecurity> security) throws GGAPIException {
+	
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityUpdater<Object> updater, Optional<IGGAPISecurity> security) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
+		this.entityUpdater = updater;
 		this.security = security;
 		
 		this.beforeCreateMethodAddress = this.domain.getEntity().getValue1().beforeCreateMethodAddress();
@@ -60,14 +64,14 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	}
 
 	@Override
-	public void save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIException {
+	public Object save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIException {
 		if( domain == null ) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "Domain is null");
 		}
 		if( caller == null ) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "Caller is null");
 		}
-		if( repository == null ) {
+		if( this.repository == null ) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "Repository is null");
 		}
 		if( entity == null ) {
@@ -75,14 +79,18 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 
 		try {
-			if( repository.doesExist(caller, entity) ) {
+			if( this.repository.doesExist(caller, entity) ) {
 				if( this.beforeUpdateMethodAddress != null ) {
 					this.objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, parameters);
 				}
-				this.updateEntity(caller, parameters, entity);
+				Object storedObject = this.repository.getOneByUuid(caller, GGAPIEntityHelper.getUuid(entity));
+				Object updatedObject = this.entityUpdater.update(caller, storedObject, entity, this.domain.getEntity().getValue1().updateAuthorizations());
+				
+				this.updateEntity(caller, parameters, updatedObject);
 				if( this.afterUpdateMethodAddress != null ) {
 					this.objectQuery.invoke(entity, this.afterUpdateMethodAddress, caller, parameters);
 				}
+				return updatedObject;
 			} else {
 				if( this.beforeCreateMethodAddress != null ) {
 					this.objectQuery.invoke(entity, this.beforeCreateMethodAddress, caller, parameters);
@@ -91,12 +99,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				if( this.afterCreateMethodAddress != null ) {
 					this.objectQuery.invoke(entity, this.afterCreateMethodAddress, caller, parameters);
 				}
+				return entity;
 			}
 		} catch (GGReflectionException e) {
 			this.processException(e);
 			
 			//Should never be reached
-			return;
+			return null;
 		}
 	}
 	
@@ -105,8 +114,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		this.applySecurityRuleOnAuthenticatorEntity(domain, security, entity);
 		this.applyUpdateUnicityRule(domain, repository, caller, entity);
 
-		repository.update(caller, entity);
-	
+		this.repository.save(caller, entity);
 	}
 
 	private <Entity> void applyUpdateUnicityRule(IGGAPIDomain domain, IGGAPIRepository<Entity> repository,
@@ -134,7 +142,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 
 		this.applyCreationUnicityRule(domain, repository, caller, entity);
-		repository.save(caller, entity);
+		this.repository.save(caller, entity);
 
 	}
 

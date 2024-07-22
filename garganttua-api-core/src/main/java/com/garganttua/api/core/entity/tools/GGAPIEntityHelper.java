@@ -36,12 +36,13 @@ public class GGAPIEntityHelper {
 		return domain;
 	}
 	
-	public static void save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
+	public static Object save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
-			GGObjectQueryFactory.objectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);
+			return GGObjectQueryFactory.objectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);
 		} catch (GGReflectionException e) {
 			GGAPIEntityHelper.processException(e);
+			return null;
 		}
 	}
 

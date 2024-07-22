@@ -22,6 +22,7 @@ import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurity;
 import com.garganttua.api.spec.sort.IGGAPISort;
+import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.injection.IGGInjector;
@@ -59,6 +60,9 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	private IGGPropertyLoader propertyLoader;
 
 	private IGGAPIEngine engine;
+
+	@Setter
+	private IGGAPIEntityUpdater<Object> entityUpdater;
 
 	public GGAPIEntityFactory(IGGAPIDomain domain) throws GGAPIException {
 		this.domain = domain;
@@ -171,7 +175,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	private <T> void setEntityMethodsAndFields(Map<String, String> customParameters, IGGAPIDomain domain, T entity) throws GGAPIException{
 		GGAPIEntityHelper.setRepository(entity, this.repository );
 		GGAPIEntityHelper.setEngine(entity, this.engine );
-		GGAPIEntityHelper.setSaveMethod(entity, new GGAPIEntitySaveMethod(this.domain, this.repository, this.security));
+		GGAPIEntityHelper.setSaveMethod(entity, new GGAPIEntitySaveMethod(this.domain, this.repository, this.entityUpdater, this.security));
 		GGAPIEntityHelper.setDeleteMethod(entity, new GGAPIEntityDeleteMethod(this.domain, this.repository));
 		this.injectDependenciesAndValues(entity);
 	}

@@ -41,11 +41,11 @@ public class GGAPIMultipleRepository implements IGGAPIRepository<Object> {
 		
 	}
 
-	@Override
-	public Object update(IGGAPICaller caller, Object entity) throws GGAPIException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	@Override
+//	public Object update(IGGAPICaller caller, Object entity) throws GGAPIException {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	@Override
 	public Object getOneById(IGGAPICaller caller, String id) throws GGAPIException {

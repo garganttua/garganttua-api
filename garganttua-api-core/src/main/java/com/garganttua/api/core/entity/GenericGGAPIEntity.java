@@ -60,8 +60,8 @@ public class GenericGGAPIEntity {
 	protected IGGAPIEngine engine;
 
 	@GGAPIEntitySaveMethod
-	public void save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
-		this.saveMethod.save(caller, parameters, this);
+	public Object save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
+		return this.saveMethod.save(caller, parameters, this);
 	}
 
 	@GGAPIEntityDeleteMethod

@@ -24,7 +24,6 @@ import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
-import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.objects.mapper.GGMapper;
 import com.garganttua.objects.mapper.GGMapperException;
 import com.garganttua.objects.mapper.IGGMapper;
@@ -42,10 +41,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 	
 	@Setter
 	private IGGMapper entityMapper = new GGMapper();
-	
-	@Setter
-	private IGGAPIEntityUpdater<Object> entityUpdater;
-	
+
 	@Setter
 	protected IGGAPIDomain domain;
 	
@@ -124,28 +120,27 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 		}
 	}
 
-	@Override
-	public Object update(IGGAPICaller caller, Object entity) throws GGAPIException {
-		
-		Object storedObject;
-		try {
-			storedObject = this.getOneByUuid(caller, GGAPIEntityHelper.getUuid(entity));
-		
-			if( storedObject != null ){
-				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Updating entity with uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
-				
-				this.entityUpdater.update(caller, storedObject, entity, this.domain.getEntity().getValue1().updateAuthorizations());
-				this.daoRepository.save(storedObject);
-				return this.entityMapper.map(storedObject, this.domain.getEntity().getValue0());
-			
-			} else {
-				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with uuid "+GGAPIEntityHelper.getUuid(entity)+" does not exist");
-				return null;
-			}
-		} catch (GGMapperException e) {
-			throw new GGAPIEngineException(e);
-		}
-	}
+//	@Override
+//	public Object update(IGGAPICaller caller, Object entity) throws GGAPIException {
+//		
+//		Object storedObject;
+//		try {
+//			storedObject = this.getOneByUuid(caller, GGAPIEntityHelper.getUuid(entity));
+//		
+//			if( storedObject != null ){
+//				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Updating entity with uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
+//				
+//				this.daoRepository.save(storedObject);
+//				return this.entityMapper.map(storedObject, this.domain.getEntity().getValue0());
+//			
+//			} else {
+//				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with uuid "+GGAPIEntityHelper.getUuid(entity)+" does not exist");
+//				return null;
+//			}
+//		} catch (GGMapperException e) {
+//			throw new GGAPIEngineException(e);
+//		}
+//	}
 
 	@Override
 	public Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {

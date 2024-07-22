@@ -353,6 +353,9 @@ public class GGAPIEntityChecker {
 				if( !isOptionalIGGAPISecurity(parameters[2]) ) {
 					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has method "+methodAddress+" but parameter 2 is not of type Optional<IGGAPISecurity>");
 				}
+				if( !method.getReturnType().equals(Object.class) ) {
+					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has method "+methodAddress+" but returned type is not Object.class but is "+method.getGenericReturnType());
+				}
 			}
 		}
 		
