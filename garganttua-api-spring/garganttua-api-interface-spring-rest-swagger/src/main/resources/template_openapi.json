@@ -26,15 +26,7 @@
         "description": "",
         "operationId": "",
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
+
           {
             "name": "mode",
             "in": "query",
@@ -137,15 +129,7 @@
 	         }
 	     },
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+
         ],
         "responses": {
           "201": {
@@ -188,15 +172,7 @@
         "description": "",
         "operationId": "",
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+
         ],
         "responses": {
           "200": {
@@ -251,15 +227,7 @@
         "description": "",
         "operationId": "",
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
+
         ],
         "responses": {
           "200": {
@@ -294,15 +262,7 @@
         "description": "",
         "operationId": "",
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
+
           {
             "name": "uuid",
             "in": "path",
@@ -364,15 +324,7 @@
         "description": "",
         "operationId": "",
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
+  
           {
             "name": "uuid",
             "in": "path",
@@ -434,15 +386,7 @@
         "description": "",
         "operationId": "",
         "parameters": [
-          {
-            "name": "tenantId",
-            "in": "header",
-            "description": "",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
+
           {
             "name": "uuid",
             "in": "path",

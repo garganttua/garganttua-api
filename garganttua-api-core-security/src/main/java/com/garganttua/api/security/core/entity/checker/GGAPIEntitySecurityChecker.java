@@ -40,13 +40,13 @@ public class GGAPIEntitySecurityChecker {
 				annotation.delete_all_access(), 
 				annotation.delete_one_access(), 
 				annotation.count_access(), 
-				annotation.creation_authority(), 
-				annotation.read_all_authority(),
-				annotation.read_one_authority(), 
-				annotation.update_one_authority(), 
-				annotation.delete_all_authority(), 
-				annotation.delete_one_authority(), 
-				annotation.count_authority()
+				annotation.creation_access()==GGAPIServiceAccess.anonymous?false:annotation.creation_authority(), 
+				annotation.read_all_access()==GGAPIServiceAccess.anonymous?false:annotation.read_all_authority(),
+				annotation.read_one_access()==GGAPIServiceAccess.anonymous?false:annotation.read_one_authority(), 
+				annotation.update_one_access()==GGAPIServiceAccess.anonymous?false:annotation.update_one_authority(), 
+				annotation.delete_all_access()==GGAPIServiceAccess.anonymous?false:annotation.delete_all_authority(), 
+				annotation.delete_one_access()==GGAPIServiceAccess.anonymous?false:annotation.delete_one_authority(), 
+				annotation.count_access()==GGAPIServiceAccess.anonymous?false:annotation.count_authority()
 				);
 	}
 

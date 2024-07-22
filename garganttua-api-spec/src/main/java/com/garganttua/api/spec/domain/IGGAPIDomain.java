@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
@@ -35,5 +36,9 @@ public interface IGGAPIDomain {
 	boolean isAllowDeleteAll();
 
 	boolean isAllowCount();
+
+	boolean isTenantIdMandatoryForOperation(GGAPIEntityOperation operation);
+
+	boolean isOwnerIdMandatoryForOperation(GGAPIEntityOperation operation);
 
 }
