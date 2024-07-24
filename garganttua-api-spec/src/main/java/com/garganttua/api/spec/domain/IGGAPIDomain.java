@@ -35,7 +35,7 @@ public interface IGGAPIDomain {
 
 	boolean isAllowDeleteAll();
 
-	boolean isAllowCount();
+//	boolean isAllowCount();
 
 	boolean isTenantIdMandatoryForOperation(GGAPIEntityOperation operation);
 

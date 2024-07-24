@@ -20,8 +20,6 @@ public @interface GGAPIEntity {
 	boolean allow_delete_one() default true;
 
 	boolean allow_delete_all() default true;
-
-	boolean allow_count() default true;
 	
 	String[] interfaces();
 	

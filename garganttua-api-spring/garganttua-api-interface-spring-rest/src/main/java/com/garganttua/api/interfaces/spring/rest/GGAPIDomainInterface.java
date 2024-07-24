@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.core.pageable.GGAPIPageable;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
@@ -84,6 +85,10 @@ public class GGAPIDomainInterface {
 				filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
 		} catch(Exception e) {
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+		}
+		
+		if( pageSize != null && pageIndex != null ) {
+			pageable = GGAPIPageable.getPage(pageSize, pageIndex);
 		}
 		
 		try {
@@ -178,31 +183,6 @@ public class GGAPIDomainInterface {
 		
 		try {
 			response = this.service.deleteAll(caller, filter, customParametersMap);
-		} catch( Exception e ) {
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-		
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public ResponseEntity<?> getCount(@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@RequestParam(name = "filter", defaultValue = "") String filterString,
-			@RequestParam(name = "params", defaultValue = "") String customParameters) {
-		IGGAPIServiceResponse response = null;
-		Map<String, String> customParametersMap = new HashMap<String, String>();
-		IGGAPIFilter filter = null;
-		try {
-			if( customParameters != null && !customParameters.isEmpty() )
-				customParametersMap = this.mapper.readValue(customParameters, Map.class);
-			if( filterString != null && !filterString.isEmpty() )
-				filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
-		} catch(Exception e) {
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
-		}
-		
-		try {
-			response = this.service.getCount(caller, filter, customParametersMap);
 		} catch( Exception e ) {
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
 		}

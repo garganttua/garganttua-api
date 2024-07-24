@@ -63,13 +63,17 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		
 		
 		//TenantId rules
-		this.throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(accessRule, tenantId);
-//		this.sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(accessRule, tenantId);
-		superTenantTemp = this.setSuperTenantIfTenantIdEqualsToSuperTenantId(tenantId);
-		superTenantTemp = this.checkIfTenantExistsAndSetSuperTenantIfTenantIsSuperTenant(tenantId) || superTenantTemp;
-		this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantIdTemp);
-		tenantIdTemp = this.setTenantIdToNullIfThisIsTenantCreationRequest(accessRule, tenantIdTemp);
-		requestedTenantIdTemp = this.setRequestedTenantIdToNullIfThisIsTenantCreationRequest(accessRule, requestedTenantIdTemp);
+		if( this.throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(accessRule, tenantId) ) {
+	//		this.sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(accessRule, tenantId);
+			superTenantTemp = this.setSuperTenantIfTenantIdEqualsToSuperTenantId(tenantId);
+			superTenantTemp = this.checkIfTenantExistsAndSetSuperTenantIfTenantIsSuperTenant(tenantId) || superTenantTemp;
+			this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantIdTemp);
+			tenantIdTemp = this.setTenantIdToNullIfThisIsTenantCreationRequest(accessRule, tenantIdTemp);
+			requestedTenantIdTemp = this.setRequestedTenantIdToNullIfThisIsTenantCreationRequest(accessRule, requestedTenantIdTemp);
+		} else {
+			tenantIdTemp = null;
+			requestedTenantIdTemp = null;
+		}
 		
 		//OwnerId rules
 		if( this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp) ) {
@@ -110,10 +114,12 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		return ownerIdMandatory; 
 	}
 
-	private void throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(IGGAPIAccessRule accessRule, String tenantId) throws GGAPIEngineException {
-		if( this.domain.isTenantIdMandatoryForOperation(accessRule.getOperation()) && tenantId == null ){
+	private boolean throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(IGGAPIAccessRule accessRule, String tenantId) throws GGAPIEngineException {
+		boolean tenantIdMandatory = this.domain.isTenantIdMandatoryForOperation(accessRule.getOperation());
+		if(  tenantIdMandatory && tenantId == null ){
 			throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, "TenantId is null");
 		}
+		return tenantIdMandatory;
 	}
 
 	private String setRequestedTenantIdToNullIfThisIsTenantCreationRequest(IGGAPIAccessRule accessRule, String requestedTenantIdTemp) {

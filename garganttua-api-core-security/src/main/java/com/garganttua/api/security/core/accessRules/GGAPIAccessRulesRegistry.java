@@ -76,13 +76,13 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							: null,
 							GGAPIEntityOperation.delete_all, domain.getSecurity().deleteAllAccess()));
 		
-		if( domain.isAllowCount() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/count",
-					domain.getSecurity().countAuthority() == true
-							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
-									GGAPIEntityOperation.count)
-							: null,
-							GGAPIEntityOperation.count, domain.getSecurity().countAccess()));
+//		if( domain.isAllowCount() )
+//			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/count",
+//					domain.getSecurity().countAuthority() == true
+//							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
+//									GGAPIEntityOperation.count)
+//							: null,
+//							GGAPIEntityOperation.count, domain.getSecurity().countAccess()));
 		
 		if( domain.isAllowReadOne() )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",

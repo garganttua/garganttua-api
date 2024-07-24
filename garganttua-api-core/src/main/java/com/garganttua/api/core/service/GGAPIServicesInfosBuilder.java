@@ -35,10 +35,6 @@ public class GGAPIServicesInfosBuilder {
 			Class<?>[] params = {IGGAPICaller.class, Object.class, Map.class};
 			services.add(getInfos("createEntity", params, baseUrl, "", GGAPIEntityOperation.create_one));
 		}
-		if (domain.isAllowCount()) {
-			Class<?>[] params = {IGGAPICaller.class, IGGAPIFilter.class, Map.class};
-			services.add(getInfos("getCount", params, baseUrl+"/count", "", GGAPIEntityOperation.count));
-		}
 		if (domain.isAllowReadOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
 			services.add(getInfos("getEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.read_one));

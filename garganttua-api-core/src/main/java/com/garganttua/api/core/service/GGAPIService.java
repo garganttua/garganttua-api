@@ -203,17 +203,17 @@ public class GGAPIService implements IGGAPIService {
 		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.delete_all);
 	}
 
-	@Override
-	public IGGAPIServiceResponse getCount(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) {
-		IGGAPIServiceCommand command = (event) -> {
-			long totalCount = this.factory.countEntities(caller, filter, customParameters);
-			event.setCode(GGAPIServiceResponseCode.OK);
-			event.setOut(totalCount);
-			return event;
-		};
-		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCount();}, command, customParameters, GGAPIEntityOperation.count);
-	}
+//	@Override
+//	public IGGAPIServiceResponse getCount(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) {
+//		IGGAPIServiceCommand command = (event) -> {
+//			long totalCount = this.factory.countEntities(caller, filter, customParameters);
+//			event.setCode(GGAPIServiceResponseCode.OK);
+//			event.setOut(totalCount);
+//			return event;
+//		};
+//		
+//		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCount();}, command, customParameters, GGAPIEntityOperation.count);
+//	}
 
 	protected IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation) {
 		IGGAPIEvent event = this.prepareEvent(caller, operation, customParameters);

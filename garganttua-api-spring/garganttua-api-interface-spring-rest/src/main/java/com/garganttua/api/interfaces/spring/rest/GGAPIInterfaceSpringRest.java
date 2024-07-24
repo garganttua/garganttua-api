@@ -78,8 +78,8 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 				.options(options).build();
 		RequestMappingInfo requestMappingInfoCreate = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.POST)
 				.options(options).build();
-		RequestMappingInfo requestMappingInfoCount = RequestMappingInfo.paths(baseUrl + "/count")
-				.methods(RequestMethod.GET).options(options).build();
+//		RequestMappingInfo requestMappingInfoCount = RequestMappingInfo.paths(baseUrl + "/count")
+//				.methods(RequestMethod.GET).options(options).build();
 		RequestMappingInfo requestMappingInfoGetOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
 				.methods(RequestMethod.GET).options(options).build();
 		RequestMappingInfo requestMappingInfoUpdate = RequestMappingInfo.paths(baseUrl + "/{uuid}")
@@ -103,11 +103,11 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 					this.domainInterface.getClass().getMethod("createEntity", IGGAPICaller.class, String.class,
 							String.class));
 		}
-		if (this.domain.isAllowCount()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, this.domainInterface,
-					this.domainInterface.getClass().getMethod("getCount", IGGAPICaller.class, String.class,
-							String.class));
-		}
+//		if (this.domain.isAllowCount()) {
+//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, this.domainInterface,
+//					this.domainInterface.getClass().getMethod("getCount", IGGAPICaller.class, String.class,
+//							String.class));
+//		}
 		if (this.domain.isAllowReadOne()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, this.domainInterface,
 					this.domainInterface.getClass().getMethod("getEntity", IGGAPICaller.class, String.class,

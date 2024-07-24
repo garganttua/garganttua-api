@@ -53,8 +53,8 @@ public class GGAPIDomain implements IGGAPIDomain {
 	private boolean allowDeleteOne;
 	@Getter
 	private boolean allowDeleteAll;
-	@Getter
-	private boolean allowCount;
+//	@Getter
+//	private boolean allowCount;
 
 	@Override
 	public boolean equals(Object o) {
@@ -66,7 +66,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 		return allowCreation == that.allowCreation && allowReadAll == that.allowReadAll
 				&& allowReadOne == that.allowReadOne && allowUpdateOne == that.allowUpdateOne
 				&& allowDeleteOne == that.allowDeleteOne && allowDeleteAll == that.allowDeleteAll
-				&& allowCount == that.allowCount && Objects.equals(entity, that.entity)
+				&& Objects.equals(entity, that.entity)
 				&& Objects.equals(dtos, that.dtos) && Objects.equals(security, that.security) && Objects.equals(interfaces, that.interfaces)
 				&& Objects.equals(event, that.event);
 	}
@@ -74,7 +74,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 	@Override
 	public int hashCode() {
 		return Objects.hash(entity, dtos, security, interfaces, event, allowCreation, allowReadAll, allowReadOne,
-				allowUpdateOne, allowDeleteOne, allowDeleteAll, allowCount);
+				allowUpdateOne, allowDeleteOne, allowDeleteAll);
 	}
 
 	@Override
@@ -82,8 +82,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 		return "GGAPIDomain{" + "domain=" + domain + ", entity=" + entity + ", dtos=" + dtos + ", security= "+security+", interfaces='" + interfaces
 				+ '\'' + ", event='" + event + '\'' + ", allow_creation=" + allowCreation
 				+ ", allow_read_all=" + allowReadAll + ", allow_read_one=" + allowReadOne + ", allow_update_one="
-				+ allowUpdateOne + ", allow_delete_one=" + allowDeleteOne + ", allow_delete_all=" + allowDeleteAll
-				+ ", allow_count=" + allowCount + '}';
+				+ allowUpdateOne + ", allow_delete_one=" + allowDeleteOne + ", allow_delete_all=" + allowDeleteAll + '}';
 	}
 
 	static public GGAPIDomain fromEntityClass(Class<?> clazz, List<String> scanPackages) throws GGAPIException {
@@ -123,14 +122,13 @@ public class GGAPIDomain implements IGGAPIDomain {
 		boolean allow_update_one = entityAnnotation.allow_update_one();
 		boolean allow_delete_one = entityAnnotation.allow_delete_one();
 		boolean allow_delete_all = entityAnnotation.allow_delete_all();
-		boolean allow_count = entityAnnotation.allow_count();
 
 		String event = entityAnnotation.eventPublisher();
 		String[] interfaces = entityAnnotation.interfaces();
 
 		return new GGAPIDomain(infos.domain(), new Pair<Class<?>, GGAPIEntityInfos>(entityClass, infos), dtos, securityInfos,
 				interfaces, event, allow_creation, allow_read_all, allow_read_one, allow_update_one,
-				allow_delete_one, allow_delete_all, allow_count);
+				allow_delete_one, allow_delete_all);
 	}
 
 	@Override
