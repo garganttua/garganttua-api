@@ -97,7 +97,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	@Override
 	public Object getEntityFromRepository(IGGAPICaller caller, Map<String, String> customParameters, GGAPIEntityIdentifier identifier , String uuid) throws GGAPIException  {
 		if( this.domain == null ) {
-			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "this.domain is null");
+			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "Domain is null");
 		}
 		if( caller == null ) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "Caller is null");

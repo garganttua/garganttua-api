@@ -50,8 +50,8 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		
 		this.beforeCreateMethodAddress = this.domain.getEntity().getValue1().beforeCreateMethodAddress();
 		this.afterCreateMethodAddress = this.domain.getEntity().getValue1().afterCreateMethodAddress();
-		this.beforeUpdateMethodAddress = this.domain.getEntity().getValue1().beforeCreateMethodAddress();
-		this.afterUpdateMethodAddress = this.domain.getEntity().getValue1().afterCreateMethodAddress();
+		this.beforeUpdateMethodAddress = this.domain.getEntity().getValue1().beforeUpdateMethodAddress();
+		this.afterUpdateMethodAddress = this.domain.getEntity().getValue1().afterUpdateMethodAddress();
 		
 		try {
 			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());

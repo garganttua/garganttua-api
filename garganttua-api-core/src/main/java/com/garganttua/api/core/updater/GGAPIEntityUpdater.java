@@ -33,8 +33,12 @@ public class GGAPIEntityUpdater implements IGGAPIEntityUpdater<Object> {
 			this.testIfObjectAreOfTheSameType(storedEntity, updatedEntity);
 
 			updateAuthorizations.entrySet().parallelStream().forEach(entry -> {
-				try {
-					storedEntityQuery.setValue(entry.getKey(), updatedEntityQuery.getValue(entry.getKey()));
+				try {	
+					if( this.isAuthorizedUpdate(caller, entry.getValue()) ) {
+						Object updatedValue = updatedEntityQuery.getValue(entry.getKey());
+						if( updatedValue != null )
+							storedEntityQuery.setValue(entry.getKey(), updatedValue);
+					}
 				} catch (GGReflectionException e) {
 					if( log.isDebugEnabled() ) {
 						log.warn("Error during entity updating ", e);
@@ -47,6 +51,17 @@ public class GGAPIEntityUpdater implements IGGAPIEntityUpdater<Object> {
 		}
 
 		return storedEntity;
+	}
+
+	private boolean isAuthorizedUpdate(IGGAPICaller caller, String authority) {
+		if( authority != null && !authority.isEmpty() ) {
+			if( caller.getAuthorities() == null ) {
+				return true;
+			} else {
+				return caller.getAuthorities().contains(authority);
+			}
+		}
+		return true;
 	}
 
 	private void testIfObjectAreOfTheSameType(Object storedEntity, Object entity) throws GGAPIException {
