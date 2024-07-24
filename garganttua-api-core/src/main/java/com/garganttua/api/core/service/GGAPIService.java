@@ -7,11 +7,11 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 import com.garganttua.api.spec.event.IGGAPIEvent;
 import com.garganttua.api.spec.event.IGGAPIEventPublisher;
 import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
@@ -20,7 +20,6 @@ import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.security.IGGAPISecurity;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
-import com.garganttua.api.spec.service.GGAPIServiceMethod;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
@@ -57,16 +56,15 @@ public class GGAPIService implements IGGAPIService {
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		this.engine = engine;
-		this.tenantsDomain = this.engine.getTenantDomain();
 	}
 	
-	protected IGGAPIEvent prepareEvent(IGGAPICaller caller, GGAPIServiceMethod method, Map<String, String> params) {
+	protected IGGAPIEvent prepareEvent(IGGAPICaller caller, GGAPIEntityOperation operation, Map<String, String> params) {
 		GGAPIEvent event = new GGAPIEvent();
 		event.setTenantId(caller.getTenantId());
 		event.setOwnerId(caller.getOwnerId());
 		event.setDomain(this.domain);
 		event.setCaller(caller);
-		event.setMethod(method);
+		event.setOperation(operation);
 		event.setInParams(params);
 		return event;
 	}
@@ -75,12 +73,6 @@ public class GGAPIService implements IGGAPIService {
 	public IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity, Map<String, String> customParameters) {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(entity);
-			
-			//Particular case : if the entity to be created if a tenant entity, set tenantId to null in order to generated a new tenantId
-			if( caller.getDomain().getDomain().equals(this.tenantsDomain.getDomain()) ){
-				caller.deleteTenantId();
-				caller.deleteRequestedTenantId();
-			}
 			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, null, caller.getRequestedTenantId());
 			Object createdEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
 			event.setOut(createdEntity);
@@ -88,7 +80,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCreation();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCreation();}, command, customParameters, GGAPIEntityOperation.create_one);
 	}
 
 	@Override
@@ -149,7 +141,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadAll();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadAll();}, command, customParameters, GGAPIEntityOperation.read_all);
 	}
 
 	@Override
@@ -162,7 +154,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadOne();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadOne();}, command, customParameters, GGAPIEntityOperation.read_one);
 	}
 
 	@Override
@@ -177,7 +169,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowUpdateOne();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowUpdateOne();}, command, customParameters, GGAPIEntityOperation.update_one);
 	}
 
 	@Override
@@ -191,7 +183,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteOne();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteOne();}, command, customParameters, GGAPIEntityOperation.delete_one);
 	}
 
 	@Override
@@ -208,7 +200,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.delete_all);
 	}
 
 	@Override
@@ -220,11 +212,11 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCount();}, command, customParameters);
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCount();}, command, customParameters, GGAPIEntityOperation.count);
 	}
 
-	protected IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters) {
-		IGGAPIEvent event = this.prepareEvent(caller, GGAPIServiceMethod.READ, customParameters);
+	protected IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation) {
+		IGGAPIEvent event = this.prepareEvent(caller, operation, customParameters);
 		try {
 			if (allowed.isAllowed()) {
 				

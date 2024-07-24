@@ -3,7 +3,7 @@ package com.garganttua.api.spec.service;
 import java.util.Map;
 import java.util.Optional;
 
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 import com.garganttua.api.spec.event.IGGAPIEventPublisher;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;

@@ -12,7 +12,7 @@ import com.garganttua.api.core.entity.methods.GGAPIEntitySaveMethod;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;

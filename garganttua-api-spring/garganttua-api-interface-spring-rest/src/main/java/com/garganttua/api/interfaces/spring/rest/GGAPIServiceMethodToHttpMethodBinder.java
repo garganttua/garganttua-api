@@ -2,40 +2,41 @@ package com.garganttua.api.interfaces.spring.rest;
 
 import org.springframework.http.HttpMethod;
 
-import com.garganttua.api.spec.service.GGAPIServiceMethod;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 
 public class GGAPIServiceMethodToHttpMethodBinder {
 	
-	public static HttpMethod fromServiceMethod(GGAPIServiceMethod method) {
-		switch( method ) {
-		case CREATE:
+	public static HttpMethod fromServiceMethod(GGAPIEntityOperation operation) {
+		switch( operation ) {
+		case create_one:
 			return HttpMethod.POST;
-		case READ:
+		case read_all:
+		case count:
+		case read_one:
 			return HttpMethod.GET;
-		case DELETE:
+		case delete_one:
+		case delete_all:
 			return HttpMethod.DELETE;
-		case PARTIAL_UPDATE:
+		case update_one:
 			return HttpMethod.PATCH;
-		case FULL_UPDATE:
-			return HttpMethod.PUT;
 		};
 		return HttpMethod.GET;
 	}
 	
-	public static GGAPIServiceMethod fromHttpMethod(HttpMethod method) {
+	public static GGAPIEntityOperation fromHttpMethod(HttpMethod method) {
 		switch( method.name() ) {
 		case "POST":
-			return GGAPIServiceMethod.CREATE;
+			return GGAPIEntityOperation.create_one;
 		case "GET":
-			return GGAPIServiceMethod.READ;
+			return GGAPIEntityOperation.read_all;
 		case "DELETE":
-			return GGAPIServiceMethod.DELETE;
+			return GGAPIEntityOperation.delete_one;
 		case "PATCH":
-			return GGAPIServiceMethod.PARTIAL_UPDATE;
+			return GGAPIEntityOperation.update_one;
 		case "PUT":
-			return GGAPIServiceMethod.FULL_UPDATE;
+			return GGAPIEntityOperation.update_one;
 		};
-		return GGAPIServiceMethod.READ;
+		return GGAPIEntityOperation.read_all;
 	}
 
 }

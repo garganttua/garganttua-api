@@ -13,7 +13,7 @@ import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
@@ -54,9 +54,9 @@ public class GGAPIEntityHelperTest {
 		GGAPIEntityHelper.setSaveMethod(entity, new IGGAPIEntitySaveMethod<Object>() {
 
 			@Override
-			public void save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIEntityException {
+			public Object save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIEntityException {
 				// TODO Auto-generated method stub
-				
+				return null;
 			}
 		});
 		GGAPIEntityHelper.setId(entity, "id");
@@ -80,12 +80,6 @@ public class GGAPIEntityHelperTest {
 			public void save(IGGAPICaller caller, Object entity) throws GGAPIException {
 				// TODO Auto-generated method stub
 				
-			}
-
-			@Override
-			public Object update(IGGAPICaller caller, Object entity) throws GGAPIException {
-				// TODO Auto-generated method stub
-				return null;
 			}
 
 			@Override

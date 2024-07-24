@@ -9,13 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.garganttua.api.core.GGAPICaller;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.IGGAPICaller;
-import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 
 import jakarta.servlet.Filter;
@@ -51,20 +49,19 @@ public class GGAPICallerFilter implements Filter {
 		if (((HttpServletRequest) request).getServletPath().contains("swagger") || ((HttpServletRequest) request).getServletPath().contains("api-docs")) {
 			chain.doFilter(request, response);
 		} else {
-
-			GGAPICaller caller = new GGAPICaller();
+				
+			HttpMethod method = this.getHttpMethod(request);
+			String uri = this.getUri(request);
+			
+			IGGAPICallerFactory callerFactory = this.engine.getCallerFactory(this.getDomainNameFromRequestUri((HttpServletRequest) request));
 	
 			String tenantId = ((HttpServletRequest) request).getHeader(this.tenantIdHeaderName);
 			String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
 			String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
-	
-			this.doDomainFilter(caller, (HttpServletRequest) request);
-			this.doAccessRuleFilter(caller, (HttpServletRequest) request);
-	
+			
 			try {
-				this.engine.getTenantFilter().doTenantIdFiltering(caller, tenantId, requestedtenantId);
-				this.engine.getOwnerFilter().doOwnerIdFiltering(caller, ownerId, requestedtenantId);
-	
+				IGGAPICaller caller = callerFactory.getCaller(GGAPIServiceMethodToHttpMethodBinder.fromHttpMethod(method), uri, tenantId, ownerId, requestedtenantId, null);
+				
 				request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
 				chain.doFilter(request, response);
 			} catch (IOException | ServletException e) {
@@ -91,25 +88,11 @@ public class GGAPICallerFilter implements Filter {
 			}
 		}
 	}
-
-	private void doDomainFilter(GGAPICaller caller, HttpServletRequest request) {
-		IGGAPIDomain ddomain = this.engine.getDomainsRegistry().getDomain(this.getDomainNameFromRequestUri(request));
-		caller.setDomain(ddomain);
-	}
-
+	
 	private String getDomainNameFromRequestUri(HttpServletRequest request) {
 		String uri = request.getRequestURI();
 		String[] uriParts = uri.split("/");
 		return uriParts[1];
-	}
-
-	private void doAccessRuleFilter(GGAPICaller caller, HttpServletRequest request) {
-		HttpMethod method = this.getHttpMethod(request);
-		String uriTotest = this.getUri(request);
-		IGGAPIAccessRule accessRule = this.engine.getSecurity().getAccessRulesRegistry()
-				.getAccessRule(GGAPIServiceMethodToHttpMethodBinder.fromHttpMethod(method), uriTotest);
-
-		caller.setAccessRule(accessRule);
 	}
 
 	private String getUri(ServletRequest request) {
@@ -141,15 +124,4 @@ public class GGAPICallerFilter implements Filter {
 		}
 		return method;
 	}
-
-	private IGGAPICaller getCaller(ServletRequest request) {
-		return (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
-	}
-
-	private IGGAPIDomain getDomain(HttpServletRequest request) {
-		String uri = request.getRequestURI();
-		String[] uriParts = uri.split("/");
-		return this.engine.getDomainsRegistry().getDomain(uriParts[1]);
-	}
-
 }

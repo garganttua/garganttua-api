@@ -11,7 +11,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;

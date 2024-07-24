@@ -1,5 +1,5 @@
-package com.garganttua.api.core.entity.checker;
 
+package com.garganttua.api.core.entity.checker;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,13 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.geojson.Point;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
@@ -61,6 +62,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
@@ -159,9 +161,10 @@ public class GGAPIEntityChecker {
 		Method beforeDeletem = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityBeforeDelete.class);
 		Method afterDeletem = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityAfterDelete.class);
 
-		Map<String, String> updateAuthorizations = new HashMap<String, String>();
-				
+		Map<String, String> updateAuthorizations = new HashMap<String, String>();	
 		updateAuthorizations = GGAPIEntityChecker.getFieldAuthorizedForUpdate(entityClass, updateAuthorizations);
+		
+		       
 		
 		String gotFromReposiotryFieldAddress = GGAPIEntityChecker.checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);;
 		
@@ -169,6 +172,19 @@ public class GGAPIEntityChecker {
 
 		try {
 			IGGObjectQuery q = GGObjectQueryFactory.objectQuery(entityClass);
+			Map<GGObjectAddress, String> output = updateAuthorizations.entrySet().stream()
+	        .collect(Collectors.toMap(
+	                e -> {
+						try {
+							return q.address(e.getKey());
+						} catch (GGReflectionException e1) {
+							e1.printStackTrace();
+						}
+						return null;
+					},
+	                Map.Entry::getValue)
+	        );
+			
 			return new GGAPIEntityInfos (
 					domain, 
 					q.address(uuidFieldAddress), 
@@ -202,7 +218,7 @@ public class GGAPIEntityChecker {
 					afterUpdatem==null?null:q.address(afterUpdatem.getName()),
 					beforeDeletem==null?null:q.address(beforeDeletem.getName()),
 					afterDeletem==null?null:q.address(afterDeletem.getName()),
-					updateAuthorizations,
+					output,
 					q.address(gotFromReposiotryFieldAddress));
 		} catch (GGReflectionException e) {
 			throw new GGAPIEntityException(e);

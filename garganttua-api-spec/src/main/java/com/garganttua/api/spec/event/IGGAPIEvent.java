@@ -3,16 +3,16 @@ package com.garganttua.api.spec.event;
 import java.util.Date;
 import java.util.Map;
 
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.service.GGAPIServiceMethod;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
 public interface IGGAPIEvent {
 
-	GGAPIServiceMethod getMethod();
-    void setMethod(GGAPIServiceMethod method);
+	GGAPIEntityOperation getOperation();
+    void setOperation(GGAPIEntityOperation operation);
 
     Date getInDate();
     void setInDate(Date inDate);

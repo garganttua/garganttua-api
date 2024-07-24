@@ -2,7 +2,7 @@ package com.garganttua.api.core.security.authorization.tokens.storage;
 
 import java.util.List;
 
-import com.garganttua.api.core.GGAPICaller;
+import com.garganttua.api.core.caller.GGAPICallerICallerICaller;
 import com.garganttua.api.core.repository.GGAPIRepositoryException;
 import com.garganttua.api.core.repository.GGAPISimpleRepository;
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;

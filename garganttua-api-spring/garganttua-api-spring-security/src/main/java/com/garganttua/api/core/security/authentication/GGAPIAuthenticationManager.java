@@ -17,7 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.GGAPICaller;
+import com.garganttua.api.core.caller.GGAPICallerICallerICaller;
 import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.factory.GGAPIFactoryException;
@@ -42,7 +42,7 @@ import com.garganttua.api.core.security.authentication.mappers.GGAPIEntityLoginP
 import com.garganttua.api.core.security.authentication.mappers.IGGAPIAuthenticationUserMapper;
 import com.garganttua.api.core.security.authentication.providers.dao.GGAPIDaoAuthenticationProvider;
 import com.garganttua.api.core.security.authentication.tools.GGAPIAuthenticationPasswordEncoder;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICallerICallerICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;

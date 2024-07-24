@@ -9,7 +9,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.garganttua.api.core.security.authorization.tokens.GGAPIToken;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerManager;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICallerICallerICaller;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 
 import jakarta.servlet.FilterChain;

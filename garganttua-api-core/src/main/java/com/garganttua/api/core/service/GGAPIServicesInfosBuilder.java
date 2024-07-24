@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.service.GGAPICustomService;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
-import com.garganttua.api.spec.service.GGAPIServiceMethod;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.sort.IGGAPISort;
@@ -25,45 +25,45 @@ public class GGAPIServicesInfosBuilder {
     	
 		if (domain.isAllowReadAll()) {
 			Class<?>[] params = {IGGAPICaller.class, GGAPIReadOutputMode.class, IGGAPIPageable.class, IGGAPIFilter.class, IGGAPISort.class, Map.class};
-			services.add(getInfos("getEntities", params, baseUrl, "", GGAPIServiceMethod.READ));
+			services.add(getInfos("getEntities", params, baseUrl, "", GGAPIEntityOperation.read_all));
 		}
 		if (domain.isAllowDeleteAll()) {
 			Class<?>[] params = {IGGAPICaller.class,  IGGAPIFilter.class, Map.class};
-			services.add(getInfos("deleteAll", params, baseUrl, "", GGAPIServiceMethod.DELETE));
+			services.add(getInfos("deleteAll", params, baseUrl, "", GGAPIEntityOperation.delete_all));
 		}
 		if (domain.isAllowCreation()) {
 			Class<?>[] params = {IGGAPICaller.class, Object.class, Map.class};
-			services.add(getInfos("createEntity", params, baseUrl, "", GGAPIServiceMethod.CREATE));
+			services.add(getInfos("createEntity", params, baseUrl, "", GGAPIEntityOperation.create_one));
 		}
 		if (domain.isAllowCount()) {
 			Class<?>[] params = {IGGAPICaller.class, IGGAPIFilter.class, Map.class};
-			services.add(getInfos("getCount", params, baseUrl+"/count", "", GGAPIServiceMethod.READ));
+			services.add(getInfos("getCount", params, baseUrl+"/count", "", GGAPIEntityOperation.count));
 		}
 		if (domain.isAllowReadOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
-			services.add(getInfos("getEntity", params, baseUrl+"/{uuid}", "", GGAPIServiceMethod.READ));
+			services.add(getInfos("getEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.read_one));
 		}
 		if (domain.isAllowUpdateOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Object.class, Map.class};
-			services.add(getInfos("updateEntity", params, baseUrl+"/{uuid}", "", GGAPIServiceMethod.PARTIAL_UPDATE));
+			services.add(getInfos("updateEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.update_one));
 		}
 		if (domain.isAllowDeleteOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
-			services.add(getInfos("deleteEntity", params, baseUrl+"/{uuid}", "", GGAPIServiceMethod.DELETE));
+			services.add(getInfos("deleteEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.delete_one));
 		}
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
             if (method.isAnnotationPresent(GGAPICustomService.class)) {
                 GGAPICustomService annotation = method.getAnnotation(GGAPICustomService.class);
-                IGGAPIServiceInfos service = getInfos(method.getName(), method.getParameterTypes(), annotation.path(), annotation.description(), annotation.method());
+                IGGAPIServiceInfos service = getInfos(method.getName(), method.getParameterTypes(), annotation.path(), annotation.description(), annotation.operation());
                 services.add(service);
             }
         }
         return services;
     }
 
-    private static IGGAPIServiceInfos getInfos(String methodName, Class<?>[] parameters, String path, String description, GGAPIServiceMethod method) {
-        return new GGAPIServiceInfos(methodName, method, parameters, path, description);
+    private static IGGAPIServiceInfos getInfos(String methodName, Class<?>[] parameters, String path, String description, GGAPIEntityOperation operation) {
+        return new GGAPIServiceInfos(methodName, operation, parameters, path, description);
     }
 
 }

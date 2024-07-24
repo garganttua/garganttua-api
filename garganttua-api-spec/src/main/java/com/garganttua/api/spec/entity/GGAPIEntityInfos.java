@@ -39,7 +39,7 @@ public record GGAPIEntityInfos (
         GGObjectAddress afterUpdateMethodAddress, 
         GGObjectAddress beforeDeleteMethodAddress, 
         GGObjectAddress afterDeleteMethodAddress, 
-        Map<String, String> updateAuthorizations,
+        Map<GGObjectAddress, String> updateAuthorizations,
         GGObjectAddress gotFromRepositoryFieldAddress
 ) {
 	

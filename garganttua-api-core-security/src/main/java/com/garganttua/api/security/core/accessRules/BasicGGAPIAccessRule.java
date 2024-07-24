@@ -3,7 +3,6 @@ package com.garganttua.api.security.core.accessRules;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
-import com.garganttua.api.spec.service.GGAPIServiceMethod;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,12 +13,12 @@ public class BasicGGAPIAccessRule implements IGGAPIAccessRule {
 	
 	private String endpoint;
 	private String authority; 
-	private GGAPIServiceMethod method;
+	private GGAPIEntityOperation operation;
 	private GGAPIServiceAccess access;
 	
 	@Override
 	public String toString() {	
-		return "[endpoint ["+this.endpoint+"] access ["+this.access+"] authorization ["+this.authority+"] method ["+this.method+"]]";
+		return "[endpoint ["+this.endpoint+"] access ["+this.access+"] authorization ["+this.authority+"] operation ["+this.operation+"]]";
 	}
 	
 	public static String getAuthority(String domain, GGAPIEntityOperation operation) {

@@ -4,10 +4,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.event.IGGAPIEvent;
-import com.garganttua.api.spec.service.GGAPIServiceMethod;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
@@ -21,7 +21,7 @@ public class GGAPIEvent implements IGGAPIEvent {
 		this.inParams = new HashMap<String, String>();
 	}
 	
-	private GGAPIServiceMethod method;
+	private GGAPIEntityOperation operation;
 	
 	private Date inDate;
 	

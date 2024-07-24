@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.garganttua.api.core.GGAPICaller;
+import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.pageable.GGAPIPageable;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
 import com.garganttua.api.spec.filter.GGAPILiteral;
@@ -194,7 +194,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				if (GGAPIEntityHelper.getUuid(entity) == null || ((String) GGAPIEntityHelper.getUuid(entity)).isEmpty()) {
 					GGAPIEntityHelper.setUuid(entity, UUID.randomUUID().toString());
 				} 
-				((GGAPICaller) caller).setRequestedTenantId(GGAPIEntityHelper.getUuid(entity));
+//				((GGAPICaller) caller).setRequestedTenantId(GGAPIEntityHelper.getUuid(entity));
 			} else {
 				GGAPIEntityHelper.setUuid(entity, caller.getRequestedTenantId());
 			}
@@ -234,9 +234,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 			}
 			String[] fieldValues = new String[values.size()];
 			values.toArray(fieldValues);
-
-			GGAPICaller superCaller = new GGAPICaller();
-			superCaller.setSuperTenant(true);
 			
 			GGAPILiteral literal = null;
 			for( int i = 0; i < unicity.size(); i++ ) {
@@ -248,9 +245,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				}
 			}
 
-			List<Entity> entities = repository.getEntities(superCaller, GGAPIPageable.getPage(0,0), literal, null);
-
-			return entities;
+			return repository.getEntities(GGAPICaller.createSuperCaller(), GGAPIPageable.getPage(0,0), literal, null);
 
 		} catch (GGReflectionException e) {
 			log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);

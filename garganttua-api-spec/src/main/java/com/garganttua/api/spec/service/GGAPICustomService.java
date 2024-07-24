@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.garganttua.api.spec.GGAPIEntityOperation;
+
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface GGAPICustomService {
@@ -13,7 +15,7 @@ public @interface GGAPICustomService {
 
 //	String authority() default "";
 
-	GGAPIServiceMethod method();
+	GGAPIEntityOperation operation();
 
 //	GGAPIServiceAccess access();
 	

@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.IGGAPICaller;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;

@@ -70,13 +70,12 @@ public class GGAPIEntitySecurityCheckerTest {
 		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteAllAccess());
 		assertEquals(GGAPIServiceAccess.anonymous, infos.countAccess());
 		
-		assertEquals(true, infos.creationAuthority());
-		assertEquals(true, infos.readAllAuthority());
-		assertEquals(true, infos.readOneAuthority());
-		assertEquals(true, infos.updateOneAuthority());
-		assertEquals(true, infos.deleteOneAuthority());
-		assertEquals(true, infos.deleteAllAuthority());
-		assertEquals(true, infos.countAuthority());	
-		
+		assertEquals(false, infos.creationAuthority());
+		assertEquals(false, infos.readAllAuthority());
+		assertEquals(false, infos.readOneAuthority());
+		assertEquals(false, infos.updateOneAuthority());
+		assertEquals(false, infos.deleteOneAuthority());
+		assertEquals(false, infos.deleteAllAuthority());
+		assertEquals(false, infos.countAuthority());	
 	}
 }

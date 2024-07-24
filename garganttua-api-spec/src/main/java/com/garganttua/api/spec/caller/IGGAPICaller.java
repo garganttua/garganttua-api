@@ -1,4 +1,4 @@
-package com.garganttua.api.spec;
+package com.garganttua.api.spec.caller;
 
 import java.util.List;
 
@@ -13,6 +13,8 @@ public interface IGGAPICaller {
 	
 	String getOwnerId();
 	
+	String getCallerId();
+	
 	boolean isSuperTenant();
 	
 	boolean isSuperOwner();
@@ -25,19 +27,19 @@ public interface IGGAPICaller {
 	
 	List<String> getAuthorities();
 
-	void deleteTenantId();
-
-	void deleteRequestedTenantId();
-
-	void setAnonymous(boolean b);
-
-	void setTenantId(String tenantId);
-
-	void setRequestedTenantId(String requestedtenantId);
-
-	void setSuperTenant(boolean value);
-
-	void setOwnerId(String ownerId);
-
-	void setSuperOwner(boolean value);
+//	void deleteTenantId();
+//
+//	void deleteRequestedTenantId();
+//
+//	void setAnonymous(boolean b);
+//
+//	void setTenantId(String tenantId);
+//
+//	void setRequestedTenantId(String requestedtenantId);
+//
+//	void setSuperTenant(boolean value);
+//
+//	void setOwnerId(String ownerId);
+//
+//	void setSuperOwner(boolean value);
 }

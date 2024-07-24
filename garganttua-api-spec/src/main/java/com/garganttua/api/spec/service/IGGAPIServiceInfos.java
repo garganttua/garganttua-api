@@ -1,5 +1,7 @@
 package com.garganttua.api.spec.service;
 
+import com.garganttua.api.spec.GGAPIEntityOperation;
+
 public interface IGGAPIServiceInfos {
 
 	String getMethodName();
@@ -14,6 +16,6 @@ public interface IGGAPIServiceInfos {
 
 	String getDescription();
 
-	GGAPIServiceMethod getMethod();
+	GGAPIEntityOperation getOperation();
 
 }
