@@ -95,7 +95,7 @@ public class GGAPIEntityChecker {
 		
 		if( tenantEntity ) {
 			tenantIdFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityTenantId.class, String.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).tenantId(), String.class, GGAPIEntityTenantId.class);
-			superTenantFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperTenant.class, boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).superTenant(), boolean.class, GGAPIEntitySuperTenant.class);
+			superTenantFieldAddress = GGAPIEntityChecker.checkAnnotationOrField(entityClass, GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntitySuperTenant.class, Boolean.class), entityClass.getDeclaredAnnotation(GGAPIEntityTenant.class).superTenant(), Boolean.class, GGAPIEntitySuperTenant.class);
 		} else {
 			tenantIdFieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass, GGAPIEntityTenantId.class, String.class);
 		}
@@ -152,7 +152,6 @@ public class GGAPIEntityChecker {
 		unicityFields = GGAPIEntityChecker.getFieldsWithAnnotation(unicityFields, entityClass, GGAPIEntityUnicity.class);
 		unicityFields.addAll(GGAPIEntityChecker.checkUnicitiesAnnotationPresent(entityClass));
 		
-		
 		Method afterGetm = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityAfterGet.class);
 		Method beforeCreatem = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityBeforeCreate.class);
 		Method afterCreatem = GGAPIEntityChecker.hasAnnotation(entityClass, GGAPIEntityAfterCreate.class);
@@ -163,9 +162,7 @@ public class GGAPIEntityChecker {
 
 		Map<String, String> updateAuthorizations = new HashMap<String, String>();	
 		updateAuthorizations = GGAPIEntityChecker.getFieldAuthorizedForUpdate(entityClass, updateAuthorizations);
-		
-		       
-		
+
 		String gotFromReposiotryFieldAddress = GGAPIEntityChecker.checkGotFromRepositoryAnnotationPresentAndFieldHasGoodType(entityClass);;
 		
 		GGAPIEntityChecker.checkConstructor(entityClass);

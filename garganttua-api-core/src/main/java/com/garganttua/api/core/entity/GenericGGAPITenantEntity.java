@@ -45,7 +45,7 @@ public class GenericGGAPITenantEntity {
 	@Setter
 	@GGAPIEntitySuperTenant
 	@GGAPIEntityAuthorizeUpdate(authority = "super-tenant-update")
-	protected boolean superTenant;
+	protected Boolean superTenant;
 	
 	@GGAPIEntityGotFromRepository
 	private boolean gotFromRepository;
