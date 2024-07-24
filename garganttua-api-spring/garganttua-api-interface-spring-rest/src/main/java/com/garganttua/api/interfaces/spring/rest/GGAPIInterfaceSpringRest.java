@@ -103,11 +103,6 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 					this.domainInterface.getClass().getMethod("createEntity", IGGAPICaller.class, String.class,
 							String.class));
 		}
-//		if (this.domain.isAllowCount()) {
-//			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCount, this.domainInterface,
-//					this.domainInterface.getClass().getMethod("getCount", IGGAPICaller.class, String.class,
-//							String.class));
-//		}
 		if (this.domain.isAllowReadOne()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, this.domainInterface,
 					this.domainInterface.getClass().getMethod("getEntity", IGGAPICaller.class, String.class,

@@ -136,13 +136,6 @@ public class GGAPIInterfaceSpringRestSwagger {
 				this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.create_one) );
 			}
 		}
-//		if (domain.isAllowCount()) {
-//			Operation operation = templateOpenApi.getPaths().get(baseUrl + "/count").getGet();
-//			this.openApi.path(baseUrl + "/count", pathItemCount.get(operation.description("<b>Access</b> : ["+domain.getSecurity().countAccess()+"] <br> <b>Authority</b>: ["+(domain.getSecurity().countAuthority()==false?"none":BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(), GGAPIEntityOperation.count))+"]")));
-//			this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(GGAPIEntityOperation.count) );
-//			this.addRequestedTenantIdHeader(operation);
-//			this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.count) );
-//		}
 		if (domain.isAllowReadOne()) {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet();
 			this.openApi.path(baseUrl + "/{uuid}", pathItemUuid.get(operation.description("<b>Access</b> : ["+domain.getSecurity().readOneAccess()+"] <br> <b>Authority</b>: ["+(domain.getSecurity().readOneAuthority()==false?"none":BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(), GGAPIEntityOperation.read_one))+"]")));
