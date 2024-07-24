@@ -67,14 +67,17 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 //		this.sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(accessRule, tenantId);
 		superTenantTemp = this.setSuperTenantIfTenantIdEqualsToSuperTenantId(tenantId);
 		superTenantTemp = this.checkIfTenantExistsAndSetSuperTenantIfTenantIsSuperTenant(tenantId) || superTenantTemp;
-		this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantId);
+		this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantIdTemp);
 		tenantIdTemp = this.setTenantIdToNullIfThisIsTenantCreationRequest(accessRule, tenantIdTemp);
 		requestedTenantIdTemp = this.setRequestedTenantIdToNullIfThisIsTenantCreationRequest(accessRule, requestedTenantIdTemp);
 		
 		//OwnerId rules
-		this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerId);
-		superOwnerTemp = this.setSuperOwnerIfOwnerIdEqualsToSuperOwnerId(ownerId);
-		superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(ownerId) || superOwnerTemp;
+		if( this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp) ) {
+			superOwnerTemp = this.setSuperOwnerIfOwnerIdEqualsToSuperOwnerId(ownerIdTemp);
+			superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(ownerIdTemp) || superOwnerTemp;
+		} else {
+			ownerIdTemp = null;
+		}
 				
 		return new GGAPICaller(tenantIdTemp, requestedTenantIdTemp, callerIdTemp, ownerIdTemp, superTenantTemp, superOwnerTemp, accessRule, domain, anonymousTemp, null);
 	}
@@ -96,13 +99,15 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		return ownerId.equals(this.superOwnerId);
 	}
 
-	private void throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(IGGAPIAccessRule accessRule, String ownerId) throws GGAPIEngineException {
-		if( this.domain.isOwnerIdMandatoryForOperation(accessRule.getOperation()) ){
+	private boolean throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(IGGAPIAccessRule accessRule, String ownerId) throws GGAPIEngineException {
+		boolean ownerIdMandatory = this.domain.isOwnerIdMandatoryForOperation(accessRule.getOperation());
+		if( ownerIdMandatory ){
 			if( ownerId == null || ownerId.isEmpty() )
 				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "OwnerId is null");
 			if( this.ownersDomain.isEmpty() || this.ownersFactory.isEmpty() )
 				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Onwers Domain or Owners Factory is null");
 		}
+		return ownerIdMandatory; 
 	}
 
 	private void throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(IGGAPIAccessRule accessRule, String tenantId) throws GGAPIEngineException {

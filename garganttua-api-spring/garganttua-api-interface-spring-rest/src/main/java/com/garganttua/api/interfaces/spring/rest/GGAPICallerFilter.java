@@ -62,6 +62,10 @@ public class GGAPICallerFilter implements Filter {
 			try {
 				IGGAPICaller caller = callerFactory.getCaller(GGAPIServiceMethodToHttpMethodBinder.fromHttpMethod(method), uri, tenantId, ownerId, requestedtenantId, null);
 				
+				if( log.isDebugEnabled() ) {
+					log.debug("Generated caller "+caller);
+				}
+				
 				request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
 				chain.doFilter(request, response);
 			} catch (IOException | ServletException e) {

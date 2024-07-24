@@ -106,20 +106,6 @@ public class GGApiEngine implements IGGAPIEngine {
 		interfaces.forEach(interfasse -> {
 			interfasse.setService(service, serviceInfos);
 		});
-		
-//		log.info("*** Creating tenant filter");
-//		this.tenantFilter = new GGAPITenantFilter(this.getTenantDomain(),
-//				this.factoriesRegistry.getFactory(this.getTenantDomain().getEntity().getValue1().domain()), 
-//				this.superTenantId);
-//		
-//		log.info("*** Creating owner filter");
-//		Optional<IGGAPIDomain> ownerDomain = Optional.ofNullable(this.getOwnerDomain());
-//		IGGAPIEntityFactory<?> ownersFactory = null;
-//		if( ownerDomain.isPresent() ) {
-//			ownersFactory = this.factoriesRegistry.getFactory(ownerDomain.get().getEntity().getValue1().domain());
-//		}
-//		
-//		this.ownerFilter = new GGAPIOwnerFilter(ownerDomain, ownersFactory, this.superOwnerId);
 	}
 
 	@Override

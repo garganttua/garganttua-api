@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.spec.caller.IGGAPICallerFactoriesRegistry;
@@ -31,6 +30,7 @@ public class GGAPICallerFactoriesFactory {
 	public GGAPICallerFactoriesFactory(Collection<IGGAPIDomain> domains, IGGAPIFactoriesRegistry factoriesRegistry, IGGAPIAccessRulesRegistry accessRulesRegistry) {
 		this.domains = domains;
 		this.factoriesRegistry = factoriesRegistry;
+		this.accessRulesRegistry = accessRulesRegistry;
 	
 		this.createCallerFactories();
 	}
