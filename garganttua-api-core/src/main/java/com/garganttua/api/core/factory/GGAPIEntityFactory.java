@@ -175,7 +175,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	private <T> void setEntityMethodsAndFields(Map<String, String> customParameters, IGGAPIDomain domain, T entity) throws GGAPIException{
 		GGAPIEntityHelper.setRepository(entity, this.repository );
 		GGAPIEntityHelper.setEngine(entity, this.engine );
-		GGAPIEntityHelper.setSaveMethod(entity, new GGAPIEntitySaveMethod(this.domain, this.repository, this.entityUpdater, this.security));
+		GGAPIEntityHelper.setSaveMethod(entity, new GGAPIEntitySaveMethod(this.domain, this.repository, this, this.entityUpdater, this.security));
 		GGAPIEntityHelper.setDeleteMethod(entity, new GGAPIEntityDeleteMethod(this.domain, this.repository));
 		this.injectDependenciesAndValues(entity);
 	}

@@ -1,9 +1,12 @@
 package com.garganttua.api.daos.spring.mongodb;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.management.RuntimeErrorException;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +26,13 @@ import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.sort.IGGAPISort;
+import com.garganttua.objects.mapper.GGMapperException;
+import com.garganttua.objects.mapper.rules.GGMappingRule;
+import com.garganttua.objects.mapper.rules.GGMappingRules;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -263,8 +270,25 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 		this.domain = domain;
 		if( domain.getEntity().getValue1().geolocalizedEntity() ) {
 			GGObjectAddress geolocField = domain.getEntity().getValue1().locationFieldAddress();
-			if( geolocField != null )
-				this.mongo.indexOps(this.dtoClass).ensureIndex( new GeospatialIndex(geolocField.getFields()[geolocField.getFields().length-1]).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+			if( geolocField != null ) {
+				
+				try {
+					List<GGMappingRule> rules = GGMappingRules.parse(this.dtoClass);
+					
+					List<GGMappingRule> templist = rules.stream().filter(rule -> {
+						return rule.sourceFieldAddress().equals(geolocField);
+					}).collect(Collectors.toList());
+					
+					Field field = GGObjectReflectionHelper.getField(this.dtoClass, templist.get(0).destinationFieldAddress().getElement(templist.get(0).destinationFieldAddress().length()-1));
+					
+					if( templist.size()>0 ) {
+						this.mongo.indexOps(this.dtoClass).ensureIndex(new GeospatialIndex(field.getName()).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+					}
+					
+				} catch (GGMapperException e) {
+					throw new RuntimeException(e);
+				}
+			}
 		};
 	}
 	

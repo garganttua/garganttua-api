@@ -32,6 +32,7 @@ import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -48,7 +49,9 @@ public class GGApiEngine implements IGGAPIEngine {
 	private IGGAPIServicesRegistry servicesRegistry;
 	private IGGAPIInterfacesRegistry interfacesRegistry;
 	private IGGAPICallerFactoriesRegistry callerFactoriesRegistry;
+	@Getter
 	private String superTenantId = "0";
+	@Getter
 	private String superOwnerId = "0";
 
 	protected GGApiEngine(IGGAPISecurityEngine security, IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader, String superTenantId, String superOwnerId) {

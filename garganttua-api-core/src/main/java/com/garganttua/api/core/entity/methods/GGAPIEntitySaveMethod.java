@@ -1,6 +1,7 @@
 package com.garganttua.api.core.entity.methods;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -16,6 +17,8 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
+import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPISecurity;
@@ -40,11 +43,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private GGObjectAddress beforeCreateMethodAddress;
 	private IGGObjectQuery objectQuery;
 	private IGGAPIEntityUpdater<Object> entityUpdater;
+	private IGGAPIEntityFactory<Object> factory;
 	
 	
-	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityUpdater<Object> updater, Optional<IGGAPISecurity> security) throws GGAPIException {
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater, Optional<IGGAPISecurity> security) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
+		this.factory = factory;
 		this.entityUpdater = updater;
 		this.security = security;
 		
@@ -81,7 +86,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		try {
 			if( this.repository.doesExist(caller, entity) ) {
 				
-				Object storedObject = this.repository.getOneByUuid(caller, GGAPIEntityHelper.getUuid(entity));
+				Object storedObject = this.factory.getEntityFromRepository(caller, new HashMap<String, String>(), GGAPIEntityIdentifier.UUID , GGAPIEntityHelper.getUuid(entity));
 				Object updatedObject = this.entityUpdater.update(caller, storedObject, entity, this.domain.getEntity().getValue1().updateAuthorizations());
 				
 				this.updateEntity(caller, parameters, updatedObject);

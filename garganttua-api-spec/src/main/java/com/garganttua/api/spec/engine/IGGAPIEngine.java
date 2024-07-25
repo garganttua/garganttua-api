@@ -38,4 +38,6 @@ public interface IGGAPIEngine {
 	
 	IGGAPICallerFactory getCallerFactory(String domainName);
 
+	String getSuperTenantId();
+
 }

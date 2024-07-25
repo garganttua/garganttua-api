@@ -49,8 +49,8 @@ public class GGAPIDaosFactory {
 				Pair<String, String> beanRef = GGBeanRefValidator.validate(db);
 				
 				IGGAPIDao<Object> dao = (IGGAPIDao<Object>) this.beanLoader.getBeanNamed(beanRef.getValue0(), beanRef.getValue1());
-				dao.setDomain(domain);
 				dao.setDtoClass((Class<Object>) dto.getValue0());
+				dao.setDomain(domain);
 				
 				domainDaos.add(new Pair<Class<?>, IGGAPIDao<?>>(dto.getValue0(), dao));
 				
