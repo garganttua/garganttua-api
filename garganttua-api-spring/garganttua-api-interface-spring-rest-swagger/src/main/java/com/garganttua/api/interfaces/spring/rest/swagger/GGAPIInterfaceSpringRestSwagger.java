@@ -98,7 +98,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 				  "<b>Public Entity</b> ["+domain.getEntity().getValue1().publicEntity()+"] <br> "
 				+ "<b>Shared Entity</b> ["+(domain.getEntity().getValue1().sharedEntity()?"false":domain.getEntity().getValue1().shareFieldAddress())+"] <br> "
 				+ "<b>Hiddenable Entity</b> ["+domain.getEntity().getValue1().hiddenableEntity()+"] <br> "
-				+ "<b>Geolocalized</b> ["+(domain.getEntity().getValue1().geolocalizedEntity()?"false":domain.getEntity().getValue1().locationFieldAddress())+"]");
+				+ "<b>Geolocalized</b> ["+(!domain.getEntity().getValue1().geolocalizedEntity()?"false":domain.getEntity().getValue1().locationFieldAddress())+"]");
 		this.openApi.addTagsItem(tag);
 
 		GGAPIEntity entityAnnotation = entityClass.getAnnotation(GGAPIEntity.class);
