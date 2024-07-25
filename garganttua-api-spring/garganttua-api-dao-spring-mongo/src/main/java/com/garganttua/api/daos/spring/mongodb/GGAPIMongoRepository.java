@@ -6,12 +6,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.management.RuntimeErrorException;
 
+import org.geojson.GeoJsonObject;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.geo.Circle;
+import org.springframework.data.geo.Shape;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.index.GeospatialIndex;
@@ -76,13 +78,12 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 				TextCriteria textCriteria = TextCriteria.forDefaultLanguage().matchingPhrase(textCriteriaString);
 				query.addCriteria(textCriteria);
 			}
+			
+			Criteria geolocCriteria = GGAPIMongoRepository.getGeolocCriteriaFromFilter(filter);
+			if( geolocCriteria != null)
+				query.addCriteria(geolocCriteria);
 		}
 		
-//		if (geoloc != null) {
-//			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, domain.geolocalized);
-//			if( criteria != null)
-//				query.addCriteria(criteria);
-//		}
 		
 		Pageable page = null; 
 		
@@ -123,28 +124,46 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 		}
 		return null;
 	}
+	
+	private static Criteria getGeolocCriteriaFromFilter(IGGAPIFilter filter) {
+		String filterName = filter.getName();
+		String fieldName = (String) filter.getValue();
+		if( filterName.equals(GGAPILiteral.OPERATOR_FIELD) ) {
+			String subFilterName = filter.getLiterals().get(0).getName();
+			if( subFilterName.equals(GGAPILiteral.OPERATOR_GEOLOC_SPHERE) || subFilterName.equals(GGAPILiteral.OPERATOR_GEOLOC) ) {
+				GeoJsonObject geoloc = (GeoJsonObject) filter.getLiterals().get(0).getValue();
+				return getCriteriaFromGeolocFilter(fieldName, geoloc, subFilterName);
+			}
 
-//	private static Criteria getCriteriaFromGeolocFilter(GGAPIGeolocFilter geoloc, String geolocField) {
-//		Criteria criteria = null;
-//		
-//		if( geolocField != null ) {
-//			Shape shape = geoloc.getShape().accept(new GGAPIGeoJsonToSpringShapeBinder());
-//			
-//			criteria = Criteria.where(geolocField);
-//			switch(geoloc.getType()) {
-//			default:
-//				break;
-//			case GEO_WITHIN:
-//				criteria.within(shape);
-//				break;
-//			case GEO_WITHIN_SPHERE:
-//				criteria.withinSphere((Circle) shape);
-//				break;
-//			}
-//		}
-//		
-//		return criteria;
-//	}
+		} else if( !GGAPILiteral.isFinal(filter) ){
+			for(IGGAPIFilter sub: filter.getLiterals() ) {
+				return getGeolocCriteriaFromFilter(sub);
+			}
+		}
+		return null;
+	}
+
+	private static Criteria getCriteriaFromGeolocFilter(String geolocField, GeoJsonObject geoloc, String subFilterName) {
+		Criteria criteria = null;
+		
+		if( geolocField != null ) {
+			Shape shape = geoloc.accept(new GGAPIGeoJsonToSpringShapeBinder());
+			
+			criteria = Criteria.where(geolocField);
+			switch(subFilterName) {
+			default:
+				break;
+			case GGAPILiteral.OPERATOR_GEOLOC:
+				criteria.within(shape);
+				break;
+			case GGAPILiteral.OPERATOR_GEOLOC_SPHERE:
+				criteria.withinSphere((Circle) shape);
+				break;
+			}
+		}
+		
+		return criteria;
+	}
 
 	/*
 	 * Not very elegant, must be refactored
@@ -256,11 +275,9 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 			}
 		}
 		
-//		if (geoloc != null) {
-//			Criteria criteria = GGAPIMongoRepository.getCriteriaFromGeolocFilter(geoloc, domain.geolocalized);
-//			if( criteria != null)
-//				query.addCriteria(criteria);
-//		}
+		Criteria criteria = GGAPIMongoRepository.getGeolocCriteriaFromFilter(filter);
+		if( criteria != null)
+			query.addCriteria(criteria);
 		
 		return this.mongo.count(query, this.dtoClass);
 	}

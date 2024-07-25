@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.regex.Pattern;
 
+import org.geojson.GeoJsonObject;
+import org.geojson.GeoJsonObjectVisitor;
+import org.geojson.Point;
 import org.junit.jupiter.api.Test;
 
 
@@ -225,25 +228,28 @@ public class GGAPILiteralTest {
 		assertEquals(filter, filterCloned);
 	}
 	
-//	@Test
-//	public void testGeoloc() throws JsonMappingException, JsonProcessingException, GGAPILiteralException {
-//		String geoString = "{"
-//				+ "  \"type\": \"Feature\","
-//				+ "  \"properties\": {"
-//				+ "    \"radius\": 443.0003055263856"
-//				+ "  },"
-//				+ "  \"geometry\": { \"type\": \"Point\", \"coordinates\": [-74.008317, 40.72251] }"
-//				+ "}";
+	@Test
+	public void testGeoloc() throws GGAPILiteralException {
+		String geoString = "{"
+				+ "  \"type\": \"Feature\","
+				+ "  \"properties\": {"
+				+ "    \"radius\": 443.0003055263856"
+				+ "  },"
+				+ "  \"geometry\": { \"type\": \"Point\", \"coordinates\": [-74.008317, 40.72251] }"
+				+ "}";
+		GeoJsonObject test = new Point(0,0);
+				
 //		GeoJsonObject object = new ObjectMapper().readValue(geoString , GeoJsonObject.class);
-//		
-//		GGAPILiteral lit = GGAPILiteral.geolocWithin("fieldName", object);
-//		
-//		GGAPILiteral.validate(lit);
-//		
-//		String geoString2 = lit.toString();
-//		
+		
+		GGAPILiteral lit = GGAPILiteral.geolocWithin("fieldName", test);
+		
+		GGAPILiteral.validate(lit);
+		
+		String geoString2 = lit.toString();
+		System.out.println(geoString2);
+		
 //		GGAPILiteral lit2 = new ObjectMapper().readValue(geoString2 , GGAPILiteral.class);
-//		
-//	}
+		
+	}
 	
 }

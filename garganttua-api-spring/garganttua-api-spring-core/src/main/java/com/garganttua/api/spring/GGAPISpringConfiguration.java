@@ -33,7 +33,7 @@ public class GGAPISpringConfiguration {
 	@Autowired
 	private GGAPIPropertyLoader propLoader;
 
-	@Bean
+	@Bean(name = "IGGAPIEngine")
 	public IGGAPIEngine createGarganttuaApiEngine() throws GGAPIException, GGReflectionException {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(this.propLoader, List.of(this.packages), List.of(this.springBeanSupplier));
 		IGGAPIBuilder builder = GGApiBuilder.builder().setPropertyLoader(null).setPackages(List.of(this.packages)).setBeanLoader(l);
