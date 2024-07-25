@@ -1,5 +1,6 @@
 package com.garganttua.api.security.core.engine;
 
+import java.util.List;
 import java.util.Set;
 
 import com.garganttua.api.security.core.accessRules.GGAPIAccessRulesRegistry;
@@ -43,6 +44,11 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	public void init(Set<IGGAPIDomain> domains) {
 		log.info("Garganttua API Security Engine initalisation");
 		this.accessRulesRegistry = new GGAPIAccessRulesRegistry(domains);
+	}
+
+	@Override
+	public List<String> getAuthorities() {
+		return this.accessRulesRegistry.getAuthorities();
 	}
 
 }

@@ -80,25 +80,17 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 
 		try {
 			if( this.repository.doesExist(caller, entity) ) {
-				if( this.beforeUpdateMethodAddress != null ) {
-					this.objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, parameters);
-				}
+				
 				Object storedObject = this.repository.getOneByUuid(caller, GGAPIEntityHelper.getUuid(entity));
 				Object updatedObject = this.entityUpdater.update(caller, storedObject, entity, this.domain.getEntity().getValue1().updateAuthorizations());
 				
 				this.updateEntity(caller, parameters, updatedObject);
-				if( this.afterUpdateMethodAddress != null ) {
-					this.objectQuery.invoke(entity, this.afterUpdateMethodAddress, caller, parameters);
-				}
+				
 				return updatedObject;
 			} else {
-				if( this.beforeCreateMethodAddress != null ) {
-					this.objectQuery.invoke(entity, this.beforeCreateMethodAddress, caller, parameters);
-				}
+
 				this.createEntity(caller, parameters, entity);
-				if( this.afterCreateMethodAddress != null ) {
-					this.objectQuery.invoke(entity, this.afterCreateMethodAddress, caller, parameters);
-				}
+				
 				return entity;
 			}
 		} catch (GGReflectionException e) {
@@ -109,12 +101,17 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 	
-	private void updateEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException {
+	private void updateEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException, GGReflectionException {
 		log.info("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Updating entity with Uuid " + GGAPIEntityHelper.getUuid(entity));
 		this.applySecurityRuleOnAuthenticatorEntity(domain, security, entity);
 		this.applyUpdateUnicityRule(domain, repository, caller, entity);
-
+		if( this.beforeUpdateMethodAddress != null ) {
+			this.objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, customParameters);
+		}
 		this.repository.save(caller, entity);
+		if( this.afterUpdateMethodAddress != null ) {
+			this.objectQuery.invoke(entity, this.afterUpdateMethodAddress, caller, customParameters);
+		}
 	}
 
 	private <Entity> void applyUpdateUnicityRule(IGGAPIDomain domain, IGGAPIRepository<Entity> repository,
@@ -128,7 +125,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 
-	private void createEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException {
+	private void createEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException, GGReflectionException {
 
 		this.applyTenantEntityRule(domain, caller, entity);
 
@@ -142,7 +139,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 
 		this.applyCreationUnicityRule(domain, repository, caller, entity);
+		if( this.beforeCreateMethodAddress != null ) {
+			this.objectQuery.invoke(entity, this.beforeCreateMethodAddress, caller, customParameters);
+		}
 		this.repository.save(caller, entity);
+		if( this.afterCreateMethodAddress != null ) {
+			this.objectQuery.invoke(entity, this.afterCreateMethodAddress, caller, customParameters);
+		}
 
 	}
 

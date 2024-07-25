@@ -9,8 +9,6 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 
-import lombok.Setter;
-
 public class GGAPIRepositoriesRegistry implements IGGAPIRepositoriesRegistry {
 
 	private Map<String, IGGAPIRepository<Object>> repositories;

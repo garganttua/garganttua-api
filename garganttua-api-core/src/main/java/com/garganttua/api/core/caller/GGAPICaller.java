@@ -95,4 +95,8 @@ public class GGAPICaller implements IGGAPICaller {
 	public static IGGAPICaller createSuperCaller() {
 		return new GGAPICaller(null, null, null, null, true, true, null, null, false, null);
 	}
+
+	public static IGGAPICaller createTenantCaller(String uuid) {
+		return new GGAPICaller(uuid, uuid, null, null, false, false, null, null, false, null);
+	}
 }

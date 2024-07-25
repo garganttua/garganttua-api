@@ -3,6 +3,7 @@ package com.garganttua.api.security.core.accessRules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
@@ -12,7 +13,6 @@ import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-//@Service
 @Slf4j
 public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 	
@@ -29,7 +29,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 	private void init() {
 		log.info("Creating Access Rules ...");
 		for( IGGAPIDomain domain: this.domains ) {
-			this.createAccessRules(domain/*, this.servicesRegistry.getService(domain.getEntity().getValue1().domain())*/);
+			this.createAccessRules(domain);
 		}
 //		
 //		this.authoritiesWS.ifPresent(ws -> {
@@ -41,7 +41,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 		});
 	}
 //	
-	@Override
+	@Override// TODO Auto-generated method stub
 	public IGGAPIAccessRule getAccessRule(GGAPIEntityOperation operation, String endpoint) {
 		for (IGGAPIAccessRule auth : this.accessRules) {
 			if (auth.getEndpoint().equals(endpoint) && auth.getOperation() == operation) {
@@ -51,7 +51,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 		return null;
 	}
 
-	private List<IGGAPIAccessRule> createAccessRules(IGGAPIDomain domain/*, IGGAPIService service*/) {
+	private List<IGGAPIAccessRule> createAccessRules(IGGAPIDomain domain) {
 		if( domain.isAllowReadAll() )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase(),
 					domain.getSecurity().readAllAuthority() == true
@@ -75,14 +75,6 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 									GGAPIEntityOperation.delete_all)
 							: null,
 							GGAPIEntityOperation.delete_all, domain.getSecurity().deleteAllAccess()));
-		
-//		if( domain.isAllowCount() )
-//			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/count",
-//					domain.getSecurity().countAuthority() == true
-//							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
-//									GGAPIEntityOperation.count)
-//							: null,
-//							GGAPIEntityOperation.count, domain.getSecurity().countAccess()));
 		
 		if( domain.isAllowReadOne() )
 			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
@@ -114,6 +106,16 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 //		});
 		
 		return accessRules;
+	}
+
+	@Override
+	public List<String> getAuthorities() {
+		List<String> list = this.domains.parallelStream().flatMap(domain -> domain.getEntity().getValue1().updateAuthorizations().values().stream()).collect(Collectors.toList());
+		list.addAll(this.accessRules.parallelStream().map(rule -> {
+			return rule.getAuthority();
+		}).collect(Collectors.toList()));
+		return list
+				.parallelStream().filter(authority -> {return (authority != null && !authority.isEmpty());}).collect(Collectors.toList());
 	}
 
 }

@@ -10,5 +10,7 @@ public interface IGGAPIAccessRulesRegistry {
 	List<IGGAPIAccessRule> getAccessRules();
 
 	IGGAPIAccessRule getAccessRule(GGAPIEntityOperation operation, String endpoint);
+	
+	List<String> getAuthorities();
 
 }

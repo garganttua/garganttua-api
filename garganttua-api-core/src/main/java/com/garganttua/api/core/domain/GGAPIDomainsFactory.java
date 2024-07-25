@@ -43,7 +43,7 @@ public class GGAPIDomainsFactory {
 		
 		this.domains = new HashSet<IGGAPIDomain>();
 		
-		this.packages.parallelStream().forEach(package_ -> {
+		this.packages.stream().forEach(package_ -> {
 			try {
 				List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_, GGAPIEntity.class);
 				if( log.isDebugEnabled() )

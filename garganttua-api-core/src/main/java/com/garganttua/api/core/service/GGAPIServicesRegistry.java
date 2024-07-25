@@ -13,8 +13,6 @@ import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
-import lombok.Setter;
-
 public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 
 	private Map<String, Pair<IGGAPIService, List<IGGAPIServiceInfos>>> services = new HashMap<String, Pair<IGGAPIService, List<IGGAPIServiceInfos>>>();
@@ -53,11 +51,4 @@ public class GGAPIServicesRegistry implements IGGAPIServicesRegistry {
 			pair.getValue0().setEngine(engine);
 		});
 	}
-	
-//	private Optional<IGGAPIEventPublisher> getEventPublisher(GGAPIDomain domain) throws GGAPIEngineException {
-//		if( domain.event != null && !domain.event.isEmpty() ) {
-//			return Optional.ofNullable(this.helper.getObjectFromConfiguration(domain.event, IGGAPIEventPublisher.class));
-//		}
-//		return Optional.ofNullable(null);
-//	}
 }

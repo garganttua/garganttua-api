@@ -15,7 +15,6 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
-import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.github.victools.jsonschema.generator.Option;
@@ -31,9 +30,12 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
 import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.PathParameter;
+import io.swagger.v3.oas.models.parameters.QueryParameter;
 import io.swagger.v3.oas.models.tags.Tag;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -119,6 +121,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(GGAPIEntityOperation.read_all) );
 			this.addRequestedTenantIdHeader(operation);
 			this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.read_all) );
+			this.addCustomParamsPathParameter(operation);
 		}
 		if (domain.isAllowDeleteAll()) {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl).getDelete();
@@ -126,6 +129,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(GGAPIEntityOperation.delete_all) );
 			this.addRequestedTenantIdHeader(operation);
 			this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.delete_all) );
+			this.addCustomParamsPathParameter(operation);
 		}
 		if (domain.isAllowCreation()) {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl).getPost();
@@ -135,6 +139,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 				this.addRequestedTenantIdHeader(operation);
 				this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.create_one) );
 			}
+			this.addCustomParamsPathParameter(operation);
 		}
 		if (domain.isAllowReadOne()) {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getGet();
@@ -142,6 +147,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(GGAPIEntityOperation.read_one) );
 			this.addRequestedTenantIdHeader(operation);
 			this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.read_one) );
+			this.addCustomParamsPathParameter(operation);
 		}
 		if (domain.isAllowUpdateOne()) {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getPatch();
@@ -149,6 +155,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(GGAPIEntityOperation.update_one) );
 			this.addRequestedTenantIdHeader(operation);
 			this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.update_one) );
+			this.addCustomParamsPathParameter(operation);
 		}
 		if (domain.isAllowDeleteOne()) {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl + "/{uuid}").getDelete();
@@ -156,6 +163,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(GGAPIEntityOperation.delete_one) );
 			this.addRequestedTenantIdHeader(operation);
 			this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(GGAPIEntityOperation.delete_one) );
+			this.addCustomParamsPathParameter(operation);
 		}
 
 //			for( IGGAPICustomService cservice: customServices ) {
@@ -179,6 +187,16 @@ public class GGAPIInterfaceSpringRestSwagger {
 		}
 	}
 
+	private void addCustomParamsPathParameter(Operation operation) {
+		List<Parameter> params = operation.getParameters();
+		QueryParameter param = new QueryParameter();
+		param.setName("params");
+		param.setRequired(false);
+		param.setSchema(new MapSchema());
+		params.add(param);
+		operation.setParameters(params);
+	}
+	
 	private void addRequestedTenantIdHeader(Operation operation) {
 		List<Parameter> params = operation.getParameters();
 		HeaderParameter param = new HeaderParameter();

@@ -1,5 +1,6 @@
 package com.garganttua.api.spec.security;
 
+import java.util.List;
 import java.util.Set;
 
 import com.garganttua.api.spec.domain.IGGAPIDomain;
@@ -20,4 +21,6 @@ public interface IGGAPISecurityEngine {
 	void init(Set<IGGAPIDomain> domains);
 	
 	IGGAPIAccessRulesRegistry getAccessRulesRegistry();
+
+	List<String> getAuthorities();
 }

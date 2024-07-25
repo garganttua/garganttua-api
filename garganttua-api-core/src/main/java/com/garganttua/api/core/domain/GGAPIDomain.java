@@ -138,9 +138,6 @@ public class GGAPIDomain implements IGGAPIDomain {
 		case read_all: 
 			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.readAllAccess() == GGAPIServiceAccess.tenant || this.security.readAllAccess() == GGAPIServiceAccess.owner ) );
 			break;
-		case count:
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.countAccess() == GGAPIServiceAccess.tenant || this.security.countAccess() == GGAPIServiceAccess.owner ) );
-			break;
 		case create_one:
 			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.creationAccess() == GGAPIServiceAccess.tenant || this.security.creationAccess() == GGAPIServiceAccess.owner ) );
 			break;
@@ -170,9 +167,6 @@ public class GGAPIDomain implements IGGAPIDomain {
 		switch (operation) {
 		case read_all: 
 			mandatory = this.security.readAllAccess() == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
-			break;
-		case count:
-			mandatory = this.security.countAccess() == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
 			break;
 		case create_one:
 			mandatory = this.entity.getValue1().ownedEntity();

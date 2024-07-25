@@ -37,11 +37,6 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 			IGGAPICaller caller,
 			IGGAPIFilter filter,
 			Map<String, String> customParameters);
-	
-//	IGGAPIServiceResponse getCount(
-//			IGGAPICaller caller,
-//			IGGAPIFilter filter,
-//			Map<String, String> customParameters);
 
 	void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 	

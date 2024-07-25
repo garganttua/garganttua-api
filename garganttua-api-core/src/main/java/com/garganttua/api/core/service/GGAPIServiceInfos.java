@@ -6,6 +6,7 @@ import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import lombok.Getter;
 
 public class GGAPIServiceInfos implements IGGAPIServiceInfos {
+	
     @Getter
 	private String methodName;
     @Getter

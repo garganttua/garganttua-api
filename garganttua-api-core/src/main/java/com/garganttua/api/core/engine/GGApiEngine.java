@@ -150,7 +150,7 @@ public class GGApiEngine implements IGGAPIEngine {
 		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.servicesRegistry = new GGAPIServicesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.interfacesRegistry = new GGAPIInterfacesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
-		this.callerFactoriesRegistry = new GGAPICallerFactoriesFactory(this.domainRegistry.getDomains(), this.factoriesRegistry, this.security.getAccessRulesRegistry()).getRegistry();
+		this.callerFactoriesRegistry = new GGAPICallerFactoriesFactory(this.domainRegistry.getDomains(), this.factoriesRegistry, this.security.getAccessRulesRegistry(), this.superTenantId, this.superOwnerId).getRegistry();
 
 		return this;
 	}

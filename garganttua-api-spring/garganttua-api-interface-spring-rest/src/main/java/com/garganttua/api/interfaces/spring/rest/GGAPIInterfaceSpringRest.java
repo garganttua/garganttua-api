@@ -1,6 +1,7 @@
 package com.garganttua.api.interfaces.spring.rest;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -89,34 +90,31 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 
 		if (this.domain.isAllowReadAll()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, this.domainInterface,
-					this.domainInterface.getClass().getMethod("getEntities", IGGAPICaller.class,
-							GGAPIReadOutputMode.class, Integer.class, Integer.class, String.class, String.class,
-							String.class));
+					this.domainInterface.getClass().getMethod("getEntities", IGGAPICaller.class, Map.class));
 		}
 		if (this.domain.isAllowDeleteAll()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, this.domainInterface,
-					this.domainInterface.getClass().getMethod("deleteAll", IGGAPICaller.class, String.class,
-							String.class));
+					this.domainInterface.getClass().getMethod("deleteAll", IGGAPICaller.class, Map.class));
 		}
 		if (this.domain.isAllowCreation()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, this.domainInterface,
 					this.domainInterface.getClass().getMethod("createEntity", IGGAPICaller.class, String.class,
-							String.class));
+							Map.class));
 		}
 		if (this.domain.isAllowReadOne()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, this.domainInterface,
 					this.domainInterface.getClass().getMethod("getEntity", IGGAPICaller.class, String.class,
-							String.class));
+							Map.class));
 		}
 		if (this.domain.isAllowUpdateOne()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, this.domainInterface,
 					this.domainInterface.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class,
-							String.class, String.class));
+							String.class, Map.class));
 		}
 		if (this.domain.isAllowDeleteOne()) {
 			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, this.domainInterface,
 					this.domainInterface.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class,
-							String.class));
+							Map.class));
 		}
 
 //		for (IGGAPIServiceInfos serviceInfos : servicesInfos) {

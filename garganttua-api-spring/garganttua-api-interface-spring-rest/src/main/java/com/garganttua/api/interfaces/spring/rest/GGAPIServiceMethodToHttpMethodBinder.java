@@ -11,7 +11,6 @@ public class GGAPIServiceMethodToHttpMethodBinder {
 		case create_one:
 			return HttpMethod.POST;
 		case read_all:
-		case count:
 		case read_one:
 			return HttpMethod.GET;
 		case delete_one:

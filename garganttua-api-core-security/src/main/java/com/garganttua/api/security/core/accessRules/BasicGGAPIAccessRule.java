@@ -25,9 +25,6 @@ public class BasicGGAPIAccessRule implements IGGAPIAccessRule {
 		
 		String authority = null;
 		switch (operation) {
-		case count:
-			authority = domain + "-get-count";
-			break;
 		case create_one:
 			authority = domain + "-create";
 			break;

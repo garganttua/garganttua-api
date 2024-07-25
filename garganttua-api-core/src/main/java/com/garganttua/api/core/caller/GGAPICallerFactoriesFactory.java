@@ -27,10 +27,12 @@ public class GGAPICallerFactoriesFactory {
 	private String superOwnerId;
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 
-	public GGAPICallerFactoriesFactory(Collection<IGGAPIDomain> domains, IGGAPIFactoriesRegistry factoriesRegistry, IGGAPIAccessRulesRegistry accessRulesRegistry) {
+	public GGAPICallerFactoriesFactory(Collection<IGGAPIDomain> domains, IGGAPIFactoriesRegistry factoriesRegistry, IGGAPIAccessRulesRegistry accessRulesRegistry, String superTenantId, String superOwnerId) {
 		this.domains = domains;
 		this.factoriesRegistry = factoriesRegistry;
 		this.accessRulesRegistry = accessRulesRegistry;
+		this.superTenantId = superTenantId;
+		this.superOwnerId = superOwnerId;
 	
 		this.createCallerFactories();
 	}
@@ -62,11 +64,10 @@ public class GGAPICallerFactoriesFactory {
 	}
 
 	private Optional<IGGAPIDomain> getOwnersDomain() {
-		List<IGGAPIDomain> owners = this.domains.parallelStream().filter(domain -> {
+		List<IGGAPIDomain> owners = this.domains.stream().filter(domain -> {
 			return domain.getEntity().getValue1().ownerEntity();
 		}).collect(Collectors.toList());
-				
-				
+			
 		return owners.size()>0?Optional.ofNullable(owners.get(0)):Optional.empty();
 	}
 
