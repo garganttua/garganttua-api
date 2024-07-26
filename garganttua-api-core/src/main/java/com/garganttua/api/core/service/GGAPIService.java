@@ -74,7 +74,7 @@ public class GGAPIService implements IGGAPIService {
 	public IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity, Map<String, String> customParameters) {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(entity);
-			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, null, caller.getRequestedTenantId());
+			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId());
 			Object createdEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
 			event.setOut(createdEntity);
 			event.setCode(GGAPIServiceResponseCode.CREATED);
