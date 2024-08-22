@@ -65,7 +65,7 @@ jobs:
       uses: whelk-io/maven-settings-xml-action@v22
       with:
         output_file: settings.xml
-        servers: >
+        servers: |
           [
             {
               "id": "github garganttua tooling",
