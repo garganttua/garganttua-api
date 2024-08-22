@@ -61,6 +61,19 @@ jobs:
         server-id: github garganttua api
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 
+    - name: Generate Maven Settings
+      uses: whelk-io/maven-settings-xml-action@v22
+      with:
+        output_file: settings.xml
+        servers: >
+          [
+            {
+              "id": "github garganttua tooling",
+              "username": "${{ github.actor }}",
+              "password": "${{ github.token }}"
+            }
+          ]
+
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
