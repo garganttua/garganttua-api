@@ -29,7 +29,11 @@ jobs:
       uses: whelk-io/maven-settings-xml-action@v22
       with:
         output_file: package-settings.xml
+<<<<<<< HEAD
         servers: >
+=======
+        repositories: >
+>>>>>>> 1401c7b (Update maven-publish.yml)
           [
             {
 <<<<<<< HEAD
@@ -39,7 +43,7 @@ jobs:
               "url": "https://maven.pkg.github.com/garganttua/garganttua-tooling"
             }
           ]
-        servers: |
+        servers: >
           [
             {
               "id": "github",
