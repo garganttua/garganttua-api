@@ -64,7 +64,7 @@ jobs:
     - name: Generate Maven Settings
       uses: whelk-io/maven-settings-xml-action@v22
       with:
-        output_file: settings.xml
+        output_file: custom-settings.xml
         servers: |
           [
             {
