@@ -59,3 +59,8 @@ jobs:
         java-version: '18'
         distribution: 'temurin'
         server-id: github garganttua api
+		
+    - name: Deploy to GitHub Packages Apache Maven
+      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
