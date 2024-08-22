@@ -37,7 +37,7 @@ jobs:
             {
               "id": "github",
               "username": "${{ github.actor }}",
-              "password": "${{ secrets.REPO_TOKEN }}"
+              "password": " ${{ github.token }}"
             }
           ]
 
