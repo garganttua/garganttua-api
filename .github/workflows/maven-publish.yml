@@ -28,7 +28,7 @@ jobs:
           [
             {
               "id": "github",
-              "url": "https://maven.pkg.github.com/<name>/<github-repo>"
+              "url": "https://maven.pkg.github.com/garganttua/garganttua-tooling"
             }
           ]
         servers: |
