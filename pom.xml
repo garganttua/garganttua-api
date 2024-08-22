@@ -69,6 +69,18 @@
 				<artifactId>garganttua-api-interface-spring-rest</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-spring-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
