@@ -82,6 +82,6 @@ jobs:
         xmlstarlet ed -s /settings -t elem -n additionalSettings -v "" custom-settings.xml | xmlstarlet ed -s /settings/additionalSettings -t elem -n include -v '$GITHUB_WORKSPACE/settings.xml' > merged-settings.xml
 
     - name: Deploy to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn deploy -s $GITHUB_WORKSPACE/merged-settings.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
