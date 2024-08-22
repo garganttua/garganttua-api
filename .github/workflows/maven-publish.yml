@@ -34,7 +34,7 @@ jobs:
             {
               "id": "github garganttua tooling",
               "username": "${{ github.actor }}",
-              "password": " ${{ github.token }}"
+              "password": "${{ github.token }}"
             }
           ]
 
