@@ -71,6 +71,11 @@ jobs:
               "id": "github garganttua tooling",
               "username": "${{ github.actor }}",
               "password": "${{ github.token }}"
+            },
+             {
+              "id": "github garganttua api",
+              "username": "${{ github.actor }}",
+              "password": "${{ github.token }}"
             }
           ]
 
@@ -91,6 +96,6 @@ jobs:
       run: cat $GITHUB_WORKSPACE/merged-settings.xml
 
     - name: Deploy to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/merged-settings.xml
+      run: mvn deploy -s $GITHUB_WORKSPACE/custom-settings.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
