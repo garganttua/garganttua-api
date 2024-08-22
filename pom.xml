@@ -21,6 +21,14 @@
 		</developer>
 	</developers>
 
+	<repositories>
+		<repository>
+			<id>github garganttua tooling</id>
+			<name>github garganttua tooling</name>
+			<url>https://maven.pkg.github.com/garganttua/garganttua-tooling</url>
+		</repository>
+	</repositories>
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>github garganttua api</id>
