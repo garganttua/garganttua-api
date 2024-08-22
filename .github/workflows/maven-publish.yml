@@ -81,6 +81,12 @@ jobs:
       run: |
         xmlstarlet ed -s /settings -t elem -n additionalSettings -v "" custom-settings.xml | xmlstarlet ed -s /settings/additionalSettings -t elem -n include -v '$GITHUB_WORKSPACE/settings.xml' > merged-settings.xml
 
+    - name: Display custom-settings.xml content
+      run: cat $GITHUB_WORKSPACE/custom-settings.xml
+
+    - name: Display settings.xml content
+      run: cat $GITHUB_WORKSPACE/settings.xml
+
     - name: Display merged-settings.xml content
       run: cat $GITHUB_WORKSPACE/merged-settings.xml
 
