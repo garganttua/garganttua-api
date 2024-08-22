@@ -29,17 +29,10 @@ jobs:
       uses: whelk-io/maven-settings-xml-action@v22
       with:
         output_file: package-settings.xml
-        repositories: >
-          [
-            {
-              "id": "github",
-              "url": "https://maven.pkg.github.com/garganttua/garganttua-tooling"
-            }
-          ]
         servers: >
           [
             {
-              "id": "github",
+              "id": "github garganttua tooling",
               "username": "${{ github.actor }}",
               "password": " ${{ github.token }}"
             }
