@@ -68,7 +68,11 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: |
+<<<<<<< HEAD
       startsWith(github.ref, 'refs/tags/')
+=======
+      github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/')
+>>>>>>> 297b44c (Update maven-publish.yml)
     permissions:
       contents: read
       packages: write
@@ -81,8 +85,14 @@ jobs:
       with:
         java-version: '18'
         distribution: 'temurin'
+<<<<<<< HEAD
         server-id: github garganttua api
 		
+=======
+        server-id: github
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+>>>>>>> 297b44c (Update maven-publish.yml)
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
