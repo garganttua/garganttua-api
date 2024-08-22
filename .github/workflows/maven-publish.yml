@@ -3,7 +3,11 @@ name: Maven Package
 on:
   push:
     branches: 
+<<<<<<< HEAD
       - "*"  # Build on any branch push
+=======
+      - "**"  # Build on any branch push
+>>>>>>> 6a4a702 (Update maven-publish.yml)
     tags:
       - "*"  # Trigger on any tag creation
 
@@ -82,4 +86,8 @@ jobs:
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
+<<<<<<< HEAD
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+=======
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+>>>>>>> 6a4a702 (Update maven-publish.yml)
