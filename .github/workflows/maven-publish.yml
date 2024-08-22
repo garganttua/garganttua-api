@@ -49,7 +49,11 @@ jobs:
               "id": "github",
 >>>>>>> 3e270c2 (Update maven-publish.yml)
               "username": "${{ github.actor }}",
+<<<<<<< HEAD
               "password": "${{ github.token }}"
+=======
+              "password": " ${{ github.token }}"
+>>>>>>> ba2e248 (Update maven-publish.yml)
             }
           ]
 
