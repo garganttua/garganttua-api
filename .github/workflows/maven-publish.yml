@@ -24,6 +24,7 @@ jobs:
     - name: Generate Maven Settings
       uses: whelk-io/maven-settings-xml-action@v22
       with:
+        output_file: package-settings.xml
         repositories: |
           [
             {
@@ -41,8 +42,8 @@ jobs:
           ]
 
     - name: Build with Maven
-      run: mvn -B package --file pom.xml -s $GITHUB_WORKSPACE/settings.xml
-
+      run: mvn -B package --file pom.xml -s $GITHUB_WORKSPACE/package-settings.xml
+      
     - name: Publish to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
