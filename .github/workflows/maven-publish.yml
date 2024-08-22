@@ -60,6 +60,23 @@ jobs:
         distribution: 'temurin'
         server-id: github garganttua api
         settings-path: ${{ github.workspace }} # location for the settings.xml file
+    - uses: whelk-io/maven-settings-xml-action@v22
+      with:
+          repositories: >
+            [
+              {
+                  "id": "github",
+                  "url": "https://maven.pkg.github.com/<name>/<github-repo>"
+              }
+            ]
+          servers: >
+            [
+              {
+                "id":"github",
+                "username":"${{ github.actor }}",
+                "password":"${{ secrets.REPO_TOKEN }}"
+              }
+            ]
 
     - name: Generate Maven Settings
       uses: whelk-io/maven-settings-xml-action@v22
