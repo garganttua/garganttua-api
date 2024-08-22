@@ -18,7 +18,6 @@
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-reflection</artifactId>
-			<version>1.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>de.grundid.opendatalab</groupId>
