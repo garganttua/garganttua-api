@@ -23,7 +23,7 @@ jobs:
         java-version: '18'
         distribution: 'temurin'
         server-id: github-garganttua-api
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+        settings-path: ${{ github.workspace }}
 
     - name: Generate Maven Settings
       uses: whelk-io/maven-settings-xml-action@v22
@@ -59,44 +59,3 @@ jobs:
         java-version: '18'
         distribution: 'temurin'
         server-id: github garganttua api
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
-    - uses: whelk-io/maven-settings-xml-action@v22
-      with:
-          repositories: >
-            [
-              {
-                  "id": "github",
-                  "url": "https://maven.pkg.github.com/<name>/<github-repo>"
-              }
-            ]
-          servers: >
-            [
-              {
-                "id":"github",
-                "username":"${{ github.actor }}",
-                "password":"${{ secrets.REPO_TOKEN }}"
-              }
-            ]
-
-    - name: Generate Maven Settings
-      uses: whelk-io/maven-settings-xml-action@v22
-      with:
-        output_file: custom-settings.xml
-        servers: |
-          [
-            {
-              "id": "github garganttua tooling",
-              "username": "${{ github.actor }}",
-              "password": "${{ github.token }}"
-            },
-             {
-              "id": "github garganttua api",
-              "username": "${{ github.actor }}",
-              "password": "${{ github.token }}"
-            }
-          ]
-
-    - name: Deploy to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/custom-settings.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
