@@ -32,7 +32,18 @@ jobs:
         servers: >
           [
             {
+<<<<<<< HEAD
               "id": "github garganttua tooling",
+=======
+              "id": "github",
+              "url": "https://maven.pkg.github.com/garganttua/garganttua-tooling"
+            }
+          ]
+        servers: |
+          [
+            {
+              "id": "github",
+>>>>>>> 3e270c2 (Update maven-publish.yml)
               "username": "${{ github.actor }}",
               "password": "${{ github.token }}"
             }
