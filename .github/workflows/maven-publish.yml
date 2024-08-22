@@ -65,7 +65,7 @@ jobs:
       with:
         java-version: '18'
         distribution: 'temurin'
-        server-id: github
+        server-id: github garganttua api
         settings-path: ${{ github.workspace }} # location for the settings.xml file
 
     - name: Deploy to GitHub Packages Apache Maven
