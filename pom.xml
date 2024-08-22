@@ -69,7 +69,7 @@
 				<artifactId>garganttua-api-interface-spring-rest</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-		<dependencies>
+		</dependencies>
 	</dependencyManagement>
 
 	<dependencies>
