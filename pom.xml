@@ -2,10 +2,15 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.apache</groupId>
+		<artifactId>apache</artifactId>
+		<version>18</version>
+	</parent>
 	<groupId>com.garganttua</groupId>
 	<artifactId>garganttua-api</artifactId>
 	<packaging>pom</packaging>
-	<version>2.0.0-SNAPSHOT</version>
+	<version>${revision}</version>
 
 	<licenses>
 		<license>
@@ -44,6 +49,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<revision>2.0.0-SNAPSHOT</revision>
 	</properties>
 
 	<dependencyManagement>
@@ -53,19 +59,19 @@
 				<artifactId>garganttua-api-spec</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-core-security</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-	
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-objects-mapper</artifactId>
 				<version>1.0.2</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-reflection</artifactId>
@@ -77,13 +83,13 @@
 				<artifactId>garganttua-api-interface-spring-rest</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-spring-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-core</artifactId>
@@ -136,12 +142,6 @@
 		<!--		</dependency>-->
 
 
-
-
-
-
-
-
 		<!--		<dependency>-->
 		<!--			<groupId>io.jsonwebtoken</groupId>-->
 		<!--			<artifactId>jjwt-api</artifactId>-->
@@ -159,12 +159,6 @@
 		<!--			<artifactId>jjwt-jackson</artifactId>-->
 		<!--			<version>0.11.5</version>-->
 		<!--		</dependency>-->
-
-
-
-
-
-
 
 
 	</dependencies>
