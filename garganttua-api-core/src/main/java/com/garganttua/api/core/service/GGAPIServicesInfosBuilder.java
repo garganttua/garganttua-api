@@ -17,11 +17,13 @@ import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
 public class GGAPIServicesInfosBuilder {
+	
+	public static String CONTEXT_PATH = "api";
 
     public static List<IGGAPIServiceInfos> buildGGAPIServices(IGGAPIDomain domain, Class<? extends IGGAPIService> clazz) {
     	List<IGGAPIServiceInfos> services = new ArrayList<>();
     	
-    	String baseUrl = "/"+domain.getDomain();
+    	String baseUrl = GGAPIServicesInfosBuilder.CONTEXT_PATH+"/"+domain.getDomain();
     	
 		if (domain.isAllowReadAll()) {
 			Class<?>[] params = {IGGAPICaller.class, GGAPIReadOutputMode.class, IGGAPIPageable.class, IGGAPIFilter.class, IGGAPISort.class, Map.class};

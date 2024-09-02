@@ -46,7 +46,10 @@ public class GGAPICallerFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
-		if (((HttpServletRequest) request).getServletPath().contains("swagger") || ((HttpServletRequest) request).getServletPath().contains("api-docs")|| ((HttpServletRequest) request).getServletPath().contains("authorities")) {
+		if( log.isDebugEnabled() ) {
+			log.debug("Serving url "+((HttpServletRequest) request).getServletPath());
+		}
+		if (!((HttpServletRequest) request).getServletPath().startsWith("/api")) {
 			chain.doFilter(request, response);
 		} else {
 				
