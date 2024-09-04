@@ -6,7 +6,7 @@ import com.garganttua.api.spec.GGAPIException;
 
 public interface IGGAPIAuthenticationManager {
 
-	IGGAPISecurity configureSecurity(IGGAPISecurity security) throws GGAPIException;
+//	IGGAPISecurity configureSecurity(IGGAPISecurity security) throws GGAPIException;
 
 	Optional<IGGAPIPasswordEncoder> getPasswordEncoder();
 

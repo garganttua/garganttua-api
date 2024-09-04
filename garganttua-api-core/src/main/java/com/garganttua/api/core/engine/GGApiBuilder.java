@@ -11,7 +11,6 @@ import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 public class GGApiBuilder implements IGGAPIBuilder {
 
-	
 	public static IGGAPIBuilder builder() {
 		return new GGApiBuilder();
 	}

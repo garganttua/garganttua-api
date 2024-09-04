@@ -11,6 +11,7 @@ import com.garganttua.api.core.engine.GGApiBuilder;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIBuilder;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.beans.GGBeanLoaderFactory;
 import com.garganttua.reflection.beans.IGGBeanLoader;
@@ -29,6 +30,9 @@ public class GGAPISpringConfiguration {
 	
 	@Autowired
 	private GGAPISpringBeanSupplier springBeanSupplier;
+	
+	@Autowired
+	private IGGAPISecurityEngine springSecurity;
 	
 	@Autowired
 	private GGAPIPropertyLoader propLoader;

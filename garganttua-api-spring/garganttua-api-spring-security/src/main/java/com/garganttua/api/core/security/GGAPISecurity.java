@@ -14,7 +14,6 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.domain.GGAPIDomain;
-import com.garganttua.api.core.security.authentication.entity.annotations.GGAPIAuthenticator;
 import com.garganttua.api.core.security.authentication.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.owners.GGAPIOwnerVerifier;
 import com.garganttua.api.core.security.tenants.GGAPITenantVerifier;
@@ -28,6 +27,7 @@ import com.com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistryyport com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
 import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
 import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
@@ -43,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 @SecurityScheme(name = "Bearer Authentication", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", scheme = "bearer")
 @Slf4j
 @EnableWebSecurity
-public class GGAPISecurity implements IGGAPISecurity {
+public class GGAPISecurity implements IGGAPISecurityEngine {
 	
 	@Autowired
 	@Getter

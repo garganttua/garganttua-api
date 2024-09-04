@@ -1,7 +1,6 @@
 package com.garganttua.api.core.service;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,7 +18,7 @@ import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
@@ -46,7 +45,7 @@ public class GGAPIService implements IGGAPIService {
 	@Setter
 	protected IGGAPIEntityFactory<Object> factory;
 	@Setter
-	protected Optional<IGGAPISecurity> security;
+	protected Optional<IGGAPISecurityEngine> security;
 	
 	private IGGAPIDomain tenantsDomain;
 

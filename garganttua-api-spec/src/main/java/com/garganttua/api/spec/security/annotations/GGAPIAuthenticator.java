@@ -1,4 +1,4 @@
-package com.garganttua.api.core.security.authentication.entity.annotations;
+package com.garganttua.api.spec.security.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

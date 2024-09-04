@@ -5,13 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 public class GGAPIEntitySecurityCheckerTest {
 
 	@Test
-	public void testEntityWithNoAnnotation() {
+	public void testEntityWithNoAnnotation() throws GGAPIException {
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithNoSecurityAnnotation.class);
 		
 		assertNotNull(infos);
@@ -33,7 +34,7 @@ public class GGAPIEntitySecurityCheckerTest {
 	}
 	
 	@Test
-	public void testEntityWithAnnotationButEmpty() {
+	public void testEntityWithAnnotationButEmpty() throws GGAPIException {
 		
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotationButEmpty.class);
 		
@@ -57,9 +58,32 @@ public class GGAPIEntitySecurityCheckerTest {
 	}
 	
 	@Test
-	public void testEntityWithAnnotation() {
+	public void testEntityWithAnnotation() throws GGAPIException {
 		
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotation.class);
+		
+		assertNotNull(infos);
+		assertEquals(GGAPIServiceAccess.anonymous, infos.creationAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.readAllAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.readOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.updateOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteAllAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.countAccess());
+		
+		assertEquals(false, infos.creationAuthority());
+		assertEquals(false, infos.readAllAuthority());
+		assertEquals(false, infos.readOneAuthority());
+		assertEquals(false, infos.updateOneAuthority());
+		assertEquals(false, infos.deleteOneAuthority());
+		assertEquals(false, infos.deleteAllAuthority());
+		assertEquals(false, infos.countAuthority());	
+	}
+	
+	@Test
+	public void testAuthenticator() throws GGAPIException {
+		
+		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestAuthenticator.class);
 		
 		assertNotNull(infos);
 		assertEquals(GGAPIServiceAccess.anonymous, infos.creationAccess());

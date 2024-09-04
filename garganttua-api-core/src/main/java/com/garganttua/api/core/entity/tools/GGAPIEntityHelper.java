@@ -15,7 +15,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
@@ -36,7 +36,7 @@ public class GGAPIEntityHelper {
 		return domain;
 	}
 	
-	public static Object save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurity> security) throws GGAPIException {
+	public static Object save(Object entity, IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurityEngine> security) throws GGAPIException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		try {
 			return GGObjectQueryFactory.objectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters, security);

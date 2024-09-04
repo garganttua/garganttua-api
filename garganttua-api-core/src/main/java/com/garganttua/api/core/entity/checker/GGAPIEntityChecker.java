@@ -61,7 +61,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicities;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -395,7 +395,7 @@ public class GGAPIEntityChecker {
                     Type typeArgument = typeArguments[0];
                     if (typeArgument instanceof Class<?>) {
                         Class<?> classArgument = (Class<?>) typeArgument;
-                        if (classArgument == IGGAPISecurity.class) {
+                        if (classArgument == IGGAPISecurityEngine.class) {
                             return true;
                         }
                     }

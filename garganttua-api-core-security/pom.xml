@@ -21,5 +21,15 @@
 			<version>5.9.1</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-objects-mapper</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-reflection</artifactId>
+		</dependency>
 	</dependencies>
 </project>

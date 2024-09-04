@@ -9,7 +9,7 @@ import com.garganttua.api.spec.event.IGGAPIEventPublisher;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
 public interface IGGAPIService extends IGGAPIEngineObject {
@@ -42,6 +42,6 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 	
 	void setFactory(IGGAPIEntityFactory<Object> factory);
 	
-	void setSecurity(Optional<IGGAPISecurity> security);
+	void setSecurity(Optional<IGGAPISecurityEngine> security);
 
 }

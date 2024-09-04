@@ -21,7 +21,7 @@ import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
@@ -36,7 +36,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	
 	private IGGAPIDomain domain;
 	private IGGAPIRepository<Object> repository;
-	private Optional<IGGAPISecurity> security;
+	private Optional<IGGAPISecurityEngine> security;
 	private GGObjectAddress afterUpdateMethodAddress;
 	private GGObjectAddress beforeUpdateMethodAddress;
 	private GGObjectAddress afterCreateMethodAddress;
@@ -46,7 +46,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private IGGAPIEntityFactory<Object> factory;
 	
 	
-	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater, Optional<IGGAPISecurity> security) throws GGAPIException {
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater, Optional<IGGAPISecurityEngine> security) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
 		this.factory = factory;
@@ -182,7 +182,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 
-	private void applySecurityRuleOnAuthenticatorEntity(IGGAPIDomain domain, Optional<IGGAPISecurity> security, Object entity) throws GGAPIEntityException {
+	private void applySecurityRuleOnAuthenticatorEntity(IGGAPIDomain domain, Optional<IGGAPISecurityEngine> security, Object entity) throws GGAPIEntityException {
 //		if( security.isPresent() ) {
 //			Optional<IGGAPIAuthenticationManager> authenticationManager = security.get().getAuthenticationManager();
 //			if( authenticationManager.isPresent() ) {

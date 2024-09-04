@@ -18,7 +18,8 @@ public record GGAPIEntitySecurityInfos (
 		boolean updateOneAuthority,
 		boolean deleteOneAuthority,
 		boolean deleteAllAuthority,
-		boolean countAuthority
+		boolean countAuthority, 
+		GGAPIAuthenticatorInfos authenticatorInfos
 		) {
 	 @Override
 	    public String toString() {
@@ -37,6 +38,7 @@ public record GGAPIEntitySecurityInfos (
 	                ", deleteAuthority=" + deleteOneAuthority +
 	                ", deleteAllAuthority=" + deleteAllAuthority +
 	                ", countAuthority=" + countAuthority +
+	                ", authenticatorInfos=" + authenticatorInfos +
 	                '}';
 	    }
 
@@ -58,7 +60,8 @@ public record GGAPIEntitySecurityInfos (
 	                Objects.equals(updateOneAccess, that.updateOneAccess) &&
 	                Objects.equals(deleteOneAccess, that.deleteOneAccess) &&
 	                Objects.equals(deleteAllAccess, that.deleteAllAccess) &&
-	                Objects.equals(countAccess, that.countAccess);
+	                Objects.equals(countAccess, that.countAccess) &&
+	                Objects.equals(authenticatorInfos, that.authenticatorInfos);
 	    }
 
 	    @Override
@@ -77,7 +80,8 @@ public record GGAPIEntitySecurityInfos (
 	                updateOneAuthority,
 	                deleteOneAuthority,
 	                deleteAllAuthority,
-	                countAuthority
+	                countAuthority, 
+	                authenticatorInfos
 	        );
 	    }
 }

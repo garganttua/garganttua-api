@@ -20,7 +20,7 @@ import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurity;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.sort.IGGAPISort;
 import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
@@ -44,7 +44,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	private IGGAPIDomain domain;
 
 	@Setter
-	private Optional<IGGAPISecurity> security = Optional.empty();
+	private Optional<IGGAPISecurityEngine> security = Optional.empty();
 
 	private IGGObjectQuery objectQuery;
 
