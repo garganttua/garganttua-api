@@ -20,7 +20,7 @@ public class GGAPIEngineTest {
 	@Test
 	public void test() throws GGAPIException {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
-		IGGAPIEngine engine = GGApiBuilder.builder().setPropertyLoader(null).setSecurity(null).setPackages(List.of("com")).setBeanLoader(l).build().init().start();
+		IGGAPIEngine engine = GGApiBuilder.builder().setPropertyLoader(null).setPackages(List.of("com")).setBeanLoader(l).build().init().start();
 		
 		assertNotNull(engine.getDomainsRegistry());
 	}

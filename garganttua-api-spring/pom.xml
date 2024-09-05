@@ -36,10 +36,9 @@
 	</dependencies>
 	
 	<modules>
-<!--		<module>garganttua-api-spring-security</module>-->
-		<module>garganttua-api-interface-spring-rest</module>
-		<module>garganttua-api-interface-spring-rest-swagger</module>
-		<module>garganttua-api-dao-spring-mongo</module>
+		<module>garganttua-api-spring-security</module>
+		<module>garganttua-api-spring-interfaces</module>
+		<module>garganttua-api-spring-daos</module>
 		<module>garganttua-api-spring-core</module>
 	</modules>
 </project>

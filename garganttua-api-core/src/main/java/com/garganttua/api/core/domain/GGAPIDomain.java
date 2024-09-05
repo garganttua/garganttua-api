@@ -53,8 +53,6 @@ public class GGAPIDomain implements IGGAPIDomain {
 	private boolean allowDeleteOne;
 	@Getter
 	private boolean allowDeleteAll;
-//	@Getter
-//	private boolean allowCount;
 
 	@Override
 	public boolean equals(Object o) {

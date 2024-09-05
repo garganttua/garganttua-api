@@ -14,13 +14,13 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.domain.GGAPIDomain;
-import com.garganttua.api.core.security.authentication.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.owners.GGAPIOwnerVerifier;
 import com.garganttua.api.core.security.tenants.GGAPITenantVerifier;
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.interfaces.spring.rest.GGAPIDomainFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIOwnerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPITenantFilter;
+import com.garganttua.api.security.core.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.spec.GGAPIServiceAccess;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;

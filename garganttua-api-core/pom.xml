@@ -17,7 +17,7 @@
 		
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-core-security</artifactId>
+			<artifactId>garganttua-api-security-core</artifactId>
 		</dependency>
 
 		<dependency>

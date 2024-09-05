@@ -182,17 +182,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 
-	private void applySecurityRuleOnAuthenticatorEntity(IGGAPIDomain domain, Optional<IGGAPISecurityEngine> security, Object entity) throws GGAPIEntityException {
-//		if( security.isPresent() ) {
-//			Optional<IGGAPIAuthenticationManager> authenticationManager = security.get().getAuthenticationManager();
-//			if( authenticationManager.isPresent() ) {
-//				try {
-//					entity = authenticationManager.get().applySecurityOnAuthenticatorEntity(entity);
-//				} catch (GGAPISecurityException e) {
-//					throw new GGAPIEntityException(GGAPIExceptionCode.UNKNOWN_ERROR, "Error durnig applying security on entity", e);
-//				}
-//			}
-//		}
+	private void applySecurityRuleOnAuthenticatorEntity(IGGAPIDomain domain, Optional<IGGAPISecurityEngine> security, Object entity) throws GGAPIException {
+		if( security.isPresent() ) {
+			entity = this.security.get().applySecurityOnAuthenticatorEntity(entity);
+		}
 	}
 
 	private void applyTenantEntityRule(IGGAPIDomain domain, IGGAPICaller caller, Object entity) throws GGAPIException {

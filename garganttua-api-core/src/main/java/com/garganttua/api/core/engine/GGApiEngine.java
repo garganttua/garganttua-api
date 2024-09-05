@@ -1,6 +1,7 @@
 package com.garganttua.api.core.engine;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.javatuples.Pair;
 
@@ -11,6 +12,9 @@ import com.garganttua.api.core.factory.GGAPIEntityFactoriesFactory;
 import com.garganttua.api.core.interfasse.GGAPIInterfacesFactory;
 import com.garganttua.api.core.repository.GGAPIRepositoriesFactory;
 import com.garganttua.api.core.service.GGAPIServicesFactory;
+import com.garganttua.api.security.core.engine.GGAPIOwnerVerifier;
+import com.garganttua.api.security.core.engine.GGAPISecurityEngine;
+import com.garganttua.api.security.core.engine.GGAPITenantVerifier;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICallerFactoriesRegistry;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
@@ -25,6 +29,8 @@ import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
@@ -38,7 +44,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGApiEngine implements IGGAPIEngine {
 
-	private IGGAPISecurityEngine security;
+	@Getter
+	private GGAPISecurityEngine security;
 	private IGGBeanLoader loader;
 	private IGGAPIDomainsRegistry domainRegistry;
 	private List<String> packages;
@@ -53,14 +60,19 @@ public class GGApiEngine implements IGGAPIEngine {
 	private String superTenantId = "0";
 	@Getter
 	private String superOwnerId = "0";
+	private IGGAPIAuthenticationManager authenticationManager;
+	private IGGAPIAuthorizationManager authorizationManager;
 
-	protected GGApiEngine(IGGAPISecurityEngine security, IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader, String superTenantId, String superOwnerId) {
-		this.security = security;
+	protected GGApiEngine(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader, String superTenantId, String superOwnerId, IGGAPIAuthenticationManager authenticationManager, IGGAPIAuthorizationManager authorizationManager) {
 		this.loader = loader;
 		this.packages = packages;
 		this.propLoader = propLoader;
 		this.superTenantId = superTenantId;
 		this.superOwnerId = superOwnerId;
+		this.authenticationManager = authenticationManager;
+		this.authorizationManager = authorizationManager;
+		
+		this.security = new GGAPISecurityEngine(Optional.ofNullable(this.authorizationManager), Optional.ofNullable(this.authenticationManager), Optional.ofNullable(new GGAPITenantVerifier()), Optional.ofNullable(new GGAPIOwnerVerifier()));
 	}
 
 	@Override
@@ -146,7 +158,7 @@ public class GGApiEngine implements IGGAPIEngine {
 		
 		this.domainRegistry = new GGAPIDomainsFactory(this.packages).getRegistry();
 		
-		this.security.init(this.domainRegistry.getDomains());
+		this.security.setDomains(this.domainRegistry.getDomains());
 
 		this.daosRegistry =  new GGAPIDaosFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.repositoriesRegistry = new GGAPIRepositoriesFactory(this.domainRegistry.getDomains()).getRegistry();

@@ -56,7 +56,13 @@
 			
 			<dependency>
 				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-core-security</artifactId>
+				<artifactId>garganttua-api-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-security-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 	
@@ -84,11 +90,6 @@
 				<version>${project.version}</version>
 			</dependency>
 			
-			<dependency>
-				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -113,7 +114,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
 		<!--		<dependency>-->
 		<!--			<groupId>org.springframework.boot</groupId>-->
 		<!--			<artifactId>spring-boot-starter-security</artifactId>-->
@@ -135,13 +135,6 @@
 		<!--			<version>1.18.26</version>-->
 		<!--		</dependency>-->
 
-
-
-
-
-
-
-
 		<!--		<dependency>-->
 		<!--			<groupId>io.jsonwebtoken</groupId>-->
 		<!--			<artifactId>jjwt-api</artifactId>-->
@@ -159,13 +152,6 @@
 		<!--			<artifactId>jjwt-jackson</artifactId>-->
 		<!--			<version>0.11.5</version>-->
 		<!--		</dependency>-->
-
-
-
-
-
-
-
 
 	</dependencies>
 
@@ -203,7 +189,7 @@
 	<modules>
 		<module>garganttua-api-spec</module>
 		<module>garganttua-api-core</module>
-		<module>garganttua-api-core-security</module>
+		<module>garganttua-api-security-core</module>
 		<module>garganttua-api-spring</module>
 	</modules>
 </project>
