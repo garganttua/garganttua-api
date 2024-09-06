@@ -53,25 +53,25 @@
 				<artifactId>garganttua-api-spec</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-security-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-	
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-objects-mapper</artifactId>
 				<version>1.0.2</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-reflection</artifactId>
@@ -83,13 +83,19 @@
 				<artifactId>garganttua-api-interface-spring-rest</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-spring-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-spring-interface-rest</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
@@ -114,12 +120,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--		<dependency>-->
-		<!--			<groupId>org.springframework.boot</groupId>-->
-		<!--			<artifactId>spring-boot-starter-security</artifactId>-->
-		<!--			<version>${spring.version}</version>-->
-		<!--			<scope>provided</scope>-->
-		<!--		</dependency>-->
 
 		<!--		<dependency>-->
 		<!--			<groupId>org.springframework.boot</groupId>-->

@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.garganttua.api.security.core.accessRules.GGAPIAccessRulesRegistry;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
@@ -31,10 +32,10 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	
 	protected Set<IGGAPIDomain> domains; 
 
-	public GGAPISecurityEngine(Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> optional, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
+	public GGAPISecurityEngine(Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
 		this.authorizationManager = authorizationManager;
 		this.authenticationManager = authenticationManager;
-		this.tenantVerifier = optional;
+		this.tenantVerifier = tenantVerifier;
 		this.ownerVerifier = ownerVerifier;
 	}
 
@@ -91,5 +92,19 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 			return this.authorizationManager.get().validateAuthorization(authorization);
 		}
 		return null;
+	}
+
+	@Override
+	public void verifyTenant(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException {
+		if( this.tenantVerifier.isPresent() ) {
+			this.tenantVerifier.get().verifyTenant(caller, authorization);
+		}
+	}
+
+	@Override
+	public void verifyOwner(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException {
+		if( this.ownerVerifier.isPresent() ) {
+			this.ownerVerifier.get().verifyOwner(caller, authorization);
+		}
 	}
 }

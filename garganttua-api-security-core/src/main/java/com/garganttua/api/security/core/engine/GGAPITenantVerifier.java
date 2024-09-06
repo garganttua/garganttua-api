@@ -32,5 +32,4 @@ public class GGAPITenantVerifier implements IGGAPITenantVerifier {
 			}
 		}
 	}
-
 }
