@@ -22,11 +22,13 @@ public class GGAPIServiceMethodToHttpMethodBinder {
 		return HttpMethod.GET;
 	}
 	
-	public static GGAPIEntityOperation fromHttpMethod(HttpMethod method) {
+	public static GGAPIEntityOperation fromHttpMethodAndEndpoint(HttpMethod method, String endpoint) {
 		switch( method.name() ) {
 		case "POST":
 			return GGAPIEntityOperation.create_one;
 		case "GET":
+			if( endpoint.endsWith("*") )
+				return GGAPIEntityOperation.read_one;
 			return GGAPIEntityOperation.read_all;
 		case "DELETE":
 			return GGAPIEntityOperation.delete_one;

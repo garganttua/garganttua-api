@@ -53,7 +53,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 
 	private List<IGGAPIAccessRule> createAccessRules(IGGAPIDomain domain) {
 		if( domain.isAllowReadAll() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase(),
+			this.accessRules.add(new BasicGGAPIAccessRule("/api/" + domain.getEntity().getValue1().domain().toLowerCase(),
 					domain.getSecurity().readAllAuthority() == true
 							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
 									GGAPIEntityOperation.read_all)
@@ -61,7 +61,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							GGAPIEntityOperation.read_all, domain.getSecurity().readAllAccess()));
 		
 		if( domain.isAllowCreation() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase(),
+			this.accessRules.add(new BasicGGAPIAccessRule("/api/" + domain.getEntity().getValue1().domain().toLowerCase(),
 					domain.getSecurity().creationAuthority() == true
 							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
 									GGAPIEntityOperation.create_one)
@@ -69,7 +69,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							GGAPIEntityOperation.create_one, domain.getSecurity().creationAccess()));
 		
 		if( domain.isAllowDeleteAll() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase(),
+			this.accessRules.add(new BasicGGAPIAccessRule("/api/" + domain.getEntity().getValue1().domain().toLowerCase(),
 					domain.getSecurity().deleteAllAuthority() == true
 							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
 									GGAPIEntityOperation.delete_all)
@@ -77,7 +77,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							GGAPIEntityOperation.delete_all, domain.getSecurity().deleteAllAccess()));
 		
 		if( domain.isAllowReadOne() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
+			this.accessRules.add(new BasicGGAPIAccessRule("/api/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
 					domain.getSecurity().readOneAuthority() == true
 							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
 									GGAPIEntityOperation.read_one)
@@ -85,7 +85,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							GGAPIEntityOperation.read_one, domain.getSecurity().readOneAccess()));
 		
 		if( domain.isAllowUpdateOne() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
+			this.accessRules.add(new BasicGGAPIAccessRule("/api/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
 					domain.getSecurity().updateOneAuthority() == true
 							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
 									GGAPIEntityOperation.update_one)
@@ -93,7 +93,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							GGAPIEntityOperation.update_one, domain.getSecurity().updateOneAccess()));
 		
 		if( domain.isAllowDeleteOne() )
-			this.accessRules.add(new BasicGGAPIAccessRule("/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
+			this.accessRules.add(new BasicGGAPIAccessRule("/api/" + domain.getEntity().getValue1().domain().toLowerCase() + "/*",
 					domain.getSecurity().deleteOneAuthority() == true
 							? BasicGGAPIAccessRule.getAuthority(domain.getEntity().getValue1().domain().toLowerCase(),
 									GGAPIEntityOperation.delete_one)

@@ -71,7 +71,7 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
 		options.setPatternParser(new PathPatternParser());
 
-		String baseUrl = "/" + this.domain.getDomain();
+		String baseUrl = "/api/" + this.domain.getDomain();
 
 		RequestMappingInfo requestMappingInfoGetAll = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.GET)
 				.options(options).build();

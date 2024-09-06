@@ -31,6 +31,8 @@ public class GGAPICallerFilter implements Filter {
 
 	public static final String CALLER_ATTRIBUTE_NAME = "caller";
 
+	private static final int DOMAIN_INDEX_IN_URI = 2;
+
 	@Value(value = "${com.garganttua.api.interface.spring.rest.ownerIdHeaderName:tenantId}")
 	private String tenantIdHeaderName = "tenantId";
 
@@ -63,7 +65,7 @@ public class GGAPICallerFilter implements Filter {
 			String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
 			
 			try {
-				IGGAPICaller caller = callerFactory.getCaller(GGAPIServiceMethodToHttpMethodBinder.fromHttpMethod(method), uri, tenantId, ownerId, requestedtenantId, null);
+				IGGAPICaller caller = callerFactory.getCaller(GGAPIServiceMethodToHttpMethodBinder.fromHttpMethodAndEndpoint(method, uri), uri, tenantId, ownerId, requestedtenantId, null);
 				
 				if( log.isDebugEnabled() ) {
 					log.debug("Generated caller "+caller);
@@ -99,7 +101,7 @@ public class GGAPICallerFilter implements Filter {
 	private String getDomainNameFromRequestUri(HttpServletRequest request) {
 		String uri = request.getRequestURI();
 		String[] uriParts = uri.split("/");
-		return uriParts[1];
+		return uriParts[DOMAIN_INDEX_IN_URI];
 	}
 
 	private String getUri(ServletRequest request) {
@@ -107,8 +109,8 @@ public class GGAPICallerFilter implements Filter {
 		String uriTotest = uri;
 		String[] uriParts = uri.split("/");
 
-		if (uriParts.length > 2) {
-			uriTotest = "/" + uriParts[1] + "/*";
+		if (uriParts.length > 3) {
+			uriTotest = "/" + uriParts[1] + "/" + uriParts[2] + "/*";
 		}
 		return uriTotest;
 	}
