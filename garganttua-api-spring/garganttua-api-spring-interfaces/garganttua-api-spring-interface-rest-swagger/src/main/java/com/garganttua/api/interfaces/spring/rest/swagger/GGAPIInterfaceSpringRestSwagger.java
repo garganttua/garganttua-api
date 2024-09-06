@@ -81,9 +81,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 		
 		this.engine.getDomainsRegistry().getDomains().stream().forEach(domain -> {
 			IGGAPIService service = this.engine.getServicesRegistry().getService(domain.getDomain());
-
 			try {
-				this.setOpenApiDocumentation(service, domain, "/"+domain.getDomain(), List.of());
+				this.setOpenApiDocumentation(service, domain, "/api/"+domain.getDomain(), List.of());
 			} catch (Exception e) {
 				log.warn("Error during openapi initialisation :", e);
 			}
@@ -101,13 +100,13 @@ public class GGAPIInterfaceSpringRestSwagger {
 				+ "<b>Geolocalized</b> ["+(!domain.getEntity().getValue1().geolocalizedEntity()?"false":domain.getEntity().getValue1().locationFieldAddress())+"]");
 		this.openApi.addTagsItem(tag);
 
-		GGAPIEntity entityAnnotation = entityClass.getAnnotation(GGAPIEntity.class);
+//		GGAPIEntity entityAnnotation = entityClass.getAnnotation(GGAPIEntity.class);
 
 		String entityClassSchema = this.test(entityClass);
 		
 		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.getEntity().getValue1().domain().toLowerCase(), entityClass.getSimpleName(), entityClassSchema);
 		PathItem pathItemBase = new PathItem();
-		PathItem pathItemCount = new PathItem();
+//		PathItem pathItemCount = new PathItem();
 		PathItem pathItemUuid = new PathItem();
 
 		this.openApi.getComponents().addSchemas(entityClass.getSimpleName(), templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()));

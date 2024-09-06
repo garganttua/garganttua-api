@@ -17,7 +17,7 @@
     }
   ],
   "paths": {
-    "/{{domain}}": {
+    "/api/{{domain}}": {
       "get": {
         "tags": [
           "Domain {{domain}}"
@@ -218,7 +218,7 @@
         }
       }
     },
-    "/{{domain}}/count": {
+    "/api/{{domain}}/count": {
       "get": {
         "tags": [
           "Domain {{domain}}"
@@ -253,7 +253,7 @@
         }
       }
     },
-    "/{{domain}}/{uuid}": {
+    "/api/{{domain}}/{uuid}": {
       "get": {
         "tags": [
           "Domain {{domain}}"
