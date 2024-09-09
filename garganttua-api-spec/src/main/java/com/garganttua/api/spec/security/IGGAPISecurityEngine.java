@@ -1,18 +1,11 @@
 package com.garganttua.api.spec.security;
 
-import java.util.List;
-
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
 
 public interface IGGAPISecurityEngine {
 
-	IGGAPIAccessRulesRegistry getAccessRulesRegistry();
-	
 	Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPIException;
-
-	List<String> getAuthorities();
 	
 	IGGAPIAuthorization authenticate(Object Entity) throws GGAPIException;
 	
@@ -24,5 +17,23 @@ public interface IGGAPISecurityEngine {
 	
 	void verifyOwner(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException;
 
+	void ifAuthorizationManagerPresent(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller)
+			throws GGAPIException;
 
+	void ifAuthenticationManagerPresent(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller)
+			throws GGAPIException;
+	
+	void ifTenantVerifierPresent(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
+	
+	void ifOwnerVerifierPresent(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
+
+	void ifAuthorizationManagerPresentOrElse(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
+			throws GGAPIException;
+
+	void ifAuthenticationManagerPresentOrElse(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
+			throws GGAPIException;
+	
+	void ifTenantVerifierPresentOrElse(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
+	
+	void ifOwnerVerifierPresentOrElse(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
 }

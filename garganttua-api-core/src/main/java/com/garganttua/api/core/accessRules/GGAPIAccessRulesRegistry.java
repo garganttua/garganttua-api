@@ -1,4 +1,4 @@
-package com.garganttua.api.security.core.accessRules;
+package com.garganttua.api.core.accessRules;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.garganttua.api.security.core.accessRules.BasicGGAPIAccessRule;
+import com.garganttua.api.core.accessRules.BasicGGAPIAccessRule;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;

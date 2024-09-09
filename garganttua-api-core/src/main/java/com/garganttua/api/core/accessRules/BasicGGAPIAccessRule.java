@@ -1,4 +1,4 @@
-package com.garganttua.api.security.core.accessRules;
+package com.garganttua.api.core.accessRules;
 
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;

@@ -18,5 +18,9 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-spring-security-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-spring-core</artifactId>
+		</dependency>
 	</dependencies>
 </project>

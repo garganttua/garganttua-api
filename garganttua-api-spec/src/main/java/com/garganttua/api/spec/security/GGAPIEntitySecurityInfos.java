@@ -84,4 +84,8 @@ public record GGAPIEntitySecurityInfos (
 	                authenticatorInfos
 	        );
 	    }
+
+		public boolean isAuthenticatorEntity() {
+			return this.authenticatorInfos==null?false:true;
+		}
 }

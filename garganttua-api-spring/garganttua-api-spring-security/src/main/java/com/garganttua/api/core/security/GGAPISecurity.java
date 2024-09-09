@@ -14,20 +14,20 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.domain.GGAPIDomain;
-import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.interfaces.spring.rest.GGAPIDomainFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIOwnerFilter;
+import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.interfaces.spring.rest.GGAPITenantFilter;
+import com.garganttua.api.security.core.engine.GGAPIOwnerVerifier;
+import com.garganttua.api.security.core.engine.GGAPITenantVerifier;
 import com.garganttua.api.security.core.entity.tools.GGAPIEntityAuthenticatorHelper;
-import com.garganttua.api.security.spring.core.GGAPIOwnerVerifier;
-import com.garganttua.api.security.spring.core.GGAPITenantVerifier;
-import com.garganttua.api.spec.GGAPIServiceAccess;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
-import com.com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
-import com.garganttua.api.spec.service.IGGAPIServicesRegistryyport com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
 import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
-import com.garganttua.api.spec.security.IGGAPISecurity;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 

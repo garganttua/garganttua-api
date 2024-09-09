@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.api.core.caller.GGAPICaller;
@@ -21,7 +20,6 @@ import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
@@ -36,7 +34,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	
 	private IGGAPIDomain domain;
 	private IGGAPIRepository<Object> repository;
-	private Optional<IGGAPISecurityEngine> security;
 	private GGObjectAddress afterUpdateMethodAddress;
 	private GGObjectAddress beforeUpdateMethodAddress;
 	private GGObjectAddress afterCreateMethodAddress;
@@ -46,12 +43,11 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private IGGAPIEntityFactory<Object> factory;
 	
 	
-	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater, Optional<IGGAPISecurityEngine> security) throws GGAPIException {
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
 		this.factory = factory;
 		this.entityUpdater = updater;
-		this.security = security;
 		
 		this.beforeCreateMethodAddress = this.domain.getEntity().getValue1().beforeCreateMethodAddress();
 		this.afterCreateMethodAddress = this.domain.getEntity().getValue1().afterCreateMethodAddress();
@@ -108,7 +104,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	
 	private void updateEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException, GGReflectionException {
 		log.info("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Updating entity with Uuid " + GGAPIEntityHelper.getUuid(entity));
-		this.applySecurityRuleOnAuthenticatorEntity(domain, security, entity);
 		this.applyUpdateUnicityRule(domain, repository, caller, entity);
 		if( this.beforeUpdateMethodAddress != null ) {
 			this.objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, customParameters);
@@ -136,7 +131,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 
 		log.info("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Creating entity with uuid {}", GGAPIEntityHelper.getUuid(entity));
 
-		this.applySecurityRuleOnAuthenticatorEntity(domain, security, entity);
 		this.applyOwnedEntityRule(domain, caller, entity);
 
 		if( domain.getEntity().getValue1().mandatoryFields().size() > 0 ) {
@@ -179,12 +173,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 			} else {
 				throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "No ownerId provided");
 			}
-		}
-	}
-
-	private void applySecurityRuleOnAuthenticatorEntity(IGGAPIDomain domain, Optional<IGGAPISecurityEngine> security, Object entity) throws GGAPIException {
-		if( security.isPresent() ) {
-			entity = this.security.get().applySecurityOnAuthenticatorEntity(entity);
 		}
 	}
 

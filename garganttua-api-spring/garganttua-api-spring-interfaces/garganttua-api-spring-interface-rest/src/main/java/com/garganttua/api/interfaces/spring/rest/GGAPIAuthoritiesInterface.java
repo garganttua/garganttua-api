@@ -18,6 +18,6 @@ public class GGAPIAuthoritiesInterface {
 	
 	@RequestMapping(method = RequestMethod.GET, path = "/authorities")
 	public ResponseEntity<?> getAuthorities(){
-		return new ResponseEntity<>(this.engine.getSecurity().getAuthorities(),  HttpStatus.OK);
+		return new ResponseEntity<>(this.engine.getAuthorities(),  HttpStatus.OK);
 	}
 }

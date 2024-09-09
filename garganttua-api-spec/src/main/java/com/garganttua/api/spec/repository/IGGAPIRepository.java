@@ -29,8 +29,6 @@ public interface IGGAPIRepository<Entity> extends IGGAPIEngineObject {
 
 	void save(IGGAPICaller caller, Entity entity) throws GGAPIException;
 
-//	Entity update(IGGAPICaller caller, Entity entity) throws GGAPIException;
-
 	Entity getOneById(IGGAPICaller caller, String id) throws GGAPIException;
 
 	void delete(IGGAPICaller caller, Entity entity) throws GGAPIException;

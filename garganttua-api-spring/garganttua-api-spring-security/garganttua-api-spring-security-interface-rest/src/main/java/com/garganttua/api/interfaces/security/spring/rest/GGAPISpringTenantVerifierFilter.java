@@ -12,6 +12,8 @@ import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationManagerIfPresentMethod;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 
 import jakarta.servlet.FilterChain;
@@ -20,7 +22,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Service
-public class GGAPITenantVerifier extends OncePerRequestFilter {
+public class GGAPISpringTenantVerifierFilter extends OncePerRequestFilter implements IGGAPIAuthorizationManagerIfPresentMethod {
 	
 	@Autowired
 	private IGGAPISecurityEngine security;
@@ -31,16 +33,20 @@ public class GGAPITenantVerifier extends OncePerRequestFilter {
 		
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
 
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		IGGAPIAuthorization authorization = (IGGAPIAuthorization) auth.getPrincipal();
-		
 		try {
-			this.security.verifyTenant(caller, authorization);
+			this.security.ifAuthorizationManagerPresent(this, caller);
 		} catch (GGAPIException e) {
 			throw new IOException(e);
 		}
-		
+
 		filterChain.doFilter(request, response);
+	}
+
+	@Override
+	public void ifPresent(IGGAPIAuthorizationManager manager, IGGAPICaller caller) throws GGAPIException {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		IGGAPIAuthorization authorization = (IGGAPIAuthorization) auth.getPrincipal();
+		this.security.verifyTenant(caller, authorization);
 	}
 
 }

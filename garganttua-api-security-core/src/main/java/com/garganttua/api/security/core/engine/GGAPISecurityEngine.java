@@ -1,28 +1,28 @@
 package com.garganttua.api.security.core.engine;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.api.security.core.accessRules.GGAPIAccessRulesRegistry;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthenticationManagerIfPresentMethod;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
 import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
+import com.garganttua.api.spec.security.IGGAPIAuthorizationManagerIfPresentMethod;
+import com.garganttua.api.spec.security.IGGAPIOrElseMethod;
 import com.garganttua.api.spec.security.IGGAPIOwnerVerifier;
+import com.garganttua.api.spec.security.IGGAPIOwnnerVerifierIfPresentMethod;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.security.IGGAPITenantVerifier;
+import com.garganttua.api.spec.security.IGGAPITenantVerifierIfPresentMethod;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 
-	@Getter
-	protected GGAPIAccessRulesRegistry accessRulesRegistry;
 	protected Optional<IGGAPIDomain> authenticatorDomain;
 	
 	protected Optional<IGGAPIAuthenticationManager> authenticationManager; 
@@ -32,7 +32,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	
 	protected Set<IGGAPIDomain> domains; 
 
-	public GGAPISecurityEngine(Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
+	protected GGAPISecurityEngine(Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
 		this.authorizationManager = authorizationManager;
 		this.authenticationManager = authenticationManager;
 		this.tenantVerifier = tenantVerifier;
@@ -42,17 +42,12 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	public void setDomains(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
 		log.info("Garganttua API Security Engine initalisation");
-		this.accessRulesRegistry = new GGAPIAccessRulesRegistry(domains);
-		
+
 		this.authenticatorDomain = domains.stream().filter(domain -> 
 			domain.getSecurity().authenticatorInfos()!=null?true:false
 		).findFirst();
 	}
 
-	@Override
-	public List<String> getAuthorities() {
-		return this.accessRulesRegistry.getAuthorities();
-	}
 	
 	@Override
 	public boolean isAuthenticatorEntity(Object entity) {
@@ -106,5 +101,74 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		if( this.ownerVerifier.isPresent() ) {
 			this.ownerVerifier.get().verifyOwner(caller, authorization);
 		}
+	}
+
+	@Override
+	public void ifAuthorizationManagerPresentOrElse(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException {
+		if( this.authorizationManager.isPresent() ){
+			method.ifPresent(this.authorizationManager.get(), caller);
+		} else {
+			if( orElseMethod != null ) {
+				orElseMethod.orElse();
+			}
+		}
+	}
+
+	@Override
+	public void ifAuthenticationManagerPresentOrElse(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
+			throws GGAPIException {
+		if( this.authenticationManager.isPresent() ){
+			method.ifPresent(this.authenticationManager.get(), caller);
+		} else {
+			if( orElseMethod != null ) {
+				orElseMethod.orElse();
+			}
+		}
+	}
+
+	@Override
+	public void ifTenantVerifierPresentOrElse(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException {
+		if( this.tenantVerifier.isPresent() ){
+			method.ifPresent(this.tenantVerifier.get(), caller);
+		} else {
+			if( orElseMethod != null ) {
+				orElseMethod.orElse();
+			}
+		}
+	}
+
+	@Override
+	public void ifOwnerVerifierPresentOrElse(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException {
+		if( this.ownerVerifier.isPresent() ){
+			method.ifPresent(this.ownerVerifier.get(), caller);
+		} else {
+			if( orElseMethod != null ) {
+				orElseMethod.orElse();
+			}
+		}
+	}
+
+	@Override
+	public void ifAuthorizationManagerPresent(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller)
+			throws GGAPIException {
+		this.ifAuthorizationManagerPresentOrElse(method, caller, null);
+	}
+
+	@Override
+	public void ifAuthenticationManagerPresent(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller)
+			throws GGAPIException {
+		this.ifAuthenticationManagerPresentOrElse(method, caller, null);
+	}
+
+	@Override
+	public void ifTenantVerifierPresent(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller)
+			throws GGAPIException {
+		this.ifTenantVerifierPresentOrElse(method, caller, null);
+	}
+
+	@Override
+	public void ifOwnerVerifierPresent(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller)
+			throws GGAPIException {
+		this.ifOwnerVerifierPresentOrElse(method, caller, null);
 	}
 }

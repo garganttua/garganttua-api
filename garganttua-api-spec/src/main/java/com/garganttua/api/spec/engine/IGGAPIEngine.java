@@ -1,5 +1,7 @@
 package com.garganttua.api.spec.engine;
 
+import java.util.List;
+
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
@@ -7,7 +9,6 @@ import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
 public interface IGGAPIEngine {
@@ -21,10 +22,10 @@ public interface IGGAPIEngine {
     IGGAPIFactoriesRegistry getFactoriesRegistry();
 
     IGGAPIServicesRegistry getServicesRegistry();
-
-    IGGAPISecurityEngine getSecurity();
 	
-	IGGAPIEngine start() throws GGAPIException;
+    IGGAPIAccessRulesRegistry getAccessRulesRegistry();
+
+    IGGAPIEngine start() throws GGAPIException;
 
 	IGGAPIEngine stop() throws GGAPIException;
 
@@ -40,4 +41,5 @@ public interface IGGAPIEngine {
 
 	String getSuperTenantId();
 
+	List<String> getAuthorities();
 }

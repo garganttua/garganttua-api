@@ -250,5 +250,4 @@ public class GGAPIService implements IGGAPIService {
 			return false;
 		return true;
 	}
-
 }
