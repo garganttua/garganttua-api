@@ -98,4 +98,13 @@ public class GGAPIEntityAuthenticatorHelper {
 		return false; 
 	}
 
+	public static void setPassword(Object entity, String password) throws GGAPIException {
+		GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
+		try {
+			GGObjectQueryFactory.objectQuery(entity).setValue(infos.passwordFieldAddress(), password);
+		} catch (GGReflectionException e) {
+			GGAPIException.processException(e);
+		}	
+	}
+
 }

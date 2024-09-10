@@ -9,6 +9,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
+import com.garganttua.reflection.injection.IGGInjector;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,9 +18,11 @@ public class GGAPIEntityFactoriesFactory {
 
 	private Collection<IGGAPIDomain> domains;
 	private Map<String, IGGAPIEntityFactory<?>> factories = new HashMap<String, IGGAPIEntityFactory<?>>();
+	private IGGInjector injector;
 
-	public GGAPIEntityFactoriesFactory(Collection<IGGAPIDomain> domains) throws GGAPIException {
+	public GGAPIEntityFactoriesFactory(Collection<IGGAPIDomain> domains, IGGInjector injector) throws GGAPIException {
 		this.domains = domains;
+		this.injector = injector;
 		this.collectFactories();
 	}
 
@@ -29,6 +32,7 @@ public class GGAPIEntityFactoriesFactory {
 		for( IGGAPIDomain domain: this.domains ) {
 			IGGAPIEntityFactory<Object> factory = new GGAPIEntityFactory(domain);
 			factory.setEntityUpdater(new GGAPIEntityUpdater());
+			factory.setInjector(this.injector);
 			
 			this.factories.put(domain.getEntity().getValue1().domain(), factory);
 			

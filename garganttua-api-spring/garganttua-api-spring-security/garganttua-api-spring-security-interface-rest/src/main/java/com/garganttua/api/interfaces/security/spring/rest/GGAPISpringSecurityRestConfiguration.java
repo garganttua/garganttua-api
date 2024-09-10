@@ -1,13 +1,15 @@
 package com.garganttua.api.interfaces.security.spring.rest;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.stereotype.Service;
 
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
@@ -19,7 +21,7 @@ import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Configuration
+@Service
 @Slf4j
 public class GGAPISpringSecurityRestConfiguration {
 
@@ -43,6 +45,9 @@ public class GGAPISpringSecurityRestConfiguration {
 	
 	@Value("${com.garganttua.api.spring.interface.rest.security.csrf.enabled}")
 	private boolean csrf = false;
+	
+	@Autowired
+	private List<IGGAPISpringSecurityRestConfigurer> configurers;
 
 	@Bean
 	public DefaultSecurityFilterChain configureFilterChain(HttpSecurity http) throws GGAPISecurityException {
@@ -60,6 +65,14 @@ public class GGAPISpringSecurityRestConfiguration {
 //				http.authorizeHttpRequests().requestMatchers("/swagger-ui.html","/swagger-ui/**","/v3/**").permitAll().and().authorizeHttpRequests();
 //			}
 		
+			this.configurers.stream().forEach(config -> {
+				try {
+					config.configureFilterChain(http);
+				} catch (Exception e) {
+					log.atWarn().log("Error occured", e);
+				}
+			});
+			
 			this.configureSecurityFilterChainIfAuthorizationManagerIsPresent(http);
 
 			this.security.ifTenantVerifierPresent((verifier, caller) -> {
@@ -85,8 +98,9 @@ public class GGAPISpringSecurityRestConfiguration {
 //			if( this.authorizationManager.isPresent() ){
 //				this.authorizationManager.get().configureFilterChain(http);
 //			}
-
+			
 			return http.build();
+			
 		} catch (Exception e) {
 			throw new GGAPISecurityException(e);
 		}

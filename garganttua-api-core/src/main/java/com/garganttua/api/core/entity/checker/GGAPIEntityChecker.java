@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import org.geojson.Point;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
+import com.garganttua.api.security.core.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -491,6 +492,7 @@ public class GGAPIEntityChecker {
 	}
 
 	private static String getFieldAddressAnnotatedWithAndCheckType(Class<?> entityClass, Class<? extends Annotation> annotationClass, Class<?> fieldClass) throws GGAPIEntityException {
+		log.atDebug().log("Looking for annotation "+annotationClass.getSimpleName()+" on field of type "+fieldClass.getSimpleName()+" from type "+entityClass.getSimpleName());
 		String fieldAddress = null;
 		for( Field field: entityClass.getDeclaredFields() ) {
 			if( field.isAnnotationPresent(annotationClass) ) {
@@ -499,9 +501,13 @@ public class GGAPIEntityChecker {
 				}
 				if( field.getType().equals(fieldClass) ) {
 					fieldAddress = field.getName();
+					break;
 				} else {
 					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
 				}
+			} else {
+				if( isNotPrimitiveOrInternal(field.getType()) && !entityClass.equals(field.getType()))
+					fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(field.getType(), annotationClass, fieldClass);
 			}
 		}
 
@@ -512,6 +518,27 @@ public class GGAPIEntityChecker {
 		}
 	}
 
+	public static boolean isNotPrimitiveOrInternal(Class<?> clazz) {
+		// Vérifier si c'est un type primitif
+		if (clazz.isPrimitive()) {
+			return false;
+		}
+
+		// Vérifier si c'est un type interne Java (java.* ou javax.*)
+		Package package1 = clazz.getPackage();
+		if( package1 == null ) {
+			return false;
+		}
+		
+		String packageName = package1.getName();
+		if (packageName.startsWith("java.") || packageName.startsWith("javax.")) {
+			return false;
+		}
+
+		// Sinon, c'est un type valide
+		return true;
+	}
+	
 	private static String checkDomainInAnnotation(GGAPIEntity annotation, Class<?> entityClass) throws GGAPIEntityException {
 		if( annotation.domain() == null || annotation.domain().isEmpty() ) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "No domain provided in annotation of entity "+entityClass.getSimpleName());

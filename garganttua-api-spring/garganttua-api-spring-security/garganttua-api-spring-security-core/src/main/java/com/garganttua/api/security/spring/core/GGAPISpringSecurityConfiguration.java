@@ -34,7 +34,7 @@ public class GGAPISpringSecurityConfiguration {
 		this.authenticationManager.ifPresent(authenticationManager -> {builder.authenticationManager(authenticationManager);});
 		this.authorizationManager.ifPresent(authorizationManager -> {builder.authorizationManager(authorizationManager);});
 		
-		builder.domains(engine.getDomainsRegistry().getDomains());
+		builder.domains(this.engine.getDomainsRegistry().getDomains());
 		builder.ownerVerifier(new GGAPIOwnerVerifier());
 		builder.tenantVerifier(new GGAPITenantVerifier());
 		

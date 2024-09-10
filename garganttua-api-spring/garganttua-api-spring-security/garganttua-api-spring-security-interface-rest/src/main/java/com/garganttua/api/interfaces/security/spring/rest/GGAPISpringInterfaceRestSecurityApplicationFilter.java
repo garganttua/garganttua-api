@@ -46,7 +46,6 @@ public class GGAPISpringInterfaceRestSecurityApplicationFilter extends OncePerRe
 					log.debug("Applying security on authenticator entity "+caller.getDomain().getEntity().getValue0().getSimpleName());
 				}
 				
-				
 				ServletInputStream stream = request.getInputStream();
 				ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 	

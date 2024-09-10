@@ -11,10 +11,20 @@
 	<artifactId>garganttua-api-spring-security</artifactId>
 
 	<modules>
-		<!--
-		<module>garganttua-api-spring-security-authentication-login-password</module>-->
+		
 		<module>garganttua-api-spring-security-core</module>
 		<module>garganttua-api-spring-security-interface-rest</module>
+		<module>garganttua-api-spring-security-authorization-bearer</module>
+		<module>garganttua-api-spring-security-authorization-manager</module>
+		
+		
+		<module>garganttua-api-spring-security-authentication-login-password</module>
+		<module>garganttua-api-spring-security-authentication-login-password-rest-service</module>
+		<module>garganttua-api-spring-security-authentication-login-password-entity-provider</module>
+		
+		
+		
+		<module>garganttua-api-spring-security-password-encoders</module>
 	</modules>
 
 

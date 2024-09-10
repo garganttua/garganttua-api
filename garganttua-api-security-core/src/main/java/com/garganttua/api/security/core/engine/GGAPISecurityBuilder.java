@@ -52,6 +52,7 @@ public class GGAPISecurityBuilder implements IGGAPISecurityBuilder {
 	@Override
 	public IGGAPISecurityEngine build() {
 		return new GGAPISecurityEngine(
+				this.domains,
 				Optional.ofNullable(this.authorizationManager), 
 				Optional.ofNullable(this.authenticationManager), 
 				Optional.ofNullable(this.tenantVerifier), 

@@ -11,6 +11,7 @@ import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
 import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
+import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
@@ -28,5 +29,7 @@ public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
 	void setPropertyLoader(IGGPropertyLoader propertyLoader);
 	
 	void setEntityUpdater(IGGAPIEntityUpdater<Entity> updater);
+	
+	void setInjector(IGGInjector injector);
 
 }

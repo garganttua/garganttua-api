@@ -7,7 +7,7 @@ public interface IGGAPISecurityEngine {
 
 	Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPIException;
 	
-	IGGAPIAuthorization authenticate(Object Entity) throws GGAPIException;
+	IGGAPIAuthentication authenticate(IGGAPIAuthentication authentication) throws GGAPIException;
 	
 	boolean isAuthenticatorEntity(Object entity);
 

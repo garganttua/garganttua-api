@@ -6,6 +6,7 @@ import java.util.Set;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.security.IGGAPIAuthentication;
 import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
 import com.garganttua.api.spec.security.IGGAPIAuthenticationManagerIfPresentMethod;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
@@ -32,27 +33,26 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	
 	protected Set<IGGAPIDomain> domains; 
 
-	protected GGAPISecurityEngine(Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
+	protected GGAPISecurityEngine(Set<IGGAPIDomain> domains, Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
+		log.info("Garganttua API Security Engine initalisation");
 		this.authorizationManager = authorizationManager;
 		this.authenticationManager = authenticationManager;
 		this.tenantVerifier = tenantVerifier;
 		this.ownerVerifier = ownerVerifier;
+		this.setDomains(domains);
 	}
 
-	public void setDomains(Set<IGGAPIDomain> domains) {
+	private void setDomains(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
-		log.info("Garganttua API Security Engine initalisation");
 
-		this.authenticatorDomain = domains.stream().filter(domain -> 
-			domain.getSecurity().authenticatorInfos()!=null?true:false
-		).findFirst();
+		this.authenticatorDomain = domains.stream().filter(domain -> {
+			return domain.getSecurity().authenticatorInfos()!=null?true:false;
+		}).findFirst();
 	}
 
-	
 	@Override
 	public boolean isAuthenticatorEntity(Object entity) {
 		boolean isAuthenticator = false;
-		
 		if( this.authenticatorDomain.isPresent() )
 			isAuthenticator = this.authenticatorDomain.get().getEntity().getValue0().equals(entity.getClass());
 		
@@ -70,12 +70,13 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	}
 
 	@Override
-	public IGGAPIAuthorization authenticate(Object entity) throws GGAPIException {
-		if( this.isAuthenticatorEntity(entity) ) {
-			if( this.authenticationManager.isPresent() ) {
-				if( this.authenticationManager.get().authenticate(entity) ) {
-					return this.authorizationManager.get().createAuthorization(entity);
-				}
+	public IGGAPIAuthentication authenticate(IGGAPIAuthentication authentication) throws GGAPIException {
+		if( this.authenticationManager.isPresent() ) {
+			authentication = this.authenticationManager.get().authenticate(authentication);
+			if( authentication.isAuthenticated() && this.authorizationManager.isPresent() ) {
+				return this.authorizationManager.get().createAuthorization(authentication);
+			} else {
+				return authentication;
 			}
 		}
 		return null;

@@ -31,6 +31,7 @@ import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 import lombok.Getter;
@@ -54,6 +55,7 @@ public class GGApiEngine implements IGGAPIEngine {
 	@Getter
 	private String superOwnerId = "0";
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
+	private IGGInjector injector;
 
 	protected GGApiEngine(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader, String superTenantId, String superOwnerId) {
 		this.loader = loader;
@@ -148,7 +150,7 @@ public class GGApiEngine implements IGGAPIEngine {
 
 		this.daosRegistry =  new GGAPIDaosFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.repositoriesRegistry = new GGAPIRepositoriesFactory(this.domainRegistry.getDomains()).getRegistry();
-		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains()).getRegistry();
+		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains(), this.injector).getRegistry();
 		this.servicesRegistry = new GGAPIServicesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.interfacesRegistry = new GGAPIInterfacesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.accessRulesRegistry = new GGAPIAccessRulesFactory(this.domainRegistry.getDomains()).getRegistry();

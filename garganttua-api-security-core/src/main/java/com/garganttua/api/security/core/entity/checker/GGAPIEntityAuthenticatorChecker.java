@@ -7,7 +7,6 @@ import java.util.List;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.security.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorAccountNonExpired;
@@ -140,9 +139,13 @@ public class GGAPIEntityAuthenticatorChecker {
 				}
 				if( field.getType().equals(fieldClass) ) {
 					fieldAddress = field.getName();
+					break;
 				} else {
 					throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
 				}
+			} else {
+				if( isNotPrimitiveOrInternal(field.getType()) && !entityAuthenticatorClass.equals(field.getType()))
+					fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(field.getType(), annotationClass, fieldClass);
 			}
 		}
 
@@ -151,6 +154,27 @@ public class GGAPIEntityAuthenticatorChecker {
 		} else {
 			return fieldAddress;
 		}
+	}
+	
+	public static boolean isNotPrimitiveOrInternal(Class<?> clazz) {
+		// Vérifier si c'est un type primitif
+		if (clazz.isPrimitive()) {
+			return false;
+		}
+
+		// Vérifier si c'est un type interne Java (java.* ou javax.*)
+		Package package1 = clazz.getPackage();
+		if( package1 == null ) {
+			return false;
+		}
+		
+		String packageName = package1.getName();
+		if (packageName.startsWith("java.") || packageName.startsWith("javax.")) {
+			return false;
+		}
+
+		// Sinon, c'est un type valide
+		return true;
 	}
 
 	public static GGAPIAuthenticatorInfos checkEntityAuthenticator(Object entity) throws GGAPIException {

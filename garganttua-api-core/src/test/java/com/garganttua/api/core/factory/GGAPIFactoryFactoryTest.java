@@ -19,7 +19,7 @@ public class GGAPIFactoryFactoryTest {
 		GGAPIDomainsFactory dof = new GGAPIDomainsFactory(List.of("com"));
 		Collection<IGGAPIDomain> domains = dof.getDomains();
 		
-		GGAPIEntityFactoriesFactory daf = new GGAPIEntityFactoriesFactory(domains);
+		GGAPIEntityFactoriesFactory daf = new GGAPIEntityFactoriesFactory(domains, null);
 		IGGAPIFactoriesRegistry reg = daf.getRegistry();
 
 		assertNotNull(daf);

@@ -22,4 +22,8 @@ public class GGAPISecurityException extends GGAPIException {
 		super(exception);
 	}
 
+	public GGAPISecurityException(GGAPIExceptionCode code, Exception exception) {
+		super(code, exception.getMessage(), exception);
+	}
+
 }

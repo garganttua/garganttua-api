@@ -20,7 +20,7 @@ public class GGAPICallerFactoriesFactoryTest {
 	public void test() throws GGAPIException {
 		GGAPIDomainsFactory dof = new GGAPIDomainsFactory(List.of("com"));
 		Collection<IGGAPIDomain> domains = dof.getDomains();
-		GGAPIEntityFactoriesFactory daf = new GGAPIEntityFactoriesFactory(domains);
+		GGAPIEntityFactoriesFactory daf = new GGAPIEntityFactoriesFactory(domains, null);
 		IGGAPIFactoriesRegistry reg = daf.getRegistry();
 		
 		GGAPICallerFactoriesFactory callerFactoriesFactory = new GGAPICallerFactoriesFactory(domains, reg, null, "", "");

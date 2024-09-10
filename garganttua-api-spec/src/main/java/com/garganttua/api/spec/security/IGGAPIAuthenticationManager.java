@@ -6,8 +6,6 @@ public interface IGGAPIAuthenticationManager {
 
 	Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPIException;
 
-	boolean authenticate(Object entity) throws GGAPIException;
-	
-
+	IGGAPIAuthentication authenticate(IGGAPIAuthentication entity) throws GGAPIException;
 	
 }

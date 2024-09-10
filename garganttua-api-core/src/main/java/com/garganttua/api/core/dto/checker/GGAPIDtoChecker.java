@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
+import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
@@ -66,11 +67,15 @@ public class GGAPIDtoChecker {
 				}
 				if (field.getType().equals(fieldClass)) {
 					fieldName = field.getName();
+					break;
 				} else {
 					throw new GGAPIDtoException(GGAPIExceptionCode.DTO_DEFINITION,
 							"Dto " + dtoClass.getSimpleName() + " has field " + field.getName() + " with wrong type "
 									+ field.getType().getName() + ", should be " + fieldClass);
 				}
+			} else {
+				if( GGAPIEntityChecker.isNotPrimitiveOrInternal(field.getType()) && !dtoClass.equals(field.getType()))
+					fieldName = GGAPIDtoChecker.getFieldNameAnnotatedWithAndCheckType(field.getType(), annotationClass, fieldClass);
 			}
 		}
 
