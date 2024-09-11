@@ -75,13 +75,13 @@
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-objects-mapper</artifactId>
-				<version>1.0.2</version>
+				<version>1.0.3</version>
 			</dependency>
 
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-reflection</artifactId>
-				<version>1.0.2</version>
+				<version>1.0.3</version>
 			</dependency>
 
 			<dependency>
@@ -196,7 +196,7 @@
 	<modules>
 		<module>garganttua-api-spec</module>
 		<module>garganttua-api-core</module>
-		<module>garganttua-api-security-core</module>
+		<module>garganttua-api-security</module>
 		<module>garganttua-api-spring</module>
 	</modules>
 </project>

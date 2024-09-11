@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
+import com.garganttua.api.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.spring.keys.domain.GGAPIKeyRealmEntity;
 import com.garganttua.tooling.objects.mapper.annotations.GGAPIFieldMappingRule;
 
 import lombok.Getter;

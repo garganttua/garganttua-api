@@ -5,6 +5,10 @@ import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
+import com.garganttua.api.spring.keys.domain.AbstractGGAPIKeyRealm;
+import com.garganttua.api.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.spring.keys.domain.GGAPIKeyExpiration;
+
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 

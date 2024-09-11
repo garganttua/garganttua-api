@@ -1,5 +1,9 @@
 package com.garganttua.api.core.security.keys;
 
+import com.garganttua.api.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.spring.keys.domain.GGAPIKeyExpiration;
+import com.garganttua.api.spring.keys.domain.IGGAPIKeyRealm;
+
 import io.jsonwebtoken.SignatureAlgorithm;
 
 public class GGAPIKeyRealms {

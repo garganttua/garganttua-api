@@ -1,6 +1,6 @@
 package com.garganttua.api.core.security.keys.managers.db;
 
-import com.garganttua.api.core.security.keys.IGGAPIKeyRealm;
+import com.garganttua.api.spring.keys.domain.IGGAPIKeyRealm;
 
 public interface IGGAPIDBKeyKeeper {
 

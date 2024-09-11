@@ -1,5 +1,8 @@
 package com.garganttua.api.core.security.keys;
 
+import com.garganttua.api.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.spring.keys.domain.IGGAPIKeyRealm;
+
 public interface IGGAPIKeyManager {
 	
 	IGGAPIKeyRealm getRealm(String realm) throws GGAPIKeyManagerException;

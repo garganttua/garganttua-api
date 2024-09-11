@@ -2,6 +2,11 @@ package com.garganttua.api.core.security.keys;
 
 import java.util.Date;
 
+import com.garganttua.api.security.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.security.spring.keys.domain.GGAPIKeyExpiration;
+import com.garganttua.api.security.spring.keys.domain.GGAPIKeyExpiredException;
+import com.garganttua.api.security.spring.keys.domain.IGGAPIKeyRealm;
+
 public abstract class AbstractGGAPIKeyRealm implements IGGAPIKeyRealm {
 	
 	public AbstractGGAPIKeyRealm() {

@@ -12,6 +12,7 @@ import com.garganttua.api.core.security.keys.managers.db.GGAPIDBKeyManager;
 import com.garganttua.api.core.security.keys.managers.db.IGGAPIDBKeyKeeper;
 import com.garganttua.api.core.security.keys.managers.inmemory.GGAPIInMemoryKeyManager;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spring.keys.domain.GGAPIKeyRealmEntity;
 
 @Configuration
 @ConditionalOnProperty(name = "com.garganttua.api.security.key.manager", havingValue = "enabled", matchIfMissing = false)

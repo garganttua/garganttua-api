@@ -25,6 +25,7 @@
 		
 		
 		<module>garganttua-api-spring-security-password-encoders</module>
+		<module>garganttua-api-spring-security-keys</module>
 	</modules>
 
 

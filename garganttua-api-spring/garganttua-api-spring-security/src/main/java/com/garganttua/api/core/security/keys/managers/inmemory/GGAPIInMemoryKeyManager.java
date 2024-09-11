@@ -3,11 +3,11 @@ package com.garganttua.api.core.security.keys.managers.inmemory;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.garganttua.api.core.security.keys.GGAPIKey;
-import com.garganttua.api.core.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.core.security.keys.GGAPIKeyManagerException;
 import com.garganttua.api.core.security.keys.IGGAPIKeyManager;
-import com.garganttua.api.core.security.keys.IGGAPIKeyRealm;
+import com.garganttua.api.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.spring.keys.domain.GGAPIKeyExpiredException;
+import com.garganttua.api.spring.keys.domain.IGGAPIKeyRealm;
 
 public class GGAPIInMemoryKeyManager implements IGGAPIKeyManager {
 

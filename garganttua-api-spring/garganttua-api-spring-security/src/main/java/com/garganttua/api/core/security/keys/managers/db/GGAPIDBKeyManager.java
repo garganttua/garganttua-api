@@ -2,11 +2,11 @@ package com.garganttua.api.core.security.keys.managers.db;
 
 import java.util.Optional;
 
-import com.garganttua.api.core.security.keys.GGAPIKey;
-import com.garganttua.api.core.security.keys.GGAPIKeyExpiredException;
 import com.garganttua.api.core.security.keys.GGAPIKeyManagerException;
 import com.garganttua.api.core.security.keys.IGGAPIKeyManager;
-import com.garganttua.api.core.security.keys.IGGAPIKeyRealm;
+import com.garganttua.api.spring.keys.domain.GGAPIKey;
+import com.garganttua.api.spring.keys.domain.GGAPIKeyExpiredException;
+import com.garganttua.api.spring.keys.domain.IGGAPIKeyRealm;
 
 import lombok.Setter;
 
