@@ -2,8 +2,6 @@ package com.garganttua.api.security.keys.domain;
 
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
-import java.security.spec.EllipticCurve;
 
 import javax.crypto.KeyGenerator;
 

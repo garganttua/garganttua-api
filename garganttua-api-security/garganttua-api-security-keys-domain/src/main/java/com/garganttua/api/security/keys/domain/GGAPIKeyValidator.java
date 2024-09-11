@@ -26,10 +26,10 @@ public class GGAPIKeyValidator {
         add("RSA", 1024);
         add("RSA", 2048);
         add("RSA", 4096);
-        add("RSASSA_PSS", 512);
-        add("RSASSA_PSS", 1024);
-        add("RSASSA_PSS", 2048);
-        add("RSASSA_PSS", 4096);
+//        add("RSASSA_PSS", 512);
+//        add("RSASSA_PSS", 1024);
+//        add("RSASSA_PSS", 2048);
+//        add("RSASSA_PSS", 4096);
         add("EC", 128);
         add("EC", 256);
         add("EC", 384);
@@ -238,9 +238,13 @@ public class GGAPIKeyValidator {
         KeyPairGenerator keyGen;
 		try {
 			keyGen = KeyPairGenerator.getInstance(algo);
-			keyGen.initialize(size);
+			if (algo.equals("EC")) {
+				keyGen.initialize(new ECGenParameterSpec("secp256r1"));
+			} else {
+				keyGen.initialize(size);
+			}
 			return keyGen.generateKeyPair();
-		} catch (NoSuchAlgorithmException  e) {
+		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException  e) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, e);
 		}
     }
