@@ -2,69 +2,70 @@ package com.garganttua.api.security.keys.domain;
 
 import java.security.Key;
 import java.security.KeyFactory;
-import java.security.KeyPairGenerator;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
 
-import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityId;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
 
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 public class GGAPIKeyRealmEntity extends GenericGGAPIEntity implements IGGAPIKeyRealm {
 	
 	public static final String domain = "keys";
 	
-	@GGAPIEntityAuthorizeUpdate
-	protected String algorithm = "RS512";
+	@GGAPIEntityId
+	@Setter
+	@GGAPIEntityMandatory
+	@GGAPIEntityUnicity
+	protected String id;
 	
-	protected GGAPIKeyType type;
+	@GGAPIEntityMandatory
+	@GGAPIEntityAuthorizeUpdate
+	public String algorithm;
+	
+	public GGAPIKeyType type;
 
-	protected GGAPIKey cipheringKey;
+	private GGAPIKey cipheringKey;
 
-	protected GGAPIKey uncipheringKey;
+	private GGAPIKey uncipheringKey;
 	
 	@GGAPIEntityAuthorizeUpdate
-	protected Date expiration;
+	public Date expiration;
 	
 	@GGAPIEntityAuthorizeUpdate
-	protected boolean revoked;
+	public boolean revoked;
 	
 	@GGAPIEntityBeforeCreate
-	private void createKeys() throws GGAPISecurityException {
-
+	private void createKeys(IGGAPICaller caller, Map<String, String> params) throws GGAPISecurityException {
+		String[] infos = GGAPIKeyValidator.validateAlgorithm(this.algorithm);
+		this.type = GGAPIKeyValidator.determineAlgorithmType(this.algorithm);
 		
-		this.createAsymetricKeys();
-	}
-
-	private void createAsymetricKeys() {
-//		KeyPairGenerator.getInstance(algorithm);
-//		
-//		Mac key__ = Mac.getInstance("HmacSHA256");
-//		key__.
-		
-//		Mac.getInstance("HmacSHA384");
-//		Mac.getInstance("HmacSHA512");
-		
-		
-		
-//		KeyPair keys = Keys.keyPairFor(SignatureAlgorithm.forName(algo));
-//		PrivateKey private__ = keys.getPrivate();
-//		this.cipheringKey = new GGAPIKey(private__.getEncoded());
-//		PublicKey public__ = keys.getPublic();
-//		this.uncipheringKey = new GGAPIKey(public__.getEncoded());
+		if( this.type == GGAPIKeyType.SYMETRIC) {
+			SecretKey key = GGAPIKeyValidator.generateSymetricKey(infos[0], Integer.valueOf(infos[1]));
+			this.cipheringKey = new GGAPIKey(key.getEncoded());
+			this.uncipheringKey = new GGAPIKey(key.getEncoded());
+		} else {
+			KeyPair keyPair = GGAPIKeyValidator.generateAsymetricKey(infos[0], Integer.valueOf(infos[1]));
+			this.cipheringKey = new GGAPIKey(keyPair.getPrivate().getEncoded());
+			this.uncipheringKey = new GGAPIKey(keyPair.getPublic().getEncoded());
+		}
 	}
 
 	@Override
@@ -117,23 +118,4 @@ public class GGAPIKeyRealmEntity extends GenericGGAPIEntity implements IGGAPIKey
 		return key_;
     }
 
-	
-//	switch (algo) {
-//	default:
-//	case HS256:
-//	case HS384:
-//	case HS512:
-//		keyRealm = new GGAPISymetricKeyRealm(algo, expiration);
-//		break;
-//	case ES256:
-//	case ES384:
-//	case ES512:
-//	case PS256:
-//	case PS384:
-//	case PS512:
-//	case RS256:
-//	case RS384:
-//	case RS512:
-//		break;
-	
 }
