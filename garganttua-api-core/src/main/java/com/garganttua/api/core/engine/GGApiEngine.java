@@ -31,7 +31,6 @@ import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
-import com.garganttua.reflection.injection.GGInjector;
 import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
@@ -64,7 +63,6 @@ public class GGApiEngine implements IGGAPIEngine {
 		this.propLoader = propLoader;
 		this.superTenantId = superTenantId;
 		this.superOwnerId = superOwnerId;
-		this.injector = GGInjector.injector(this.loader);
 	}
 
 	@Override
