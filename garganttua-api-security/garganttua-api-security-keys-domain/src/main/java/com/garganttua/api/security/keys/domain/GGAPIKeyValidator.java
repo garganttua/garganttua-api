@@ -30,7 +30,7 @@ public class GGAPIKeyValidator {
 //        add("RSASSA_PSS", 1024);
 //        add("RSASSA_PSS", 2048);
 //        add("RSASSA_PSS", 4096);
-        add("EC", 128);
+//        add("EC", 128);
         add("EC", 256);
         add("EC", 384);
         add("EC", 512);
@@ -179,13 +179,13 @@ public class GGAPIKeyValidator {
         supportedAlgorithms.add(algo + "-" + size);
     }
     
-    public static GGAPIKeyType determineAlgorithmType(String input) throws GGAPISecurityException {
+    public static GGAPIKeyRealmType determineAlgorithmType(String input) throws GGAPISecurityException {
         String[] infos = validateAlgorithm(input);
         
         if (isSymetricAlgorithm(infos[0])) {
-            return GGAPIKeyType.SYMETRIC;
+            return GGAPIKeyRealmType.SYMETRIC;
         } else if (isAsymetricAlgorithm(infos[0])) {
-            return GGAPIKeyType.ASYMETRIC;
+            return GGAPIKeyRealmType.ASYMETRIC;
         } else {
         	throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Unsupported algorithm "+input);
         }
@@ -239,7 +239,10 @@ public class GGAPIKeyValidator {
 		try {
 			keyGen = KeyPairGenerator.getInstance(algo);
 			if (algo.equals("EC")) {
-				keyGen.initialize(new ECGenParameterSpec("secp256r1"));
+				if( size == 512 )
+					keyGen.initialize(new ECGenParameterSpec("secp521r1"));
+				else 
+					keyGen.initialize(new ECGenParameterSpec("secp"+size+"r1"));
 			} else {
 				keyGen.initialize(size);
 			}

@@ -4,12 +4,13 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.interfaces.security.key.spring.rest.GGAPIKeyRealmSpringRestEntity;
+import com.garganttua.api.interfaces.security.key.spring.rest.GGAPIKeyRealmSpringEntity;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
 
-@GGAPIDto(entityClass = GGAPIKeyRealmSpringRestEntity.class, db = "gg:SpringMongoDao")
+@GGAPIDto(entityClass = GGAPIKeyRealmSpringEntity.class, db = "gg:SpringMongoDao")
 @Document(collection = "keys")
 public class GGAPIKeyRealmSpringMongoDto {
 	@Id
@@ -18,10 +19,25 @@ public class GGAPIKeyRealmSpringMongoDto {
 	
 	@Field
 	@GGFieldMappingRule(sourceFieldAddress = "id")
-	protected String id;
+	private String id;
 	
 	@Field
 	@GGAPIDtoTenantId
 	@GGFieldMappingRule(sourceFieldAddress = "tenantId")
-	protected String tenantId;
+	private String tenantId;
+
+	@Field
+	@GGFieldMappingRule(sourceFieldAddress = "cipheringKey")
+	private GGAPIKeySpringMongoDto cipheringKey;
+	
+	@Field
+	@GGFieldMappingRule(sourceFieldAddress = "uncipheringKey")
+	private GGAPIKeySpringMongoDto uncipheringKey;
+	
+	@GGFieldMappingRule(sourceFieldAddress = "algorithm")
+	public String algorithm;
+	
+	@GGFieldMappingRule(sourceFieldAddress = "revoked")
+	@GGAPIEntityAuthorizeUpdate
+	public boolean revoked;
 }

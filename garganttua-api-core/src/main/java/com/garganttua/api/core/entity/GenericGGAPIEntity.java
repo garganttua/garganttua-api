@@ -1,7 +1,6 @@
 package com.garganttua.api.core.entity;
 
 import java.util.Map;
-import java.util.Optional;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -21,7 +20,6 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethodProvider;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -60,7 +58,7 @@ public class GenericGGAPIEntity {
 	protected IGGAPIEngine engine;
 
 	@GGAPIEntitySaveMethod
-	public Object save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurityEngine> security) throws GGAPIException {
+	public Object save(IGGAPICaller caller, Map<String, String> parameters) throws GGAPIException {
 		return this.saveMethod.save(caller, parameters, this);
 	}
 

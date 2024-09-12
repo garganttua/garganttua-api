@@ -11,5 +11,6 @@
   <modules>
   	<module>garganttua-api-security-core</module>
   	<module>garganttua-api-security-keys-domain</module>
+  	<module>garganttua-api-security-authorizations-domain</module>
   </modules>
 </project>

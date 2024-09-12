@@ -364,9 +364,6 @@ public class GGAPIEntityChecker {
 				if( !isMapOfString(parameters[1]) ) {
 					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has method "+methodAddress+" but parameter 1 is not of type java.lang.Map<java.lang.String,java.lang.String>");
 				}
-				if( !isOptionalIGGAPISecurity(parameters[2]) ) {
-					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has method "+methodAddress+" but parameter 2 is not of type Optional<IGGAPISecurity>");
-				}
 				if( !method.getReturnType().equals(Object.class) ) {
 					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has method "+methodAddress+" but returned type is not Object.class but is "+method.getGenericReturnType());
 				}

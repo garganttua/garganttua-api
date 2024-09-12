@@ -19,7 +19,7 @@ public class GGAPIKeyValidatorTest {
 		for (String algoSize : GGAPIKeyValidator.supportedAlgorithms) {
 			String[] infos = GGAPIKeyValidator.validateAlgorithm(algoSize);
 
-			if (GGAPIKeyValidator.determineAlgorithmType(algoSize) == GGAPIKeyType.SYMETRIC) {
+			if (GGAPIKeyValidator.determineAlgorithmType(algoSize) == GGAPIKeyRealmType.SYMETRIC) {
 				SecretKey key = GGAPIKeyValidator.generateSymetricKey(infos[0], Integer.valueOf(infos[1]));
 				assertNotNull(key);
 			}
@@ -31,7 +31,7 @@ public class GGAPIKeyValidatorTest {
 		for (String algoSize : GGAPIKeyValidator.supportedAlgorithms) {
 			String[] infos = GGAPIKeyValidator.validateAlgorithm(algoSize);
 
-			if (GGAPIKeyValidator.determineAlgorithmType(algoSize) == GGAPIKeyType.ASYMETRIC) {
+			if (GGAPIKeyValidator.determineAlgorithmType(algoSize) == GGAPIKeyRealmType.ASYMETRIC) {
 				KeyPair keyPair = GGAPIKeyValidator.generateAsymetricKey(infos[0], Integer.valueOf(infos[1]));
 				assertNotNull(keyPair);
 			}

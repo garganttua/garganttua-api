@@ -44,8 +44,8 @@ public class GGAPIService implements IGGAPIService {
 	protected Optional<IGGAPIEventPublisher> eventPublisher = Optional.empty();
 	@Setter
 	protected IGGAPIEntityFactory<Object> factory;
-	@Setter
-	protected Optional<IGGAPISecurityEngine> security;
+//	@Setter
+//	protected Optional<IGGAPISecurityEngine> security;
 	
 	private IGGAPIDomain tenantsDomain;
 
@@ -74,7 +74,7 @@ public class GGAPIService implements IGGAPIService {
 		IGGAPIServiceCommand command = (event) -> {
 			event.setIn(entity);
 			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId());
-			Object createdEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
+			Object createdEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters);
 			event.setOut(createdEntity);
 			event.setCode(GGAPIServiceResponseCode.CREATED);
 			return event;
@@ -163,7 +163,7 @@ public class GGAPIService implements IGGAPIService {
 			event.setIn(entity);
 			customParameters.put("uuid", uuid);
 			Object preparedEntity = this.factory.prepareNewEntity(customParameters, entity, uuid, caller.getRequestedTenantId());
-			Object udpatedEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters, this.security);
+			Object udpatedEntity = GGAPIEntityHelper.save(preparedEntity, caller, customParameters);
 			event.setOut(udpatedEntity);
 			event.setCode(GGAPIServiceResponseCode.UPDATED);
 			return event;

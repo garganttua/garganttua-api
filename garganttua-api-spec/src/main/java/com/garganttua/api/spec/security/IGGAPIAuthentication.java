@@ -11,5 +11,7 @@ public interface IGGAPIAuthentication {
 	IGGAPIAuthorization getAuthorization();
 
 	List<String> getAuthorities();
+
+	IGGAPIAuthenticator getAuthenticator();
 	
 }

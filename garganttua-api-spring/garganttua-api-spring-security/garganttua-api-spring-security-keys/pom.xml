@@ -9,8 +9,11 @@
   <artifactId>garganttua-api-spring-security-keys</artifactId>
   <modules>
   	<module>
-  		garganttua-api-spring-security-keys-interface-rest
+  		garganttua-api-spring-security-keys-entity
   	</module>
   	<module>garganttua-api-spring-security-keys-dao-mongo</module>
+  	<module>
+  		garganttua-api-spring-security-key-entity-provider
+  	</module>
   </modules>
 </project>
