@@ -1,4 +1,4 @@
-package com.garganttua.api.security.authorizations.spring.provider;
+package com.garganttua.api.security.authorizations.spring.jwt;
 
 import java.util.Date;
 import java.util.UUID;
@@ -13,38 +13,20 @@ import com.garganttua.api.security.spring.core.authentication.AbstractGGAPISprin
 import com.garganttua.api.security.spring.core.authorizations.IGGAPISpringAuthorizationProvider;
 import com.garganttua.api.security.spring.core.keys.IGGAPISpringKeyProvider;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.IGGAPIAuthentication;
 import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
 import com.garganttua.api.spec.security.IGGAPIKey;
 import com.garganttua.api.spec.security.IGGAPIKeyRealm;
 
-import io.jsonwebtoken.security.InvalidKeyException;
-import io.jsonwebtoken.security.SignatureException;
-
 @Service
 public class GGAPIJwtAuthorizationProvider implements IGGAPISpringAuthorizationProvider {
-	
-//	private static final String keyRealmName = "jwt-signing-key";
 	
 	@Value("${com.garganttua.api.security.authorization.tokens.lifetime}")
 	private int tokenLifetime;
 	
-	@Value("${com.garganttua.api.security.authorization.tokens.jwt.key.algorithm}")
-	private String keyAlgorythm;
-
-	@Value("${com.garganttua.api.security.authorization.tokens.jwt.key.realm}")
-	private String keyRealmName;
-
-	@Value("${com.garganttua.api.security.authorization.tokens.jwt.key.renewal}")
-	private GGAPIKeyRenewal keyRenewal;
-
-	@Value("${com.garganttua.api.security.authorization.tokens.jwt.key.lifetime}")
-	private long keyLifetime;
-
-	@Value("${com.garganttua.api.security.authorization.tokens.jwt.key.lifetime.unit}")
-	private TimeUnit keyLifetimeUnit;
+	@Value("${com.garganttua.api.security.keys.provider.tokens.jwt.key.algorithm}")
+	private String algorithm;
 
 	@Autowired
 	private IGGAPISpringKeyProvider keyProvider;
@@ -57,24 +39,16 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringAuthorizationP
 	}
 	
 	private IGGAPIAuthorization generateAuthorization(IGGAPIAuthenticator authenticator) throws GGAPISecurityException {
-		IGGAPIKeyRealm keyRealm = null;
-		try {
-			keyRealm = this.keyProvider.getRealm(authenticator, this.keyRealmName+"-tenant-"+authenticator.getTenantId());
-		} catch(GGAPISecurityException e) {
-			if( e.getCode() != GGAPIExceptionCode.ENTITY_NOT_FOUND ) {
-				throw e;
-			}
-			keyRealm = this.keyProvider.createRealm(authenticator, this.keyRealmName+"-tenant-"+authenticator.getTenantId(), GGAPISpringJWTAuthorization.getJavaAlgorithmFromJJWT(this.keyAlgorythm), null);
-		}
+		IGGAPIKeyRealm keyRealm = this.keyProvider.getRealm(authenticator.getTenantId(), authenticator.getUuid(), "jwt-signing-key-tenant-"+authenticator.getTenantId(), GGAPISpringJWTAuthorization.getJavaAlgorithmFromJJWT(this.algorithm));
 
 		try {
 			IGGAPIKey keyForCiphering = keyRealm.getKeyForCiphering();
 		
-			Date expiration = null;
+			Date tokenExpiration = null;
 	
 			if (this.tokenLifetime != 0) {
-				long expirationDate = new Date().getTime() + TimeUnit.MINUTES.toMillis(this.tokenLifetime);
-				expiration = new Date(expirationDate);
+				long tokenExpirationDate = new Date().getTime() + TimeUnit.MINUTES.toMillis(this.tokenLifetime);
+				tokenExpiration = new Date(tokenExpirationDate);
 			}
 
 			return new GGAPISpringJWTAuthorization (
@@ -83,11 +57,12 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringAuthorizationP
 					authenticator.getUuid(), 
 					authenticator.getAuthoritiesList(), 
 					new Date(), 
-					expiration, 
+					tokenExpiration, 
 					keyRealm.getUuid(),
-					keyForCiphering );
+					keyForCiphering, 
+					this.algorithm);
 
-		} catch (InvalidKeyException | SignatureException | GGAPIException e) {
+		} catch (GGAPIException e) {
 			throw new GGAPISecurityException(e);
 		}
 	}

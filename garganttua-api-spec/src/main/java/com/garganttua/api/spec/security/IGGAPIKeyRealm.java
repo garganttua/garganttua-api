@@ -1,6 +1,7 @@
 package com.garganttua.api.spec.security;
 
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.reflection.GGObjectAddress;
 
 public interface IGGAPIKeyRealm {
 
@@ -15,5 +16,9 @@ public interface IGGAPIKeyRealm {
 	IGGAPIKey getKeyForCiphering() throws GGAPIException;
 
 	String getUuid();
+	
+	byte[] sign(byte[] toBeSigned)throws GGAPIException;
+	
+	void verifySignature(byte[] signature, byte[] original) throws GGAPIException;
 
 }

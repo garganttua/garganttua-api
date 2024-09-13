@@ -11,6 +11,7 @@ import java.util.Set;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+import com.garganttua.api.security.core.GGAPISecurityRandoms;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 
@@ -25,6 +26,7 @@ public class GGAPIKeyValidator {
         add("RSA", 512);
         add("RSA", 1024);
         add("RSA", 2048);
+        add("RSA", 3072);
         add("RSA", 4096);
 //        add("RSASSA_PSS", 512);
 //        add("RSASSA_PSS", 1024);
@@ -227,7 +229,7 @@ public class GGAPIKeyValidator {
         KeyGenerator keyGen;
 		try {
 			keyGen = KeyGenerator.getInstance(algo);
-			keyGen.init(size);
+			keyGen.init(size, GGAPISecurityRandoms.secureRandom());
 			return keyGen.generateKey();
 		} catch (NoSuchAlgorithmException e) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, e);
@@ -240,11 +242,11 @@ public class GGAPIKeyValidator {
 			keyGen = KeyPairGenerator.getInstance(algo);
 			if (algo.equals("EC")) {
 				if( size == 512 )
-					keyGen.initialize(new ECGenParameterSpec("secp521r1"));
+					keyGen.initialize(new ECGenParameterSpec("secp521r1"), GGAPISecurityRandoms.secureRandom());
 				else 
-					keyGen.initialize(new ECGenParameterSpec("secp"+size+"r1"));
+					keyGen.initialize(new ECGenParameterSpec("secp"+size+"r1"), GGAPISecurityRandoms.secureRandom());
 			} else {
-				keyGen.initialize(size);
+				keyGen.initialize(size, GGAPISecurityRandoms.secureRandom());
 			}
 			return keyGen.generateKeyPair();
 		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException  e) {

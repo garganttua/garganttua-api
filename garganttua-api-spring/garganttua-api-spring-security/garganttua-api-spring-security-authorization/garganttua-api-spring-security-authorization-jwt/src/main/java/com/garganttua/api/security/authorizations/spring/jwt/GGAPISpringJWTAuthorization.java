@@ -1,4 +1,4 @@
-package com.garganttua.api.security.authorizations.spring.provider;
+package com.garganttua.api.security.authorizations.spring.jwt;
 
 import java.util.Collection;
 import java.util.Date;
@@ -29,6 +29,7 @@ public class GGAPISpringJWTAuthorization implements IGGAPIAuthorization {
 	private Date expirationDate;
 	private String signingKeyUuid;
 	private IGGAPIKey key;
+	private String jwtAlgo;
 
 	@Override
 	public byte[] toByteArray() throws GGAPIException {
@@ -36,10 +37,10 @@ public class GGAPISpringJWTAuthorization implements IGGAPIAuthorization {
 		claims.put("tenantId", this.tenantId);
 		claims.put("ownerId", this.ownerId);
 		claims.put("uuid", this.uuid);
-		claims.put("authorities", authorities);
+//		claims.put("authorities", authorities);
 		
 		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.ownerId)
-				.setIssuedAt(this.creationDate).signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(GGAPISpringJWTAuthorization.getJJWTAlgorithmFromJava(this.key.getSigningKey().getAlgorithm())));
+				.setIssuedAt(this.creationDate).signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(this.jwtAlgo));
 		
 		token.setExpiration(this.expirationDate);
 		return token.compact().getBytes();
@@ -55,44 +56,31 @@ public class GGAPISpringJWTAuthorization implements IGGAPIAuthorization {
 	public static String getJavaAlgorithmFromJJWT(String algorithm) throws GGAPISecurityException {
 		switch(algorithm) {
 		case "HS256":
-			return "HmacSHA256-256";
+			return "HmacSHA512-256";
 		case "HS384":
-			return "HmacSHA384-384";
+			return "HmacSHA512-384";
 		case "HS512":
 			return "HmacSHA512-512";
 		case "RS256":
+			return "RSA-2048";
 		case "RS384":
+			return "RSA-3072";
 		case "RS512":
+			return "RSA-4096";
 		case "PS256":
+			return "RSA-2048";
 		case "PS384":
+			return "RSA-3072";
 		case "PS512":
-		case "EC256":
-		case "EC384":
-		case "EC512":
-			
+			return "RSA-4096";
+		case "ES256":
+			return "EC-256";
+		case "ES384":
+			return "EC-384";
+		case "ES512":
+			return "EC-512";
 		}
 		throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Unsuported JWT algorithm "+algorithm);
-	}
-	
-	public static String getJJWTAlgorithmFromJava(String algorithm) throws GGAPISecurityException {
-		switch(algorithm) {
-		case "HmacSHA256":
-			return "HS256";
-		case "HmacSHA384":
-			return "HS384";
-		case "HmacSHA512":
-			return "HS512";
-		case "RS256":
-		case "RS384":
-		case "RS512":
-		case "PS256":
-		case "PS384":
-		case "PS512":
-		case "EC256":
-		case "EC384":
-		case "EC512":
-		}
-		throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Unsuported Java algorithm "+algorithm+" for JJWT");
 	}
 
 }

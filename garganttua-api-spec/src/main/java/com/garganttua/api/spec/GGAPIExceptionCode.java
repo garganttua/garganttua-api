@@ -56,9 +56,10 @@ public enum GGAPIExceptionCode {
 	//Key error codes
 	KEY_EXPIRED						(220),
 	KEY_ERROR						(221), 
+	KEY_REVOKED						(222), 
 	
 	// Authentication error codes
-	FAILED_AUTHENTICATION			(230)
+	FAILED_AUTHENTICATION			(230), 
 	
 	
 	;

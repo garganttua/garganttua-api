@@ -63,7 +63,7 @@ public class GenericGGAPITenantEntity {
 	protected IGGAPIEngine engine;
 
 	@GGAPIEntitySaveMethod
-	public Object save(IGGAPICaller caller, Map<String, String> parameters, Optional<IGGAPISecurityEngine> security) throws GGAPIException {
+	public Object save(IGGAPICaller caller, Map<String, String> parameters) throws GGAPIException {
 		return this.saveMethod.save(caller, parameters, this);
 	}
 

@@ -9,7 +9,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.spec.filter.GGAPILiteral;
-import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.security.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;

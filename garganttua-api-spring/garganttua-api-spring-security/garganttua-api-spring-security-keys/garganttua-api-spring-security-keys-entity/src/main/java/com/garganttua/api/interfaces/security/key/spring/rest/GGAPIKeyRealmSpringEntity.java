@@ -9,7 +9,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import lombok.NoArgsConstructor;
 
 @GGAPIEntity(domain = GGAPIKeyRealmEntity.domain, interfaces = { "gg:SpringRestInterface" })
-@JsonIgnoreProperties(value = { "gotFromRepository","saveMethod","deleteMethod", "repository", "save", "delete", "engine", "keyForCiphering", "keyForUnciphering", "name" })
+@JsonIgnoreProperties(value = { "gotFromRepository","saveMethod","deleteMethod", "repository", "save", "delete", "engine", "keyForCiphering", "keyForUnciphering", "name", "cipheringKey", "uncipheringKey" })
 @NoArgsConstructor
 public class GGAPIKeyRealmSpringEntity extends GGAPIKeyRealmEntity {
 
