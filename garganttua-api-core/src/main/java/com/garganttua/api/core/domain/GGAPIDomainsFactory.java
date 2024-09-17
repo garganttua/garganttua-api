@@ -53,6 +53,7 @@ public class GGAPIDomainsFactory {
 						log.debug("processing annotated entity "+annotatedClass.getSimpleName());
 					try {
 						domains.add(processAnnotatedEntity(annotatedClass));
+						
 					} catch (GGAPIException e) {
 						e.printStackTrace();
 					}
@@ -80,34 +81,13 @@ public class GGAPIDomainsFactory {
 		} else if (domain.getEntity().getValue1().tenantEntity() && !this.tenantFound) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "There are more than one entity declared as tenantEntity.");
 		}
-		
-//			if( this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIKeyRealmEntity.domain) && this.keyManagerType == GGAPIKeyManagerType.mongo ) {
-////				domain.dto.db = GGAPIDao.MONGO;
-//			}
-//			
-//			if( this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIToken.domain) && this.tokenProviderType == GGAPITokenProviderType.mongo ) {
-////				dynamicDomain.db = GGAPIDao.MONGO;
-//			}
-		
+
 		if( !this.onwerFound && domain.getEntity().getValue1().ownerEntity()) {
 			this.onwerFound = true;
 		} else if( this.onwerFound && domain.getEntity().getValue1().ownerEntity() ) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "More than one owner entity found");
 		}
-		
-//			if( !this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIKeyRealmEntity.domain) ) {
-//				continue;
-//			}
-//			if( !this.securityEnabled.equals("enabled") && domain.entity.getValue1().domain().equals(GGAPIToken.domain) ) {
-//				continue;
-//			}
-//			if( domain.entity.getValue1().domain().equals(GGAPIKeyRealmEntity.domain) && this.keyManagerType != GGAPIKeyManagerType.mongo ) {
-//				continue;
-//			} 
-//			if( domain.entity.getValue1().equals(GGAPIToken.domain) && this.tokenProviderType != GGAPITokenProviderType.mongo ) {
-//				continue;
-//			}
-		
+
 		if( domain.getDtos().size() == 0 ) {
 			log.error("No class annotated with @GGAPIDto found for entity "+annotatedClass.getName());
 			throw new GGAPIDtoException(GGAPIExceptionCode.NO_DTO_FOUND, "No class annotated with @GGAPIDto found for entity "+annotatedClass.getName());

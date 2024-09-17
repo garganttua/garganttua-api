@@ -11,13 +11,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.geojson.Point;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.security.core.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -62,7 +60,6 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicities;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -74,10 +71,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIEntityChecker {
 	
+	private static Map<Class<?>, GGAPIEntityInfos> infos = new HashMap<Class<?>, GGAPIEntityInfos>();
+	
 	public static GGAPIEntityInfos checkEntityClass(Class<?> entityClass) throws GGAPIException {
+		if( GGAPIEntityChecker.infos.containsKey(entityClass) ) {
+			return GGAPIEntityChecker.infos.get(entityClass);  
+		}
+
 		if (log.isDebugEnabled()) {
 			log.debug("Checking entity infos from class " + entityClass.getName());
 		}
+			
 		GGAPIEntity annotation = entityClass.getDeclaredAnnotation(GGAPIEntity.class);
 		
 		if( annotation == null ) {
@@ -183,7 +187,7 @@ public class GGAPIEntityChecker {
 	                Map.Entry::getValue)
 	        );
 			
-			return new GGAPIEntityInfos (
+			GGAPIEntityInfos entityInfos = new GGAPIEntityInfos (
 					domain, 
 					q.address(uuidFieldAddress), 
 					q.address(idFieldAddress), 
@@ -218,7 +222,12 @@ public class GGAPIEntityChecker {
 					afterDeletem==null?null:q.address(afterDeletem.getName()),
 					output,
 					q.address(gotFromReposiotryFieldAddress));
+			
+			GGAPIEntityChecker.infos.put(entityClass, entityInfos);
+			
+			return entityInfos;
 		} catch (GGReflectionException e) {
+			e.printStackTrace();
 			throw new GGAPIEntityException(e);
 		}
 	}
@@ -380,29 +389,7 @@ public class GGAPIEntityChecker {
 		
 		return methodAddress;
 	}
-	
-	private static boolean isOptionalIGGAPISecurity(Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType parameterizedType = (ParameterizedType) type;
-            Type rawType = parameterizedType.getRawType();
-            Type[] typeArguments = parameterizedType.getActualTypeArguments();
 
-            if (rawType instanceof Class<?>) {
-                Class<?> rawClass = (Class<?>) rawType;
-                if (rawClass == Optional.class && typeArguments.length == 1) {
-                    Type typeArgument = typeArguments[0];
-                    if (typeArgument instanceof Class<?>) {
-                        Class<?> classArgument = (Class<?>) typeArgument;
-                        if (classArgument == IGGAPISecurityEngine.class) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-	
 	static private boolean isMapOfString(Type type) {
 		if (type instanceof ParameterizedType) {
 			ParameterizedType parameterizedType = (ParameterizedType) type;

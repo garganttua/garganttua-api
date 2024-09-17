@@ -1,5 +1,8 @@
 package com.garganttua.api.security.core.entity.checker;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
@@ -11,8 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GGAPIEntitySecurityChecker {
+	
+	private static Map<Class<?>, GGAPIEntitySecurityInfos> infos = new HashMap<Class<?>, GGAPIEntitySecurityInfos>();
 
 	public static GGAPIEntitySecurityInfos checkEntityClass(Class<?> entityClass) throws GGAPIException {
+		if( GGAPIEntitySecurityChecker.infos.containsKey(entityClass) ) {
+			return GGAPIEntitySecurityChecker.infos.get(entityClass);  
+		}
+		
 		if (log.isDebugEnabled()) {
 			log.debug("Checking entity security infos from class " + entityClass.getName());
 		}
@@ -58,6 +67,7 @@ public class GGAPIEntitySecurityChecker {
 					authenticatorInfos
 					);
 		}
+		GGAPIEntitySecurityChecker.infos.put(entityClass, infos);
 		return infos;
 	}
 

@@ -2,13 +2,17 @@ package com.garganttua.api.core.domain;
 
 import java.util.Set;
 
+import com.garganttua.api.core.mapper.GGAPIDefaultMapper;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.objects.mapper.GGMapperException;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 
 	@Getter
@@ -19,6 +23,19 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 
 	public GGAPIDomainsRegistry(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
+		
+		domains.stream().forEach(domain -> {
+			Class<?> entityClass = domain.getEntity().getValue0();
+			domain.getDtos().stream().forEach(dto -> {
+				Class<?> dtoClass = dto.getValue0();
+				try {
+					GGAPIDefaultMapper.mapper().recordMappingConfiguration(entityClass, dtoClass);
+					GGAPIDefaultMapper.mapper().recordMappingConfiguration(dtoClass, entityClass);
+				} catch (GGMapperException e) {
+					log.atWarn().log("Error", e);
+				}
+			});
+		});
 	}
 
 	@Override

@@ -1,7 +1,5 @@
 package com.garganttua.api.daos.security.key.spring.mongo;
 
-import static org.mockito.Mockito.RETURNS_SELF;
-
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;

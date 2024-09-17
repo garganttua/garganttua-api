@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
+import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
@@ -62,7 +63,7 @@ public class GGAPISpringSecurityRestConfiguration {
 			}
 			
 //			if( this.openApi.isPresent() ) {
-//				http.authorizeHttpRequests().requestMatchers("/swagger-ui.html","/swagger-ui/**","/v3/**").permitAll().and().authorizeHttpRequests();
+//				
 //			}
 		
 			this.configurers.stream().forEach(config -> {

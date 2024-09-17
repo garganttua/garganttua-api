@@ -2,7 +2,9 @@ package com.garganttua.api.security.core.entity.checker;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
@@ -25,7 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIEntityAuthenticatorChecker {
 	
+	private static Map<Class<?>, GGAPIAuthenticatorInfos> infos = new HashMap<Class<?>, GGAPIAuthenticatorInfos>();
+	
 	public static GGAPIAuthenticatorInfos checkEntityAuthenticatorClass(Class<?> entityAuthenticatorClass) throws GGAPIException {
+		if( GGAPIEntityAuthenticatorChecker.infos.containsKey(entityAuthenticatorClass) ) {
+			return GGAPIEntityAuthenticatorChecker.infos.get(entityAuthenticatorClass);  
+		}
+		
 		if (log.isDebugEnabled()) {
 			log.debug("Checking entity authenticator infos from class " + entityAuthenticatorClass.getName());
 		}
@@ -61,7 +69,8 @@ public class GGAPIEntityAuthenticatorChecker {
 		IGGObjectQuery q;
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
-			return new GGAPIAuthenticatorInfos(
+			
+			GGAPIAuthenticatorInfos authenticatorinfos = new GGAPIAuthenticatorInfos(
 					q.address(autoritiesFieldName), 
 					q.address(accountNonExpiredFieldName), 
 					q.address(accountNonLockedFieldName), 
@@ -69,6 +78,10 @@ public class GGAPIEntityAuthenticatorChecker {
 					q.address(enabledFieldName), 
 					loginFieldName==null?null:q.address(loginFieldName), 
 					passwordFieldName==null?null:q.address(passwordFieldName));
+			
+			GGAPIEntityAuthenticatorChecker.infos.put(entityAuthenticatorClass, authenticatorinfos);
+
+			return authenticatorinfos;
 		} catch (GGReflectionException e) {
 			throw new GGAPISecurityException(e);
 		}

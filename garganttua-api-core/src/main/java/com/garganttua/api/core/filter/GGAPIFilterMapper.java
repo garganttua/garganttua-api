@@ -7,16 +7,16 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
+import com.garganttua.api.core.mapper.GGAPIDefaultMapper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.objects.mapper.GGMapper;
-import com.garganttua.objects.mapper.GGMapperConfigurationItem;
 import com.garganttua.objects.mapper.GGMapperException;
+import com.garganttua.objects.mapper.GGMappingConfiguration;
 import com.garganttua.objects.mapper.rules.GGMappingRule;
-import com.garganttua.objects.mapper.rules.GGMappingRules;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 	
-	private GGMapper mapper = new GGMapper().configure(GGMapperConfigurationItem.FAIL_ON_ERROR, false);
+	private GGMapper mapper = GGAPIDefaultMapper.mapper();
 
 	@Override
 	public List<Pair<Class<?>, IGGAPIFilter>> map(IGGAPIDomain domain, IGGAPIFilter filter) throws GGAPIException {
@@ -41,10 +41,11 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 				filters.add(new Pair<Class<?>, IGGAPIFilter>(destinationClass.getValue0(), null));
 				continue;
 			}
-			
+
 			List<GGMappingRule> mappingRules = null;
 			try {
-				mappingRules = GGMappingRules.parse(destinationClass.getValue0());
+				GGMappingConfiguration mappingConfiguration = this.mapper.getMappingConfiguration(domain.getEntity().getValue0(), destinationClass.getValue0());
+				mappingRules = mappingConfiguration.destinationRules();
 			} catch (GGMapperException e) {
 				throw new GGAPIEngineException(e);
 			}

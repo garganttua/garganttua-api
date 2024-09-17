@@ -16,5 +16,11 @@
 		<module>
 			garganttua-api-spring-security-authorization-jwt
 		</module>
+		<module>
+			garganttua-api-spring-security-authorization-entity
+		</module>
+		<module>
+			garganttua-api-spring-security-authorization-dao-mongo
+		</module>
 	</modules>
 </project>

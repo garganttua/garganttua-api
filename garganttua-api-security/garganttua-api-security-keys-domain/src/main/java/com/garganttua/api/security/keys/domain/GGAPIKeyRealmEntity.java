@@ -81,7 +81,7 @@ public class GGAPIKeyRealmEntity extends GenericGGAPIEntity implements IGGAPIKey
 	}
     
     private void throwExceptionIfRevoked() throws GGAPISecurityException {
-    	if( this.revoked  ) {
+    	if( this.revoked ) {
     		throw new GGAPISecurityException(GGAPIExceptionCode.KEY_REVOKED, "The key for realm "+this.id+" has expired");
     	}
 	}

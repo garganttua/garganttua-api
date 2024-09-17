@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.garganttua.api.interfaces.security.spring.rest.IGGAPISpringSecurityRestConfigurer;
 import com.garganttua.api.interfaces.spring.rest.GGAPIResponseObject;
 import com.garganttua.api.security.spring.authentication.loginpassword.GGAPILoginPasswordAuthentication;
 import com.garganttua.api.security.spring.authentication.loginpassword.GGAPILoginPasswordAuthenticationRequest;
 import com.garganttua.api.security.spring.authentication.loginpassword.GGAPILoginPasswordAuthenticationResponse;
+import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.IGGAPIAuthentication;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;

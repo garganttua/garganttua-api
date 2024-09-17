@@ -3,7 +3,9 @@ package com.garganttua.api.core.dto.checker;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
@@ -11,6 +13,7 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
+import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
@@ -19,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GGAPIDtoChecker {
+	
+	private static Map<Class<?>, GGAPIDtoInfos> infos = new HashMap<Class<?>, GGAPIDtoInfos>();
 
 	public static List<GGAPIDtoInfos> checkDtos(List<Class<?>> dtoClasss) throws GGAPIDtoException {
 		List<GGAPIDtoInfos> dtoinfos = new ArrayList<GGAPIDtoInfos>();
@@ -29,6 +34,10 @@ public class GGAPIDtoChecker {
 	}
 
 	public static GGAPIDtoInfos checkDto(Class<?> dtoClass) throws GGAPIDtoException {
+		if( GGAPIDtoChecker.infos.containsKey(dtoClass) ) {
+			return GGAPIDtoChecker.infos.get(dtoClass);  
+		}
+		
 		if (log.isDebugEnabled()) {
 			log.debug("Checking dto infos from class " + dtoClass.getName());
 		}
@@ -50,7 +59,10 @@ public class GGAPIDtoChecker {
 		IGGObjectQuery q;
 		try {
 			q = GGObjectQueryFactory.objectQuery(dtoClass);
-			return new GGAPIDtoInfos(annotation.db(), q.address(tenantIdFieldName));
+			GGAPIDtoInfos dtoInfos = new GGAPIDtoInfos(annotation.db(), q.address(tenantIdFieldName));
+			GGAPIDtoChecker.infos.put(dtoClass, dtoInfos);
+			
+			return dtoInfos;
 		} catch (GGReflectionException e) {
 			throw new GGAPIDtoException(e);
 		}

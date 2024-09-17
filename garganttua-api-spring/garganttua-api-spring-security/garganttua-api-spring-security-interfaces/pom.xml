@@ -11,5 +11,8 @@
 	<artifactId>garganttua-api-spring-security-interfaces</artifactId>
 	<modules>
 		<module>garganttua-api-spring-security-interface-rest</module>
+		<module>
+			garganttua-api-soring-security-interface-rest-swagger
+		</module>
 	</modules>
 </project>

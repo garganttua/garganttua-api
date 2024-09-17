@@ -1,7 +1,6 @@
 package com.garganttua.api.spec.security;
 
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.reflection.GGObjectAddress;
 
 public interface IGGAPIKeyRealm {
 

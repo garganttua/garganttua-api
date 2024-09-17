@@ -45,9 +45,9 @@ public class GGAPIService implements IGGAPIService {
 	@Setter
 	protected IGGAPIEntityFactory<Object> factory;
 //	@Setter
-//	protected Optional<IGGAPISecurityEngine> security;
+//	protected Optional<IGGAPISecurityEngine> security; 
 	
-	private IGGAPIDomain tenantsDomain;
+//	private IGGAPIDomain tenantsDomain;
 
 	public GGAPIService(IGGAPIDomain domain) {
 		this.domain = domain;

@@ -23,6 +23,10 @@ public interface IGGAPIAuthorization {
 	
 	String getSigningKeyUuid();
 	
+	boolean isRevoked();
+	
+	void revoke();
+	
 	byte[] getSignature();
 
 }

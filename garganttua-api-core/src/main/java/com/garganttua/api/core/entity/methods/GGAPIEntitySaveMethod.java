@@ -163,7 +163,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		if( domain.getEntity().getValue1().ownedEntity() ) {
 			if( caller.getOwnerId() != null && !caller.getOwnerId().isEmpty()) {
 				try {
-					GGObjectQueryFactory.objectQuery(entity).setValue(GGAPIEntityChecker.checkEntity(entity).ownerIdFieldAddress(), caller.getOwnerId());
+					GGObjectQueryFactory.objectQuery(entity).setValue(domain.getEntity().getValue1().ownerIdFieldAddress(), caller.getOwnerId());
 				} catch (GGReflectionException e) {
 					this.processException(e);
 					

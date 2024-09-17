@@ -5,40 +5,46 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.garganttua.api.security.authorizations.domain.GGAPIAuthorizationEntity;
+import com.garganttua.api.security.authorizations.spring.entity.GGAPISpringSecurityAuthorizationEntity;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.security.IGGAPIAuthorization;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.spec.security.IGGAPIKey;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@AllArgsConstructor
-@Getter
-public class GGAPISpringJWTAuthorization implements IGGAPIAuthorization {
-	
-	private String uuid;
-	private String tenantId;
-	private String ownerId;
-	private Collection<String> authorities;
-	private Date creationDate;
-	private Date expirationDate;
-	private String signingKeyUuid;
+@GGAPIEntity(domain = GGAPIAuthorizationEntity.domain, interfaces = { "gg:SpringRestInterface" })
+@JsonIgnoreProperties(value = { "gotFromRepository","saveMethod","deleteMethod", "repository", "save", "delete", "engine" })
+@NoArgsConstructor
+public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizationEntity {
+	@Setter
 	private IGGAPIKey key;
+	
+	@GGAPIEntityMandatory
 	private String jwtAlgo;
 
+	public GGAPISpringJWTAuthorization(String uuid, String tenantId, String ownerId, Collection<String> authorities,
+			Date tokenCreation, Date tokenExpiration, String realmUuid, IGGAPIKey key, String jwtAlgo) {
+		super(uuid, tenantId, ownerId, authorities, tokenCreation, tokenExpiration, realmUuid);
+		this.key = key;
+		this.jwtAlgo = jwtAlgo;
+	}
+	
 	@Override
 	public byte[] toByteArray() throws GGAPIException {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("tenantId", this.tenantId);
 		claims.put("ownerId", this.ownerId);
 		claims.put("uuid", this.uuid);
-//		claims.put("authorities", authorities);
-		
+
 		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.ownerId)
 				.setIssuedAt(this.creationDate).signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(this.jwtAlgo));
 		

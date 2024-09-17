@@ -15,6 +15,7 @@ import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPIFilterMapper;
 import com.garganttua.api.core.filter.IGGAPIFilterMapper;
+import com.garganttua.api.core.mapper.GGAPIDefaultMapper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.dao.IGGAPIDao;
@@ -24,7 +25,6 @@ import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
-import com.garganttua.objects.mapper.GGMapper;
 import com.garganttua.objects.mapper.GGMapperException;
 import com.garganttua.objects.mapper.IGGMapper;
 
@@ -40,7 +40,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 	private IGGAPIFilterMapper filterMapper = new GGAPIFilterMapper();
 	
 	@Setter
-	private IGGMapper entityMapper = new GGMapper();
+	private IGGMapper entityMapper = GGAPIDefaultMapper.mapper();
 
 	@Setter
 	protected IGGAPIDomain domain;
