@@ -1,8 +1,8 @@
 package com.garganttua.api.security.authorizations.spring.jwt;
 
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -13,6 +13,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.security.IGGAPIKey;
 
 import io.jsonwebtoken.JwtBuilder;
@@ -22,22 +23,25 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @GGAPIEntity(domain = GGAPIAuthorizationEntity.domain, interfaces = { "gg:SpringRestInterface" })
-@JsonIgnoreProperties(value = { "gotFromRepository","saveMethod","deleteMethod", "repository", "save", "delete", "engine" })
+@JsonIgnoreProperties(value = { "gotFromRepository", "saveMethod", "deleteMethod", "repository", "save", "delete",
+		"engine" })
 @NoArgsConstructor
+@GGAPIEntityOwned(ownerId = "ownerId")
 public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizationEntity {
+
 	@Setter
 	private IGGAPIKey key;
-	
+
 	@GGAPIEntityMandatory
 	private String jwtAlgo;
 
-	public GGAPISpringJWTAuthorization(String uuid, String tenantId, String ownerId, Collection<String> authorities,
+	public GGAPISpringJWTAuthorization(String uuid, String tenantId, String ownerId, List<String> authorities,
 			Date tokenCreation, Date tokenExpiration, String realmUuid, IGGAPIKey key, String jwtAlgo) {
 		super(uuid, tenantId, ownerId, authorities, tokenCreation, tokenExpiration, realmUuid);
 		this.key = key;
 		this.jwtAlgo = jwtAlgo;
 	}
-	
+
 	@Override
 	public byte[] toByteArray() throws GGAPIException {
 		Map<String, Object> claims = new HashMap<>();
@@ -45,9 +49,9 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 		claims.put("ownerId", this.ownerId);
 		claims.put("uuid", this.uuid);
 
-		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.ownerId)
-				.setIssuedAt(this.creationDate).signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(this.jwtAlgo));
-		
+		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.ownerId).setIssuedAt(this.creationDate)
+				.signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(this.jwtAlgo));
+
 		token.setExpiration(this.expirationDate);
 		return token.compact().getBytes();
 	}
@@ -57,10 +61,9 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
-	
+
 	public static String getJavaAlgorithmFromJJWT(String algorithm) throws GGAPISecurityException {
-		switch(algorithm) {
+		switch (algorithm) {
 		case "HS256":
 			return "HmacSHA512-256";
 		case "HS384":
@@ -86,7 +89,23 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 		case "ES512":
 			return "EC-512";
 		}
-		throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Unsuported JWT algorithm "+algorithm);
+		throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
+				"Unsuported JWT algorithm " + algorithm);
 	}
 
+	@Override
+	public void validateAgainst(byte[] authorization) throws GGAPIException {
+		try {
+			Jwts.parserBuilder()
+			.setSigningKey(this.key.getSigningKey())
+			.requireExpiration(this.expirationDate)
+			.requireIssuedAt(this.creationDate)
+			.requireSubject(this.ownerId)
+			.require("tenantId", this.tenantId)
+			.require("ownerId", this.ownerId)
+			.build().parse(new String(authorization));
+		} catch (Exception e) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, e.getMessage());
+		}
+	}
 }

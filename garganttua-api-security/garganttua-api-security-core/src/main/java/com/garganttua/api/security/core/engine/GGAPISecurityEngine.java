@@ -83,7 +83,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	}
 
 	@Override
-	public IGGAPIAuthorization validateAuthorization(byte[] authorization) throws GGAPIException {
+	public IGGAPIAuthentication validateAuthorization(byte[] authorization) throws GGAPIException {
 		if( this.authorizationManager.isPresent() ) {
 			return this.authorizationManager.get().validateAuthorization(authorization);
 		}

@@ -9,8 +9,10 @@ public interface IGGAPIAuthentication {
 	boolean isAuthenticated();
 	
 	IGGAPIAuthorization getAuthorization();
+	
+	void setAuthorization(IGGAPIAuthorization authorization);
 
-	List<String> getAuthorities();
+	List<String> getAuthoritieList();
 
 	IGGAPIAuthenticator getAuthenticator();
 	

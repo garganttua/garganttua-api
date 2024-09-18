@@ -11,6 +11,7 @@ import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
@@ -25,9 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class GGAPISpringSecurityRestConfiguration {
-
-//	@Autowired
-//	private Optional<OpenAPI> openApi;
 	
 	@Autowired
 	private IGGAPIEngine engine;
@@ -41,6 +39,9 @@ public class GGAPISpringSecurityRestConfiguration {
 	@Autowired
 	private GGAPISpringTenantVerifierFilter tenantVerifier;
 	
+	@Autowired
+	private GGAPISpringAuthorizationFilter authorizationFilter;
+	
 	@Value("${com.garganttua.api.spring.interface.rest.security.cors.enabled}")
 	private boolean cors = false;
 	
@@ -48,7 +49,13 @@ public class GGAPISpringSecurityRestConfiguration {
 	private boolean csrf = false;
 	
 	@Autowired
+	private GGAPICallerFilter callerFilter;
+	
+	@Autowired
 	private List<IGGAPISpringSecurityRestConfigurer> configurers;
+	
+	@Autowired
+	private GGAPISpringInterfaceRestSecurityApplicationFilter securityApplicationFilter;
 
 	@Bean
 	public DefaultSecurityFilterChain configureFilterChain(HttpSecurity http) throws GGAPISecurityException {
@@ -61,11 +68,7 @@ public class GGAPISpringSecurityRestConfiguration {
 			if( this.cors ) {
 				http.cors();				
 			}
-			
-//			if( this.openApi.isPresent() ) {
-//				
-//			}
-		
+
 			this.configurers.stream().forEach(config -> {
 				try {
 					config.configureFilterChain(http);
@@ -76,6 +79,22 @@ public class GGAPISpringSecurityRestConfiguration {
 			
 			this.configureSecurityFilterChainIfAuthorizationManagerIsPresent(http);
 
+			this.security.ifAuthorizationManagerPresentOrElse((manager, caller) -> {
+				try {
+					http.authorizeHttpRequests().and().addFilterBefore(this.authorizationFilter, AuthorizationFilter.class);
+					http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, GGAPISpringAuthorizationFilter.class);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			} , null, () -> {
+				try {
+					http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, AuthorizationFilter.class);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			});
+
+			
 			this.security.ifTenantVerifierPresent((verifier, caller) -> {
 				try {
 					http.authorizeHttpRequests().and().addFilterAfter(this.tenantVerifier, AuthorizationFilter.class);
@@ -83,22 +102,16 @@ public class GGAPISpringSecurityRestConfiguration {
 					throw new RuntimeException(e);
 				}
 			} , null);
-			
+			 
 			this.security.ifOwnerVerifierPresent((verifier, caller) -> {
 				try {
-					http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, AuthorizationFilter.class);
+					http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, GGAPISpringTenantVerifierFilter.class);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
 			} , null);
 			
-//			if( this.authenticationManager.isPresent() ) {
-//				this.authenticationManager.get().configureFilterChain(http);
-//			}
-			
-//			if( this.authorizationManager.isPresent() ){
-//				this.authorizationManager.get().configureFilterChain(http);
-//			}
+			http.authorizeHttpRequests().and().addFilterAfter(this.securityApplicationFilter, AuthorizationFilter.class);
 			
 			return http.build();
 			

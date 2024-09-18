@@ -64,7 +64,7 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 		for(Pair<Class<?>, IGGAPIFilter> p: filters) {
 			Object dtoExample;
 			try {
-				dtoExample = this.mapper.map(entityExample, p.getValue0());
+				dtoExample = this.mapper.map(entityExample, p.getValue0()); 
 			} catch (GGMapperException e) {
 				throw new GGAPIEngineException(e);
 			}

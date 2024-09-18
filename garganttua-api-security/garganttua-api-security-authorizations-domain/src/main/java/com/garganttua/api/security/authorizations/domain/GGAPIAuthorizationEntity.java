@@ -1,7 +1,7 @@
 package com.garganttua.api.security.authorizations.domain;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public abstract class GGAPIAuthorizationEntity extends GenericGGAPIEntity implements IGGAPIAuthorization {
 
-	public GGAPIAuthorizationEntity(String uuid, String tenantId, String ownerId, Collection<String> authorities,
+	public GGAPIAuthorizationEntity(String uuid, String tenantId, String ownerId, List<String> authorities,
 			Date creationDate, Date expirationDate, String signingKeyUuid) {
 		this.uuid = uuid;
 		this.id = ownerId;
@@ -31,7 +31,7 @@ public abstract class GGAPIAuthorizationEntity extends GenericGGAPIEntity implem
 	public String ownerId;
 	
 	@GGAPIEntityMandatory
-	public Collection<String> authorities;
+	public List<String> authorities;
 	
 	@GGAPIEntityMandatory
 	public Date creationDate;

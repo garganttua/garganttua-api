@@ -1,13 +1,13 @@
 package com.garganttua.api.security.authorizations.spring.entity;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import com.garganttua.api.security.authorizations.domain.GGAPIAuthorizationEntity;
 
 public abstract class GGAPISpringSecurityAuthorizationEntity extends GGAPIAuthorizationEntity {
 
-	public GGAPISpringSecurityAuthorizationEntity(String uuid, String tenantId, String ownerId, Collection<String> authorities, Date creationDate,
+	public GGAPISpringSecurityAuthorizationEntity(String uuid, String tenantId, String ownerId, List<String> authorities, Date creationDate,
 			Date expirationDate, String signingKeyUuid) {
 		super(uuid, tenantId, ownerId, authorities, creationDate, expirationDate, signingKeyUuid);
 	}
@@ -22,7 +22,7 @@ public abstract class GGAPISpringSecurityAuthorizationEntity extends GGAPIAuthor
 	}
 
 	@Override
-	public Collection<String> getAuthorities() {
+	public List<String> getAuthorities() {
 		return this.authorities;
 	}
 

@@ -1,9 +1,11 @@
 package com.garganttua.api.security.authorizations.spring.manager;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.security.spring.core.authorizations.IGGAPISpringAuthorizationProvider;
+import com.garganttua.api.security.spring.core.authentication.IGGAPISpringAuthentication;
+import com.garganttua.api.security.spring.core.authorizations.IGGAPISpringSecurityAuthorizationProvider;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.IGGAPIAuthentication;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
@@ -16,17 +18,20 @@ import lombok.extern.slf4j.Slf4j;
 public class GGAPISecuritySpringAuthorizationManager implements IGGAPIAuthorizationManager {
 	
 	@Autowired
-	private IGGAPISpringAuthorizationProvider authorizationProvider;
+	private IGGAPISpringSecurityAuthorizationProvider authorizationProvider;
 
 	@Override
-	public IGGAPIAuthorization validateAuthorization(byte[] authorization) {
-		// TODO Auto-generated method stub
-		return null;
+	public IGGAPIAuthentication validateAuthorization(byte[] authorization) throws GGAPIException {
+		IGGAPIAuthorization validatedAuthorization = this.authorizationProvider.validateAuthorization(authorization);
+
+		IGGAPISpringAuthentication auth = GGAPISpringSecurityAuthorizationAuthentication.fromAuthorization(validatedAuthorization);;
+		SecurityContextHolder.getContext().setAuthentication(auth);
+		return auth;
 	}
 
 	@Override
 	public IGGAPIAuthentication createAuthorization(IGGAPIAuthentication authentication) throws GGAPIException {
-		return authorizationProvider.createAuthorization(authentication);
+		return this.authorizationProvider.createAuthorization(authentication);
 	}
 
 }

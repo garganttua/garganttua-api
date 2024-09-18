@@ -11,7 +11,7 @@ public interface IGGAPISecurityEngine {
 	
 	boolean isAuthenticatorEntity(Object entity);
 
-	IGGAPIAuthorization validateAuthorization(byte[] token) throws GGAPIException;
+	IGGAPIAuthentication validateAuthorization(byte[] authorization) throws GGAPIException;
 	
 	void verifyTenant(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException;
 	

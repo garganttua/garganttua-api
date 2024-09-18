@@ -1,7 +1,7 @@
 package com.garganttua.api.security.authorizations.daos.mongo.spring;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -30,7 +30,7 @@ public abstract class GGAPISpringSecurityAuthorizationDto {
 	
 	@Field
 	@GGFieldMappingRule(sourceFieldAddress = "authorities")
-	public Collection<String> authorities;
+	public List<String> authorities;
 	
 	@Field
 	@GGFieldMappingRule(sourceFieldAddress = "creationDate")

@@ -1,7 +1,7 @@
 package com.garganttua.api.spec.security;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import com.garganttua.api.spec.GGAPIException;
 
@@ -15,7 +15,7 @@ public interface IGGAPIAuthorization {
 	
 	String getOwnerId();
 	
-	Collection<String> getAuthorities();
+	List<String> getAuthorities();
 	
 	Date getCreationDate();
 	
@@ -28,5 +28,7 @@ public interface IGGAPIAuthorization {
 	void revoke();
 	
 	byte[] getSignature();
+	
+	void validateAgainst(byte[] authorization) throws GGAPIException;
 
 }

@@ -16,7 +16,7 @@ public class GGAPIOwnerVerifier implements IGGAPIOwnerVerifier {
 		IGGAPIAccessRule rule = caller.getAccessRule();
 
 		if (rule != null && rule.getAccess() == GGAPIServiceAccess.owner ) {
-			String authentifiedOwnerId = authorization.getUuid();
+			String authentifiedOwnerId = authorization.getOwnerId();
 			String ownerId = caller.getOwnerId();
 
 			if (!authentifiedOwnerId.equals(ownerId) && !caller.isSuperOwner()) {

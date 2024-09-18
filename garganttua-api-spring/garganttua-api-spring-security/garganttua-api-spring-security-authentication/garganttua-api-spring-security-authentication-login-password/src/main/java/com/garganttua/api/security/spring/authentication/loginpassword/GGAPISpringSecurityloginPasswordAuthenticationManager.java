@@ -3,6 +3,7 @@ package com.garganttua.api.security.spring.authentication.loginpassword;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.security.core.entity.tools.GGAPIEntityAuthenticatorHelper;
@@ -41,9 +42,11 @@ public class GGAPISpringSecurityloginPasswordAuthenticationManager implements IG
 		GGAPILoginPasswordAuthentication authenticationRequest = (GGAPILoginPasswordAuthentication) authentication;
 
 		try {
-			Authentication authentication__ = this.configuration.getAuthenticationManager().authenticate(authenticationRequest.toSpringAuthentication());
-			authenticationRequest.setAuthenticated(authentication__);
+			Authentication authenticationReturned = this.configuration.getAuthenticationManager().authenticate(authenticationRequest);
+			authenticationRequest.setAuthenticated(authenticationReturned);
+			SecurityContextHolder.getContext().setAuthentication(authenticationRequest);
 		} catch (Exception e) {
+			e.printStackTrace();
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, e);
 		}
 
