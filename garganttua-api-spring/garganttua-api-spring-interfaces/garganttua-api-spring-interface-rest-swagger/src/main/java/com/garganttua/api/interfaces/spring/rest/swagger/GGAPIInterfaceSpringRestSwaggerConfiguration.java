@@ -17,11 +17,14 @@ public class GGAPIInterfaceSpringRestSwaggerConfiguration {
 	@Value("${com.garganttua.api.interface.spring.rest.openapi.description}")
 	private String openapiDescription;
 
+	@Value(value = "${com.garganttua.api.version}")
+	private String version;
+	
 	@Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .components(new Components())
                 .info(new Info().title(this.openapiTitle).description(
-                        this.openapiDescription));
+                        this.openapiDescription).version(this.version));
     }
 }

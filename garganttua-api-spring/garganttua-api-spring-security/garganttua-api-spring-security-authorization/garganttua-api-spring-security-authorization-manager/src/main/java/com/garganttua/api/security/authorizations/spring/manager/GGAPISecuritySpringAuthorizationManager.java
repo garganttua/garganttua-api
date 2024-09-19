@@ -27,10 +27,7 @@ public class GGAPISecuritySpringAuthorizationManager implements IGGAPIAuthorizat
 	@Override
 	public IGGAPIAuthentication validateAuthorization(byte[] authorization) throws GGAPIException {
 		IGGAPIAuthorization validatedAuthorization = this.authorizationProvider.validateAuthorization(authorization);
-
-		IGGAPISpringAuthentication auth = GGAPISpringSecurityAuthorizationAuthentication.fromAuthorization(validatedAuthorization);;
-		SecurityContextHolder.getContext().setAuthentication(auth);
-		return auth;
+		return GGAPISpringSecurityAuthorizationAuthentication.fromAuthorization(validatedAuthorization);
 	}
 
 	@Override

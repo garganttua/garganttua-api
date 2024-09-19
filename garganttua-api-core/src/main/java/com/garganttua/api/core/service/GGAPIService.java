@@ -44,10 +44,6 @@ public class GGAPIService implements IGGAPIService {
 	protected Optional<IGGAPIEventPublisher> eventPublisher = Optional.empty();
 	@Setter
 	protected IGGAPIEntityFactory<Object> factory;
-//	@Setter
-//	protected Optional<IGGAPISecurityEngine> security; 
-	
-//	private IGGAPIDomain tenantsDomain;
 
 	public GGAPIService(IGGAPIDomain domain) {
 		this.domain = domain;

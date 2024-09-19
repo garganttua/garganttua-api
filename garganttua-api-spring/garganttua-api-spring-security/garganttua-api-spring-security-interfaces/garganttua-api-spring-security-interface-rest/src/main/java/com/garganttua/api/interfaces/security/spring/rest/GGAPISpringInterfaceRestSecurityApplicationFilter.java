@@ -1,69 +1,90 @@
 package com.garganttua.api.interfaces.security.spring.rest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.engine.GGAPIEngineException;
+import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
+import com.garganttua.api.interfaces.spring.rest.GGAPIServiceResponseUtils;
 import com.garganttua.api.interfaces.spring.rest.GGAPISpringHttpApiFilter;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
+import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 
-import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class GGAPISpringInterfaceRestSecurityApplicationFilter extends GGAPISpringHttpApiFilter {
+public class GGAPISpringInterfaceRestSecurityApplicationFilter extends OncePerRequestFilter {
 
 	@Autowired
 	private IGGAPISecurityEngine security;
-	
-	@Override
-	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
+
+	protected HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
-		
-		if( caller.getDomain().getSecurity().isAuthenticatorEntity() 
-				&& (
-						request.getMethod().equals("POST") 
-						|| request.getMethod().equals("PATCH") 
-						|| request.getMethod().equals("PUT")
-					) 
-		) {
-			if( log.isDebugEnabled() ) {
-				log.debug("Applying security on authenticator entity "+caller.getDomain().getEntity().getValue0().getSimpleName());
+
+		if (caller.getDomain().getSecurity().isAuthenticatorEntity() && (request.getMethod().equals("POST")
+				|| request.getMethod().equals("PATCH") || request.getMethod().equals("PUT"))) {
+			if (log.isDebugEnabled()) {
+				log.debug("Applying security on authenticator entity "
+						+ caller.getDomain().getEntity().getValue0().getSimpleName());
 			}
-			
+
 			try {
-				ServletInputStream stream = request.getInputStream();
-				ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-				
-				int nRead;
-				byte[] data = new byte[16384];
-				
-				while ((nRead = stream.read(data, 0, data.length)) != -1) {
-					buffer.write(data, 0, nRead);
-				}
-				
-				byte[] entityAsByteArray = buffer.toByteArray();
-				
+
+				HttpServletRequest httpServletRequest = (HttpServletRequest) request;
+				ModifiableHttpServletRequest modifiableRequest = new ModifiableHttpServletRequest(httpServletRequest);
+
+				String originalBody = new String(modifiableRequest.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 				ObjectMapper mapper = new ObjectMapper();
-				Object entity;
-				entity = mapper.readValue(entityAsByteArray, caller.getDomain().getEntity().getValue0());
-			
+				Object entity = mapper.readValue(originalBody, caller.getDomain().getEntity().getValue0());
+
 				this.security.applySecurityOnAuthenticatorEntity(entity);
+
+				String writeValueAsString = mapper.writeValueAsString(entity);
+				modifiableRequest.setRequestBody(writeValueAsString);
+				return modifiableRequest;
+				
 			} catch (IOException e) {
 				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, e.getMessage());
 			}
 
+		} else {
+			return request;
+		}
+	}
+
+	@Override
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+		if (((HttpServletRequest) request).getServletPath().startsWith("/api")) {
+			try {
+				HttpServletRequest requestModified = this.doFilter(request, response);
+				filterChain.doFilter(requestModified, response);
+			} catch (GGAPIException e) {
+				GGAPIServiceResponse responseObject = new GGAPIServiceResponse(e.getMessage(), GGAPIServiceResponseCode.fromExceptionCode(e));		
+				ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
+				String json = new ObjectMapper().writeValueAsString(responseEntity.getBody());
+				((HttpServletResponse) response).setStatus(responseEntity.getStatusCode().value());
+				response.setContentType("application/json");
+				((HttpServletResponse) response).getWriter().write(json);
+				((HttpServletResponse) response).getWriter().flush();
+				return;
+			}
+		} else {
+			filterChain.doFilter(request, response);
 		}
 	}
 }

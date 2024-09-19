@@ -125,4 +125,9 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 //					service, service.getClass().getMethod(serviceInfos.getMethodName(), serviceInfos.getParameters()));
 //		}
 	}
+
+	@Override
+	public String getName() {
+		return "SpringRestInterface-"+this.domain.getDomain();
+	}
 }

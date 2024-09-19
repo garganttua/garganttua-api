@@ -82,7 +82,7 @@ public class GGApiEngine implements IGGAPIEngine {
 		log.info("Starting interfaces");
 		
 		for( IGGAPIInterface interfasse: this.interfacesRegistry.getInterfaces() ) {
-			log.info("*** Starting interface "+interfasse);
+			log.info("*** Starting interface "+interfasse.getName());
 			interfasse.start();
 		};
 		

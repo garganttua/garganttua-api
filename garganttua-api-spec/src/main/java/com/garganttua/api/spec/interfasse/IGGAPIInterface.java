@@ -16,4 +16,6 @@ public interface IGGAPIInterface extends IGGAPIEngineObject{
 
 	void setService(IGGAPIService service, List<IGGAPIServiceInfos> serviceInfos);
 
+	String getName();
+
 }

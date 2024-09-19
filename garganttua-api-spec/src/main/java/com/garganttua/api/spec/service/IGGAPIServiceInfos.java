@@ -9,10 +9,6 @@ public interface IGGAPIServiceInfos {
 	Class<?>[] getParameters();
 	
 	String getPath();
-	
-//	String getAuthority();
-	
-//	IGGAPIAccessRule getAccessRule();
 
 	String getDescription();
 

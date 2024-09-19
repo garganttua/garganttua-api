@@ -38,6 +38,7 @@ public class GGAPISpringSecurityAuthorizationProtocolHttpBearer implements IGGAP
 	public void setAuthorization(IGGAPIAuthorization authorization, HttpServletResponse response) throws GGAPIException {
 		String bearer = "Bearer "+new String(authorization.toByteArray());
 		response.addHeader("Authorization", bearer);
+		response.addHeader("Access-Control-Expose-Headers", "Authorization");
 	}
 
 	@Override

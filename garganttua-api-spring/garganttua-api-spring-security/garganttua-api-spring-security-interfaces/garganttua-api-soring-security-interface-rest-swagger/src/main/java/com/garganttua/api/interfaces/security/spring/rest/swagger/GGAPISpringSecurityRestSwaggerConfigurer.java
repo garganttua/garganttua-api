@@ -58,7 +58,6 @@ public class GGAPISpringSecurityRestSwaggerConfigurer implements IGGAPISpringSec
 		
 		this.engine.getAccessRulesRegistry().getAccessRules().stream().forEach( accessRule -> {
 			String endpoint = accessRule.getEndpoint().replace("*", "{uuid}");
-			System.out.println(endpoint+" "+accessRule);
 			PathItem path = this.openApi.get().getPaths().get(endpoint);
 			Operation operation = null;
 			switch(accessRule.getOperation()) {
