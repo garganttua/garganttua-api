@@ -13,7 +13,10 @@ import com.garganttua.api.spec.security.IGGAPIAuthentication;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
 import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class GGAPISpringOwnerVerifierFilter extends GGAPISpringWithAuthorizationManagerGenericFilter {
 
 	@Override
@@ -22,6 +25,7 @@ public class GGAPISpringOwnerVerifierFilter extends GGAPISpringWithAuthorization
 		if (IGGAPIAuthentication.class.isAssignableFrom(authentication.getClass())) {
 			IGGAPIAuthentication auth = (IGGAPIAuthentication) SecurityContextHolder.getContext().getAuthentication();
 			IGGAPIAuthorization authorization = auth.getAuthorization();
+			log.atDebug().log("Checking caller ownerId ["+caller.getOwnerId()+"] against authentication ownerId ["+authorization.getOwnerId()+"]");
 			this.security.verifyOwner(caller, authorization);
 		} else if (AnonymousAuthenticationToken.class.isAssignableFrom(authentication.getClass())) {
 			// Nothing to do

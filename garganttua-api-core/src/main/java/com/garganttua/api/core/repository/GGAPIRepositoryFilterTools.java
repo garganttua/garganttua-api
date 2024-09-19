@@ -10,6 +10,7 @@ public class GGAPIRepositoryFilterTools {
 	public static IGGAPIFilter getFilterFromCallerInfosAndDomainInfos(IGGAPICaller caller, IGGAPIDomain domain, IGGAPIFilter filter) {
 		String requestedTenantId = caller.getRequestedTenantId(); 
 		String ownerId = caller.getOwnerId();
+		boolean superOwner = caller.isSuperOwner();
 		boolean superTenant = caller.isSuperTenant();
 		String shared = domain.getEntity().getValue1().shareFieldAddress()==null?null:domain.getEntity().getValue1().shareFieldAddress().toString();
 		
@@ -59,7 +60,7 @@ public class GGAPIRepositoryFilterTools {
 				}
 			} 
 			
-			if( ownerIdFilter != null && domain.getEntity().getValue1().ownedEntity()) {
+			if( ownerIdFilter != null && domain.getEntity().getValue1().ownedEntity() && !superOwner ) {
 				and.andOperator(ownerIdFilter);
 			}
 		}

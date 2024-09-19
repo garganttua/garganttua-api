@@ -16,7 +16,7 @@ public class GGAPITenantVerifier implements IGGAPITenantVerifier {
 		
 		IGGAPIAccessRule rule = caller.getAccessRule();
 
-		if ( rule != null && rule.getAccess() == GGAPIServiceAccess.tenant ) {
+		if ( rule != null && (rule.getAccess() == GGAPIServiceAccess.tenant || rule.getAccess() == GGAPIServiceAccess.owner) ) {
 			String authentifiedTenantId = authorization.getTenantId();
 			String tenantId = caller.getTenantId();
 			String requestedTenantId = caller.getRequestedTenantId();
