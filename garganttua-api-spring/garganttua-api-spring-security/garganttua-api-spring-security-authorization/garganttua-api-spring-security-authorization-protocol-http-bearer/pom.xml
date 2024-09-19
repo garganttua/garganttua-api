@@ -15,10 +15,5 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-spring-security-core</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.nextgentrace</groupId>
-			<artifactId>backend-client</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
 	</dependencies>
 </project>
