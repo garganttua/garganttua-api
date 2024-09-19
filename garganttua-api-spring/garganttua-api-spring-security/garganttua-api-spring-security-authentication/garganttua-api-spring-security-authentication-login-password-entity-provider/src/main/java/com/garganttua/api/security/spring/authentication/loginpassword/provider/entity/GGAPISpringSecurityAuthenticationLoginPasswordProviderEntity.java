@@ -42,12 +42,4 @@ public class GGAPISpringSecurityAuthenticationLoginPasswordProviderEntity extend
 		this.setPasswordEncoder(this.passwordEncoder);
 		this.setUserDetailsService(this.detailsService);
 	}
-	
-	public IGGAPIAuthentication getAuthentication() {
-		GGAPIEntityDetails details = (GGAPIEntityDetails) this.detailsService.loadUserByUsername("");
-		
-//		details.
-		
-		return null;
-	}
 }

@@ -20,6 +20,7 @@ import com.garganttua.api.security.spring.core.keys.GGAPISpringSecurityKeyEntity
 import com.garganttua.api.security.spring.core.keys.IGGAPISpringKeyProvider;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
@@ -51,10 +52,13 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringSecurityAuthor
 	private IGGAPIEngine engine;
 
 	private IGGAPIService authorizationService;
+
+	private IGGAPIDomain tenantDomain;
 	
 	@PostConstruct
 	private void init() {
 		this.authorizationService = this.engine.getServicesRegistry().getService(GGAPIAuthorizationEntity.domain);
+		this.tenantDomain = this.engine.getDomainsRegistry().getTenantDomain();
 	}
 
 	@Override
@@ -73,9 +77,9 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringSecurityAuthor
 	}
 
 	private GGAPISpringJWTAuthorization createNewToken(IGGAPIAuthenticator authenticator, GGAPISpringJWTAuthorization token)
-			throws GGAPISecurityException {
-		GGAPISpringSecurityKeyEntityRequest request = new GGAPISpringSecurityKeyEntityRequest(authenticator.getTenantId(), authenticator.getUuid(), "jwt-signing-key-tenant-"+authenticator.getTenantId(), GGAPISpringJWTAuthorization.getJavaAlgorithmFromJJWT(this.algorithm));
-		IGGAPIKeyRealm keyRealm = this.keyProvider.getRealm(request);
+			throws GGAPIException {
+		GGAPISpringSecurityKeyEntityRequest request = new GGAPISpringSecurityKeyEntityRequest("jwt-signing-key-tenant-"+authenticator.getTenantId(), GGAPISpringJWTAuthorization.getJavaAlgorithmFromJJWT(this.algorithm));
+		IGGAPIKeyRealm keyRealm = this.keyProvider.getRealm(GGAPICaller.createTenantCallerWithOwnerId(authenticator.getTenantId(), this.tenantDomain.getDomain()+":"+authenticator.getTenantId()), request);
 		
 		try {
 		
@@ -88,6 +92,7 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringSecurityAuthor
 
 			token = new GGAPISpringJWTAuthorization (
 					UUID.randomUUID().toString(), 
+					authenticator.getId(),
 					authenticator.getTenantId(), 
 					authenticator.getUuid(), 
 					authenticator.getAuthoritiesList(), 
@@ -107,7 +112,7 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringSecurityAuthor
 	@SuppressWarnings("unchecked")
 	private GGAPISpringJWTAuthorization lookForToken(IGGAPIAuthenticator authenticator) throws GGAPIException, GGAPISecurityException {
 		IGGAPIFilter filter = this.buildAuthorizationFilter(authenticator.getUuid());
-		IGGAPIServiceResponse response = this.authorizationService.getEntities(GGAPICaller.createTenantCaller(authenticator.getTenantId()), GGAPIReadOutputMode.full, null, filter, null, new HashMap<String, String>());
+		IGGAPIServiceResponse response = this.authorizationService.getEntities(GGAPICaller.createTenantCallerWithOwnerId(authenticator.getTenantId(), authenticator.getUuid()), GGAPIReadOutputMode.full, null, filter, null, new HashMap<String, String>());
 		GGAPISpringJWTAuthorization token = null;
 		if( response.getResponseCode() == GGAPIServiceResponseCode.OK ) {
 			List<GGAPISpringJWTAuthorization> authorizations = (List<GGAPISpringJWTAuthorization>) response.getResponse();
@@ -126,7 +131,7 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringSecurityAuthor
 			throws GGAPIException, GGAPISecurityException {
 		String realmUuid = token.getSigningKeyUuid();
 		try {
-			IGGAPIKeyRealm realm = this.keyProvider.getRealm(realmUuid);
+			IGGAPIKeyRealm realm = this.keyProvider.getRealm(GGAPICaller.createTenantCallerWithOwnerId(tenantId, this.tenantDomain.getDomain()+":"+tenantId), realmUuid);
 			token.setKey(realm.getKeyForCiphering());
 		} catch(GGAPIException e) {
 			if( e.getCode() != GGAPIExceptionCode.ENTITY_NOT_FOUND 
@@ -176,77 +181,13 @@ public class GGAPIJwtAuthorizationProvider implements IGGAPISpringSecurityAuthor
 		return token;
 	}
 
+	@Override
+	public String getFormat() {
+		return "JWT";
+	}
 
-//	private <T> T extractClaim(byte[] token, Function<Claims, T> claimsResolver)
-//			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
-//			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
-//		final Claims claims = extractAllClaims(token);
-//		return claimsResolver.apply(claims);
-//	}
-//
-//	private Claims extractAllClaims(byte[] token)
-//			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
-//			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
-//		return Jwts.parserBuilder().setSigningKey(this.keyRealm.getCipheringKey().getKey()).build()
-//				.parseClaimsJws(new String(token)).getBody();
-//	}
-//
-//	public String extractUsername(byte[] token)
-//			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
-//			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
-//		return extractClaim(token, Claims::getSubject);
-//	}
-//
-//	private Boolean isTokenExpired(byte[] token)
-//			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
-//			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
-//		return extractExpiration(token).before(new Date());
-//	}
-//
-//	public Date extractExpiration(byte[] token)
-//			throws GGAPIKeyExpiredException, SignatureException, ExpiredJwtException, UnsupportedJwtException,
-//			MalformedJwtException, IllegalArgumentException, InvalidKeySpecException, NoSuchAlgorithmException {
-//		return extractClaim(token, Claims::getExpiration);
-//	}
-//
-//	@SuppressWarnings("unchecked")
-//	@Override
-//	public GGAPIToken validateAuthorization(byte[] token) throws GGAPIAuthorizationProviderException {
-//
-//		try {
-//			Claims claims = extractAllClaims(token);
-//
-//			String ownerId = (String) claims.get("ownerId");
-//			String uuid = (String) claims.get("uuid");
-//			List<String> authorities = (List<String>) claims.get("authorities");
-//			String tenantId = (String) claims.get("tenantId");
-//			Integer iat = (Integer) claims.get("iat");
-//			Integer exp = (Integer) claims.get("exp");
-//
-//			GGAPIToken tokenExample = new GGAPIToken(tenantId, uuid, ownerId, null, null, null, token, null);
-//
-//			GGAPIToken storeToken = this.findToken(tokenExample);
-//
-//			boolean storeToken__ = (storeToken != null && new String(token).equals(new String(storeToken.getToken())));
-//
-//			if (!storeToken__) {
-//				return null;
-//			}
-//
-//			boolean tokenValid = (storeToken.getOwnerId().equals(ownerId)
-//					&& !(this.tokenLifetime != 0 && isTokenExpired(token)) && storeToken__);
-//			if (!tokenValid) {
-//				return null;
-//			}
-//
-//			return new GGAPIToken(tenantId, storeToken.getUuid(), ownerId, new Date(iat * 1000), new Date(exp * 1000),
-//					authorities, token, storeToken.getSigningKeyId());
-//
-//		} catch (GGAPIKeyExpiredException | SignatureException | ExpiredJwtException | UnsupportedJwtException
-//				| MalformedJwtException | IllegalArgumentException | InvalidKeySpecException
-//				| NoSuchAlgorithmException e) {
-//			throw new GGAPIAuthorizationProviderException(e);
-//		}
-//	}
-
+	@Override
+	public String getType() {
+		return "Token";
+	}
 }

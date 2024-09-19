@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.garganttua.api.core.caller.GGAPICaller;
-import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
+import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.pageable.GGAPIPageable;
@@ -163,7 +163,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		if( domain.getEntity().getValue1().ownedEntity() ) {
 			if( caller.getOwnerId() != null && !caller.getOwnerId().isEmpty()) {
 				try {
-					GGObjectQueryFactory.objectQuery(entity).setValue(domain.getEntity().getValue1().ownerIdFieldAddress(), caller.getOwnerId());
+					String ownerId = caller.getOwnerId();
+				
+					if( ownerId.split(":").length!=2 ) {
+						throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, "Invalid ownerId ["+ownerId+"] should be of format DOMAIN:UUID");
+					}
+					
+					GGObjectQueryFactory.objectQuery(entity).setValue(domain.getEntity().getValue1().ownerIdFieldAddress(), ownerId);
 				} catch (GGReflectionException e) {
 					this.processException(e);
 					
@@ -234,7 +240,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 				}
 			}
 
-			return repository.getEntities(GGAPICaller.createSuperCaller(), GGAPIPageable.getPage(0,0), literal, null);
+			return repository.getEntities(GGAPICaller.createTenantCaller(caller.getTenantId()), GGAPIPageable.getPage(0,0), literal, null);
 
 		} catch (GGReflectionException e) {
 			log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);

@@ -4,6 +4,8 @@ import java.util.List;
 
 public interface IGGAPIAuthentication {
 
+	String getTenantId();
+	
 	Object getPrincipal();
 	
 	boolean isAuthenticated();

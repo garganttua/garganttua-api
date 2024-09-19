@@ -38,7 +38,7 @@ public class GGAPIEntityAuthenticatorChecker {
 			log.debug("Checking entity authenticator infos from class " + entityAuthenticatorClass.getName());
 		}
 		
-		GGAPIAuthenticator annotation = entityAuthenticatorClass.getDeclaredAnnotation(GGAPIAuthenticator.class);
+		GGAPIAuthenticator annotation = entityAuthenticatorClass.getDeclaredAnnotation(GGAPIAuthenticator.class); 
 		
 		if( annotation == null ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
@@ -170,12 +170,10 @@ public class GGAPIEntityAuthenticatorChecker {
 	}
 	
 	public static boolean isNotPrimitiveOrInternal(Class<?> clazz) {
-		// Vérifier si c'est un type primitif
 		if (clazz.isPrimitive()) {
 			return false;
 		}
 
-		// Vérifier si c'est un type interne Java (java.* ou javax.*)
 		Package package1 = clazz.getPackage();
 		if( package1 == null ) {
 			return false;
@@ -186,7 +184,6 @@ public class GGAPIEntityAuthenticatorChecker {
 			return false;
 		}
 
-		// Sinon, c'est un type valide
 		return true;
 	}
 

@@ -5,6 +5,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.security.spring.core.authentication.IGGAPISpringAuthentication;
+import com.garganttua.api.security.spring.core.authorizations.IGGAPISpringSecurityAuthorizationProtocol;
 import com.garganttua.api.security.spring.core.authorizations.IGGAPISpringSecurityAuthorizationProvider;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.IGGAPIAuthentication;
@@ -19,6 +20,9 @@ public class GGAPISecuritySpringAuthorizationManager implements IGGAPIAuthorizat
 	
 	@Autowired
 	private IGGAPISpringSecurityAuthorizationProvider authorizationProvider;
+	
+	@Autowired
+	private IGGAPISpringSecurityAuthorizationProtocol protocol;
 
 	@Override
 	public IGGAPIAuthentication validateAuthorization(byte[] authorization) throws GGAPIException {
@@ -32,6 +36,21 @@ public class GGAPISecuritySpringAuthorizationManager implements IGGAPIAuthorizat
 	@Override
 	public IGGAPIAuthentication createAuthorization(IGGAPIAuthentication authentication) throws GGAPIException {
 		return this.authorizationProvider.createAuthorization(authentication);
+	}
+
+	@Override
+	public String getAuthorizationType() {
+		return this.authorizationProvider.getType();
+	}
+
+	@Override
+	public String getAuthorizationFormat() {
+		return this.authorizationProvider.getFormat();
+	}
+
+	@Override
+	public String getAuthorizationProtocol() {
+		return this.protocol.getProtocol();
 	}
 
 }

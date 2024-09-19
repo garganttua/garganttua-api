@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public abstract class GGAPIAuthorizationEntity extends GenericGGAPIEntity implements IGGAPIAuthorization {
 
-	public GGAPIAuthorizationEntity(String uuid, String tenantId, String ownerId, List<String> authorities,
+	public GGAPIAuthorizationEntity(String uuid, String id, String tenantId, String ownerId, List<String> authorities,
 			Date creationDate, Date expirationDate, String signingKeyUuid) {
 		this.uuid = uuid;
-		this.id = ownerId;
+		this.id = id;
 		this.tenantId = tenantId;
 		this.ownerId = ownerId; 
 		this.authorities = authorities;

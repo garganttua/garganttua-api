@@ -3,6 +3,8 @@ package com.garganttua.api.core.caller;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.api.core.engine.GGAPIEngineException;
+import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
@@ -13,7 +15,7 @@ public class GGAPICaller implements IGGAPICaller {
 	
 	protected GGAPICaller(String tenantId, String requestedTenantId, String callerId, String ownerId, boolean superTenant,
 			boolean superOwner, IGGAPIAccessRule accessRule, IGGAPIDomain domain, boolean anonymous,
-			List<String> authorities) {
+			List<String> authorities) throws GGAPIEngineException {
 		this.tenantId = tenantId;
 		this.requestedTenantId = requestedTenantId;
 		this.ownerId = ownerId;
@@ -24,6 +26,8 @@ public class GGAPICaller implements IGGAPICaller {
 		this.anonymous = anonymous;
 		this.authorities = authorities;
 		this.callerId = callerId;
+		if( this.ownerId!=null && this.ownerId.split(":").length != 2 )
+			throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, "Invalid ownerId ["+ownerId+"] should be of format DOMAIN:UUID");
 	}
 	
 	@Getter
@@ -92,15 +96,15 @@ public class GGAPICaller implements IGGAPICaller {
         return Objects.hash(tenantId, requestedTenantId, ownerId, superTenant, superOwner, accessRule, domain, anonymous, authorities);
     }
 
-	public static IGGAPICaller createSuperCaller() {
+	public static IGGAPICaller createSuperCaller() throws GGAPIEngineException {
 		return new GGAPICaller(null, null, null, null, true, true, null, null, false, null);
 	}
 
-	public static IGGAPICaller createTenantCaller(String uuid) {
+	public static IGGAPICaller createTenantCaller(String uuid) throws GGAPIEngineException {
 		return new GGAPICaller(uuid, uuid, null, null, false, false, null, null, false, null);
 	}
 
-	public static IGGAPICaller createTenantCallerWithOwnerId(String tenantId, String ownerId) {
+	public static IGGAPICaller createTenantCallerWithOwnerId(String tenantId, String ownerId) throws GGAPIEngineException {
 		return new GGAPICaller(tenantId, tenantId, null, ownerId, false, false, null, null, false, null);
 	}
 }

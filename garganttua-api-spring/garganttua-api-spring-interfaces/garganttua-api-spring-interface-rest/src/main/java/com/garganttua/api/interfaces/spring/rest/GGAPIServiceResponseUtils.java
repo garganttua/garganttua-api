@@ -29,6 +29,8 @@ public class GGAPIServiceResponseUtils {
 				return new ResponseEntity<>(new GGAPIResponseObject(serviceResponse, HttpStatus.BAD_REQUEST.value()), HttpStatus.BAD_REQUEST);
 			case NOT_AVAILABLE:
 				return new ResponseEntity<>(new GGAPIResponseObject(serviceResponse, HttpStatus.NOT_IMPLEMENTED.value()), HttpStatus.NOT_IMPLEMENTED);
+			case FORBIDDEN:
+				return new ResponseEntity<>(new GGAPIResponseObject(serviceResponse, HttpStatus.FORBIDDEN.value()), HttpStatus.FORBIDDEN);
 		}
 		return new ResponseEntity<>(new GGAPIResponseObject("internal server error", HttpStatus.INTERNAL_SERVER_ERROR.value()), HttpStatus.INTERNAL_SERVER_ERROR);
 	}

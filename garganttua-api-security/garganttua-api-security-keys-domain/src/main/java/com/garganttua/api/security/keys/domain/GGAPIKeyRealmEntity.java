@@ -13,6 +13,7 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.security.IGGAPIKey;
 import com.garganttua.api.spec.security.IGGAPIKeyRealm;
 import com.garganttua.reflection.GGObjectAddress;
@@ -22,24 +23,27 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
+@GGAPIEntityOwned(ownerId = "ownerId")
 public class GGAPIKeyRealmEntity extends GenericGGAPIEntity implements IGGAPIKeyRealm {
 	
 	public static final String domain = "keys";
 	
 	@GGAPIEntityMandatory
 	@Getter
-	public String algorithm;
-	
-	public GGAPIKeyRealmType type;
-
-	private GGAPIKey cipheringKey;
-
-	private GGAPIKey uncipheringKey;
-	
-	public Date expiration;
-	
+	protected String algorithm;
+	@Getter
+	protected GGAPIKeyRealmType type;
+	@Getter
+	protected GGAPIKey cipheringKey;
+	@Getter
+	protected GGAPIKey uncipheringKey;
+	@Getter
+	protected String ownerId;
+	@Getter
+	protected Date expiration;
+	@Getter
 	@GGAPIEntityAuthorizeUpdate()
-	public boolean revoked;
+	protected boolean revoked;
 	
 	@GGAPIEntityBeforeCreate
 	private void createKeys(IGGAPICaller caller, Map<String, String> params) throws GGAPISecurityException {

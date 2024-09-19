@@ -18,7 +18,6 @@ import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
 
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
 @AllArgsConstructor
 class Entity {

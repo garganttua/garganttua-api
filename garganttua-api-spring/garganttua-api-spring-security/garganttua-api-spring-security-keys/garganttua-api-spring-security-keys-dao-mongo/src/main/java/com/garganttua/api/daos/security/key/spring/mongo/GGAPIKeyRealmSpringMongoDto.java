@@ -35,12 +35,19 @@ public class GGAPIKeyRealmSpringMongoDto {
 	@GGFieldMappingRule(sourceFieldAddress = "uncipheringKey")
 	private GGAPIKeySpringMongoDto uncipheringKey;
 	
+	@Field
 	@GGFieldMappingRule(sourceFieldAddress = "algorithm")
-	public String algorithm;
+	private String algorithm;
 	
+	@Field
 	@GGFieldMappingRule(sourceFieldAddress = "revoked")
-	public boolean revoked;
+	private boolean revoked;
 	
+	@Field
 	@GGFieldMappingRule(sourceFieldAddress = "expiration")
-	public Date expiration;
+	private Date expiration;
+	
+	@Field
+	@GGFieldMappingRule(sourceFieldAddress = "ownerId")
+	private String ownerId;
 }

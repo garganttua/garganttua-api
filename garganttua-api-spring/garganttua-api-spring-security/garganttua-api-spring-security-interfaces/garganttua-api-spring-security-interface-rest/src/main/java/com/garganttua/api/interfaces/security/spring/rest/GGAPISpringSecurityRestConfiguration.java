@@ -56,7 +56,7 @@ public class GGAPISpringSecurityRestConfiguration {
 	
 	@Autowired
 	private GGAPISpringInterfaceRestSecurityApplicationFilter securityApplicationFilter;
-
+	
 	@Bean
 	public DefaultSecurityFilterChain configureFilterChain(HttpSecurity http) throws GGAPISecurityException {
 		
@@ -94,7 +94,6 @@ public class GGAPISpringSecurityRestConfiguration {
 				}
 			});
 
-			
 			this.security.ifTenantVerifierPresent((verifier, caller) -> {
 				try {
 					http.authorizeHttpRequests().and().addFilterAfter(this.tenantVerifier, AuthorizationFilter.class);

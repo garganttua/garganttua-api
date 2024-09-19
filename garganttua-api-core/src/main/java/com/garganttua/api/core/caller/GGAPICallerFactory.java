@@ -1,6 +1,6 @@
 package com.garganttua.api.core.caller;
 
-import java.util.Optional;
+import java.util.Map;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIEntityOperation;
@@ -24,29 +24,28 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		
 	private IGGAPIDomain domain;
 	
-	private String superTenantId;
-	
-	private String superOwnerId;
-	
 	private IGGAPIDomain tenantsDomain;
 	
 	private IGGAPIEntityFactory<?> tenantsFactory;
 	
-	private Optional<IGGAPIDomain> ownersDomain;
+	private Map<String, IGGAPIDomain> ownerDomains;
 	
-	private Optional<IGGAPIEntityFactory<?>> ownersFactory;
+	private Map<String, IGGAPIEntityFactory<?>> ownerFactories;
 	
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 
 	@Override
 	public IGGAPICaller getCaller(GGAPIEntityOperation operation, String endpoint, String tenantId, String ownerId, String requestedTenantId, String callerId) throws GGAPIException {
 		if( operation == null ) {
-			throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Method is null");
+			throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Method is null"); 
 		}
 		if( endpoint == null ) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Endpoint is null");
 		}
-
+		if( ownerId != null && !ownerId.isEmpty() && ownerId.split(":").length != 2 ) {
+			throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, "Invalid ownerId ["+ownerId+"] sould be of format DOMAIN:UUID");
+		}
+		
 		IGGAPIAccessRule accessRule = this.accessRulesRegistry.getAccessRule(operation, endpoint);
 		
 		if( accessRule == null ) {
@@ -61,11 +60,9 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		boolean superTenantTemp = false;
 		boolean superOwnerTemp = false;
 		
-		
 		//TenantId rules
 		if( this.throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(accessRule, tenantId) ) {
-	//		this.sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(accessRule, tenantId);
-			superTenantTemp = this.setSuperTenantIfTenantIdEqualsToSuperTenantId(tenantId);
+			this.sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(accessRule, tenantId);
 			superTenantTemp = this.checkIfTenantExistsAndSetSuperTenantIfTenantIsSuperTenant(tenantId) || superTenantTemp;
 			this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantIdTemp);
 			tenantIdTemp = this.setTenantIdToNullIfThisIsTenantCreationRequest(accessRule, tenantIdTemp);
@@ -77,8 +74,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		
 		//OwnerId rules
 		if( this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp) ) {
-			superOwnerTemp = this.setSuperOwnerIfOwnerIdEqualsToSuperOwnerId(ownerIdTemp);
-			superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(ownerIdTemp) || superOwnerTemp;
+			superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(tenantId, ownerIdTemp) || superOwnerTemp;
 		} else {
 			ownerIdTemp = null;
 		}
@@ -86,21 +82,17 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		return new GGAPICaller(tenantIdTemp, requestedTenantIdTemp, callerIdTemp, ownerIdTemp, superTenantTemp, superOwnerTemp, accessRule, domain, anonymousTemp, null);
 	}
 
-	private boolean checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(String ownerId) throws GGAPIException {
-		Object owner = this.ownersFactory.get().getEntityFromRepository(GGAPICaller.createSuperCaller(), null, GGAPIEntityIdentifier.UUID, ownerId);
+	private boolean checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(String tenantId, String ownerId) throws GGAPIException {
+		Object owner = this.ownerFactories.get(ownerId.split(":")[0]).getEntityFromRepository(GGAPICaller.createTenantCaller(tenantId), null, GGAPIEntityIdentifier.UUID, ownerId.split(":")[1]);
 		if( owner == null ) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, "Owner not found ["+ownerId+"]");
 		}
 		
 		try {
-			return (boolean) GGObjectQueryFactory.objectQuery(owner).getValue(this.ownersDomain.get().getEntity().getValue1().superOnwerIdFieldAddress());
+			return (boolean) GGObjectQueryFactory.objectQuery(owner).getValue(this.ownerDomains.get(ownerId.split(":")[0]).getEntity().getValue1().superOnwerIdFieldAddress());
 		} catch (GGReflectionException e) {
 			throw new GGAPIEngineException(e);
 		}
-	}
-
-	private boolean setSuperOwnerIfOwnerIdEqualsToSuperOwnerId(String ownerId) {
-		return ownerId.equals(this.superOwnerId);
 	}
 
 	private boolean throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(IGGAPIAccessRule accessRule, String ownerId) throws GGAPIEngineException {
@@ -108,7 +100,9 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		if( ownerIdMandatory ){
 			if( ownerId == null || ownerId.isEmpty() )
 				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "OwnerId is null");
-			if( this.ownersDomain.isEmpty() || this.ownersFactory.isEmpty() )
+			if( ownerId.split(":").length != 2 )
+				throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, "Invalid ownerId ["+ownerId+"] should be of format DOMAIN:UUID");
+			if( this.ownerDomains.get(ownerId.split(":")[0]) == null )
 				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Onwers Domain or Owners Factory is null");
 		}
 		return ownerIdMandatory; 
@@ -152,10 +146,6 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		} catch (GGReflectionException e) {
 			throw new GGAPIEngineException(e);
 		}
-	}
-
-	private boolean setSuperTenantIfTenantIdEqualsToSuperTenantId(String tenantId) {
-		return tenantId.equals(this.superTenantId);
 	}
 
 	private void sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(IGGAPIAccessRule accessRule, String tenantId) throws GGAPIEngineException {

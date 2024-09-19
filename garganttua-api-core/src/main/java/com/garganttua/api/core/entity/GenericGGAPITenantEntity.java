@@ -1,7 +1,6 @@
 package com.garganttua.api.core.entity;
 
 import java.util.Map;
-import java.util.Optional;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -22,7 +21,6 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperTenant;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -45,7 +43,7 @@ public class GenericGGAPITenantEntity {
 	@Setter
 	@GGAPIEntitySuperTenant
 	@GGAPIEntityAuthorizeUpdate(authority = "super-tenant-update")
-	protected Boolean superTenant;
+	protected boolean superTenant;
 	
 	@GGAPIEntityGotFromRepository
 	private boolean gotFromRepository;

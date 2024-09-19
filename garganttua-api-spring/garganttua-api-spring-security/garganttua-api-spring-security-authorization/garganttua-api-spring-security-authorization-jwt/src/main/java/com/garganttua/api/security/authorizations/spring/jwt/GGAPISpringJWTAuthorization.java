@@ -15,6 +15,8 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.security.IGGAPIKey;
+import com.garganttua.api.spec.security.annotations.GGAPIEntitySecurity;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -27,6 +29,14 @@ import lombok.Setter;
 		"engine" })
 @NoArgsConstructor
 @GGAPIEntityOwned(ownerId = "ownerId")
+@GGAPIEntitySecurity(
+		creation_access = GGAPIServiceAccess.owner,
+		delete_all_access = GGAPIServiceAccess.owner,
+		delete_one_access = GGAPIServiceAccess.owner,
+		read_all_access = GGAPIServiceAccess.owner,
+		read_one_access = GGAPIServiceAccess.owner,
+		update_one_access = GGAPIServiceAccess.owner
+		)
 public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizationEntity {
 
 	@Setter
@@ -35,9 +45,9 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 	@GGAPIEntityMandatory
 	private String jwtAlgo;
 
-	public GGAPISpringJWTAuthorization(String uuid, String tenantId, String ownerId, List<String> authorities,
+	public GGAPISpringJWTAuthorization(String uuid, String id, String tenantId, String ownerId, List<String> authorities,
 			Date tokenCreation, Date tokenExpiration, String realmUuid, IGGAPIKey key, String jwtAlgo) {
-		super(uuid, tenantId, ownerId, authorities, tokenCreation, tokenExpiration, realmUuid);
+		super(uuid, id, tenantId, ownerId, authorities, tokenCreation, tokenExpiration, realmUuid);
 		this.key = key;
 		this.jwtAlgo = jwtAlgo;
 	}
@@ -49,7 +59,7 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 		claims.put("ownerId", this.ownerId);
 		claims.put("uuid", this.uuid);
 
-		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.ownerId).setIssuedAt(this.creationDate)
+		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.id).setIssuedAt(this.creationDate)
 				.signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(this.jwtAlgo));
 
 		token.setExpiration(this.expirationDate);
@@ -95,12 +105,18 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 
 	@Override
 	public void validateAgainst(byte[] authorization) throws GGAPIException {
+		if( this.revoked ) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_REVOKED, "Token revoked");
+		}
+		if( new Date().after(this.expirationDate) ) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_EXPIRED, "Token expired");
+		}
 		try {
 			Jwts.parserBuilder()
 			.setSigningKey(this.key.getSigningKey())
 			.requireExpiration(this.expirationDate)
 			.requireIssuedAt(this.creationDate)
-			.requireSubject(this.ownerId)
+			.requireSubject(this.id)
 			.require("tenantId", this.tenantId)
 			.require("ownerId", this.ownerId)
 			.build().parse(new String(authorization));

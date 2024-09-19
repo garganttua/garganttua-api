@@ -1,18 +1,18 @@
 package com.garganttua.api.security.spring.core.keys;
 
-import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.IGGAPIKeyRealm;
 
 public interface IGGAPISpringKeyProvider {
 
-	IGGAPIKeyRealm getRealm(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException;
+	IGGAPIKeyRealm getRealm(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPIException;
 
-	IGGAPIKeyRealm createRealm(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException;
+	IGGAPIKeyRealm createRealm(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPIException;
 
-	IGGAPIKeyRealm revokeRealm(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException;
+	IGGAPIKeyRealm revokeRealm(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPIException;
 
-	IGGAPIKeyRealm revokeAllRealms(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException;
+	IGGAPIKeyRealm revokeAllRealms(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPIException;
 
-	IGGAPIKeyRealm getRealm(String realmUuid) throws GGAPIException;
+	IGGAPIKeyRealm getRealm(IGGAPICaller caller, String realmUuid) throws GGAPIException;
 }

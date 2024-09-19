@@ -16,8 +16,7 @@ public class GGApiBuilder implements IGGAPIBuilder {
 	private IGGBeanLoader loader;
 	private List<String> packages;
 	private IGGPropertyLoader propLoader;
-	private String superTenantId = "0";
-	private String superOwnerId = "0";
+	
 	@Override
 	public IGGAPIBuilder setBeanLoader(IGGBeanLoader loader) {
 		this.loader = loader;
@@ -26,7 +25,7 @@ public class GGApiBuilder implements IGGAPIBuilder {
 
 	@Override
 	public IGGAPIEngine build() {
-		return new GGApiEngine(this.loader, this.packages, this.propLoader, this.superTenantId, this.superOwnerId);
+		return new GGApiEngine(this.loader, this.packages, this.propLoader);
 	}
 
 	@Override
@@ -38,18 +37,6 @@ public class GGApiBuilder implements IGGAPIBuilder {
 	@Override
 	public IGGAPIBuilder setPropertyLoader(IGGPropertyLoader loader) {
 		propLoader = loader;
-		return this;
-	}
-
-	@Override
-	public IGGAPIBuilder superTenantId(String superTenantId) {
-		this.superTenantId = superTenantId;
-		return this;
-	}
-
-	@Override
-	public IGGAPIBuilder superOwnerId(String superOwnerId) {
-		this.superOwnerId = superOwnerId;
 		return this;
 	}
 

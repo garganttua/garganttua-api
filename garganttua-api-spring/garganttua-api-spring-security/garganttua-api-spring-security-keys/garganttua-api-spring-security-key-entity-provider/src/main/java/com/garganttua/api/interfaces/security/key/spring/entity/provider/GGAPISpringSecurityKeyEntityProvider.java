@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.interfaces.security.key.spring.rest.GGAPIKeyRealmSpringEntity;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.security.keys.domain.GGAPIKeyRealmEntity;
@@ -17,6 +16,7 @@ import com.garganttua.api.security.spring.core.keys.GGAPISpringSecurityKeyEntity
 import com.garganttua.api.security.spring.core.keys.IGGAPISpringKeyProvider;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.filter.GGAPILiteral;
@@ -54,8 +54,8 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 	}
 	
 	@Override
-	public IGGAPIKeyRealm getRealm(String realmUuid) throws GGAPIException {
-		IGGAPIServiceResponse response = this.keyRealmService.getEntity(GGAPICaller.createSuperCaller(), realmUuid, new HashMap<String, String>());
+	public IGGAPIKeyRealm getRealm(IGGAPICaller caller, String realmUuid) throws GGAPIException {
+		IGGAPIServiceResponse response = this.keyRealmService.getEntity(caller, realmUuid, new HashMap<String, String>());
 		if( response.getResponseCode() == GGAPIServiceResponseCode.NOT_FOUND ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Key realm with uuid "+realmUuid+" not found");			 
 		} else {
@@ -70,10 +70,10 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public IGGAPIKeyRealm getRealm(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException {
+	public IGGAPIKeyRealm getRealm(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPIException {
 		request.validate();
-		IGGAPIFilter filter = this.buildFilter(request);
-		IGGAPIServiceResponse response = this.keyRealmService.getEntities(GGAPICaller.createTenantCaller(request.tenantId()), GGAPIReadOutputMode.full, null, filter, null, new HashMap<String, String>());
+		IGGAPIFilter filter = this.buildFilter(request, caller.getOwnerId());
+		IGGAPIServiceResponse response = this.keyRealmService.getEntities(caller, GGAPIReadOutputMode.full, null, filter, null, new HashMap<String, String>());
 		
 		if( response.getResponseCode() == GGAPIServiceResponseCode.OK ) {
 			List<IGGAPIKeyRealm> list = (List<IGGAPIKeyRealm>) response.getResponse();
@@ -81,17 +81,17 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 				return list.get(0);
 			} else {
 				if( this.autoCreate ) {
-					return this.createRealm(request);
+					return this.createRealm(caller, request);
 				} else {
-					throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Key realm "+request.keyRealmName()+" not found for tenant "+request.tenantId()+" and owner "+request.ownerId());
+					throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Key realm "+request.keyRealmName()+" not found for tenant "+caller.getRequestedTenantId()+" and owner "+caller.getOwnerId());
 				}
 			}
 		} else {
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Unknown error during Key realm "+request.keyRealmName()+" for tenant "+request.tenantId()+" and owner "+request.ownerId()+" retrival");
+			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Unknown error during Key realm "+request.keyRealmName()+" for tenant "+caller.getRequestedTenantId()+" and owner "+caller.getOwnerId()+" retrival");
 		}
 	}
 
-	private IGGAPIFilter buildFilter(GGAPISpringSecurityKeyEntityRequest request) {
+	private IGGAPIFilter buildFilter(GGAPISpringSecurityKeyEntityRequest request, String ownerId) {
 		IGGAPIFilter filter = null;
 		GGObjectAddress idFieldAddress = this.domain.getEntity().getValue1().idFieldAddress();
 		GGObjectAddress expirationFieldAddress = GGAPIKeyRealmEntity.getExpirationFieldAddress();
@@ -104,7 +104,7 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 		
 		if( this.domain.getEntity().getValue1().ownedEntity() ) {
 			GGObjectAddress ownerIdFieldAddress = GGAPIKeyRealmEntity.getOwnerIdFieldAddress();
-			GGAPILiteral ownerIdFilter = GGAPILiteral.eq(ownerIdFieldAddress.toString(), request.ownerId());
+			GGAPILiteral ownerIdFilter = GGAPILiteral.eq(ownerIdFieldAddress.toString(), ownerId);
 			filter = GGAPILiteral.and(idFilter, expirationFilter, revokedFilter, ownerIdFilter, algorithmFilter);
 		} else {
 			filter = GGAPILiteral.and(idFilter, expirationFilter, revokedFilter, algorithmFilter);
@@ -113,11 +113,11 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 	}
 
 	@Override
-	public IGGAPIKeyRealm createRealm(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException {
+	public IGGAPIKeyRealm createRealm(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPIException {
 		request.validate();
 		Date keyExpirationDate = new Date(System.currentTimeMillis() + this.keyLifetimeUnit.toMillis(this.keyLifetime));
 		GGAPIKeyRealmSpringEntity entity = new GGAPIKeyRealmSpringEntity(request.keyRealmName(), request.algorithm(), keyExpirationDate);
-		IGGAPIServiceResponse response = this.keyRealmService.createEntity(GGAPICaller.createTenantCaller(request.tenantId()), entity, new HashMap<String, String>());
+		IGGAPIServiceResponse response = this.keyRealmService.createEntity(caller, entity, new HashMap<String, String>());
 
 		if( response.getResponseCode() != GGAPIServiceResponseCode.CREATED ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR, response.getResponse().toString());
@@ -127,13 +127,13 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 	}
 
 	@Override
-	public IGGAPIKeyRealm revokeRealm(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException {
+	public IGGAPIKeyRealm revokeRealm(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException {
 		request.validate();
 		return null;
 	}
 	
 	@Override
-	public IGGAPIKeyRealm revokeAllRealms(GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException {
+	public IGGAPIKeyRealm revokeAllRealms(IGGAPICaller caller, GGAPISpringSecurityKeyEntityRequest request) throws GGAPISecurityException {
 		request.validate();
 		return null;
 	}

@@ -23,7 +23,7 @@ public class GGAPICallerFactoriesFactoryTest {
 		GGAPIEntityFactoriesFactory daf = new GGAPIEntityFactoriesFactory(domains, null);
 		IGGAPIFactoriesRegistry reg = daf.getRegistry();
 		
-		GGAPICallerFactoriesFactory callerFactoriesFactory = new GGAPICallerFactoriesFactory(domains, reg, null, "", "");
+		GGAPICallerFactoriesFactory callerFactoriesFactory = new GGAPICallerFactoriesFactory(domains, reg, null);
 		IGGAPICallerFactoriesRegistry registry = callerFactoriesFactory.getRegistry();
 
 		assertNotNull(callerFactoriesFactory);

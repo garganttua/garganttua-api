@@ -45,12 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIInterfaceSpringRestSwagger {
 	
-	@Value(value = "${com.garganttua.api.spring.superOwnerId:0}")
-	private String superOwnerId = "0";
-	
-	@Value(value = "${com.garganttua.api.spring.superTenantId:0}")
-	private String superTenantId = "0";
-	
 	@Value(value = "${com.garganttua.api.interface.spring.rest.ownerIdHeaderName:tenantId}")
 	private String tenantIdHeaderName = "tenantId";
 
@@ -74,9 +68,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 		
 		Info infos = this.openApi.getInfo();
 		String description = infos.getDescription() 
-				+ "<br>"
-				+ "<br>The configured <b>Super Tenant ID</b> is : "+superTenantId
-				+ "<br>The configured <b>Super Owner ID</b> is : "+superOwnerId;
+				+ "<br>";
 		infos.description(description);
 		
 		this.engine.getDomainsRegistry().getDomains().stream().forEach(domain -> {

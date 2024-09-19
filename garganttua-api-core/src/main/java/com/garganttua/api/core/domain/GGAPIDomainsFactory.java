@@ -82,11 +82,11 @@ public class GGAPIDomainsFactory {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "There are more than one entity declared as tenantEntity.");
 		}
 
-		if( !this.onwerFound && domain.getEntity().getValue1().ownerEntity()) {
-			this.onwerFound = true;
-		} else if( this.onwerFound && domain.getEntity().getValue1().ownerEntity() ) {
-			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "More than one owner entity found");
-		}
+//		if( !this.onwerFound && domain.getEntity().getValue1().ownerEntity()) {
+//			this.onwerFound = true;
+//		} else if( this.onwerFound && domain.getEntity().getValue1().ownerEntity() ) {
+//			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "More than one owner entity found");
+//		}
 
 		if( domain.getDtos().size() == 0 ) {
 			log.error("No class annotated with @GGAPIDto found for entity "+annotatedClass.getName());

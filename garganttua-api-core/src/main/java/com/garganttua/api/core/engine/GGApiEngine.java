@@ -51,19 +51,13 @@ public class GGApiEngine implements IGGAPIEngine {
 	private IGGAPIServicesRegistry servicesRegistry;
 	private IGGAPIInterfacesRegistry interfacesRegistry;
 	private IGGAPICallerFactoriesRegistry callerFactoriesRegistry;
-	@Getter
-	private String superTenantId = "0";
-	@Getter
-	private String superOwnerId = "0";
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 	private IGGInjector injector;
 
-	protected GGApiEngine(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader, String superTenantId, String superOwnerId) {
+	protected GGApiEngine(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader) {
 		this.loader = loader;
 		this.packages = packages;
 		this.propLoader = propLoader;
-		this.superTenantId = superTenantId;
-		this.superOwnerId = superOwnerId;
 		this.injector = GGInjector.injector(this.loader);
 	}
 
@@ -156,7 +150,7 @@ public class GGApiEngine implements IGGAPIEngine {
 		this.servicesRegistry = new GGAPIServicesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.interfacesRegistry = new GGAPIInterfacesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.accessRulesRegistry = new GGAPIAccessRulesFactory(this.domainRegistry.getDomains()).getRegistry();
-		this.callerFactoriesRegistry = new GGAPICallerFactoriesFactory(this.domainRegistry.getDomains(), this.factoriesRegistry, this.accessRulesRegistry, this.superTenantId, this.superOwnerId).getRegistry();
+		this.callerFactoriesRegistry = new GGAPICallerFactoriesFactory(this.domainRegistry.getDomains(), this.factoriesRegistry, this.accessRulesRegistry).getRegistry();
 
 		return this;
 	}

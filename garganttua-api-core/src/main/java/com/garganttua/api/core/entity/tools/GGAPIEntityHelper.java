@@ -239,4 +239,9 @@ public class GGAPIEntityHelper {
 			GGAPIException.processException(e);
 		} 
 	}
+
+	public static String getDomainName(Object entity) throws GGAPIException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		return infos.domain(); 
+	}
 }

@@ -10,4 +10,8 @@ public interface IGGAPISpringSecurityAuthorizationProvider {
 
 	IGGAPIAuthorization validateAuthorization(byte[] authorization) throws GGAPIException;
 
+	String getFormat();
+
+	String getType();
+
 }

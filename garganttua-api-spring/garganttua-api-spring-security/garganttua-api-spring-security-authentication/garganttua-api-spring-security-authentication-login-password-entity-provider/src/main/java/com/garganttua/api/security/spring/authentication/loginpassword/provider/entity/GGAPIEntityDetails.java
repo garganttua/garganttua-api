@@ -143,7 +143,7 @@ public class GGAPIEntityDetails implements UserDetails, IGGAPIAuthenticator {
 	@Override
 	public String getUuid() {
 		try {
-			return GGAPIEntityHelper.getUuid(this.entity);
+			return GGAPIEntityHelper.getDomainName(this.entity)+":"+GGAPIEntityHelper.getUuid(this.entity);
 		} catch (GGAPIException e) {
 			if( log.isDebugEnabled() ) {
 				log.warn("Unable to get uuid", e);
@@ -175,4 +175,5 @@ public class GGAPIEntityDetails implements UserDetails, IGGAPIAuthenticator {
 			return null;
 		}
 	}
+
 }

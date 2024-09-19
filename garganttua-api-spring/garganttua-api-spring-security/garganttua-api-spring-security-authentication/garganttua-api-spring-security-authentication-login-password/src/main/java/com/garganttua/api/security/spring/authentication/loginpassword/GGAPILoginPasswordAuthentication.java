@@ -1,6 +1,6 @@
 package com.garganttua.api.security.spring.authentication.loginpassword;
 
-import java.util.List;import java.util.stream.Collector;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,15 +20,18 @@ public class GGAPILoginPasswordAuthentication extends UsernamePasswordAuthentica
 	private boolean authenticated = false;
 	private Object login;
 	private String password;
+	@Getter
+	private String tenantId;
 
-	private GGAPILoginPasswordAuthentication(String login, String password) {
+	private GGAPILoginPasswordAuthentication(String tenantId, String login, String password) {
 		super(login, password);
+		this.tenantId = tenantId;
 		this.login = login;
 		this.password = password; 
 	}
 
-	public static GGAPILoginPasswordAuthentication fromRequest(GGAPILoginPasswordAuthenticationRequest request) {
-		return new GGAPILoginPasswordAuthentication(request.getLogin(), request.getPassword());
+	public static GGAPILoginPasswordAuthentication fromRequest(String tenantId, GGAPILoginPasswordAuthenticationRequest request) {
+		return new GGAPILoginPasswordAuthentication(tenantId, request.getLogin(), request.getPassword());
 	}
 	
 	@Override
@@ -48,7 +51,10 @@ public class GGAPILoginPasswordAuthentication extends UsernamePasswordAuthentica
 
 	@Override
 	public Object getPrincipal() {
-		return this.login;
+		if( String.class.isAssignableFrom(this.login.getClass()) )
+			return this.tenantId+":"+this.login;
+		else 
+			return this.login;
 	}
 
 	@Override

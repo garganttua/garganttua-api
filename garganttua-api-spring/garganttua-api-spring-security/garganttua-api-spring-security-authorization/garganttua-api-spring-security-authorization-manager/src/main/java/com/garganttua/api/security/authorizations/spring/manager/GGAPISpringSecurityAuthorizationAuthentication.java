@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -12,15 +11,20 @@ import com.garganttua.api.security.spring.core.authentication.IGGAPISpringAuthen
 import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 import com.garganttua.api.spec.security.IGGAPIAuthorization;
 
+import lombok.Getter;
+
 public class GGAPISpringSecurityAuthorizationAuthentication implements IGGAPISpringAuthentication {
 
 	private static final long serialVersionUID = 6973977239085301281L;
 	private IGGAPIAuthorization authorization;
 	private boolean authenticated = false;
+	@Getter
+	private String tenantId;
 
 	private GGAPISpringSecurityAuthorizationAuthentication(IGGAPIAuthorization authorization) {
 		this.authorization = authorization;
 		this.authenticated = true;
+		this.tenantId = authorization.getTenantId();
 	}
 
 	public static GGAPISpringSecurityAuthorizationAuthentication fromAuthorization(IGGAPIAuthorization authorization) {

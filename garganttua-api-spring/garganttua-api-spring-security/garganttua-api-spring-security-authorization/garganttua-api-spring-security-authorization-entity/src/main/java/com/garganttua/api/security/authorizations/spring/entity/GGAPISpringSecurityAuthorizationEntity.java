@@ -7,9 +7,9 @@ import com.garganttua.api.security.authorizations.domain.GGAPIAuthorizationEntit
 
 public abstract class GGAPISpringSecurityAuthorizationEntity extends GGAPIAuthorizationEntity {
 
-	public GGAPISpringSecurityAuthorizationEntity(String uuid, String tenantId, String ownerId, List<String> authorities, Date creationDate,
+	public GGAPISpringSecurityAuthorizationEntity(String uuid, String id, String tenantId, String ownerId, List<String> authorities, Date creationDate,
 			Date expirationDate, String signingKeyUuid) {
-		super(uuid, tenantId, ownerId, authorities, creationDate, expirationDate, signingKeyUuid);
+		super(uuid, id, tenantId, ownerId, authorities, creationDate, expirationDate, signingKeyUuid);
 	}
 	
 	public GGAPISpringSecurityAuthorizationEntity() {
