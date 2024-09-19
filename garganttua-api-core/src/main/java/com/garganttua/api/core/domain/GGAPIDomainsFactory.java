@@ -48,16 +48,17 @@ public class GGAPIDomainsFactory {
 				List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_, GGAPIEntity.class);
 				if( log.isDebugEnabled() )
 					log.debug("Found "+annotatedClasses.size()+" domains");
+				
 				annotatedClasses.forEach( annotatedClass -> {
 					if( log.isDebugEnabled() )
 						log.debug("processing annotated entity "+annotatedClass.getSimpleName());
 					try {
-						domains.add(processAnnotatedEntity(annotatedClass));
-						
+						this.domains.add(processAnnotatedEntity(annotatedClass));
 					} catch (GGAPIException e) {
 						e.printStackTrace();
 					}
 				});
+				
 			} catch (ClassNotFoundException | IOException e) {
 				e.printStackTrace();
 			}
@@ -81,12 +82,6 @@ public class GGAPIDomainsFactory {
 		} else if (domain.getEntity().getValue1().tenantEntity() && !this.tenantFound) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "There are more than one entity declared as tenantEntity.");
 		}
-
-//		if( !this.onwerFound && domain.getEntity().getValue1().ownerEntity()) {
-//			this.onwerFound = true;
-//		} else if( this.onwerFound && domain.getEntity().getValue1().ownerEntity() ) {
-//			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "More than one owner entity found");
-//		}
 
 		if( domain.getDtos().size() == 0 ) {
 			log.error("No class annotated with @GGAPIDto found for entity "+annotatedClass.getName());
