@@ -1,7 +1,6 @@
 package com.garganttua.api.spring.core;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +11,6 @@ import com.garganttua.api.core.engine.GGApiBuilder;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIBuilder;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.security.IGGAPISecurityBuilder;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.beans.GGBeanLoaderFactory;
 import com.garganttua.reflection.beans.IGGBeanLoader;
