@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.interfaces.security.key.spring.rest.GGAPIKeyRealmSpringEntity;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.security.keys.domain.GGAPIKeyRealmEntity;
@@ -19,7 +20,6 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.security.IGGAPIKeyRealm;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
@@ -97,10 +97,10 @@ public class GGAPISpringSecurityKeyEntityProvider implements IGGAPISpringKeyProv
 		GGObjectAddress expirationFieldAddress = GGAPIKeyRealmEntity.getExpirationFieldAddress();
 		GGObjectAddress revokedFieldAddress = GGAPIKeyRealmEntity.getRevokedFieldAddress();
 		GGObjectAddress algorithmFieldAddress = GGAPIKeyRealmEntity.getAlgorithmFieldAddress();
-		IGGAPIFilter idFilter = GGAPILiteral.eq(idFieldAddress.toString(), request.keyRealmName());
-		IGGAPIFilter expirationFilter = GGAPILiteral.gt(expirationFieldAddress.toString(), new Date());
-		IGGAPIFilter revokedFilter = GGAPILiteral.eq(revokedFieldAddress.toString(), false);
-		IGGAPIFilter algorithmFilter = GGAPILiteral.eq(algorithmFieldAddress.toString(), request.algorithm());
+		GGAPILiteral idFilter = GGAPILiteral.eq(idFieldAddress.toString(), request.keyRealmName());
+		GGAPILiteral expirationFilter = GGAPILiteral.gt(expirationFieldAddress.toString(), new Date());
+		GGAPILiteral revokedFilter = GGAPILiteral.eq(revokedFieldAddress.toString(), false);
+		GGAPILiteral algorithmFilter = GGAPILiteral.eq(algorithmFieldAddress.toString(), request.algorithm());
 		
 		if( this.domain.getEntity().getValue1().ownedEntity() ) {
 			GGObjectAddress ownerIdFieldAddress = GGAPIKeyRealmEntity.getOwnerIdFieldAddress();

@@ -35,7 +35,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 
 	private static final int DOMAIN_INDEX_IN_URI = 2;
 
-	@Value(value = "${com.garganttua.api.interface.spring.rest.ownerIdHeaderName:tenantId}")
+	@Value(value = "${com.garganttua.api.interface.spring.rest.tenantIdHeaderName:tenantId}")
 	private String tenantIdHeaderName = "tenantId";
 
 	@Value(value = "${com.garganttua.api.interface.spring.rest.requestedTenantIdHeaderName:requestedTenantId}")

@@ -204,7 +204,7 @@ public class GGAPIService implements IGGAPIService {
 		try {
 			if (allowed.isAllowed()) {
 				
-				if( !caller.isSuperTenant() && !this.checkTenantIdIsPresent(caller) ) {
+				if( !caller.isSuperTenant() && !this.checkTenantIdIsPresent(caller) && this.domain.isTenantIdMandatoryForOperation(caller.getAccessRule().getOperation())) {
 					event.setOut("TenantId not provided");
 					event.setCode(GGAPIServiceResponseCode.CLIENT_ERROR);
 				} else {

@@ -1,13 +1,13 @@
 package com.garganttua.api.core.repository;
 
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 
 public class GGAPIRepositoryFilterTools {
 
-	public static IGGAPIFilter getFilterFromCallerInfosAndDomainInfos(IGGAPICaller caller, IGGAPIDomain domain, IGGAPIFilter filter) {
+	public static IGGAPIFilter getFilterFromCallerInfosAndDomainInfos(IGGAPICaller caller, IGGAPIDomain domain, GGAPILiteral filter) {
 		String requestedTenantId = caller.getRequestedTenantId(); 
 		String ownerId = caller.getOwnerId();
 		boolean superOwner = caller.isSuperOwner();

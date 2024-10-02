@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.caller.GGAPICaller;
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.security.authorizations.domain.GGAPIAuthorizationEntity;
 import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.security.spring.core.authentication.IGGAPISpringAuthentication;
@@ -22,7 +23,6 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.security.IGGAPIAuthentication;
 import com.garganttua.api.spec.security.IGGAPIAuthenticator;

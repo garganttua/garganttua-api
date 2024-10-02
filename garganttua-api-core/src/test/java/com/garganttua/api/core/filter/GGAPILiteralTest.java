@@ -1,16 +1,28 @@
-package com.garganttua.api.spec.filter;
+package com.garganttua.api.core.filter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
 import org.geojson.GeoJsonObject;
-import org.geojson.GeoJsonObjectVisitor;
 import org.geojson.Point;
 import org.junit.jupiter.api.Test;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 public class GGAPILiteralTest {
+	
+	@Test
+	public void testJsonSerialisation() throws JsonParseException, JsonMappingException, IOException  {
+		String filter = "{\"name\":\"$field\", \"value\":\"type\", \"literals\":[{\"name\":\"$eq\", \"value\":\"true\"}]}";
+		System.out.println(filter);
+		ObjectMapper mapper = new ObjectMapper();
+		GGAPILiteral lit = mapper.readValue(filter.getBytes(), GGAPILiteral.class);
+	}
 	
 	@Test
 	public void testEquals() {

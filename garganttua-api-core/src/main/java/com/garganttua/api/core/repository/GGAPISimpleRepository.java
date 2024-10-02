@@ -14,6 +14,7 @@ import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPIFilterMapper;
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.filter.IGGAPIFilterMapper;
 import com.garganttua.api.core.mapper.GGAPIDefaultMapper;
 import com.garganttua.api.spec.GGAPIException;
@@ -52,7 +53,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
     	log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Get Total Count, Filter {}", caller.getRequestedTenantId(), domain, filter);
     	long totalCount = 0;
 		
-    	IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, filter);
+    	IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, (GGAPILiteral) filter);
 		List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
   	
 		totalCount = this.daoRepository.count(dtoFilters.get(0).getValue1());
@@ -97,7 +98,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository<Object> {
 		List<Object> entities = new ArrayList<Object>();
 		List<?> objects = null;
 		
-		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, filter);
+		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, (GGAPILiteral) filter);
 		List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 		objects = this.daoRepository.find(pageable, dtoFilters.get(0).getValue1(), sort);
 		try {

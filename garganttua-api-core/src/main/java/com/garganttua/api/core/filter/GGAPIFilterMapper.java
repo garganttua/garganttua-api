@@ -11,7 +11,6 @@ import com.garganttua.api.core.mapper.GGAPIDefaultMapper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.objects.mapper.GGMapper;
 import com.garganttua.objects.mapper.GGMapperException;
@@ -86,7 +85,8 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 			} catch (GGReflectionException e) {
 				throw new GGAPIEngineException(e);
 			}
-			filter.getLiterals().get(0).setValue(value);
+			if( value != null ) 
+				filter.getLiterals().get(0).setValue(value);
 		} else {
 			for( IGGAPIFilter sub: filter.getLiterals() ) {
 				this.setCorrespondingValuesToFilter(sub, dtoExample);

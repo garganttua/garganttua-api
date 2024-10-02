@@ -1,5 +1,6 @@
 package com.garganttua.api.daos.spring.mongodb;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,10 +22,11 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.spec.dao.IGGAPIDao;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.sort.IGGAPISort;
@@ -114,7 +116,7 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 	private static String getTextCriteriaFromFilter(IGGAPIFilter filter) {
 		if( filter.getName().equals(GGAPILiteral.OPERATOR_TEXT) ) {
 			return (String) filter.getValue();
-		} else if( !GGAPILiteral.isFinal(filter) ){
+		} else if( !GGAPILiteral.isFinal((GGAPILiteral) filter) ){
 			for(IGGAPIFilter sub: filter.getLiterals() ) {
 				String text = getTextCriteriaFromFilter(sub);
 				if( text != null && !text.isEmpty() ) {
@@ -131,11 +133,17 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 		if( filterName.equals(GGAPILiteral.OPERATOR_FIELD) ) {
 			String subFilterName = filter.getLiterals().get(0).getName();
 			if( subFilterName.equals(GGAPILiteral.OPERATOR_GEOLOC_SPHERE) || subFilterName.equals(GGAPILiteral.OPERATOR_GEOLOC) ) {
-				GeoJsonObject geoloc = (GeoJsonObject) filter.getLiterals().get(0).getValue();
-				return getCriteriaFromGeolocFilter(fieldName, geoloc, subFilterName);
+
+				try {
+					GeoJsonObject geoloc = new ObjectMapper().readValue(((String) filter.getLiterals().get(0).getValue()).getBytes(), GeoJsonObject.class);
+					return getCriteriaFromGeolocFilter(fieldName, geoloc, subFilterName);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 
-		} else if( !GGAPILiteral.isFinal(filter) ){
+		} else if( !GGAPILiteral.isFinal((GGAPILiteral) filter) ){
 			for(IGGAPIFilter sub: filter.getLiterals() ) {
 				return getGeolocCriteriaFromFilter(sub);
 			}
@@ -273,11 +281,11 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 				TextCriteria textCriteria = TextCriteria.forDefaultLanguage().matchingPhrase(textCriteriaString);
 				query.addCriteria(textCriteria);
 			}
+			Criteria geolocCriteria = GGAPIMongoRepository.getGeolocCriteriaFromFilter(filter);
+			if( geolocCriteria != null)
+				query.addCriteria(geolocCriteria);
 		}
 		
-		Criteria criteria = GGAPIMongoRepository.getGeolocCriteriaFromFilter(filter);
-		if( criteria != null)
-			query.addCriteria(criteria);
 		
 		return this.mongo.count(query, this.dtoClass);
 	}

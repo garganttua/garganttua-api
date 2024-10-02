@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.pageable.GGAPIPageable;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;

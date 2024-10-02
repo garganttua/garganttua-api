@@ -14,7 +14,7 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-spec</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-security-core</artifactId>
@@ -24,7 +24,7 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-objects-mapper</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-reflection</artifactId>
@@ -34,6 +34,13 @@
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<version>5.9.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.17.2</version>
 			<scope>test</scope>
 		</dependency>
 

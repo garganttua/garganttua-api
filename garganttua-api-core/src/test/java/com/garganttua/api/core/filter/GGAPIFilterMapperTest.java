@@ -13,7 +13,6 @@ import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
 

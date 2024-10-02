@@ -43,7 +43,7 @@ public class GGAPISpringSecurityRestConfiguration {
 	private GGAPISpringAuthorizationFilter authorizationFilter;
 	
 	@Value("${com.garganttua.api.spring.interface.rest.security.cors.enabled}")
-	private boolean cors = false;
+	private boolean cors = true;
 	
 	@Value("${com.garganttua.api.spring.interface.rest.security.csrf.enabled}")
 	private boolean csrf = false;
@@ -65,8 +65,8 @@ public class GGAPISpringSecurityRestConfiguration {
 				http.csrf().disable();
 			}
 			
-			if( this.cors ) {
-				http.cors();				
+			if( !this.cors ) {
+				http.cors().disable();				
 			}
 
 			this.configurers.stream().forEach(config -> {

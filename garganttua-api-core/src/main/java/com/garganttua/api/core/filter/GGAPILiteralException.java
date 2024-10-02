@@ -1,4 +1,4 @@
-package com.garganttua.api.spec.filter;
+package com.garganttua.api.core.filter;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;

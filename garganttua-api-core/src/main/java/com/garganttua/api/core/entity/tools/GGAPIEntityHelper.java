@@ -3,6 +3,7 @@ package com.garganttua.api.core.entity.tools;
 import java.util.Map;
 
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
+import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
@@ -10,7 +11,6 @@ import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.IGGAPIEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.filter.GGAPILiteral;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.reflection.GGReflectionException;
