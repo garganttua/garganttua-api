@@ -250,7 +250,7 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).nin(values);
 				break;
 			case GGAPILiteral.OPERATOR_EMPTY:
-				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).isNullValue();
+				criteria = Criteria.where(literal.getValue().equals("uuid")?"_id":literal.getValue().toString()).isNull();
 				break;
 			}
 			break;

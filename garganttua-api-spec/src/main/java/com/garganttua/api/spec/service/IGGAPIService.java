@@ -16,7 +16,7 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 	IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity,
 			Map<String, String> customParameters);
 		
-	IGGAPIServiceResponse getEntities(
+	IGGAPIServiceResponse getEntities (
 			IGGAPICaller caller, 
 			GGAPIReadOutputMode mode,
 			IGGAPIPageable pageable,

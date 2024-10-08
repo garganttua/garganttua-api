@@ -22,6 +22,9 @@ import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.api.spec.sort.GGAPISort;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GGAPIDomainInterface {
 	
 	private static final String REQUEST_PARAM_MODE = "mode";
@@ -50,12 +53,14 @@ public class GGAPIDomainInterface {
 		try {
 			entityObject = this.mapper.readValue(entity, this.entityClass);
 		} catch(Exception e) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
 		}
 		
 		try {
 			response = this.service.createEntity(caller, entityObject, customParameters);
 		} catch(Exception e) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.BAD_REQUEST);
 		}
 		
@@ -83,6 +88,7 @@ public class GGAPIDomainInterface {
 			if( filterString != null && !filterString.isEmpty() )
 				filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
 		} catch(Exception e) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
 		}
 		
@@ -94,6 +100,7 @@ public class GGAPIDomainInterface {
 			GGAPIReadOutputMode mode = modeString==null?GGAPIReadOutputMode.full:GGAPIReadOutputMode.valueOf(modeString);
 			response = this.service.getEntities(caller, mode, pageable, filter, sort, customParameters);
 		} catch( Exception e ) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -115,6 +122,7 @@ public class GGAPIDomainInterface {
 		try {
 			response = this.service.getEntity(caller, uuid, customParameters);
 		} catch( Exception e ) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -129,12 +137,14 @@ public class GGAPIDomainInterface {
 		try {
 			entityObject = this.mapper.readValue(entity, this.entityClass);
 		} catch(Exception e) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
 		}
 		
 		try {
 			response = this.service.updateEntity(caller, uuid, entityObject, customParameters);
 		} catch( Exception e ) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -148,6 +158,7 @@ public class GGAPIDomainInterface {
 		try {
 			response = this.service.deleteEntity(caller, uuid, customParameters);
 		} catch( Exception e ) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
@@ -164,12 +175,14 @@ public class GGAPIDomainInterface {
 			if( filterString != null && !filterString.isEmpty() )
 				filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
 		} catch(Exception e) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
 		}
 		
 		try {
 			response = this.service.deleteAll(caller, filter, customParameters);
 		} catch( Exception e ) {
+			log.atDebug().log("error", e);
 			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		

@@ -64,6 +64,9 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	private HttpMethod getHttpMethod(ServletRequest request) {
 		HttpMethod method = HttpMethod.GET;
 		switch (((HttpServletRequest) request).getMethod()) {
+		case "OPTIONS":
+			method = HttpMethod.OPTIONS;
+			break;
 		case "GET":
 			method = HttpMethod.GET;
 			break;
@@ -84,10 +87,18 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		HttpMethod method = this.getHttpMethod(request);
 		String uri = this.getUri(request);
-		String servletPath = ((HttpServletRequest) request).getServletPath();
-		
+		String servletPath = request.getServletPath();
+
 		if( log.isDebugEnabled() ) {
-			log.debug("Serving url "+servletPath);
+			log.debug("Serving url "+servletPath+ " "+method);
+		}
+		if( method == HttpMethod.OPTIONS ) {
+			log.warn("*********************************************");
+			log.warn("* An Options http request has been received *");
+			log.warn("* These requests are not yet developped     *");
+			log.warn("* There should be developped soon           *");
+			log.warn("*********************************************");
+			return;
 		}
 		
 		IGGAPICallerFactory callerFactory = this.engine.getCallerFactory(this.getDomainNameFromRequestUri((HttpServletRequest) request));
@@ -110,4 +121,25 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		return;
 
 	}
+	
+	public static void printRequest(HttpServletRequest request) {
+        System.out.println("Request Method: " + request.getMethod());
+        System.out.println("Request URI: " + request.getRequestURI());
+        System.out.println("Request URL: " + request.getRequestURL());
+        System.out.println("Protocol: " + request.getProtocol());
+        System.out.println("Remote Address: " + request.getRemoteAddr());
+        System.out.println("Query String: " + request.getQueryString());
+        System.out.println("Headers:");
+
+        // Print headers
+        request.getHeaderNames().asIterator().forEachRemaining(headerName -> {
+            System.out.println(headerName + ": " + request.getHeader(headerName));
+        });
+
+        System.out.println("Parameters:");
+        // Print parameters
+        request.getParameterMap().forEach((key, value) -> {
+            System.out.println(key + ": " + String.join(", ", value));
+        });
+    }
 }
