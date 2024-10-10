@@ -31,7 +31,9 @@ public class GGAPIServiceMethodToHttpMethodBinder {
 				return GGAPIEntityOperation.read_one;
 			return GGAPIEntityOperation.read_all;
 		case "DELETE":
-			return GGAPIEntityOperation.delete_one;
+			if( endpoint.endsWith("*") )
+				return GGAPIEntityOperation.delete_one;
+			return GGAPIEntityOperation.delete_all;
 		case "PATCH":
 			return GGAPIEntityOperation.update_one;
 		case "PUT":
