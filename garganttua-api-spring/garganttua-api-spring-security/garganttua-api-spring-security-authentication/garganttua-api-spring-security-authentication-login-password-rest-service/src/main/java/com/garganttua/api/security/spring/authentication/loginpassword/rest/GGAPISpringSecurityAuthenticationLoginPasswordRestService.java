@@ -31,7 +31,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @CrossOrigin(origins = "*")
-@io.swagger.v3.oas.annotations.tags.Tag(name = "Authentication", description = "Authentication service based on login and password")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Authentication", description = "Authentication service based on login and password. The requester must provide credentials corresponding to an authenticator entity.")
 public class GGAPISpringSecurityAuthenticationLoginPasswordRestService implements IGGAPISpringSecurityRestConfigurer {
 
 	@Autowired

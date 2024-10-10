@@ -204,6 +204,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private String getDocumentation(IGGAPIDomain domain) {
+		String authenticatorEntity = domain.getSecurity().authenticatorInfos()==null?"false":"true";
 		String description = "<b>Public Entity</b> [" + domain.getEntity().getValue1().publicEntity() + "] <br> "
 				+ "<b>Shared Entity</b> ["
 				+ (domain.getEntity().getValue1().sharedEntity() ? "false"
@@ -214,7 +215,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 						: domain.getEntity().getValue1().locationFieldAddress())
 				+ "]<br>" + "<b>Onwed Entity</b> [" + domain.getEntity().getValue1().ownedEntity() + "] <br> "
 				+ "<b>Owner Entity</b> [" + domain.getEntity().getValue1().ownerEntity() + "] <br> "
-				+ "<b>Tenant Entity</b> [" + domain.getEntity().getValue1().tenantEntity() + "] <br> ";
+				+ "<b>Tenant Entity</b> [" + domain.getEntity().getValue1().tenantEntity() + "] <br> "
+				+ "<b>Authenticator Entity</b> [" + authenticatorEntity + "] <br> ";
 
 		if (domain.getDocumentation() != null && domain.getDocumentation().general() != null
 				&& !domain.getDocumentation().general().isEmpty()) {
