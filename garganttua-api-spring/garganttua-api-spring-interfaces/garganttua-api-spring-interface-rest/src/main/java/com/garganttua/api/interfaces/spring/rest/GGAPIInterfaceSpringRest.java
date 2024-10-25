@@ -16,7 +16,6 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
-import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.beans.annotation.GGBean;
@@ -54,7 +53,7 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 	@Override
 	public void start() throws GGAPIException {
 		try {
-			this.domainInterface = new GGAPIDomainInterface(service, this.domain.getEntity().getValue0());
+			this.domainInterface = new GGAPIDomainInterface(this.service, this.domain.getEntity().getValue0());
 			this.createRequestMappings();
 		} catch (NoSuchMethodException e) {
 			throw new GGAPIEngineException(e);
@@ -79,8 +78,6 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 				.options(options).build();
 		RequestMappingInfo requestMappingInfoCreate = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.POST)
 				.options(options).build();
-//		RequestMappingInfo requestMappingInfoCount = RequestMappingInfo.paths(baseUrl + "/count")
-//				.methods(RequestMethod.GET).options(options).build();
 		RequestMappingInfo requestMappingInfoGetOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
 				.methods(RequestMethod.GET).options(options).build();
 		RequestMappingInfo requestMappingInfoUpdate = RequestMappingInfo.paths(baseUrl + "/{uuid}")
@@ -116,14 +113,6 @@ public class GGAPIInterfaceSpringRest implements IGGAPIInterface {
 					this.domainInterface.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class,
 							Map.class));
 		}
-
-//		for (IGGAPIServiceInfos serviceInfos : servicesInfos) {
-//			HttpMethod method = GGAPIServiceMethodToHttpMethodBinder.fromServiceMethod(serviceInfos.getMethod());
-//			this.requestMappingHandlerMapping.registerMapping(
-//					RequestMappingInfo.paths(serviceInfos.getPath())
-//							.methods(RequestMethod.resolve(method)).options(options).build(),
-//					service, service.getClass().getMethod(serviceInfos.getMethodName(), serviceInfos.getParameters()));
-//		}
 	}
 
 	@Override

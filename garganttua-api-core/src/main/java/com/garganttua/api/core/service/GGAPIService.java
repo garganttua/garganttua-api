@@ -18,7 +18,6 @@ import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;

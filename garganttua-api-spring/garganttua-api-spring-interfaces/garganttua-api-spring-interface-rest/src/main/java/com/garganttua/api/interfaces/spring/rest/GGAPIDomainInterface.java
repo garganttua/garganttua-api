@@ -67,7 +67,7 @@ public class GGAPIDomainInterface {
 		return GGAPIServiceResponseUtils.toResponseEntity(response);
 	}
 	
-	public ResponseEntity<?> getEntities(
+	public ResponseEntity<?> getEntities (
 			@RequestAttribute(name=GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller, 
 			@RequestParam Map<String, String> customParameters
 			) {
