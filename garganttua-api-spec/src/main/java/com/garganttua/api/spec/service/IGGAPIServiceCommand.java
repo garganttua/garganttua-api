@@ -1,4 +1,4 @@
-package com.garganttua.api.core.service;
+package com.garganttua.api.spec.service;
 
 import com.garganttua.api.spec.event.IGGAPIEvent;
 

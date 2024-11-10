@@ -157,8 +157,11 @@ public class GGAPIEntityAuthenticatorChecker {
 					throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
 				}
 			} else {
-				if( isNotPrimitiveOrInternal(field.getType()) && !entityAuthenticatorClass.equals(field.getType()))
+				if( isNotPrimitiveOrInternal(field.getType()) && !entityAuthenticatorClass.equals(field.getType())) {
 					fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(field.getType(), annotationClass, fieldClass);
+					if( fieldAddress != null )
+						break;
+				}
 			}
 		}
 

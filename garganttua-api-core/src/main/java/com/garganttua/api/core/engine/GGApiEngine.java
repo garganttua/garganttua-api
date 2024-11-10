@@ -12,6 +12,7 @@ import com.garganttua.api.core.factory.GGAPIEntityFactoriesFactory;
 import com.garganttua.api.core.interfasse.GGAPIInterfacesFactory;
 import com.garganttua.api.core.repository.GGAPIRepositoriesFactory;
 import com.garganttua.api.core.service.GGAPIServicesFactory;
+import com.garganttua.api.core.service.GGAPIServicesInfosFactory;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICallerFactoriesRegistry;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
@@ -29,6 +30,7 @@ import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
+import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.GGInjector;
@@ -52,6 +54,7 @@ public class GGApiEngine implements IGGAPIEngine {
 	private IGGAPIInterfacesRegistry interfacesRegistry;
 	private IGGAPICallerFactoriesRegistry callerFactoriesRegistry;
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
+	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
 	private IGGInjector injector;
 
 	protected GGApiEngine(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader) {
@@ -98,14 +101,14 @@ public class GGApiEngine implements IGGAPIEngine {
 		IGGAPIRepository<Object> repository = (IGGAPIRepository<Object>) this.repositoriesRegistry.getRepository(domainName);
 		IGGAPIEntityFactory<Object> factory = (IGGAPIEntityFactory<Object>) this.factoriesRegistry.getFactory(domainName);
 		IGGAPIService service = this.servicesRegistry.getService(domainName);
-		List<IGGAPIServiceInfos> serviceInfos = this.servicesRegistry.getServiceInfos(domainName);
+//		List<IGGAPIServiceInfos> serviceInfos = this.servicesInfosRegistry.getServiceInfos(domainName);
 		List<IGGAPIInterface> interfaces = this.interfacesRegistry.getInterfaces(domainName);
 		
 		repository.setDaos(daos);
 		factory.setRepository(repository);
 		service.setFactory(factory);
 		interfaces.forEach(interfasse -> {
-			interfasse.setService(service, serviceInfos);
+			interfasse.setService(service);
 		});
 	}
 
@@ -149,7 +152,8 @@ public class GGApiEngine implements IGGAPIEngine {
 		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains(), this.injector).getRegistry();
 		this.servicesRegistry = new GGAPIServicesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.interfacesRegistry = new GGAPIInterfacesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
-		this.accessRulesRegistry = new GGAPIAccessRulesFactory(this.domainRegistry.getDomains()).getRegistry();
+		this.servicesInfosRegistry = new GGAPIServicesInfosFactory(this.domainRegistry.getDomains(), this.interfacesRegistry).getRegistry();
+		this.accessRulesRegistry = new GGAPIAccessRulesFactory(this.servicesInfosRegistry).getRegistry();
 		this.callerFactoriesRegistry = new GGAPICallerFactoriesFactory(this.domainRegistry.getDomains(), this.factoriesRegistry, this.accessRulesRegistry).getRegistry();
 
 		return this;

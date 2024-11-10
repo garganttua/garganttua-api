@@ -21,6 +21,7 @@ import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServiceCommand;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.api.spec.sort.IGGAPISort;
 

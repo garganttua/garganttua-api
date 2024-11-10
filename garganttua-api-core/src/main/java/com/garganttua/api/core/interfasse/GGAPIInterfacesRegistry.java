@@ -18,8 +18,8 @@ public class GGAPIInterfacesRegistry implements IGGAPIInterfacesRegistry {
 	}
 
 	@Override
-	public List<IGGAPIInterface> getInterfaces(String name) {
-		return this.interfaces.get(name);
+	public List<IGGAPIInterface> getInterfaces(String domainName) {
+		return this.interfaces.get(domainName);
 	}
 
 	@Override

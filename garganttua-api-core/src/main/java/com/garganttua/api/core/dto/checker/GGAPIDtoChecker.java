@@ -13,7 +13,6 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
-import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;

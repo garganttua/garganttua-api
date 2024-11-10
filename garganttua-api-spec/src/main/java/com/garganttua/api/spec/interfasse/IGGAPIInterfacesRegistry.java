@@ -6,7 +6,7 @@ import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 
 public interface IGGAPIInterfacesRegistry extends IGGAPIEngineObject {
 	
-	List<IGGAPIInterface> getInterfaces(String name);
+	List<IGGAPIInterface> getInterfaces(String domainName);
 
 	List<IGGAPIInterface> getInterfaces();
 

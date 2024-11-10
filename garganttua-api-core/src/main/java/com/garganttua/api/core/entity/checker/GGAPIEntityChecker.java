@@ -492,8 +492,11 @@ public class GGAPIEntityChecker {
 					throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity "+entityClass.getSimpleName()+" has field "+field.getName()+" with wrong type "+field.getType().getName()+", should be "+fieldClass);
 				}
 			} else {
-				if( isNotPrimitiveOrInternal(field.getType()) && !entityClass.equals(field.getType()))
+				if( isNotPrimitiveOrInternal(field.getType()) && !entityClass.equals(field.getType())) {
 					fieldAddress = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(field.getType(), annotationClass, fieldClass);
+					if( fieldAddress != null )
+						break;
+				}
 			}
 		}
 

@@ -31,17 +31,12 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 		for( IGGAPIDomain domain: this.domains ) {
 			this.createAccessRules(domain);
 		}
-//		
-//		this.authoritiesWS.ifPresent(ws -> {
-//			accessRules.addAll(ws.getCustomAuthorizations());
-//		});
-		
 		this.accessRules.forEach(ar -> {
-			log.info("	Access Rule added {}",ar);
+			log.info("	Access Rule added {}", ar);
 		});
 	}
-//	
-	@Override// TODO Auto-generated method stub
+
+	@Override
 	public IGGAPIAccessRule getAccessRule(GGAPIEntityOperation operation, String endpoint) {
 		for (IGGAPIAccessRule auth : this.accessRules) {
 			if (auth.getEndpoint().equals(endpoint) && auth.getOperation() == operation) {
@@ -100,10 +95,10 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 							: null,
 							GGAPIEntityOperation.delete_one, domain.getSecurity().deleteOneAccess()));
 		
-//		List<IGGAPICustomService> customServices = GGAPICustomServiceBuilder.buildGGAPIServices(service.getClass());
-//		customServices.forEach( cService -> {
-//			this.accessRules.add(cService.getAccessRule());
-//		});
+		List<IGGAPICustomService> customServices = GGAPICustomServiceBuilder.buildGGAPIServices(service.getClass());
+		customServices.forEach( cService -> {
+			this.accessRules.add(cService.getAccessRule());
+		});
 		
 		return accessRules;
 	}

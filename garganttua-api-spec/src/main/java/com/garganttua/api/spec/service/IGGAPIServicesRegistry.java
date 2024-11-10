@@ -10,6 +10,4 @@ public interface IGGAPIServicesRegistry extends IGGAPIEngineObject {
 
 	List<IGGAPIService> getServices();
 
-	List<IGGAPIServiceInfos> getServiceInfos(String domain);
-
 }
