@@ -97,7 +97,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 		GGAPIEntity entityAnnotation = clazz.getAnnotation(GGAPIEntity.class);
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntityClass(entityClass);
 		GGAPIEntityDocumentationInfos documentation = GGAPIEntityDocumentationChecker.checkEntityClass(entityClass);
-		GGAPIEntitySecurityInfos securityInfos = GGAPIEntitySecurityChecker.checkEntityClass(entityClass);
+		GGAPIEntitySecurityInfos securityInfos = GGAPIEntitySecurityChecker.checkEntityClass(entityClass, infos.domain());
 
 		for (String pack : scanPackages) {
 			List<Class<?>> annotatedClasses;

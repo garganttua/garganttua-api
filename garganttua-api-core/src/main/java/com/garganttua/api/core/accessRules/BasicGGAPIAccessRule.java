@@ -20,33 +20,4 @@ public class BasicGGAPIAccessRule implements IGGAPIAccessRule {
 	public String toString() {	
 		return "[endpoint ["+this.endpoint+"] access ["+this.access+"] authorization ["+this.authority+"] operation ["+this.operation+"]]";
 	}
-	
-	public static String getAuthority(String domain, GGAPIEntityOperation operation) {
-		
-		String authority = null;
-		switch (operation) {
-		case create_one:
-			authority = domain + "-create";
-			break;
-		case delete_all:
-			authority = domain + "-delete-all";
-			break;
-		case delete_one:
-			authority = domain + "-delete-one";
-			break;
-		default:
-		case read_all:
-			authority = domain + "-read-all";
-			break;
-		case read_one:
-			authority = domain + "-read-one";
-			break;
-		case update_one:
-			authority = domain + "-update-one";
-			break;
-		}
-		
-		return authority;
-	}
-
 }

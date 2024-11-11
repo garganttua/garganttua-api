@@ -17,7 +17,7 @@ public class GGAPIEntitySecurityChecker {
 	
 	private static Map<Class<?>, GGAPIEntitySecurityInfos> infos = new HashMap<Class<?>, GGAPIEntitySecurityInfos>();
 
-	public static GGAPIEntitySecurityInfos checkEntityClass(Class<?> entityClass) throws GGAPIException {
+	public static GGAPIEntitySecurityInfos checkEntityClass(Class<?> entityClass, String domainName) throws GGAPIException {
 		if( GGAPIEntitySecurityChecker.infos.containsKey(entityClass) ) {
 			return GGAPIEntitySecurityChecker.infos.get(entityClass);
 		}
@@ -47,7 +47,8 @@ public class GGAPIEntitySecurityChecker {
 				true, 
 				true, 
 				true,
-				authenticatorInfos
+				authenticatorInfos,
+				domainName
 			);
 		} else {
 			infos = new GGAPIEntitySecurityInfos(
@@ -65,7 +66,8 @@ public class GGAPIEntitySecurityChecker {
 				annotation.delete_all_access()==GGAPIServiceAccess.anonymous?false:annotation.delete_all_authority(), 
 				annotation.delete_one_access()==GGAPIServiceAccess.anonymous?false:annotation.delete_one_authority(), 
 				annotation.count_access()==GGAPIServiceAccess.anonymous?false:annotation.count_authority(),
-				authenticatorInfos
+				authenticatorInfos,
+				domainName
 			);
 		}
 		GGAPIEntitySecurityChecker.infos.put(entityClass, infos);

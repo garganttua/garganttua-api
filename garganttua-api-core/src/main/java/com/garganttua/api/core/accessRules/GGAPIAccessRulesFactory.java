@@ -10,14 +10,16 @@ public class GGAPIAccessRulesFactory {
 
 	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
 	private IGGAPIAccessRulesRegistry registry;
+	private Set<IGGAPIDomain> domains;
 
-	public GGAPIAccessRulesFactory(IGGAPIServicesInfosRegistry servicesInfosRegistry) {
+	public GGAPIAccessRulesFactory(Set<IGGAPIDomain> domains, IGGAPIServicesInfosRegistry servicesInfosRegistry) {
+		this.domains = domains;
 		this.servicesInfosRegistry = servicesInfosRegistry;
 		this.init();
 	}
 
 	private void init() {
-		this.registry = new GGAPIAccessRulesRegistry(servicesInfosRegistry);
+		this.registry = new GGAPIAccessRulesRegistry(domains, servicesInfosRegistry);
 	}
 
 	public IGGAPIAccessRulesRegistry getRegistry() {

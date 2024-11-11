@@ -20,7 +20,7 @@ public class GGAPIServicesInfosBuilder {
     public static List<IGGAPIServiceInfos> buildGGAPIServices(IGGAPIDomain domain) {
     	List<IGGAPIServiceInfos> services = new ArrayList<>();
     	
-    	String baseUrl = GGAPIServicesInfosBuilder.CONTEXT_PATH+"/"+domain.getDomain();
+    	String baseUrl = "/"+GGAPIServicesInfosBuilder.CONTEXT_PATH+"/"+domain.getDomain();
     	
 		if (domain.isAllowReadAll()) {
 			Class<?>[] params = {IGGAPICaller.class, GGAPIReadOutputMode.class, IGGAPIPageable.class, IGGAPIFilter.class, IGGAPISort.class, Map.class};

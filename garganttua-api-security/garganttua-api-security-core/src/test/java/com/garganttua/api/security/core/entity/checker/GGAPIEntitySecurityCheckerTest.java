@@ -13,7 +13,7 @@ public class GGAPIEntitySecurityCheckerTest {
 
 	@Test
 	public void testEntityWithNoAnnotation() throws GGAPIException {
-		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithNoSecurityAnnotation.class);
+		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithNoSecurityAnnotation.class, null);
 		
 		assertNotNull(infos);
 		assertEquals(GGAPIServiceAccess.tenant, infos.creationAccess());
@@ -36,7 +36,7 @@ public class GGAPIEntitySecurityCheckerTest {
 	@Test
 	public void testEntityWithAnnotationButEmpty() throws GGAPIException {
 		
-		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotationButEmpty.class);
+		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotationButEmpty.class, null);
 		
 		assertNotNull(infos);
 		assertEquals(GGAPIServiceAccess.tenant, infos.creationAccess());
@@ -60,7 +60,7 @@ public class GGAPIEntitySecurityCheckerTest {
 	@Test
 	public void testEntityWithAnnotation() throws GGAPIException {
 		
-		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotation.class);
+		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotation.class, null);
 		
 		assertNotNull(infos);
 		assertEquals(GGAPIServiceAccess.anonymous, infos.creationAccess());
@@ -83,7 +83,7 @@ public class GGAPIEntitySecurityCheckerTest {
 	@Test
 	public void testAuthenticator() throws GGAPIException {
 		
-		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestAuthenticator.class);
+		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestAuthenticator.class, null);
 		
 		assertNotNull(infos);
 		assertEquals(GGAPIServiceAccess.anonymous, infos.creationAccess());

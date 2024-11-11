@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.garganttua.api.core.accessRules.BasicGGAPIAccessRule;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
@@ -114,7 +113,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl).getGet();
 
 			this.openApi.path(baseUrl, pathItemBase.get(operation.description(this.getOperationDescription(domainName,
-					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readAll()))));
+					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readAll(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
 			this.setAdditionalInfos(domain, entityOperation, operation);
 			this.addCustomParamsPathParameter(operation);
 		}
@@ -126,7 +125,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 			this.openApi.path(baseUrl,
 					pathItemBase.delete(operation.description(this.getOperationDescription(domainName, access,
-							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteAll()))));
+							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteAll(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
 			this.setAdditionalInfos(domain, entityOperation, operation);
 			this.addCustomParamsPathParameter(operation);
 		}
@@ -137,7 +136,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			Operation operation = templateOpenApi.getPaths().get(baseUrl).getPost();
 
 			this.openApi.path(baseUrl, pathItemBase.post(operation.description(this.getOperationDescription(domainName,
-					access, hasAuthority, entityOperation, documentation == null ? null : documentation.createOne()))));
+					access, hasAuthority, entityOperation, documentation == null ? null : documentation.createOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
 
 			if (!domain.getEntity().getValue1().tenantEntity()) {
 				this.setAdditionalInfos(domain, entityOperation, operation);
@@ -153,7 +152,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 			Operation operation = templateOpenApi.getPaths().get(endpoint).getGet();
 
 			this.openApi.path(endpoint, pathItemUuid.get(operation.description(this.getOperationDescription(domainName,
-					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readOne()))));
+					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
 			this.setAdditionalInfos(domain, entityOperation, operation);
 			this.addCustomParamsPathParameter(operation);
 		}
@@ -166,7 +165,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 			this.openApi.path(endpoint,
 					pathItemUuid.patch(operation.description(this.getOperationDescription(domainName, access,
-							hasAuthority, entityOperation, documentation == null ? null : documentation.updateOne()))));
+							hasAuthority, entityOperation, documentation == null ? null : documentation.updateOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
 			this.setAdditionalInfos(domain, entityOperation, operation);
 			this.addCustomParamsPathParameter(operation);
 		}
@@ -179,7 +178,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 			this.openApi.path(endpoint,
 					pathItemUuid.delete(operation.description(this.getOperationDescription(domainName, access,
-							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteOne()))));
+							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
 			this.setAdditionalInfos(domain, entityOperation, operation);
 			this.addCustomParamsPathParameter(operation);
 		}
@@ -192,10 +191,10 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private String getOperationDescription(String domainName, GGAPIServiceAccess access, boolean hasAuthority,
-			GGAPIEntityOperation operation, String documentation) {
+			GGAPIEntityOperation operation, String documentation, String authority) {
 		String description = "<b>Access </b>: [" + access + "] <br> <b>Authority</b>: ["
 				+ (hasAuthority == false ? "none"
-						: BasicGGAPIAccessRule.getAuthority(domainName.toLowerCase(), operation))
+						: authority)
 				+ "]";
 		if (documentation != null && !documentation.isEmpty()) {
 			description += "<br><h3><strong><u><b>Documentation</b></u></strong></h3><br>" + documentation + "<br>";
