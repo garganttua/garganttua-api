@@ -37,7 +37,6 @@ import com.garganttua.reflection.injection.GGInjector;
 import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -101,7 +100,6 @@ public class GGApiEngine implements IGGAPIEngine {
 		IGGAPIRepository<Object> repository = (IGGAPIRepository<Object>) this.repositoriesRegistry.getRepository(domainName);
 		IGGAPIEntityFactory<Object> factory = (IGGAPIEntityFactory<Object>) this.factoriesRegistry.getFactory(domainName);
 		IGGAPIService service = this.servicesRegistry.getService(domainName);
-//		List<IGGAPIServiceInfos> serviceInfos = this.servicesInfosRegistry.getServiceInfos(domainName);
 		List<IGGAPIInterface> interfaces = this.interfacesRegistry.getInterfaces(domainName);
 		
 		repository.setDaos(daos);
@@ -202,5 +200,10 @@ public class GGApiEngine implements IGGAPIEngine {
 	@Override
 	public IGGAPIAccessRulesRegistry getAccessRulesRegistry() {
 		return this.accessRulesRegistry;
+	}
+
+	@Override
+	public IGGAPIServicesInfosRegistry getServicesInfosRegistry() {
+		return this.servicesInfosRegistry;
 	}
 }

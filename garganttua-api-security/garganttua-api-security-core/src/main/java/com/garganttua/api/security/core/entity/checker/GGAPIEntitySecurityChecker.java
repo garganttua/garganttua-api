@@ -31,6 +31,7 @@ public class GGAPIEntitySecurityChecker {
 		if( entityClass.getAnnotation(GGAPIAuthenticator.class) != null ) {
 			authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entityClass);
 		}
+
 		if( annotation == null ) {
 			infos = new GGAPIEntitySecurityInfos(
 				GGAPIServiceAccess.tenant, 

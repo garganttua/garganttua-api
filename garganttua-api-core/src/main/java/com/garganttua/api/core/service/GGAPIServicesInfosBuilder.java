@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
@@ -17,41 +18,41 @@ public class GGAPIServicesInfosBuilder {
 	
 	public static String CONTEXT_PATH = "api";
 
-    public static List<IGGAPIServiceInfos> buildGGAPIServices(IGGAPIDomain domain) {
+    public static List<IGGAPIServiceInfos> buildGGAPIServices(IGGAPIDomain domain) throws GGAPIEngineException {
     	List<IGGAPIServiceInfos> services = new ArrayList<>();
     	
     	String baseUrl = "/"+GGAPIServicesInfosBuilder.CONTEXT_PATH+"/"+domain.getDomain();
     	
 		if (domain.isAllowReadAll()) {
 			Class<?>[] params = {IGGAPICaller.class, GGAPIReadOutputMode.class, IGGAPIPageable.class, IGGAPIFilter.class, IGGAPISort.class, Map.class};
-			services.add(getInfos("getEntities", params, baseUrl, "", GGAPIEntityOperation.read_all));
+			services.add(getInfos(domain.getDomain(), "getEntities", null, params, baseUrl, "", GGAPIEntityOperation.readAll(domain.getDomain(), domain.getEntityName())));
 		}
 		if (domain.isAllowDeleteAll()) {
 			Class<?>[] params = {IGGAPICaller.class,  IGGAPIFilter.class, Map.class};
-			services.add(getInfos("deleteAll", params, baseUrl, "", GGAPIEntityOperation.delete_all));
+			services.add(getInfos(domain.getDomain(), "deleteAll", null, params, baseUrl, "", GGAPIEntityOperation.deleteAll(domain.getDomain(), domain.getEntityName())));
 		}
 		if (domain.isAllowCreation()) {
 			Class<?>[] params = {IGGAPICaller.class, Object.class, Map.class};
-			services.add(getInfos("createEntity", params, baseUrl, "", GGAPIEntityOperation.create_one));
+			services.add(getInfos(domain.getDomain(), "createEntity", null, params, baseUrl, "", GGAPIEntityOperation.createOne(domain.getDomain(), domain.getEntityName())));
 		}
 		if (domain.isAllowReadOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
-			services.add(getInfos("getEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.read_one));
+			services.add(getInfos(domain.getDomain(), "getEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.readOne(domain.getDomain(), domain.getEntityName())));
 		}
 		if (domain.isAllowUpdateOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Object.class, Map.class};
-			services.add(getInfos("updateEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.update_one));
+			services.add(getInfos(domain.getDomain(), "updateEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.updateOne(domain.getDomain(), domain.getEntityName())));
 		}
 		if (domain.isAllowDeleteOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
-			services.add(getInfos("deleteEntity", params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.delete_one));
+			services.add(getInfos(domain.getDomain(), "deleteEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.deleteOne(domain.getDomain(), domain.getEntityName())));
 		}
 
         return services;
     }
 
-    public static IGGAPIServiceInfos getInfos(String methodName, Class<?>[] parameters, String path, String description, GGAPIEntityOperation operation) {
-        return new GGAPIServiceInfos(methodName, operation, parameters, path, description);
+    public static IGGAPIServiceInfos getInfos(String domainName, String methodName, Class<?> interfasse, Class<?>[] parameters, String path, String description, GGAPIEntityOperation operation) throws GGAPIEngineException {
+        return new GGAPIServiceInfos(domainName, methodName, operation, interfasse, parameters, path, description);
     }
 
 }

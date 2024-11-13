@@ -1,16 +1,51 @@
 package com.garganttua.api.spec.security;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
-public record GGAPIEntitySecurityInfos(GGAPIServiceAccess creationAccess, GGAPIServiceAccess readAllAccess,
-		GGAPIServiceAccess readOneAccess, GGAPIServiceAccess updateOneAccess, GGAPIServiceAccess deleteOneAccess,
-		GGAPIServiceAccess deleteAllAccess, GGAPIServiceAccess countAccess, boolean creationAuthority,
-		boolean readAllAuthority, boolean readOneAuthority, boolean updateOneAuthority, boolean deleteOneAuthority,
-		boolean deleteAllAuthority, boolean countAuthority, GGAPIAuthenticatorInfos authenticatorInfos,
-		String domainName) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public class GGAPIEntitySecurityInfos {
+
+	private GGAPIServiceAccess creationAccess;
+	private GGAPIServiceAccess readAllAccess;
+	private GGAPIServiceAccess readOneAccess;
+	private GGAPIServiceAccess updateOneAccess;
+	private GGAPIServiceAccess deleteOneAccess;
+	private GGAPIServiceAccess deleteAllAccess;
+	private GGAPIServiceAccess countAccess;
+	private boolean creationAuthority;
+	private boolean readAllAuthority;
+	private boolean readOneAuthority;
+	private boolean updateOneAuthority;
+	private boolean deleteOneAuthority;
+	private boolean deleteAllAuthority;
+	private boolean countAuthority;
+	private GGAPIAuthenticatorInfos authenticatorInfos;
+	private String domainName;
+
+	private Map<GGAPIEntityOperation, IGGAPIAccessRule> accessRules = new HashMap<GGAPIEntityOperation, IGGAPIAccessRule>();
+
+	public void addAccessRules(List<IGGAPIAccessRule> rules) {
+		rules.forEach(rule -> {
+			this.accessRules.put(rule.getOperation(), rule);
+		});
+	}
+	
+	public void addAccessRule(IGGAPIAccessRule rule) {
+		this.accessRules.put(rule.getOperation(), rule);
+	}
+
 	@Override
 	public String toString() {
 		return "GGAPIEntitySecurityInfos{" + "creationAccess=" + creationAccess + ", readAllAccess=" + readAllAccess
@@ -54,64 +89,43 @@ public record GGAPIEntitySecurityInfos(GGAPIServiceAccess creationAccess, GGAPIS
 		return this.authenticatorInfos == null ? false : true;
 	}
 
-	public String getAuthorityForOperation(GGAPIEntityOperation operation) {
-		String authority = null;
-		switch (operation) {
-		case create_one:
-			if (this.creationAuthority) {
-				authority = domainName + "-create";
-			}
-			break;
-		case delete_all:
-			if (this.deleteAllAuthority) {
-				authority = domainName + "-delete-all";
-			}
-			break;
-		case delete_one:
-			if (this.deleteOneAuthority) {
-				authority = domainName + "-delete-one";
-			}
-			break;
-		case read_all:
-			if (this.readAllAuthority) {
-				authority = domainName + "-read-all";
-			}
-			break;
-		default:
-		case read_one:
-			if (this.readOneAuthority) {
-				authority = domainName + "-read-one";
-			}
-			break;
-		case update_one:
-			if (this.updateOneAuthority) {
-				authority = domainName + "-update-one";
-			}
-			break;
-		case custom:
+	public String getAuthority(IGGAPIServiceInfos infos) {
+		IGGAPIAccessRule rule = this.accessRules.get(infos.getOperation());
+		if (rule != null)
+			return rule.getAuthority();
 
-			break;
-		}
-		return authority;
+		return null;
 	}
 
-	public GGAPIServiceAccess getAccessForOperation(GGAPIEntityOperation operation) {
-		switch (operation) {
-		case create_one:
-			return creationAccess;
-		case delete_all:
-			return deleteAllAccess;
-		case delete_one:
-			return deleteOneAccess;
-		case read_all:
-			return readAllAccess;
-		default:
-		case read_one:
-			return readOneAccess;
-		case update_one:
-			return updateOneAccess;
-		case custom:
-			return null;
-		}
+	public GGAPIServiceAccess getAccess(IGGAPIServiceInfos infos) {
+		IGGAPIAccessRule rule = this.accessRules.get(infos.getOperation());
+		if (rule != null)
+			return rule.getAccess();
+
+		return GGAPIServiceAccess.tenant;
+	}
+
+	public GGAPIEntitySecurityInfos(GGAPIServiceAccess creationAccess, GGAPIServiceAccess readAllAccess,
+			GGAPIServiceAccess readOneAccess, GGAPIServiceAccess updateOneAccess, GGAPIServiceAccess deleteOneAccess,
+			GGAPIServiceAccess deleteAllAccess, GGAPIServiceAccess countAccess, boolean creationAuthority,
+			boolean readAllAuthority, boolean readOneAuthority, boolean updateOneAuthority, boolean deleteOneAuthority,
+			boolean deleteAllAuthority, boolean countAuthority, GGAPIAuthenticatorInfos authenticatorInfos,
+			String domainName) {
+		this.creationAccess = creationAccess;
+		this.readAllAccess = readAllAccess;
+		this.readOneAccess = readOneAccess;
+		this.updateOneAccess = updateOneAccess;
+		this.deleteOneAccess = deleteOneAccess;
+		this.deleteAllAccess = deleteAllAccess;
+		this.countAccess = countAccess;
+		this.creationAuthority = creationAuthority;
+		this.readAllAuthority = readAllAuthority;
+		this.readOneAuthority = readOneAuthority;
+		this.updateOneAuthority = updateOneAuthority;
+		this.deleteOneAuthority = deleteOneAuthority;
+		this.deleteAllAuthority = deleteAllAuthority;
+		this.countAuthority = countAuthority;
+		this.authenticatorInfos = authenticatorInfos;
+		this.domainName = domainName;
 	}
 }

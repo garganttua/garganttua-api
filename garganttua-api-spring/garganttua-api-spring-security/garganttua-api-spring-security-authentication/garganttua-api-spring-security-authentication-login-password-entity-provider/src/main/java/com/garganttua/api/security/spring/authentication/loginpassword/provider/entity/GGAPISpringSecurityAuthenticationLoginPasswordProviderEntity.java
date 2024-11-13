@@ -32,13 +32,13 @@ public class GGAPISpringSecurityAuthenticationLoginPasswordProviderEntity extend
 	@PostConstruct
 	private void init() throws GGAPISecurityException {
 		this.authenticatorDomain = this.engine.getDomainsRegistry().getDomains().stream().filter(domain -> 
-			domain.getSecurity().authenticatorInfos()!=null?true:false
+			domain.getSecurity().getAuthenticatorInfos()!=null?true:false
 		).findFirst();
 		
 		if( this.authenticatorDomain.isEmpty() ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "No Authenticator Entity found !");
 		}
-		this.detailsService = new GGAPISpringSecurityEntityDetailsService(this.authenticatorDomain.get().getSecurity().authenticatorInfos(), this.engine.getServicesRegistry().getService(this.authenticatorDomain.get().getDomain()));
+		this.detailsService = new GGAPISpringSecurityEntityDetailsService(this.authenticatorDomain.get().getSecurity().getAuthenticatorInfos(), this.engine.getServicesRegistry().getService(this.authenticatorDomain.get().getDomain()));
 		this.setPasswordEncoder(this.passwordEncoder);
 		this.setUserDetailsService(this.detailsService);
 	}

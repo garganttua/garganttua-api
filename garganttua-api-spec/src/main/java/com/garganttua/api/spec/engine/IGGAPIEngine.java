@@ -9,6 +9,7 @@ import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
+import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
 public interface IGGAPIEngine {
@@ -22,6 +23,8 @@ public interface IGGAPIEngine {
     IGGAPIFactoriesRegistry getFactoriesRegistry();
 
     IGGAPIServicesRegistry getServicesRegistry();
+    
+    IGGAPIServicesInfosRegistry getServicesInfosRegistry();
 	
     IGGAPIAccessRulesRegistry getAccessRulesRegistry();
 

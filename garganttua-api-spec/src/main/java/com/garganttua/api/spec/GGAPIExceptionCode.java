@@ -44,6 +44,10 @@ public enum GGAPIExceptionCode {
 	GENERIC_FACTORY_EXCEPTION		(180),
 	INJECTION_ERROR					(181),
 	
+	//Custom services codes
+	CUSTOM_SERVICE_ERROR            (140),
+	
+	
 	/*
 	 * Security API error codes 
 	 */

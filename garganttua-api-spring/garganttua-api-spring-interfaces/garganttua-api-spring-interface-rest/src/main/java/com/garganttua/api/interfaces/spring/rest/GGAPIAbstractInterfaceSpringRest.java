@@ -46,7 +46,7 @@ public abstract class GGAPIAbstractInterfaceSpringRest implements IGGAPIInterfac
 		}
 	}
 
-	protected abstract void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping);
+	protected abstract void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping) throws NoSuchMethodException;
 
 	@Override
 	public void setService(IGGAPIService service) {

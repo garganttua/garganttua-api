@@ -1,24 +1,28 @@
 package com.garganttua.api.interfaces.spring.rest;
 
-import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.server.PathContainer;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.pattern.PathPattern;
+import org.springframework.web.util.pattern.PathPatternParser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.engine.GGAPIEngineException;
-import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +34,18 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 
 	@Autowired
 	protected IGGAPIEngine engine;
+
+	private Map<IGGAPIServiceInfos, PathPattern> patterns;
+	
+	@PostConstruct
+	private void init() {
+		PathPatternParser parser = new PathPatternParser();
+		this.patterns = new HashMap<>();
+		List<IGGAPIServiceInfos> infos = this.engine.getServicesInfosRegistry().getServicesInfos();
+		infos.forEach(info -> {
+			this.patterns.put(info, parser.parse(info.getPath()));
+		});
+	}
 	
 	public static final String CALLER_ATTRIBUTE_NAME = "caller";
 
@@ -50,15 +66,18 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		return uriParts[DOMAIN_INDEX_IN_URI];
 	}
 
-	private String getUri(ServletRequest request) {
+	private IGGAPIServiceInfos getServiceInfos(ServletRequest request, HttpMethod method) {
 		String uri = ((HttpServletRequest) request).getRequestURI();
-		String uriTotest = uri;
-		String[] uriParts = uri.split("/");
+		PathContainer pathContainer = PathContainer.parsePath(uri);
 
-		if (uriParts.length > 3) {
-			uriTotest = "/" + uriParts[1] + "/" + uriParts[2] + "/*";
+		for( Entry<IGGAPIServiceInfos, PathPattern> pattern: this.patterns.entrySet()) {
+			if (pattern.getValue().matches(pathContainer)) {
+				if( pattern.getKey().getOperation().getMethod() == GGAPIServiceMethodToHttpMethodBinder.fromHttpMethodAndEndpoint(method) )
+					return pattern.getKey();
+            }
 		}
-		return uriTotest;
+		
+		return null;
 	}
 
 	private HttpMethod getHttpMethod(ServletRequest request) {
@@ -86,9 +105,13 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	@Override
 	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		HttpMethod method = this.getHttpMethod(request);
-		String uri = this.getUri(request);
+		IGGAPIServiceInfos infos = this.getServiceInfos(request, method);
 		String servletPath = request.getServletPath();
-
+		
+		if( infos == null ){
+			throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, request.getRequestURI() + " does not match any service");
+		}
+		
 		if( log.isDebugEnabled() ) {
 			log.debug("Serving url "+servletPath+ " "+method);
 		}
@@ -111,7 +134,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
 		String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
 
-		IGGAPICaller caller = callerFactory.getCaller(GGAPIServiceMethodToHttpMethodBinder.fromHttpMethodAndEndpoint(method, uri), uri, tenantId, ownerId, requestedtenantId, null);
+		IGGAPICaller caller = callerFactory.getCaller(infos.getOperation(), infos.getPath(), tenantId, ownerId, requestedtenantId, null);
 		 
 		if( log.isDebugEnabled() ) {
 			log.debug("Generated caller "+caller);
@@ -119,7 +142,6 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		
 		request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
 		return;
-
 	}
 	
 	public static void printRequest(HttpServletRequest request) {

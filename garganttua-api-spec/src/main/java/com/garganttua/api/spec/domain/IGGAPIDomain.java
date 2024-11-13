@@ -9,6 +9,7 @@ import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityDocumentationInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
 public interface IGGAPIDomain {
 
@@ -43,5 +44,9 @@ public interface IGGAPIDomain {
 	boolean isOwnerIdMandatoryForOperation(GGAPIEntityOperation operation);
 
 	GGAPIEntityDocumentationInfos getDocumentation();
+
+	void addServicesInfos(List<IGGAPIServiceInfos> servicesInfos);
+	
+	public String getEntityName();
 
 }

@@ -1,26 +1,35 @@
 package com.garganttua.api.core.domain;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.core.accessRules.BasicGGAPIAccessRule;
 import com.garganttua.api.core.dto.checker.GGAPIDtoChecker;
+import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.checker.GGAPIEntityDocumentationChecker;
 import com.garganttua.api.security.core.entity.checker.GGAPIEntitySecurityChecker;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.entity.GGAPIEntityDocumentationInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.security.GGAPICustomServiceSecurity;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.AllArgsConstructor;
@@ -57,6 +66,62 @@ public class GGAPIDomain implements IGGAPIDomain {
 	private boolean allowDeleteOne;
 	@Getter
 	private boolean allowDeleteAll;
+
+	private Map<GGAPIEntityOperation, IGGAPIServiceInfos> serviceInfos = new HashMap<GGAPIEntityOperation, IGGAPIServiceInfos>();
+	
+	@Override
+	public void addServicesInfos(List<IGGAPIServiceInfos> servicesInfos) {
+		servicesInfos.forEach(info -> {
+			this.serviceInfos.put(info.getOperation(), info);
+			try {
+				this.security.addAccessRule(this.createAccessRule(info));
+			} catch (GGAPIEngineException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	private IGGAPIAccessRule createAccessRule(IGGAPIServiceInfos info) throws GGAPIEngineException {
+		boolean auth = false;
+		GGAPIServiceAccess access = GGAPIServiceAccess.anonymous;
+		String authorityLabel = info.getOperation().toString();
+		
+		if( info.getOperation().isCustom() ) {
+			try {
+				Method method = info.getInterface().getDeclaredMethod(info.getMethodName(), info.getParameters());
+				GGAPICustomServiceSecurity annotation = method.getAnnotation(GGAPICustomServiceSecurity.class);
+				access = annotation.access();
+				auth = annotation.authority();
+			} catch (NoSuchMethodException | SecurityException e) {
+				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Error during accesss rule creation for service "+info.toString(),e);
+			}
+		}
+		if( info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.getEntityName())) ) {
+			auth = this.security.isCreationAuthority();
+			access = this.security.getCreationAccess();
+		}
+		if( info.getOperation().equals(GGAPIEntityOperation.deleteAll(this.domain, this.getEntityName())) ) {
+			auth = this.security.isDeleteAllAuthority();
+			access = this.security.getDeleteAllAccess();
+		}
+		if( info.getOperation().equals(GGAPIEntityOperation.deleteOne(this.domain, this.getEntityName())) ) {
+			auth = this.security.isDeleteOneAuthority();
+			access = this.security.getDeleteOneAccess();
+		}
+		if( info.getOperation().equals(GGAPIEntityOperation.readAll(this.domain, this.getEntityName())) ) {
+			auth = this.security.isReadAllAuthority();
+			access = this.security.getReadAllAccess();
+		}
+		if( info.getOperation().equals(GGAPIEntityOperation.readOne(this.domain, this.getEntityName())) ) {
+			auth = this.security.isReadOneAuthority();
+			access = this.security.getReadOneAccess();
+		}
+		if( info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.getEntityName())) ) {
+			auth = this.security.isUpdateOneAuthority();
+			access = this.security.getUpdateOneAccess();
+		}
+		return new BasicGGAPIAccessRule(info.getPath(), auth?authorityLabel:null, info.getOperation(), access);
+	}
 
 	@Override
 	public boolean equals(Object o) {
@@ -136,61 +201,44 @@ public class GGAPIDomain implements IGGAPIDomain {
 
 	@Override
 	public boolean isTenantIdMandatoryForOperation(GGAPIEntityOperation operation) {
-		boolean mandatory = true;
-		switch (operation) {
-		case read_all: 
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.readAllAccess() == GGAPIServiceAccess.tenant || this.security.readAllAccess() == GGAPIServiceAccess.owner ) );
-			break;
-		case create_one:
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.creationAccess() == GGAPIServiceAccess.tenant || this.security.creationAccess() == GGAPIServiceAccess.owner ) );
-			break;
-		case delete_all:
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.deleteAllAccess() == GGAPIServiceAccess.tenant || this.security.deleteAllAccess() == GGAPIServiceAccess.owner ) );
-			break;
-		case delete_one:
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.deleteOneAccess() == GGAPIServiceAccess.tenant || this.security.deleteOneAccess() == GGAPIServiceAccess.owner ) );
-			break;
-		case read_one:
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.readOneAccess() == GGAPIServiceAccess.tenant || this.security.readOneAccess() == GGAPIServiceAccess.owner ) );
-			break;
-		case update_one:
-			mandatory = ( !this.entity.getValue1().publicEntity() && ( this.security.updateOneAccess() == GGAPIServiceAccess.tenant || this.security.updateOneAccess() == GGAPIServiceAccess.owner ) );
-			break;
-		default:
-			mandatory = true;
-			break;
-		}
-
-		return mandatory;
+		IGGAPIServiceInfos info = this.serviceInfos.get(operation);
+		GGAPIServiceAccess access = this.security.getAccess(info);
+		return ( !this.entity.getValue1().publicEntity() && ( access == GGAPIServiceAccess.tenant || access == GGAPIServiceAccess.owner ) );
 	}
 
 	@Override
 	public boolean isOwnerIdMandatoryForOperation(GGAPIEntityOperation operation) {
-		boolean mandatory = true;
-		switch (operation) {
-		case read_all: 
-			mandatory = this.security.readAllAccess() == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
-			break;
-		case create_one:
-			mandatory = this.entity.getValue1().ownedEntity();
-			break;
-		case delete_all:
-			mandatory = this.security.deleteAllAccess() == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
-			break;
-		case delete_one:
-			mandatory = this.security.deleteOneAccess() == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
-			break;
-		case read_one:
-			mandatory = this.security.readOneAccess() == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
-			break;
-		case update_one:
-			mandatory = this.entity.getValue1().ownedEntity();
-			break;
-		default:
-			mandatory = true;
-			break;
+		IGGAPIServiceInfos info = this.serviceInfos.get(operation);
+		GGAPIServiceAccess access = this.security.getAccess(info);
+		
+		if( info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.getEntityName())) || info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.getEntityName()))) {
+			return this.entity.getValue1().ownedEntity();
 		}
+		
+		return access == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
+	}
 
-		return mandatory;
+	public GGAPIDomain(String domain, Pair<Class<?>, GGAPIEntityInfos> entity, List<Pair<Class<?>, GGAPIDtoInfos>> dtos,
+			GGAPIEntityDocumentationInfos documentation, GGAPIEntitySecurityInfos securityInfos, String[] interfaces,
+			String event, boolean allow_creation, boolean allow_read_all, boolean allow_read_one,
+			boolean allow_update_one, boolean allow_delete_one, boolean allow_delete_all) {
+				this.domain = domain;
+				this.dtos = dtos;
+				this.entity = entity;
+				this.documentation = documentation;
+				this.security = securityInfos;
+				this.interfaces = interfaces;
+				this.event = event;
+				this.allowCreation = allow_creation;
+				this.allowReadAll = allow_read_all;
+				this.allowReadOne = allow_read_one;
+				this.allowUpdateOne = allow_update_one;
+				this.allowDeleteOne = allow_delete_one;
+				this.allowDeleteAll = allow_delete_all;
+	}
+
+	@Override
+	public String getEntityName() {
+		return this.entity.getValue0().getSimpleName().toLowerCase();
 	}
 }

@@ -46,7 +46,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		this.domains = domains;
 
 		this.authenticatorDomain = domains.stream().filter(domain -> {
-			return domain.getSecurity().authenticatorInfos()!=null?true:false;
+			return domain.getSecurity().getAuthenticatorInfos()!=null?true:false;
 		}).findFirst();
 	}
 

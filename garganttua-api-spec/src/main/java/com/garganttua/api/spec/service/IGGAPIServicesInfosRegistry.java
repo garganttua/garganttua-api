@@ -6,4 +6,6 @@ public interface IGGAPIServicesInfosRegistry {
 
 	List<IGGAPIServiceInfos> getServiceInfos(String domainName);
 
+	List<IGGAPIServiceInfos> getServicesInfos();
+
 }

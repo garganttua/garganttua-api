@@ -28,7 +28,6 @@ import com.github.victools.jsonschema.module.jackson.JacksonOption;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.StringSchema;
@@ -92,96 +91,96 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 		String entityClassSchema = this.test(entityClass);
 
-		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.getEntity().getValue1().domain().toLowerCase(),
-				entityClass.getSimpleName(), entityClassSchema);
-		PathItem pathItemBase = new PathItem();
-		PathItem pathItemUuid = new PathItem();
-
-		this.openApi.getComponents().addSchemas(entityClass.getSimpleName(),
-				templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()));
-		this.openApi.getComponents().addSchemas("ResponseObject",
-				templateOpenApi.getComponents().getSchemas().get("ResponseObject"));
-		this.openApi.getComponents().addSchemas("SortQuery",
-				templateOpenApi.getComponents().getSchemas().get("SortQuery"));
-		this.openApi.getComponents().addSchemas("FilterQuery",
-				templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
-
-		if (domain.isAllowReadAll()) {
-			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.read_all;
-			boolean hasAuthority = domain.getSecurity().readAllAuthority();
-			GGAPIServiceAccess access = domain.getSecurity().readAllAccess();
-			Operation operation = templateOpenApi.getPaths().get(baseUrl).getGet();
-
-			this.openApi.path(baseUrl, pathItemBase.get(operation.description(this.getOperationDescription(domainName,
-					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readAll(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
-			this.setAdditionalInfos(domain, entityOperation, operation);
-			this.addCustomParamsPathParameter(operation);
-		}
-		if (domain.isAllowDeleteAll()) {
-			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.delete_all;
-			boolean hasAuthority = domain.getSecurity().deleteAllAuthority();
-			GGAPIServiceAccess access = domain.getSecurity().readAllAccess();
-			Operation operation = templateOpenApi.getPaths().get(baseUrl).getDelete();
-
-			this.openApi.path(baseUrl,
-					pathItemBase.delete(operation.description(this.getOperationDescription(domainName, access,
-							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteAll(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
-			this.setAdditionalInfos(domain, entityOperation, operation);
-			this.addCustomParamsPathParameter(operation);
-		}
-		if (domain.isAllowCreation()) {
-			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.create_one;
-			boolean hasAuthority = domain.getSecurity().creationAuthority();
-			GGAPIServiceAccess access = domain.getSecurity().creationAccess();
-			Operation operation = templateOpenApi.getPaths().get(baseUrl).getPost();
-
-			this.openApi.path(baseUrl, pathItemBase.post(operation.description(this.getOperationDescription(domainName,
-					access, hasAuthority, entityOperation, documentation == null ? null : documentation.createOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
-
-			if (!domain.getEntity().getValue1().tenantEntity()) {
-				this.setAdditionalInfos(domain, entityOperation, operation);
-			}
-
-			this.addCustomParamsPathParameter(operation);
-		}
-		if (domain.isAllowReadOne()) {
-			String endpoint = baseUrl + "/{uuid}";
-			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.read_one;
-			boolean hasAuthority = domain.getSecurity().readOneAuthority();
-			GGAPIServiceAccess access = domain.getSecurity().readOneAccess();
-			Operation operation = templateOpenApi.getPaths().get(endpoint).getGet();
-
-			this.openApi.path(endpoint, pathItemUuid.get(operation.description(this.getOperationDescription(domainName,
-					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
-			this.setAdditionalInfos(domain, entityOperation, operation);
-			this.addCustomParamsPathParameter(operation);
-		}
-		if (domain.isAllowUpdateOne()) {
-			String endpoint = baseUrl + "/{uuid}";
-			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.update_one;
-			boolean hasAuthority = domain.getSecurity().updateOneAuthority();
-			GGAPIServiceAccess access = domain.getSecurity().updateOneAccess();
-			Operation operation = templateOpenApi.getPaths().get(endpoint).getPatch();
-
-			this.openApi.path(endpoint,
-					pathItemUuid.patch(operation.description(this.getOperationDescription(domainName, access,
-							hasAuthority, entityOperation, documentation == null ? null : documentation.updateOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
-			this.setAdditionalInfos(domain, entityOperation, operation);
-			this.addCustomParamsPathParameter(operation);
-		}
-		if (domain.isAllowDeleteOne()) {
-			String endpoint = baseUrl + "/{uuid}";
-			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.delete_one;
-			boolean hasAuthority = domain.getSecurity().deleteOneAuthority();
-			GGAPIServiceAccess access = domain.getSecurity().deleteOneAccess();
-			Operation operation = templateOpenApi.getPaths().get(endpoint).getDelete();
-
-			this.openApi.path(endpoint,
-					pathItemUuid.delete(operation.description(this.getOperationDescription(domainName, access,
-							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
-			this.setAdditionalInfos(domain, entityOperation, operation);
-			this.addCustomParamsPathParameter(operation);
-		}
+//		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.getEntity().getValue1().domain().toLowerCase(),
+//				entityClass.getSimpleName(), entityClassSchema);
+//		PathItem pathItemBase = new PathItem();
+//		PathItem pathItemUuid = new PathItem();
+//
+//		this.openApi.getComponents().addSchemas(entityClass.getSimpleName(),
+//				templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()));
+//		this.openApi.getComponents().addSchemas("ResponseObject",
+//				templateOpenApi.getComponents().getSchemas().get("ResponseObject"));
+//		this.openApi.getComponents().addSchemas("SortQuery",
+//				templateOpenApi.getComponents().getSchemas().get("SortQuery"));
+//		this.openApi.getComponents().addSchemas("FilterQuery",
+//				templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
+//
+//		if (domain.isAllowReadAll()) {
+//			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.read_all;
+//			boolean hasAuthority = domain.getSecurity().readAllAuthority();
+//			GGAPIServiceAccess access = domain.getSecurity().readAllAccess();
+//			Operation operation = templateOpenApi.getPaths().get(baseUrl).getGet();
+//
+//			this.openApi.path(baseUrl, pathItemBase.get(operation.description(this.getOperationDescription(domainName,
+//					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readAll(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
+//			this.setAdditionalInfos(domain, entityOperation, operation);
+//			this.addCustomParamsPathParameter(operation);
+//		}
+//		if (domain.isAllowDeleteAll()) {
+//			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.delete_all;
+//			boolean hasAuthority = domain.getSecurity().deleteAllAuthority();
+//			GGAPIServiceAccess access = domain.getSecurity().readAllAccess();
+//			Operation operation = templateOpenApi.getPaths().get(baseUrl).getDelete();
+//
+//			this.openApi.path(baseUrl,
+//					pathItemBase.delete(operation.description(this.getOperationDescription(domainName, access,
+//							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteAll(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
+//			this.setAdditionalInfos(domain, entityOperation, operation);
+//			this.addCustomParamsPathParameter(operation);
+//		}
+//		if (domain.isAllowCreation()) {
+//			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.create_one;
+//			boolean hasAuthority = domain.getSecurity().creationAuthority();
+//			GGAPIServiceAccess access = domain.getSecurity().creationAccess();
+//			Operation operation = templateOpenApi.getPaths().get(baseUrl).getPost();
+//
+//			this.openApi.path(baseUrl, pathItemBase.post(operation.description(this.getOperationDescription(domainName,
+//					access, hasAuthority, entityOperation, documentation == null ? null : documentation.createOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
+//
+//			if (!domain.getEntity().getValue1().tenantEntity()) {
+//				this.setAdditionalInfos(domain, entityOperation, operation);
+//			}
+//
+//			this.addCustomParamsPathParameter(operation);
+//		}
+//		if (domain.isAllowReadOne()) {
+//			String endpoint = baseUrl + "/{uuid}";
+//			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.read_one;
+//			boolean hasAuthority = domain.getSecurity().readOneAuthority();
+//			GGAPIServiceAccess access = domain.getSecurity().readOneAccess();
+//			Operation operation = templateOpenApi.getPaths().get(endpoint).getGet();
+//
+//			this.openApi.path(endpoint, pathItemUuid.get(operation.description(this.getOperationDescription(domainName,
+//					access, hasAuthority, entityOperation, documentation == null ? null : documentation.readOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
+//			this.setAdditionalInfos(domain, entityOperation, operation);
+//			this.addCustomParamsPathParameter(operation);
+//		}
+//		if (domain.isAllowUpdateOne()) {
+//			String endpoint = baseUrl + "/{uuid}";
+//			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.update_one;
+//			boolean hasAuthority = domain.getSecurity().updateOneAuthority();
+//			GGAPIServiceAccess access = domain.getSecurity().updateOneAccess();
+//			Operation operation = templateOpenApi.getPaths().get(endpoint).getPatch();
+//
+//			this.openApi.path(endpoint,
+//					pathItemUuid.patch(operation.description(this.getOperationDescription(domainName, access,
+//							hasAuthority, entityOperation, documentation == null ? null : documentation.updateOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
+//			this.setAdditionalInfos(domain, entityOperation, operation);
+//			this.addCustomParamsPathParameter(operation);
+//		}
+//		if (domain.isAllowDeleteOne()) {
+//			String endpoint = baseUrl + "/{uuid}";
+//			GGAPIEntityOperation entityOperation = GGAPIEntityOperation.delete_one;
+//			boolean hasAuthority = domain.getSecurity().deleteOneAuthority();
+//			GGAPIServiceAccess access = domain.getSecurity().deleteOneAccess();
+//			Operation operation = templateOpenApi.getPaths().get(endpoint).getDelete();
+//
+//			this.openApi.path(endpoint,
+//					pathItemUuid.delete(operation.description(this.getOperationDescription(domainName, access,
+//							hasAuthority, entityOperation, documentation == null ? null : documentation.deleteOne(), domain.getSecurity().getAuthorityForOperation(entityOperation)))));
+//			this.setAdditionalInfos(domain, entityOperation, operation);
+//			this.addCustomParamsPathParameter(operation);
+//		}
 	}
 
 	private void setAdditionalInfos(IGGAPIDomain domain, GGAPIEntityOperation entityOperation, Operation operation) {
@@ -203,7 +202,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private String getDocumentation(IGGAPIDomain domain) {
-		String authenticatorEntity = domain.getSecurity().authenticatorInfos()==null?"false":"true";
+		String authenticatorEntity = domain.getSecurity().getAuthenticatorInfos()==null?"false":"true";
 		String description = "<b>Public Entity</b> [" + domain.getEntity().getValue1().publicEntity() + "] <br> "
 				+ "<b>Shared Entity</b> ["
 				+ (domain.getEntity().getValue1().sharedEntity() ? "false"

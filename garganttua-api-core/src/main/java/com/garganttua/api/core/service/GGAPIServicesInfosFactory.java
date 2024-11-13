@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.garganttua.api.core.engine.GGAPIEngineException;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
@@ -30,7 +32,12 @@ public class GGAPIServicesInfosFactory {
 
 	private void init() {
 		this.domains.parallelStream().forEach(domain -> {
-			List<IGGAPIServiceInfos> infos = GGAPIServicesInfosBuilder.buildGGAPIServices(domain);
+			List<IGGAPIServiceInfos> infos;
+			try {
+				infos = GGAPIServicesInfosBuilder.buildGGAPIServices(domain);
+			} catch (GGAPIEngineException e) {
+				throw new RuntimeException(e);
+			}
 			List<IGGAPIInterface> interfasses = this.interfacesRegistry.getInterfaces(domain.getDomain());
 
 			interfasses.stream().forEach(interfasse -> {
@@ -38,9 +45,14 @@ public class GGAPIServicesInfosFactory {
 				for (Method method : methods) {
 					if (method.isAnnotationPresent(GGAPICustomService.class)) {
 						GGAPICustomService annotation = method.getAnnotation(GGAPICustomService.class);
-						IGGAPIServiceInfos service = GGAPIServicesInfosBuilder.getInfos(method.getName(),
-								method.getParameterTypes(), annotation.path(), annotation.description(),
-								annotation.operation());
+						IGGAPIServiceInfos service;
+						try {
+							service = GGAPIServicesInfosBuilder.getInfos(domain.getDomain(), method.getName(), interfasse.getClass(),
+									method.getParameterTypes(), annotation.path(), annotation.description(),
+									GGAPIEntityOperation.custom(domain.getDomain(), annotation.method(), annotation.entityName(), annotation.actionOnAllEntities()));
+						} catch (GGAPIEngineException e) {
+							throw new RuntimeException(e);
+						}
 						infos.add(service);
 					}
 				}
@@ -49,6 +61,8 @@ public class GGAPIServicesInfosFactory {
 			infos.forEach(info -> {
 				log.info("		Method added [domain {}, service {}]", domain.getEntity().getValue1().domain(), info);
 			});
+			
+			domain.addServicesInfos(infos);
 			
 			this.servicesInfos.put(domain.getDomain(), infos);
 		});

@@ -16,21 +16,21 @@ public class GGAPIEntitySecurityCheckerTest {
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithNoSecurityAnnotation.class, null);
 		
 		assertNotNull(infos);
-		assertEquals(GGAPIServiceAccess.tenant, infos.creationAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.readAllAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.readOneAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.updateOneAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.deleteOneAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.deleteAllAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.countAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getCreationAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getReadAllAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getReadOneAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getUpdateOneAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getDeleteOneAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getDeleteAllAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getCountAccess());
 		
-		assertEquals(true, infos.creationAuthority());
-		assertEquals(true, infos.readAllAuthority());
-		assertEquals(true, infos.readOneAuthority());
-		assertEquals(true, infos.updateOneAuthority());
-		assertEquals(true, infos.deleteOneAuthority());
-		assertEquals(true, infos.deleteAllAuthority());
-		assertEquals(true, infos.countAuthority());	
+		assertEquals(true, infos.isCreationAuthority());
+		assertEquals(true, infos.isReadAllAuthority());
+		assertEquals(true, infos.isReadOneAuthority());
+		assertEquals(true, infos.isUpdateOneAuthority());
+		assertEquals(true, infos.isDeleteOneAuthority());
+		assertEquals(true, infos.isDeleteAllAuthority());
+		assertEquals(true, infos.isCountAuthority());	
 	}
 	
 	@Test
@@ -39,21 +39,21 @@ public class GGAPIEntitySecurityCheckerTest {
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotationButEmpty.class, null);
 		
 		assertNotNull(infos);
-		assertEquals(GGAPIServiceAccess.tenant, infos.creationAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.readAllAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.readOneAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.updateOneAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.deleteOneAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.deleteAllAccess());
-		assertEquals(GGAPIServiceAccess.tenant, infos.countAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getCreationAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getReadAllAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getReadOneAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getUpdateOneAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getDeleteOneAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getDeleteAllAccess());
+		assertEquals(GGAPIServiceAccess.tenant, infos.getCountAccess());
 		
-		assertEquals(true, infos.creationAuthority());
-		assertEquals(true, infos.readAllAuthority());
-		assertEquals(true, infos.readOneAuthority());
-		assertEquals(true, infos.updateOneAuthority());
-		assertEquals(true, infos.deleteOneAuthority());
-		assertEquals(true, infos.deleteAllAuthority());
-		assertEquals(true, infos.countAuthority());	
+		assertEquals(true, infos.isCreationAuthority());
+		assertEquals(true, infos.isReadAllAuthority());
+		assertEquals(true, infos.isReadOneAuthority());
+		assertEquals(true, infos.isUpdateOneAuthority());
+		assertEquals(true, infos.isDeleteOneAuthority());
+		assertEquals(true, infos.isDeleteAllAuthority());
+		assertEquals(true, infos.isCountAuthority());	
 		
 	}
 	
@@ -63,21 +63,21 @@ public class GGAPIEntitySecurityCheckerTest {
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithAnnotation.class, null);
 		
 		assertNotNull(infos);
-		assertEquals(GGAPIServiceAccess.anonymous, infos.creationAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.readAllAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.readOneAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.updateOneAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteOneAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteAllAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.countAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getCreationAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getReadAllAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getReadOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getUpdateOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getDeleteOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getDeleteAllAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getCountAccess());
 		
-		assertEquals(false, infos.creationAuthority());
-		assertEquals(false, infos.readAllAuthority());
-		assertEquals(false, infos.readOneAuthority());
-		assertEquals(false, infos.updateOneAuthority());
-		assertEquals(false, infos.deleteOneAuthority());
-		assertEquals(false, infos.deleteAllAuthority());
-		assertEquals(false, infos.countAuthority());	
+		assertEquals(false, infos.isCreationAuthority());
+		assertEquals(false, infos.isReadAllAuthority());
+		assertEquals(false, infos.isReadOneAuthority());
+		assertEquals(false, infos.isUpdateOneAuthority());
+		assertEquals(false, infos.isDeleteOneAuthority());
+		assertEquals(false, infos.isDeleteAllAuthority());
+		assertEquals(false, infos.isCountAuthority());		
 	}
 	
 	@Test
@@ -86,20 +86,20 @@ public class GGAPIEntitySecurityCheckerTest {
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestAuthenticator.class, null);
 		
 		assertNotNull(infos);
-		assertEquals(GGAPIServiceAccess.anonymous, infos.creationAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.readAllAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.readOneAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.updateOneAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteOneAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.deleteAllAccess());
-		assertEquals(GGAPIServiceAccess.anonymous, infos.countAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getCreationAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getReadAllAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getReadOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getUpdateOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getDeleteOneAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getDeleteAllAccess());
+		assertEquals(GGAPIServiceAccess.anonymous, infos.getCountAccess());
 		
-		assertEquals(false, infos.creationAuthority());
-		assertEquals(false, infos.readAllAuthority());
-		assertEquals(false, infos.readOneAuthority());
-		assertEquals(false, infos.updateOneAuthority());
-		assertEquals(false, infos.deleteOneAuthority());
-		assertEquals(false, infos.deleteAllAuthority());
-		assertEquals(false, infos.countAuthority());	
+		assertEquals(false, infos.isCreationAuthority());
+		assertEquals(false, infos.isReadAllAuthority());
+		assertEquals(false, infos.isReadOneAuthority());
+		assertEquals(false, infos.isUpdateOneAuthority());
+		assertEquals(false, infos.isDeleteOneAuthority());
+		assertEquals(false, infos.isDeleteAllAuthority());
+		assertEquals(false, infos.isCountAuthority());	
 	}
 }

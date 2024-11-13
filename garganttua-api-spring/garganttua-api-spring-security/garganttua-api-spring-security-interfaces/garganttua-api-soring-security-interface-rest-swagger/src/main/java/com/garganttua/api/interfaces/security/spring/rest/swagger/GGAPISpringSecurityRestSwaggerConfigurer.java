@@ -7,6 +7,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
@@ -56,23 +57,29 @@ public class GGAPISpringSecurityRestSwaggerConfigurer implements IGGAPISpringSec
 		
 		SecurityRequirement req = new SecurityRequirement().addList("Authorization");
 		
-		this.engine.getAccessRulesRegistry().getAccessRules().stream().forEach( accessRule -> {
+		this.engine.getAccessRulesRegistry().getAccessRules().stream().filter(accessRule -> {
+				return !accessRule.getOperation().isCustom();
+			}).forEach( accessRule -> {
 			String endpoint = accessRule.getEndpoint().replace("*", "{uuid}");
+			if( this.openApi.get().getPaths() == null ) {
+				return ;
+			}
 			PathItem path = this.openApi.get().getPaths().get(endpoint);
+			if( path == null) {
+				return;
+			}
 			Operation operation = null;
-			switch(accessRule.getOperation()) {
-			case create_one:
+			switch(accessRule.getOperation().getMethod()) {
+			case create:
 				operation = path.getPost();
 				break;
-			case delete_all:
-			case delete_one:
+			case delete:
 				operation = path.getDelete();
 				break;
-			case read_all:
-			case read_one:
+			case read:
 				operation = path.getGet();
 				break;
-			case update_one:
+			case update:
 				operation = path.getPatch();
 				break;
 			}

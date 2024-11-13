@@ -11,7 +11,7 @@ import com.garganttua.api.spec.service.GGAPIServiceAccess;
 @Target(ElementType.METHOD)
 public @interface GGAPICustomServiceSecurity {
 	
-	String authority() default "";
+	boolean authority() default false;
 
 	GGAPIServiceAccess access();
 
