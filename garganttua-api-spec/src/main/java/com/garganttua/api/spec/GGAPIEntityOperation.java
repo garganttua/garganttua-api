@@ -46,7 +46,7 @@ public class GGAPIEntityOperation {
 
 	@Override
 	public String toString() {
-		return this.domainName+"-"+method+"-"+(actionOnAllEntities?"all":"one")+"-"+entityName;
+		return this.domainName+"-"+method+"-"+(actionOnAllEntities?"all":"one")+"-"+(actionOnAllEntities?Pluralizer.toPlural(entityName):Singularizer.toSingular(entityName));
 	}
 	
 	@Override

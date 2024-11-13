@@ -1,8 +1,8 @@
 package com.garganttua.api.core.accessRules;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -10,7 +10,6 @@ import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
-import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 
 import lombok.Getter;
@@ -60,9 +59,13 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 		list.addAll(this.accessRules.stream().map(rule -> {
 			return rule.getAuthority();
 		}).collect(Collectors.toList()));
-		return list.stream().filter(authority -> {
+		List<String> presque_liste_finale = list.stream().filter(authority -> {
 			return (authority != null && !authority.isEmpty());
 		}).collect(Collectors.toList());
+		
+		//remove doobloons
+		Set<String> uniqueSet = new HashSet<>(presque_liste_finale);
+		return new ArrayList<>(uniqueSet);
 	}
 
 }
