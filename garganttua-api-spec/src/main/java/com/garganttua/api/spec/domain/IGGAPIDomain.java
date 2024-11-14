@@ -1,6 +1,7 @@
 package com.garganttua.api.spec.domain;
 
 import java.util.List;
+import java.util.Map;
 
 import org.javatuples.Pair;
 
@@ -47,6 +48,8 @@ public interface IGGAPIDomain {
 
 	void addServicesInfos(List<IGGAPIServiceInfos> servicesInfos);
 	
-	public String getEntityName();
+	String getEntityName();
+	
+	Map<GGAPIEntityOperation, IGGAPIServiceInfos> getServiceInfos();
 
 }

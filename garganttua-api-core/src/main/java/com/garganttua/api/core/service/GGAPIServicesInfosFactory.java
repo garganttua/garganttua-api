@@ -49,7 +49,7 @@ public class GGAPIServicesInfosFactory {
 						try {
 							service = GGAPIServicesInfosBuilder.getInfos(domain.getDomain(), method.getName(), interfasse.getClass(),
 									method.getParameterTypes(), annotation.path(), annotation.description(),
-									GGAPIEntityOperation.custom(domain.getDomain(), annotation.method(), annotation.entityName(), annotation.actionOnAllEntities()));
+									GGAPIEntityOperation.custom(domain.getDomain(), annotation.method(), annotation.entity(), annotation.actionOnAllEntities()));
 						} catch (GGAPIEngineException e) {
 							throw new RuntimeException(e);
 						}

@@ -25,27 +25,27 @@ public class GGAPIServicesInfosBuilder {
     	
 		if (domain.isAllowReadAll()) {
 			Class<?>[] params = {IGGAPICaller.class, GGAPIReadOutputMode.class, IGGAPIPageable.class, IGGAPIFilter.class, IGGAPISort.class, Map.class};
-			services.add(getInfos(domain.getDomain(), "getEntities", null, params, baseUrl, "", GGAPIEntityOperation.readAll(domain.getDomain(), domain.getEntityName())));
+			services.add(getInfos(domain.getDomain(), "getEntities", null, params, baseUrl, "", GGAPIEntityOperation.readAll(domain.getDomain(), domain.getEntity().getValue0())));
 		}
 		if (domain.isAllowDeleteAll()) {
 			Class<?>[] params = {IGGAPICaller.class,  IGGAPIFilter.class, Map.class};
-			services.add(getInfos(domain.getDomain(), "deleteAll", null, params, baseUrl, "", GGAPIEntityOperation.deleteAll(domain.getDomain(), domain.getEntityName())));
+			services.add(getInfos(domain.getDomain(), "deleteAll", null, params, baseUrl, "", GGAPIEntityOperation.deleteAll(domain.getDomain(), domain.getEntity().getValue0())));
 		}
 		if (domain.isAllowCreation()) {
 			Class<?>[] params = {IGGAPICaller.class, Object.class, Map.class};
-			services.add(getInfos(domain.getDomain(), "createEntity", null, params, baseUrl, "", GGAPIEntityOperation.createOne(domain.getDomain(), domain.getEntityName())));
+			services.add(getInfos(domain.getDomain(), "createEntity", null, params, baseUrl, "", GGAPIEntityOperation.createOne(domain.getDomain(), domain.getEntity().getValue0())));
 		}
 		if (domain.isAllowReadOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
-			services.add(getInfos(domain.getDomain(), "getEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.readOne(domain.getDomain(), domain.getEntityName())));
+			services.add(getInfos(domain.getDomain(), "getEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.readOne(domain.getDomain(), domain.getEntity().getValue0())));
 		}
 		if (domain.isAllowUpdateOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Object.class, Map.class};
-			services.add(getInfos(domain.getDomain(), "updateEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.updateOne(domain.getDomain(), domain.getEntityName())));
+			services.add(getInfos(domain.getDomain(), "updateEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.updateOne(domain.getDomain(), domain.getEntity().getValue0())));
 		}
 		if (domain.isAllowDeleteOne()) {
 			Class<?>[] params = {IGGAPICaller.class, String.class, Map.class};
-			services.add(getInfos(domain.getDomain(), "deleteEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.deleteOne(domain.getDomain(), domain.getEntityName())));
+			services.add(getInfos(domain.getDomain(), "deleteEntity", null, params, baseUrl+"/{uuid}", "", GGAPIEntityOperation.deleteOne(domain.getDomain(), domain.getEntity().getValue0())));
 		}
 
         return services;

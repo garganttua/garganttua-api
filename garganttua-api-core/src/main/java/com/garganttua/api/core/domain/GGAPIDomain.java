@@ -66,7 +66,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 	private boolean allowDeleteOne;
 	@Getter
 	private boolean allowDeleteAll;
-
+	@Getter
 	private Map<GGAPIEntityOperation, IGGAPIServiceInfos> serviceInfos = new HashMap<GGAPIEntityOperation, IGGAPIServiceInfos>();
 	
 	@Override
@@ -96,27 +96,27 @@ public class GGAPIDomain implements IGGAPIDomain {
 				throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Error during accesss rule creation for service "+info.toString(),e);
 			}
 		}
-		if( info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.getEntityName())) ) {
+		if( info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.entity.getValue0())) ) {
 			auth = this.security.isCreationAuthority();
 			access = this.security.getCreationAccess();
 		}
-		if( info.getOperation().equals(GGAPIEntityOperation.deleteAll(this.domain, this.getEntityName())) ) {
+		if( info.getOperation().equals(GGAPIEntityOperation.deleteAll(this.domain, this.entity.getValue0())) ) {
 			auth = this.security.isDeleteAllAuthority();
 			access = this.security.getDeleteAllAccess();
 		}
-		if( info.getOperation().equals(GGAPIEntityOperation.deleteOne(this.domain, this.getEntityName())) ) {
+		if( info.getOperation().equals(GGAPIEntityOperation.deleteOne(this.domain, this.entity.getValue0())) ) {
 			auth = this.security.isDeleteOneAuthority();
 			access = this.security.getDeleteOneAccess();
 		}
-		if( info.getOperation().equals(GGAPIEntityOperation.readAll(this.domain, this.getEntityName())) ) {
+		if( info.getOperation().equals(GGAPIEntityOperation.readAll(this.domain, this.entity.getValue0())) ) {
 			auth = this.security.isReadAllAuthority();
 			access = this.security.getReadAllAccess();
 		}
-		if( info.getOperation().equals(GGAPIEntityOperation.readOne(this.domain, this.getEntityName())) ) {
+		if( info.getOperation().equals(GGAPIEntityOperation.readOne(this.domain, this.entity.getValue0())) ) {
 			auth = this.security.isReadOneAuthority();
 			access = this.security.getReadOneAccess();
 		}
-		if( info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.getEntityName())) ) {
+		if( info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.entity.getValue0())) ) {
 			auth = this.security.isUpdateOneAuthority();
 			access = this.security.getUpdateOneAccess();
 		}
@@ -211,7 +211,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 		IGGAPIServiceInfos info = this.serviceInfos.get(operation);
 		GGAPIServiceAccess access = this.security.getAccess(info);
 		
-		if( info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.getEntityName())) || info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.getEntityName()))) {
+		if( info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.entity.getValue0())) || info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.entity.getValue0()))) {
 			return this.entity.getValue1().ownedEntity();
 		}
 		

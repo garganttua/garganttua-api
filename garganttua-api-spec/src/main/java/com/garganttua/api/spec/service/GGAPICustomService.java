@@ -13,7 +13,7 @@ public @interface GGAPICustomService {
 
 	String path();
 	
-	String entityName();
+	Class<?> entity();
 	
 	boolean actionOnAllEntities();
 	

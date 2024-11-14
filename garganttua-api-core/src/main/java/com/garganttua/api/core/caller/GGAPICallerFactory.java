@@ -121,7 +121,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 	}
 
 	private String setTenantIdToNullIfThisIsTenantCreationRequest(IGGAPIAccessRule accessRule, String tenantIdTemp) {
-		if( accessRule.getOperation().equals(GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntityName())) && this.domain.getDomain().equals(this.tenantsDomain.getDomain()) )
+		if( accessRule.getOperation().equals(GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntity().getValue0())) && this.domain.getDomain().equals(this.tenantsDomain.getDomain()) )
 			return null;
 		return tenantIdTemp;
 	}

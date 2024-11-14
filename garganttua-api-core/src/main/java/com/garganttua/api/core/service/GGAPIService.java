@@ -76,7 +76,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCreation();}, command, customParameters, GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntityName()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCreation();}, command, customParameters, GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
 	}
 
 	@Override
@@ -137,7 +137,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadAll();}, command, customParameters, GGAPIEntityOperation.readAll(this.domain.getDomain(), this.domain.getEntityName()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadAll();}, command, customParameters, GGAPIEntityOperation.readAll(this.domain.getDomain(), this.domain.getEntity().getValue0()));
 	}
 
 	@Override
@@ -150,7 +150,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadOne();}, command, customParameters, GGAPIEntityOperation.readOne(this.domain.getDomain(), this.domain.getEntityName()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadOne();}, command, customParameters, GGAPIEntityOperation.readOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
 	}
 
 	@Override
@@ -165,7 +165,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowUpdateOne();}, command, customParameters, GGAPIEntityOperation.updateOne(this.domain.getDomain(), this.domain.getEntityName()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowUpdateOne();}, command, customParameters, GGAPIEntityOperation.updateOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
 	}
 
 	@Override
@@ -179,7 +179,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteOne();}, command, customParameters, GGAPIEntityOperation.deleteOne(this.domain.getDomain(), this.domain.getEntityName()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteOne();}, command, customParameters, GGAPIEntityOperation.deleteOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
 	}
 
 	@Override
@@ -196,7 +196,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.deleteAll(this.domain.getDomain(), this.domain.getEntityName()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.deleteAll(this.domain.getDomain(), this.domain.getEntity().getValue0()));
 	}
 
 	protected IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation) {
