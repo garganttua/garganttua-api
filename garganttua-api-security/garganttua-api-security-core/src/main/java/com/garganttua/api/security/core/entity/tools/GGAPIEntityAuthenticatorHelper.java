@@ -6,7 +6,6 @@ import com.garganttua.api.security.core.entity.checker.GGAPIEntityAuthenticatorC
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
-import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.security.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
 import com.garganttua.reflection.GGReflectionException;
@@ -18,28 +17,6 @@ public class GGAPIEntityAuthenticatorHelper {
 		return domainsRegistry.getDomains().parallelStream().filter(e -> 
 			e.getEntity().getValue0().getAnnotation(GGAPIAuthenticator.class)==null?false:true
 		).findFirst().get();
-	}
-	
-	public static String getLogin(Object entity) throws GGAPIException {
-		GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
-		try {
-			return (String) GGObjectQueryFactory.objectQuery(entity).getValue(infos.loginFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}
-		// Should never be reached
-		return null; 
-	}
-
-	public static String getPassword(Object entity) throws GGAPIException {
-		GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
-		try {
-			return (String) GGObjectQueryFactory.objectQuery(entity).getValue(infos.passwordFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}
-		// Should never be reached
-		return null; 
 	}
 
 	@SuppressWarnings("unchecked")
@@ -96,15 +73,6 @@ public class GGAPIEntityAuthenticatorHelper {
 		}
 		// Should never be reached
 		return false; 
-	}
-
-	public static void setPassword(Object entity, String password) throws GGAPIException {
-		GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.passwordFieldAddress(), password);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}	
 	}
 
 }

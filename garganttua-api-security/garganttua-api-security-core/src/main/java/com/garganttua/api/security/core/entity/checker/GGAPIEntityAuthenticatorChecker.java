@@ -16,8 +16,6 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorAccountNon
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorAuthorities;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorCredentialsNonExpired;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorEnabled;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorLogin;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorPassword;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
@@ -51,21 +49,6 @@ public class GGAPIEntityAuthenticatorChecker {
 		String enabledFieldName = GGAPIEntityAuthenticatorChecker.checkEnabledAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
 		String autoritiesFieldName = GGAPIEntityAuthenticatorChecker.checkAuthoritiesAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
 		
-		String loginFieldName = null; 
-		String passwordFieldName = null;
-		
-		try {
-			loginFieldName= GGAPIEntityAuthenticatorChecker.checkLoginAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
-		} catch (GGAPIException e) {
-			log.warn("Entity Authenticator " + entityAuthenticatorClass.getSimpleName() + " does not have a field annotated with @GGAPILogin");
-		}
-		
-		try {
-			passwordFieldName = GGAPIEntityAuthenticatorChecker.checkPasswordAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
-		} catch (GGAPIException e) {
-			log.warn("Entity Authenticator " + entityAuthenticatorClass.getSimpleName() + " does not have a field annotated with @GGAPIPassword");
-		}
-		
 		IGGObjectQuery q;
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
@@ -75,9 +58,7 @@ public class GGAPIEntityAuthenticatorChecker {
 					q.address(accountNonExpiredFieldName), 
 					q.address(accountNonLockedFieldName), 
 					q.address(credentialsNonExpiredFieldName), 
-					q.address(enabledFieldName), 
-					loginFieldName==null?null:q.address(loginFieldName), 
-					passwordFieldName==null?null:q.address(passwordFieldName));
+					q.address(enabledFieldName));
 			
 			GGAPIEntityAuthenticatorChecker.infos.put(entityAuthenticatorClass, authenticatorinfos);
 
@@ -91,22 +72,6 @@ public class GGAPIEntityAuthenticatorChecker {
 		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorAuthorities.class, List.class);
 		if( fieldAddress == null ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorAutorities");
-		}
-		return fieldAddress; 
-	}
-	
-	private static String checkPasswordAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIException {
-		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorPassword.class, String.class);
-		if( fieldAddress == null ) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorPassword");
-		}
-		return fieldAddress; 
-	}
-	
-	private static String checkLoginAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIException {
-		String fieldAddress = GGAPIEntityAuthenticatorChecker.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorLogin.class, String.class);
-		if( fieldAddress == null ) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorLogin");
 		}
 		return fieldAddress; 
 	}
@@ -143,7 +108,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		return fieldAddress; 
 	}
 
-	private static String getFieldAddressAnnotatedWithAndCheckType(Class<?> entityAuthenticatorClass, Class<? extends Annotation> annotationClass, Class<?> fieldClass) throws GGAPIException {
+	public static String getFieldAddressAnnotatedWithAndCheckType(Class<?> entityAuthenticatorClass, Class<? extends Annotation> annotationClass, Class<?> fieldClass) throws GGAPIException {
 		String fieldAddress = null;
 		for( Field field: entityAuthenticatorClass.getDeclaredFields() ) {
 			if( field.isAnnotationPresent(annotationClass) ) {

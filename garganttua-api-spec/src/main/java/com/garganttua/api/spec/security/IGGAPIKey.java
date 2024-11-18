@@ -6,6 +6,10 @@ import com.garganttua.api.spec.GGAPIException;
 
 public interface IGGAPIKey {
 	
-	Key getSigningKey() throws GGAPIException;
+	byte[] cipher(byte[] clear) throws GGAPIException;
+	
+	byte[] uncipher(byte[] encoded) throws GGAPIException;
+
+	Key getKey() throws GGAPIException;
 	
 }

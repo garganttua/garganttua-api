@@ -1,7 +1,10 @@
 package com.garganttua.api.security.core.engine;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -24,19 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 
-	protected Optional<IGGAPIDomain> authenticatorDomain;
-	
-	protected Optional<IGGAPIAuthenticationManager> authenticationManager; 
+	protected List<IGGAPIAuthenticationManager> authenticationManagers = new ArrayList<IGGAPIAuthenticationManager>(); 
 	protected Optional<IGGAPIAuthorizationManager> authorizationManager;
 	protected Optional<IGGAPITenantVerifier> tenantVerifier;
 	protected Optional<IGGAPIOwnerVerifier> ownerVerifier;
 	
-	protected Set<IGGAPIDomain> domains; 
+	protected Set<IGGAPIDomain> domains;
+	private List<IGGAPIDomain> authenticatorDomains; 
 
-	protected GGAPISecurityEngine(Set<IGGAPIDomain> domains, Optional<IGGAPIAuthorizationManager> authorizationManager, Optional<IGGAPIAuthenticationManager> authenticationManager, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
+	protected GGAPISecurityEngine(Set<IGGAPIDomain> domains, Optional<IGGAPIAuthorizationManager> authorizationManager, List<IGGAPIAuthenticationManager> authenticationManagers, Optional<IGGAPITenantVerifier> tenantVerifier, Optional<IGGAPIOwnerVerifier> ownerVerifier) {
 		log.info("Garganttua API Security Engine initalisation");
 		this.authorizationManager = authorizationManager;
-		this.authenticationManager = authenticationManager;
+		this.authenticationManagers = authenticationManagers;
 		this.tenantVerifier = tenantVerifier;
 		this.ownerVerifier = ownerVerifier;
 		this.setDomains(domains);
@@ -45,16 +47,17 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	private void setDomains(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
 
-		this.authenticatorDomain = domains.stream().filter(domain -> {
+		this.authenticatorDomains = domains.stream().filter(domain -> {
 			return domain.getSecurity().getAuthenticatorInfos()!=null?true:false;
-		}).findFirst();
+		}).collect(Collectors.toList());
 	}
 
 	@Override
 	public boolean isAuthenticatorEntity(Object entity) {
 		boolean isAuthenticator = false;
-		if( this.authenticatorDomain.isPresent() )
-			isAuthenticator = this.authenticatorDomain.get().getEntity().getValue0().equals(entity.getClass());
+		for( IGGAPIDomain domain: this.authenticatorDomains) {
+			isAuthenticator |= domain.getEntity().getValue0().equals(entity.getClass());
+		}
 		
 		return isAuthenticator;
 	}
@@ -62,24 +65,29 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	@Override
 	public Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPIException {
 		if( this.isAuthenticatorEntity(entity) ) {
-			if( this.authenticationManager.isPresent() ) {
-				return this.authenticationManager.get().applySecurityOnAuthenticatorEntity(entity);
+			for( IGGAPIAuthenticationManager manager: this.authenticationManagers ) {
+				manager.applySecurityOnAuthenticatorEntity(entity);
 			}
+			return entity;
 		}
 		return null;
 	}
 
 	@Override
 	public IGGAPIAuthentication authenticate(IGGAPIAuthentication authentication) throws GGAPIException {
-		if( this.authenticationManager.isPresent() ) {
-			authentication = this.authenticationManager.get().authenticate(authentication);
-			if( authentication.isAuthenticated() && this.authorizationManager.isPresent() ) {
-				return this.authorizationManager.get().createAuthorization(authentication);
-			} else {
-				return authentication;
+		
+		for( IGGAPIAuthenticationManager manager: this.authenticationManagers ) {
+			authentication = manager.authenticate(authentication);
+			if( authentication.isAuthenticated() ) {
+				break;
 			}
 		}
-		return null;
+		
+		if( authentication.isAuthenticated() && this.authorizationManager.isPresent() ) {
+			return this.authorizationManager.get().createAuthorization(authentication);
+		} else {
+			return authentication;
+		}
 	}
 
 	@Override
@@ -118,8 +126,10 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	@Override
 	public void ifAuthenticationManagerPresentOrElse(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
 			throws GGAPIException {
-		if( this.authenticationManager.isPresent() ){
-			method.ifPresent(this.authenticationManager.get(), caller);
+		if( !this.authenticationManagers.isEmpty() ){
+			for( IGGAPIAuthenticationManager manager: this.authenticationManagers ) {
+				method.ifPresent(manager, caller);
+			}
 		} else {
 			if( orElseMethod != null ) {
 				orElseMethod.orElse();

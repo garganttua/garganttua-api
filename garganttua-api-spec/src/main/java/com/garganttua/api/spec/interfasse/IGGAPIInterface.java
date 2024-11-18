@@ -1,5 +1,7 @@
 package com.garganttua.api.spec.interfasse;
 
+import java.lang.reflect.Method;
+
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngineObject;
@@ -14,5 +16,7 @@ public interface IGGAPIInterface extends IGGAPIEngineObject {
 	void setService(IGGAPIService service);
 
 	String getName();
+
+	Method getMethod(GGAPIInterfaceMethod method);
 
 }

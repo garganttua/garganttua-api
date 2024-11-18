@@ -15,9 +15,5 @@ public interface IGGAPIKeyRealm {
 	IGGAPIKey getKeyForCiphering() throws GGAPIException;
 
 	String getUuid();
-	
-	byte[] sign(byte[] toBeSigned)throws GGAPIException;
-	
-	void verifySignature(byte[] signature, byte[] original) throws GGAPIException;
 
 }

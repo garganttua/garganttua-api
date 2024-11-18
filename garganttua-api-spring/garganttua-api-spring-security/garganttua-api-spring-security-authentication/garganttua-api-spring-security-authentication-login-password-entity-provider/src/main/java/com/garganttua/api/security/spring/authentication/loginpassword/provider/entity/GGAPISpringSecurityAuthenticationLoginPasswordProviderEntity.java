@@ -1,6 +1,7 @@
 package com.garganttua.api.security.spring.authentication.loginpassword.provider.entity;
 
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -12,7 +13,6 @@ import com.garganttua.api.security.spring.password.encoders.IGGAPISpringPassword
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.security.IGGAPIAuthentication;
 
 import jakarta.annotation.PostConstruct;
 
@@ -25,20 +25,20 @@ public class GGAPISpringSecurityAuthenticationLoginPasswordProviderEntity extend
 	@Autowired
 	private IGGAPISpringPasswordEncoder passwordEncoder;
 
-	private Optional<IGGAPIDomain> authenticatorDomain;
+	private List<IGGAPIDomain> authenticatorDomains;
 
 	private GGAPISpringSecurityEntityDetailsService detailsService;
 
 	@PostConstruct
 	private void init() throws GGAPISecurityException {
-		this.authenticatorDomain = this.engine.getDomainsRegistry().getDomains().stream().filter(domain -> 
+		this.authenticatorDomains = this.engine.getDomainsRegistry().getDomains().stream().filter(domain -> 
 			domain.getSecurity().getAuthenticatorInfos()!=null?true:false
-		).findFirst();
+		).collect(Collectors.toList());
 		
-		if( this.authenticatorDomain.isEmpty() ) {
+		if( this.authenticatorDomains.isEmpty() ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "No Authenticator Entity found !");
 		}
-		this.detailsService = new GGAPISpringSecurityEntityDetailsService(this.authenticatorDomain.get().getSecurity().getAuthenticatorInfos(), this.engine.getServicesRegistry().getService(this.authenticatorDomain.get().getDomain()));
+		this.detailsService = new GGAPISpringSecurityEntityDetailsService(this.authenticatorDomains, this.engine);
 		this.setPasswordEncoder(this.passwordEncoder);
 		this.setUserDetailsService(this.detailsService);
 	}

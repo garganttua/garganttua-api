@@ -1,5 +1,7 @@
 package com.garganttua.api.security.core.engine;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,7 +15,7 @@ import com.garganttua.api.spec.security.IGGAPITenantVerifier;
 
 public class GGAPISecurityBuilder implements IGGAPISecurityBuilder {
 
-	private IGGAPIAuthenticationManager authenticationManager = null;
+	private List<IGGAPIAuthenticationManager> authenticationManager = new ArrayList<IGGAPIAuthenticationManager>();
 	private IGGAPIAuthorizationManager authorizationManager = null;
 	private IGGAPITenantVerifier tenantVerifier = null;
 	private IGGAPIOwnerVerifier ownerVerifier = null;
@@ -21,7 +23,7 @@ public class GGAPISecurityBuilder implements IGGAPISecurityBuilder {
 
 	@Override
 	public IGGAPISecurityBuilder authenticationManager(IGGAPIAuthenticationManager manager) {
-		this.authenticationManager = manager;
+		this.authenticationManager.add(manager);
 		return this;
 	}
 
@@ -54,7 +56,7 @@ public class GGAPISecurityBuilder implements IGGAPISecurityBuilder {
 		return new GGAPISecurityEngine(
 				this.domains,
 				Optional.ofNullable(this.authorizationManager), 
-				Optional.ofNullable(this.authenticationManager), 
+				this.authenticationManager, 
 				Optional.ofNullable(this.tenantVerifier), 
 				Optional.ofNullable(this.ownerVerifier)
 		);

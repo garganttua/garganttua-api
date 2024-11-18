@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.security.core.entity.tools.GGAPIEntityAuthenticatorHelper;
+import com.garganttua.api.security.spring.authentication.loginpassword.GGAPILoginPasswordEntityAuthenticatorHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.IGGAPIAuthenticator;
 
@@ -59,7 +60,7 @@ public class GGAPIEntityDetails implements UserDetails, IGGAPIAuthenticator {
 	@Override
 	public String getPassword() {
 		try {
-			return GGAPIEntityAuthenticatorHelper.getPassword(this.entity);
+			return GGAPILoginPasswordEntityAuthenticatorHelper.getPassword(this.entity);
 		} catch (GGAPIException e) {
 			if( log.isDebugEnabled() ) {
 				log.warn("Unable to get password", e);
@@ -71,7 +72,7 @@ public class GGAPIEntityDetails implements UserDetails, IGGAPIAuthenticator {
 	@Override
 	public String getUsername() {
 		try {
-			return GGAPIEntityAuthenticatorHelper.getLogin(this.entity);
+			return GGAPILoginPasswordEntityAuthenticatorHelper.getLogin(this.entity);
 		} catch (GGAPIException e) {
 			if( log.isDebugEnabled() ) {
 				log.warn("Unable to get login", e);

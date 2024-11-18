@@ -1,5 +1,6 @@
 package com.garganttua.api.security.spring.core;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ public class GGAPISpringSecurityConfiguration {
 	private Optional<IGGAPIAuthorizationManager> authorizationManager;
 	
 	@Autowired
-	private Optional<IGGAPIAuthenticationManager> authenticationManager;
+	private List<IGGAPIAuthenticationManager> authenticationManagers;
 
 	@Autowired
 	private IGGAPIEngine engine;
@@ -31,7 +32,7 @@ public class GGAPISpringSecurityConfiguration {
 	@Bean
 	public IGGAPISecurityEngine createSecurityEngine() {
 		GGAPISecurityBuilder builder = new GGAPISecurityBuilder();
-		this.authenticationManager.ifPresent(authenticationManager -> {builder.authenticationManager(authenticationManager);});
+		this.authenticationManagers.forEach(authenticationManager -> {builder.authenticationManager(authenticationManager);});
 		this.authorizationManager.ifPresent(authorizationManager -> {builder.authorizationManager(authorizationManager);});
 		
 		builder.domains(this.engine.getDomainsRegistry().getDomains());

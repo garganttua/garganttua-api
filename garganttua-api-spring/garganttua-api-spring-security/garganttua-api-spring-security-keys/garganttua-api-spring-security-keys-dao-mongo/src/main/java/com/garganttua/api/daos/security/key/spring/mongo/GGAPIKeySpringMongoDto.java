@@ -16,7 +16,7 @@ public class GGAPIKeySpringMongoDto {
 	private String algorithm;
 	
 	@Field
-	@GGFieldMappingRule(sourceFieldAddress = "key")
+	@GGFieldMappingRule(sourceFieldAddress = "rawKey")
 	private byte[] key;
 
 }

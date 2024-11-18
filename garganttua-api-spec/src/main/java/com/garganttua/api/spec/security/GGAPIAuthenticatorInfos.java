@@ -9,9 +9,7 @@ public record GGAPIAuthenticatorInfos (
 		GGObjectAddress isAccountNonExpiredFieldAddress,
 		GGObjectAddress isAccountNonLockedFieldAddress,
 		GGObjectAddress isCredentialsNonExpiredFieldAddress,
-		GGObjectAddress isEnabledFieldAddress,
-		GGObjectAddress loginFieldAddress,
-		GGObjectAddress passwordFieldAddress) {
+		GGObjectAddress isEnabledFieldAddress) {
 		
 		@Override
 	    public int hashCode() {
@@ -20,9 +18,7 @@ public record GGAPIAuthenticatorInfos (
 	                isAccountNonExpiredFieldAddress,
 	                isAccountNonLockedFieldAddress,
 	                isCredentialsNonExpiredFieldAddress,
-	                isEnabledFieldAddress,
-	                loginFieldAddress,
-	                passwordFieldAddress);
+	                isEnabledFieldAddress);
 	    }
 
 	    @Override
@@ -33,8 +29,6 @@ public record GGAPIAuthenticatorInfos (
 	                ", isAccountNonLockedFieldAddress=" + isAccountNonLockedFieldAddress +
 	                ", isCredentialsNonExpiredFieldAddress=" + isCredentialsNonExpiredFieldAddress +
 	                ", isEnabledField=" + isEnabledFieldAddress +
-	                ", loginFieldAddress=" + loginFieldAddress +
-	                ", passwordFieldAddress=" + passwordFieldAddress +
 	                '}';
 	    }
 
@@ -47,8 +41,6 @@ public record GGAPIAuthenticatorInfos (
 	                Objects.equals(isAccountNonExpiredFieldAddress, that.isAccountNonExpiredFieldAddress) &&
 	                Objects.equals(isAccountNonLockedFieldAddress, that.isAccountNonLockedFieldAddress) &&
 	                Objects.equals(isCredentialsNonExpiredFieldAddress, that.isCredentialsNonExpiredFieldAddress) &&
-	                Objects.equals(isEnabledFieldAddress, that.isEnabledFieldAddress) &&
-	                Objects.equals(loginFieldAddress, that.loginFieldAddress) &&
-	                Objects.equals(passwordFieldAddress, that.passwordFieldAddress);
+	                Objects.equals(isEnabledFieldAddress, that.isEnabledFieldAddress);
 	    }
 	}

@@ -60,7 +60,7 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 		claims.put("uuid", this.uuid);
 
 		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.id).setIssuedAt(this.creationDate)
-				.signWith(this.key.getSigningKey(), SignatureAlgorithm.forName(this.jwtAlgo));
+				.signWith(this.key.getKey(), SignatureAlgorithm.forName(this.jwtAlgo));
 
 		token.setExpiration(this.expirationDate);
 		return token.compact().getBytes();
@@ -113,7 +113,7 @@ public class GGAPISpringJWTAuthorization extends GGAPISpringSecurityAuthorizatio
 		}
 		try {
 			Jwts.parserBuilder()
-			.setSigningKey(this.key.getSigningKey())
+			.setSigningKey(this.key.getKey())
 			.requireExpiration(this.expirationDate)
 			.requireIssuedAt(this.creationDate)
 			.requireSubject(this.id)

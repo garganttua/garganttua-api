@@ -1,4 +1,4 @@
-package com.garganttua.api.spec.security.annotations;
+package com.garganttua.api.security.spring.authentication.loginpassword;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

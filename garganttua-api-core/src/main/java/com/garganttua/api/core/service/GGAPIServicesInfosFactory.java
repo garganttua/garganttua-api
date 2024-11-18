@@ -32,38 +32,39 @@ public class GGAPIServicesInfosFactory {
 
 	private void init() {
 		this.domains.parallelStream().forEach(domain -> {
+			this.createInfos(domain);
+		});
+	}
+
+	private void createInfos(IGGAPIDomain domain) {
+		List<IGGAPIInterface> interfasses = this.interfacesRegistry.getInterfaces(domain.getDomain());
+		interfasses.stream().forEach(interfasse -> {
 			List<IGGAPIServiceInfos> infos;
 			try {
-				infos = GGAPIServicesInfosBuilder.buildGGAPIServices(domain);
+				infos = GGAPIServicesInfosBuilder.buildGGAPIServices(domain, interfasse);
 			} catch (GGAPIEngineException e) {
 				throw new RuntimeException(e);
 			}
-			List<IGGAPIInterface> interfasses = this.interfacesRegistry.getInterfaces(domain.getDomain());
-
-			interfasses.stream().forEach(interfasse -> {
-				Method[] methods = interfasse.getClass().getDeclaredMethods();
-				for (Method method : methods) {
-					if (method.isAnnotationPresent(GGAPICustomService.class)) {
-						GGAPICustomService annotation = method.getAnnotation(GGAPICustomService.class);
-						IGGAPIServiceInfos service;
-						try {
-							service = GGAPIServicesInfosBuilder.getInfos(domain.getDomain(), method.getName(), interfasse.getClass(),
-									method.getParameterTypes(), annotation.path(), annotation.description(),
-									GGAPIEntityOperation.custom(domain.getDomain(), annotation.method(), annotation.entity(), annotation.actionOnAllEntities()));
-						} catch (GGAPIEngineException e) {
-							throw new RuntimeException(e);
-						}
-						infos.add(service);
+			Method[] methods = interfasse.getClass().getDeclaredMethods();
+			for (Method method : methods) {
+				if (method.isAnnotationPresent(GGAPICustomService.class)) {
+					GGAPICustomService annotation = method.getAnnotation(GGAPICustomService.class);
+					IGGAPIServiceInfos service;
+					try {
+						service = GGAPIServicesInfosBuilder.getInfos(domain.getDomain(), interfasse.getClass(),
+								method, annotation.path(), annotation.description(),
+								GGAPIEntityOperation.custom(domain.getDomain(), annotation.method(), annotation.entity(), annotation.actionOnAllEntities()));
+					} catch (GGAPIEngineException e) {
+						throw new RuntimeException(e);
 					}
+					infos.add(service);
 				}
-			});
-
+			}
 			infos.forEach(info -> {
 				log.info("		Method added [domain {}, service {}]", domain.getEntity().getValue1().domain(), info);
 			});
 			
 			domain.addServicesInfos(infos);
-			
 			this.servicesInfos.put(domain.getDomain(), infos);
 		});
 	}

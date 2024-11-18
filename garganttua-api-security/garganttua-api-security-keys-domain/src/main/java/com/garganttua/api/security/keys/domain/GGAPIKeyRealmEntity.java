@@ -103,18 +103,6 @@ public class GGAPIKeyRealmEntity extends GenericGGAPIEntity implements IGGAPIKey
 		return this.uncipheringKey;
     }
 
-	@Override
-	public byte[] sign(byte[] toBeSigned) throws GGAPISecurityException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void verifySignature(byte[] signature, byte[] original) throws GGAPISecurityException {
-		// TODO Auto-generated method stub
-		
-	}
-
 	public static GGObjectAddress getExpirationFieldAddress() {
 		try {
 			return new GGObjectAddress("expiration");

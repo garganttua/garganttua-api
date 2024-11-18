@@ -1,7 +1,7 @@
 package com.garganttua.api.interfaces.spring.rest.swagger;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +14,9 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.garganttua.api.spec.GGAPIEntityOperation;
@@ -37,12 +40,14 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MapSchema;
+import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
-import io.swagger.v3.oas.models.parameters.Parameter;
 import io.swagger.v3.oas.models.parameters.PathParameter;
 import io.swagger.v3.oas.models.parameters.QueryParameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.tags.Tag;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -148,13 +153,47 @@ public class GGAPIInterfaceSpringRestSwagger {
 		
 		this.setAdditionalInfos(domain, operation, httpOperation);
 				
-		List<String> pathParameters = this.extractSubstringsBetweenBraces(info.getPath());
-		pathParameters.forEach( param -> {
-			PathParameter parameter = new PathParameter().required(true);
-			parameter.setName(param);
-			pathItem.addParametersItem(parameter);
-		});
+		for( Parameter param: info.getMethod().getParameters()) {
+			this.handleParameter(param, httpOperationDescription);
+		}
 	}
+	
+	private void handleParameter(Parameter param, Operation operation) {
+        List<Annotation> annotations = List.of(param.getAnnotations());
+
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof RequestParam) {
+            	RequestParam rp = (RequestParam) annotation;
+                QueryParameter queryParam = new QueryParameter();
+                queryParam.name(rp.name())
+                        .required(rp.required())
+                        .schema(new StringSchema());
+                operation.addParametersItem(queryParam);
+
+            } else if (annotation instanceof PathVariable) {
+            	PathVariable pv = (PathVariable) annotation;
+                PathParameter pathParam = new PathParameter();
+                pathParam.name(pv.name())
+                        .required(pv.required())
+                        .schema(new StringSchema());
+                operation.addParametersItem(pathParam);
+
+            } else if (annotation instanceof RequestHeader) {
+            	RequestHeader rh = (RequestHeader) annotation;
+            	HeaderParameter headerParam = new HeaderParameter();
+                headerParam.in("header")
+                        .name(rh.name())
+                        .required(rh.required())
+                        .schema(new StringSchema());
+                operation.addParametersItem(headerParam);
+
+            } else if (annotation instanceof RequestBody) {
+                RequestBody requestBody = new RequestBody();
+                operation.setRequestBody(requestBody);
+            }
+        }
+    }
+
 
 	private void ceateStandardDocumentation(IGGAPIDomain domain, String domainName, GGAPIEntityDocumentationInfos documentation,
 			OpenAPI templateOpenApi, PathItem pathItemBase, GGAPIEntityOperation operation, IGGAPIServiceInfos info) {
@@ -250,9 +289,9 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void addOwnerIdHeader(Operation operation, boolean tenantIdMandatoryForOperation) {
 		if (tenantIdMandatoryForOperation) {
-			List<Parameter> params = operation.getParameters();
+			List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
 			if( params == null ) {
-				params = new ArrayList<Parameter>();
+				params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 			}
 			HeaderParameter param = new HeaderParameter();
 			param.setName(this.ownerIdHeaderName);
@@ -264,9 +303,9 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private void addCustomParamsPathParameter(Operation operation) {
-		List<Parameter> params = operation.getParameters();
+		List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
 		if( params == null ) {
-			params = new ArrayList<Parameter>();
+			params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 		}
 		QueryParameter param = new QueryParameter();
 		param.setName("params");
@@ -277,9 +316,9 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private void addRequestedTenantIdHeader(Operation operation) {
-		List<Parameter> params = operation.getParameters();
+		List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
 		if( params == null ) {
-			params = new ArrayList<Parameter>();
+			params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 		}
 		HeaderParameter param = new HeaderParameter();
 		param.setName(this.requestedTenantIdHeaderName);
@@ -290,9 +329,9 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private void addTenantIdHeader(Operation operation, boolean mandatory) {
-		List<Parameter> params = operation.getParameters();
+		List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
 		if( params == null ) {
-			params = new ArrayList<Parameter>();
+			params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 		}
 		HeaderParameter param = new HeaderParameter();
 		param.setName(this.tenantIdHeaderName);

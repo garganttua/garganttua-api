@@ -19,5 +19,11 @@
 		<module>garganttua-api-spring-security-authentication-password-encoders
 		</module>
 
+		<module>
+			garganttua-api-spring-security-authentication-challenge
+		</module>
+		<module>
+			garganttua-api-spring-security-authentication-challenge-rest-service
+		</module>
 	</modules>
 </project>
