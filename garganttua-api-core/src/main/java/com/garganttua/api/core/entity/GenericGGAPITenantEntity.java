@@ -49,13 +49,13 @@ public class GenericGGAPITenantEntity {
 	private boolean gotFromRepository;
 
 	@GGAPIEntitySaveMethodProvider
-	protected IGGAPIEntitySaveMethod<GenericGGAPITenantEntity> saveMethod;
+	protected IGGAPIEntitySaveMethod saveMethod;
 
 	@GGAPIEntityDeleteMethodProvider
-	protected IGGAPIEntityDeleteMethod<GenericGGAPITenantEntity> deleteMethod;
+	protected IGGAPIEntityDeleteMethod deleteMethod;
 	
 	@GGAPIEntityRepository
-	protected IGGAPIRepository<Object> repository;
+	protected IGGAPIRepository repository;
 	
 	@GGAPIEntityEngine
 	protected IGGAPIEngine engine;

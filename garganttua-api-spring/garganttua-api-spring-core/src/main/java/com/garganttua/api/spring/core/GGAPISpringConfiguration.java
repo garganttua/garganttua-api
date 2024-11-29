@@ -14,6 +14,7 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.beans.GGBeanLoaderFactory;
 import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.reflection.injection.GGInjector;
 
 @Configuration
 public class GGAPISpringConfiguration {
@@ -36,7 +37,7 @@ public class GGAPISpringConfiguration {
 	@Bean(name = "IGGAPIEngine")
 	public IGGAPIEngine createGarganttuaApiEngine() throws GGAPIException, GGReflectionException {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(this.propLoader, List.of(this.packages), List.of(this.springBeanSupplier));
-		IGGAPIBuilder builder = GGApiBuilder.builder().setPropertyLoader(null).setPackages(List.of(this.packages)).setBeanLoader(l);
+		IGGAPIBuilder builder = GGApiBuilder.builder().propertyLoader(this.propLoader).packages(List.of(this.packages)).beanLoader(l).injector(GGInjector.injector(l));
 		return builder.build().init().start();
 	}
 }

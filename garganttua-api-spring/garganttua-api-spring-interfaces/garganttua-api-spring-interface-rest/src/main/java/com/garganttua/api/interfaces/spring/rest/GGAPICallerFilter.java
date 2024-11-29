@@ -16,10 +16,10 @@ import org.springframework.web.util.pattern.PathPatternParser;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
 import jakarta.annotation.PostConstruct;
@@ -34,6 +34,9 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 
 	@Autowired
 	protected IGGAPIEngine engine;
+	
+	@Autowired
+	protected IGGAPISecurityEngine security;
 
 	private Map<IGGAPIServiceInfos, PathPattern> patterns;
 	
@@ -75,6 +78,12 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 				if( pattern.getKey().getOperation().getMethod() == GGAPIServiceMethodToHttpMethodBinder.fromHttpMethodAndEndpoint(method) )
 					return pattern.getKey();
             }
+		}
+		
+		for( Entry<IGGAPIServiceInfos, PathPattern> pattern: this.patterns.entrySet()) {
+			if( pattern.getKey().getPath().equals(uri) ) {
+				return pattern.getKey();
+			}
 		}
 		
 		return null;

@@ -15,7 +15,7 @@ public class GGAPIEntityCheckerTest {
 	public void testGeolocEntity() throws GGAPIException {
 		
 		GGAPIEntityException exception = assertThrows(GGAPIEntityException.class, () -> {
-			GGAPIEntityChecker.checkEntityClass(GeolocEntity.class);
+			GGAPIEntityChecker.checkEntityClass(GeolocEntity.class); 
 		});
 		assertEquals("Entity GeolocEntity has field test with wrong type class java.lang.String, should be class org.geojson.Point",
 				exception.getMessage());

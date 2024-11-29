@@ -2,23 +2,21 @@ package com.garganttua.api.security.authorizations.protocols.bearer;
 
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
-import com.garganttua.api.security.spring.core.authorizations.IGGAPISpringSecurityAuthorizationProtocol;
+import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.security.IGGAPIAuthorization;
+import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationProtocol;
 
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class GGAPISpringSecurityAuthorizationProtocolHttpBearer implements IGGAPISpringSecurityAuthorizationProtocol {
+public class GGAPISpringSecurityAuthorizationProtocolHttpBearer implements IGGAPIAuthorizationProtocol {
 
 	@Override
-	public byte[] getAuthorization(ServletRequest request) throws GGAPIException {
+	public byte[] getAuthorization(Object request) throws GGAPIException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		String authorizationHeader = httpRequest.getHeader("Authorization");
 		
@@ -35,14 +33,17 @@ public class GGAPISpringSecurityAuthorizationProtocolHttpBearer implements IGGAP
 	}
 
 	@Override
-	public void setAuthorization(IGGAPIAuthorization authorization, HttpServletResponse response) throws GGAPIException {
-		String bearer = "Bearer "+new String(authorization.toByteArray());
-		response.addHeader("Authorization", bearer);
-		response.addHeader("Access-Control-Expose-Headers", "Authorization");
+	public void setAuthorization(byte[] authorization, Object response) throws GGAPIException {
+		if( authorization == null )
+			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Authorization is null");
+		String bearer = "Bearer "+new String(authorization);
+		((HttpServletResponse) response).addHeader("Authorization", bearer);
+		((HttpServletResponse) response).addHeader("Access-Control-Expose-Headers", "Authorization");
 	}
 
 	@Override
 	public String getProtocol() {
 		return "Bearer";
 	}
+
 }

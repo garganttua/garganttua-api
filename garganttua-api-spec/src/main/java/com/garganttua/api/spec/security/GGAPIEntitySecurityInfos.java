@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.security;
 
-import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,14 +31,17 @@ public class GGAPIEntitySecurityInfos {
 	private boolean deleteOneAuthority;
 	private boolean deleteAllAuthority;
 	private boolean countAuthority;
-	private GGAPIAuthenticatorInfos authenticatorInfos;
+	private boolean isAuthenticatorEntity;
+	private boolean isAuthorizationEntity;
+	private Class<?>[] authorizations;
+	private Class<?>[] authorizationProtocols;
 	private String domainName;
 
 	private Map<GGAPIEntityOperation, IGGAPIAccessRule> accessRules = new HashMap<GGAPIEntityOperation, IGGAPIAccessRule>();
 
 	public void addAccessRules(List<IGGAPIAccessRule> rules) {
 		rules.forEach(rule -> {
-			this.accessRules.put(rule.getOperation(), rule);
+			this.addAccessRule(rule);
 		});
 	}
 	
@@ -47,47 +50,64 @@ public class GGAPIEntitySecurityInfos {
 	}
 
 	@Override
-	public String toString() {
-		return "GGAPIEntitySecurityInfos{" + "creationAccess=" + creationAccess + ", readAllAccess=" + readAllAccess
-				+ ", readOneAccess=" + readOneAccess + ", updateOneAccess=" + updateOneAccess + ", deleteOneAccess="
-				+ deleteOneAccess + ", deleteAllAccess=" + deleteAllAccess + ", countAccess=" + countAccess
-				+ ", creationAuthority=" + creationAuthority + ", readAllAuthority=" + readAllAuthority
-				+ ", readOneAuthority=" + readOneAuthority + ", updateOneAuthority=" + updateOneAuthority
-				+ ", deleteAuthority=" + deleteOneAuthority + ", deleteAllAuthority=" + deleteAllAuthority
-				+ ", countAuthority=" + countAuthority + ", authenticatorInfos=" + authenticatorInfos + ", domainName="
-				+ domainName + '}';
-	}
+    public String toString() {
+        return "GGAPIEntitySecurityInfos{" +
+                "creationAccess=" + creationAccess +
+                ", readAllAccess=" + readAllAccess +
+                ", readOneAccess=" + readOneAccess +
+                ", updateOneAccess=" + updateOneAccess +
+                ", deleteOneAccess=" + deleteOneAccess +
+                ", deleteAllAccess=" + deleteAllAccess +
+                ", countAccess=" + countAccess +
+                ", creationAuthority=" + creationAuthority +
+                ", readAllAuthority=" + readAllAuthority +
+                ", readOneAuthority=" + readOneAuthority +
+                ", updateOneAuthority=" + updateOneAuthority +
+                ", deleteOneAuthority=" + deleteOneAuthority +
+                ", deleteAllAuthority=" + deleteAllAuthority +
+                ", countAuthority=" + countAuthority +
+                ", isAuthenticatorEntity=" + isAuthenticatorEntity +
+                ", isAuthorizationEntity=" + isAuthorizationEntity +
+                ", authorizations=" + Arrays.toString(authorizations) +
+                ", authorizationProtocols=" + Arrays.toString(authorizationProtocols) +
+                ", domainName='" + domainName + '\'' +
+                '}';
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || getClass() != o.getClass())
-			return false;
-		GGAPIEntitySecurityInfos that = (GGAPIEntitySecurityInfos) o;
-		return creationAuthority == that.creationAuthority && readAllAuthority == that.readAllAuthority
-				&& readOneAuthority == that.readOneAuthority && updateOneAuthority == that.updateOneAuthority
-				&& deleteOneAuthority == that.deleteOneAuthority && deleteAllAuthority == that.deleteAllAuthority
-				&& countAuthority == that.countAuthority && Objects.equals(creationAccess, that.creationAccess)
-				&& Objects.equals(readAllAccess, that.readAllAccess)
-				&& Objects.equals(readOneAccess, that.readOneAccess)
-				&& Objects.equals(updateOneAccess, that.updateOneAccess)
-				&& Objects.equals(deleteOneAccess, that.deleteOneAccess)
-				&& Objects.equals(deleteAllAccess, that.deleteAllAccess)
-				&& Objects.equals(countAccess, that.countAccess) && Objects.equals(domainName, that.domainName)
-				&& Objects.equals(authenticatorInfos, that.authenticatorInfos);
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GGAPIEntitySecurityInfos that = (GGAPIEntitySecurityInfos) o;
+        return creationAuthority == that.creationAuthority &&
+                readAllAuthority == that.readAllAuthority &&
+                readOneAuthority == that.readOneAuthority &&
+                updateOneAuthority == that.updateOneAuthority &&
+                deleteOneAuthority == that.deleteOneAuthority &&
+                deleteAllAuthority == that.deleteAllAuthority &&
+                countAuthority == that.countAuthority &&
+                isAuthenticatorEntity == that.isAuthenticatorEntity &&
+                isAuthorizationEntity == that.isAuthorizationEntity &&
+                Objects.equals(creationAccess, that.creationAccess) &&
+                Objects.equals(readAllAccess, that.readAllAccess) &&
+                Objects.equals(readOneAccess, that.readOneAccess) &&
+                Objects.equals(updateOneAccess, that.updateOneAccess) &&
+                Objects.equals(deleteOneAccess, that.deleteOneAccess) &&
+                Objects.equals(deleteAllAccess, that.deleteAllAccess) &&
+                Objects.equals(countAccess, that.countAccess) &&
+                Arrays.equals(authorizations, that.authorizations) &&
+                Arrays.equals(authorizationProtocols, that.authorizationProtocols) &&
+                Objects.equals(domainName, that.domainName);
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(creationAccess, readAllAccess, readOneAccess, updateOneAccess, deleteOneAccess,
-				deleteAllAccess, countAccess, creationAuthority, readAllAuthority, readOneAuthority, updateOneAuthority,
-				deleteOneAuthority, deleteAllAuthority, countAuthority, authenticatorInfos, domainName);
-	}
-
-	public boolean isAuthenticatorEntity() {
-		return this.authenticatorInfos == null ? false : true;
-	}
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(creationAccess, readAllAccess, readOneAccess, updateOneAccess, deleteOneAccess, deleteAllAccess, countAccess,
+                creationAuthority, readAllAuthority, readOneAuthority, updateOneAuthority, deleteOneAuthority, deleteAllAuthority,
+                countAuthority, isAuthenticatorEntity, isAuthorizationEntity, domainName);
+        result = 31 * result + Arrays.hashCode(authorizations)+ Arrays.hashCode(authorizationProtocols);
+        return result;
+    }
 
 	public String getAuthority(IGGAPIServiceInfos infos) {
 		IGGAPIAccessRule rule = this.accessRules.get(infos.getOperation());
@@ -97,6 +117,10 @@ public class GGAPIEntitySecurityInfos {
 		return null;
 	}
 
+	public Class<?>[] getAuthorizations(){
+		return this.authorizations;
+	}
+	
 	public GGAPIServiceAccess getAccess(IGGAPIServiceInfos infos) {
 		IGGAPIAccessRule rule = this.accessRules.get(infos.getOperation());
 		if (rule != null)
@@ -109,7 +133,8 @@ public class GGAPIEntitySecurityInfos {
 			GGAPIServiceAccess readOneAccess, GGAPIServiceAccess updateOneAccess, GGAPIServiceAccess deleteOneAccess,
 			GGAPIServiceAccess deleteAllAccess, GGAPIServiceAccess countAccess, boolean creationAuthority,
 			boolean readAllAuthority, boolean readOneAuthority, boolean updateOneAuthority, boolean deleteOneAuthority,
-			boolean deleteAllAuthority, boolean countAuthority, GGAPIAuthenticatorInfos authenticatorInfos,
+			boolean deleteAllAuthority, boolean countAuthority, boolean isAuthenticatorEntity, boolean isAuthorizationEntity,
+			Class<?>[] authorizations, Class<?>[] authorizationProtocols,
 			String domainName) {
 		this.creationAccess = creationAccess;
 		this.readAllAccess = readAllAccess;
@@ -125,7 +150,10 @@ public class GGAPIEntitySecurityInfos {
 		this.deleteOneAuthority = deleteOneAuthority;
 		this.deleteAllAuthority = deleteAllAuthority;
 		this.countAuthority = countAuthority;
-		this.authenticatorInfos = authenticatorInfos;
+		this.isAuthenticatorEntity = isAuthenticatorEntity;
+		this.isAuthorizationEntity = isAuthorizationEntity;
+		this.authorizations = authorizations;
+		this.authorizationProtocols = authorizationProtocols;
 		this.domainName = domainName;
 	}
 }

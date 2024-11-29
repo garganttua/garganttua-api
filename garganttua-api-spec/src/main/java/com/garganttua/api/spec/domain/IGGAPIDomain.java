@@ -6,10 +6,12 @@ import java.util.Map;
 import org.javatuples.Pair;
 
 import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityDocumentationInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
+import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
 public interface IGGAPIDomain {
@@ -51,5 +53,9 @@ public interface IGGAPIDomain {
 	String getEntityName();
 	
 	Map<GGAPIEntityOperation, IGGAPIServiceInfos> getServiceInfos();
+
+	void addServiceInfos(IGGAPIServiceInfos servicesInfos);
+
+	IGGAPIAccessRule createAccessRule(IGGAPIServiceInfos info) throws GGAPIException;
 
 }

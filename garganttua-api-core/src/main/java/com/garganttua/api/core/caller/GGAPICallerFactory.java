@@ -67,10 +67,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 			this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantIdTemp);
 			tenantIdTemp = this.setTenantIdToNullIfThisIsTenantCreationRequest(accessRule, tenantIdTemp);
 			requestedTenantIdTemp = this.setRequestedTenantIdToNullIfThisIsTenantCreationRequest(accessRule, requestedTenantIdTemp);
-		} else {
-			tenantIdTemp = null;
-			requestedTenantIdTemp = null;
-		}
+		} 
 		
 		//OwnerId rules
 		if( this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp) ) {

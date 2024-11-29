@@ -13,9 +13,9 @@ import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceResponseUtils;
-import com.garganttua.api.interfaces.spring.rest.GGAPISpringHttpApiFilter;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
@@ -36,8 +36,8 @@ public class GGAPISpringInterfaceRestSecurityApplicationFilter extends OncePerRe
 	protected HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
 
-		if (caller.getDomain().getSecurity().isAuthenticatorEntity() && (request.getMethod().equals("POST")
-				|| request.getMethod().equals("PATCH") || request.getMethod().equals("PUT"))) {
+		if (caller.getDomain().getSecurity().isAuthenticatorEntity() 
+				&& (caller.getAccessRule().getOperation().getMethod() == GGAPIMethod.create || caller.getAccessRule().getOperation().getMethod() == GGAPIMethod.update)) {
 			if (log.isDebugEnabled()) {
 				log.debug("Applying security on authenticator entity "
 						+ caller.getDomain().getEntity().getValue0().getSimpleName());
@@ -52,7 +52,7 @@ public class GGAPISpringInterfaceRestSecurityApplicationFilter extends OncePerRe
 				ObjectMapper mapper = new ObjectMapper();
 				Object entity = mapper.readValue(originalBody, caller.getDomain().getEntity().getValue0());
 
-				this.security.applySecurityOnAuthenticatorEntity(entity);
+//				this.security.applySecurityOnAuthenticatorEntity(caller, entity);
 
 				String writeValueAsString = mapper.writeValueAsString(entity);
 				modifiableRequest.setRequestBody(writeValueAsString);

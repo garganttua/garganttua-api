@@ -31,7 +31,7 @@ public class GGAPIDtoCheckerTest {
     @Test
     void testCheckDtoWithNoTenantIdField() {
         List<Class<?>> dtoClasses = Arrays.asList(DtoClassWithoutTenantIdField.class);
-        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtos(dtoClasses));
+        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtos(dtoClasses)); 
     }
 
     @Test

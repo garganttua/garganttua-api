@@ -1,6 +1,7 @@
 package com.garganttua.api.core.engine;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.javatuples.Pair;
 
@@ -29,11 +30,9 @@ import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.service.IGGAPIService;
-import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
-import com.garganttua.reflection.injection.GGInjector;
 import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
@@ -54,18 +53,18 @@ public class GGApiEngine implements IGGAPIEngine {
 	private IGGAPICallerFactoriesRegistry callerFactoriesRegistry;
 	private IGGAPIAccessRulesRegistry accessRulesRegistry;
 	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
-	private IGGInjector injector;
+	private Optional<IGGInjector> injector;
 
-	protected GGApiEngine(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader) {
-		this.loader = loader;
+	protected GGApiEngine(Optional<IGGInjector> injector, List<String> packages, IGGPropertyLoader propLoader, IGGBeanLoader loader) {
 		this.packages = packages;
 		this.propLoader = propLoader;
-		this.injector = GGInjector.injector(this.loader);
+		this.injector = injector;
+		this.loader = loader;
 	}
 
 	@Override
 	public IGGAPIEngine start() throws GGAPIException {
-		log.info("== START GGAPI ENGINE ==");
+		log.info("== STARTING GARGANTTUA API ENGINE ==");
 		
 		log.info("Assembling domains");
 		
@@ -97,7 +96,7 @@ public class GGApiEngine implements IGGAPIEngine {
 		log.info("*** Assembling domain "+domainName);
 		
 		List<Pair<Class<?>, IGGAPIDao<?>>> daos = this.daosRegistry.getDao(domainName);
-		IGGAPIRepository<Object> repository = (IGGAPIRepository<Object>) this.repositoriesRegistry.getRepository(domainName);
+		IGGAPIRepository repository = (IGGAPIRepository) this.repositoriesRegistry.getRepository(domainName);
 		IGGAPIEntityFactory<Object> factory = (IGGAPIEntityFactory<Object>) this.factoriesRegistry.getFactory(domainName);
 		IGGAPIService service = this.servicesRegistry.getService(domainName);
 		List<IGGAPIInterface> interfaces = this.interfacesRegistry.getInterfaces(domainName);
@@ -112,13 +111,13 @@ public class GGApiEngine implements IGGAPIEngine {
 
 	@Override
 	public IGGAPIEngine stop() throws GGAPIException {
-		log.info("== STOP GGAPI ENGINE ==");
+		log.info("== STOPPING GARGANTTUA API ENGINE ==");
 		return this;
 	}
 
 	@Override
 	public IGGAPIEngine reload() throws GGAPIException {
-		log.info("== RELOAD GGAPI ENGINE ==");
+		log.info("== RELOADING GARGANTTUA API ENGINE ==");
 		this.stop();
 		this.flush();
 		this.init();
@@ -128,7 +127,7 @@ public class GGApiEngine implements IGGAPIEngine {
 
 	@Override
 	public IGGAPIEngine flush() throws GGAPIException {
-		log.info("== FLUSH GGAPI ENGINE ==");
+		log.info("== FLUSHING GARGANTTUA API ENGINE ==");
 		return this;
 	}
 
@@ -140,11 +139,9 @@ public class GGApiEngine implements IGGAPIEngine {
 		log.info("======                                ======");
 		log.info("============================================");
 		log.info("Version: {}", this.getClass().getPackage().getImplementationVersion());
-		log.info("== INIT GGAPI ENGINE ==");
-		log.info("Collecting domains");
+		log.info("== INITIALIZING GARGANTTUA API ENGINE ==");
 		
-		this.domainRegistry = new GGAPIDomainsFactory(this.packages).getRegistry();
-
+		this.domainRegistry = new GGAPIDomainsFactory(this.packages).getRegistry(); 
 		this.daosRegistry =  new GGAPIDaosFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.repositoriesRegistry = new GGAPIRepositoriesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains(), this.injector).getRegistry();

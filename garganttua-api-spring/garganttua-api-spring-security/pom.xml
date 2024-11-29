@@ -12,9 +12,9 @@
 
 	<modules>	
 		<module>garganttua-api-spring-security-core</module>
-		<module>garganttua-api-spring-security-keys</module>
+<!--		<module>garganttua-api-spring-security-keys</module>-->
 		<module>garganttua-api-spring-security-authentication</module>
-		<module>garganttua-api-spring-security-authorization</module>
+<!--		<module>garganttua-api-spring-security-authorization</module>-->
 		<module>garganttua-api-spring-security-interfaces</module>
 	</modules>
 </project>

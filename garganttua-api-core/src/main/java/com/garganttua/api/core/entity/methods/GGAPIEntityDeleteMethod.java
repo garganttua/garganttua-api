@@ -18,15 +18,15 @@ import com.garganttua.reflection.query.IGGObjectQuery;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GGAPIEntityDeleteMethod implements IGGAPIEntityDeleteMethod<Object> {
+public class GGAPIEntityDeleteMethod implements IGGAPIEntityDeleteMethod {
 
 	private IGGAPIDomain domain;
-	private IGGAPIRepository<Object> repository;
+	private IGGAPIRepository repository;
 	private IGGObjectQuery objectQuery;
 	private GGObjectAddress beforeDeleteMethodAddress;
 	private GGObjectAddress afterDeleteMethodAddress;
 	
-	public GGAPIEntityDeleteMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository) throws GGAPIException {
+	public GGAPIEntityDeleteMethod(IGGAPIDomain domain, IGGAPIRepository repository) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
 		this.beforeDeleteMethodAddress = this.domain.getEntity().getValue1().beforeDeleteMethodAddress();

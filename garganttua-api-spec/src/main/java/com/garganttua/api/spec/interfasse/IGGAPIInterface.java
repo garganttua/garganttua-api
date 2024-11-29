@@ -17,6 +17,6 @@ public interface IGGAPIInterface extends IGGAPIEngineObject {
 
 	String getName();
 
-	Method getMethod(GGAPIInterfaceMethod method);
+	Method getMethod(GGAPIInterfaceMethod method) throws GGAPIException;
 
 }

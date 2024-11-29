@@ -42,7 +42,7 @@ public class GGAPIException extends Exception {
 	public static void processException(Exception e) throws GGAPIException {
 		GGAPIException apiException = GGAPIException.findFirstInException(e);
 		if( apiException != null ) {
-			throw apiException;
+			throw apiException; 
 		} else {
 			throw new GGAPIException(GGAPIExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
 		}

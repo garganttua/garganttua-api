@@ -14,15 +14,18 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.reflection.beans.GGBeanLoaderFactory;
 import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.reflection.properties.GGPropertyLoader;
+import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 public class GGAPIEngineTest {
 	
 	@Test
 	public void test() throws GGAPIException {
+		IGGPropertyLoader pl = new GGPropertyLoader();
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
-		IGGAPIEngine engine = GGApiBuilder.builder().setPropertyLoader(null).setPackages(List.of("com")).setBeanLoader(l).build().init().start();
+		IGGAPIEngine engine = GGApiBuilder.builder().propertyLoader(pl).packages(List.of("com")).beanLoader(l).build().init().start();
 		
-		assertNotNull(engine.getDomainsRegistry());
+		assertNotNull(engine.getDomainsRegistry()); 
 	}
 	
 	
@@ -31,11 +34,10 @@ public class GGAPIEngineTest {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
 
 		GGAPIException exception = assertThrows(GGAPIException.class, () -> {
-			GGApiBuilder.builder().setBeanLoader(l).build().init();
+			GGApiBuilder.builder().beanLoader(l).build().init();
 		});
 		
 		assertNotNull(exception);
 		assertEquals(GGAPIExceptionCode.CORE_GENERIC_CODE, exception.getCode());
 	}
-
 }

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 import com.garganttua.api.spec.event.IGGAPIEventPublisher;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
@@ -20,8 +21,8 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 			IGGAPICaller caller, 
 			GGAPIReadOutputMode mode,
 			IGGAPIPageable pageable,
-			IGGAPIFilter filterString,
-			IGGAPISort sortString, 
+			IGGAPIFilter filter,
+			IGGAPISort sort, 
 			Map<String, String> customParameters);
 
 	IGGAPIServiceResponse getEntity(IGGAPICaller caller, String uuid,
@@ -40,5 +41,7 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 	void setEventPublisher(Optional<IGGAPIEventPublisher> eventObj);
 	
 	void setFactory(IGGAPIEntityFactory<Object> factory);
+	
+	IGGAPIDomain getDomain();
 
 }

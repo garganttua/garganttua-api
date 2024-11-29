@@ -30,10 +30,10 @@ import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
+public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 	
 	private IGGAPIDomain domain;
-	private IGGAPIRepository<Object> repository;
+	private IGGAPIRepository repository;
 	private GGObjectAddress afterUpdateMethodAddress;
 	private GGObjectAddress beforeUpdateMethodAddress;
 	private GGObjectAddress afterCreateMethodAddress;
@@ -43,7 +43,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 	private IGGAPIEntityFactory<Object> factory;
 	
 	
-	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository<Object> repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater) throws GGAPIException {
+	public GGAPIEntitySaveMethod(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPIEntityFactory<Object> factory, IGGAPIEntityUpdater<Object> updater) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
 		this.factory = factory;
@@ -114,10 +114,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 
-	private <Entity> void applyUpdateUnicityRule(IGGAPIDomain domain, IGGAPIRepository<Entity> repository,
-			IGGAPICaller caller, Entity entity) throws GGAPIException {
+	private void applyUpdateUnicityRule(IGGAPIDomain domain, IGGAPIRepository repository,
+			IGGAPICaller caller, Object entity) throws GGAPIException {
 		if( domain.getEntity().getValue1().unicityFields() != null && domain.getEntity().getValue1().unicityFields().size() > 0) {
-			List<Entity> entities = this.checkUnicityFields(domain, repository, caller, entity, domain.getEntity().getValue1().unicityFields() );
+			List<Object> entities = this.checkUnicityFields(domain, repository, caller, entity, domain.getEntity().getValue1().unicityFields() );
 			if( entities.size() != 1 && !GGAPIEntityHelper.getUuid(entities.get(0)).equals(GGAPIEntityHelper.getUuid(entity))) {
 				log.warn("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
 				throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS, "Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
@@ -148,8 +148,8 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 
 	}
 
-	private <Entity> void applyCreationUnicityRule(IGGAPIDomain domain, IGGAPIRepository<Entity> repository,
-			IGGAPICaller caller, Entity entity) throws GGAPIException {
+	private void applyCreationUnicityRule(IGGAPIDomain domain, IGGAPIRepository repository,
+			IGGAPICaller caller, Object entity) throws GGAPIException {
 		if( domain.getEntity().getValue1().unicityFields() != null && domain.getEntity().getValue1().unicityFields().size() > 0) {
 			if( this.checkUnicityFields(domain, repository, caller, entity, domain.getEntity().getValue1().unicityFields()).size() > 0 ) {
 				log.warn("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with same unical fields already exists, fields "+domain.getEntity().getValue1().unicityFields());
@@ -221,7 +221,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod<Object> {
 		}
 	}
 	
-	private <Entity> List<Entity> checkUnicityFields(IGGAPIDomain domain, IGGAPIRepository<Entity> repository, IGGAPICaller caller, Entity entity, List<String> unicity) throws GGAPIException {
+	private List<Object> checkUnicityFields(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller, Object entity, List<String> unicity) throws GGAPIException {
 		try {
 			List<String> values = new ArrayList<String>();
 			for (String fieldName : unicity) {

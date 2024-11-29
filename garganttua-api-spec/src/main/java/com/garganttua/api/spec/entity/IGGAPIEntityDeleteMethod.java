@@ -6,9 +6,9 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 
 @FunctionalInterface
-public interface IGGAPIEntityDeleteMethod<Entity> {
+public interface IGGAPIEntityDeleteMethod {
 
-	void delete(IGGAPICaller caller, Map<String, String> parameters, Entity entity)
+	void delete(IGGAPICaller caller, Map<String, String> parameters, Object entity)
 			throws GGAPIException;
 	
 }

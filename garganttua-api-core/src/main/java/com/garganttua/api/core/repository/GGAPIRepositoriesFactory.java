@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GGAPIRepositoriesFactory {
 
 	private Collection<IGGAPIDomain> domains;
-	private	Map<String, IGGAPIRepository<Object>> repositories = new HashMap<String, IGGAPIRepository<Object>>();
+	private	Map<String, IGGAPIRepository> repositories = new HashMap<String, IGGAPIRepository>();
 
 	public GGAPIRepositoriesFactory(Collection<IGGAPIDomain> domains) throws GGAPIEngineException {
 		this.domains = domains;
@@ -26,7 +26,7 @@ public class GGAPIRepositoriesFactory {
 		log.info("*** Creating Repositories ...");
 		for( IGGAPIDomain ddomain: this.domains ){
 		
-			IGGAPIRepository<Object> repo;
+			IGGAPIRepository repo;
 			if(ddomain.getDtos().size() == 1) {
 				repo = new GGAPISimpleRepository();
 			} else {

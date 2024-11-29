@@ -6,6 +6,8 @@ import java.util.List;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.interfasse.GGAPIInterfaceMethod;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
@@ -39,7 +41,7 @@ public class GGAPIServicesInfosBuilder {
 			if (domain.isAllowDeleteOne()) {
 				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.deleteOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.deleteOne(domain.getDomain(), domain.getEntity().getValue0())));
 			}
-		} catch (GGAPIEngineException | SecurityException e) {
+		} catch (GGAPIException | SecurityException e) {
 			throw new GGAPIEngineException(e);
 		}
 
@@ -47,7 +49,10 @@ public class GGAPIServicesInfosBuilder {
     }
 
     public static IGGAPIServiceInfos getInfos(String domainName, Class<?> interfasse, Method method, String path, String description, GGAPIEntityOperation operation) throws GGAPIEngineException {
-        return new GGAPIServiceInfos(domainName, operation, interfasse, method, path, description);
+        if( method == null ) {
+        	throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_DEFINITION, "Cannot construct service infos as provided method by interface is null");
+        }
+    	return new GGAPIServiceInfos(domainName, operation, interfasse, method, path, description);
     }
 
 }

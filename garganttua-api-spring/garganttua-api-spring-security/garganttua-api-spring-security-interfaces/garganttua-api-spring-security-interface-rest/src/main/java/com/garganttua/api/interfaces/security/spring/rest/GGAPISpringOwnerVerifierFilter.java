@@ -1,37 +1,38 @@
 package com.garganttua.api.interfaces.security.spring.rest;
 
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
+import com.garganttua.api.interfaces.spring.rest.GGAPISpringHttpApiFilter;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.security.IGGAPIAuthentication;
-import com.garganttua.api.spec.security.IGGAPIAuthorization;
-import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class GGAPISpringOwnerVerifierFilter extends GGAPISpringWithAuthorizationManagerGenericFilter {
-
+public class GGAPISpringOwnerVerifierFilter extends GGAPISpringHttpApiFilter {
+	
 	@Override
-	public void ifPresent(IGGAPIAuthorizationManager manager, IGGAPICaller caller) throws GGAPIException {
-		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		if (IGGAPIAuthentication.class.isAssignableFrom(authentication.getClass())) {
-			IGGAPIAuthentication auth = (IGGAPIAuthentication) SecurityContextHolder.getContext().getAuthentication();
-			IGGAPIAuthorization authorization = auth.getAuthorization();
-			log.atDebug().log("Checking caller ownerId ["+caller.getOwnerId()+"] against authentication ownerId ["+authorization.getOwnerId()+"]");
-			this.security.verifyOwner(caller, authorization);
-		} else if (AnonymousAuthenticationToken.class.isAssignableFrom(authentication.getClass())) {
-			// Nothing to do
-		} else {
-			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR,
-					"Unsupported Authentiction of type " + authentication.getClass().getSimpleName());
-		}
+	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
+		// TODO Auto-generated method stub
+		
 	}
+	
+
+//	@Override
+//	public void ifPresent(IGGAPIAuthorizationManager manager, IGGAPICaller caller) throws GGAPIException {
+//		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//		if (IGGAPIAuthentication.class.isAssignableFrom(authentication.getClass())) {
+//			IGGAPIAuthentication auth = (IGGAPIAuthentication) SecurityContextHolder.getContext().getAuthentication();
+//			IGGAPIAuthorization authorization = auth.getAuthorization();
+//			log.atDebug().log("Checking caller ownerId ["+caller.getOwnerId()+"] against authentication ownerId ["+authorization.getOwnerUuid()+"]");
+//			this.security.verifyOwner(caller, authorization);
+//		} else if (AnonymousAuthenticationToken.class.isAssignableFrom(authentication.getClass())) {
+//			// Nothing to do
+//		} else {
+//			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR,
+//					"Unsupported Authentiction of type " + authentication.getClass().getSimpleName());
+//		}
+//	}
 }

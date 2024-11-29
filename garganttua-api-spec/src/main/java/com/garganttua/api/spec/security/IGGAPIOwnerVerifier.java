@@ -6,6 +6,6 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 @FunctionalInterface
 public interface IGGAPIOwnerVerifier {
 	
-	void verifyOwner(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException;
+	void verifyOwner(IGGAPICaller caller, Object authorization) throws GGAPIException;
 
 }

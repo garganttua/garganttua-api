@@ -3,6 +3,7 @@ package com.garganttua.api.core.factory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
@@ -24,7 +25,6 @@ import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.injection.IGGInjector;
-import com.garganttua.reflection.properties.IGGPropertyLoader;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
 
@@ -46,13 +46,10 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	private GGObjectAddress afterGetMethodAddress;
 	
 	@Setter
-	private IGGAPIRepository<Object> repository;
+	private IGGAPIRepository repository;
 	
 	@Setter
-	private IGGInjector injector;
-
-	@Setter
-	private IGGPropertyLoader propertyLoader;
+	private Optional<IGGInjector> injector;
 
 	private IGGAPIEngine engine;
 
@@ -146,7 +143,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		return entities;
 	}
 
-	private void executeAfterGetProcedure(IGGAPICaller caller, Map<String, String> customParameters, Object entity, IGGAPIRepository<Object> repository) throws GGAPIException {
+	private void executeAfterGetProcedure(IGGAPICaller caller, Map<String, String> customParameters, Object entity, IGGAPIRepository repository) throws GGAPIException {
 		this.setEntityMethodsAndFields(customParameters, this.domain, entity);
 		try {
 			if( this.afterGetMethodAddress != null ) {
@@ -181,10 +178,10 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	}
 	
 	private void injectDependenciesAndValues(Object entity) throws GGAPIException {
-		if( this.injector != null ) {
+		if( this.injector.isPresent() ) {
 			try {
-				this.injector.injectBeans(entity);
-				this.injector.injectProperties(entity);
+				this.injector.get().injectBeans(entity);
+				this.injector.get().injectProperties(entity);
 			} catch (GGReflectionException e) {
 				GGAPIEntityFactory.processException(e);
 				//should be never reached

@@ -7,7 +7,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
-import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
@@ -34,26 +33,26 @@ public class GGAPISpringSecurityRestSwaggerConfigurer implements IGGAPISpringSec
 	
 	@PostConstruct
 	private void init() throws GGAPIException {
-		this.security.ifAuthorizationManagerPresent((manager, caller) -> {
-			io.swagger.v3.oas.models.security.SecurityScheme scheme = new io.swagger.v3.oas.models.security.SecurityScheme();
-			String authorizationType = manager.getAuthorizationType();
-			String authorizationFormat = manager.getAuthorizationFormat();
-			String authorizationProtocol = manager.getAuthorizationProtocol();
-			Type type = null;
-			if( authorizationType.equals("Token") ) {
-				type = Type.HTTP;
-			}
-			if( authorizationFormat.equals("JWT") ) {
-				scheme.bearerFormat("JWT");
-			}
-			if( authorizationProtocol.equals("Bearer") ) {
-				scheme.scheme("bearer");				
-			}
-			
-			scheme.type(type);
-			this.openApi.get().schemaRequirement("Authorization", scheme);
-			
-		}, null);
+//		this.security.ifAuthorizationManagerPresent((manager, caller) -> {
+//			io.swagger.v3.oas.models.security.SecurityScheme scheme = new io.swagger.v3.oas.models.security.SecurityScheme();
+//			String authorizationType = manager.getAuthorizationType();
+//			String authorizationFormat = manager.getAuthorizationFormat();
+////			String authorizationProtocol = manager.getAuthorizationProtocol();
+//			Type type = null;
+//			if( authorizationType.equals("Token") ) {
+//				type = Type.HTTP;
+//			}
+//			if( authorizationFormat.equals("JWT") ) {
+//				scheme.bearerFormat("JWT");
+//			}
+////			if( authorizationProtocol.equals("Bearer") ) {
+////				scheme.scheme("bearer");				
+////			}
+//			
+//			scheme.type(type);
+//			this.openApi.get().schemaRequirement("Authorization", scheme);
+//			
+//		}, null);
 		
 		SecurityRequirement req = new SecurityRequirement().addList("Authorization");
 		

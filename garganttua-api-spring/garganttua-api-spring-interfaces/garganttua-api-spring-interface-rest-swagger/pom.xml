@@ -35,7 +35,7 @@
 
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-interface-spring-rest</artifactId>
+			<artifactId>garganttua-api-spring-interface-rest</artifactId>
 			<scope>provided</scope>
 		</dependency>
 

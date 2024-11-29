@@ -40,9 +40,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.MapSchema;
-import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
 import io.swagger.v3.oas.models.parameters.PathParameter;
@@ -226,6 +224,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 			return pathItem.get(operationDescription);
 		case update:
 			return pathItem.patch(operationDescription);
+		case authenticate:
+			return pathItem.post(operationDescription);
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + method);
 		}
@@ -241,6 +241,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 			return templateOpenApi.getPaths().get(path).getGet();
 		case update:
 			return templateOpenApi.getPaths().get(path).getPatch();
+		case authenticate:
+			return templateOpenApi.getPaths().get(path).getPost();
 		default:
 			throw new IllegalArgumentException("Unexpected value: " + method);
 		}
@@ -265,7 +267,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private String getDocumentation(IGGAPIDomain domain) {
-		String authenticatorEntity = domain.getSecurity().getAuthenticatorInfos()==null?"false":"true";
+		String authenticatorEntity = String.valueOf(domain.getSecurity().isAuthenticatorEntity());
 		String description = "<b>Public Entity</b> [" + domain.getEntity().getValue1().publicEntity() + "] <br> "
 				+ "<b>Shared Entity</b> ["
 				+ (domain.getEntity().getValue1().sharedEntity() ? "false"

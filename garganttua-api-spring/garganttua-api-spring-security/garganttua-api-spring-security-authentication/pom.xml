@@ -11,19 +11,9 @@
 	<artifactId>garganttua-api-spring-security-authentication</artifactId>
 
 	<modules>
-		<module>garganttua-api-spring-security-authentication-login-password</module>
-		<module>
-			garganttua-api-spring-security-authentication-login-password-entity-provider</module>
-		<module>
-			garganttua-api-spring-security-authentication-login-password-rest-service</module>
-		<module>garganttua-api-spring-security-authentication-password-encoders
-		</module>
 
-		<module>
-			garganttua-api-spring-security-authentication-challenge
-		</module>
-		<module>
-			garganttua-api-spring-security-authentication-challenge-rest-service
-		</module>
+	<module>
+		garganttua-api-spring-security-authentication-interface-rest
+	</module>
 	</modules>
 </project>

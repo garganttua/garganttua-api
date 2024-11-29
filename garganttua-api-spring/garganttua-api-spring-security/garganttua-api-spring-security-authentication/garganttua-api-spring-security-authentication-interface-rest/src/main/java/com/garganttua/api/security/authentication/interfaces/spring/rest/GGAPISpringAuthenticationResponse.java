@@ -1,0 +1,27 @@
+package com.garganttua.api.security.authentication.interfaces.spring.rest;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper;
+import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
+import com.garganttua.api.spec.GGAPIException;
+
+public class GGAPISpringAuthenticationResponse {
+
+	@JsonProperty
+	private Object principal;
+	@JsonProperty
+	@JsonFormat(shape = JsonFormat.Shape.ARRAY)
+	private String authorization;
+	@JsonProperty
+	private String authorizationType;
+
+	public GGAPISpringAuthenticationResponse(Object authentication) throws GGAPIException {
+		this.principal = GGAPIAuthenticationHelper.getPrincipal(authentication);
+		Object authorization = GGAPIAuthenticationHelper.getAuthorization(authentication);
+		if( authorization != null ) {
+			this.authorization = new String(GGAPIEntityAuthorizationHelper.toByteArray(authorization));
+			this.authorizationType = GGAPIEntityAuthorizationHelper.getType(authorization);
+		}
+	}
+}

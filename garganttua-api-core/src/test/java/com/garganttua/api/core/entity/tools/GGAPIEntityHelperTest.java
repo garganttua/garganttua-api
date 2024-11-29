@@ -39,10 +39,10 @@ public class GGAPIEntityHelperTest {
 		assertNull(entity.getId());
 		assertNull(entity.getRepository());
 		assertNull(entity.getSaveMethod());
-		assertNull(entity.getUuid());
+		assertNull(entity.getUuid()); 
 				
 		GGAPIEntityHelper.setGotFromRepository(entity, false);
-		GGAPIEntityHelper.setDeleteMethod(entity, new IGGAPIEntityDeleteMethod<Object>() {
+		GGAPIEntityHelper.setDeleteMethod(entity, new IGGAPIEntityDeleteMethod() {
 
 			@Override
 			public void delete(IGGAPICaller caller, Map<String, String> parameters, Object entity)
@@ -51,7 +51,7 @@ public class GGAPIEntityHelperTest {
 				
 			}
 		});
-		GGAPIEntityHelper.setSaveMethod(entity, new IGGAPIEntitySaveMethod<Object>() {
+		GGAPIEntityHelper.setSaveMethod(entity, new IGGAPIEntitySaveMethod() {
 
 			@Override
 			public Object save(IGGAPICaller caller, Map<String, String> parameters, Object entity) throws GGAPIEntityException {
@@ -61,7 +61,7 @@ public class GGAPIEntityHelperTest {
 		});
 		GGAPIEntityHelper.setId(entity, "id");
 		GGAPIEntityHelper.setUuid(entity, "uuid");
-		GGAPIEntityHelper.setRepository(entity, new IGGAPIRepository<Object>	() {
+		GGAPIEntityHelper.setRepository(entity, new IGGAPIRepository() {
 
 			@Override
 			public void setEngine(IGGAPIEngine engine) {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 
@@ -31,6 +32,11 @@ public class GGAPIServicesInfosRegistry implements IGGAPIServicesInfosRegistry {
 		});
 		
 		return list;
+	}
+
+	@Override
+	public void addServicesInfos(IGGAPIDomain domain, List<IGGAPIServiceInfos> authenticationServiceInfos) {
+		this.servicesInfos.get(domain.getDomain()).addAll(authenticationServiceInfos);
 	}
 
 }

@@ -1,10 +1,9 @@
 package com.garganttua.api.core.domain;
 
 import java.lang.reflect.Method;
-import java.util.Map;
 
+import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.interfasse.GGAPIInterfaceMethod;
@@ -46,9 +45,12 @@ public class TestInterface implements IGGAPIInterface {
 	}
 
 	@Override
-	public Method getMethod(GGAPIInterfaceMethod method) {
-		// TODO Auto-generated method stub
-		return null;
+	public Method getMethod(GGAPIInterfaceMethod method) throws GGAPIEntityException {
+		try {
+			return this.getClass().getDeclaredMethod("getName");
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new GGAPIEntityException(e);
+		}
 	}
 
 }

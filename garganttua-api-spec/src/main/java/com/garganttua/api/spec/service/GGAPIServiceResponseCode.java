@@ -27,7 +27,7 @@ public enum GGAPIServiceResponseCode {
 		case KEY_ERROR:
 		case KEY_EXPIRED:
 		case KEY_REVOKED:
-			code = FORBIDDEN;
+			code = UNAUTHORIZED;
 			break;
 		}
 

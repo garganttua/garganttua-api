@@ -57,12 +57,12 @@ public class GGAPIServicesInfosFactory {
 					} catch (GGAPIEngineException e) {
 						throw new RuntimeException(e);
 					}
-					infos.add(service);
+					infos.add(service); 
 				}
 			}
 			infos.forEach(info -> {
-				log.info("		Method added [domain {}, service {}]", domain.getEntity().getValue1().domain(), info);
-			});
+				log.info("	Method added [domain {}, service {}]", domain.getEntity().getValue1().domain(), info);
+			}); 
 			
 			domain.addServicesInfos(infos);
 			this.servicesInfos.put(domain.getDomain(), infos);

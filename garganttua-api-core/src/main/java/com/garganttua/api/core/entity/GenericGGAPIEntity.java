@@ -29,7 +29,7 @@ public class GenericGGAPIEntity {
 	
 	@GGAPIEntityUuid
 	@Setter
-	@GGAPIEntityMandatory
+	@GGAPIEntityMandatory 
 	protected String uuid;
 	
 	@GGAPIEntityId
@@ -46,13 +46,13 @@ public class GenericGGAPIEntity {
 	private boolean gotFromRepository;
 
 	@GGAPIEntitySaveMethodProvider
-	protected IGGAPIEntitySaveMethod<GenericGGAPIEntity> saveMethod;
+	protected IGGAPIEntitySaveMethod saveMethod;
 
 	@GGAPIEntityDeleteMethodProvider
-	protected IGGAPIEntityDeleteMethod<GenericGGAPIEntity> deleteMethod;
+	protected IGGAPIEntityDeleteMethod deleteMethod;
 	
 	@GGAPIEntityRepository
-	protected IGGAPIRepository<Object> repository;
+	protected IGGAPIRepository repository;
 	
 	@GGAPIEntityEngine
 	protected IGGAPIEngine engine;

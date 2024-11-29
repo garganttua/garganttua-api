@@ -6,8 +6,8 @@ import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 
 public interface IGGAPIRepositoriesRegistry extends IGGAPIEngineObject {
 	
-	IGGAPIRepository<?> getRepository(String domain);
+	IGGAPIRepository getRepository(String domain);
 
-	List<IGGAPIRepository<?>> getRepositories();
+	List<IGGAPIRepository> getRepositories();
 
 }

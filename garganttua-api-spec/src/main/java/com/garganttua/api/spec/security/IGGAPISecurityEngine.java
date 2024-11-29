@@ -2,38 +2,60 @@ package com.garganttua.api.spec.security;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterfacesRegistry;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationServicesRegistry;
 
 public interface IGGAPISecurityEngine {
-
-	Object applySecurityOnAuthenticatorEntity(Object entity) throws GGAPIException;
 	
-	IGGAPIAuthentication authenticate(IGGAPIAuthentication authentication) throws GGAPIException;
+	IGGAPISecurityEngine start() throws GGAPIException;
+
+	IGGAPISecurityEngine stop() throws GGAPIException;
+	
+	IGGAPISecurityEngine reload() throws GGAPIException;
+
+	IGGAPISecurityEngine flush() throws GGAPIException;
+
+	IGGAPISecurityEngine init() throws GGAPIException;
+	
+	
+	
+	
+
+//	Object applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity) throws GGAPIException;
+	
+//	Object authenticate(IGGAPIAuthenticationRequest authentication) throws GGAPIException;
 	
 	boolean isAuthenticatorEntity(Object entity);
 
-	IGGAPIAuthentication validateAuthorization(byte[] authorization) throws GGAPIException;
+	void verifyTenant(IGGAPICaller caller, Object authorization) throws GGAPIException;
 	
-	void verifyTenant(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException;
-	
-	void verifyOwner(IGGAPICaller caller, IGGAPIAuthorization authorization) throws GGAPIException;
+	void verifyOwner(IGGAPICaller caller, Object authorization) throws GGAPIException;
 
-	void ifAuthorizationManagerPresent(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller)
-			throws GGAPIException;
+	IGGAPIAuthenticationInterfacesRegistry getAuthenticationInterfacesRegistry();
 
-	void ifAuthenticationManagerPresent(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller)
-			throws GGAPIException;
-	
-	void ifTenantVerifierPresent(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
-	
-	void ifOwnerVerifierPresent(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
+	byte[] decodeAuthorizationFromRequest(Object request, IGGAPICaller caller) throws GGAPIException;
 
-	void ifAuthorizationManagerPresentOrElse(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
-			throws GGAPIException;
+	Object decodeRawAuthorization(byte[] authorizationRaw, IGGAPICaller caller);
 
-	void ifAuthenticationManagerPresentOrElse(IGGAPIAuthenticationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
-			throws GGAPIException;
+	IGGAPIAuthenticationServicesRegistry getAuthenticationServicesRegistry();
+
+//	void ifAuthorizationManagerPresent(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller)
+//			throws GGAPIException;
+//
+//	void ifAuthenticationProviderPresent(IGGAPIAuthenticationProviderIfPresentMethod method, IGGAPICaller caller)
+//			throws GGAPIException;
 	
-	void ifTenantVerifierPresentOrElse(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
+//	void ifTenantVerifierPresent(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
+//	
+//	void ifOwnerVerifierPresent(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
+
+//	void ifAuthorizationManagerPresentOrElse(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
+//			throws GGAPIException;
+//
+//	void ifAuthenticationProviderPresentOrElse(IGGAPIAuthenticationProviderIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
+//			throws GGAPIException;
 	
-	void ifOwnerVerifierPresentOrElse(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
+//	void ifTenantVerifierPresentOrElse(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
+//	
+//	void ifOwnerVerifierPresentOrElse(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
 }

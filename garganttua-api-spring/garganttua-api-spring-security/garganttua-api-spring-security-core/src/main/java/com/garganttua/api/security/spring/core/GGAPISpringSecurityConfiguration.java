@@ -1,44 +1,47 @@
 package com.garganttua.api.security.spring.core;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 
-import com.garganttua.api.security.core.engine.GGAPIOwnerVerifier;
-import com.garganttua.api.security.core.engine.GGAPISecurityBuilder;
-import com.garganttua.api.security.core.engine.GGAPITenantVerifier;
+import com.garganttua.api.core.security.engine.GGAPISecurityBuilder;
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.security.IGGAPIAuthenticationManager;
-import com.garganttua.api.spec.security.IGGAPIAuthorizationManager;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
+import com.garganttua.api.spring.core.GGAPIPropertyLoader;
+import com.garganttua.api.spring.core.GGAPISpringBeanSupplier;
+import com.garganttua.reflection.beans.GGBeanLoaderFactory;
+import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.reflection.injection.GGInjector;
 
 @Configuration
 @EnableWebSecurity
 public class GGAPISpringSecurityConfiguration {
-	
-	@Autowired
-	private Optional<IGGAPIAuthorizationManager> authorizationManager;
-	
-	@Autowired
-	private List<IGGAPIAuthenticationManager> authenticationManagers;
+
+	@Value("${com.garganttua.api.spring.scanPackages}")
+	private List<String> packages;
 
 	@Autowired
 	private IGGAPIEngine engine;
 	
+	@Autowired
+	private GGAPISpringBeanSupplier springBeanSupplier;
+	
+	@Autowired
+	private GGAPIPropertyLoader propLoader;
+
+	private IGGAPISecurityEngine securityEngine;
+
 	@Bean
-	public IGGAPISecurityEngine createSecurityEngine() {
+	public IGGAPISecurityEngine createSecurityEngine() throws GGAPIException {
 		GGAPISecurityBuilder builder = new GGAPISecurityBuilder();
-		this.authenticationManagers.forEach(authenticationManager -> {builder.authenticationManager(authenticationManager);});
-		this.authorizationManager.ifPresent(authorizationManager -> {builder.authorizationManager(authorizationManager);});
-		
-		builder.domains(this.engine.getDomainsRegistry().getDomains());
-		builder.ownerVerifier(new GGAPIOwnerVerifier());
-		builder.tenantVerifier(new GGAPITenantVerifier());
-		
-		return builder.build();
+		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(this.propLoader, this.packages, List.of(this.springBeanSupplier));
+		builder.engine(this.engine).loader(l).scanPackages(this.packages).injector(GGInjector.injector(l)).servicesRegistry(this.engine.getServicesRegistry());
+		this.securityEngine = builder.build().init().start();
+		return this.securityEngine;
 	}
 }

@@ -1,5 +1,6 @@
 package com.garganttua.api.interfaces.security.spring.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,16 +12,18 @@ import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
-import com.garganttua.api.security.core.exceptions.GGAPISecurityException;
 import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -52,10 +55,20 @@ public class GGAPISpringSecurityRestConfiguration {
 	private GGAPICallerFilter callerFilter;
 	
 	@Autowired
-	private List<IGGAPISpringSecurityRestConfigurer> configurers;
+	private List<IGGAPISpringSecurityRestConfigurer> configurers = new ArrayList<IGGAPISpringSecurityRestConfigurer>();
 	
 	@Autowired
 	private GGAPISpringInterfaceRestSecurityApplicationFilter securityApplicationFilter;
+	
+	@PostConstruct
+	private void init() {
+		IGGAPIAuthenticationInterfacesRegistry reg = this.security.getAuthenticationInterfacesRegistry();
+		reg.getInterfaces().forEach(interfasse -> {
+			if( IGGAPISpringSecurityRestConfigurer.class.isAssignableFrom(interfasse.getClass()) ) {
+				this.configurers.add((IGGAPISpringSecurityRestConfigurer) interfasse);
+			}
+		});
+	}
 	
 	@Bean
 	public DefaultSecurityFilterChain configureFilterChain(HttpSecurity http) throws GGAPISecurityException {
@@ -77,39 +90,13 @@ public class GGAPISpringSecurityRestConfiguration {
 				}
 			});
 			
-			this.configureSecurityFilterChainIfAuthorizationManagerIsPresent(http);
-
-			this.security.ifAuthorizationManagerPresentOrElse((manager, caller) -> {
-				try {
-					http.authorizeHttpRequests().and().addFilterBefore(this.authorizationFilter, AuthorizationFilter.class);
-					http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, GGAPISpringAuthorizationFilter.class);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			} , null, () -> {
-				try {
-					http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, AuthorizationFilter.class);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			});
-
-			this.security.ifTenantVerifierPresent((verifier, caller) -> {
-				try {
-					http.authorizeHttpRequests().and().addFilterAfter(this.tenantVerifier, AuthorizationFilter.class);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			} , null);
-			 
-			this.security.ifOwnerVerifierPresent((verifier, caller) -> {
-				try {
-					http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, GGAPISpringTenantVerifierFilter.class);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			} , null);
+			this.configureAuthorizations(http);
 			
+			http.authorizeHttpRequests().and().addFilterBefore(this.authorizationFilter, AuthorizationFilter.class);
+			http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, GGAPISpringAuthorizationFilter.class);
+			http.authorizeHttpRequests().and().addFilterAfter(this.tenantVerifier, AuthorizationFilter.class);
+			http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, GGAPISpringTenantVerifierFilter.class);
+
 			http.authorizeHttpRequests().and().addFilterAfter(this.securityApplicationFilter, AuthorizationFilter.class);
 			
 			return http.build();
@@ -117,26 +104,6 @@ public class GGAPISpringSecurityRestConfiguration {
 		} catch (Exception e) {
 			throw new GGAPISecurityException(e);
 		}
-	}
-
-	private void configureSecurityFilterChainIfAuthorizationManagerIsPresent(HttpSecurity http) throws GGAPIException {
-		this.security.ifAuthorizationManagerPresentOrElse(
-			(manager, caller) -> {
-				try {
-					this.configureAuthorizations(http);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}, 
-			null, 
-			() -> {
-				try {
-					http.authorizeHttpRequests().requestMatchers("**").permitAll();
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		);
 	}
 
 	private void configureAuthorizations(HttpSecurity http) throws Exception {

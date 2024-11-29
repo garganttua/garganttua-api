@@ -11,16 +11,6 @@
 	<artifactId>garganttua-api-spring-security-authorization</artifactId>
 
 	<modules>
-		<module>garganttua-api-spring-security-authorization-manager</module>
-		<module>
-			garganttua-api-spring-security-authorization-jwt
-		</module>
-		<module>
-			garganttua-api-spring-security-authorization-entity
-		</module>
-		<module>
-			garganttua-api-spring-security-authorization-dao-mongo
-		</module>
 		<module>
 			garganttua-api-spring-security-authorization-protocol-http-bearer
 		</module>

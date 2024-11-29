@@ -9,8 +9,6 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 
-import lombok.Setter;
-
 public class GGAPIFactoriesRegistry implements IGGAPIFactoriesRegistry {
 
 	private Map<String, IGGAPIEntityFactory<?>> factories;

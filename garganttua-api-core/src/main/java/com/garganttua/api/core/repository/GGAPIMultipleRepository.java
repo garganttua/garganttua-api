@@ -14,7 +14,7 @@ import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
-public class GGAPIMultipleRepository implements IGGAPIRepository<Object> {
+public class GGAPIMultipleRepository implements IGGAPIRepository {
 
 	@Override
 	public void setEngine(IGGAPIEngine engine) {

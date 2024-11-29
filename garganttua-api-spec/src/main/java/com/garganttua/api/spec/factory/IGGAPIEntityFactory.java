@@ -2,6 +2,7 @@ package com.garganttua.api.spec.factory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -12,7 +13,6 @@ import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
 import com.garganttua.api.spec.updater.IGGAPIEntityUpdater;
 import com.garganttua.reflection.injection.IGGInjector;
-import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
 
@@ -24,12 +24,10 @@ public interface IGGAPIEntityFactory<Entity> extends IGGAPIEngineObject {
 
 	long countEntities(IGGAPICaller caller, IGGAPIFilter filter, Map<String, String> customParameters) throws GGAPIException;
 	
-	void setRepository(IGGAPIRepository<Object> repo);
+	void setRepository(IGGAPIRepository repo);
 
-	void setPropertyLoader(IGGPropertyLoader propertyLoader);
-	
 	void setEntityUpdater(IGGAPIEntityUpdater<Entity> updater);
 	
-	void setInjector(IGGInjector injector);
+	void setInjector(Optional<IGGInjector> injector);
 
 }

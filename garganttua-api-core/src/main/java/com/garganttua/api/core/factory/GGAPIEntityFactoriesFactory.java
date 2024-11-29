@@ -3,6 +3,7 @@ package com.garganttua.api.core.factory;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import com.garganttua.api.core.updater.GGAPIEntityUpdater;
 import com.garganttua.api.spec.GGAPIException;
@@ -18,9 +19,9 @@ public class GGAPIEntityFactoriesFactory {
 
 	private Collection<IGGAPIDomain> domains;
 	private Map<String, IGGAPIEntityFactory<?>> factories = new HashMap<String, IGGAPIEntityFactory<?>>();
-	private IGGInjector injector;
+	private Optional<IGGInjector> injector;
 
-	public GGAPIEntityFactoriesFactory(Collection<IGGAPIDomain> domains, IGGInjector injector) throws GGAPIException {
+	public GGAPIEntityFactoriesFactory(Collection<IGGAPIDomain> domains, Optional<IGGInjector> injector) throws GGAPIException {
 		this.domains = domains;
 		this.injector = injector;
 		this.collectFactories();

@@ -27,6 +27,9 @@ public class GGAPIEntityOperation {
 	public static GGAPIEntityOperation readAll(String domainName, Class<?> entity) {
 		return new GGAPIEntityOperation(domainName, GGAPIMethod.read, entity, true, false);
 	}
+	public static GGAPIEntityOperation authenticate(String domainName, Class<?> request) {
+		return new GGAPIEntityOperation(domainName, GGAPIMethod.authenticate, request, false, false);
+	}
 
 	@Getter
 	private Class<?> entity;

@@ -21,25 +21,25 @@ import com.garganttua.api.spec.sort.IGGAPISort;
  *
  * @param <Entity>
  */
-public interface IGGAPIRepository<Entity> extends IGGAPIEngineObject {
+public interface IGGAPIRepository extends IGGAPIEngineObject {
 
-	boolean doesExist(IGGAPICaller caller, Entity entity) throws GGAPIException;
+	boolean doesExist(IGGAPICaller caller, Object entity) throws GGAPIException;
 
-	List<Entity> getEntities(IGGAPICaller caller, IGGAPIPageable pageable, IGGAPIFilter filter, IGGAPISort sort) throws GGAPIException;
+	List<Object> getEntities(IGGAPICaller caller, IGGAPIPageable pageable, IGGAPIFilter filter, IGGAPISort sort) throws GGAPIException;
 
-	void save(IGGAPICaller caller, Entity entity) throws GGAPIException;
+	void save(IGGAPICaller caller, Object entity) throws GGAPIException;
 
-	Entity getOneById(IGGAPICaller caller, String id) throws GGAPIException;
+	Object getOneById(IGGAPICaller caller, String id) throws GGAPIException;
 
-	void delete(IGGAPICaller caller, Entity entity) throws GGAPIException;
+	void delete(IGGAPICaller caller, Object entity) throws GGAPIException;
 
 	boolean doesExist(IGGAPICaller caller, String uuid) throws GGAPIException;
 	
-	Entity getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException;
+	Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException;
 
 	long getCount(IGGAPICaller caller, IGGAPIFilter filter) throws GGAPIException;
 
-	String getTenant(Entity entity) throws GGAPIException;
+	String getTenant(Object entity) throws GGAPIException;
 
 	void setDaos(List<Pair<Class<?>, IGGAPIDao<?>>> daos);
 

@@ -42,6 +42,13 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 	}
 
 	@Override
+	public void addAccessRule(IGGAPIAccessRule accessRule) {
+		this.accessRules.add(accessRule);
+		log.info("	Access Rule added {}", accessRule);
+	}
+	
+	
+	@Override
 	public IGGAPIAccessRule getAccessRule(GGAPIEntityOperation operation, String endpoint) {
 		for (IGGAPIAccessRule auth : this.accessRules) {
 			if (auth.getEndpoint().equals(endpoint) && auth.getOperation() == operation) {
@@ -67,5 +74,4 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 		Set<String> uniqueSet = new HashSet<>(presque_liste_finale);
 		return new ArrayList<>(uniqueSet);
 	}
-
 }

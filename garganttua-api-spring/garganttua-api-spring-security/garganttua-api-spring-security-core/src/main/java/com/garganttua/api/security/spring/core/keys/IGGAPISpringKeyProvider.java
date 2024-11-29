@@ -2,7 +2,7 @@ package com.garganttua.api.security.spring.core.keys;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.security.IGGAPIKeyRealm;
+import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 
 public interface IGGAPISpringKeyProvider {
 

@@ -2,7 +2,7 @@ package com.garganttua.api.daos.security.key.spring.mongo;
 
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import com.garganttua.api.security.keys.domain.GGAPIKeyType;
+import com.garganttua.api.spec.security.key.GGAPIKeyType;
 import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
 
 public class GGAPIKeySpringMongoDto {

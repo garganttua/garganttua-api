@@ -25,6 +25,7 @@ import com.garganttua.api.spec.service.IGGAPIServiceCommand;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,7 @@ public class GGAPIService implements IGGAPIService {
 	@Setter
 	protected IGGAPIEngine engine;
 	@Setter
+	@Getter
 	protected IGGAPIDomain domain;
 	@Setter
 	protected Optional<IGGAPIEventPublisher> eventPublisher = Optional.empty();

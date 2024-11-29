@@ -2,17 +2,21 @@ package com.garganttua.api.spec.engine;
 
 import java.util.List;
 
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
 
 public interface IGGAPIBuilder {
 
-	IGGAPIBuilder setBeanLoader(IGGBeanLoader loadder);
+	IGGAPIBuilder injector(IGGInjector injector);
 	
-	IGGAPIBuilder setPackages(List<String> packages);
+	IGGAPIBuilder beanLoader(IGGBeanLoader loadder);
+	
+	IGGAPIBuilder packages(List<String> packages);
 
-	IGGAPIEngine build();
+	IGGAPIEngine build() throws GGAPIException;
 
-	IGGAPIBuilder setPropertyLoader(IGGPropertyLoader loader);
+	IGGAPIBuilder propertyLoader(IGGPropertyLoader loader);
 
 }

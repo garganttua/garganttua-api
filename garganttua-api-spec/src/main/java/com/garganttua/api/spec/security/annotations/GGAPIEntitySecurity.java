@@ -38,5 +38,9 @@ public @interface GGAPIEntitySecurity {
 	boolean delete_all_authority() default true;
 
 	boolean count_authority() default true;
+	
+	Class<?>[] authorizations() default {};
+
+	Class<?>[] authorizationProtocols() default {};
 
 }
