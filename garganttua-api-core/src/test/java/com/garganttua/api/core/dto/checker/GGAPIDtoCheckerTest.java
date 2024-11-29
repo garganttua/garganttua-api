@@ -19,25 +19,25 @@ public class GGAPIDtoCheckerTest {
     @Test
     void testCheckDtos() {
         List<Class<?>> dtoClasses = Arrays.asList(DtoClass1.class, DtoClass2.class);
-        assertDoesNotThrow(() -> GGAPIDtoChecker.checkDtos(dtoClasses));
+        assertDoesNotThrow(() -> GGAPIDtoChecker.checkDtosClasses(dtoClasses));
     }
 
     @Test
     void testCheckDtoWithInvalidAnnotation() {
         List<Class<?>> dtoClasses = Arrays.asList(DtoClassWithoutAnnotation.class);
-        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtos(dtoClasses));
+        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtosClasses(dtoClasses));
     }
 
     @Test
     void testCheckDtoWithNoTenantIdField() {
         List<Class<?>> dtoClasses = Arrays.asList(DtoClassWithoutTenantIdField.class);
-        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtos(dtoClasses)); 
+        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtosClasses(dtoClasses)); 
     }
 
     @Test
     void testCheckDtoWithInvalidFieldType() {
         List<Class<?>> dtoClasses = Arrays.asList(DtoClassWithInvalidFieldType.class);
-        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtos(dtoClasses));
+        assertThrows(GGAPIDtoException.class, () -> GGAPIDtoChecker.checkDtosClasses(dtoClasses));
     }
 }
 

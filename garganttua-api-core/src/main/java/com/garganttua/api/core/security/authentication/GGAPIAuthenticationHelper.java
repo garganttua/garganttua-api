@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticationChecker;
 import com.garganttua.api.spec.GGAPIException;
@@ -19,7 +20,8 @@ public class GGAPIAuthenticationHelper {
 		GGAPIAuthenticationInfos infos;
 		try {
 			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).invoke(infos.authenticateMethodAddress(), infos.findPrincipal());
+			GGObjectQueryFactory.objectQuery(authentication).invoke(infos.authenticateMethodAddress(),
+					infos.findPrincipal());
 		} catch (Exception e) {
 			GGAPIException.processException(e);
 		}
@@ -29,7 +31,8 @@ public class GGAPIAuthenticationHelper {
 		GGAPIAuthenticationInfos infos;
 		try {
 			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return (boolean) GGObjectQueryFactory.objectQuery(authentication).getValue(infos.authenticatedFieldAddress());
+			return (boolean) GGObjectQueryFactory.objectQuery(authentication)
+					.getValue(infos.authenticatedFieldAddress());
 		} catch (Exception e) {
 			GGAPIException.processException(e);
 			return false;
@@ -62,10 +65,12 @@ public class GGAPIAuthenticationHelper {
 		try {
 			ctor = authenticationClass.getDeclaredConstructor();
 			Object authentication = ctor.newInstance();
-			
+
 			return authentication;
-		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new GGAPIEntityException(GGAPIExceptionCode.INVOKE_METHOD, "Cannot instanciate new authentication of type "+authenticationClass.getSimpleName(), e);
+		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
+			throw new GGAPIEntityException(GGAPIExceptionCode.INVOKE_METHOD,
+					"Cannot instanciate new authentication of type " + authenticationClass.getSimpleName(), e);
 		}
 	}
 
@@ -74,7 +79,8 @@ public class GGAPIAuthenticationHelper {
 		GGAPIAuthenticationInfos infos;
 		try {
 			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return (List<String>) GGObjectQueryFactory.objectQuery(authentication).getValue(infos.autoritiesFieldAddress());
+			return (List<String>) GGObjectQueryFactory.objectQuery(authentication)
+					.getValue(infos.autoritiesFieldAddress());
 		} catch (Exception e) {
 			GGAPIException.processException(e);
 			return null;
@@ -82,14 +88,8 @@ public class GGAPIAuthenticationHelper {
 	}
 
 	public static Object getCredentials(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return GGObjectQueryFactory.objectQuery(authentication).getValue(infos.credentialsFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::credentialsFieldAddress);
 	}
 
 	public static Object getAuthorization(Object authentication) throws GGAPIException {
@@ -107,17 +107,20 @@ public class GGAPIAuthenticationHelper {
 		GGAPIAuthenticationInfos infos;
 		try {
 			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatedFieldAddress(), isAuthenticated);
+			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatedFieldAddress(),
+					isAuthenticated);
 		} catch (Exception e) {
 			GGAPIException.processException(e);
 		}
 	}
 
-	public static void setAuthenticatorService(Object authentication, IGGAPIService authenticatorService) throws GGAPIException {
+	public static void setAuthenticatorService(Object authentication, IGGAPIService authenticatorService)
+			throws GGAPIException {
 		GGAPIAuthenticationInfos infos;
 		try {
 			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatorServiceFieldAddress(), authenticatorService);
+			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatorServiceFieldAddress(),
+					authenticatorService);
 		} catch (Exception e) {
 			GGAPIException.processException(e);
 		}
@@ -153,11 +156,13 @@ public class GGAPIAuthenticationHelper {
 		}
 	}
 
-	public static void setAuthenticatorInfos(Object authentication, GGAPIAuthenticatorInfos authenticatorInfos) throws GGAPIException {
+	public static void setAuthenticatorInfos(Object authentication, GGAPIAuthenticatorInfos authenticatorInfos)
+			throws GGAPIException {
 		GGAPIAuthenticationInfos infos;
 		try {
 			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatorInfosFieldAddress(), authenticatorInfos);
+			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatorInfosFieldAddress(),
+					authenticatorInfos);
 		} catch (Exception e) {
 			GGAPIException.processException(e);
 		}
@@ -173,5 +178,4 @@ public class GGAPIAuthenticationHelper {
 			return null;
 		}
 	}
-
 }

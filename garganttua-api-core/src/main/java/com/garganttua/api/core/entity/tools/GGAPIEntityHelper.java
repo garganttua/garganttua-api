@@ -2,6 +2,7 @@ package com.garganttua.api.core.entity.tools;
 
 import java.util.Map;
 
+import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.filter.GGAPILiteral;
@@ -36,152 +37,63 @@ public class GGAPIEntityHelper {
 	}
 	
 	public static Object save(Object entity, IGGAPICaller caller, Map<String, String> parameters) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return GGObjectQueryFactory.objectQuery(entity).invoke(infos.saveMethodAddress(), caller, parameters);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.invoke(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::saveMethodAddress, caller, parameters);
 	}
 
 	public static void delete(Object entity, IGGAPICaller caller, Map<String, String> parameters) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).invoke(infos.deleteMethodAddress(), caller, parameters);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.invoke(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::deleteMethodAddress, caller, parameters);
 	}
 
 	public static void setUuid(Object entity, String uuid) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.uuidFieldAddress(), uuid);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::uuidFieldAddress, uuid);
 	}
 	
 	public static void setId(Object entity, String id) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.idFieldAddress(), id);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::idFieldAddress, id);
 	}
 
 	public static void setRepository(Object entity, IGGAPIRepository repository) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.repositoryFieldAddress(), repository);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::repositoryFieldAddress, repository);
 	}
 	
 	public static void setEngine(Object entity, IGGAPIEngine engine) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.engineFieldAddress(), engine);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::engineFieldAddress, engine);
 	}
 	
 	public static void setGotFromRepository(Object entity, boolean b) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.gotFromRepositoryFieldAddress(), b); 
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::gotFromRepositoryFieldAddress, b);
 	}
 
 	public static void setSaveMethod(Object entity, IGGAPIEntitySaveMethod method) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.saveProviderFieldAddress(), method);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::saveProviderFieldAddress, method);
 	}
 
 	public static void setDeleteMethod(Object entity, IGGAPIEntityDeleteMethod method) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.deleteProviderFieldAddress(), method);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::deleteProviderFieldAddress, method);
 	}
 	
 	public static String getUuid(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (String) GGObjectQueryFactory.objectQuery(entity).getValue(infos.uuidFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}
-		// Should never be reached
-		return null; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::uuidFieldAddress);
 	}
 	
 	public static String getId(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (String) GGObjectQueryFactory.objectQuery(entity).getValue( infos.idFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
-		// Should never be reached
-		return null; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::idFieldAddress);
 	}
 
-	@SuppressWarnings("unchecked")
 	public static IGGAPIRepository getRepository(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (IGGAPIRepository) GGObjectQueryFactory.objectQuery(entity).getValue(infos.repositoryFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
-		// Should never be reached
-		return null; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::repositoryFieldAddress);
 	}
 	
 	public static boolean isGotFromRepository(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (boolean) GGObjectQueryFactory.objectQuery(entity).getValue(infos.gotFromRepositoryFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
-		// Should never be reached
-		return false; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::gotFromRepositoryFieldAddress);
 	}
 
 	public static IGGAPIEntitySaveMethod getSaveMethodProvider(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (IGGAPIEntitySaveMethod) GGObjectQueryFactory.objectQuery(entity).getValue(infos.saveProviderFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
-		// Should never be reached
-		return null; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::saveProviderFieldAddress);
 	}
 
 	public static IGGAPIEntityDeleteMethod getDeleteMethodProvider(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (IGGAPIEntityDeleteMethod) GGObjectQueryFactory.objectQuery(entity).getValue(infos.deleteProviderFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
-		// Should never be reached
-		return null; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::deleteProviderFieldAddress);
 	}
 
 	public static Object newInstance(Class<?> entityClass) throws GGAPIException {
@@ -223,28 +135,26 @@ public class GGAPIEntityHelper {
 	}
 
 	public static String getTenantId(Object entity) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			return (String) GGObjectQueryFactory.objectQuery(entity).getValue(infos.tenantIdFieldAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}
-		// Should never be reached
-		return null; 
+		return GGAPIInfosHelper.getValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::tenantIdFieldAddress);
 	}
 
 	public static void setTenantId(Object entity, String tenantId) throws GGAPIException {
-		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
-		try {
-			GGObjectQueryFactory.objectQuery(entity).setValue(infos.tenantIdFieldAddress(), tenantId);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		} 
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::tenantIdFieldAddress, tenantId);
 	}
 
 	public static String getDomainName(Object entity) throws GGAPIException {
 		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
 		return infos.domain(); 
+	}
+	
+	public static void setOwnerId(Object entity, String ownerId) throws GGAPIException {
+		GGAPIEntityInfos infos = GGAPIEntityChecker.checkEntity(entity);
+		
+		if( !infos.ownedEntity() ) {
+			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity of type "+entity.getClass().getSimpleName()+" is not owned");
+		}
+		
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityChecker::checkEntityClass, GGAPIEntityInfos::ownerIdFieldAddress, ownerId);
 	}
 
 	public static String getOwnerId(Object entity) throws GGAPIException {

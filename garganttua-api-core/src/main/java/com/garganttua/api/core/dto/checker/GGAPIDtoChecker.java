@@ -22,15 +22,15 @@ public class GGAPIDtoChecker {
 	
 	private static Map<Class<?>, GGAPIDtoInfos> infos = new HashMap<Class<?>, GGAPIDtoInfos>();
 
-	public static List<GGAPIDtoInfos> checkDtos(List<Class<?>> dtoClasss) throws GGAPIDtoException {
+	public static List<GGAPIDtoInfos> checkDtosClasses(List<Class<?>> dtoClasss) throws GGAPIDtoException {
 		List<GGAPIDtoInfos> dtoinfos = new ArrayList<GGAPIDtoInfos>();
 		for (Class<?> dtoClass : dtoClasss) {
-			dtoinfos.add(GGAPIDtoChecker.checkDto(dtoClass));
+			dtoinfos.add(GGAPIDtoChecker.checkDtoClass(dtoClass));
 		}
 		return dtoinfos;
 	}
 
-	public static GGAPIDtoInfos checkDto(Class<?> dtoClass) throws GGAPIDtoException {
+	public static GGAPIDtoInfos checkDtoClass(Class<?> dtoClass) throws GGAPIDtoException {
 		if( GGAPIDtoChecker.infos.containsKey(dtoClass) ) {
 			return GGAPIDtoChecker.infos.get(dtoClass);  
 		}
@@ -71,7 +71,7 @@ public class GGAPIDtoChecker {
 	}
 
 	public static GGAPIDtoInfos checkDto(Object dto) throws GGAPIDtoException {
-		return GGAPIDtoChecker.checkDto(dto.getClass());
+		return GGAPIDtoChecker.checkDtoClass(dto.getClass());
 	}
 
 }

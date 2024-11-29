@@ -63,7 +63,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		try {
 			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());
 		} catch (GGReflectionException e) {
-			GGAPIEntityFactory.processException(e);
+			GGAPIException.processException(e);
 		}
 	}
 
@@ -80,7 +80,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			
 			return entity;
 		} catch (GGAPIEntityException e) {
-			GGAPIEntityFactory.processException(e);
+			GGAPIException.processException(e);
 			//should be never reached
 			return null;
 		}
@@ -158,7 +158,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			if(log.isDebugEnabled()) {
 				log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" The error :", e);
 			}
-			GGAPIEntityFactory.processException(e);
+			GGAPIException.processException(e);
 			//should be never reached
 			return;
 		}
@@ -183,7 +183,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 				this.injector.get().injectBeans(entity);
 				this.injector.get().injectProperties(entity);
 			} catch (GGReflectionException e) {
-				GGAPIEntityFactory.processException(e);
+				GGAPIException.processException(e);
 				//should be never reached
 				return ;
 			}
@@ -193,15 +193,6 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	@Override
 	public void setEngine(IGGAPIEngine engine) {
 		this.engine = engine;	
-	}
-	
-	private static void processException(Exception e) throws GGAPIException, GGAPIEntityException {
-		GGAPIException apiException = GGAPIException.findFirstInException(e);
-		if( apiException != null ) {
-			throw apiException;
-		} else {
-			throw new GGAPIEntityException(e);
-		}
 	}
 
 }

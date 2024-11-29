@@ -191,7 +191,7 @@ public class GGAPIDomain implements IGGAPIDomain {
 					try {
 						GGAPIDto dtoAnnotation = annotatedClass.getAnnotation(GGAPIDto.class);
 						if (dtoAnnotation.entityClass().equals(entityClass)) {
-							GGAPIDtoInfos dtoInfos = GGAPIDtoChecker.checkDto(annotatedClass);
+							GGAPIDtoInfos dtoInfos = GGAPIDtoChecker.checkDtoClass(annotatedClass);
 							dtos.add(new Pair<Class<?>, GGAPIDtoInfos>(annotatedClass, dtoInfos));
 						}
 					} catch (GGAPIException e) {
