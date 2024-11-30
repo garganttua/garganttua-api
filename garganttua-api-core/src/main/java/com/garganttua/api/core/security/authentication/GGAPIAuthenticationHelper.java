@@ -12,52 +12,27 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.IGGAPIService;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
 
 public class GGAPIAuthenticationHelper {
 
 	public static void authenticate(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).invoke(infos.authenticateMethodAddress(),
-					infos.findPrincipal());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.invoke(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticateMethodAddress);
 	}
 
 	public static boolean isAuthenticated(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return (boolean) GGObjectQueryFactory.objectQuery(authentication)
-					.getValue(infos.authenticatedFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return false;
-		}
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticatedFieldAddress);
 	}
 
 	public static void setAuthorization(Object authentication, Object authorization) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authorizationFieldAddress(), authorization);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authorizationFieldAddress, authorization);
 	}
 
 	public static Object getPrincipal(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return GGObjectQueryFactory.objectQuery(authentication).getValue(infos.principalFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return false;
-		}
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::principalFieldAddress);
 	}
 
 	public static Object instanciateNewOject(Class<?> authenticationClass) throws GGAPIEntityException {
@@ -74,17 +49,9 @@ public class GGAPIAuthenticationHelper {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public static List<String> getAuthorities(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return (List<String>) GGObjectQueryFactory.objectQuery(authentication)
-					.getValue(infos.autoritiesFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::autoritiesFieldAddress);
 	}
 
 	public static Object getCredentials(Object authentication) throws GGAPIException {
@@ -93,89 +60,44 @@ public class GGAPIAuthenticationHelper {
 	}
 
 	public static Object getAuthorization(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return GGObjectQueryFactory.objectQuery(authentication).getValue(infos.authorizationFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authorizationFieldAddress);
 	}
 
 	public static void setAuthenticated(Object authentication, boolean isAuthenticated) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatedFieldAddress(),
-					isAuthenticated);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticatedFieldAddress, isAuthenticated);
 	}
 
 	public static void setAuthenticatorService(Object authentication, IGGAPIService authenticatorService)
 			throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatorServiceFieldAddress(),
-					authenticatorService);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticatorServiceFieldAddress, authenticatorService);
 	}
 
 	public static void setCredentials(Object authentication, Object credentials) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.credentialsFieldAddress(), credentials);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::credentialsFieldAddress, credentials);
 	}
 
 	public static void setPrincipal(Object authentication, Object principal) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.principalFieldAddress(), principal);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::principalFieldAddress, principal);
 	}
 
 	public static void setTenantId(Object authentication, String tenantId) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.tenantIdFieldAddress(), tenantId);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::tenantIdFieldAddress, tenantId);
 	}
 
 	public static void setAuthenticatorInfos(Object authentication, GGAPIAuthenticatorInfos authenticatorInfos)
 			throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			GGObjectQueryFactory.objectQuery(authentication).setValue(infos.authenticatorInfosFieldAddress(),
-					authenticatorInfos);
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-		}
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticatorInfosFieldAddress, authenticatorInfos);
 	}
 
 	public static String getTenantId(Object authentication) throws GGAPIException {
-		GGAPIAuthenticationInfos infos;
-		try {
-			infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
-			return (String) GGObjectQueryFactory.objectQuery(authentication).getValue(infos.tenantIdFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::tenantIdFieldAddress);
 	}
 }

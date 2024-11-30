@@ -19,7 +19,7 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 
 	private static Map<Class<?>, GGAPIChallengeAuthenticatorInfos> infos = new HashMap<Class<?>, GGAPIChallengeAuthenticatorInfos>();
 	
-	public static GGAPIChallengeAuthenticatorInfos checkEntityAuthenticator(Class<? extends Object> entityAuthenticatorClass) throws GGAPISecurityException {
+	public static GGAPIChallengeAuthenticatorInfos checkEntityAuthenticatorClass(Class<? extends Object> entityAuthenticatorClass) throws GGAPISecurityException {
 		if( GGAPIChallengeEntityAuthenticatorChecker.infos.containsKey(entityAuthenticatorClass) ) {
 			return GGAPIChallengeEntityAuthenticatorChecker.infos.get(entityAuthenticatorClass);  
 		}

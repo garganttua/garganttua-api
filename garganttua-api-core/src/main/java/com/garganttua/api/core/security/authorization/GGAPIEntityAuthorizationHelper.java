@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.List;
 
+import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthorizationChecker;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.authorization.GGAPIAuthorizationInfos;
@@ -14,14 +15,8 @@ import com.garganttua.reflection.query.GGObjectQueryFactory;
 public class GGAPIEntityAuthorizationHelper {
 
 	public static String getUuid(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos;
-		try {
-			infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-			return (String) GGObjectQueryFactory.objectQuery(authorization).getValue(infos.uuidFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::uuidFieldAddress);
 	}
 
 	public static boolean isSignable(Class<?> authorization) throws GGAPIException {
@@ -41,77 +36,33 @@ public class GGAPIEntityAuthorizationHelper {
 	}
 
 	public static void validateAgainst(Object authorization, Object authorizationRef) throws GGAPIException {
-		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-		try {
-			GGObjectQueryFactory.objectQuery(authorization).invoke(infos.validateAgainstMethodAddress(), authorizationRef);
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-
-		}	
+		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::validateAgainstMethodAddress, authorizationRef);
 	}
 
 	public static void validate(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-		try {
-			GGObjectQueryFactory.objectQuery(authorization).invoke(infos.validateMethodAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-		}	
+		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::validateMethodAddress);
 	}
 
-	@SuppressWarnings("unchecked")
 	public static List<String> getAuthorities(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos;
-		try {
-			infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-			return (List<String>) GGObjectQueryFactory.objectQuery(authorization).getValue(infos.authoritiesFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::authoritiesFieldAddress);
 	}
 
 	public static String getOwnerId(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos;
-		try {
-			infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-			return (String) GGObjectQueryFactory.objectQuery(authorization).getValue(infos.ownerIdFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
-	}
-	
-	public static String getFieldValue(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos;
-		try {
-			infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-			return (String) GGObjectQueryFactory.objectQuery(authorization).getValue(infos.ownerIdFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::ownerIdFieldAddress);
 	}
 
 	public static String getTenantId(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos;
-		try {
-			infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-			return (String) GGObjectQueryFactory.objectQuery(authorization).getValue(infos.tenantIdFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::tenantIdFieldAddress);
 	}
 
 	public static byte[] toByteArray(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-		try {
-			return (byte[]) GGObjectQueryFactory.objectQuery(authorization).invoke(infos.toByteArrayMethodAddress());
-		} catch (GGReflectionException e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return (byte[]) GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::toByteArrayMethodAddress);
 	}
 
 	public static Object newObject(Class<?> authorization, byte[] authorizationRaw) throws GGAPIException {
@@ -159,14 +110,7 @@ public class GGAPIEntityAuthorizationHelper {
 	}
 
 	public static String getType(Object authorization) throws GGAPIException {
-		GGAPIAuthorizationInfos infos;
-		try {
-			infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization.getClass());
-			return (String) GGObjectQueryFactory.objectQuery(authorization).getValue(infos.authorizationTypeFieldAddress());
-		} catch (Exception e) {
-			GGAPIException.processException(e);
-			return null;
-		}
+		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::authorizationTypeFieldAddress);
 	}
-
 }

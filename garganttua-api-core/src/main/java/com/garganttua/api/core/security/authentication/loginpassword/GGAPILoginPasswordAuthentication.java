@@ -39,7 +39,7 @@ public class GGAPILoginPasswordAuthentication extends AbstractGGAPIAuthenticatio
 	protected Object findPrincipal() {
 		try {
 			
-			GGAPILoginPasswordAuthenticatorInfos infos = GGAPILoginPasswordEntityAuthenticatorChecker.checkEntityAuthenticator(this.authenticatorInfos.authenticatorType());
+			GGAPILoginPasswordAuthenticatorInfos infos = GGAPILoginPasswordEntityAuthenticatorChecker.checkEntityAuthenticatorClass(this.authenticatorInfos.authenticatorType());
 			IGGAPIServiceResponse getPrincipalResponse = this.authenticatorService.getEntities(GGAPICaller.createTenantCaller(this.tenantId), GGAPIReadOutputMode.full, null, GGAPILiteral.eq(infos.loginFieldAddress().toString(), (String) this.principal), null, new HashMap<String, String>());
 			if( getPrincipalResponse.getResponseCode() == GGAPIServiceResponseCode.OK ) {
 				List<Object> list = (List<Object>) getPrincipalResponse.getResponse();

@@ -22,7 +22,7 @@ public class GGAPILoginPasswordEntityAuthenticatorChecker {
 
 	private static Map<Class<?>, GGAPILoginPasswordAuthenticatorInfos> infos = new HashMap<Class<?>, GGAPILoginPasswordAuthenticatorInfos>();
 	
-	public static GGAPILoginPasswordAuthenticatorInfos checkEntityAuthenticator(Class<?> entityAuthenticatorClass) throws GGAPIException {
+	public static GGAPILoginPasswordAuthenticatorInfos checkEntityAuthenticatorClass(Class<?> entityAuthenticatorClass) throws GGAPIException {
 		
 		if( GGAPILoginPasswordEntityAuthenticatorChecker.infos.containsKey(entityAuthenticatorClass) ) {
 			return GGAPILoginPasswordEntityAuthenticatorChecker.infos.get(entityAuthenticatorClass);  
