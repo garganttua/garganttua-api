@@ -24,6 +24,7 @@ public class GGAPIStorableAuthorizationAuthentication extends AbstractGGAPIAuthe
 	protected void doAuthentication() throws GGAPIException {
 		if( GGAPIEntityAuthorizationHelper.isAuthorization(this.principal) ) {
 			GGAPIEntityAuthorizationHelper.validateAgainst(this.credential, this.principal);
+			this.ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(this.principal);
 			this.authorities = GGAPIEntityAuthorizationHelper.getAuthorities(this.principal);
 		} else {
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Principal is not an authorization");

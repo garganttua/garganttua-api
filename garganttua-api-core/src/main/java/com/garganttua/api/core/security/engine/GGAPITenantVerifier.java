@@ -1,6 +1,6 @@
 package com.garganttua.api.core.security.engine;
 
-import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
+import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
@@ -17,7 +17,7 @@ public class GGAPITenantVerifier implements IGGAPITenantVerifier {
 		IGGAPIAccessRule rule = caller.getAccessRule();
 
 		if ( rule != null && (rule.getAccess() == GGAPIServiceAccess.tenant || rule.getAccess() == GGAPIServiceAccess.owner) ) {
-			String authentifiedTenantId = GGAPIEntityAuthorizationHelper.getTenantId(authorization);;
+			String authentifiedTenantId = GGAPIAuthenticationHelper.getTenantId(authorization);
 			String tenantId = caller.getTenantId();
 			String requestedTenantId = caller.getRequestedTenantId();
 

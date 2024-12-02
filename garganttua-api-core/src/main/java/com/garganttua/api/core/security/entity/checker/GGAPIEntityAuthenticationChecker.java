@@ -7,6 +7,7 @@ import java.util.Map;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticate;
@@ -54,6 +55,7 @@ public class GGAPIEntityAuthenticationChecker {
 		String principalFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationPrincipal.class, Object.class, true);
 		String credentialsFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationCredentials.class, Object.class, true);
 		String tenantIdFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIEntityTenantId.class, String.class, true);
+		String ownerIdFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIEntityOwnerId.class, String.class, true);
 		String authenticateMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationAuthenticate.class, true, void.class);
 		String findPrincipalMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationFindPrincipal.class, true, void.class);
 
@@ -71,7 +73,8 @@ public class GGAPIEntityAuthenticationChecker {
 					q.address(authenticateMethodName),
 					q.address(authenticatorInfosFieldName),
 					annotation.findPrincipal(),
-					q.address(findPrincipalMethodName));
+					q.address(findPrincipalMethodName),
+					q.address(ownerIdFieldName));
 			
 			GGAPIEntityAuthenticationChecker.infos.put(authenticationClass, infos);
 			return infos;		

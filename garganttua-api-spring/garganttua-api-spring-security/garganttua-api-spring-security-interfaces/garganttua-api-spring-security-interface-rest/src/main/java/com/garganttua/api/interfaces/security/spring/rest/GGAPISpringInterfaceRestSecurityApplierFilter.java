@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class GGAPISpringInterfaceRestSecurityApplicationFilter extends OncePerRequestFilter {
+public class GGAPISpringInterfaceRestSecurityApplierFilter extends OncePerRequestFilter {
 
 	@Autowired
 	private IGGAPISecurityEngine security;
@@ -52,7 +52,7 @@ public class GGAPISpringInterfaceRestSecurityApplicationFilter extends OncePerRe
 				ObjectMapper mapper = new ObjectMapper();
 				Object entity = mapper.readValue(originalBody, caller.getDomain().getEntity().getValue0());
 
-//				this.security.applySecurityOnAuthenticatorEntity(caller, entity);
+				this.security.applySecurityOnAuthenticatorEntity(caller, entity);
 
 				String writeValueAsString = mapper.writeValueAsString(entity);
 				modifiableRequest.setRequestBody(writeValueAsString);

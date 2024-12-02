@@ -2,10 +2,12 @@ package com.garganttua.api.core.security.authentication;
 
 import java.util.List;
 
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticate;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticated;
@@ -44,6 +46,9 @@ public abstract class AbstractGGAPIAuthentication {
 
 	@GGAPIEntityTenantId
 	protected String tenantId;
+	
+	@GGAPIEntityOwnerId
+	protected String ownerId;
 
 	@GGAPIAuthenticationAuthorities
 	protected List<String> authorities;
@@ -67,6 +72,11 @@ public abstract class AbstractGGAPIAuthentication {
 				return;
 			}	
 			this.principal = principal;
+			try {
+				this.ownerId = GGAPIEntityHelper.getOwnerId(principal);
+			} catch (GGAPIException e) {
+				log.atTrace().log("Error triing to get ownerId of principal identified by "+this.principal, e);
+			}
 		} else {
 			log.atWarn().log("Principal identified by "+this.principal+" indicated to be found but no authenticator service provided"); 
 			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR, "Principal identified by "+this.principal+" indicated to be found but no authenticator service provided");

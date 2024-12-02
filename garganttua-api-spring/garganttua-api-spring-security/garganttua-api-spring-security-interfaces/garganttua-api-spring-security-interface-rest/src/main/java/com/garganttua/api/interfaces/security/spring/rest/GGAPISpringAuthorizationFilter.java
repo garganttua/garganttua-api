@@ -65,7 +65,6 @@ public class GGAPISpringAuthorizationFilter extends GGAPISpringHttpApiFilter {
 						IGGAPIAuthenticationRequest authenticationRequest = new GGAPIAuthenticationRequest(domain , caller.getTenantId(), GGAPIEntityAuthorizationHelper.getUuid(authorization), authorization, infos.authenticationType());						
 						Authentication springAuthentication = this.manager.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));		
 						SecurityContextHolder.getContext().setAuthentication(springAuthentication);
-
 					}
 				} else {
 					log.atWarn().log("Undecodable authorization "+new String(authorizationRaw));

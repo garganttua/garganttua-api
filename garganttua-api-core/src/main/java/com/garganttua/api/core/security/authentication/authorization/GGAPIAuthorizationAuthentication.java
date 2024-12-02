@@ -15,12 +15,13 @@ public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthenticatio
 	protected void doAuthentication() throws GGAPIException {
 		GGAPIEntityAuthorizationHelper.validate(this.credential);
 		this.authorities = GGAPIEntityAuthorizationHelper.getAuthorities(this.credential);
+		this.ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(this.credential);
 		this.authenticated = true;
 	}
 
 	@Override
 	protected Object doFindPrincipal() {
-		// TODO Auto-generated method stub
+		// Nothing to do
 		return null;
 	}
 

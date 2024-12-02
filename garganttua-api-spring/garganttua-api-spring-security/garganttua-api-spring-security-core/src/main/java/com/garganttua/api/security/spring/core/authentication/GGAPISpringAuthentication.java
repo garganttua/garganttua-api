@@ -9,10 +9,13 @@ import org.springframework.security.core.GrantedAuthority;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper;
 import com.garganttua.api.spec.GGAPIException;
 
+import lombok.Getter;
+
 public class GGAPISpringAuthentication implements Authentication {
 
 	private static final long serialVersionUID = 4650365846780785344L;
 	
+	@Getter
 	private Object authentication;
 
 	public GGAPISpringAuthentication(Object authentication) {
@@ -87,6 +90,22 @@ public class GGAPISpringAuthentication implements Authentication {
 
 	public Object getAuthentication() {
 		return this.authentication;
+	}
+
+	public String getTenantId() {
+		try {
+			return GGAPIAuthenticationHelper.getTenantId(this.authentication);
+		} catch (GGAPIException e) {
+			return null;
+		}
+	}
+	
+	public String getOwnerId() {
+		try {
+			return GGAPIAuthenticationHelper.getOwnerId(this.authentication);
+		} catch (GGAPIException e) {
+			return null;
+		}
 	}
 
 }

@@ -4,7 +4,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationFactoryFactory;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationInfosFactory;
@@ -84,13 +83,13 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	}
 
 	@Override
-	public void verifyTenant(IGGAPICaller caller, Object authorization) throws GGAPIException {
-		this.tenantVerifier.verifyTenant(caller, authorization);
+	public void verifyTenant(IGGAPICaller caller, Object authentication) throws GGAPIException {
+		this.tenantVerifier.verifyTenant(caller, authentication);
 	}
 
 	@Override
-	public void verifyOwner(IGGAPICaller caller, Object authorization) throws GGAPIException {
-		this.ownerVerifier.verifyOwner(caller, authorization);
+	public void verifyOwner(IGGAPICaller caller, Object authentication) throws GGAPIException {
+		this.ownerVerifier.verifyOwner(caller, authentication);
 	}
 
 	@Override
@@ -156,6 +155,8 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		return this;
 	}
 	
+	
+	//TODO to be refactored
 	private Object getAuthorization(byte[] authorizationRaw, IGGAPICaller caller) {
 		Class<?>[] supportedAuthorizations = caller.getDomain().getSecurity().getAuthorizations();
 		Object authorization = null;
@@ -251,6 +252,12 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 			return service.getDomain().getEntity().getValue0().equals(authorization.getClass());
 		}).findFirst();
 		return authorizationService.isPresent();
+	}
+
+	@Override
+	public void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

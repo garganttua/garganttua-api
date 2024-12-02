@@ -17,16 +17,13 @@ public class ModifiableHttpServletRequest extends HttpServletRequestWrapper {
 
 	    public ModifiableHttpServletRequest(HttpServletRequest request) throws IOException {
 	        super(request);
-	        // Lit et tamponne le corps du ServletInputStream
 	        this.requestBody = toByteArray(request.getInputStream());
 	    }
 
-	    // Permet de définir un nouveau corps pour la requête
 	    public void setRequestBody(String newBody) {
 	        this.requestBody = newBody.getBytes(StandardCharsets.UTF_8);
 	    }
 
-	    // Retourne un ServletInputStream basé sur le corps actuel (modifié ou non)
 	    @Override
 	    public ServletInputStream getInputStream() throws IOException {
 	        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(this.requestBody);
@@ -53,7 +50,6 @@ public class ModifiableHttpServletRequest extends HttpServletRequestWrapper {
 	        };
 	    }
 
-	    // Convertit l'InputStream en tableau d'octets
 	    private byte[] toByteArray(InputStream inputStream) throws IOException {
 	        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 	        byte[] buffer = new byte[1024];

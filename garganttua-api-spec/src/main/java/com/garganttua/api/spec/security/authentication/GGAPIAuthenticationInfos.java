@@ -14,7 +14,8 @@ public record GGAPIAuthenticationInfos(
 		GGObjectAddress authenticateMethodAddress,
 		GGObjectAddress authenticatorInfosFieldAddress,
 		boolean findPrincipal,
-		GGObjectAddress findPrincipalMethodAddress
+		GGObjectAddress findPrincipalMethodAddress,
+		GGObjectAddress ownerIdFieldAddress
 		) {
 
 }

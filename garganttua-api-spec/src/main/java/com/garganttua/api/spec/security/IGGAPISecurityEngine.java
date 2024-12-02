@@ -17,9 +17,9 @@ public interface IGGAPISecurityEngine {
 
 	IGGAPISecurityEngine init() throws GGAPIException;
 
-	void verifyTenant(IGGAPICaller caller, Object authorization) throws GGAPIException;
+	void verifyTenant(IGGAPICaller caller, Object authentication) throws GGAPIException;
 	
-	void verifyOwner(IGGAPICaller caller, Object authorization) throws GGAPIException;
+	void verifyOwner(IGGAPICaller caller, Object authentication) throws GGAPIException;
 
 	IGGAPIAuthenticationInterfacesRegistry getAuthenticationInterfacesRegistry();
 
@@ -30,5 +30,7 @@ public interface IGGAPISecurityEngine {
 	IGGAPIAuthenticationServicesRegistry getAuthenticationServicesRegistry();
 
 	boolean isStorableAuthorization(Object authorization);
+
+	void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity);
 
 }

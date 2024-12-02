@@ -16,7 +16,6 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIServiceMethodToHttpMethodBinder;
 import com.garganttua.api.security.spring.core.IGGAPISpringSecurityRestConfigurer;
-import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
@@ -37,10 +36,10 @@ public class GGAPISpringSecurityRestConfiguration {
 	private IGGAPISecurityEngine security;
 	
 	@Autowired
-	private GGAPISpringOwnerVerifierFilter ownerVerifier;
+	private GGAPISpringTenantVerifierFilter tenantVerifier;
 	
 	@Autowired
-	private GGAPISpringTenantVerifierFilter tenantVerifier;
+	private GGAPISpringOwnerVerifierFilter ownerVerifier;
 	
 	@Autowired
 	private GGAPISpringAuthorizationFilter authorizationFilter;
@@ -58,7 +57,7 @@ public class GGAPISpringSecurityRestConfiguration {
 	private List<IGGAPISpringSecurityRestConfigurer> configurers = new ArrayList<IGGAPISpringSecurityRestConfigurer>();
 	
 	@Autowired
-	private GGAPISpringInterfaceRestSecurityApplicationFilter securityApplicationFilter;
+	private GGAPISpringInterfaceRestSecurityApplierFilter securityApplicationFilter;
 	
 	@PostConstruct
 	private void init() {
@@ -96,7 +95,6 @@ public class GGAPISpringSecurityRestConfiguration {
 			http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, GGAPISpringAuthorizationFilter.class);
 			http.authorizeHttpRequests().and().addFilterAfter(this.tenantVerifier, AuthorizationFilter.class);
 			http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, GGAPISpringTenantVerifierFilter.class);
-
 			http.authorizeHttpRequests().and().addFilterAfter(this.securityApplicationFilter, AuthorizationFilter.class);
 			
 			return http.build();

@@ -11,12 +11,15 @@ public class GGAPISpringAuthenticationResponse {
 	@JsonProperty
 	private Object principal;
 	@JsonProperty
+	private String domain;
+	@JsonProperty
 	@JsonFormat(shape = JsonFormat.Shape.ARRAY)
 	private String authorization;
 	@JsonProperty
 	private String authorizationType;
 
 	public GGAPISpringAuthenticationResponse(Object authentication) throws GGAPIException {
+		this.domain = GGAPIAuthenticationHelper.getAuthenticatorService(authentication).getDomain().getDomain();
 		this.principal = GGAPIAuthenticationHelper.getPrincipal(authentication);
 		Object authorization = GGAPIAuthenticationHelper.getAuthorization(authentication);
 		if( authorization != null ) {

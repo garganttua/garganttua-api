@@ -101,6 +101,17 @@ public class GGAPIAuthenticationHelper {
 		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
 				GGAPIAuthenticationInfos::tenantIdFieldAddress);
 	}
+	
+	public static String getOwnerId(Object authentication) throws GGAPIException {
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::ownerIdFieldAddress);
+	}
+	
+	public static void setOwnerInfos(Object authentication, String ownerId)
+			throws GGAPIException {
+		GGAPIInfosHelper.setValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::ownerIdFieldAddress, ownerId);
+	}
 
 	public static boolean isFindPrincipal(Object authentication) throws GGAPIException {
 		GGAPIAuthenticationInfos infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
