@@ -49,12 +49,14 @@ public class GGAPIEntityAuthenticatorChecker {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "
 					+ entityAuthenticatorClass.getSimpleName() + " is not annotated with @GGAPIAuthenticator");
 		}
+		
+		Class<?> authorizationType = annotation.authorization();
 
-		if (entityAuthenticatorClass.getDeclaredAnnotation(GGAPIEntityOwner.class) == null) {
+		if (authorizationType != void.class && entityAuthenticatorClass.getDeclaredAnnotation(GGAPIEntityOwner.class) == null) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "
 					+ entityAuthenticatorClass.getSimpleName() + " is not annotated with @GGAPIEntityOwner");
 		}
-
+		
 		Class<?> authentication = annotation.authentication();
 		String[] authenticationInterfaces = annotation.interfaces();
 		Class<?> keyType = annotation.key();
@@ -104,8 +106,9 @@ public class GGAPIEntityAuthenticatorChecker {
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
 
+
 			GGAPIAuthenticatorInfos authenticatorinfos = new GGAPIAuthenticatorInfos(entityAuthenticatorClass,
-					authentication, authenticationInterfaces, annotation.authorization(), keyType, keyUsage,
+					authentication, authenticationInterfaces, authorizationType, keyType, keyUsage,
 					autoCreateKey, keyAlgorithm, keyLifeTime, keyLifeTimeUnit, annotation.authorizationLifeTime(),
 					annotation.authorizationLifeTimeUnit(), q.address(autoritiesFieldName),
 					q.address(accountNonExpiredFieldName), q.address(accountNonLockedFieldName),

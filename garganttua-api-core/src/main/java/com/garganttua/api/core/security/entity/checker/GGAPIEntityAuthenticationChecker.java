@@ -16,6 +16,7 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthentic
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthorities;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthorization;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationCredentials;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationFindPrincipal;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationPrincipal;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
@@ -53,7 +54,8 @@ public class GGAPIEntityAuthenticationChecker {
 		String principalFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationPrincipal.class, Object.class, true);
 		String credentialsFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationCredentials.class, Object.class, true);
 		String tenantIdFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIEntityTenantId.class, String.class, true);
-		String authenticateMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationAuthenticate.class, true, void.class, Boolean.class);
+		String authenticateMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationAuthenticate.class, true, void.class);
+		String findPrincipalMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationFindPrincipal.class, true, void.class);
 
 		try {
 			IGGObjectQuery q = GGObjectQueryFactory.objectQuery(authenticationClass);
@@ -68,7 +70,8 @@ public class GGAPIEntityAuthenticationChecker {
 					q.address(tenantIdFieldName),
 					q.address(authenticateMethodName),
 					q.address(authenticatorInfosFieldName),
-					annotation.findPrincipal());
+					annotation.findPrincipal(),
+					q.address(findPrincipalMethodName));
 			
 			GGAPIEntityAuthenticationChecker.infos.put(authenticationClass, infos);
 			return infos;		

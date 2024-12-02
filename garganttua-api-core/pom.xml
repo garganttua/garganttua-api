@@ -24,6 +24,11 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-reflection</artifactId>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-executor-chain</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

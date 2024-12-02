@@ -93,8 +93,8 @@ public class TestGGAPIJWTAuthorization {
 		GGAPIException exception = assertThrows(GGAPIException.class, ()->{
 			auth.validateAgainst(auth2);		
 		});
-		assertEquals(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, exception.getCode());
-		assertEquals("Expected sub claim to be: test, but was: toto.", exception.getMessage());
+		assertEquals(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, exception.getCode());
+		assertEquals("Invalid signature", exception.getMessage());
 	}
 	
 	@Test
@@ -104,8 +104,8 @@ public class TestGGAPIJWTAuthorization {
 		GGAPIException exception = assertThrows(GGAPIException.class, ()->{
 			auth.validateAgainst(auth2);		
 		});
-		assertEquals(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, exception.getCode());
-		assertEquals("JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.", exception.getMessage());
+		assertEquals(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, exception.getCode());
+		assertEquals("Invalid signature", exception.getMessage());
 	}
 	
 	@Test

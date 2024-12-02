@@ -37,7 +37,7 @@ public class GGAPISpringAuthentication implements Authentication {
 					}
 				};
 				
-			}).collect(Collectors.toCollection(null));
+			}).collect(Collectors.toList());
 		} catch (GGAPIException e) {
 			return null;
 		}

@@ -16,16 +16,6 @@ public interface IGGAPISecurityEngine {
 	IGGAPISecurityEngine flush() throws GGAPIException;
 
 	IGGAPISecurityEngine init() throws GGAPIException;
-	
-	
-	
-	
-
-//	Object applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity) throws GGAPIException;
-	
-//	Object authenticate(IGGAPIAuthenticationRequest authentication) throws GGAPIException;
-	
-	boolean isAuthenticatorEntity(Object entity);
 
 	void verifyTenant(IGGAPICaller caller, Object authorization) throws GGAPIException;
 	
@@ -39,23 +29,6 @@ public interface IGGAPISecurityEngine {
 
 	IGGAPIAuthenticationServicesRegistry getAuthenticationServicesRegistry();
 
-//	void ifAuthorizationManagerPresent(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller)
-//			throws GGAPIException;
-//
-//	void ifAuthenticationProviderPresent(IGGAPIAuthenticationProviderIfPresentMethod method, IGGAPICaller caller)
-//			throws GGAPIException;
-	
-//	void ifTenantVerifierPresent(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
-//	
-//	void ifOwnerVerifierPresent(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller) throws GGAPIException;
+	boolean isStorableAuthorization(Object authorization);
 
-//	void ifAuthorizationManagerPresentOrElse(IGGAPIAuthorizationManagerIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
-//			throws GGAPIException;
-//
-//	void ifAuthenticationProviderPresentOrElse(IGGAPIAuthenticationProviderIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod)
-//			throws GGAPIException;
-	
-//	void ifTenantVerifierPresentOrElse(IGGAPITenantVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
-//	
-//	void ifOwnerVerifierPresentOrElse(IGGAPIOwnnerVerifierIfPresentMethod method, IGGAPICaller caller, IGGAPIOrElseMethod orElseMethod) throws GGAPIException;
 }

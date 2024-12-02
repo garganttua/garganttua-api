@@ -42,7 +42,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 	}
 
 	@Override
-	protected Object findPrincipal() {
+	protected Object doFindPrincipal() {
 		// TODO Auto-generated method stub
 		return null;
 	}

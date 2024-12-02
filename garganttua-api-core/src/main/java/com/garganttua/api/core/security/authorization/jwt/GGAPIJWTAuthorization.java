@@ -12,7 +12,6 @@ import com.garganttua.api.core.security.authorization.GGAPISignableAuthorization
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorization;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationToByteArray;
@@ -31,9 +30,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @GGAPIEntityOwned
 public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 
-	@GGAPIEntityMandatory
 	private byte[] signature = null;
-	@GGAPIEntityMandatory
+
 	private byte[] raw = null;
 	
 	@GGAPIAuthorizationType
@@ -58,7 +56,7 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 			DocumentContext jsonPayload = JsonPath.parse(payload);
 			this.uuid = jsonPayload.read("$['uuid']");
 			this.tenantId = jsonPayload.read("$['tenantId']");
-			this.ownerUuid = jsonPayload.read("$['ownerId']"); 
+			this.ownerId = jsonPayload.read("$['ownerId']"); 
 			this.authorities = jsonPayload.read("$['authorities'][*]");
 			this.id = jsonPayload.read("$['sub']");
 			int creationDateInt = jsonPayload.read("$['iat']");
@@ -98,8 +96,6 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 		return null;
 	}
 
-
-	
 	private static String getJJWTAlgorithmFromJava(GGAPIKeyAlgorithm keyAlgorithm) throws GGAPISecurityException {
 	    switch (keyAlgorithm) {
 	        case HMAC_SHA512_256:
@@ -136,7 +132,7 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 	private Map<String, Object> getClaims() {
 		Map<String, Object> claims = new HashMap<>();
 		claims.put("tenantId", this.tenantId);
-		claims.put("ownerId", this.ownerUuid);
+		claims.put("ownerId", this.ownerId);
 		claims.put("uuid", this.uuid);
 		claims.put("authorities", this.authorities);
 		return claims;
@@ -144,17 +140,8 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 
 	@Override
 	protected void doValidationAgainst(GGAPIJWTAuthorization authorization) throws GGAPISecurityException {
-		try {
-			Jwts.parserBuilder()
-			.setSigningKey(this.key.getKeyForCiphering().getKey())
-			.requireExpiration(this.expirationDate)
-			.requireIssuedAt(this.creationDate)
-			.requireSubject(this.id)
-			.require("tenantId", this.tenantId)
-			.require("ownerId", this.ownerUuid)
-			.build().parse(new String(authorization.toByteArray()));
-		} catch (Exception e) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, e.getMessage());
+		if( !Arrays.equals(this.signature, authorization.signature) ) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, "Invalid signature");
 		}
 	}
 

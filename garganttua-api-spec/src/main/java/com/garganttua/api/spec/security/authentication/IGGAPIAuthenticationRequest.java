@@ -13,5 +13,9 @@ public interface IGGAPIAuthenticationRequest {
 	Object getCredentials();
 	
 	Class<?> getAuthenticationType();
+	
+	Object getAuthentication();
+
+	void setAuthentication(Object authentication);
 
 }

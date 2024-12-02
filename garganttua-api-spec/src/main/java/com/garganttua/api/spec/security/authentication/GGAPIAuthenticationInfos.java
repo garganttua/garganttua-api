@@ -13,7 +13,8 @@ public record GGAPIAuthenticationInfos(
 		GGObjectAddress tenantIdFieldAddress,
 		GGObjectAddress authenticateMethodAddress,
 		GGObjectAddress authenticatorInfosFieldAddress,
-		boolean findPrincipal
+		boolean findPrincipal,
+		GGObjectAddress findPrincipalMethodAddress
 		) {
 
 }

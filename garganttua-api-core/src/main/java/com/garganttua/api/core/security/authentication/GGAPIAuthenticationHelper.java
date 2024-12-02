@@ -7,6 +7,7 @@ import java.util.List;
 import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticationChecker;
+import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
@@ -99,5 +100,30 @@ public class GGAPIAuthenticationHelper {
 	public static String getTenantId(Object authentication) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
 				GGAPIAuthenticationInfos::tenantIdFieldAddress);
+	}
+
+	public static boolean isFindPrincipal(Object authentication) throws GGAPIException {
+		GGAPIAuthenticationInfos infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(authentication.getClass());
+		if( infos == null ) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR, authentication.getClass().getSimpleName()+" not an authentication");
+		}
+		return infos.findPrincipal();
+	}
+
+	public static void findPrincipal(Object authentication) throws GGAPIException {
+		if( GGAPIAuthenticationHelper.isFindPrincipal(authentication) ) {
+			GGAPIInfosHelper.invoke(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::findPrincipalMethodAddress);
+		}
+	}
+
+	public static IGGAPIService getAuthenticatorService(Object authentication) throws GGAPIException {
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticatorServiceFieldAddress);
+	}
+
+	public static GGAPIAuthenticatorInfos getAuthenticatorInfos(Object authentication) throws GGAPIException {
+		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::authenticatorInfosFieldAddress);
 	}
 }

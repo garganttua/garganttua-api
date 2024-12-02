@@ -56,6 +56,17 @@ public class GGAPIEntityAuthenticatorHelper {
 		}
 		return infos!=null;
 	}
+	
+	public static boolean isAuthenticator(Class<?> entityClass) {
+		GGAPIAuthenticatorInfos infos = null;
+		try {
+			infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entityClass);
+		} catch (GGAPIException e) {
+			log.atDebug().log("Error during determining if entity of type "+entityClass.getSimpleName()+" is authenticator or not : "+e.getMessage());
+			return false;
+		}
+		return infos!=null;
+	}
 
 	public static boolean isCreateAuthorization(Object entity) throws GGAPIException {
 		GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);

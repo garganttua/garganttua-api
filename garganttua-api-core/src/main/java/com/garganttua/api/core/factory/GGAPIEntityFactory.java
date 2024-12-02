@@ -76,6 +76,7 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			GGAPIEntityHelper.setGotFromRepository( entity, false );
 			GGAPIEntityHelper.setUuid(entity, uuid);
 			GGAPIEntityHelper.setTenantId(entity, tenantId);
+			
 			this.setEntityMethodsAndFields(customParameters, this.domain, entity);
 			
 			return entity;

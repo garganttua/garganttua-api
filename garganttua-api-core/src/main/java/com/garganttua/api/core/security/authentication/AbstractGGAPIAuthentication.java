@@ -14,6 +14,7 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthentic
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthorities;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthorization;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationCredentials;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationFindPrincipal;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationPrincipal;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.IGGAPIService;
@@ -48,32 +49,31 @@ public abstract class AbstractGGAPIAuthentication {
 	protected List<String> authorities;
 
 	@GGAPIAuthenticationAuthenticate
-	public void authenticate(Boolean findPrincipal) throws GGAPIException {
-		if( findPrincipal && this.authenticatorService != null ) {
-			Object principal = this.findPrincipal();
-			
-			if( principal == null ) {
-				log.atWarn().log("Principal identified by "+this.principal+" is not found");
-				return;
-			}
-			
-			this.principal = principal;
-			this.authorities = GGAPIEntityAuthenticatorHelper.getAuthorities(principal);
-		} else if( !findPrincipal && this.authenticatorService == null ) {
-//			this.principal = this.credential;
-		} else {
-			log.atWarn().log("Principal indicated to be found but no authenticator service provided"); 
-			return;
-		}
-
+	public void authenticate() throws GGAPIException {
 		this.doAuthentication();
 			 
-		if( this.authenticated && findPrincipal ) {
+		if( this.authenticated && GGAPIEntityAuthenticatorHelper.isAuthenticator(this.principal) ) {
+			this.authorities = GGAPIEntityAuthenticatorHelper.getAuthorities(principal);
 			this.checkPrincipal();
 		} 
 	}
 
-	protected abstract Object findPrincipal();
+	@GGAPIAuthenticationFindPrincipal
+	protected void findPrincipal() throws GGAPISecurityException {
+		if( this.authenticatorService != null ) {
+			Object principal = this.doFindPrincipal();
+			if( principal == null ) {
+				log.atWarn().log("Principal identified by "+this.principal+" is not found");
+				return;
+			}	
+			this.principal = principal;
+		} else {
+			log.atWarn().log("Principal identified by "+this.principal+" indicated to be found but no authenticator service provided"); 
+			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR, "Principal identified by "+this.principal+" indicated to be found but no authenticator service provided");
+		}
+	}
+
+	protected abstract Object doFindPrincipal();
 
 	protected void checkPrincipal() throws GGAPISecurityException, GGAPIException {
 		if( !GGAPIEntityAuthenticatorHelper.isAccountNonExpired(this.principal) ) {

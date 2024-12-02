@@ -1,7 +1,9 @@
 package com.garganttua.api.spec;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GGAPIException extends Exception {
 
 	private static final long serialVersionUID = 7855765591949705798L;
@@ -40,6 +42,7 @@ public class GGAPIException extends Exception {
 	}
 	
 	public static void processException(Exception e) throws GGAPIException {
+		log.atWarn().log("Error ", e);
 		GGAPIException apiException = GGAPIException.findFirstInException(e);
 		if( apiException != null ) {
 			throw apiException; 

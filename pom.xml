@@ -81,6 +81,12 @@
 
 			<dependency>
 				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-executor-chain</artifactId>
+				<version>${com.garganttua.tooling.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-interface-spring-rest</artifactId>
 				<version>${project.version}</version>
 			</dependency>
