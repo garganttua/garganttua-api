@@ -17,8 +17,10 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyUsage;
-import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
+import com.garganttua.api.spec.security.key.GGAPIEncryptionMode;
+import com.garganttua.api.spec.security.key.GGAPIEncryptionPaddingMode;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
+import com.garganttua.api.spec.security.key.GGAPISignatureAlgorithm;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
@@ -27,20 +29,18 @@ import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.GGObjectAddress;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class GGAPIKeyHelper {
 
-	public static IGGAPIKeyRealm getKey(GGAPIAuthenticatorInfos authenticatorInfos, String ownerUuid, String tenantId, IGGAPIDomain tenantsDomain, IGGAPIServicesRegistry registry)
+	public static IGGAPIKeyRealm getKey(String realmName, Class<?> keyType, GGAPIAuthenticatorKeyUsage keyUsage, boolean autoCreate, GGAPIKeyAlgorithm keyAlgorithm, int keyLifeTime, TimeUnit keyLifeTimeUnit, String ownerUuid, String tenantId, IGGAPIDomain tenantsDomain, IGGAPIServicesRegistry registry, GGAPIEncryptionMode encryptionMode,
+			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm)
 			throws GGAPIEngineException, GGAPIException {
-		Class<?> keyType = authenticatorInfos.key();
-		GGAPIAuthenticatorKeyUsage keyUsage = authenticatorInfos.keyUsage();
-		boolean autoCreate = authenticatorInfos.autoCreateKey();
-		GGAPIKeyAlgorithm keyAlgorithm = authenticatorInfos.keyAlgorithm();
-		int keyLifeTime = authenticatorInfos.keyLifeTime();
-		TimeUnit keyLifeTimeUnit = authenticatorInfos.keyLifeTimeUnit();
+
 		IGGAPIService keyService = registry.getService(GGAPIEntityHelper.getDomain(keyType));
 
 		IGGAPICaller caller = null;
-		String realmName = null;
 		switch (keyUsage) {
 		case oneForAll:
 			caller = GGAPICaller.createTenantCallerWithOwnerId(tenantId,
@@ -55,17 +55,18 @@ public class GGAPIKeyHelper {
 					tenantsDomain.getDomain() + ":" + tenantId);
 			break;
 		}
-		realmName = "authorizations-signing-key";
 
 		IGGAPIKeyRealm key = getRealm(caller, realmName, keyAlgorithm, autoCreate, keyService, keyLifeTime,
-				keyLifeTimeUnit, keyService.getDomain());
+				keyLifeTimeUnit, keyService.getDomain(), encryptionMode,
+				paddingMode, signatureAlgorithm);
 		return key;
 	}
 
 	@SuppressWarnings("unchecked")
 	private static IGGAPIKeyRealm getRealm(IGGAPICaller caller, String realmName, GGAPIKeyAlgorithm algorithm,
 			boolean autoCreate, IGGAPIService keyRealmService, int keyLifetime, TimeUnit keyLifetimeUnit,
-			IGGAPIDomain domain) throws GGAPIException {
+			IGGAPIDomain domain, GGAPIEncryptionMode encryptionMode,
+			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) throws GGAPIException {
 		IGGAPIFilter filter = buildFilterForKeyRealm(realmName, algorithm, domain);
 		IGGAPIServiceResponse response = keyRealmService.getEntities(caller, GGAPIReadOutputMode.full, null, filter,
 				null, new HashMap<String, String>());
@@ -77,7 +78,8 @@ public class GGAPIKeyHelper {
 			} else {
 				if (autoCreate) {
 					return createRealm(caller, realmName, algorithm, keyRealmService, keyLifetime,
-							keyLifetimeUnit);
+							keyLifetimeUnit, encryptionMode,
+							paddingMode, signatureAlgorithm);
 				} else {
 					throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_NOT_FOUND,
 							"Key realm " + realmName + " not found for tenant " + caller.getRequestedTenantId()
@@ -92,12 +94,14 @@ public class GGAPIKeyHelper {
 	}
 
 	private static IGGAPIKeyRealm createRealm(IGGAPICaller caller, String realmName, GGAPIKeyAlgorithm algorithm,
-			IGGAPIService keyRealmService, int keyLifetime, TimeUnit keyLifetimeUnit) throws GGAPIException {
+			IGGAPIService keyRealmService, int keyLifetime, TimeUnit keyLifetimeUnit, GGAPIEncryptionMode encryptionMode,
+			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) throws GGAPIException {
 		Date expiration = Date
 				.from(Instant.ofEpochSecond(Instant.now().getEpochSecond() + keyLifetimeUnit.toSeconds(keyLifetime)));
 
 		IGGAPIKeyRealm entity = GGAPIKeyRealmHelper.newInstance(keyRealmService.getDomain().getEntity().getValue0(),
-				realmName, algorithm, expiration);
+				realmName, algorithm, expiration, encryptionMode,
+				paddingMode, signatureAlgorithm);
 		IGGAPIServiceResponse response = keyRealmService.createEntity(caller, entity, new HashMap<String, String>());
 
 		if (response.getResponseCode() != GGAPIServiceResponseCode.CREATED) {
@@ -119,6 +123,33 @@ public class GGAPIKeyHelper {
 		GGAPILiteral revokedFilter = GGAPILiteral.eq(revokedFieldAddress.toString(), false);
 		GGAPILiteral algorithmFilter = GGAPILiteral.eq(algorithmFieldAddress.toString(), algorithm);
 		return GGAPILiteral.and(idFilter, expirationFilter, revokedFilter, algorithmFilter);
+	}
+
+	public static void revokeAllForOwner(String realmName, String tenantId, String ownerId, Class<?> keyType, IGGAPIServicesRegistry registry) throws GGAPIEngineException {
+		
+		IGGAPIService keyService = registry.getService(GGAPIEntityHelper.getDomain(keyType));
+		
+		IGGAPIDomain domain = keyService.getDomain();
+		
+		GGObjectAddress idFieldAddress = domain.getEntity().getValue1().idFieldAddress();
+		GGObjectAddress revokedFieldAddress = GGAPIKeyRealm.getRevokedFieldAddress();
+		GGAPILiteral revokedFilter = GGAPILiteral.eq(revokedFieldAddress.toString(), false);
+		GGAPILiteral idFilter = GGAPILiteral.eq(idFieldAddress.toString(), realmName);
+		
+		IGGAPIServiceResponse getEntitiesResponse = keyService.getEntities(GGAPICaller.createTenantCallerWithOwnerId(tenantId, ownerId), GGAPIReadOutputMode.full, null, GGAPILiteral.and(idFilter, revokedFilter), null, new HashMap<String, String>());
+		
+		if( getEntitiesResponse.getResponseCode() == GGAPIServiceResponseCode.OK ) {
+			((List<IGGAPIKeyRealm>) getEntitiesResponse.getResponse()).forEach(realm -> {
+				realm.revoke();
+				try {
+					GGAPIEntityHelper.save(realm, GGAPICaller.createTenantCallerWithOwnerId(tenantId, ownerId), new HashMap<String, String>());
+				} catch (GGAPIException e) {
+					log.atWarn().log("Error", e);
+				}
+			});
+		}
+
+		
 	}
 
 	

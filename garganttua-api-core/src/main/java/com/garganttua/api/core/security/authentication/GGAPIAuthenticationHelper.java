@@ -3,6 +3,7 @@ package com.garganttua.api.core.security.authentication;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Map;
 
 import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
@@ -10,6 +11,7 @@ import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthentication
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.IGGAPIService;
@@ -136,5 +138,10 @@ public class GGAPIAuthenticationHelper {
 	public static GGAPIAuthenticatorInfos getAuthenticatorInfos(Object authentication) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
 				GGAPIAuthenticationInfos::authenticatorInfosFieldAddress);
+	}
+
+	public static void applySecurity(Object authentication, IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
+		GGAPIInfosHelper.invoke(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::applySecurityMethodAddress, caller, entity, params);
 	}
 }

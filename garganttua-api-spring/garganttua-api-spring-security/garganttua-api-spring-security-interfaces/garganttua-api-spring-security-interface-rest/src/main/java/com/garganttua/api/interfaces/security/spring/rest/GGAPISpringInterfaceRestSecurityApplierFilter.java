@@ -2,13 +2,18 @@ package com.garganttua.api.interfaces.security.spring.rest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
@@ -49,13 +54,18 @@ public class GGAPISpringInterfaceRestSecurityApplierFilter extends OncePerReques
 				ModifiableHttpServletRequest modifiableRequest = new ModifiableHttpServletRequest(httpServletRequest);
 
 				String originalBody = new String(modifiableRequest.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-				ObjectMapper mapper = new ObjectMapper();
+				
+				ObjectMapper mapper = new ObjectMapper()
+						.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, false)
+						.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+				
 				Object entity = mapper.readValue(originalBody, caller.getDomain().getEntity().getValue0());
-
-				this.security.applySecurityOnAuthenticatorEntity(caller, entity);
+				
+				this.security.applySecurityOnAuthenticatorEntity(caller, entity, new HashMap<String, String>());
 
 				String writeValueAsString = mapper.writeValueAsString(entity);
 				modifiableRequest.setRequestBody(writeValueAsString);
+				
 				return modifiableRequest;
 				
 			} catch (IOException e) {

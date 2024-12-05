@@ -2,12 +2,15 @@ package com.garganttua.api.core.security.engine;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationFactoryFactory;
+import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationInfosFactory;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationInterfacesFactory;
+import com.garganttua.api.core.security.authentication.GGAPIAuthenticationService;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationServicesFactory;
 import com.garganttua.api.core.security.authenticator.GGAPIAuthenticatorInfosFactory;
 import com.garganttua.api.core.security.authenticator.GGAPIAuthenticatorServicesFactory;
@@ -20,6 +23,7 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.core.security.key.GGAPIKeyHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
@@ -155,7 +159,6 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		return this;
 	}
 	
-	
 	//TODO to be refactored
 	private Object getAuthorization(byte[] authorizationRaw, IGGAPICaller caller) {
 		Class<?>[] supportedAuthorizations = caller.getDomain().getSecurity().getAuthorizations();
@@ -193,7 +196,21 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 						return d.getEntity().getValue1().tenantEntity();
 					}).findFirst();
 					
-					IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(authenticatorInfos, ownerId, caller.getTenantId(), tenantDomain.get(), this.servicesRegistry);
+					IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
+							GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
+							authenticatorInfos.key(), 
+							authenticatorInfos.keyUsage(),
+							authenticatorInfos.autoCreateKey(),
+							authenticatorInfos.keyAlgorithm(),
+							authenticatorInfos.keyLifeTime(),
+							authenticatorInfos.keyLifeTimeUnit(),
+							ownerId, 
+							caller.getTenantId(), 
+							tenantDomain.get(), 
+							this.servicesRegistry,
+							null,
+							null,
+							null);
 					
 					if( key != null ) {
 						authorization = GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization, authorizationRaw, key);
@@ -255,9 +272,15 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	}
 
 	@Override
-	public void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity) {
-		// TODO Auto-generated method stub
-		
+	public void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
+		if( GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass()) ) {
+			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
+			log.atDebug().log("Appliing authenticator security on entity of type "+entity.getClass().getSimpleName()+" with authentication type "+authenticatorInfos.authenticationType().getSimpleName());
+			Object authentication = this.authenticationFactoryRegistry.getFactory(authenticatorInfos.authenticationType()).createDummy();
+			GGAPIAuthenticationHelper.applySecurity(authentication, caller, entity, params);			
+		} else {
+			log.atDebug().log("Cannot apply authenticator security on entity of type "+entity.getClass().getSimpleName()+" as it is not an authenticator entity");
+		}
 	}
 
 }

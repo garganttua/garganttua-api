@@ -16,11 +16,18 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
 
+import lombok.NoArgsConstructor;
+
 @GGAPIEntity(
 	domain = "test", interfaces = { "gg:test" }
 )
+@NoArgsConstructor
 class Entity extends GenericGGAPIEntity {
 	
+	protected Entity(String uuid, String id) {
+		super(uuid, id);
+	}
+
 	private String mapping;
 }
 @GGAPIDto(entityClass = Entity.class )
@@ -34,9 +41,7 @@ public class GGAPIFilterMapperTest {
 	
 	@Test
 	public void testUniqueDtoForEntity() throws GGAPIException {
-		Entity entity = new Entity();
-		entity.setUuid("uuid");
-		entity.setId("id");
+		Entity entity = new Entity("uuid", "id");
 
 		GGAPIDomain domain = GGAPIDomain.fromEntityClass(entity.getClass(), List.of("com.garganttua.api.core.filter"));
 		
@@ -54,9 +59,7 @@ public class GGAPIFilterMapperTest {
 	
 	@Test
 	public void testUniqueDtoEntityFieldNotMapped() throws GGAPIException {
-		Entity entity = new Entity();
-		entity.setUuid("uuid");
-		entity.setId("id");
+		Entity entity = new Entity("uuid", "id");
 
 		GGAPIDomain domain = GGAPIDomain.fromEntityClass(entity.getClass(), List.of("com.garganttua.api.core.filter"));
 		
@@ -69,10 +72,8 @@ public class GGAPIFilterMapperTest {
 	
 	@Test
 	public void testUniqueDtoEntityFieldNotMappedAndOneMapped() throws GGAPIException {
-		Entity entity = new Entity();
-		entity.setUuid("uuid");
-		entity.setId("id");
-
+		Entity entity = new Entity("uuid", "id");
+		
 		GGAPIDomain domain = GGAPIDomain.fromEntityClass(entity.getClass(), List.of("com.garganttua.api.core.filter"));
 		
 		GGAPILiteral filter = GGAPILiteral.eq("fieldNotMapped", "toto");

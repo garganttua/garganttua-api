@@ -56,7 +56,18 @@ public class GGAPIEntityOperation {
 	
 	@Override
 	public boolean equals(Object obj) {
-		return obj.toString().equals(this.toString());
+	    if (this == obj) {
+	        return true;
+	    }
+	    if (obj == null || getClass() != obj.getClass()) {
+	        return false;
+	    }
+	    GGAPIEntityOperation other = (GGAPIEntityOperation) obj;
+	    return Objects.equals(domainName, other.domainName) &&
+	           Objects.equals(entity, other.entity) &&
+	           method == other.method &&
+	           actionOnAllEntities == other.actionOnAllEntities &&
+	           custom == other.custom;
 	}
 	
 	@Override

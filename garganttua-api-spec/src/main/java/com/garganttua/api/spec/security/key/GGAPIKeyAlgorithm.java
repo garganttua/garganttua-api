@@ -12,7 +12,7 @@ import javax.crypto.SecretKey;
 
 import com.garganttua.api.spec.security.GGAPISecurityRandoms;
 
-public enum GGAPIKeyAlgorithm {
+public enum GGAPIKeyAlgorithm implements IGGAPIKeyAlgorithm {
     // DSA
     DSA_512("DSA", 512),
     DSA_1024("DSA", 1024),
@@ -95,12 +95,17 @@ public enum GGAPIKeyAlgorithm {
     HMAC_SHA512_2048("HmacSHA512", 2048),
     HMAC_SHA512_4096("HmacSHA512", 4096),
 
-    // ARCFOUR
-    ARCFOUR_128("ARCFOUR", 128),
-    ARCFOUR_256("ARCFOUR", 256),
-    ARCFOUR_384("ARCFOUR", 384),
-    ARCFOUR_512("ARCFOUR", 512),
-    ARCFOUR_1024("ARCFOUR", 1024),
+    // ARCFOUR - RC4
+    @Deprecated
+    ARCFOUR_128("RC4", 128),
+    @Deprecated
+    ARCFOUR_256("RC4", 256),
+    @Deprecated
+    ARCFOUR_384("RC4", 384),
+    @Deprecated
+    ARCFOUR_512("RC4", 512),
+    @Deprecated
+    ARCFOUR_1024("RC4", 1024),
 
     // Blowfish
     BLOWFISH_32("Blowfish", 32),
@@ -165,10 +170,15 @@ public enum GGAPIKeyAlgorithm {
     DESEDE_168("DESede", 168),
 
     // RC2
+    @Deprecated
     RC2_128("RC2", 128),
+    @Deprecated
     RC2_256("RC2", 256),
+    @Deprecated
     RC2_384("RC2", 384),
+    @Deprecated
     RC2_512("RC2", 512),
+    @Deprecated
     RC2_1024("RC2", 1024);
 
     private final String algorithm;
@@ -214,25 +224,27 @@ public enum GGAPIKeyAlgorithm {
                 .orElseThrow(() -> new IllegalArgumentException("Unsupported size or algorithm "+input));
     }
     
-    public static GGAPIKeyRealmType determineAlgorithmType(GGAPIKeyAlgorithm input) throws IllegalArgumentException {
-        if (isSymetricAlgorithm(input)) {
+    @Override
+    public GGAPIKeyRealmType getType() throws IllegalArgumentException {
+        if (this.isSymetricAlgorithm()) {
             return GGAPIKeyRealmType.SYMETRIC;
-        } else if (isAsymetricAlgorithm(input)) {
+        } else if (this.isAsymetricAlgorithm()) {
             return GGAPIKeyRealmType.ASYMETRIC;
         } else {
-        	throw new IllegalArgumentException("Unsupported algorithm "+input);
+        	//Should never happen
+        	throw new IllegalArgumentException("Unsupported algorithm "+this.algorithm);
         }
     }
 
-    private static boolean isSymetricAlgorithm(GGAPIKeyAlgorithm algo) {
-        switch (algo.algorithm) {
+    private boolean isSymetricAlgorithm() {
+        switch (this.algorithm) {
             case "AES":
             case "HmacSHA1":
             case "HmacSHA224":
             case "HmacSHA256":
             case "HmacSHA384":
             case "HmacSHA512":
-            case "ARCFOUR":
+            case "RC4":
             case "Blowfish":
             case "DES":
             case "DESede":
@@ -243,8 +255,8 @@ public enum GGAPIKeyAlgorithm {
         }
     }
 
-    private static boolean isAsymetricAlgorithm(GGAPIKeyAlgorithm algo) {
-        switch (algo.algorithm) {
+    private boolean isAsymetricAlgorithm() {
+        switch (this.algorithm) {
             case "DSA":
             case "RSA":
             case "RSASSA_PSS":
@@ -255,33 +267,58 @@ public enum GGAPIKeyAlgorithm {
                 return false;
         }
     }
-    
-    public static SecretKey generateSymetricKey(GGAPIKeyAlgorithm algo) throws IllegalArgumentException {
+
+    @Override
+    public SecretKey generateSymetricKey() throws IllegalArgumentException {
         KeyGenerator keyGen;
 		try {
-			keyGen = KeyGenerator.getInstance(algo.getAlgorithm());
-			keyGen.init(algo.keySize, GGAPISecurityRandoms.secureRandom());
+			keyGen = KeyGenerator.getInstance(this.getAlgorithm());
+			keyGen.init(this.keySize, GGAPISecurityRandoms.secureRandom());
 			return keyGen.generateKey();
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalArgumentException(e);
 		}
     }
 
-    public static KeyPair generateAsymetricKey(GGAPIKeyAlgorithm algo) throws IllegalArgumentException {
+    @Override
+    public KeyPair generateAsymetricKey() throws IllegalArgumentException {
         KeyPairGenerator keyGen;
 		try {
-			keyGen = KeyPairGenerator.getInstance(algo.getAlgorithm());
-			if (algo.algorithm.equals("EC")) {
-				if( algo.keySize == 512 )
+			keyGen = KeyPairGenerator.getInstance(this.getAlgorithm());
+			if (this.algorithm.equals("EC")) {
+				if( this.keySize == 512 )
 					keyGen.initialize(new ECGenParameterSpec("secp521r1"), GGAPISecurityRandoms.secureRandom());
 				else 
-					keyGen.initialize(new ECGenParameterSpec("secp"+algo.keySize+"r1"), GGAPISecurityRandoms.secureRandom());
+					keyGen.initialize(new ECGenParameterSpec("secp"+this.keySize+"r1"), GGAPISecurityRandoms.secureRandom());
 			} else {
-				keyGen.initialize(algo.keySize, GGAPISecurityRandoms.secureRandom());
+				keyGen.initialize(this.keySize, GGAPISecurityRandoms.secureRandom());
 			}
 			return keyGen.generateKeyPair();
 		} catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException  e) {
 			throw new IllegalArgumentException(e);
 		}
     }
+
+    @Override
+    public String geCipherName(GGAPIEncryptionMode mode, GGAPIEncryptionPaddingMode padding) throws IllegalArgumentException {
+        if (mode == null || padding == null) {
+            throw new IllegalArgumentException("Mode and Padding cannot be null");
+        }
+        
+        return this.getAlgorithm() + "/" + mode + "/" + padding.getPadding();
+    }
+
+    @Override
+	public String geSignatureName(GGAPISignatureAlgorithm signatureAlgorithm) {
+		if (signatureAlgorithm == null) {
+            throw new IllegalArgumentException("Signture algorithm cannot be null");
+        }
+        
+        String algorithmName = this.algorithm;
+        if( this.algorithm.equals("EC") )
+        	algorithmName = "ECDSA";
+        
+        
+		return signatureAlgorithm.getName()+"with"+algorithmName;
+	}
 }

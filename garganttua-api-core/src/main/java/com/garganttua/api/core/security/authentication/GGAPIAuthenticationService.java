@@ -50,6 +50,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
+	public static final String AUTHORIZATION_SIGNING_KEY_REALM_NAME = "authorization-signing-key";
+	
 	private GGAPIAuthenticationInfos infos;
 	private Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> authenticatorServices;
 	private IGGAPIServicesRegistry servicesRegistry;
@@ -276,7 +278,21 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 		Date expirationDate = Date.from(Instant.ofEpochSecond(lifeTimeInseconds));
 
 		if (GGAPIEntityAuthorizationHelper.isSignable(authenticatorInfos.authorizationType())) {
-			IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(authenticatorInfos, ownerUuid, tenantId, this.tenantDomain, this.servicesRegistry);
+			IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
+					AUTHORIZATION_SIGNING_KEY_REALM_NAME,
+					authenticatorInfos.key(), 
+					authenticatorInfos.keyUsage(),
+					authenticatorInfos.autoCreateKey(),
+					authenticatorInfos.keyAlgorithm(),
+					authenticatorInfos.keyLifeTime(),
+					authenticatorInfos.keyLifeTimeUnit(),
+					ownerUuid, 
+					tenantId, 
+					this.tenantDomain, 
+					this.servicesRegistry,
+					null, 
+					null, 
+					null);
 
 			if( foundAuthorization != null && this.revalidateAuthorizationWithKey(foundAuthorization, key) ) {
 				return foundAuthorization;

@@ -2,9 +2,11 @@ package com.garganttua.api.spec.engine;
 
 import java.util.List;
 
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.domain.IGGAPIDomainsRegistry;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
@@ -43,4 +45,8 @@ public interface IGGAPIEngine {
 	IGGAPICallerFactory getCallerFactory(String domainName);
 
 	List<String> getAuthorities();
+
+	String getAuthority(GGAPIEntityOperation method);
+
+	IGGAPIDomain getTenantsDomain();
 }

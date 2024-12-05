@@ -15,4 +15,6 @@ public interface IGGAPIAccessRulesRegistry {
 	
 	void addAccessRule(IGGAPIAccessRule accessRule);
 
+	String getAuthority(GGAPIEntityOperation operation);
+
 }

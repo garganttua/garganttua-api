@@ -1,5 +1,6 @@
 package com.garganttua.api.core.security.authorization.jwt;
 
+import java.security.Key;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
@@ -123,9 +124,11 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 
 	private JwtBuilder createTokenFromThis() throws GGAPIException, GGAPISecurityException {
 		Map<String, Object> claims = this.getClaims();
-		IGGAPIKey keyForCiphering = this.key.getKeyForCiphering();
+		IGGAPIKey keyForCiphering = this.key.getKeyForEncryption();
+		SignatureAlgorithm forName = SignatureAlgorithm.forName(GGAPIJWTAuthorization.getJJWTAlgorithmFromJava(this.key.getKeyAlgorithm()));
+		Key key__ = keyForCiphering.getKey();
 		JwtBuilder token = Jwts.builder().setClaims(claims).setSubject(this.id).setIssuedAt(this.creationDate).setExpiration(this.expirationDate)
-				.signWith(keyForCiphering.getKey(), SignatureAlgorithm.forName(GGAPIJWTAuthorization.getJJWTAlgorithmFromJava(this.key.getAlgorithm())));
+				.signWith(key__, forName);
 		return token;
 	}
 

@@ -36,8 +36,7 @@ public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 
 	public GGAPIAuthorization(String uuid, String id, String tenantId, String ownerId, List<String> authorities,
 			Date creationDate, Date expirationDate) {
-		this.uuid = uuid;
-		this.id = id;
+		super(uuid, id);
 		this.tenantId = tenantId;
 		this.ownerId = ownerId; 
 		this.authorities = authorities;

@@ -43,7 +43,7 @@
 	</distributionManagement>
 
 	<properties>
-		<com.garganttua.tooling.version>1.0.11-SNAPSHOT</com.garganttua.tooling.version>
+		<com.garganttua.tooling.version>1.0.11</com.garganttua.tooling.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -128,39 +128,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
-		<!--		<dependency>-->
-		<!--			<groupId>org.springframework.boot</groupId>-->
-		<!--			<artifactId>spring-boot-starter-test</artifactId>-->
-		<!--			<scope>test</scope>-->
-		<!--			<version>${spring.version}</version>-->
-		<!--		</dependency>-->
-
-		<!--		<dependency>-->
-		<!--			<groupId>org.projectlombok</groupId>-->
-		<!--			<artifactId>lombok</artifactId>-->
-		<!--			<scope>provided</scope>-->
-		<!--			<version>1.18.26</version>-->
-		<!--		</dependency>-->
-
-		<!--		<dependency>-->
-		<!--			<groupId>io.jsonwebtoken</groupId>-->
-		<!--			<artifactId>jjwt-api</artifactId>-->
-		<!--			<version>0.11.5</version>-->
-		<!--		</dependency>-->
-
-		<!--		<dependency>-->
-		<!--			<groupId>io.jsonwebtoken</groupId>-->
-		<!--			<artifactId>jjwt-impl</artifactId>-->
-		<!--			<version>0.11.5</version>-->
-		<!--		</dependency>-->
-
-		<!--		<dependency>-->
-		<!--			<groupId>io.jsonwebtoken</groupId>-->
-		<!--			<artifactId>jjwt-jackson</artifactId>-->
-		<!--			<version>0.11.5</version>-->
-		<!--		</dependency>-->
-
 	</dependencies>
 
 	<build>
@@ -198,5 +165,6 @@
 		<module>garganttua-api-spec</module>
 		<module>garganttua-api-core</module>
 		<module>garganttua-api-spring</module>
+		<module>garganttua-api-security</module>
 	</modules>
 </project>

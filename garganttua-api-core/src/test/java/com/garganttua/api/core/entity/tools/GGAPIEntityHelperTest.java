@@ -24,8 +24,15 @@ import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
 
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
 @GGAPIEntity(domain = "test", interfaces = { "gg:test" })
 class GenericEntity extends GenericGGAPIEntity {
+
+	protected GenericEntity(String uuid, String id) {
+		super(uuid, id);
+	}
 
 }
 
@@ -33,7 +40,7 @@ public class GGAPIEntityHelperTest {
 	
 	@Test
 	public void testSetAndGetMethods() throws GGAPIException {
-		GenericEntity entity = new GenericEntity();
+		GenericEntity entity = new GenericEntity(null, null);
 		
 		assertNull(entity.getDeleteMethod());
 		assertNull(entity.getId());

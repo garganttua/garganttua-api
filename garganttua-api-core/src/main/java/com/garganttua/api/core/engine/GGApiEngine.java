@@ -14,6 +14,7 @@ import com.garganttua.api.core.interfasse.GGAPIInterfacesFactory;
 import com.garganttua.api.core.repository.GGAPIRepositoriesFactory;
 import com.garganttua.api.core.service.GGAPIServicesFactory;
 import com.garganttua.api.core.service.GGAPIServicesInfosFactory;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICallerFactoriesRegistry;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
@@ -202,5 +203,15 @@ public class GGApiEngine implements IGGAPIEngine {
 	@Override
 	public IGGAPIServicesInfosRegistry getServicesInfosRegistry() {
 		return this.servicesInfosRegistry;
+	}
+
+	@Override
+	public String getAuthority(GGAPIEntityOperation method) {
+		return this.accessRulesRegistry.getAuthority(method);
+	}
+
+	@Override
+	public IGGAPIDomain getTenantsDomain() {
+		return this.domainRegistry.getTenantDomain();
 	}
 }

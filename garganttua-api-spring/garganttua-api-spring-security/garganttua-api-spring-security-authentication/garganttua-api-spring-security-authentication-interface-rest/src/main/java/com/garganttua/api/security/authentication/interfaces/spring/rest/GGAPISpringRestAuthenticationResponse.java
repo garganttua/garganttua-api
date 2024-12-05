@@ -6,7 +6,12 @@ import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
 import com.garganttua.api.spec.GGAPIException;
 
-public class GGAPISpringAuthenticationResponse {
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@Getter
+public class GGAPISpringRestAuthenticationResponse {
 
 	@JsonProperty
 	private Object principal;
@@ -18,7 +23,7 @@ public class GGAPISpringAuthenticationResponse {
 	@JsonProperty
 	private String authorizationType;
 
-	public GGAPISpringAuthenticationResponse(Object authentication) throws GGAPIException {
+	public GGAPISpringRestAuthenticationResponse(Object authentication) throws GGAPIException {
 		this.domain = GGAPIAuthenticationHelper.getAuthenticatorService(authentication).getDomain().getDomain();
 		this.principal = GGAPIAuthenticationHelper.getPrincipal(authentication);
 		Object authorization = GGAPIAuthenticationHelper.getAuthorization(authentication);

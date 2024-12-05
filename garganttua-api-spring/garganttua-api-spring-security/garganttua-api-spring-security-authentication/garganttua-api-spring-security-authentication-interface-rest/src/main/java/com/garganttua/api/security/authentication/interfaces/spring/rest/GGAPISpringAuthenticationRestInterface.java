@@ -96,7 +96,7 @@ public class GGAPISpringAuthenticationRestInterface
 		GGAPISpringAuthentication authentication = (GGAPISpringAuthentication) this.authenticationManager.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));
 
 		if( authentication.isAuthenticated() )
-			return new ResponseEntity<>(new GGAPISpringAuthenticationResponse(authentication.getAuthentication()), HttpStatus.OK);
+			return new ResponseEntity<>(new GGAPISpringRestAuthenticationResponse(authentication.getAuthentication()), HttpStatus.OK);
 		return new ResponseEntity<>(new GGAPIResponseObject("Authentication Failed", GGAPIResponseObject.BAD_REQUEST), HttpStatus.UNAUTHORIZED);
 	}
 

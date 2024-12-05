@@ -13,50 +13,50 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 
 public class ModifiableHttpServletRequest extends HttpServletRequestWrapper {
 
-	 private byte[] requestBody;
+	private byte[] requestBody;
 
-	    public ModifiableHttpServletRequest(HttpServletRequest request) throws IOException {
-	        super(request);
-	        this.requestBody = toByteArray(request.getInputStream());
-	    }
+	public ModifiableHttpServletRequest(HttpServletRequest request) throws IOException {
+		super(request);
+		this.requestBody = toByteArray(request.getInputStream());
+	}
 
-	    public void setRequestBody(String newBody) {
-	        this.requestBody = newBody.getBytes(StandardCharsets.UTF_8);
-	    }
+	public void setRequestBody(String newBody) {
+		this.requestBody = newBody.getBytes(StandardCharsets.UTF_8);
+	}
 
-	    @Override
-	    public ServletInputStream getInputStream() throws IOException {
-	        final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(this.requestBody);
-	        return new ServletInputStream() {
-	            @Override
-	            public boolean isFinished() {
-	                return byteArrayInputStream.available() == 0;
-	            }
+	@Override
+	public ServletInputStream getInputStream() throws IOException {
+		final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(this.requestBody);
+		return new ServletInputStream() {
+			@Override
+			public boolean isFinished() {
+				return byteArrayInputStream.available() == 0;
+			}
 
-	            @Override
-	            public boolean isReady() {
-	                return true;
-	            }
+			@Override
+			public boolean isReady() {
+				return true;
+			}
 
-	            @Override
-	            public void setReadListener(ReadListener listener) {
-	                // Pas utilisé dans cet exemple
-	            }
+			@Override
+			public void setReadListener(ReadListener listener) {
+			}
 
-	            @Override
-	            public int read() throws IOException {
-	                return byteArrayInputStream.read();
-	            }
-	        };
-	    }
+			@Override
+			public int read() throws IOException {
+				return byteArrayInputStream.read();
+			}
+		};
+	}
 
-	    private byte[] toByteArray(InputStream inputStream) throws IOException {
-	        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-	        byte[] buffer = new byte[1024];
-	        int bytesRead;
-	        while ((bytesRead = inputStream.read(buffer)) != -1) {
-	            byteArrayOutputStream.write(buffer, 0, bytesRead);
-	        }
-	        return byteArrayOutputStream.toByteArray();
-	    }
+	private byte[] toByteArray(InputStream inputStream) throws IOException {
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		int bytesRead;
+		while ((bytesRead = inputStream.read(buffer)) != -1) {
+			byteArrayOutputStream.write(buffer, 0, bytesRead);
+		}
+		byte[] byteArray = byteArrayOutputStream.toByteArray();
+		return byteArray;
+	}
 }

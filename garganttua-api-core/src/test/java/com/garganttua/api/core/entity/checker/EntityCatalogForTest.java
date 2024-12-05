@@ -4,12 +4,19 @@ import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityGeolocalized;
 
+import lombok.NoArgsConstructor;
+
 @GGAPIEntity(
 		domain = "test", 
 		interfaces = { "" }		
 )
 @GGAPIEntityGeolocalized(location = "test")
+@NoArgsConstructor
 class GeolocEntity extends GenericGGAPIEntity {
+	protected GeolocEntity(String uuid, String id) {
+		super(uuid, id);
+	}
+
 	private String test;
 }
 

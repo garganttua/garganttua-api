@@ -6,14 +6,42 @@ public interface IGGAPIKeyRealm {
 
 	String getName();
 	
-	GGAPIKeyAlgorithm getAlgorithm();
+	GGAPIKeyAlgorithm getKeyAlgorithm();
 	
 	boolean equals(IGGAPIKeyRealm object);
 
-	IGGAPIKey getKeyForUnciphering() throws GGAPIException;
+	/**
+	 * Actually returns a public key, or a secret key
+	 * @return
+	 * @throws GGAPIException
+	 */
+	IGGAPIKey getKeyForDecryption() throws GGAPIException;
 
-	IGGAPIKey getKeyForCiphering() throws GGAPIException;
+	/**
+	 * Actually returns a private key, or a secret key
+	 * @return
+	 * @throws GGAPIException
+	 */
+	IGGAPIKey getKeyForEncryption() throws GGAPIException;
+	
+	/**
+	 * Returns a private key for signing
+	 * @return
+	 * @throws GGAPIException
+	 */
+	IGGAPIKey getKeyForSigning() throws GGAPIException;
+	
+	/**
+	 * Returns a public key for signature verification
+	 * @return
+	 * @throws GGAPIException
+	 */
+	IGGAPIKey getKeyForSignatureVerification() throws GGAPIException;
 
 	String getUuid();
+
+	void revoke();
+
+	void removeKeyForEncryption();
 
 }

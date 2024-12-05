@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Date;
@@ -41,25 +45,58 @@ public class TestGGAPIJWTAuthorization {
 		}
 		
 		@Override
-		public IGGAPIKey getKeyForUnciphering() throws GGAPIException {
-			return new GGAPIKey(GGAPIKeyType.PUBLIC, "RSA", Base64.getDecoder().decode(RSA4096_UNCIPH));
-		}
-		
-		@Override
-		public IGGAPIKey getKeyForCiphering() throws GGAPIException {
-			return new GGAPIKey(GGAPIKeyType.PRIVATE, "RSA", Base64.getDecoder().decode(RSA4096_CIPH));
-		}
-		
-		@Override
-		public GGAPIKeyAlgorithm getAlgorithm() {
-			return GGAPIKeyAlgorithm.RSA_4096;
-		}
-		
-		@Override
 		public boolean equals(IGGAPIKeyRealm object) {
 			return false;
 		}
+
+		@Override
+		public GGAPIKeyAlgorithm getKeyAlgorithm() {
+			return GGAPIKeyAlgorithm.RSA_4096;
+		}
+
+		@Override
+		public IGGAPIKey getKeyForDecryption() throws GGAPIException {
+			return new GGAPIKey(GGAPIKeyType.PUBLIC, GGAPIKeyAlgorithm.RSA_4096, Base64.getDecoder().decode(RSA4096_UNCIPH), null, null, null, null);
+		}
+
+		@Override
+		public IGGAPIKey getKeyForEncryption() throws GGAPIException {
+			return new GGAPIKey(GGAPIKeyType.PRIVATE, GGAPIKeyAlgorithm.RSA_4096, Base64.getDecoder().decode(RSA4096_CIPH), null, null, null, null);
+		}
+
+		@Override
+		public IGGAPIKey getKeyForSigning() throws GGAPIException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public IGGAPIKey getKeyForSignatureVerification() throws GGAPIException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public void revoke() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void removeKeyForEncryption() {
+			// TODO Auto-generated method stub
+			
+		}
 	};
+	
+	@Test
+	public void test() throws InvalidKeySpecException, NoSuchAlgorithmException {
+		String key = "TUlJRXZBSUJBREFOQmdrcWhraUc5dzBCQVFFRkFBU0NCS1l3Z2dTaUFnRUFBb0lCQVFDZXJadUNyZi9qdFhGUUJSVDBYSnE0VCsyOXFDVlFlb1A3eG9ZY28vSHdzRGN3M3Q0S0ZJRDdNNFNXREVZN1VjUVpqbk8yb1BtTW9WRWNOWGlBd0QzcWtjdzJiWkNlYi92ZlFsWTNQOWVWNWV3Slg1WUtSUXhTMnRCZkRHNHhIcWNqSHFicDlZM3NQSkpLemg4NWpFTXROT1pNaUw0ZkZaNzNkdjJLemJ0bEgyNk5VUGRMNHpvRHhJOHRmSGViYWp5ZVZyeWtVb0VlcU5rWVQrTnpYWWpiRUpxbE5iek9xbGw3T0lXN2JFdUFHMGxVN2M1T0JYSGw4UUgrVHdzbmFlTy9lNmcvUmFGT3BIc25sN3JVRVlyVElWSkJYOE5pVmNQc3RHdmFkdkhWdjJLbWNSelplelUrKzFHTmhFZW1qMTYvY2NpU2VnR0lhdTc0WE1XV1ZPM2ZBZ01CQUFFQ2dnRUFFYUpOengyQzBRTDMxMEtML0J0b2ViQXU4RmliTmxEa2thL3BIK05icVU4T3F4M2NHTXhZM2RIR3NSMThhKzQxSXFQeFJHdi9uNlhKSVBTVG5PSUFYNEpFRldPNERTdDVGeGJGQkdSOHZib0NCbDZsaXM3Mm1pU2F3SWdJbk9rcnFOeFRXZ1VYSXhoRGZSQmdGRXltcGRqNW82cS9UNFFKdzdXVHQvKzZETTJKekd2UUZRUFBLSTU5VzNFK1J3eHJhdFZKclhLT2IwMlpGYm1EcnpyMGRVK09HSFFEY250KytXZ0MweWx1VFNDZURGSU1mcnpPVHUxazhkTng2TU5pK3g2MG5aNTdqMEUxOE5iZElIZDQ2SmxqTFdVN3lGREFsTlJ5YTVBdzA5MFoyMVd0TWxhT2tTUC9PVWZxR1p5bG5hdzd1MzZRbDNEOWxhL2d5emFzWVFLQmdRREpEcDBQSUE4S0R1Z0owTGNUV0NGaFFzdzNmWWNGUGIrTWRkY3Arbm5wUVlnSUwwTkhNVTdTeUhraHdNWHFJT09xbVE1YUlabElTYjluQVRQd1ZYNHNKS3Z6R0FkSmFXNm9xb05WRS9rRGNZd1BMeDVubHZOeWgwRkF4dTA4ZWxCd0NialFZVy96TUFLRk5YTzV6Z29rRFpJak92Yjc1QU1hMGhkTzc2K2hvUUtCZ1FES0NraVc0ZGxISmUvS3NuOU5OTWpLYXhmcUpyN2hqYllSSlBqMWgwRXExZGdCN080ck9JYjE5N0dvRWNUek5oSmNlU3JXcHdsM2hFcHk3WlJiU0daRTdGb01SeEZuZTFBUGNxY3FZNFVvTXhaZVIyR1JIdGJ1SVk2NmV2R3BRNGpCM2kzTmN4MDNpVFZCSE55emN2SjNUNGxONlRzN1g3bnhaNzZaNkpsZmZ3S0JnQ00rVEltNk5PaXVkRDVFTjlOTVA0MnRCOTh5UWRqSldpcGsvYkorRmFDdHZBcXpQamZjak5TbUQ1VzdGUFpWalpMNkFXb0xPYk5TT2hyME93YUY5ZmdHOVoxSE9QL0ZXNEIxWTFBbWtCL3FaNExCMzdLSTQyUFFFY0FwSHF6YlEvNWZ0ZVhSTHE2U1c5NjkzK3RTRXJUL0svN0E5MHB3VFpzRitNLzljK3dCQW9HQVo0TTNSNTUwdk1BU0NBN0ZyQiswRkFra1dvSDVZQVJEMktyUnBySGlVSGo1VDVzOU53V2lGOWtNdTJoSE9MaG1WZHg2ZHpsalgwbDIvMFQ3c256NGNLMkxRU2tVSUttTURpNFd1Vi85cytmZ3VQTG5hUHVjOEtwZXZ1b0ljRWs2Z3VFN0pEeXJKbTMweStSbXFzWGt0ZjRaQWNMUjV3eVhicmhSYmZjK3hTOENnWUF2akxWaEx4eDE3QVlZUnV2YWowR2xrTHEvTmQySjh6cUVGMW83WS9QSTRJd2ZwZXhyNGkrK2J0NTduSDRnZmQ1NUhZeEpLVkhObWdXUFV2TWIva01PTXltM0NreVBPbExuZGZ2cDNod2tXQVhFalNYQkY1VWdXZGluK2FCc05sNHVTNkwxaktNWkUvUmpuTnZxaXdYVGVDU1M3a3hsWWZKNUIyWDBRYjgvQlE9PQ==";
+		byte[] decodedKey = Base64.getDecoder().decode(key);
+		System.out.println(new String(decodedKey));
+		
+		KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(Base64.getDecoder().decode(decodedKey)));
+	}
 	
 	@Test
 	public void testNewTokenFromCorruptedRaw() throws GGAPIException {
@@ -182,14 +219,13 @@ public class TestGGAPIJWTAuthorization {
 
 	private GGAPIJWTAuthorization createTokenWithNewRealm(GGAPIKeyAlgorithm algorithm) throws GGAPISecurityException, GGAPIException {
 		GGAPIKeyRealm realm = this.createRealm(algorithm);
-		GGAPIJWTAuthorization auth = new GGAPIJWTAuthorization("test", "test", "test", "test", List.of(), new Date(), new Date(), realm);
+		GGAPIJWTAuthorization auth = new GGAPIJWTAuthorization("test", "test", "test", "test", List.of(), new Date(), new Date(new Date().getTime()+15000), realm);
 		auth.toByteArray();
 		return auth;
 	}
 
 	private GGAPIKeyRealm createRealm(GGAPIKeyAlgorithm algorithm) throws GGAPISecurityException {
-		GGAPIKeyRealm realm = new GGAPIKeyRealm("test", algorithm, new Date(new Date().getTime()+15000));
-		realm.createKeys(null, null);
+		GGAPIKeyRealm realm = new GGAPIKeyRealm("test", algorithm, new Date(new Date().getTime()+15000), null, null, null);
 		return realm;
 	}
 }

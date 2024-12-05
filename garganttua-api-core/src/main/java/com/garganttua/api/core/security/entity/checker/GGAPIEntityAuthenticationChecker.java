@@ -7,9 +7,12 @@ import java.util.Map;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIMethod;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticate;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticated;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticatorInfos;
@@ -45,7 +48,7 @@ public class GGAPIEntityAuthenticationChecker {
 		
 		GGAPIAuthentication annotation = authenticationClass.getDeclaredAnnotation(GGAPIAuthentication.class);
 				
-		String autoritiesFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationAuthorities.class, GGObjectReflectionHelper.getParameterizedType(List.class,  String.class), true);
+		String autoritiesFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationAuthorities.class, GGObjectReflectionHelper.getParameterizedType(List.class, String.class), true);
 		String serviceFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationAuthenticatorService.class, IGGAPIService.class, true);
 		String authenticatorInfosFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIAuthenticationAuthenticatorInfos.class, GGAPIAuthenticatorInfos.class, true);
 		
@@ -58,7 +61,9 @@ public class GGAPIEntityAuthenticationChecker {
 		String ownerIdFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIEntityOwnerId.class, String.class, true);
 		String authenticateMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationAuthenticate.class, true, void.class);
 		String findPrincipalMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationFindPrincipal.class, true, void.class);
-
+		String applySecurityMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationApplySecurity.class, true, void.class, IGGAPICaller.class, Object.class, GGObjectReflectionHelper.getParameterizedType(Map.class, String.class, String.class));
+		
+		
 		try {
 			IGGObjectQuery q = GGObjectQueryFactory.objectQuery(authenticationClass);
 			GGAPIAuthenticationInfos infos = new GGAPIAuthenticationInfos(
@@ -74,7 +79,8 @@ public class GGAPIEntityAuthenticationChecker {
 					q.address(authenticatorInfosFieldName),
 					annotation.findPrincipal(),
 					q.address(findPrincipalMethodName),
-					q.address(ownerIdFieldName));
+					q.address(ownerIdFieldName),
+					q.address(applySecurityMethodName));
 			
 			GGAPIEntityAuthenticationChecker.infos.put(authenticationClass, infos);
 			return infos;		

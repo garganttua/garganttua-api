@@ -25,7 +25,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class GenericGGAPIEntity {
+public abstract class GenericGGAPIEntity {
 	
 	@GGAPIEntityUuid
 	@Setter
@@ -41,6 +41,14 @@ public class GenericGGAPIEntity {
 	@GGAPIEntityTenantId
 	@GGAPIEntityAuthorizeUpdate(authority = "entity-tenant-update")
 	protected String tenantId;
+	
+	protected GenericGGAPIEntity(String uuid, String id) {
+		this.uuid = uuid;
+		this.id = id;
+	}
+	
+	protected GenericGGAPIEntity() {
+	}
 	
 	@GGAPIEntityGotFromRepository
 	private boolean gotFromRepository;

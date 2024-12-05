@@ -3,6 +3,7 @@ package com.garganttua.api.core.accessRules;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,6 +55,17 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 			if (auth.getEndpoint().equals(endpoint) && auth.getOperation() == operation) {
 				return auth;
 			}
+		}
+		return null;
+	}
+	
+	@Override
+	public String getAuthority(GGAPIEntityOperation operation) {
+		Optional<IGGAPIAccessRule> accessRule = this.accessRules.stream().filter(ar -> {
+			return ar.getOperation().equals(operation);
+		}).findFirst();
+		if( accessRule.isPresent() ) {
+			return accessRule.get().getAuthority();
 		}
 		return null;
 	}

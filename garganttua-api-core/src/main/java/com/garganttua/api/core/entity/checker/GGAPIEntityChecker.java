@@ -228,7 +228,25 @@ public class GGAPIEntityChecker {
 					locationFieldAddress == null ? null : q.address(locationFieldAddress),
 					sharedAnnotation == null ? false : true,
 					shareFieldAddress == null ? null : q.address(shareFieldAddress), q.address(repositoryFieldAddress),
-					q.address(engineFieldAddress), mandatoryFields, unicityFields,
+					q.address(engineFieldAddress), 
+					mandatoryFields.stream().map(s -> {
+						try {
+							return q.address(s);
+						} catch (GGReflectionException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						return null;
+					}).collect(Collectors.toList()),
+					unicityFields.stream().map(s -> {
+						try {
+							return q.address(s);
+						} catch (GGReflectionException e1) {
+							// TODO Auto-generated catch block
+							e1.printStackTrace();
+						}
+						return null;
+					}).collect(Collectors.toList()),
 					afterGetm == null ? null : q.address(afterGetm),
 					beforeCreatem == null ? null : q.address(beforeCreatem),
 					afterCreatem == null ? null : q.address(afterCreatem),

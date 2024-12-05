@@ -1,6 +1,9 @@
 package com.garganttua.api.spec.security;
 
+import java.util.Map;
+
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationServicesRegistry;
@@ -31,6 +34,7 @@ public interface IGGAPISecurityEngine {
 
 	boolean isStorableAuthorization(Object authorization);
 
-	void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity);
+	void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity,
+			Map<String, String> params) throws GGAPIException;
 
 }

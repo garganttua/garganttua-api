@@ -10,7 +10,6 @@ import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthorizationC
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorization;
-import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authorization.GGAPIAuthorizationInfos;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationInfosRegistry;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;

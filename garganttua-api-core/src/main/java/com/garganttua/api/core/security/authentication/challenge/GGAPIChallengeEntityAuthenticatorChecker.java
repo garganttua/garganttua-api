@@ -2,6 +2,7 @@ package com.garganttua.api.core.security.authentication.challenge;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
@@ -9,6 +10,7 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorChallenge;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyRealm;
 import com.garganttua.api.spec.security.authentication.GGAPIChallengeAuthenticatorInfos;
+import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -39,10 +41,28 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator " + entityAuthenticatorClass.getSimpleName() + " does not have a field annotated with @GGAPIAuthenticatorChallenge");
 		}
 		
+		GGAPIAuthenticatorKeyRealm keyRealmAnnotation = GGObjectReflectionHelper.getField(entityAuthenticatorClass, keyRealmFieldName).getAnnotation(GGAPIAuthenticatorKeyRealm.class);
+		
+		Class<?> keyType = keyRealmAnnotation.key();
+		boolean autoCreateKey = keyRealmAnnotation.autoCreateKey();
+		GGAPIKeyAlgorithm keyAlgorithm = keyRealmAnnotation.keyAlgorithm();
+		int keyLifeTime = keyRealmAnnotation.keyLifeTime();
+		TimeUnit keyLifeTimeUnit = keyRealmAnnotation.keyLifeTimeUnit();
+		
 		IGGObjectQuery q;
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
-			GGAPIChallengeAuthenticatorInfos authenticatorinfos = new GGAPIChallengeAuthenticatorInfos(q.address(challengeFieldName), q.address(keyRealmFieldName));
+			GGAPIChallengeAuthenticatorInfos authenticatorinfos = new GGAPIChallengeAuthenticatorInfos(
+					q.address(challengeFieldName), 
+					q.address(keyRealmFieldName),
+					keyType, 
+					autoCreateKey, 
+					keyAlgorithm, 
+					keyLifeTime,
+					keyLifeTimeUnit,
+					keyRealmAnnotation.encryptionMode(),
+					keyRealmAnnotation.encryptionPadding(),
+					keyRealmAnnotation.signatureAlgorithm());
 			
 			GGAPIChallengeEntityAuthenticatorChecker.infos.put(entityAuthenticatorClass, authenticatorinfos);
 			return authenticatorinfos;

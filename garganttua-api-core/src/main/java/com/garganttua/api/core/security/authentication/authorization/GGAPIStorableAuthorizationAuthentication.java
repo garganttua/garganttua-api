@@ -1,6 +1,7 @@
 package com.garganttua.api.core.security.authentication.authorization;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.security.authentication.AbstractGGAPIAuthentication;
@@ -8,7 +9,10 @@ import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHe
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.GGAPIMethod;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
@@ -51,5 +55,10 @@ public class GGAPIStorableAuthorizationAuthentication extends AbstractGGAPIAuthe
 			log.atDebug().log("Failed to find principal", e);
 			return null;
 		}
+	}
+	
+	@GGAPIAuthenticationApplySecurity
+	public void applySecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) {
+		//Nothgin to do 
 	}
 }

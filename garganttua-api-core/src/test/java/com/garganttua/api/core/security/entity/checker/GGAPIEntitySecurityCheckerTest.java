@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.security.entity.checker.GGAPIEntitySecurityChecker;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;

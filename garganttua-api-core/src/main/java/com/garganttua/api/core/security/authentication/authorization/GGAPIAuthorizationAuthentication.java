@@ -1,9 +1,13 @@
 package com.garganttua.api.core.security.authentication.authorization;
 
+import java.util.Map;
+
 import com.garganttua.api.core.security.authentication.AbstractGGAPIAuthentication;
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 
 import lombok.NoArgsConstructor;
 
@@ -23,6 +27,11 @@ public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthenticatio
 	protected Object doFindPrincipal() {
 		// Nothing to do
 		return null;
+	}
+	
+	@GGAPIAuthenticationApplySecurity
+	public void applySecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) {
+		//Nothing to do
 	}
 
 }

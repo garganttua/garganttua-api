@@ -8,4 +8,6 @@ public interface IGGAPIAuthenticationFactory {
 
 	Object createNewAuthentication(IGGAPIAuthenticationRequest authenticationRequest, IGGAPIService authenticatorService, GGAPIAuthenticatorInfos authenticatorInfos) throws GGAPIException;
 
+	Object createDummy() throws GGAPIException;
+
 }

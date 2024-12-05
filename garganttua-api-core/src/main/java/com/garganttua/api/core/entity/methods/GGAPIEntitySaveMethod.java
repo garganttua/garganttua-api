@@ -38,7 +38,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 	private GGObjectAddress beforeUpdateMethodAddress;
 	private GGObjectAddress afterCreateMethodAddress;
 	private GGObjectAddress beforeCreateMethodAddress;
-	private IGGObjectQuery objectQuery;
 	private IGGAPIEntityUpdater<Object> entityUpdater;
 	private IGGAPIEntityFactory<Object> factory;
 	
@@ -54,14 +53,6 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 		this.beforeUpdateMethodAddress = this.domain.getEntity().getValue1().beforeUpdateMethodAddress();
 		this.afterUpdateMethodAddress = this.domain.getEntity().getValue1().afterUpdateMethodAddress();
 		
-		try {
-			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());
-		} catch (GGReflectionException e) {
-			this.processException(e);
-			
-			//Should never be reached
-			return;
-		}
 	}
 
 	@Override
@@ -95,7 +86,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 				return entity;
 			}
 		} catch (GGReflectionException e) {
-			this.processException(e);
+			GGAPIException.processException(e);
 			
 			//Should never be reached
 			return null;
@@ -104,13 +95,14 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 	
 	private void updateEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException, GGReflectionException {
 		log.info("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Updating entity with Uuid " + GGAPIEntityHelper.getUuid(entity));
+		IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
 		this.applyUpdateUnicityRule(domain, repository, caller, entity);
 		if( this.beforeUpdateMethodAddress != null ) {
-			this.objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, customParameters);
+			objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, customParameters);
 		}
 		this.repository.save(caller, entity);
 		if( this.afterUpdateMethodAddress != null ) {
-			this.objectQuery.invoke(entity, this.afterUpdateMethodAddress, caller, customParameters);
+			objectQuery.invoke(entity, this.afterUpdateMethodAddress, caller, customParameters);
 		}
 	}
 
@@ -126,7 +118,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 	}
 
 	private void createEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity) throws GGAPIException, GGReflectionException {
-
+		IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
 		this.applyTenantEntityRule(domain, caller, entity);
 
 		log.info("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Creating entity with uuid {}", GGAPIEntityHelper.getUuid(entity));
@@ -139,11 +131,11 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 
 		this.applyCreationUnicityRule(domain, repository, caller, entity);
 		if( this.beforeCreateMethodAddress != null ) {
-			this.objectQuery.invoke(entity, this.beforeCreateMethodAddress, caller, customParameters);
+			objectQuery.invoke(entity, this.beforeCreateMethodAddress, caller, customParameters);
 		}
 		this.repository.save(caller, entity);
 		if( this.afterCreateMethodAddress != null ) {
-			this.objectQuery.invoke(entity, this.afterCreateMethodAddress, caller, customParameters);
+			objectQuery.invoke(entity, this.afterCreateMethodAddress, caller, customParameters);
 		}
 
 	}
@@ -171,7 +163,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 					
 					GGObjectQueryFactory.objectQuery(entity).setValue(domain.getEntity().getValue1().ownerIdFieldAddress(), ownerId);
 				} catch (GGReflectionException e) {
-					this.processException(e);
+					GGAPIException.processException(e);
 					
 					//Should never be reached
 					return;
@@ -201,11 +193,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 		}
 	}
 	
-	protected void checkMandatoryFields(List<String> mandatory, Object entity) throws GGAPIException {
+	protected void checkMandatoryFields(List<GGObjectAddress> mandatory, Object entity) throws GGAPIException {
 		
-		for( String field: mandatory ) {
+		for( GGObjectAddress field: mandatory ) {
 			try {
-				Object value = GGObjectReflectionHelper.getObjectFieldValue(entity, field);
+				
+				IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
+				Object value = objectQuery.getValue(field);
 				
 				if( value == null ) {
 					throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "Field "+field+" is mandatory");
@@ -213,7 +207,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 					throw new GGAPIEntityException(GGAPIExceptionCode.BAD_REQUEST, "Field "+field+" is mandatory");
 				}
 			} catch (IllegalArgumentException | GGReflectionException e) {
-				this.processException(e);
+				GGAPIException.processException(e);
 				
 				//Should never be reached
 				return;
@@ -221,18 +215,19 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 		}
 	}
 	
-	private List<Object> checkUnicityFields(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller, Object entity, List<String> unicity) throws GGAPIException {
+	private List<Object> checkUnicityFields(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller, Object entity, List<GGObjectAddress> unicity) throws GGAPIException {
 		try {
+			IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
 			List<String> values = new ArrayList<String>();
-			for (String fieldName : unicity) {
-				values.add(GGObjectReflectionHelper.getObjectFieldValue(entity, fieldName).toString());
+			for (GGObjectAddress fieldName : unicity) {
+				values.add(objectQuery.getValue(fieldName).toString());
 			}
 			String[] fieldValues = new String[values.size()];
 			values.toArray(fieldValues);
 			
 			GGAPILiteral literal = null;
 			for( int i = 0; i < unicity.size(); i++ ) {
-				GGAPILiteral eqLiteral = GGAPILiteral.eq(unicity.get(i), fieldValues[i]);
+				GGAPILiteral eqLiteral = GGAPILiteral.eq(unicity.get(i).toString(), fieldValues[i]);
 				if( literal == null ) {
 					literal = eqLiteral;
 				} else {
@@ -240,23 +235,14 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 				}
 			}
 
-			return repository.getEntities(GGAPICaller.createTenantCaller(caller.getTenantId()), GGAPIPageable.getPage(0,0), literal, null);
+			return repository.getEntities(GGAPICaller.createTenantCaller(caller.getRequestedTenantId()), GGAPIPageable.getPage(0,0), literal, null);
 
 		} catch (GGReflectionException e) {
 			log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);
-			this.processException(e);
+			GGAPIException.processException(e);
 			
 			//Should never be reached
 			return null;
-		}
-	}
-	
-	private void processException(Exception e) throws GGAPIException {
-		GGAPIException apiException = GGAPIException.findFirstInException(e);
-		if( apiException != null ) {
-			throw apiException;
-		} else {
-			throw new GGAPIEntityException(GGAPIExceptionCode.UNKNOWN_ERROR, e.getMessage(), e);
 		}
 	}
 }

@@ -31,21 +31,28 @@ public class GGAPIAuthenticationFactory implements IGGAPIAuthenticationFactory {
 
 	@Override
 	public Object createNewAuthentication(IGGAPIAuthenticationRequest authenticationRequest, IGGAPIService authenticatorService, GGAPIAuthenticatorInfos authenticatorInfos) throws GGAPIException {
-		IGGAPIDomain domain = authenticationRequest.getDomain();
-		Object authentication = GGAPIAuthenticationHelper.instanciateNewOject(this.authenticationType);
+		Object authentication = this.createDummy();
 
 		GGAPIAuthenticationHelper.setCredentials(authentication, authenticationRequest.getCredentials());
 		GGAPIAuthenticationHelper.setPrincipal(authentication, authenticationRequest.getPrincipal());
 		GGAPIAuthenticationHelper.setTenantId(authentication, authenticationRequest.getTenantId());
 		GGAPIAuthenticationHelper.setAuthenticatorService(authentication, authenticatorService);
 		GGAPIAuthenticationHelper.setAuthenticatorInfos(authentication, authenticatorInfos);
-		
+
+		return authentication;
+	}
+	
+	@Override
+	public Object createDummy() throws GGAPIException {
+
+		Object authentication = GGAPIAuthenticationHelper.instanciateNewOject(this.authenticationType);
+
 		this.injector.ifPresent(injector -> {
 			try {
 				injector.injectBeans(authentication);
 				injector.injectProperties(authentication);
 			} catch (GGReflectionException e) {
-				log.atWarn().log( "Injection failed for authentication of "+domain, e);
+				log.atWarn().log( "Injection failed for authentication of type "+authentication.getClass().getSimpleName(), e);
 			}
 		});
 		return authentication;
