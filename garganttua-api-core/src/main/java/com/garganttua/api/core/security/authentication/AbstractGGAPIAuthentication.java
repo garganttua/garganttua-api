@@ -54,12 +54,15 @@ public abstract class AbstractGGAPIAuthentication {
 	protected List<String> authorities;
 
 	@GGAPIAuthenticationAuthenticate
-	public void authenticate() throws GGAPIException {
-		this.doAuthentication();
-			 
-		if( this.authenticated && GGAPIEntityAuthenticatorHelper.isAuthenticator(this.principal) ) {
-			this.authorities = GGAPIEntityAuthenticatorHelper.getAuthorities(principal);
+	public void authenticate() throws GGAPIException {	 
+		boolean authenticator = GGAPIEntityAuthenticatorHelper.isAuthenticator(this.principal);
+		if( authenticator ) {
 			this.checkPrincipal();
+		}
+		
+		this.doAuthentication();
+		if( this.authenticated && authenticator ) {
+			this.authorities = GGAPIEntityAuthenticatorHelper.getAuthorities(principal);
 		} 
 	}
 

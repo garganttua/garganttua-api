@@ -76,4 +76,9 @@ public class GGAPIEntityAuthenticatorHelper {
 		return false;
 	}
 
+	public static void setCredentialsNonExpired(Object entity, boolean b) throws GGAPIException {
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
+				GGAPIAuthenticatorInfos::isCredentialsNonExpiredFieldAddress, b);
+	}
+
 }

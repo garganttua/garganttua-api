@@ -15,5 +15,8 @@
 	<module>
 		garganttua-api-spring-security-authentication-interface-rest
 	</module>
+	<module>
+		garganttua-api-spring-security-authentication-challenge-interface-rest
+	</module>
 	</modules>
 </project>

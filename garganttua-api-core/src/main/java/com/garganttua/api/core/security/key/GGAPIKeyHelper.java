@@ -10,6 +10,7 @@ import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
+import com.garganttua.api.core.security.GGAPIExpirationTools;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
@@ -96,8 +97,7 @@ public class GGAPIKeyHelper {
 	private static IGGAPIKeyRealm createRealm(IGGAPICaller caller, String realmName, GGAPIKeyAlgorithm algorithm,
 			IGGAPIService keyRealmService, int keyLifetime, TimeUnit keyLifetimeUnit, GGAPIEncryptionMode encryptionMode,
 			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) throws GGAPIException {
-		Date expiration = Date
-				.from(Instant.ofEpochSecond(Instant.now().getEpochSecond() + keyLifetimeUnit.toSeconds(keyLifetime)));
+		Date expiration = GGAPIExpirationTools.getExpirationDateFromNow(keyLifetime, keyLifetimeUnit);
 
 		IGGAPIKeyRealm entity = GGAPIKeyRealmHelper.newInstance(keyRealmService.getDomain().getEntity().getValue0(),
 				realmName, algorithm, expiration, encryptionMode,
@@ -126,7 +126,6 @@ public class GGAPIKeyHelper {
 	}
 
 	public static void revokeAllForOwner(String realmName, String tenantId, String ownerId, Class<?> keyType, IGGAPIServicesRegistry registry) throws GGAPIEngineException {
-		
 		IGGAPIService keyService = registry.getService(GGAPIEntityHelper.getDomain(keyType));
 		
 		IGGAPIDomain domain = keyService.getDomain();
@@ -148,9 +147,5 @@ public class GGAPIKeyHelper {
 				}
 			});
 		}
-
-		
 	}
-
-	
 }

@@ -16,9 +16,7 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationRequest;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
@@ -44,9 +42,10 @@ import lombok.Setter;
 public class GGAPISpringAuthenticationRestInterface
 		implements IGGAPIAuthenticationInterface, IGGAPISpringAuthenticationInterface, IGGAPISpringSecurityRestConfigurer {
 
-	private IGGAPIAuthenticationService authenticationService;
-	private GGAPIAuthenticationInfos authenticationInfos;
-	private IGGAPIDomain domain;
+	protected IGGAPIAuthenticationService authenticationService;
+	protected GGAPIAuthenticationInfos authenticationInfos;
+	protected IGGAPIDomain domain;
+	
 	@Inject
 	protected RequestMappingHandlerMapping requestMappingHandlerMapping;
 	
@@ -81,10 +80,8 @@ public class GGAPISpringAuthenticationRestInterface
 		RequestMappingInfo requestMappingInfoCreate = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.POST)
 				.options(options).build();
 
-		if (this.domain.isAllowCreation()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, this,
+		this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, this,
 					this.getClass().getMethod("authenticate", IGGAPICaller.class, GGAPISpringRestAuthenticationRequest.class));
-		}
 	}
 
 	public ResponseEntity<?> authenticate (

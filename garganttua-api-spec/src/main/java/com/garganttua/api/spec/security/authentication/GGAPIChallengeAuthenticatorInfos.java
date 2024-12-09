@@ -11,6 +11,7 @@ import com.garganttua.reflection.GGObjectAddress;
 public record GGAPIChallengeAuthenticatorInfos(
 		GGObjectAddress challengeFieldAddress, 
 		GGObjectAddress keyRealmFieldAddress,
+		GGObjectAddress challengeExpirationFieldAddress,
 		Class<?> key,
 		boolean autoCreateKey,
 		GGAPIKeyAlgorithm keyAlgorithm,
@@ -18,6 +19,9 @@ public record GGAPIChallengeAuthenticatorInfos(
 		TimeUnit keyLifeTimeUnit,
 		GGAPIEncryptionMode encryptionMode,
 		GGAPIEncryptionPaddingMode encryptionPadding,
-		GGAPISignatureAlgorithm signatureAlgorithm) {
+		GGAPISignatureAlgorithm signatureAlgorithm, 
+		GGAPIChallengeType challengeType,
+		int challengeLifeTime,
+		TimeUnit challengeLifeTimeUnit) {
 
 }

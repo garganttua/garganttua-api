@@ -23,7 +23,6 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.core.security.key.GGAPIKeyHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
@@ -65,8 +64,8 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	private IGGAPIAuthenticatorInfosRegistry authenticatorInfosRegistry;
 	private IGGAPIAuthenticationInfosRegistry authenticationInfosRegistry;
 	private IGGAPIAuthorizationInfosRegistry authorizationInfosRegistry;
-	private IGGAPIAuthenticatorServicesRegistry authenticatorServicesRegistry;
-	private IGGAPIAuthorizationServicesRegistry authorizationsServicesRegistry;
+	@Getter private IGGAPIAuthenticatorServicesRegistry authenticatorServicesRegistry;
+	@Getter private IGGAPIAuthorizationServicesRegistry authorizationsServicesRegistry;
 	@Getter private IGGAPIAuthenticationServicesRegistry authenticationServicesRegistry;
 	private IGGAPIAuthenticationFactoriesRegistry authenticationFactoryRegistry;
 	@Getter private IGGAPIAuthenticationInterfacesRegistry authenticationInterfacesRegistry;
@@ -108,7 +107,6 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 			log.info("*** Starting authentication interface " + interfasse.getName());
 			interfasse.start();
 		}
-		;
 		return this;
 	}
 

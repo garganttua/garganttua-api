@@ -49,7 +49,9 @@ public class GGAPIServicesInfosBuilder {
     }
 
     public static IGGAPIServiceInfos getInfos(String domainName, Class<?> interfasse, Method method, String path, String description, GGAPIEntityOperation operation) throws GGAPIEngineException {
-        if( method == null ) {
+    	path = path.replace("{domain}", domainName);
+    	
+    	if( method == null ) {
         	throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_DEFINITION, "Cannot construct service infos as provided method by interface is null");
         }
     	return new GGAPIServiceInfos(domainName, operation, interfasse, method, path, description);

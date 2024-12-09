@@ -1,6 +1,6 @@
 package com.garganttua.api.core.security.authentication.challenge;
 
-import java.util.Arrays;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,8 +8,6 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
@@ -25,7 +23,9 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyUsage;
+import com.garganttua.api.spec.security.authentication.GGAPIChallenge;
 import com.garganttua.api.spec.security.authentication.GGAPIChallengeAuthenticatorInfos;
+import com.garganttua.api.spec.security.authentication.GGAPIChallengeType;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
@@ -50,66 +50,43 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 		if( !GGAPIEntityAuthenticatorHelper.isAuthenticator(this.principal) ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.UNKNOWN_ERROR, "Authenticator as principal is mandatory for Challenge authentication, verify that findPrincipal is set to true");
 		}
-//		IGGAPIKeyRealm realm = null;
-//		byte[] challengeB64FromDB = null;
-//		
-//		//Reference Challenge
-//
-//		challengeB64FromDB = GGAPIChallengeEntityAuthenticatorHelper.getChallenge(this.principal);
-//		
-//		log.atDebug().log("B64 Challenge in DB for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
-//		log.atDebug().log(new String(challengeB64FromDB));
-//
-//		byte[] challengeFromDB = Base64.getDecoder().decode(challengeB64FromDB);
-//		
-//		realm = GGAPIChallengeEntityAuthenticatorHelper.getKeyRealm(this.principal);
-//		
-//		//Received Challenge decoding
-//		
-//		log.atDebug().log("B64 Challenge received from entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
-//		log.atDebug().log((String) this.credential);
-//
-//		byte[] receivedChallenge = Base64.getDecoder().decode(((String) this.credential));
-//		
-//		log.atDebug().log("B64 Public key for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
-//		log.atDebug().log(new String(realm.getKeyForDecryption().getRawKey()));
-//		
-//		byte[] decodedReceivedChallenge = realm.getKeyForDecryption().uncipher(receivedChallenge);
-//	
-//		System.out.println(new String(decodedReceivedChallenge));
-//		
-//		//MUST BE REMOVED BELOW :
-//		
-//		byte[] decodedChallengeFromDB = realm.getKeyForEncryption().uncipher(challengeFromDB);
-//		String uuid = new String(decodedChallengeFromDB);
-//		System.out.println(new String(decodedChallengeFromDB));
-//		
-//		byte[] encryptedChallenge = realm.getKeyForDecryption().cipher(uuid.getBytes());
-//		byte[] challengeB64 = Base64.getEncoder().encode(encryptedChallenge);
-//		
-//		System.out.println(new String(challengeB64));
-//		
-//		encryptedChallenge = realm.getKeyForDecryption().cipher(uuid.getBytes());
-//		challengeB64 = Base64.getEncoder().encode(encryptedChallenge);
-//		
-//		System.out.println(new String(challengeB64));
-//		
-//		encryptedChallenge = realm.getKeyForDecryption().cipher(uuid.getBytes());
-//		challengeB64 = Base64.getEncoder().encode(encryptedChallenge);
-//		
-//		System.out.println(new String(challengeB64));
-//		
-//		//Challenge re-encoding
-//		
-//		byte[] reencodedReceivedChallenge = realm.getKeyForDecryption().cipher(decodedReceivedChallenge);
-//		byte[] reencodedReceivedChallengeB64 = Base64.getEncoder().encode(reencodedReceivedChallenge);
-//		
-//		log.atDebug().log("B64 Re-encoded challenge received from entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
-//		log.atDebug().log(new String(reencodedReceivedChallengeB64));
-//		
-//		if (Arrays.equals(challengeB64FromDB, reencodedReceivedChallengeB64)) {
-//			this.authenticated = true;
-//		}
+		log.atDebug().log("Challenge signature received from entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+		log.atDebug().log((String) this.credential);
+		
+		GGAPIChallenge challenge = GGAPIChallengeEntityAuthenticatorHelper.getChallenge(this.principal);
+		
+		if( challenge.getChallenge() == null ) {
+			log.atInfo().log("No challenge for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "No challenge for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+		}
+		
+		log.atDebug().log("Challenge in DB for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+		log.atDebug().log(new String(challenge.getChallenge()));
+		
+		if( !GGAPIEntityAuthenticatorHelper.isCredentialsNonExpired(this.principal) ) {
+			log.atInfo().log("Challenge expired for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_EXPIRED, "Challenge expired for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+		}
+		
+		if( challenge.getExpiration() != null &&Instant.now().isAfter(challenge.getExpiration().toInstant()) ) {
+			log.atInfo().log("Challenge expired for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+			GGAPIEntityAuthenticatorHelper.setCredentialsNonExpired(this.principal, false);
+			GGAPIEntityHelper.save(this.principal, GGAPICaller.createTenantCaller(this.tenantId), new HashMap<String, String>());
+			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_EXPIRED, "Challenge expired for entity "+this.principal.getClass().getSimpleName()+" identified by "+GGAPIEntityHelper.getUuid(this.principal));
+		}
+		
+		IGGAPIKeyRealm realm = GGAPIChallengeEntityAuthenticatorHelper.getKeyRealm(this.principal);
+
+		if( realm.getKeyForSignatureVerification().verifySignature(Base64.getDecoder().decode((String) this.credential), challenge.getChallenge()) ) {
+			if( challenge.getType() == GGAPIChallengeType.ONE_TIME ) {
+				challenge.setChallenge(null);
+				challenge.setExpiration(null);
+				GGAPIEntityAuthenticatorHelper.setCredentialsNonExpired(this.principal, false);
+				GGAPIChallengeEntityAuthenticatorHelper.setChallenge(this.principal, challenge);
+			}
+			this.authenticated = true;
+		}
+		GGAPIEntityHelper.save(this.principal, GGAPICaller.createTenantCaller(this.tenantId), new HashMap<String, String>());
 	}
 	
 	@GGAPIAuthenticationApplySecurity
@@ -119,8 +96,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 		}
 		
 		String uuid = GGAPIEntityHelper.getUuid(entity);
-		String challenge = UUID.randomUUID().toString();
-		
+
 		if( uuid == null || uuid.isEmpty() ) {
 			uuid = UUID.randomUUID().toString();
 			GGAPIEntityHelper.setUuid(entity, uuid);
@@ -134,17 +110,16 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 		IGGAPIKeyRealm key = GGAPIChallengeEntityAuthenticatorHelper.getKeyRealm(entity);
 		
 		if( method  == GGAPIMethod.create && key == null) {
-			this.getKeyAndCreateChallenge(caller, entity, uuid, challenge, challengeInfos, realmName);
+			this.getKey(caller, entity, uuid, challengeInfos, realmName);
 			
 		} 
 		if( method == GGAPIMethod.update && params.get(PARAMETER_RENEW_KEY) != null && Boolean.valueOf(params.get(PARAMETER_RENEW_KEY)) ) {
 			GGAPIKeyHelper.revokeAllForOwner(realmName, caller.getRequestedTenantId(), GGAPIEntityHelper.getOwnerId(entity), challengeInfos.key(), this.engine.getServicesRegistry());	
-			this.getKeyAndCreateChallenge(caller, entity, uuid, challenge, challengeInfos, realmName);
-			
+			this.getKey(caller, entity, uuid, challengeInfos, realmName);
 		}
 	}
 
-	private void getKeyAndCreateChallenge(IGGAPICaller caller, Object entity, String uuid, String challenge,
+	private void getKey(IGGAPICaller caller, Object entity, String uuid,
 			GGAPIChallengeAuthenticatorInfos challengeInfos, String realmName) throws GGAPIEngineException, GGAPIException {
 		IGGAPIKeyRealm key;
 		key = GGAPIKeyHelper.getKey(
@@ -163,20 +138,10 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 				challengeInfos.encryptionPadding(), 
 				challengeInfos.signatureAlgorithm());
 		
-		ObjectMapper mapper = new ObjectMapper();
-		
 		GGAPIChallengeEntityAuthenticatorHelper.setkeyRealm(entity, key);
 		
 		log.atDebug().log("B64 Public key generated for entity "+entity.getClass().getSimpleName()+" identified by "+uuid);
 		log.atDebug().log(new String(key.getKeyForDecryption().getRawKey()));
-		
-		byte[] encryptedChallenge = key.getKeyForDecryption().encrypt(challenge.getBytes());
-		byte[] challengeB64 = Base64.getEncoder().encode(encryptedChallenge);
-		
-		log.atDebug().log("B64 Challenge generated for entity "+entity.getClass().getSimpleName()+" identified by "+uuid);
-		log.atDebug().log(new String(challengeB64));
-		
-		GGAPIChallengeEntityAuthenticatorHelper.setChallenge(entity, challengeB64);
 	}
 
 	@Override

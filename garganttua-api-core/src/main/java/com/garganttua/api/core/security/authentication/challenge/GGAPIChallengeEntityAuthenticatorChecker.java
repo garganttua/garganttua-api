@@ -1,6 +1,9 @@
 package com.garganttua.api.core.security.authentication.challenge;
 
+import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -8,6 +11,7 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorChallenge;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorChallengeExpiration;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyRealm;
 import com.garganttua.api.spec.security.authentication.GGAPIChallengeAuthenticatorInfos;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
@@ -28,6 +32,7 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 
 		String keyRealmFieldName = null; 
 		String challengeFieldName = null;
+		String challengeExpirationFieldName = null;
 		
 		try {
 			keyRealmFieldName= GGAPIChallengeEntityAuthenticatorChecker.checkKeyRealmAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
@@ -41,6 +46,12 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator " + entityAuthenticatorClass.getSimpleName() + " does not have a field annotated with @GGAPIAuthenticatorChallenge");
 		}
 		
+		try {
+			challengeExpirationFieldName = GGAPIChallengeEntityAuthenticatorChecker.checkChallengeExpirationAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
+		} catch (GGAPIException e) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator " + entityAuthenticatorClass.getSimpleName() + " does not have a field annotated with @GGAPIAuthenticatorChallengeExpiration");
+		}
+
 		GGAPIAuthenticatorKeyRealm keyRealmAnnotation = GGObjectReflectionHelper.getField(entityAuthenticatorClass, keyRealmFieldName).getAnnotation(GGAPIAuthenticatorKeyRealm.class);
 		
 		Class<?> keyType = keyRealmAnnotation.key();
@@ -52,9 +63,12 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 		IGGObjectQuery q;
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
+			List<Object> expiration = q.find(challengeFieldName);
+			GGAPIAuthenticatorChallenge challengeAnnotation = ((Field) expiration.getLast()).getAnnotation(GGAPIAuthenticatorChallenge.class);
 			GGAPIChallengeAuthenticatorInfos authenticatorinfos = new GGAPIChallengeAuthenticatorInfos(
 					q.address(challengeFieldName), 
 					q.address(keyRealmFieldName),
+					q.address(challengeExpirationFieldName),
 					keyType, 
 					autoCreateKey, 
 					keyAlgorithm, 
@@ -62,7 +76,10 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 					keyLifeTimeUnit,
 					keyRealmAnnotation.encryptionMode(),
 					keyRealmAnnotation.encryptionPadding(),
-					keyRealmAnnotation.signatureAlgorithm());
+					keyRealmAnnotation.signatureAlgorithm(),
+					challengeAnnotation.challengeType(),
+					challengeAnnotation.challengeLifeTime(), 
+					challengeAnnotation.challengeLifeTimeUnit());
 			
 			GGAPIChallengeEntityAuthenticatorChecker.infos.put(entityAuthenticatorClass, authenticatorinfos);
 			return authenticatorinfos;
@@ -71,6 +88,20 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 		}
 	}
 	
+	private static String checkChallengeExpirationAnnotationPresentAndFieldHasGoodType(
+			Class<? extends Object> entityAuthenticatorClass) throws GGAPISecurityException {
+		String fieldAddress;
+		try {
+			fieldAddress = GGObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass, GGAPIAuthenticatorChallengeExpiration.class, Date.class);
+			if( fieldAddress == null ) {
+				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorChallengeExpiration");
+			}
+		} catch (GGReflectionException e) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "+entityAuthenticatorClass.getSimpleName()+" does not have any field annotated with @GGAPIAuthenticatorChallengeExpiration", e);
+		}
+		return fieldAddress; 
+	}
+
 	private static String checkChallengeAnnotationPresentAndFieldHasGoodType(Class<?> entityAuthenticatorClass) throws GGAPIException {
 		String fieldAddress;
 		try {
