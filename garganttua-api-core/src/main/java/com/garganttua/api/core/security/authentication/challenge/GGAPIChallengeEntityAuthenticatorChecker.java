@@ -64,7 +64,7 @@ public class GGAPIChallengeEntityAuthenticatorChecker {
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
 			List<Object> expiration = q.find(challengeFieldName);
-			GGAPIAuthenticatorChallenge challengeAnnotation = ((Field) expiration.getLast()).getAnnotation(GGAPIAuthenticatorChallenge.class);
+			GGAPIAuthenticatorChallenge challengeAnnotation = ((Field) expiration.get(expiration.size()-1)).getAnnotation(GGAPIAuthenticatorChallenge.class);
 			GGAPIChallengeAuthenticatorInfos authenticatorinfos = new GGAPIChallengeAuthenticatorInfos(
 					q.address(challengeFieldName), 
 					q.address(keyRealmFieldName),

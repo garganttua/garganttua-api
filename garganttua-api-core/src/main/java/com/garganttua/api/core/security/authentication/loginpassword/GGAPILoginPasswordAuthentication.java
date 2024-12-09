@@ -54,7 +54,7 @@ public class GGAPILoginPasswordAuthentication extends AbstractGGAPIAuthenticatio
 				List<Object> list = (List<Object>) getPrincipalResponse.getResponse();
 				if(list.size() >0) {
 					log.atDebug().log("Found principal identified by id "+this.principal);
-					return list.getFirst();
+					return list.get(0);
 				} else {
 					log.atDebug().log("Failed to find principal identified by id "+this.principal);
 					return null;

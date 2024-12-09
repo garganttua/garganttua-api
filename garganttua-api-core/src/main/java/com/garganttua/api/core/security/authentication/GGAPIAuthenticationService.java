@@ -199,7 +199,7 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 					IGGAPIServiceResponse response = authorizationService.getEntities(caller, GGAPIReadOutputMode.full, null, filter, sort, new HashMap<String, String>());
 	
 					if( response.getResponseCode() == GGAPIServiceResponseCode.OK && ((List<Object>) response.getResponse()).size()>0) {
-						authorization = ((List<Object>) response.getResponse()).getFirst();
+						authorization = ((List<Object>) response.getResponse()).get(0);
 					}
 					
 					// It doesn't matter if authorization is null or not
