@@ -17,6 +17,8 @@ public class GGAPIServiceMethodToHttpMethodBinder {
 			return HttpMethod.DELETE;
 		case update:
 			return HttpMethod.PATCH;
+		case authenticate:
+			return HttpMethod.POST;
 		};
 		return HttpMethod.GET;
 	}
