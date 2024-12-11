@@ -22,12 +22,6 @@ public class GGAPISpringConfiguration {
 	@Value("${com.garganttua.api.spring.scanPackages}")
 	private String[] packages;
 	
-	@Value("${com.garganttua.api.spring.superTenantId:0}")
-	private String superTenantId = "0";
-	
-	@Value("${com.garganttua.api.spring.superOwnerId:0}")
-	private String superOwnerId = "0";
-	
 	@Autowired
 	private GGAPISpringBeanSupplier springBeanSupplier;
 	

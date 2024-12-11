@@ -1,7 +1,6 @@
 package com.garganttua.api.interfaces.spring.rest;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,7 +19,6 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
 import jakarta.annotation.PostConstruct;
@@ -35,21 +33,16 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 
 	@Autowired
 	protected IGGAPIEngine engine;
-	
-	@Autowired
-	protected IGGAPISecurityEngine security;
 
-	private Map<IGGAPIServiceInfos, PathPattern> patterns;
-	
-	@PostConstruct
-	private void init() {
+	private Map<IGGAPIServiceInfos, PathPattern> getPatterns() {
 		PathPatternParser parser = new PathPatternParser();
-		this.patterns = new HashMap<>();
+		Map<IGGAPIServiceInfos, PathPattern> patterns = new HashMap<>();
 		List<IGGAPIServiceInfos> infos = this.engine.getServicesInfosRegistry().getServicesInfos();
 		infos.forEach(info -> {
 			log.atDebug().log("Added Path Pattern "+info.getPath());
-			this.patterns.put(info, parser.parse(info.getPath()));
+			patterns.put(info, parser.parse(info.getPath()));
 		});
+		return patterns;
 	}
 	
 	public static final String CALLER_ATTRIBUTE_NAME = "caller";
@@ -72,17 +65,18 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	}
 
 	private IGGAPIServiceInfos getServiceInfos(ServletRequest request, HttpMethod method) {
+		Map<IGGAPIServiceInfos, PathPattern> patterns = this.getPatterns();
 		String uri = ((HttpServletRequest) request).getRequestURI();
 		PathContainer pathContainer = PathContainer.parsePath(uri);
 
-		for( Entry<IGGAPIServiceInfos, PathPattern> pattern: this.patterns.entrySet()) {
+		for( Entry<IGGAPIServiceInfos, PathPattern> pattern: patterns.entrySet()) {
 			if (pattern.getValue().matches(pathContainer)) {
 				if( pattern.getKey().getOperation().getMethod() == GGAPIServiceMethodToHttpMethodBinder.fromHttpMethodAndEndpoint(method) )
 					return pattern.getKey();
             }
 		}
 		
-		for( Entry<IGGAPIServiceInfos, PathPattern> pattern: this.patterns.entrySet()) {
+		for( Entry<IGGAPIServiceInfos, PathPattern> pattern: patterns.entrySet()) {
 			if( pattern.getKey().getPath().equals(uri) ) {
 				return pattern.getKey();
 			}
