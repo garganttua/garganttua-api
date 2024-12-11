@@ -72,9 +72,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		//OwnerId rules
 		if( this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp) ) {
 			superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(tenantId, ownerIdTemp) || superOwnerTemp;
-		} else {
-			ownerIdTemp = null;
-		}
+		} 
 				
 		return new GGAPICaller(tenantIdTemp, requestedTenantIdTemp, callerIdTemp, ownerIdTemp, superTenantTemp, superOwnerTemp, accessRule, domain, anonymousTemp, null);
 	}
