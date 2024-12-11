@@ -9,20 +9,26 @@ import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHe
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @GGAPIAuthentication(findPrincipal = true)
-@NoArgsConstructor
 public class GGAPIStorableAuthorizationAuthentication extends AbstractGGAPIAuthentication {
+
+	public GGAPIStorableAuthorizationAuthentication(IGGAPIDomain domain) {
+		super(domain);
+	}
+	
+	public GGAPIStorableAuthorizationAuthentication() {
+		super(null);
+	}
 
 	@Override
 	protected void doAuthentication() throws GGAPIException {

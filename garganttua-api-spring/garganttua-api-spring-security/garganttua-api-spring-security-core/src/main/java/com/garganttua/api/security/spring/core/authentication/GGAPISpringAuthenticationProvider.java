@@ -12,7 +12,6 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
-import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationServicesRegistry;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
@@ -34,13 +33,12 @@ public class GGAPISpringAuthenticationProvider implements AuthenticationProvider
 	public Authentication authenticate(Authentication auth) throws AuthenticationException {
 		GGAPISpringAuthenticationRequest authentication = (GGAPISpringAuthenticationRequest) auth;
 		IGGAPIAuthenticationRequest request = (IGGAPIAuthenticationRequest) authentication.getCredentials();
-		IGGAPIAuthenticationServicesRegistry authenticationServicesRegistry = this.security.getAuthenticationServicesRegistry();
-		IGGAPIAuthenticationService authenticationService = authenticationServicesRegistry.getService(request.getAuthenticationType());
+		IGGAPIAuthenticationService authenticationServicesRegistry = this.security.getAuthenticationService();
 		
-		if( authenticationService != null ) {
+		if( authenticationServicesRegistry != null ) {
 			IGGAPIDomain domain = this.engine.getDomainsRegistry().getDomain(request.getDomain().getDomain());
 			if( domain != null ) {
-				IGGAPIServiceResponse response = authenticationService.authenticate(request);
+				IGGAPIServiceResponse response = authenticationServicesRegistry.authenticate(request);
 				if( response.getResponseCode() == GGAPIServiceResponseCode.OK ) {
 					return new GGAPISpringAuthentication(response.getResponse()) ;
 				}

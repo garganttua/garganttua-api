@@ -31,7 +31,7 @@ public class GGAPIAuthenticationFactory implements IGGAPIAuthenticationFactory {
 
 	@Override
 	public Object createNewAuthentication(IGGAPIAuthenticationRequest authenticationRequest, IGGAPIService authenticatorService, GGAPIAuthenticatorInfos authenticatorInfos) throws GGAPIException {
-		Object authentication = this.createDummy();
+		Object authentication = this.createDummy(authenticationRequest.getDomain());
 
 		GGAPIAuthenticationHelper.setCredentials(authentication, authenticationRequest.getCredentials());
 		GGAPIAuthenticationHelper.setPrincipal(authentication, authenticationRequest.getPrincipal());
@@ -43,9 +43,9 @@ public class GGAPIAuthenticationFactory implements IGGAPIAuthenticationFactory {
 	}
 	
 	@Override
-	public Object createDummy() throws GGAPIException {
+	public Object createDummy(IGGAPIDomain domain) throws GGAPIException {
 
-		Object authentication = GGAPIAuthenticationHelper.instanciateNewOject(this.authenticationType);
+		Object authentication = GGAPIAuthenticationHelper.instanciateNewOject(this.authenticationType, domain);
 
 		this.injector.ifPresent(injector -> {
 			try {

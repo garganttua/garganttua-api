@@ -57,15 +57,15 @@ public class GGAPIEntityAuthenticatorChecker {
 					+ entityAuthenticatorClass.getSimpleName() + " is not annotated with @GGAPIEntityOwner");
 		}
 		
-		Class<?> authentication = annotation.authentication();
+		Class<?>[] authentications = annotation.authentications();
 		String[] authenticationInterfaces = annotation.interfaces();
-		Class<?> keyType = annotation.key();
-		boolean autoCreateKey = annotation.autoCreateKey();
-		GGAPIKeyAlgorithm keyAlgorithm = annotation.keyAlgorithm();
-		int keyLifeTime = annotation.keyLifeTime();
-		TimeUnit keyLifeTimeUnit = annotation.keyLifeTimeUnit();
+		Class<?> keyType = annotation.authorizationKey();
+		boolean autoCreateKey = annotation.autoCreateAuthorizationKey();
+		GGAPIKeyAlgorithm keyAlgorithm = annotation.authorizationKeyAlgorithm();
+		int keyLifeTime = annotation.authorizationKeyLifeTime();
+		TimeUnit keyLifeTimeUnit = annotation.authorizationKeyLifeTimeUnit();
 
-		GGAPIAuthenticatorKeyUsage keyUsage = annotation.keyUsage();
+		GGAPIAuthenticatorKeyUsage keyUsage = annotation.authorizationKeyUsage();
 
 		if (keyType != void.class && keyType.isAssignableFrom(IGGAPIKeyRealm.class)) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
@@ -85,7 +85,7 @@ public class GGAPIEntityAuthenticatorChecker {
 							+ keyType.getSimpleName() + " annotated with @GGAPIEntityOwned");
 		}
 
-		if (authenticationInterfaces != null && authenticationInterfaces.length > 0 && authentication == void.class) {
+		if (authenticationInterfaces != null && authenticationInterfaces.length > 0 && authentications[0] == void.class) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " cannot have interface configured but no authentication");
@@ -108,7 +108,7 @@ public class GGAPIEntityAuthenticatorChecker {
 
 
 			GGAPIAuthenticatorInfos authenticatorinfos = new GGAPIAuthenticatorInfos(entityAuthenticatorClass,
-					authentication, authenticationInterfaces, authorizationType, keyType, keyUsage,
+					authentications, authenticationInterfaces, authorizationType, keyType, keyUsage,
 					autoCreateKey, keyAlgorithm, keyLifeTime, keyLifeTimeUnit, annotation.authorizationLifeTime(),
 					annotation.authorizationLifeTimeUnit(), q.address(autoritiesFieldName),
 					q.address(accountNonExpiredFieldName), q.address(accountNonLockedFieldName),

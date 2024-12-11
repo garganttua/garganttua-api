@@ -5,8 +5,10 @@ import java.util.List;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
+import com.garganttua.api.core.service.GGAPIService;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticate;
@@ -24,8 +26,12 @@ import com.garganttua.api.spec.service.IGGAPIService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractGGAPIAuthentication {
+public abstract class AbstractGGAPIAuthentication extends GGAPIService {
 	
+	public AbstractGGAPIAuthentication(IGGAPIDomain domain) {
+		super(domain);
+	}
+
 	@GGAPIAuthenticationAuthenticatorService
 	protected IGGAPIService authenticatorService;
 
@@ -62,7 +68,7 @@ public abstract class AbstractGGAPIAuthentication {
 		
 		this.doAuthentication();
 		if( this.authenticated && authenticator ) {
-			this.authorities = GGAPIEntityAuthenticatorHelper.getAuthorities(principal);
+			this.authorities = GGAPIEntityAuthenticatorHelper.getAuthorities(this.principal);
 		} 
 	}
 

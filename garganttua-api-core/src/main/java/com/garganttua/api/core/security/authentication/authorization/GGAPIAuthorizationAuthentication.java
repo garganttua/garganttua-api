@@ -6,14 +6,20 @@ import com.garganttua.api.core.security.authentication.AbstractGGAPIAuthenticati
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 
-import lombok.NoArgsConstructor;
-
 @GGAPIAuthentication(findPrincipal = false)
-@NoArgsConstructor
 public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthentication {
+
+	public GGAPIAuthorizationAuthentication(IGGAPIDomain domain) {
+		super(domain);
+	}
+	
+	public GGAPIAuthorizationAuthentication() {
+		super(null);
+	}
 
 	@Override
 	protected void doAuthentication() throws GGAPIException {

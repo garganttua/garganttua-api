@@ -26,7 +26,6 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
-import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactory;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
@@ -52,20 +51,18 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
 	public static final String AUTHORIZATION_SIGNING_KEY_REALM_NAME = "authorization-signing-key";
 	
-	private GGAPIAuthenticationInfos infos;
 	private Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> authenticatorServices;
 	private IGGAPIServicesRegistry servicesRegistry;
-	private IGGAPIAuthenticationFactory factory;
+	private Map<Class<?>, IGGAPIAuthenticationFactory> authenticationFactories;
 	private IGGAPIService tenantService;
 	private IGGAPIDomain tenantDomain;
 	private Map<Class<?>, IGGAPIService> authorizationServices;
 
-	public GGAPIAuthenticationService(GGAPIAuthenticationInfos infos,
+	public GGAPIAuthenticationService(
 			Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> authenticatorServices,
-			IGGAPIAuthenticationFactory factory, IGGAPIServicesRegistry servicesRegistry) {
-		this.infos = infos;
+			Map<Class<?>, IGGAPIAuthenticationFactory> authenticationFactories, IGGAPIServicesRegistry servicesRegistry) {
 		this.authenticatorServices = authenticatorServices;
-		this.factory = factory;
+		this.authenticationFactories = authenticationFactories;
 		this.servicesRegistry = servicesRegistry;
 
 		Optional<IGGAPIService> tenantService = this.servicesRegistry.getServices().stream().filter(service -> {
@@ -247,7 +244,7 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 		Object authentication;
 		try {
 			Pair<GGAPIAuthenticatorInfos, IGGAPIService> authenticatorService = this.authenticatorServices.get(request.getDomain());
-			authentication = this.factory.createNewAuthentication((IGGAPIAuthenticationRequest) request,
+			authentication = this.authenticationFactories.get(request.getAuthenticationType()).createNewAuthentication((IGGAPIAuthenticationRequest) request,
 					authenticatorService == null ? null : authenticatorService.getValue1(),
 					authenticatorService == null ? null : authenticatorService.getValue0());
 			request.setAuthentication(authentication);
@@ -280,12 +277,12 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 		if (GGAPIEntityAuthorizationHelper.isSignable(authenticatorInfos.authorizationType())) {
 			IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
 					AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-					authenticatorInfos.key(), 
-					authenticatorInfos.keyUsage(),
-					authenticatorInfos.autoCreateKey(),
-					authenticatorInfos.keyAlgorithm(),
-					authenticatorInfos.keyLifeTime(),
-					authenticatorInfos.keyLifeTimeUnit(),
+					authenticatorInfos.authorizationKeyType(), 
+					authenticatorInfos.authorizationKeyUsage(),
+					authenticatorInfos.autoCreateAuthorizationKey(),
+					authenticatorInfos.authorizationKeyAlgorithm(),
+					authenticatorInfos.authorizationKeyLifeTime(),
+					authenticatorInfos.authorizationKeyLifeTimeUnit(),
 					ownerUuid, 
 					tenantId, 
 					this.tenantDomain, 

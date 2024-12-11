@@ -62,7 +62,7 @@ public class GGAPISpringAuthorizationFilter extends GGAPISpringHttpApiFilter {
 						}
 
 						//Domain cannot be null at this step
-						IGGAPIAuthenticationRequest authenticationRequest = new GGAPIAuthenticationRequest(domain , caller.getTenantId(), GGAPIEntityAuthorizationHelper.getUuid(authorization), authorization, infos.authenticationType());						
+						IGGAPIAuthenticationRequest authenticationRequest = new GGAPIAuthenticationRequest(domain , caller.getTenantId(), GGAPIEntityAuthorizationHelper.getUuid(authorization), authorization, infos.authenticationTypes()[0]);						
 						Authentication springAuthentication = this.manager.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));		
 						SecurityContextHolder.getContext().setAuthentication(springAuthentication);
 					}

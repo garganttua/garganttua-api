@@ -13,8 +13,8 @@ import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHel
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.authentication.GGAPILoginPasswordAuthenticatorInfos;
@@ -22,16 +22,22 @@ import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @GGAPIAuthentication (
 	findPrincipal = true
 )
 @Slf4j
-@NoArgsConstructor
 public class GGAPILoginPasswordAuthentication extends AbstractGGAPIAuthentication {
 	
+	public GGAPILoginPasswordAuthentication(IGGAPIDomain domain) {
+		super(domain);
+	}
+	
+	public GGAPILoginPasswordAuthentication() {
+		super(null);
+	}
+
 	@Inject 
 	private IGGAPIPasswordEncoder encoder;
 	

@@ -5,7 +5,7 @@ import java.util.Map;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterfacesRegistry;
-import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationServicesRegistry;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
 import com.garganttua.api.spec.security.authenticator.IGGAPIAuthenticatorServicesRegistry;
 
 public interface IGGAPISecurityEngine {
@@ -30,7 +30,7 @@ public interface IGGAPISecurityEngine {
 
 	Object decodeRawAuthorization(byte[] authorizationRaw, IGGAPICaller caller);
 
-	IGGAPIAuthenticationServicesRegistry getAuthenticationServicesRegistry();
+	IGGAPIAuthenticationService getAuthenticationService();
 	
 	IGGAPIAuthenticatorServicesRegistry getAuthenticatorServicesRegistry();
 

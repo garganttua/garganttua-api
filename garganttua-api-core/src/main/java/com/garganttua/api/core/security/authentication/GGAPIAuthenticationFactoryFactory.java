@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactoriesRegistry;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactory;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInfosRegistry;
 import com.garganttua.reflection.injection.IGGInjector;
 
@@ -16,7 +17,7 @@ public class GGAPIAuthenticationFactoryFactory {
 
 	private IGGAPIAuthenticationInfosRegistry authenticationInfosRegistry;
 	private Optional<IGGInjector> injector;
-	private Map<Class<?>, GGAPIAuthenticationFactory> factories = new HashMap<Class<?>, GGAPIAuthenticationFactory>();
+	private Map<Class<?>, IGGAPIAuthenticationFactory> factories = new HashMap<Class<?>, IGGAPIAuthenticationFactory>();
 
 	public GGAPIAuthenticationFactoryFactory(IGGAPIAuthenticationInfosRegistry authenticationInfosRegistry,
 			Optional<IGGInjector> injector) {

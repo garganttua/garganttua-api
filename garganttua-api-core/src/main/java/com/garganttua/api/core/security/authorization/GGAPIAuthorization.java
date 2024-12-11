@@ -30,7 +30,7 @@ import lombok.Getter;
 
 @GGAPIEntityOwned
 @GGAPIAuthenticator(
-		authentication = GGAPIAuthorizationAuthentication.class
+		authentications = GGAPIAuthorizationAuthentication.class
 	)
 public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 

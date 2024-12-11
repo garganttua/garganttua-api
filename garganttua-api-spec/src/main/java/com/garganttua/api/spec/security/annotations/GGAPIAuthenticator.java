@@ -20,18 +20,18 @@ public @interface GGAPIAuthenticator {
 	
 	String[] interfaces() default {};
 	
-	Class<?> authentication() default void.class;
+	Class<?>[] authentications() default {void.class};
 
-	Class<?> key() default void.class;
+	Class<?> authorizationKey() default void.class;
 
-	GGAPIAuthenticatorKeyUsage keyUsage() default GGAPIAuthenticatorKeyUsage.oneForTenant;
+	GGAPIAuthenticatorKeyUsage authorizationKeyUsage() default GGAPIAuthenticatorKeyUsage.oneForTenant;
 
-	boolean autoCreateKey() default false;
+	boolean autoCreateAuthorizationKey() default false;
 
-	GGAPIKeyAlgorithm keyAlgorithm() default GGAPIKeyAlgorithm.RSA_4096;
+	GGAPIKeyAlgorithm authorizationKeyAlgorithm() default GGAPIKeyAlgorithm.RSA_4096;
 
-	TimeUnit keyLifeTimeUnit() default TimeUnit.MINUTES;
+	TimeUnit authorizationKeyLifeTimeUnit() default TimeUnit.MINUTES;
 
-	int keyLifeTime() default 60;
+	int authorizationKeyLifeTime() default 60;
 
 }

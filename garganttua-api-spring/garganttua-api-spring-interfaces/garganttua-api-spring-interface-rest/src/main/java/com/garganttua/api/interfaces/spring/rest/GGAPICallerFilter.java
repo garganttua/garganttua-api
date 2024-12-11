@@ -1,6 +1,7 @@
 package com.garganttua.api.interfaces.spring.rest;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,6 +47,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		this.patterns = new HashMap<>();
 		List<IGGAPIServiceInfos> infos = this.engine.getServicesInfosRegistry().getServicesInfos();
 		infos.forEach(info -> {
+			log.atDebug().log("Added Path Pattern "+info.getPath());
 			this.patterns.put(info, parser.parse(info.getPath()));
 		});
 	}
@@ -114,16 +116,15 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	@Override
 	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		HttpMethod method = this.getHttpMethod(request);
-		IGGAPIServiceInfos infos = this.getServiceInfos(request, method);
 		String servletPath = request.getServletPath();
-		
+		if( log.isDebugEnabled() ) {
+			log.debug("Serving url "+servletPath+ " "+method);
+		}
+		IGGAPIServiceInfos infos = this.getServiceInfos(request, method);
 		if( infos == null ){
 			throw new GGAPIEngineException(GGAPIExceptionCode.BAD_REQUEST, request.getRequestURI() + " does not match any service");
 		}
 		
-		if( log.isDebugEnabled() ) {
-			log.debug("Serving url "+servletPath+ " "+method);
-		}
 		if( method == HttpMethod.OPTIONS ) {
 			log.warn("*********************************************");
 			log.warn("* An Options http request has been received *");

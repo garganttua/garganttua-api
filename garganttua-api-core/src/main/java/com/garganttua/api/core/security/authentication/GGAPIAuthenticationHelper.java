@@ -12,6 +12,7 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.IGGAPIService;
@@ -38,11 +39,11 @@ public class GGAPIAuthenticationHelper {
 				GGAPIAuthenticationInfos::principalFieldAddress);
 	}
 
-	public static Object instanciateNewOject(Class<?> authenticationClass) throws GGAPIEntityException {
+	public static Object instanciateNewOject(Class<?> authenticationClass, IGGAPIDomain domain) throws GGAPIEntityException {
 		Constructor<?> ctor;
 		try {
-			ctor = authenticationClass.getDeclaredConstructor();
-			Object authentication = ctor.newInstance();
+			ctor = authenticationClass.getDeclaredConstructor(IGGAPIDomain.class);
+			Object authentication = ctor.newInstance(domain);
 
 			return authentication;
 		} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException

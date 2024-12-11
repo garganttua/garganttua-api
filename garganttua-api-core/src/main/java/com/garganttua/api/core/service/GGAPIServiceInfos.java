@@ -4,9 +4,12 @@ import java.lang.reflect.Method;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
+import com.garganttua.reflection.GGReflectionException;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.Getter;
 
@@ -23,14 +26,17 @@ public class GGAPIServiceInfos implements IGGAPIServiceInfos {
     private String description;
     @Getter
 	private Method method;
+    
+	private IGGAPIObjectInstanciator objectInstanciator;
 
-    public GGAPIServiceInfos(String domainName, GGAPIEntityOperation operation, Class<?> interfasse, Method method, String path, String description) throws GGAPIEngineException {
+    public GGAPIServiceInfos(String domainName, GGAPIEntityOperation operation, Class<?> interfasse, Method method, String path, String description, IGGAPIObjectInstanciator objectInstanciator) throws GGAPIEngineException {
         this.domainName = domainName;
 		this.operation = operation;
 		this.interfasse = interfasse;
 		this.method = method;
         this.path = path;
         this.description = description;
+		this.objectInstanciator = objectInstanciator;
         
         if( operation.isCustom() ) {
 	        boolean found = false; 
@@ -90,5 +96,18 @@ public class GGAPIServiceInfos implements IGGAPIServiceInfos {
 	@Override
 	public String getMethodName() {
 		return this.method.getName();
+	}
+
+	@Override
+	public Object invoke(Object[] parameters) throws GGAPIException {
+
+		Object object = this.objectInstanciator.instanciateNew();
+		
+		try {
+			return GGObjectReflectionHelper.invokeMethod(object, this.getMethodName(), this.method, parameters);
+		} catch (GGReflectionException e) {
+			GGAPIException.processException(e);
+		}
+		return object;
 	}
 }

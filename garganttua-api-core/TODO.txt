@@ -1,10 +1,3 @@
-pour l'authent par challenge:
-- verrouiller l'update du challenge via api du domaine
-- developper 
-  @GGAPIchallengeexpirationdate
-  une nouvelle interface pour getChallenge et renouvellement 
- - verrouiller l'accès à la creation d'un boîtier 
-
 
 
 authent par pin : developper une authentification complète 
@@ -16,3 +9,4 @@ authent par pin : developper une authentification complète
 4/ Faire le point sur les algo JWT et le lien avec ceux dans GGAPIKeyAlgorithm
 5/ Trouver pourquoi GGAPIKeyRealm ne se serialize pas bien d'une string json vers un pojo 
 6/ sortir les mode d'authentification et d'authorization du core et les mettre dans des dependances 
+7/ applique le modèle de customs services pour l'authentification à aux services métier

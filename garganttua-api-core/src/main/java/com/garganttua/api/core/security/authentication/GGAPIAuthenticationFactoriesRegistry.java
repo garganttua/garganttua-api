@@ -7,15 +7,20 @@ import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFacto
 
 public class GGAPIAuthenticationFactoriesRegistry implements IGGAPIAuthenticationFactoriesRegistry {
 
-	private Map<Class<?>, GGAPIAuthenticationFactory> factories;
+	private Map<Class<?>, IGGAPIAuthenticationFactory> factories;
 
-	public GGAPIAuthenticationFactoriesRegistry(Map<Class<?>, GGAPIAuthenticationFactory> factories) {
+	public GGAPIAuthenticationFactoriesRegistry(Map<Class<?>, IGGAPIAuthenticationFactory> factories) {
 		this.factories = factories;
 	}
 
 	@Override
 	public IGGAPIAuthenticationFactory getFactory(Class<?> authenticationRequestType) {
 		return this.factories.get(authenticationRequestType);
+	}
+
+	@Override
+	public Map<Class<?>, IGGAPIAuthenticationFactory> getFactories() {
+		return this.factories;
 	}
 
 }

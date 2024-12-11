@@ -19,28 +19,40 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyUsage;
+import com.garganttua.api.spec.security.annotations.GGAPICustomServiceSecurity;
 import com.garganttua.api.spec.security.authentication.GGAPIChallenge;
 import com.garganttua.api.spec.security.authentication.GGAPIChallengeAuthenticatorInfos;
 import com.garganttua.api.spec.security.authentication.GGAPIChallengeType;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
+import com.garganttua.api.spec.service.GGAPICustomService;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
+import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServiceCommand;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @GGAPIAuthentication (
 	findPrincipal = true
 )
-@NoArgsConstructor
 @Slf4j
 public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 
-	private static final Object PARAMETER_RENEW_KEY = "renew_key";
+	public GGAPIChallengeAuthentication(IGGAPIDomain domain) {
+		super(domain);
+	}
+	
+	public GGAPIChallengeAuthentication() {
+		super(null);
+	}
+
+	public static final String CHALLENGE_KEY_REALM_NAME_PREFIX = "-challenge-key";
 	
 	@Inject 
 	private IGGAPIEngine engine;
@@ -101,22 +113,15 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 			uuid = UUID.randomUUID().toString();
 			GGAPIEntityHelper.setUuid(entity, uuid);
 		}
-		String realmName = uuid+"-challenge-key";
+		String realmName = uuid+CHALLENGE_KEY_REALM_NAME_PREFIX;
 		
 		GGAPIChallengeAuthenticatorInfos challengeInfos = GGAPIChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entity.getClass());
 
 		GGAPIMethod method = caller.getAccessRule().getOperation().getMethod();
-		
-		IGGAPIKeyRealm key = GGAPIChallengeEntityAuthenticatorHelper.getKeyRealm(entity);
-		
-		if( method  == GGAPIMethod.create && key == null) {
+	
+		if( method  == GGAPIMethod.create) {
 			this.getKey(caller, entity, uuid, challengeInfos, realmName);
-			
 		} 
-		if( method == GGAPIMethod.update && params.get(PARAMETER_RENEW_KEY) != null && Boolean.valueOf(params.get(PARAMETER_RENEW_KEY)) ) {
-			GGAPIKeyHelper.revokeAllForOwner(realmName, caller.getRequestedTenantId(), GGAPIEntityHelper.getOwnerId(entity), challengeInfos.key(), this.engine.getServicesRegistry());	
-			this.getKey(caller, entity, uuid, challengeInfos, realmName);
-		}
 	}
 
 	private void getKey(IGGAPICaller caller, Object entity, String uuid,
@@ -158,6 +163,85 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 			log.atDebug().log("Failed to find principal identified by id "+this.principal, e);
 			return null;
 		}
+	}
+	
+	@GGAPICustomServiceSecurity(access = GGAPIServiceAccess.anonymous)
+	@GGAPICustomService(actionOnAllEntities = false, entity = GGAPIChallenge.class, method = GGAPIMethod.read, path = "/api/{domain}/{uuid}/challenge")
+	public IGGAPIServiceResponse getChallenge(
+			IGGAPICaller caller,
+			Map<String, String> customParameters, String uuid) {
+
+		IGGAPIServiceCommand command = (event) -> {
+			IGGAPIService authenticatorService = this.engine.getServicesRegistry().getService(this.domain.getDomain());
+			IGGAPIServiceResponse getAuthenticatorResponse = authenticatorService.getEntity(caller, uuid,
+					new HashMap<String, String>());
+	
+			if (getAuthenticatorResponse.getResponseCode() != GGAPIServiceResponseCode.OK) {
+				event.setCode(getAuthenticatorResponse.getResponseCode());
+				event.setOut(getAuthenticatorResponse.getResponse());
+				return event;
+			}
+			GGAPIChallenge challenge = GGAPIChallengeEntityAuthenticatorHelper.getOrCreateChallengeAndSave(caller,
+					getAuthenticatorResponse.getResponse());
+
+			event.setOut(challenge);
+			event.setCode(GGAPIServiceResponseCode.OK);
+			return event;
+		};
+		return this.executeServiceCommand(caller, () -> {return true;}, command, customParameters, null);
+	}
+
+	@GGAPICustomServiceSecurity(access = GGAPIServiceAccess.owner)
+	@GGAPICustomService(actionOnAllEntities = false, entity = IGGAPIKeyRealm.class, method = GGAPIMethod.create, path = "/api/{domain}/{uuid}/keys/renew")
+	public IGGAPIServiceResponse renewKeys(
+			IGGAPICaller caller,
+			Map<String, String> customParameters, String uuid) {
+		
+		IGGAPIServiceCommand command = (event) -> {
+			IGGAPIService authenticatorService = this.engine.getServicesRegistry().getService(this.domain.getDomain());
+			IGGAPIServiceResponse getAuthenticatorResponse = authenticatorService.getEntity(caller, uuid,
+					new HashMap<String, String>());
+	
+			if (getAuthenticatorResponse.getResponseCode() != GGAPIServiceResponseCode.OK) {
+				event.setCode(getAuthenticatorResponse.getResponseCode());
+				event.setOut(getAuthenticatorResponse.getResponse());
+				return event;
+			}
+			
+			Object entity = getAuthenticatorResponse.getResponse();
+			
+			GGAPIChallengeAuthenticatorInfos infos = GGAPIChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(this.domain.getEntity().getValue0());
+			
+			GGAPIKeyHelper.revokeAllForOwner(
+					uuid+GGAPIChallengeAuthentication.CHALLENGE_KEY_REALM_NAME_PREFIX, 
+					caller.getTenantId(), 
+					GGAPIEntityHelper.getOwnerId(entity), 
+					infos.key(), 
+					this.engine.getServicesRegistry());
+			IGGAPIKeyRealm key;
+			key = GGAPIKeyHelper.getKey(
+					uuid+GGAPIChallengeAuthentication.CHALLENGE_KEY_REALM_NAME_PREFIX,
+					infos.key(), 
+					GGAPIAuthenticatorKeyUsage.oneForEach,
+					infos.autoCreateKey(),
+					infos.keyAlgorithm(),
+					infos.keyLifeTime(),
+					infos.keyLifeTimeUnit(),
+					GGAPIEntityHelper.getOwnerId(entity), 
+					caller.getRequestedTenantId(), 
+					this.engine.getTenantsDomain(), 
+					this.engine.getServicesRegistry(), 
+					infos.encryptionMode(), 
+					infos.encryptionPadding(), 
+					infos.signatureAlgorithm());
+			GGAPIChallengeEntityAuthenticatorHelper.setkeyRealm(entity, key);
+			GGAPIEntityHelper.save(entity, caller, new HashMap<String, String>());
+
+			event.setOut(entity);
+			event.setCode(GGAPIServiceResponseCode.OK);
+			return event;
+		};
+		return this.executeServiceCommand(caller, () -> {return true;}, command, customParameters, null);
 	}
 
 }

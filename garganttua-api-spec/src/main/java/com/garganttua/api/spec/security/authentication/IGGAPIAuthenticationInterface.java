@@ -4,13 +4,13 @@ import java.lang.reflect.Method;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.interfasse.GGAPIInterfaceMethod;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
 public interface IGGAPIAuthenticationInterface {
 
 	void setAuthenticationService(IGGAPIAuthenticationService authenticationService);
 
-	void setAuthenticationInfos(GGAPIAuthenticationInfos authenticationInfos);
+	void addAuthenticationInfos(GGAPIAuthenticationInfos authenticationInfos);
 
 	void start() throws GGAPIException;
 
@@ -18,6 +18,8 @@ public interface IGGAPIAuthenticationInterface {
 
 	void setDomain(IGGAPIDomain domain);
 
-	Method getMethod(GGAPIInterfaceMethod method);
+	Method getAuthenticateMethod();
+
+	void addCustomService(IGGAPIServiceInfos service);
 
 }

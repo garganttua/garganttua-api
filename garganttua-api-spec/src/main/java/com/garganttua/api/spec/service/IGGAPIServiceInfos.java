@@ -3,6 +3,7 @@ package com.garganttua.api.spec.service;
 import java.lang.reflect.Method;
 
 import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.GGAPIException;
 
 public interface IGGAPIServiceInfos {
 	
@@ -21,5 +22,7 @@ public interface IGGAPIServiceInfos {
 	String getDescription();
 
 	GGAPIEntityOperation getOperation();
+	
+	Object invoke(Object[] parameters) throws GGAPIException;
 
 }

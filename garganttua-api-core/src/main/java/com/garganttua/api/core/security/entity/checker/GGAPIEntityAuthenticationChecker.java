@@ -7,7 +7,6 @@ import java.util.Map;
 import com.garganttua.api.core.entity.checker.GGAPIEntityChecker;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
