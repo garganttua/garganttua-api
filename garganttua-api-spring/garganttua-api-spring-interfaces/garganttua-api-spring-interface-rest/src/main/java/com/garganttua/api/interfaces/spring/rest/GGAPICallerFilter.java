@@ -114,7 +114,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	}
 
 	@Override
-	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
+	protected HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		HttpMethod method = this.getHttpMethod(request);
 		String servletPath = request.getServletPath();
 		if( log.isDebugEnabled() ) {
@@ -131,7 +131,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 			log.warn("* These requests are not yet developped     *");
 			log.warn("* There should be developped soon           *");
 			log.warn("*********************************************");
-			return;
+			return request;
 		}
 		
 		IGGAPICallerFactory callerFactory = this.engine.getCallerFactory(this.getDomainNameFromRequestUri((HttpServletRequest) request));
@@ -151,7 +151,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		}
 		
 		request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
-		return;
+		return request;
 	}
 	
 	public static void printRequest(HttpServletRequest request) {

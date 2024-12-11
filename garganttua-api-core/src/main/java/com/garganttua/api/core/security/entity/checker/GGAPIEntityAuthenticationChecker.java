@@ -11,7 +11,6 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticate;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticated;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthenticatorInfos;
@@ -21,6 +20,8 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationAuthoriza
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationCredentials;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationFindPrincipal;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationPrincipal;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPostProcessing;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPreProcessing;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.IGGAPIService;
@@ -60,8 +61,8 @@ public class GGAPIEntityAuthenticationChecker {
 		String ownerIdFieldName = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(authenticationClass, GGAPIEntityOwnerId.class, String.class, true);
 		String authenticateMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationAuthenticate.class, true, void.class);
 		String findPrincipalMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationFindPrincipal.class, true, void.class);
-		String applySecurityMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticationApplySecurity.class, true, void.class, IGGAPICaller.class, Object.class, GGObjectReflectionHelper.getParameterizedType(Map.class, String.class, String.class));
-		
+		String securityPostProcessingMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticatorSecurityPostProcessing.class, true, void.class, IGGAPICaller.class, Object.class, GGObjectReflectionHelper.getParameterizedType(Map.class, String.class, String.class));
+		String securityPreProcessingMethodName = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, GGAPIAuthenticatorSecurityPreProcessing.class, true, void.class, IGGAPICaller.class, Object.class, GGObjectReflectionHelper.getParameterizedType(Map.class, String.class, String.class));
 		
 		try {
 			IGGObjectQuery q = GGObjectQueryFactory.objectQuery(authenticationClass);
@@ -79,7 +80,8 @@ public class GGAPIEntityAuthenticationChecker {
 					annotation.findPrincipal(),
 					q.address(findPrincipalMethodName),
 					q.address(ownerIdFieldName),
-					q.address(applySecurityMethodName));
+					q.address(securityPreProcessingMethodName),
+					q.address(securityPostProcessingMethodName));
 			
 			GGAPIEntityAuthenticationChecker.infos.put(authenticationClass, infos);
 			return infos;		

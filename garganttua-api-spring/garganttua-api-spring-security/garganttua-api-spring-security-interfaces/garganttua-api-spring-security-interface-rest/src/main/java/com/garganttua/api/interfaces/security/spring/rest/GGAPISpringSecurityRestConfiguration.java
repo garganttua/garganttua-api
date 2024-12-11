@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.stereotype.Service;
 
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
@@ -23,6 +24,7 @@ import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInter
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.Filter;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -57,7 +59,8 @@ public class GGAPISpringSecurityRestConfiguration {
 	private List<IGGAPISpringSecurityRestConfigurer> configurers = new ArrayList<IGGAPISpringSecurityRestConfigurer>();
 	
 	@Autowired
-	private GGAPISpringInterfaceRestSecurityApplierFilter securityApplicationFilter;
+	private GGAPISpringAuthenticatorSecurityProcessor securityProcessor;
+
 	
 	@PostConstruct
 	private void init() {
@@ -95,7 +98,7 @@ public class GGAPISpringSecurityRestConfiguration {
 			http.authorizeHttpRequests().and().addFilterBefore(this.callerFilter, GGAPISpringAuthorizationFilter.class);
 			http.authorizeHttpRequests().and().addFilterAfter(this.tenantVerifier, AuthorizationFilter.class);
 			http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, GGAPISpringTenantVerifierFilter.class);
-			http.authorizeHttpRequests().and().addFilterAfter(this.securityApplicationFilter, AuthorizationFilter.class);
+			http.authorizeHttpRequests().and().addFilterAfter(this.securityProcessor, AuthorizationFilter.class);
 			
 			return http.build();
 			

@@ -23,7 +23,7 @@ public abstract class GGAPISpringHttpApiFilter extends OncePerRequestFilter {
 	
 		if (((HttpServletRequest) request).getServletPath().startsWith("/api")) {
 			try {
-				this.doFilter(request, response);
+				request = this.doFilter(request, response);
 			} catch (GGAPIException e) {
 				GGAPIServiceResponse responseObject = new GGAPIServiceResponse(e.getMessage(), GGAPIServiceResponseCode.fromExceptionCode(e));		
 				ResponseEntity<?> responseEntity = GGAPIServiceResponseUtils.toResponseEntity(responseObject);
@@ -39,6 +39,6 @@ public abstract class GGAPISpringHttpApiFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-	protected abstract void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException ;
+	protected abstract HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException ;
 
 }

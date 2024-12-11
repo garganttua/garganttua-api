@@ -17,7 +17,8 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIPasswordEncoder;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPostProcessing;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPreProcessing;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
@@ -75,12 +76,17 @@ public class GGAPILoginPasswordAuthentication extends AbstractGGAPIAuthenticatio
 		}
 	}
 	
-	@GGAPIAuthenticationApplySecurity
+	@GGAPIAuthenticatorSecurityPreProcessing
 	public void applySecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
 		String password = GGAPILoginPasswordEntityAuthenticatorHelper.getPassword(entity);
 		if( password != null ) {
 			String passwordEncoded = this.encoder.encode(password);
 			GGAPILoginPasswordEntityAuthenticatorHelper.setPassword(entity, passwordEncoded);
 		}
+	}
+	
+	@GGAPIAuthenticatorSecurityPostProcessing
+	public void postProcessSecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) {
+		//Nothing to do
 	}
 }

@@ -24,7 +24,7 @@ public class GGAPISpringOwnerVerifierFilter extends GGAPISpringHttpApiFilter {
 	private IGGAPISecurityEngine security;
 	
 	@Override
-	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
+	protected HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication(); 
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
 		
@@ -33,5 +33,6 @@ public class GGAPISpringOwnerVerifierFilter extends GGAPISpringHttpApiFilter {
 			
 			this.security.verifyOwner(caller, ((GGAPISpringAuthentication) authentication).getAuthentication());
 		}
+		return request;
 	}
 }

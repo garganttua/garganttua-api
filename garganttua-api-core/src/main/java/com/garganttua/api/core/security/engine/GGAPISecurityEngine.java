@@ -288,16 +288,30 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	}
 
 	@Override
-	public void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
+	public void authenticatorEntitySecurityPreProcessing(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
 		if( GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass()) ) {
 			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
 			for( Class<?> authenticationType: authenticatorInfos.authenticationTypes() ) {;
-			log.atDebug().log("Appliing authenticator security on entity of type "+entity.getClass().getSimpleName()+" with authentication type "+authenticationType.getSimpleName());
+			log.atDebug().log("Pre processing authenticator security on entity of type "+entity.getClass().getSimpleName()+" with authentication type "+authenticationType.getSimpleName());
 				Object authentication = this.authenticationFactoryRegistry.getFactory(authenticationType).createDummy(caller.getDomain());
-				GGAPIAuthenticationHelper.applySecurity(authentication, caller, entity, params);			
+				GGAPIAuthenticationHelper.applyPreProcessingSecurity(authentication, caller, entity, params);			
 			}
 		} else {
-			log.atDebug().log("Cannot apply authenticator security on entity of type "+entity.getClass().getSimpleName()+" as it is not an authenticator entity");
+			log.atDebug().log("Cannot pre process authenticator security on entity of type "+entity.getClass().getSimpleName()+" as it is not an authenticator entity");
+		}
+	}
+	
+	@Override
+	public void authenticatorEntitySecurityPostProcessing(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
+		if( GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass()) ) {
+			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
+			for( Class<?> authenticationType: authenticatorInfos.authenticationTypes() ) {;
+			log.atDebug().log("Post processing authenticator security on entity of type "+entity.getClass().getSimpleName()+" with authentication type "+authenticationType.getSimpleName());
+				Object authentication = this.authenticationFactoryRegistry.getFactory(authenticationType).createDummy(caller.getDomain());
+				GGAPIAuthenticationHelper.applyPostProcessingSecurity(authentication, caller, entity, params);			
+			}
+		} else {
+			log.atDebug().log("Cannot post process authenticator security on entity of type "+entity.getClass().getSimpleName()+" as it is not an authenticator entity");
 		}
 	}
 

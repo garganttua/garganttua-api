@@ -141,8 +141,13 @@ public class GGAPIAuthenticationHelper {
 				GGAPIAuthenticationInfos::authenticatorInfosFieldAddress);
 	}
 
-	public static void applySecurity(Object authentication, IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
+	public static void applyPreProcessingSecurity(Object authentication, IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
 		GGAPIInfosHelper.invoke(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
-				GGAPIAuthenticationInfos::applySecurityMethodAddress, caller, entity, params);
+				GGAPIAuthenticationInfos::securityPreProcessingMethodAddress, caller, entity, params);
+	}
+	
+	public static void applyPostProcessingSecurity(Object authentication, IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
+		GGAPIInfosHelper.invoke(authentication, GGAPIEntityAuthenticationChecker::checkEntityAuthenticationClass,
+				GGAPIAuthenticationInfos::securityPostProcessingMethodAddress, caller, entity, params);
 	}
 }

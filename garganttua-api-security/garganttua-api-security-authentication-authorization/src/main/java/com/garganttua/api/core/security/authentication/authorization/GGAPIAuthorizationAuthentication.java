@@ -8,7 +8,8 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPostProcessing;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPreProcessing;
 
 @GGAPIAuthentication(findPrincipal = false)
 public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthentication {
@@ -35,8 +36,13 @@ public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthenticatio
 		return null;
 	}
 	
-	@GGAPIAuthenticationApplySecurity
+	@GGAPIAuthenticatorSecurityPreProcessing
 	public void applySecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) {
+		//Nothing to do
+	}
+	
+	@GGAPIAuthenticatorSecurityPostProcessing
+	public void postProcessSecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) {
 		//Nothing to do
 	}
 

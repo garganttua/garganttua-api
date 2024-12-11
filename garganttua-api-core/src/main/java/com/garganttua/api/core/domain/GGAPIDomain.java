@@ -231,12 +231,12 @@ public class GGAPIDomain implements IGGAPIDomain {
 		IGGAPIServiceInfos info = this.serviceInfos.get(operation);
 		GGAPIServiceAccess access = this.security.getAccess(info);
 
-		/*if (info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.entity.getValue0()))
+		if (info.getOperation().equals(GGAPIEntityOperation.createOne(this.domain, this.entity.getValue0()))
 				|| info.getOperation().equals(GGAPIEntityOperation.updateOne(this.domain, this.entity.getValue0()))) {
 			return this.entity.getValue1().ownedEntity();
-		}*/
+		}
 
-		return access == GGAPIServiceAccess.owner /*&& this.entity.getValue1().ownedEntity()*/;
+		return access == GGAPIServiceAccess.owner && this.entity.getValue1().ownedEntity();
 	}
 
 	public GGAPIDomain(String domain, Pair<Class<?>, GGAPIEntityInfos> entity, List<Pair<Class<?>, GGAPIDtoInfos>> dtos,

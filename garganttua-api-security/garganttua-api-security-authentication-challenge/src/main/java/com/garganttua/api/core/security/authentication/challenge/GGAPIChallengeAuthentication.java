@@ -22,8 +22,9 @@ import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyUsage;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPostProcessing;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorSecurityPreProcessing;
 import com.garganttua.api.spec.security.annotations.GGAPICustomServiceSecurity;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 import com.garganttua.api.spec.service.GGAPICustomService;
@@ -98,7 +99,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 		GGAPIEntityHelper.save(this.principal, GGAPICaller.createTenantCaller(this.tenantId), new HashMap<String, String>());
 	}
 	
-	@GGAPIAuthenticationApplySecurity
+	@GGAPIAuthenticatorSecurityPreProcessing
 	public void applySecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {	
 		if( !GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass()) ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Entity of type "+entity.getClass().getSimpleName()+" is not an authenticator");
@@ -119,6 +120,11 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 		if( method  == GGAPIMethod.create) {
 			this.getKey(caller, entity, uuid, challengeInfos, realmName);
 		} 
+	}
+	
+	@GGAPIAuthenticatorSecurityPostProcessing
+	public void postProcessSecurityOnAuthenticator(IGGAPICaller caller, Object entity, Map<String, String> params) {
+		//Nothing to do
 	}
 
 	private void getKey(IGGAPICaller caller, Object entity, String uuid,

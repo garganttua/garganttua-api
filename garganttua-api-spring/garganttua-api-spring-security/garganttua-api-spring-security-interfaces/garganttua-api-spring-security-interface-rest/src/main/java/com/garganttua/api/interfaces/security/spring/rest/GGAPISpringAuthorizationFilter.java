@@ -43,7 +43,7 @@ public class GGAPISpringAuthorizationFilter extends GGAPISpringHttpApiFilter {
 	private AuthenticationManager manager;
 	
 	@Override
-	protected void doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
+	protected HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
 		IGGAPIDomain domain = caller.getDomain();
 		if( caller.getAccessRule().getAccess() != GGAPIServiceAccess.anonymous ) {
@@ -73,5 +73,6 @@ public class GGAPISpringAuthorizationFilter extends GGAPISpringHttpApiFilter {
 				log.atWarn().log("Undecodable authorization");
 			}
 		}
+		return request;
 	}
 }

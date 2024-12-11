@@ -166,4 +166,14 @@ public class GGAPIEntityHelper {
 		
 		return infos.domain()+":"+getUuid(entity);
 	}
+	
+	public static String getUuidFromOwnerId(String ownerId) throws GGAPIException {
+		String[] parts = ownerId.split(":");
+		
+		if( parts.length != 2 ) {
+			throw new GGAPIEngineException(GGAPIExceptionCode.UNKNOWN_ERROR, "Invalid ownerId, should be domain:uuid");
+		}
+		
+		return parts[1];
+	}
 }

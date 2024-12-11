@@ -50,6 +50,7 @@ public abstract class GGAPIAbstractInterfaceSpringRest implements IGGAPIInterfac
 	private static final String REQUEST_PARAM_FILTER = "filter";
 
 	protected IGGAPIService service;
+	
 	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	
 	

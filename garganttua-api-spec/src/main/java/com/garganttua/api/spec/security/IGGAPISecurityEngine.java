@@ -36,7 +36,10 @@ public interface IGGAPISecurityEngine {
 
 	boolean isStorableAuthorization(Object authorization);
 
-	void applySecurityOnAuthenticatorEntity(IGGAPICaller caller, Object entity,
+	void authenticatorEntitySecurityPreProcessing(IGGAPICaller caller, Object entity,
+			Map<String, String> params) throws GGAPIException;
+	
+	void authenticatorEntitySecurityPostProcessing(IGGAPICaller caller, Object entity,
 			Map<String, String> params) throws GGAPIException;
 
 }
