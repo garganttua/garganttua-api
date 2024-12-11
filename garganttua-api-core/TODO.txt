@@ -3,10 +3,8 @@
 authent par pin : developper une authentification complète 
 
 
-1/ Sortir les authentications et authorizations du core
 2/ Sortir IGGAPIKey et mettre dans les garganttua-tooling
 3/ Créer un infos pour les keys et les annotations qui vont bien 
 4/ Faire le point sur les algo JWT et le lien avec ceux dans GGAPIKeyAlgorithm
 5/ Trouver pourquoi GGAPIKeyRealm ne se serialize pas bien d'une string json vers un pojo 
-6/ sortir les mode d'authentification et d'authorization du core et les mettre dans des dependances 
 7/ applique le modèle de customs services pour l'authentification à aux services métier

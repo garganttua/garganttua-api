@@ -4,8 +4,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.security.authentication.authorization.GGAPIAuthorizationAuthentication;
-import com.garganttua.api.core.security.authorization.jwt.GGAPIJWTAuthorization;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
@@ -13,7 +11,6 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorAccountNonExpired;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorAccountNonLocked;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorAuthorities;
@@ -29,9 +26,9 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationValidateAg
 import lombok.Getter;
 
 @GGAPIEntityOwned
-@GGAPIAuthenticator(
-		authentications = GGAPIAuthorizationAuthentication.class
-	)
+//@GGAPIAuthenticator(
+//		authentications = GGAPIAuthorizationAuthentication.class
+//	)
 public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 
 	public GGAPIAuthorization(String uuid, String id, String tenantId, String ownerId, List<String> authorities,
@@ -81,13 +78,13 @@ public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 	}
 	
 	@GGAPIAuthorizationValidateAgainst
-	public void validateAgainst(GGAPIJWTAuthorization authorizationReference) throws GGAPIException {
+	public void validateAgainst(GGAPIAuthorization authorizationReference) throws GGAPIException {
 		isRevokedOrExpired(authorizationReference);
 		this.validate();
 		this.doValidationAgainst(authorizationReference);
 	}
 	
-	protected abstract void doValidationAgainst(GGAPIJWTAuthorization authorization) throws GGAPISecurityException;
+	protected abstract void doValidationAgainst(GGAPIAuthorization authorization) throws GGAPISecurityException;
 
 	@GGAPIAuthorizationValidate
 	public void validate() throws GGAPIException {

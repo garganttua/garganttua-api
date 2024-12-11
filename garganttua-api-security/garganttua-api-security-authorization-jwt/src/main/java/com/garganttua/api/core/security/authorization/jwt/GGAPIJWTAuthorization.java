@@ -142,13 +142,6 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 	}
 
 	@Override
-	protected void doValidationAgainst(GGAPIJWTAuthorization authorization) throws GGAPISecurityException {
-		if( !Arrays.equals(this.signature, authorization.signature) ) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, "Invalid signature");
-		}
-	}
-
-	@Override
 	protected void doValidation() throws GGAPIException {
 
 		JwtBuilder token = this.createTokenFromThis();
@@ -159,5 +152,14 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 		if( !Arrays.equals(this.signature, signatureTemp) ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, "Invalid signature");
 		}
+	}
+
+	@Override
+	protected void doValidationAgainst(com.garganttua.api.core.security.authorization.GGAPIAuthorization authorization)
+			throws GGAPISecurityException {
+		if( !Arrays.equals(this.signature, ((GGAPIJWTAuthorization) authorization).signature) ) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, "Invalid signature");
+		}
+		
 	}
 }

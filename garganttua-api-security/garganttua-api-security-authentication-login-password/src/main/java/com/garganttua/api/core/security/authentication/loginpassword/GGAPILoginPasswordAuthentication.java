@@ -15,6 +15,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.security.IGGAPIPasswordEncoder;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
 import com.garganttua.api.spec.security.authentication.GGAPILoginPasswordAuthenticatorInfos;

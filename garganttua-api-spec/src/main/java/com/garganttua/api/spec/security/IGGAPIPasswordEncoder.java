@@ -1,4 +1,4 @@
-package com.garganttua.api.core.security.authentication.loginpassword;
+package com.garganttua.api.spec.security;
 
 public interface IGGAPIPasswordEncoder {
 
