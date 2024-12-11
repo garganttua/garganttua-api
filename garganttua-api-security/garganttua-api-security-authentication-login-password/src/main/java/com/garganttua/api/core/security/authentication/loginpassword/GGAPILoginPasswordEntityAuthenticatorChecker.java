@@ -3,13 +3,10 @@ package com.garganttua.api.core.security.authentication.loginpassword;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorLogin;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorPassword;
-import com.garganttua.api.spec.security.authentication.GGAPILoginPasswordAuthenticatorInfos;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;

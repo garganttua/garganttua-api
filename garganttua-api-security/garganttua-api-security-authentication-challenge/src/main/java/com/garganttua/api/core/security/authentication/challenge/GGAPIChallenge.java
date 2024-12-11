@@ -1,4 +1,4 @@
-package com.garganttua.api.spec.security.authentication;
+package com.garganttua.api.core.security.authentication.challenge;
 
 import java.util.Date;
 

@@ -164,9 +164,11 @@ public class GGAPISpringAuthenticationRestInterface
 
 	public ResponseEntity<?> authenticate(
 			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@RequestBody(required = true) GGAPISpringRestAuthenticationRequest request)
-			throws JsonProcessingException, GGAPIException {
+			@RequestBody(required = true) GGAPISpringRestAuthenticationRequest request) throws GGAPIException {
 
+		log.atInfo()
+		.log("Authenticating principal " + request.getPrincipal() + " of tenant "
+				+ caller.getTenantId() );
 		for (GGAPIAuthenticationInfos infos : this.authenticationInfos) {
 			log.atInfo()
 					.log("Triing to authenticate principal " + request.getPrincipal() + " of tenant "
@@ -175,13 +177,21 @@ public class GGAPISpringAuthenticationRestInterface
 			IGGAPIAuthenticationRequest authenticationRequest = new GGAPIAuthenticationRequest(caller.getDomain(),
 					caller.getTenantId(), request.getPrincipal(), request.getCredentials(), infos.authenticationType());
 
-			GGAPISpringAuthentication authentication = (GGAPISpringAuthentication) this.authenticationManager
-					.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));
+			try {
+				GGAPISpringAuthentication authentication = (GGAPISpringAuthentication) this.authenticationManager
+						.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));
+				if (authentication.isAuthenticated())
+					return new ResponseEntity<>(
+							new GGAPISpringRestAuthenticationResponse(authentication.getAuthentication()), HttpStatus.OK);
+			} catch(Exception e) {
+				log.atWarn().log(infos.authenticationType().getSimpleName()+" authentication failed for principal " + request.getPrincipal() + " of tenant "
+						+ caller.getTenantId());
+			}
 
-			if (authentication.isAuthenticated())
-				return new ResponseEntity<>(
-						new GGAPISpringRestAuthenticationResponse(authentication.getAuthentication()), HttpStatus.OK);
 		}
+		log.atWarn().log("Authentication failed for principal " + request.getPrincipal() + " of tenant "
+				+ caller.getTenantId());
+		
 		return new ResponseEntity<>(new GGAPIResponseObject("Authentication Failed", GGAPIResponseObject.BAD_REQUEST),
 				HttpStatus.UNAUTHORIZED);
 	}

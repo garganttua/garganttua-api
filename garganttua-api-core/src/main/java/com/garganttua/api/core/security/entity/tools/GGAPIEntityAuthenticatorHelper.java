@@ -81,4 +81,9 @@ public class GGAPIEntityAuthenticatorHelper {
 				GGAPIAuthenticatorInfos::isCredentialsNonExpiredFieldAddress, b);
 	}
 
+	public static void setAccountNonlocked(Object entity, boolean b) throws GGAPIException {
+		GGAPIInfosHelper.setValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
+				GGAPIAuthenticatorInfos::isAccountNonLockedFieldAddress, b);
+	}
+
 }

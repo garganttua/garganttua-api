@@ -82,12 +82,7 @@ public class GGAPIKeyRealm extends GenericGGAPIEntity implements IGGAPIKeyRealm 
 			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) {
 		this(keyRealmName, keyAlgorithm, expiration, -1, encryptionMode, paddingMode, signatureAlgorithm);
 	}
-	
-//	public GGAPIKeyRealm(String keyRealmName, GGAPIKeyAlgorithm keyAlgorithm, Date expiration, int initializationVectorSize, GGAPIEncryptionMode encryptionMode,
-//			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) {
-//		this(keyRealmName, keyAlgorithm, expiration, initializationVectorSize, encryptionMode, paddingMode, signatureAlgorithm);
-//	}
-	
+
 	//Complete CTR
 
 	public GGAPIKeyRealm(String keyRealmName, GGAPIKeyAlgorithm keyAlgorithm, Date expiration, int initializationVectorSize, GGAPIEncryptionMode encryptionMode,

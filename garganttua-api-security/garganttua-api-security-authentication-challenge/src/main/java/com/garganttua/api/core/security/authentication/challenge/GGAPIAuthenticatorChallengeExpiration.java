@@ -1,4 +1,4 @@
-package com.garganttua.api.spec.security.annotations;
+package com.garganttua.api.core.security.authentication.challenge;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

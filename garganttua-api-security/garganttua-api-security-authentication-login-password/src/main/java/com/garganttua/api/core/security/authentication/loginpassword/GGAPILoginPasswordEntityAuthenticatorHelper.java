@@ -2,7 +2,6 @@ package com.garganttua.api.core.security.authentication.loginpassword;
 
 import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.security.authentication.GGAPILoginPasswordAuthenticatorInfos;
 
 public class GGAPILoginPasswordEntityAuthenticatorHelper {
 	

@@ -18,7 +18,6 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIPasswordEncoder;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationApplySecurity;
-import com.garganttua.api.spec.security.authentication.GGAPILoginPasswordAuthenticatorInfos;
 import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;

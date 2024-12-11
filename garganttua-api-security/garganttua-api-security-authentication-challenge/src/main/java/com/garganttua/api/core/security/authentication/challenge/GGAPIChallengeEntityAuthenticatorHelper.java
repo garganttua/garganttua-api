@@ -12,9 +12,6 @@ import com.garganttua.api.core.security.GGAPIExpirationTools;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.security.authentication.GGAPIChallenge;
-import com.garganttua.api.spec.security.authentication.GGAPIChallengeAuthenticatorInfos;
-import com.garganttua.api.spec.security.authentication.GGAPIChallengeType;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 
 public class GGAPIChallengeEntityAuthenticatorHelper {
