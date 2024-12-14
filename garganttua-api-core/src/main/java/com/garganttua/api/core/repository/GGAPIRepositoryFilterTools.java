@@ -17,7 +17,7 @@ public class GGAPIRepositoryFilterTools {
 		GGAPILiteral and = GGAPILiteral.and();
 		GGAPILiteral tenantIdFilter = requestedTenantId==null?null:GGAPILiteral.eq(domain.getEntity().getValue1().tenantIdFieldAddress().toString(), requestedTenantId);
 		GGAPILiteral shareFieldFilter = GGAPILiteral.eq(shared, requestedTenantId);
-		GGAPILiteral visibleFilter = GGAPILiteral.eq(domain.getEntity().getValue1().hiddenFieldAddress()==null?null:domain.getEntity().getValue1().hiddenFieldAddress().toString(), true);
+		GGAPILiteral visibleFilter = GGAPILiteral.eq(domain.getEntity().getValue1().hiddenFieldAddress()==null?null:domain.getEntity().getValue1().hiddenFieldAddress().toString(), false);
 		GGAPILiteral ownerIdFilter = ownerId==null||domain.getEntity().getValue1().ownerIdFieldAddress()==null?null:GGAPILiteral.eq(domain.getEntity().getValue1().ownerIdFieldAddress().toString(), ownerId);
 		
 		if( filter != null ) {
@@ -54,9 +54,11 @@ public class GGAPIRepositoryFilterTools {
 						and.andOperator(tenantIdFilter);
 				}
 			} else if( domain.getEntity().getValue1().publicEntity() && domain.getEntity().getValue1().hiddenableEntity() ) {
-				and.andOperator(visibleFilter);
+				
 				if( tenantIdFilter != null ) {
-					and.andOperator(tenantIdFilter);
+					and.andOperator(GGAPILiteral.or(tenantIdFilter, visibleFilter));
+				} else {
+				  and.andOperator(visibleFilter);
 				}
 			} 
 			
