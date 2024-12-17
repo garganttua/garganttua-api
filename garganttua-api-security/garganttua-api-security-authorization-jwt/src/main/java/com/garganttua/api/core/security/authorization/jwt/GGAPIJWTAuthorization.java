@@ -27,7 +27,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-@GGAPIAuthorization(signable = true)
+//@GGAPIAuthorization(signable = true)
 @GGAPIEntityOwned
 public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 

@@ -43,7 +43,7 @@
 	</distributionManagement>
 
 	<properties>
-		<com.garganttua.tooling.version>1.0.11</com.garganttua.tooling.version>
+		<com.garganttua.tooling.version>1.0.13</com.garganttua.tooling.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 

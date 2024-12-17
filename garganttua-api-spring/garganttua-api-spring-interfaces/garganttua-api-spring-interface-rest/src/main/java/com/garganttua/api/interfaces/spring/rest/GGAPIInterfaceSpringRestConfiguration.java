@@ -18,7 +18,8 @@ public class GGAPIInterfaceSpringRestConfiguration {
 				registry.addMapping("/**")
 						.allowedMethods(CorsConfiguration.ALL)
 						.allowedHeaders(CorsConfiguration.ALL)
-						.allowedOriginPatterns(CorsConfiguration.ALL);
+						.allowedOriginPatterns(CorsConfiguration.ALL)
+						.allowCredentials(true);
 			}
 		};
 	}
