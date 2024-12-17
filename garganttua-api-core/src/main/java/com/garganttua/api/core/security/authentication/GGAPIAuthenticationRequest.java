@@ -10,6 +10,7 @@ import lombok.Setter;
 public class GGAPIAuthenticationRequest implements IGGAPIAuthenticationRequest {
 
 	private IGGAPIDomain domain;
+	@Setter
 	private String tenantId;
 	private String principal;
 	private Object credentials;

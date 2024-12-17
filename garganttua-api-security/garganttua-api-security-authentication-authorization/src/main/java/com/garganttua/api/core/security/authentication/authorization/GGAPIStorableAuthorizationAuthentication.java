@@ -44,12 +44,13 @@ public class GGAPIStorableAuthorizationAuthentication extends AbstractGGAPIAuthe
 	}
 	
 	@Override
-	protected Object doFindPrincipal() {
+	protected Object doFindPrincipal(IGGAPICaller caller) {
 		String ownerId;
 		try {
 			ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(this.credential);
 			String uuid = GGAPIEntityAuthorizationHelper.getUuid(this.credential);
-			IGGAPIServiceResponse response = this.authenticatorService.getEntity(GGAPICaller.createTenantCallerWithOwnerId(this.tenantId, ownerId), uuid, new HashMap<String, String>());
+			caller.setOwnerId(ownerId);
+			IGGAPIServiceResponse response = this.authenticatorService.getEntity(caller, uuid, new HashMap<String, String>());
 	
 			if( response.getResponseCode() == GGAPIServiceResponseCode.OK ) {
 				log.atDebug().log("Found principal identified with uuid "+uuid);

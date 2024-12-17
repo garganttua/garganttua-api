@@ -23,6 +23,7 @@ public record GGAPIAuthenticatorInfos (
 		GGObjectAddress isAccountNonExpiredFieldAddress,
 		GGObjectAddress isAccountNonLockedFieldAddress,
 		GGObjectAddress isCredentialsNonExpiredFieldAddress,
-		GGObjectAddress isEnabledFieldAddress) {
+		GGObjectAddress isEnabledFieldAddress, 
+		GGAPIAuthenticatorScope scope) {
 		
 	}

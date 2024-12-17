@@ -2,12 +2,14 @@ package com.garganttua.api.core.security.authentication;
 
 import java.util.List;
 
+import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.core.service.GGAPIService;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
@@ -21,6 +23,7 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationCredentia
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationFindPrincipal;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticationPrincipal;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
+import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorScope;
 import com.garganttua.api.spec.service.IGGAPIService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -73,14 +76,23 @@ public abstract class AbstractGGAPIAuthentication extends GGAPIService {
 	}
 
 	@GGAPIAuthenticationFindPrincipal
-	protected void findPrincipal() throws GGAPISecurityException {
+	protected void findPrincipal() throws GGAPIException {
 		if( this.authenticatorService != null ) {
-			Object principal = this.doFindPrincipal();
+		  IGGAPICaller caller;
+		  
+		  if( this.authenticatorInfos.scope() == GGAPIAuthenticatorScope.tenant) {
+		    caller = GGAPICaller.createTenantCaller(this.tenantId);
+		  } else {
+		    caller = GGAPICaller.createSuperCaller();
+		  }
+
+      Object principal = this.doFindPrincipal(caller);
 			if( principal == null ) {
 				log.atWarn().log("Principal identified by "+this.principal+" is not found");
 				return;
 			}	
 			this.principal = principal;
+			this.tenantId = GGAPIEntityHelper.getTenantId(this.principal);
 			try {
 				this.ownerId = GGAPIEntityHelper.getOwnerId(principal);
 			} catch (GGAPIException e) {
@@ -92,7 +104,7 @@ public abstract class AbstractGGAPIAuthentication extends GGAPIService {
 		}
 	}
 
-	protected abstract Object doFindPrincipal();
+	protected abstract Object doFindPrincipal(IGGAPICaller caller);
 
 	protected void checkPrincipal() throws GGAPISecurityException, GGAPIException {
 		if( !GGAPIEntityAuthenticatorHelper.isAccountNonExpired(this.principal) ) {

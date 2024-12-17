@@ -45,10 +45,10 @@ public class GGAPIPinAuthentication extends AbstractGGAPIAuthentication {
 	private IGGAPIPasswordEncoder encoder;
 	
 	@Override
-	protected Object doFindPrincipal() {
+	protected Object doFindPrincipal(IGGAPICaller caller) {
 		try {
 			GGAPIPinAuthenticatorInfos infos = GGAPIPinEntityAuthenticatorChecker.checkEntityAuthenticatorClass(this.authenticatorInfos.authenticatorType());
-			IGGAPIServiceResponse getPrincipalResponse = this.authenticatorService.getEntities(GGAPICaller.createTenantCaller(this.tenantId), GGAPIReadOutputMode.full, null, GGAPILiteral.eq(infos.loginFieldAddress().toString(), (String) this.principal), null, new HashMap<String, String>());
+			IGGAPIServiceResponse getPrincipalResponse = this.authenticatorService.getEntities(caller, GGAPIReadOutputMode.full, null, GGAPILiteral.eq(infos.loginFieldAddress().toString(), (String) this.principal), null, new HashMap<String, String>());
 			if( getPrincipalResponse.getResponseCode() == GGAPIServiceResponseCode.OK ) {
 				List<Object> list = (List<Object>) getPrincipalResponse.getResponse();
 				if(list.size() >0) {

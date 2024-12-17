@@ -18,4 +18,6 @@ public interface IGGAPIAuthenticationRequest {
 
 	void setAuthentication(Object authentication);
 
+  void setTenantId(String tenantId);
+
 }

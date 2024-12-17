@@ -27,4 +27,6 @@ public interface IGGAPICaller {
 	
 	List<String> getAuthorities();
 
+  void setOwnerId(String ownerId);
+
 }

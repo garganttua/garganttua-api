@@ -6,6 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorScope;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
 
 @Retention(RetentionPolicy.RUNTIME)
@@ -33,5 +34,7 @@ public @interface GGAPIAuthenticator {
 	TimeUnit authorizationKeyLifeTimeUnit() default TimeUnit.MINUTES;
 
 	int authorizationKeyLifeTime() default 60;
+
+  GGAPIAuthenticatorScope scope() default GGAPIAuthenticatorScope.tenant;
 
 }

@@ -31,7 +31,7 @@ public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthenticatio
 	}
 
 	@Override
-	protected Object doFindPrincipal() {
+	protected Object doFindPrincipal(IGGAPICaller caller) {
 		// Nothing to do
 		return null;
 	}

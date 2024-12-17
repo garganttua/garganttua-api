@@ -14,7 +14,6 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthorization;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationToByteArray;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationType;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;

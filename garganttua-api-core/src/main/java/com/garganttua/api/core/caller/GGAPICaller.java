@@ -10,6 +10,7 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 
 import lombok.Getter;
+import lombok.Setter;
 
 public class GGAPICaller implements IGGAPICaller {
 	
@@ -40,6 +41,7 @@ public class GGAPICaller implements IGGAPICaller {
 	protected String callerId;
 
 	@Getter
+	@Setter
 	protected String ownerId;
 
 	@Getter

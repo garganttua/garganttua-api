@@ -153,19 +153,14 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 	}
 
 	@Override
-	protected Object doFindPrincipal() {
-		try {
-			IGGAPIServiceResponse getPrincipalResponse = this.authenticatorService.getEntity(GGAPICaller.createTenantCaller(this.tenantId), (String) this.principal, new HashMap<String, String>());
-			if( getPrincipalResponse.getResponseCode() == GGAPIServiceResponseCode.OK ) {
-				 return getPrincipalResponse.getResponse();
-			} else {
-				log.atDebug().log("Failed to find principal identified by id "+this.principal);
-				return null;
-			}	
-		} catch (GGAPIException e) {
-			log.atDebug().log("Failed to find principal identified by id "+this.principal, e);
-			return null;
-		}
+	protected Object doFindPrincipal(IGGAPICaller caller) {
+		IGGAPIServiceResponse getPrincipalResponse = this.authenticatorService.getEntity(caller, (String) this.principal, new HashMap<String, String>());
+    if( getPrincipalResponse.getResponseCode() == GGAPIServiceResponseCode.OK ) {
+    	 return getPrincipalResponse.getResponse();
+    } else {
+    	log.atDebug().log("Failed to find principal identified by id "+this.principal);
+    	return null;
+    }
 	}
 	
 	@GGAPICustomServiceSecurity(access = GGAPIServiceAccess.anonymous)

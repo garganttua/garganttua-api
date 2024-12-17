@@ -218,6 +218,9 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 				throw new GGExecutorException(
 						new GGAPISecurityException(GGAPIExceptionCode.BAD_REQUEST, "Authentication failed"));
 			}
+			String tenantId = GGAPIAuthenticationHelper.getTenantId(request.getAuthentication());
+			request.setTenantId(tenantId);
+			
 			chain.execute(request);
 		} catch (GGAPIException e) {
 			throw new GGExecutorException(e);

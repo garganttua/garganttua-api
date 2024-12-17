@@ -106,13 +106,12 @@ public class GGAPIEntityAuthenticatorChecker {
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
 
-
 			GGAPIAuthenticatorInfos authenticatorinfos = new GGAPIAuthenticatorInfos(entityAuthenticatorClass,
 					authentications, authenticationInterfaces, authorizationType, keyType, keyUsage,
 					autoCreateKey, keyAlgorithm, keyLifeTime, keyLifeTimeUnit, annotation.authorizationLifeTime(),
 					annotation.authorizationLifeTimeUnit(), q.address(autoritiesFieldName),
 					q.address(accountNonExpiredFieldName), q.address(accountNonLockedFieldName),
-					q.address(credentialsNonExpiredFieldName), q.address(enabledFieldName));
+					q.address(credentialsNonExpiredFieldName), q.address(enabledFieldName), annotation.scope());
 
 			GGAPIEntityAuthenticatorChecker.infos.put(entityAuthenticatorClass, authenticatorinfos);
 
