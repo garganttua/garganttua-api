@@ -2,6 +2,7 @@ package com.garganttua.api.interfaces.spring.rest;
 
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 

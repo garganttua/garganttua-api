@@ -4,9 +4,9 @@ import java.lang.reflect.Method;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.service.IGGAPIServiceInfos;
+import com.garganttua.api.spec.interfasse.IGGAPICustomizableInterface;
 
-public interface IGGAPIAuthenticationInterface {
+public interface IGGAPIAuthenticationInterface extends IGGAPICustomizableInterface {
 
 	void setAuthenticationService(IGGAPIAuthenticationService authenticationService);
 
@@ -19,7 +19,5 @@ public interface IGGAPIAuthenticationInterface {
 	void setDomain(IGGAPIDomain domain);
 
 	Method getAuthenticateMethod();
-
-	void addCustomService(IGGAPIServiceInfos service);
 
 }

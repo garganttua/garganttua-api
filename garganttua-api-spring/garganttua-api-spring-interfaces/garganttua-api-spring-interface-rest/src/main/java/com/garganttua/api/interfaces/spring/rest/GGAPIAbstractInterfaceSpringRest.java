@@ -41,313 +41,313 @@ import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor
 @Slf4j
-public abstract class GGAPIAbstractInterfaceSpringRest implements IGGAPIInterface {
+public abstract class GGAPIAbstractInterfaceSpringRest extends GGAPIInterfaceSpringCustomizable implements IGGAPIInterface {
 
-	private static final String REQUEST_PARAM_MODE = "mode";
-	private static final String REQUEST_PARAM_PAGE_SIZE = "pageSize";
-	private static final String REQUEST_PARAM_PAGE_INDEX = "pageIndex";
-	private static final String REQUEST_PARAM_SORT = "sort";
-	private static final String REQUEST_PARAM_FILTER = "filter";
+  private static final String REQUEST_PARAM_MODE = "mode";
+  private static final String REQUEST_PARAM_PAGE_SIZE = "pageSize";
+  private static final String REQUEST_PARAM_PAGE_INDEX = "pageIndex";
+  private static final String REQUEST_PARAM_SORT = "sort";
+  private static final String REQUEST_PARAM_FILTER = "filter";
 
-	protected IGGAPIService service;
-	
-	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-	
-	
-	private Class<?> entityClass;
+  protected IGGAPIService service;
 
-	@Setter
-	protected IGGAPIDomain domain;
+  private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-	@Inject
-	protected RequestMappingHandlerMapping requestMappingHandlerMapping;
+  private Class<?> entityClass;
 
-	@Setter
-	protected IGGAPIEngine engine;
+  @Setter
+  protected IGGAPIDomain domain;
 
-	@Override
-	public void start() throws GGAPIException {
-		try {
-			this.entityClass = this.domain.getEntity().getValue0();
-			this.createRequestMappings();
-			this.createCustomMappings(this.requestMappingHandlerMapping);
-		} catch (NoSuchMethodException e) {
-			throw new GGAPIEngineException(e);
-		}
-	}
+  @Inject
+  protected RequestMappingHandlerMapping requestMappingHandlerMapping;
 
-	protected abstract void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping)
-			throws NoSuchMethodException;
+  @Setter
+  protected IGGAPIEngine engine;
 
-	@Override
-	public void setService(IGGAPIService service) {
-		this.service = service;
-	}
+  @Override
+  public void start() throws GGAPIException {
+    try {
+      this.entityClass = this.domain.getEntity().getValue0();
+      this.createRequestMappings();
+      this.createCustomMappings();
+      this.createCustomMappings(this.requestMappingHandlerMapping);
+    } catch (NoSuchMethodException e) {
+      throw new GGAPIEngineException(e);
+    }
+  }
 
-	private void createRequestMappings() throws NoSuchMethodException {
-		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
-		options.setPatternParser(new PathPatternParser());
+  protected abstract void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping)
+      throws NoSuchMethodException;
 
-		String baseUrl = "/api/" + this.domain.getDomain();
+  @Override
+  public void setService(IGGAPIService service) {
+    this.service = service;
+  }
 
-		RequestMappingInfo requestMappingInfoGetAll = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.GET)
-				.options(options).build();
-		RequestMappingInfo requestMappingInfoDeleteAll = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.DELETE)
-				.options(options).build();
-		RequestMappingInfo requestMappingInfoCreate = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.POST)
-				.options(options).build();
-		RequestMappingInfo requestMappingInfoGetOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
-				.methods(RequestMethod.GET).options(options).build();
-		RequestMappingInfo requestMappingInfoUpdate = RequestMappingInfo.paths(baseUrl + "/{uuid}")
-				.methods(RequestMethod.PATCH).options(options).build();
-		RequestMappingInfo requestMappingInfoDeleteOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
-				.methods(RequestMethod.DELETE).options(options).build();
+  private void createRequestMappings() throws NoSuchMethodException {
+    RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
+    options.setPatternParser(new PathPatternParser());
 
-		if (this.domain.isAllowReadAll()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, this,
-					this.getClass().getMethod("getEntities", IGGAPICaller.class, Map.class));
-		}
-		if (this.domain.isAllowDeleteAll()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, this,
-					this.getClass().getMethod("deleteAll", IGGAPICaller.class, Map.class));
-		}
-		if (this.domain.isAllowCreation()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, this,
-					this.getClass().getMethod("createEntity", IGGAPICaller.class, String.class, Map.class));
-		}
-		if (this.domain.isAllowReadOne()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, this,
-					this.getClass().getMethod("getEntity", IGGAPICaller.class, String.class, Map.class));
-		}
-		if (this.domain.isAllowUpdateOne()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, this, this.getClass()
-					.getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, Map.class));
-		}
-		if (this.domain.isAllowDeleteOne()) {
-			this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, this,
-					this.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class, Map.class));
-		}
-	}
+    String baseUrl = "/api/" + this.domain.getDomain();
 
-	@Override
-	public String getName() {
-		return "SpringRestInterface-" + this.domain.getDomain();
-	}
+    RequestMappingInfo requestMappingInfoGetAll = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.GET)
+        .options(options).build();
+    RequestMappingInfo requestMappingInfoDeleteAll = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.DELETE)
+        .options(options).build();
+    RequestMappingInfo requestMappingInfoCreate = RequestMappingInfo.paths(baseUrl).methods(RequestMethod.POST)
+        .options(options).build();
+    RequestMappingInfo requestMappingInfoGetOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
+        .methods(RequestMethod.GET).options(options).build();
+    RequestMappingInfo requestMappingInfoUpdate = RequestMappingInfo.paths(baseUrl + "/{uuid}")
+        .methods(RequestMethod.PATCH).options(options).build();
+    RequestMappingInfo requestMappingInfoDeleteOne = RequestMappingInfo.paths(baseUrl + "/{uuid}")
+        .methods(RequestMethod.DELETE).options(options).build();
 
-	@Override
-	public Method getMethod(GGAPIInterfaceMethod method) {
-		Method method_ = null;
-		switch (method) {
-		case count -> {
-			return null;
-		}
-		case createOne -> {
-			try {
-				method_ = this.getClass().getMethod("createEntity", IGGAPICaller.class, String.class, Map.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		case deleteAll -> {
-			try {
-				method_ = this.getClass().getMethod("deleteAll", IGGAPICaller.class, Map.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		case deleteOne -> {
-			try {
-				method_ = this.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class, Map.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		case readAll -> {
-			try {
-				method_ = this.getClass().getMethod("getEntities", IGGAPICaller.class, Map.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		case readOne -> {
-			try {
-				method_ = this.getClass().getMethod("getEntity", IGGAPICaller.class, String.class, Map.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		case updateOne -> {
-			try {
-				method_ = this.getClass()
-						.getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, Map.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new RuntimeException(e);
-			}
-		}
-		}
-		return method_;
-	}
+    if (this.domain.isAllowReadAll()) {
+      this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetAll, this,
+          this.getClass().getMethod("getEntities", IGGAPICaller.class, Map.class));
+    }
+    if (this.domain.isAllowDeleteAll()) {
+      this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteAll, this,
+          this.getClass().getMethod("deleteAll", IGGAPICaller.class, Map.class));
+    }
+    if (this.domain.isAllowCreation()) {
+      this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, this,
+          this.getClass().getMethod("createEntity", IGGAPICaller.class, String.class, Map.class));
+    }
+    if (this.domain.isAllowReadOne()) {
+      this.requestMappingHandlerMapping.registerMapping(requestMappingInfoGetOne, this,
+          this.getClass().getMethod("getEntity", IGGAPICaller.class, String.class, Map.class));
+    }
+    if (this.domain.isAllowUpdateOne()) {
+      this.requestMappingHandlerMapping.registerMapping(requestMappingInfoUpdate, this,
+          this.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, Map.class));
+    }
+    if (this.domain.isAllowDeleteOne()) {
+      this.requestMappingHandlerMapping.registerMapping(requestMappingInfoDeleteOne, this,
+          this.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class, Map.class));
+    }
+  }
 
-	// Interface handling methods
+  @Override
+  public String getName() {
+    return "SpringRestInterface-" + this.domain.getDomain();
+  }
 
-	public ResponseEntity<?> createEntity(
-			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@RequestBody(required = true) String entity, @RequestParam Map<String, String> customParameters) {
+  @Override
+  public Method getMethod(GGAPIInterfaceMethod method) {
+    Method method_ = null;
+    switch (method) {
+    case count -> {
+      return null;
+    }
+    case createOne -> {
+      try {
+        method_ = this.getClass().getMethod("createEntity", IGGAPICaller.class, String.class, Map.class);
+      } catch (NoSuchMethodException | SecurityException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    case deleteAll -> {
+      try {
+        method_ = this.getClass().getMethod("deleteAll", IGGAPICaller.class, Map.class);
+      } catch (NoSuchMethodException | SecurityException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    case deleteOne -> {
+      try {
+        method_ = this.getClass().getMethod("deleteEntity", IGGAPICaller.class, String.class, Map.class);
+      } catch (NoSuchMethodException | SecurityException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    case readAll -> {
+      try {
+        method_ = this.getClass().getMethod("getEntities", IGGAPICaller.class, Map.class);
+      } catch (NoSuchMethodException | SecurityException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    case readOne -> {
+      try {
+        method_ = this.getClass().getMethod("getEntity", IGGAPICaller.class, String.class, Map.class);
+      } catch (NoSuchMethodException | SecurityException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    case updateOne -> {
+      try {
+        method_ = this.getClass().getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, Map.class);
+      } catch (NoSuchMethodException | SecurityException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    }
+    return method_;
+  }
 
-		Object entityObject = null;
-		IGGAPIServiceResponse response = null;
+  // Interface handling methods
 
-		try {
-			entityObject = this.mapper.readValue(entity, this.entityClass);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
-					HttpStatus.BAD_REQUEST);
-		}
+  public ResponseEntity<?> createEntity(
+      @RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+      @RequestBody(required = true) String entity, @RequestParam Map<String, String> customParameters) {
 
-		try {
-			response = this.service.createEntity(caller, entityObject, customParameters);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
-					HttpStatus.BAD_REQUEST);
-		}
+    Object entityObject = null;
+    IGGAPIServiceResponse response = null;
 
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
+    try {
+      entityObject = this.mapper.readValue(entity, this.entityClass);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
+          HttpStatus.BAD_REQUEST);
+    }
 
-	public ResponseEntity<?> getEntities(
-			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@RequestParam Map<String, String> customParameters) {
-		IGGAPISort sort = null;
-		IGGAPIServiceResponse response = null;
-		IGGAPIPageable pageable = null;
-		IGGAPIFilter filter = null;
+    try {
+      response = this.service.createEntity(caller, entityObject, customParameters);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
+          HttpStatus.BAD_REQUEST);
+    }
 
-		String sortString = this.getAndRemoveRequestParameter(REQUEST_PARAM_SORT, customParameters);
-		String filterString = this.getAndRemoveRequestParameter(REQUEST_PARAM_FILTER, customParameters);
-		String pageSize = this.getAndRemoveRequestParameter(REQUEST_PARAM_PAGE_SIZE, customParameters);
-		String pageIndex = this.getAndRemoveRequestParameter(REQUEST_PARAM_PAGE_INDEX, customParameters);
-		String modeString = this.getAndRemoveRequestParameter(REQUEST_PARAM_MODE, customParameters);
-		try {
+    return GGAPIServiceResponseUtils.toResponseEntity(response);
+  }
 
-			if (sortString != null && !sortString.isEmpty())
-				sort = (IGGAPISort) this.mapper.readValue(sortString, GGAPISort.class);
-			if (filterString != null && !filterString.isEmpty())
-				filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
-					HttpStatus.BAD_REQUEST);
-		}
+  public ResponseEntity<?> getEntities(
+      @RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+      @RequestParam Map<String, String> customParameters) {
+    IGGAPISort sort = null;
+    IGGAPIServiceResponse response = null;
+    IGGAPIPageable pageable = null;
+    IGGAPIFilter filter = null;
 
-		if (pageSize != null && pageIndex != null) {
-			pageable = GGAPIPageable.getPage(Integer.valueOf(pageSize), Integer.valueOf(pageIndex));
-		}
+    String sortString = this.getAndRemoveRequestParameter(REQUEST_PARAM_SORT, customParameters);
+    String filterString = this.getAndRemoveRequestParameter(REQUEST_PARAM_FILTER, customParameters);
+    String pageSize = this.getAndRemoveRequestParameter(REQUEST_PARAM_PAGE_SIZE, customParameters);
+    String pageIndex = this.getAndRemoveRequestParameter(REQUEST_PARAM_PAGE_INDEX, customParameters);
+    String modeString = this.getAndRemoveRequestParameter(REQUEST_PARAM_MODE, customParameters);
+    try {
 
-		try {
-			GGAPIReadOutputMode mode = modeString == null ? GGAPIReadOutputMode.full
-					: GGAPIReadOutputMode.valueOf(modeString);
-			response = this.service.getEntities(caller, mode, pageable, filter, sort, customParameters);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+      if (sortString != null && !sortString.isEmpty())
+        sort = (IGGAPISort) this.mapper.readValue(sortString, GGAPISort.class);
+      if (filterString != null && !filterString.isEmpty())
+        filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
+          HttpStatus.BAD_REQUEST);
+    }
 
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
+    if (pageSize != null && pageIndex != null) {
+      pageable = GGAPIPageable.getPage(Integer.valueOf(pageSize), Integer.valueOf(pageIndex));
+    }
 
-	private String getAndRemoveRequestParameter(String parameterName, Map<String, String> customParameters) {
-		String parameterValue = customParameters.get(parameterName);
-		if (parameterValue != null) {
-			customParameters.remove(parameterName);
-		}
-		return parameterValue;
-	}
+    try {
+      GGAPIReadOutputMode mode = modeString == null ? GGAPIReadOutputMode.full
+          : GGAPIReadOutputMode.valueOf(modeString);
+      response = this.service.getEntities(caller, mode, pageable, filter, sort, customParameters);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-	public ResponseEntity<?> getEntity(
-			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@PathVariable(name = "uuid") String uuid, @RequestParam Map<String, String> customParameters) {
-		IGGAPIServiceResponse response = null;
+    return GGAPIServiceResponseUtils.toResponseEntity(response);
+  }
 
-		try {
-			response = this.service.getEntity(caller, uuid, customParameters);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+  private String getAndRemoveRequestParameter(String parameterName, Map<String, String> customParameters) {
+    String parameterValue = customParameters.get(parameterName);
+    if (parameterValue != null) {
+      customParameters.remove(parameterName);
+    }
+    return parameterValue;
+  }
 
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
+  public ResponseEntity<?> getEntity(
+      @RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+      @PathVariable(name = "uuid") String uuid, @RequestParam Map<String, String> customParameters) {
+    IGGAPIServiceResponse response = null;
 
-	public ResponseEntity<?> updateEntity(
-			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity,
-			@RequestParam Map<String, String> customParameters) {
-		IGGAPIServiceResponse response = null;
+    try {
+      response = this.service.getEntity(caller, uuid, customParameters);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-		Object entityObject = null;
-		try {
-			entityObject = this.mapper.readValue(entity, this.entityClass);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
-					HttpStatus.BAD_REQUEST);
-		}
+    return GGAPIServiceResponseUtils.toResponseEntity(response);
+  }
 
-		try {
-			response = this.service.updateEntity(caller, uuid, entityObject, customParameters);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+  public ResponseEntity<?> updateEntity(
+      @RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+      @PathVariable(name = "uuid") String uuid, @RequestBody(required = true) String entity,
+      @RequestParam Map<String, String> customParameters) {
+    IGGAPIServiceResponse response = null;
 
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
+    Object entityObject = null;
+    try {
+      entityObject = this.mapper.readValue(entity, this.entityClass);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
+          HttpStatus.BAD_REQUEST);
+    }
 
-	public ResponseEntity<?> deleteEntity(
-			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@PathVariable(name = "uuid") String uuid, @RequestParam Map<String, String> customParameters) {
-		IGGAPIServiceResponse response = null;
+    try {
+      response = this.service.updateEntity(caller, uuid, entityObject, customParameters);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-		try {
-			response = this.service.deleteEntity(caller, uuid, customParameters);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+    return GGAPIServiceResponseUtils.toResponseEntity(response);
+  }
 
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
+  public ResponseEntity<?> deleteEntity(
+      @RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+      @PathVariable(name = "uuid") String uuid, @RequestParam Map<String, String> customParameters) {
+    IGGAPIServiceResponse response = null;
 
-	public ResponseEntity<?> deleteAll(
-			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
-			@RequestParam Map<String, String> customParameters) {
-		IGGAPIServiceResponse response = null;
-		IGGAPIFilter filter = null;
+    try {
+      response = this.service.deleteEntity(caller, uuid, customParameters);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
-		String filterString = this.getAndRemoveRequestParameter(REQUEST_PARAM_FILTER, customParameters);
-		try {
-			if (filterString != null && !filterString.isEmpty())
-				filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
-					HttpStatus.BAD_REQUEST);
-		}
+    return GGAPIServiceResponseUtils.toResponseEntity(response);
+  }
 
-		try {
-			response = this.service.deleteAll(caller, filter, customParameters);
-		} catch (Exception e) {
-			log.atDebug().log("error", e);
-			return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
-					HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+  public ResponseEntity<?> deleteAll(
+      @RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
+      @RequestParam Map<String, String> customParameters) {
+    IGGAPIServiceResponse response = null;
+    IGGAPIFilter filter = null;
 
-		return GGAPIServiceResponseUtils.toResponseEntity(response);
-	}
+    String filterString = this.getAndRemoveRequestParameter(REQUEST_PARAM_FILTER, customParameters);
+    try {
+      if (filterString != null && !filterString.isEmpty())
+        filter = (IGGAPIFilter) this.mapper.readValue(filterString, GGAPILiteral.class);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.BAD_REQUEST),
+          HttpStatus.BAD_REQUEST);
+    }
+
+    try {
+      response = this.service.deleteAll(caller, filter, customParameters);
+    } catch (Exception e) {
+      log.atDebug().log("error", e);
+      return new ResponseEntity<>(new GGAPIResponseObject(e.getMessage(), GGAPIResponseObject.UNEXPECTED_ERROR),
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    return GGAPIServiceResponseUtils.toResponseEntity(response);
+  }
+
 }
