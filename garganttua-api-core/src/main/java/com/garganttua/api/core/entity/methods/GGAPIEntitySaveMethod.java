@@ -297,6 +297,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
   private List<Object> getUnicities(IGGAPIRepository repository, IGGAPICaller caller, List<GGObjectAddress> unicity,
       IGGObjectQuery objectQuery) throws GGReflectionException, GGAPIException, GGAPIEngineException {
 
+	  if( unicity.size() == 0 ) {
+		  return List.of();
+	  }
+	  
     List<String> values = new ArrayList<String>();
     for (GGObjectAddress fieldName : unicity) {
       values.add(objectQuery.getValue(fieldName).toString());

@@ -2,9 +2,7 @@ package com.garganttua.api.security.authentication.interfaces.spring.rest;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
@@ -31,7 +28,6 @@ import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterface;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
-import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 
@@ -80,7 +76,7 @@ public class GGAPISpringAuthenticationRestInterface extends GGAPIInterfaceSpring
 		Method method = handler.getClass().getDeclaredMethod("authenticate", IGGAPICaller.class, GGAPISpringRestAuthenticationRequest.class);
 
 		this.createMapping(path, method, handler, options, requestMethod);
-
+		this.createCustomMappings();
 	}
 
 	public ResponseEntity<?> authenticate(
