@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.geojson.Point;
+import org.javatuples.Pair;
 
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
@@ -57,6 +58,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicities;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
+import com.garganttua.api.spec.entity.annotations.GGAPIUnicityScope;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
@@ -133,8 +135,8 @@ public class GGAPIEntityChecker {
 		List<String> mandatoryFields = GGObjectReflectionHelper.getFieldAddressesWithAnnotation(entityClass, GGAPIEntityMandatory.class, true);
 		mandatoryFields.addAll(GGAPIEntityChecker.checkMandatoriesAnnotationPresent(entityClass));
 		
-		List<String> unicityFields = GGObjectReflectionHelper.getFieldAddressesWithAnnotation(entityClass, GGAPIEntityUnicity.class, false);
-		unicityFields.addAll(GGAPIEntityChecker.checkUnicitiesAnnotationPresent(entityClass));
+
+		List<String> unicityFieldsTemp = GGObjectReflectionHelper.getFieldAddressesWithAnnotation(entityClass, GGAPIEntityUnicity.class, false);
 		
 		if (ownerAnnotation != null && ownedAnnotation != null) {
 			throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_DEFINITION,
@@ -213,6 +215,24 @@ public class GGAPIEntityChecker {
 						return null;
 					}, Map.Entry::getValue));
 
+			
+			List<Pair<String, GGAPIUnicityScope>> unicityFields = unicityFieldsTemp.stream().map(str -> {
+			  GGObjectAddress address;
+        try {
+          address = q.address(str);
+          List<Object> struct = q.find(address);
+          Field f = (Field) struct.get(struct.size() - 1);
+          GGAPIEntityUnicity annot = f.getAnnotation(GGAPIEntityUnicity.class);
+          GGAPIUnicityScope scope = annot.scope();
+          return new Pair<String, GGAPIUnicityScope> (str, scope);
+        } catch (GGReflectionException e1) {
+          e1.printStackTrace();
+        }
+        return null;
+			}).collect(Collectors.toList());
+			
+			unicityFields.addAll(GGAPIEntityChecker.checkUnicitiesAnnotationPresent(entityClass));
+
 			GGAPIEntityInfos entityInfos = new GGAPIEntityInfos(domain, q.address(uuidFieldAddress),
 					q.address(idFieldAddress), q.address(saveProviderFieldAddress),
 					q.address(deleteProviderFieldAddress), tenantAnnotation == null ? false : true,
@@ -238,9 +258,9 @@ public class GGAPIEntityChecker {
 						}
 						return null;
 					}).collect(Collectors.toList()),
-					unicityFields.stream().map(s -> {
+					unicityFields.stream().map(p -> {
 						try {
-							return q.address(s);
+							return new Pair<GGObjectAddress, GGAPIUnicityScope> (q.address(p.getValue0()), p.getValue1());
 						} catch (GGReflectionException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -266,13 +286,14 @@ public class GGAPIEntityChecker {
 		}
 	}
 
-	private static Collection<String> checkUnicitiesAnnotationPresent(Class<?> entityClass) {
-		List<String> unicities = new ArrayList<String>();
+	private static Collection<Pair<String, GGAPIUnicityScope>> checkUnicitiesAnnotationPresent(Class<?> entityClass) {
+		List<Pair<String, GGAPIUnicityScope>> unicities = new ArrayList<Pair<String, GGAPIUnicityScope>>();
 		GGAPIEntityUnicities annotation = entityClass.getDeclaredAnnotation(GGAPIEntityUnicities.class);
 
 		if (annotation != null) {
-			String[] unicities__ = annotation.unicities();
-			unicities = List.of(unicities__);
+			for( String unicity: annotation.unicities() ) {
+			  unicities.add(new Pair<String, GGAPIUnicityScope>(unicity, GGAPIUnicityScope.system));
+			}
 		}
 
 		return unicities;

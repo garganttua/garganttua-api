@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.javatuples.Pair;
+
+import com.garganttua.api.spec.entity.annotations.GGAPIUnicityScope;
 import com.garganttua.reflection.GGObjectAddress;
 
 public record GGAPIEntityInfos (
@@ -31,7 +34,7 @@ public record GGAPIEntityInfos (
         GGObjectAddress repositoryFieldAddress,
         GGObjectAddress engineFieldAddress,
         List<GGObjectAddress> mandatoryFields,
-        List<GGObjectAddress> unicityFields,
+        List<Pair<GGObjectAddress, GGAPIUnicityScope>> unicityFields,
         GGObjectAddress afterGetMethodAddress,
         GGObjectAddress beforeCreateMethodAddress, 
         GGObjectAddress afterCreateMethodAddress, 

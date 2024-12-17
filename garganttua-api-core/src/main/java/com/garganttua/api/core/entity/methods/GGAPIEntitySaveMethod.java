@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.javatuples.Pair;
+
 import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
@@ -17,6 +19,7 @@ import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.entity.IGGAPIEntitySaveMethod;
+import com.garganttua.api.spec.entity.annotations.GGAPIUnicityScope;
 import com.garganttua.api.spec.factory.GGAPIEntityIdentifier;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
@@ -25,7 +28,6 @@ import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -215,19 +217,19 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 		}
 	}
 	
-	private List<Object> checkUnicityFields(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller, Object entity, List<GGObjectAddress> unicity) throws GGAPIException {
+	private List<Object> checkUnicityFields(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller, Object entity, List<Pair<GGObjectAddress, GGAPIUnicityScope>> unicity) throws GGAPIException {
 		try {
 			IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
 			List<String> values = new ArrayList<String>();
-			for (GGObjectAddress fieldName : unicity) {
-				values.add(objectQuery.getValue(fieldName).toString());
+			for (Pair<GGObjectAddress, GGAPIUnicityScope> fieldName : unicity) {
+				values.add(objectQuery.getValue(fieldName.getValue0()).toString());
 			}
 			String[] fieldValues = new String[values.size()];
 			values.toArray(fieldValues);
 			
 			GGAPILiteral literal = null;
 			for( int i = 0; i < unicity.size(); i++ ) {
-				GGAPILiteral eqLiteral = GGAPILiteral.eq(unicity.get(i).toString(), fieldValues[i]);
+				GGAPILiteral eqLiteral = GGAPILiteral.eq(unicity.get(i).getValue0().toString(), fieldValues[i]);
 				if( literal == null ) {
 					literal = eqLiteral;
 				} else {

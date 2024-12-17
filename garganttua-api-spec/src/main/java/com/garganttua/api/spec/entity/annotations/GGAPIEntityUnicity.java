@@ -9,4 +9,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface GGAPIEntityUnicity {
 
+  GGAPIUnicityScope scope() default GGAPIUnicityScope.tenant;
+
 }

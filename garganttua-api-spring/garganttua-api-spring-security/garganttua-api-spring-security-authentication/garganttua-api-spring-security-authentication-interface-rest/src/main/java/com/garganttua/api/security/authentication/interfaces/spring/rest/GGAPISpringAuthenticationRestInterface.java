@@ -23,7 +23,6 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationRequest;
 import com.garganttua.api.core.service.GGAPIMethodConciliator;
