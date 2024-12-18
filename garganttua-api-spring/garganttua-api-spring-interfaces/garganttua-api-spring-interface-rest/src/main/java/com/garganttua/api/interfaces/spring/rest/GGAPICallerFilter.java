@@ -78,6 +78,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		}
 
 		for (Entry<IGGAPIServiceInfos, PathPattern> pattern : patterns.entrySet()) {
+			log.atDebug().log(pathContainer.toString()+ " matching "+pattern.getValue().getPatternString());
 			if (pattern.getValue().matches(pathContainer)) {
 				if (pattern.getKey().getOperation().getMethod() == GGAPIServiceMethodToHttpMethodBinder
 						.fromHttpMethodAndEndpoint(method))

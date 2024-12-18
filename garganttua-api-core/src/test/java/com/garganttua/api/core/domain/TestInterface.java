@@ -9,6 +9,7 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.interfasse.GGAPIInterfaceMethod;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.beans.annotation.GGBean;
 
 @GGBean(name = "test")
@@ -51,6 +52,12 @@ public class TestInterface implements IGGAPIInterface {
 		} catch (NoSuchMethodException | SecurityException e) {
 			throw new GGAPIEntityException(e);
 		}
+	}
+
+	@Override
+	public void addCustomService(IGGAPIServiceInfos service) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

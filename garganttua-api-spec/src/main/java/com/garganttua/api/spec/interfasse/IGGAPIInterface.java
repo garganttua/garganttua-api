@@ -7,7 +7,7 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngineObject;
 import com.garganttua.api.spec.service.IGGAPIService;
 
-public interface IGGAPIInterface extends IGGAPIEngineObject {
+public interface IGGAPIInterface extends IGGAPIEngineObject, IGGAPICustomizableInterface {
 
 	void start() throws GGAPIException;
 
