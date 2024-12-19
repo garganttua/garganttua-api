@@ -12,12 +12,18 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIBuilder;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.reflection.GGReflectionException;
+import com.garganttua.reflection.annotation.scanner.GGSpringAnnotationScanner;
 import com.garganttua.reflection.beans.GGBeanLoaderFactory;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.GGInjector;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 @Configuration
 public class GGAPISpringConfiguration {
+	
+	static {
+		GGObjectReflectionHelper.annotationScanner = new GGSpringAnnotationScanner();
+	}
 	
 	@Value("${com.garganttua.api.spring.scanPackages}")
 	private String[] packages;

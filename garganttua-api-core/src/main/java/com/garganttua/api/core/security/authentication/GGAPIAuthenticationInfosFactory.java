@@ -1,6 +1,5 @@
 package com.garganttua.api.core.security.authentication;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,30 +31,26 @@ public class GGAPIAuthenticationInfosFactory {
 		if (this.packages == null) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.CORE_GENERIC_CODE, "No packages");
 		}
-		
+
 		this.packages.forEach(packaje -> {
 			this.collectAuthentications(packaje);
 		});
 	}
 
 	private void collectAuthentications(String packaje) {
-		try {
-			log.info("Collecting Authentications in package "+packaje);
-			GGObjectReflectionHelper.getClassesWithAnnotation(packaje, GGAPIAuthentication.class).forEach(entityClass -> {
-				try {
-					GGAPIAuthenticationInfos infos = GGAPIEntityAuthenticationChecker.checkEntityAuthenticationClass(entityClass);
+		log.info("Collecting Authentications in package " + packaje);
+		GGObjectReflectionHelper.getClassesWithAnnotation(packaje, GGAPIAuthentication.class).forEach(entityClass -> {
+			try {
+				GGAPIAuthenticationInfos infos = GGAPIEntityAuthenticationChecker
+						.checkEntityAuthenticationClass(entityClass);
 
-					this.authentications.put(entityClass, infos);
-					log.info("Authentication added "+infos.toString());
-					
-				} catch (GGAPIException e) {
-					log.atWarn().log("Error getting infos for authentication "+entityClass.getSimpleName(), e);
-				}
-			});
+				this.authentications.put(entityClass, infos);
+				log.info("Authentication added " + infos.toString());
 
-		} catch (ClassNotFoundException | IOException e) {
-			log.atWarn().log("Error getting infos for authentications in package "+packaje, e);
-		}
+			} catch (GGAPIException e) {
+				log.atWarn().log("Error getting infos for authentication " + entityClass.getSimpleName(), e);
+			}
+		});
 	}
 
 	public IGGAPIAuthenticationInfosRegistry getRegistry() {

@@ -1,6 +1,5 @@
 package com.garganttua.api.core.security.authorization;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ public class GGAPIAuthorizationInfosFactory {
 	private List<String> packages;
 	private Map<Class<?>, GGAPIAuthorizationInfos> authorizations = new HashMap<Class<?>, GGAPIAuthorizationInfos>();
 
-
 	public GGAPIAuthorizationInfosFactory(List<String> packages) throws GGAPIEngineException {
 		this.packages = packages;
 		this.collectAuthorizations();
@@ -33,30 +31,26 @@ public class GGAPIAuthorizationInfosFactory {
 		if (this.packages == null) {
 			throw new GGAPIEngineException(GGAPIExceptionCode.CORE_GENERIC_CODE, "No packages");
 		}
-		
+
 		this.packages.forEach(packaje -> {
 			this.collectAuthorizations(packaje);
 		});
 	}
 
 	private void collectAuthorizations(String packaje) {
-		log.info("Collecting Authorizations in package "+packaje);
-		try {
-			GGObjectReflectionHelper.getClassesWithAnnotation(packaje, GGAPIAuthorization.class).forEach(entityClass -> {
-				try {
-					GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(entityClass);
+		log.info("Collecting Authorizations in package " + packaje);
+		GGObjectReflectionHelper.getClassesWithAnnotation(packaje, GGAPIAuthorization.class).forEach(entityClass -> {
+			try {
+				GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker
+						.checkEntityAuthorizationClass(entityClass);
 
-					this.authorizations.put(entityClass, infos);
-					log.info("Authorization added "+infos.toString());
-					
-				} catch (GGAPIException e) {
-					log.atWarn().log("Error getting infos for authorization "+entityClass.getSimpleName(), e);
-				}
-			});
+				this.authorizations.put(entityClass, infos);
+				log.info("Authorization added " + infos.toString());
 
-		} catch (ClassNotFoundException | IOException e) {
-			log.atWarn().log("Error getting infos for authorization in package "+packaje, e);
-		}
+			} catch (GGAPIException e) {
+				log.atWarn().log("Error getting infos for authorization " + entityClass.getSimpleName(), e);
+			}
+		});
 	}
 
 	public IGGAPIAuthorizationInfosRegistry getRegistry() {

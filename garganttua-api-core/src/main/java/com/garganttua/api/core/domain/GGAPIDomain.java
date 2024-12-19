@@ -185,22 +185,18 @@ public class GGAPIDomain implements IGGAPIDomain {
 
 		for (String pack : scanPackages) {
 			List<Class<?>> annotatedClasses;
-			try {
-				annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(pack, GGAPIDto.class);
-				annotatedClasses.forEach(annotatedClass -> {
-					try {
-						GGAPIDto dtoAnnotation = annotatedClass.getAnnotation(GGAPIDto.class);
-						if (dtoAnnotation.entityClass().equals(entityClass)) {
-							GGAPIDtoInfos dtoInfos = GGAPIDtoChecker.checkDtoClass(annotatedClass);
-							dtos.add(new Pair<Class<?>, GGAPIDtoInfos>(annotatedClass, dtoInfos));
-						}
-					} catch (GGAPIException e) {
-						e.printStackTrace();
+			annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(pack, GGAPIDto.class);
+			annotatedClasses.forEach(annotatedClass -> {
+				try {
+					GGAPIDto dtoAnnotation = annotatedClass.getAnnotation(GGAPIDto.class);
+					if (dtoAnnotation.entityClass().equals(entityClass)) {
+						GGAPIDtoInfos dtoInfos = GGAPIDtoChecker.checkDtoClass(annotatedClass);
+						dtos.add(new Pair<Class<?>, GGAPIDtoInfos>(annotatedClass, dtoInfos));
 					}
-				});
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-			}
+				} catch (GGAPIException e) {
+					e.printStackTrace();
+				}
+			});
 		}
 
 		boolean allow_creation = entityAnnotation.allow_creation();

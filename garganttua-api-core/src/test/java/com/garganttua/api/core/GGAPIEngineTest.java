@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.engine.GGApiBuilder;
@@ -16,8 +17,14 @@ import com.garganttua.reflection.beans.GGBeanLoaderFactory;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.properties.GGPropertyLoader;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class GGAPIEngineTest {
+	
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	
 	@Test
 	public void test() throws GGAPIException {

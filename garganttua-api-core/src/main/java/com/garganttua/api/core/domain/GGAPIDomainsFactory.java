@@ -1,6 +1,5 @@
 package com.garganttua.api.core.domain;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -43,25 +42,21 @@ public class GGAPIDomainsFactory {
 		this.domains = new HashSet<IGGAPIDomain>();
 
 		this.packages.stream().forEach(package_ -> {
-			try {
-				List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_,
-						GGAPIEntity.class);
+			List<Class<?>> annotatedClasses = GGObjectReflectionHelper.getClassesWithAnnotation(package_,
+					GGAPIEntity.class);
+			if (log.isDebugEnabled())
+				log.debug("Found " + annotatedClasses.size() + " domains");
+
+			annotatedClasses.forEach(annotatedClass -> {
 				if (log.isDebugEnabled())
-					log.debug("Found " + annotatedClasses.size() + " domains");
+					log.debug("processing annotated entity " + annotatedClass.getSimpleName());
+				try {
+					this.domains.add(processAnnotatedEntity(annotatedClass));
+				} catch (GGAPIException e) {
+					e.printStackTrace();
+				}
+			});
 
-				annotatedClasses.forEach(annotatedClass -> {
-					if (log.isDebugEnabled())
-						log.debug("processing annotated entity " + annotatedClass.getSimpleName());
-					try {
-						this.domains.add(processAnnotatedEntity(annotatedClass));
-					} catch (GGAPIException e) {
-						e.printStackTrace();
-					}
-				});
-
-			} catch (ClassNotFoundException | IOException e) {
-				e.printStackTrace();
-			}
 		});
 
 		if (!this.tenantFound) {
