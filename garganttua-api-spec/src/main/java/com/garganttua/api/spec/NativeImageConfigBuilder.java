@@ -35,11 +35,11 @@ public class NativeImageConfigBuilder {
 
 	public static void main(String[] args) throws IOException {
 //		createReflectConfig();
-		createResourceConfig();
+		createResourceConfig(args[0]);
 	}
 
-	private static void createResourceConfig() throws IOException {
-		File resourceConfigFile = NativeImageConfig.getResourceConfigFile("./src/main/resources");
+	private static void createResourceConfig(String path) throws IOException {
+		File resourceConfigFile = NativeImageConfig.getResourceConfigFile(path);
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 		
@@ -49,8 +49,8 @@ public class NativeImageConfigBuilder {
 
 	}
 
-	private static void createReflectConfig() throws IOException {
-		File reflectConfigFile = NativeImageConfig.getReflectConfigFile("./src/main/resources");
+	private static void createReflectConfig(String path) throws IOException {
+		File reflectConfigFile = NativeImageConfig.getReflectConfigFile(path);
 		if (!reflectConfigFile.exists())
 			reflectConfigFile.createNewFile();
 
