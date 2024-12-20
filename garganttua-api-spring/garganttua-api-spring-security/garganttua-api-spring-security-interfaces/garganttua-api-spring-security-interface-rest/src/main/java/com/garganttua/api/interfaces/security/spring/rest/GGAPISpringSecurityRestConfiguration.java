@@ -109,7 +109,7 @@ public class GGAPISpringSecurityRestConfiguration {
   }
 
   private void configureAuthorizations(HttpSecurity http) throws Exception {
-    for (IGGAPIAccessRule accessRule : this.engine.getAccessRulesRegistry().getAccessRules()) {
+    for (IGGAPIAccessRule accessRule : this.engine.getAccessRules()) {
 
       log.info("Applying security configuration {}", accessRule);
 

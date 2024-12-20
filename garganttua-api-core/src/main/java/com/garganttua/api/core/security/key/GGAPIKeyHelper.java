@@ -1,6 +1,5 @@
 package com.garganttua.api.core.security.key;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +15,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.GGAPIEncryptionMode;
@@ -27,7 +27,6 @@ import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
-import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.GGObjectAddress;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,17 +34,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GGAPIKeyHelper {
 
-	public static IGGAPIKeyRealm getKey(String realmName, Class<?> keyType, GGAPIAuthenticatorKeyUsage keyUsage, boolean autoCreate, GGAPIKeyAlgorithm keyAlgorithm, int keyLifeTime, TimeUnit keyLifeTimeUnit, String ownerUuid, String tenantId, IGGAPIDomain tenantsDomain, IGGAPIServicesRegistry registry, GGAPIEncryptionMode encryptionMode,
+	public static IGGAPIKeyRealm getKey(String realmName, Class<?> keyType, GGAPIAuthenticatorKeyUsage keyUsage, boolean autoCreate, GGAPIKeyAlgorithm keyAlgorithm, int keyLifeTime, TimeUnit keyLifeTimeUnit, String ownerUuid, String tenantId, IGGAPIEngine engine, GGAPIEncryptionMode encryptionMode,
 			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm)
 			throws GGAPIEngineException, GGAPIException {
 
-		IGGAPIService keyService = registry.getService(GGAPIEntityHelper.getDomain(keyType));
+		IGGAPIService keyService = engine.getService(GGAPIEntityHelper.getDomain(keyType));
 
 		IGGAPICaller caller = null;
 		switch (keyUsage) {
 		case oneForAll:
 			caller = GGAPICaller.createTenantCallerWithOwnerId(tenantId,
-					tenantsDomain.getDomain() + ":" + tenantId);
+					engine.getTenantDomainName() + ":" + tenantId);
 			break;
 		case oneForEach:
 			caller = GGAPICaller.createTenantCallerWithOwnerId(tenantId, ownerUuid);
@@ -53,7 +52,7 @@ public class GGAPIKeyHelper {
 		default:
 		case oneForTenant:
 			caller = GGAPICaller.createTenantCallerWithOwnerId(tenantId,
-					tenantsDomain.getDomain() + ":" + tenantId);
+					engine.getTenantDomainName() + ":" + tenantId);
 			break;
 		}
 
@@ -99,7 +98,7 @@ public class GGAPIKeyHelper {
 			GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) throws GGAPIException {
 		Date expiration = GGAPIExpirationTools.getExpirationDateFromNow(keyLifetime, keyLifetimeUnit);
 
-		IGGAPIKeyRealm entity = GGAPIKeyRealmHelper.newInstance(keyRealmService.getDomain().getEntity().getValue0(),
+		IGGAPIKeyRealm entity = GGAPIKeyRealmHelper.newInstance(keyRealmService.getDomain().getEntityClass(),
 				realmName, algorithm, expiration, encryptionMode,
 				paddingMode, signatureAlgorithm);
 		IGGAPIServiceResponse response = keyRealmService.createEntity(caller, entity, new HashMap<String, String>());
@@ -114,7 +113,7 @@ public class GGAPIKeyHelper {
 
 	private static IGGAPIFilter buildFilterForKeyRealm(String realmName, GGAPIKeyAlgorithm algorithm,
 			IGGAPIDomain domain) {
-		GGObjectAddress idFieldAddress = domain.getEntity().getValue1().idFieldAddress();
+		GGObjectAddress idFieldAddress = domain.getIdFieldAddress();
 		GGObjectAddress expirationFieldAddress = GGAPIKeyRealm.getExpirationFieldAddress();
 		GGObjectAddress revokedFieldAddress = GGAPIKeyRealm.getRevokedFieldAddress();
 		GGObjectAddress algorithmFieldAddress = GGAPIKeyRealm.getAlgorithmFieldAddress();
@@ -125,12 +124,12 @@ public class GGAPIKeyHelper {
 		return GGAPILiteral.and(idFilter, expirationFilter, revokedFilter, algorithmFilter);
 	}
 
-	public static void revokeAllForOwner(String realmName, String tenantId, String ownerId, Class<?> keyType, IGGAPIServicesRegistry registry) throws GGAPIEngineException {
-		IGGAPIService keyService = registry.getService(GGAPIEntityHelper.getDomain(keyType));
+	public static void revokeAllForOwner(String realmName, String tenantId, String ownerId, Class<?> keyType, IGGAPIEngine engine) throws GGAPIEngineException {
+		IGGAPIService keyService = engine.getService(GGAPIEntityHelper.getDomain(keyType));
 		
 		IGGAPIDomain domain = keyService.getDomain();
 		
-		GGObjectAddress idFieldAddress = domain.getEntity().getValue1().idFieldAddress();
+		GGObjectAddress idFieldAddress = domain.getIdFieldAddress();
 		GGObjectAddress revokedFieldAddress = GGAPIKeyRealm.getRevokedFieldAddress();
 		GGAPILiteral revokedFilter = GGAPILiteral.eq(revokedFieldAddress.toString(), false);
 		GGAPILiteral idFilter = GGAPILiteral.eq(idFieldAddress.toString(), realmName);

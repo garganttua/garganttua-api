@@ -2,6 +2,7 @@ package com.garganttua.api.core.security.engine;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticatorC
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.core.security.key.GGAPIKeyHelper;
+import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -36,6 +38,7 @@ import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFacto
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInfosRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterface;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterfacesRegistry;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.security.authenticator.IGGAPIAuthenticatorInfosRegistry;
@@ -44,8 +47,9 @@ import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationInfosRe
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationProtocol;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationServicesRegistry;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
+import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
-import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
+import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.IGGInjector;
 
@@ -61,7 +65,6 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	protected IGGAPIOwnerVerifier ownerVerifier = new GGAPIOwnerVerifier();
 	protected Optional<IGGInjector> injector;
 
-	private IGGAPIServicesRegistry servicesRegistry;
 	private Set<IGGAPIDomain> domains;
 
 	private IGGAPIAuthenticatorInfosRegistry authenticatorInfosRegistry;
@@ -77,16 +80,13 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 
 	private IGGAPIEngine engine;
 
-
-	protected GGAPISecurityEngine(IGGAPIEngine engine, IGGAPIServicesRegistry servicesRegistry, List<String> packages,
+	protected GGAPISecurityEngine(IGGAPIEngine engine, List<String> packages,
 			Optional<IGGInjector> injector, IGGBeanLoader loader) {
 		this.engine = engine;
 		this.packages = packages;
-		this.domains = this.engine.getDomainsRegistry().getDomains();
-		this.servicesRegistry = servicesRegistry;
+		this.domains = this.engine.getDomains();
 		this.injector = injector;
 		this.loader = loader;
-		this.engine.getServicesInfosRegistry();
 	}
 
 	@Override
@@ -146,9 +146,9 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		this.authenticationInfosRegistry = new GGAPIAuthenticationInfosFactory(this.packages).getRegistry();
 		this.authorizationInfosRegistry = new GGAPIAuthorizationInfosFactory(this.packages).getRegistry();
 		this.authenticatorServicesRegistry = new GGAPIAuthenticatorServicesFactory(this.authenticatorInfosRegistry,
-				this.servicesRegistry).getRegistry();
+				this.engine).getRegistry();
 		this.authorizationsServicesRegistry = new GGAPIAuthorizationServicesFactory(this.domains,
-				this.authorizationInfosRegistry, this.servicesRegistry).getRegistry();
+				this.authorizationInfosRegistry, this.engine).getRegistry();
 		this.authenticationFactoryRegistry = new GGAPIAuthenticationFactoryFactory(this.authenticationInfosRegistry,
 				this.injector).getRegistry();
 		
@@ -156,8 +156,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		
 		this.authenticationInterfacesRegistry = new GGAPIAuthenticationInterfacesFactory(this.loader,
 				this.authenticatorInfosRegistry, this.authenticationInfosRegistry, this.authenticationFactoryRegistry,
-				this.authenticationService, this.engine.getAccessRulesRegistry(),
-				this.engine.getServicesInfosRegistry(), this.authenticationFactoryRegistry).getRegistry();
+				this.authenticationService, this.engine, this.authenticationFactoryRegistry).getRegistry();
 
 		return this;
 	}
@@ -166,18 +165,18 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		log.info("*** Creating Authentication Service ...");
 		
 		Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> services = this.domains.stream().filter(domain -> {
-			return GGAPIEntityAuthenticatorHelper.isAuthenticator(domain.getEntity().getValue0());
+			return GGAPIEntityAuthenticatorHelper.isAuthenticator(domain.getEntityClass());
 		}).map(domain -> {
 			Pair<GGAPIAuthenticatorInfos, IGGAPIService> service = this.authenticatorServicesRegistry.getService(domain.getDomain());
 			return new SimpleEntry<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>>(domain, service);
 		}).collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
 		
-		return new GGAPIAuthenticationService(services, this.authenticationFactoryRegistry.getFactories(), this.servicesRegistry);
+		return new GGAPIAuthenticationService(services, this.authenticationFactoryRegistry.getFactories(), this.engine);
 	}
 
 	//TODO to be refactored
 	private Object getAuthorization(byte[] authorizationRaw, IGGAPICaller caller) {
-		Class<?>[] supportedAuthorizations = caller.getDomain().getSecurity().getAuthorizations();
+		Collection<Class<?>> supportedAuthorizations = caller.getDomain().getAuthorizations();
 		Object authorization = null;
 		for(Class<?> supportedAuthorization: supportedAuthorizations ) {
 			log.atDebug().log("Triing authorization type "+supportedAuthorization.getSimpleName() );
@@ -194,23 +193,17 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 					
 					String domainName = ownerId.split(":")[0];
 					
-					Optional<IGGAPIDomain> authenticatorDomain = this.domains.stream().filter( d -> {
-						return d.getDomain().equals(domainName);
-					}).findFirst();
+					Optional<IGGAPIDomain> authenticatorDomain = this.engine.getDomain(domainName);
 					
 					if( authenticatorDomain.isEmpty() ) {
 						return authorization;
 					}
 					
-					if( !GGAPIEntityAuthenticatorHelper.isAuthenticator(authenticatorDomain.get().getEntity().getValue0()) ) {
+					if( !GGAPIEntityAuthenticatorHelper.isAuthenticator(authenticatorDomain.get().getEntityClass()) ) {
 						return authorization;
 					}
 					
-					GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(authenticatorDomain.get().getEntity().getValue0());
-
-					Optional<IGGAPIDomain> tenantDomain = this.domains.stream().filter(d -> {
-						return d.getEntity().getValue1().tenantEntity();
-					}).findFirst();
+					GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(authenticatorDomain.get().getEntityClass());
 					
 					IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
 							GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
@@ -221,9 +214,8 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 							authenticatorInfos.authorizationKeyLifeTime(),
 							authenticatorInfos.authorizationKeyLifeTimeUnit(),
 							ownerId, 
-							caller.getTenantId(), 
-							tenantDomain.get(), 
-							this.servicesRegistry,
+							caller.getTenantId(),  
+							this.engine,
 							null,
 							null,
 							null);
@@ -244,7 +236,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 
 	private byte[] decodeAuthorizationFromProtocols(Object request, IGGAPICaller caller) throws GGAPISecurityException {
 		byte[] authorization = null;
-		for( Class<?> protocolType: caller.getDomain().getSecurity().getAuthorizationProtocols() ) {
+		for( Class<?> protocolType: caller.getDomain().getAuthorizationProtocols() ) {
 			authorization = this.decodeAuthorizationFromProtocol(request, caller, protocolType);
 			if( authorization != null ) {
 				break;
@@ -281,8 +273,8 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 
 	@Override
 	public boolean isStorableAuthorization(Object authorization) {
-		Optional<IGGAPIService> authorizationService = this.servicesRegistry.getServices().stream().filter(service -> {
-			return service.getDomain().getEntity().getValue0().equals(authorization.getClass());
+		Optional<IGGAPIService> authorizationService = this.engine.getServices().stream().filter(service -> {
+			return service.getDomain().getEntityClass().equals(authorization.getClass());
 		}).findFirst();
 		return authorizationService.isPresent();
 	}
@@ -315,4 +307,11 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		}
 	}
 
+	@Override
+	public IGGAPIServiceResponse authenticate(IGGAPIAuthenticationRequest request) {
+		if( this.authenticationService != null ) {
+			return this.authenticationService.authenticate(request);
+		}
+		return new GGAPIServiceResponse("No authentication service", GGAPIServiceResponseCode.NOT_AVAILABLE);
+	}
 }

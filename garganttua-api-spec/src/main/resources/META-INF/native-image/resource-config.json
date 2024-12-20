@@ -1,0 +1,11 @@
+{
+  "resources" : {
+    "includes" : [ {
+      "pattern" : "\\Qcom/garganttua/api/spec/security/IGGAPIPasswordEncoder.class\\E"
+    }, {
+      "pattern" : "\\Qcom/garganttua/api/spec/security/authorization/IGGAPIAuthorizationProtocol.class\\E"
+    }, {
+      "pattern" : "\\Qcom/garganttua/api/spec/security/key/IGGAPIKeyRealm.class\\E"
+    } ]
+  }
+}

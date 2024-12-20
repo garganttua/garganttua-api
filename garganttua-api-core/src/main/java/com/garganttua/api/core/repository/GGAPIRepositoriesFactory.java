@@ -33,8 +33,8 @@ public class GGAPIRepositoriesFactory {
 				repo = new GGAPIMultipleRepository();
 			}
 			repo.setDomain(ddomain);
-			this.repositories.put(ddomain.getEntity().getValue1().domain(), repo);
-			log.info("	Repository added [domain {}, repo {}]", ddomain.getEntity().getValue1().domain(), repo);
+			this.repositories.put(ddomain.getDomain(), repo);
+			log.info("	Repository added [domain {}, repo {}]", ddomain.getDomain(), repo);
 		}
 	}
 

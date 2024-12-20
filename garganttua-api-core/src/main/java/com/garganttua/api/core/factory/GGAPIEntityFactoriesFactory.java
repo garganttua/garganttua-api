@@ -35,9 +35,9 @@ public class GGAPIEntityFactoriesFactory {
 			factory.setEntityUpdater(new GGAPIEntityUpdater());
 			factory.setInjector(this.injector);
 			
-			this.factories.put(domain.getEntity().getValue1().domain(), factory);
+			this.factories.put(domain.getDomain(), factory);
 			
-			log.info("	Factory added [domain {}, factory {}]", domain.getEntity().getValue1().domain(), factory);
+			log.info("	Factory added [domain {}, factory {}]", domain.getDomain(), factory);
 		}
 	}
 

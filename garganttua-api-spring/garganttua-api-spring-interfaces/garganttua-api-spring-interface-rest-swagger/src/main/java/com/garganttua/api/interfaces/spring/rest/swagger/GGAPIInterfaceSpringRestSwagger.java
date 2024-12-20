@@ -80,7 +80,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 		String description = infos.getDescription() + "<br>";
 		infos.description(description);
 
-		this.engine.getDomainsRegistry().getDomains().stream().forEach(domain -> {
+		this.engine.getDomains().stream().forEach(domain -> {
 			try {
 				this.setOpenApiDocumentation(domain);
 			} catch (Exception e) {
@@ -91,17 +91,17 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void setOpenApiDocumentation(IGGAPIDomain domain) throws Exception {
 		String domainName = domain.getDomain().toLowerCase();
-		Class<?> entityClass = domain.getEntity().getValue0();
+		Class<?> entityClass = domain.getEntityClass();
 		GGAPIEntityDocumentationInfos documentation = domain.getDocumentation();
 
-		String tagName = "Domain " + domain.getEntity().getValue1().domain().toLowerCase();
+		String tagName = "Domain " + domain.getDomain().toLowerCase();
 		Tag tag = new Tag().name(tagName)
 				.description(this.getDocumentation(domain));
 		this.openApi.addTagsItem(tag);
 
 		String entityClassSchema = this.test(entityClass);
 
-		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.getEntity().getValue1().domain().toLowerCase(),
+		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.getDomain().toLowerCase(),
 				entityClass.getSimpleName(), entityClassSchema);
 		
 		Map<String, PathItem> pathItems= new HashMap<String, PathItem>();
@@ -134,8 +134,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 	private void createCustomDocumentation(IGGAPIDomain domain, String domainName,
 			GGAPIEntityDocumentationInfos documentation, PathItem pathItemBase,
 			GGAPIEntityOperation operation, IGGAPIServiceInfos info, String tagName) {
-		GGAPIServiceAccess access = domain.getSecurity().getAccess(info);
-		String authority = domain.getSecurity().getAuthority(info);
+		GGAPIServiceAccess access = domain.getAccess(info);
+		String authority = domain.getAuthority(info);
 		String description = this.getOperationDescription(domainName,
 				access, !(authority==null||authority.isEmpty()), operation, documentation == null ? null : documentation.readAll(), authority);
 		
@@ -195,8 +195,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void ceateStandardDocumentation(IGGAPIDomain domain, String domainName, GGAPIEntityDocumentationInfos documentation,
 			OpenAPI templateOpenApi, PathItem pathItemBase, GGAPIEntityOperation operation, IGGAPIServiceInfos info) {
-		GGAPIServiceAccess access = domain.getSecurity().getAccess(info);
-		String authority = domain.getSecurity().getAuthority(info);
+		GGAPIServiceAccess access = domain.getAccess(info);
+		String authority = domain.getAuthority(info);
 		String description = this.getOperationDescription(domainName,
 				access, !(authority==null||authority.isEmpty()), operation, documentation == null ? null : documentation.readAll(), authority);
 
@@ -208,7 +208,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 		
 		this.openApi.path(info.getPath(), pathItem);
 
-		if (!(domain.getEntity().getValue1().tenantEntity() && info.getOperation().getMethod() == GGAPIMethod.create)) {
+		if (!(domain.isTenantEntity() && info.getOperation().getMethod() == GGAPIMethod.create)) {
 			this.setAdditionalInfos(domain, operation, httpOperation);
 		}
 		this.addCustomParamsPathParameter(httpOperation);
@@ -267,18 +267,18 @@ public class GGAPIInterfaceSpringRestSwagger {
 	}
 
 	private String getDocumentation(IGGAPIDomain domain) {
-		String authenticatorEntity = String.valueOf(domain.getSecurity().isAuthenticatorEntity());
-		String description = "<b>Public Entity</b> [" + domain.getEntity().getValue1().publicEntity() + "] <br> "
+		String authenticatorEntity = String.valueOf(domain.isAuthenticatorEntity());
+		String description = "<b>Public Entity</b> [" + domain.isPublicEntity() + "] <br> "
 				+ "<b>Shared Entity</b> ["
-				+ (domain.getEntity().getValue1().sharedEntity() ? "false"
-						: domain.getEntity().getValue1().shareFieldAddress())
-				+ "] <br> " + "<b>Hiddenable Entity</b> [" + domain.getEntity().getValue1().hiddenableEntity()
+				+ (domain.isSharedEntity() ? "false"
+						: domain.getShareFieldAddress())
+				+ "] <br> " + "<b>Hiddenable Entity</b> [" + domain.isHiddenableEntity()
 				+ "] <br> " + "<b>Geolocalized</b> ["
-				+ (!domain.getEntity().getValue1().geolocalizedEntity() ? "false"
-						: domain.getEntity().getValue1().locationFieldAddress())
-				+ "]<br>" + "<b>Onwed Entity</b> [" + domain.getEntity().getValue1().ownedEntity() + "] <br> "
-				+ "<b>Owner Entity</b> [" + domain.getEntity().getValue1().ownerEntity() + "] <br> "
-				+ "<b>Tenant Entity</b> [" + domain.getEntity().getValue1().tenantEntity() + "] <br> "
+				+ (!domain.isGeolocalizedEntity() ? "false"
+						: domain.getLocationFieldAddress())
+				+ "]<br>" + "<b>Onwed Entity</b> [" + domain.isOwnedEntity() + "] <br> "
+				+ "<b>Owner Entity</b> [" + domain.isOwnerEntity() + "] <br> "
+				+ "<b>Tenant Entity</b> [" + domain.isTenantEntity() + "] <br> "
 				+ "<b>Authenticator Entity</b> [" + authenticatorEntity + "] <br> ";
 
 		if (domain.getDocumentation() != null && domain.getDocumentation().general() != null

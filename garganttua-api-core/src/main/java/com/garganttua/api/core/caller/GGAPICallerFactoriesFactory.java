@@ -41,7 +41,7 @@ public class GGAPICallerFactoriesFactory {
 		this.domains.stream().forEach(domain -> {
 			GGAPICallerFactory factory = new GGAPICallerFactory(domain, tenantsDomain, tenantsFactory, ownersDomain, ownersFactory, this.accessRulesRegistry);
 			this.callerFactories.put(domain.getDomain(), factory);
-			log.info("	Caller factory added [domain {}, caller factory {}]", domain.getEntity().getValue1().domain(), factory);
+			log.info("	Caller factory added [domain {}, caller factory {}]", domain.getDomain(), factory);
 		});
 	}
 
@@ -62,7 +62,7 @@ public class GGAPICallerFactoriesFactory {
 		Map<String, IGGAPIDomain> domains = new HashMap<String, IGGAPIDomain>();
 		
 		this.domains.forEach(domain -> {
-			if( domain.getEntity().getValue1().ownerEntity() )
+			if( domain.isOwnerEntity() )
 				domains.put(domain.getDomain(), domain);
 		});
 		
@@ -71,7 +71,7 @@ public class GGAPICallerFactoriesFactory {
 
 	private IGGAPIDomain getTenantDomain() {
 		return this.domains.parallelStream().filter(domain -> {
-			return domain.getEntity().getValue1().tenantEntity();
+			return domain.isTenantEntity();
 		}).collect(Collectors.toList()).get(0);
 	}
 

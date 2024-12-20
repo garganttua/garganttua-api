@@ -54,10 +54,10 @@ public class GGAPIDaosFactory {
 				
 				domainDaos.add(new Pair<Class<?>, IGGAPIDao<?>>(dto.getValue0(), dao));
 				
-				log.info("	Dao added [domain {}, dao {}]", domain.getEntity().getValue1().domain(), db);
+				log.info("	Dao added [domain {}, dao {}]", domain.getDomain(), db);
 			}
 
-			this.daos.put(domain.getEntity().getValue1().domain(), domainDaos);
+			this.daos.put(domain.getDomain(), domainDaos);
 		}
 	}
 

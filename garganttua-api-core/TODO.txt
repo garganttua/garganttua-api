@@ -1,10 +1,10 @@
+ajouter les meta-inf pour la compilation antive dans tous les modules
 
+améliorer l'utilisation de GGAPIDOmain et GGAPICaller => faire des façades qui limitent l'accès aux sous objects 
 
-authent par pin : developper une authentification complète 
-
+Créer un plugin maven pour aider à la création des ficheir de config pour la compilation native
 
 2/ Sortir IGGAPIKey et mettre dans les garganttua-tooling
 3/ Créer un infos pour les keys et les annotations qui vont bien 
 4/ Faire le point sur les algo JWT et le lien avec ceux dans GGAPIKeyAlgorithm
 5/ Trouver pourquoi GGAPIKeyRealm ne se serialize pas bien d'une string json vers un pojo 
-7/ applique le modèle de customs services pour l'authentification à aux services métier

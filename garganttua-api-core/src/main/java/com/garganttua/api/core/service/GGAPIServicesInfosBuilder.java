@@ -24,22 +24,22 @@ public class GGAPIServicesInfosBuilder {
     	
     	try {
 			if (domain.isAllowReadAll()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.readAll), baseUrl, "", GGAPIEntityOperation.readAll(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.readAll), baseUrl, "", GGAPIEntityOperation.readAll(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 			if (domain.isAllowDeleteAll()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.deleteAll), baseUrl, "", GGAPIEntityOperation.deleteAll(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.deleteAll), baseUrl, "", GGAPIEntityOperation.deleteAll(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 			if (domain.isAllowCreation()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.createOne), baseUrl, "", GGAPIEntityOperation.createOne(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.createOne), baseUrl, "", GGAPIEntityOperation.createOne(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 			if (domain.isAllowReadOne()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.readOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.readOne(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.readOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.readOne(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 			if (domain.isAllowUpdateOne()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.updateOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.updateOne(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.updateOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.updateOne(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 			if (domain.isAllowDeleteOne()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.deleteOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.deleteOne(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getMethod(GGAPIInterfaceMethod.deleteOne), baseUrl+"/{uuid}", "", GGAPIEntityOperation.deleteOne(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 		} catch (GGAPIException | SecurityException e) {
 			throw new GGAPIEngineException(e);

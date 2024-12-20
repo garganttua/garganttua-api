@@ -40,7 +40,7 @@ public class GGAPIInterfacesFactory {
 		
 		for( IGGAPIDomain domain: this.domains ) {
 			List<IGGAPIInterface> listOfInterfaces = new ArrayList<IGGAPIInterface>();
-			this.interfaces.put(domain.getEntity().getValue1().domain(), listOfInterfaces ) ;
+			this.interfaces.put(domain.getDomain(), listOfInterfaces ) ;
 
 			for( String interfasse: domain.getInterfaces()) {
 			
@@ -50,7 +50,7 @@ public class GGAPIInterfacesFactory {
 				interfasseObject.setDomain(domain);
 				listOfInterfaces.add(interfasseObject);
 
-				log.info("	Interface added [domain {}, interface {}]", domain.getEntity().getValue1().domain(), interfasseObject);
+				log.info("	Interface added [domain {}, interface {}]", domain.getDomain(), interfasseObject);
 			}
 		}
 	}

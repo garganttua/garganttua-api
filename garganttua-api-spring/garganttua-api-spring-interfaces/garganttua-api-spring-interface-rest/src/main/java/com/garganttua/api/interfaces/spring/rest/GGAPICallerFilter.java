@@ -37,7 +37,7 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 	private Map<IGGAPIServiceInfos, PathPattern> getPatterns() {
 		PathPatternParser parser = new PathPatternParser();
 		Map<IGGAPIServiceInfos, PathPattern> patterns = new HashMap<>();
-		List<IGGAPIServiceInfos> infos = this.engine.getServicesInfosRegistry().getServicesInfos();
+		List<IGGAPIServiceInfos> infos = this.engine.getServicesInfos();
 		infos.forEach(info -> {
 			log.atDebug().log("Added Path Pattern " + info.getPath());
 			patterns.put(info, parser.parse(info.getPath()));
@@ -134,18 +134,11 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 //			return request;
 		}
 
-		IGGAPICallerFactory callerFactory = this.engine
-				.getCallerFactory(this.getDomainNameFromRequestUri((HttpServletRequest) request));
-
-		if (callerFactory == null) {
-			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Path " + servletPath + " not found");
-		}
-
 		String tenantId = ((HttpServletRequest) request).getHeader(this.tenantIdHeaderName);
 		String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
 		String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
 
-		IGGAPICaller caller = callerFactory.getCaller(infos.getOperation(), infos.getPath(), tenantId, ownerId,
+		IGGAPICaller caller = this.engine.getCaller(this.getDomainNameFromRequestUri((HttpServletRequest) request), infos.getOperation(), infos.getPath(), tenantId, ownerId,
 				requestedtenantId, null);
 
 		if (log.isDebugEnabled()) {

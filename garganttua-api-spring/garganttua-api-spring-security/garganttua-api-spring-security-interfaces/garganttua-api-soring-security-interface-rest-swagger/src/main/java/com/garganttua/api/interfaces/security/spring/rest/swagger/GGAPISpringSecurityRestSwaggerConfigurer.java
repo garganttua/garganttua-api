@@ -56,7 +56,7 @@ public class GGAPISpringSecurityRestSwaggerConfigurer implements IGGAPISpringSec
 		
 		SecurityRequirement req = new SecurityRequirement().addList("Authorization");
 		
-		this.engine.getAccessRulesRegistry().getAccessRules().stream().filter(accessRule -> {
+		this.engine.getAccessRules().stream().filter(accessRule -> {
 				return !accessRule.getOperation().isCustom();
 			}).forEach( accessRule -> {
 			String endpoint = accessRule.getEndpoint().replace("*", "{uuid}");

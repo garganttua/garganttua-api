@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -25,6 +24,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactory;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
@@ -52,31 +52,23 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 	public static final String AUTHORIZATION_SIGNING_KEY_REALM_NAME = "authorization-signing-key";
 	
 	private Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> authenticatorServices;
-	private IGGAPIServicesRegistry servicesRegistry;
 	private Map<Class<?>, IGGAPIAuthenticationFactory> authenticationFactories;
-	private IGGAPIService tenantService;
-	private IGGAPIDomain tenantDomain;
 	private Map<Class<?>, IGGAPIService> authorizationServices;
+
+	private IGGAPIEngine engine;
 
 	public GGAPIAuthenticationService(
 			Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> authenticatorServices,
-			Map<Class<?>, IGGAPIAuthenticationFactory> authenticationFactories, IGGAPIServicesRegistry servicesRegistry) {
+			Map<Class<?>, IGGAPIAuthenticationFactory> authenticationFactories, IGGAPIEngine engine) {
 		this.authenticatorServices = authenticatorServices;
 		this.authenticationFactories = authenticationFactories;
-		this.servicesRegistry = servicesRegistry;
+		this.engine = engine;
 
-		Optional<IGGAPIService> tenantService = this.servicesRegistry.getServices().stream().filter(service -> {
-			return service.getDomain().getEntity().getValue1().tenantEntity();
-		}).findFirst();
-
-		this.authorizationServices = this.servicesRegistry.getServices().stream().filter(service -> {
+		this.authorizationServices = this.engine.getServices().stream().filter(service -> {
 			return this.authenticatorServices.entrySet().stream().filter(authenticatorService -> {
-				return authenticatorService.getValue().getValue0().authorizationType().equals(service.getDomain().getEntity().getValue0());
+				return authenticatorService.getValue().getValue0().authorizationType().equals(service.getDomainEntityClass());
 			}).findFirst().isPresent();
-		}).collect(Collectors.toMap(key -> key.getDomain().getEntity().getValue0(), key -> key ));
-		
-		this.tenantService = tenantService.get();
-		this.tenantDomain = this.tenantService.getDomain();
+		}).collect(Collectors.toMap(key -> key.getDomain().getEntityClass(), key -> key ));
 	}
 
 	@Override
@@ -288,8 +280,7 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 					authenticatorInfos.authorizationKeyLifeTimeUnit(),
 					ownerUuid, 
 					tenantId, 
-					this.tenantDomain, 
-					this.servicesRegistry,
+					this.engine,
 					null, 
 					null, 
 					null);

@@ -40,7 +40,7 @@ public class GGAPISpringSecurityConfiguration {
 	public IGGAPISecurityEngine createSecurityEngine() throws GGAPIException {
 		GGAPISecurityBuilder builder = new GGAPISecurityBuilder();
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(this.propLoader, this.packages, List.of(this.springBeanSupplier));
-		builder.engine(this.engine).loader(l).scanPackages(this.packages).injector(GGInjector.injector(l)).servicesRegistry(this.engine.getServicesRegistry());
+		builder.engine(this.engine).loader(l).scanPackages(this.packages).injector(GGInjector.injector(l));
 		this.securityEngine = builder.build().init().start();
 		return this.securityEngine;
 	}

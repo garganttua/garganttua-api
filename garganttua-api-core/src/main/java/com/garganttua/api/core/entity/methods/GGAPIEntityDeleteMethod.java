@@ -29,10 +29,10 @@ public class GGAPIEntityDeleteMethod implements IGGAPIEntityDeleteMethod {
 	public GGAPIEntityDeleteMethod(IGGAPIDomain domain, IGGAPIRepository repository) throws GGAPIException {
 		this.domain = domain;
 		this.repository = repository;
-		this.beforeDeleteMethodAddress = this.domain.getEntity().getValue1().beforeDeleteMethodAddress();
-		this.afterDeleteMethodAddress = this.domain.getEntity().getValue1().afterDeleteMethodAddress();
+		this.beforeDeleteMethodAddress = this.domain.getBeforeDeleteMethodAddress();
+		this.afterDeleteMethodAddress = this.domain.getAfterDeleteMethodAddress();
 		try {
-			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());
+			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntityClass());
 		} catch (GGReflectionException e) {
 			throw new GGAPIEntityException(e);
 		}
@@ -51,7 +51,7 @@ public class GGAPIEntityDeleteMethod implements IGGAPIEntityDeleteMethod {
 					this.objectQuery.invoke(entity, this.afterDeleteMethodAddress, caller, parameters);
 				}
 			} else {
-				log.error("[domain ["+domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during entity deletion ");
+				log.error("[domain ["+domain.getDomain()+"]] "+caller.toString()+" Error during entity deletion ");
 				throw new GGAPIEntityException(GGAPIExceptionCode.DELETION_ERROR, "Error during entity "+GGAPIEntityHelper.getUuid(entity)+" deletion");
 			}
 		} catch (GGReflectionException e) {

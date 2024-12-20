@@ -44,4 +44,6 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 	
 	IGGAPIDomain getDomain();
 
+	Class<?> getDomainEntityClass();
+
 }

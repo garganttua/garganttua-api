@@ -43,7 +43,7 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 
 			List<GGMappingRule> mappingRules = null;
 			try {
-				GGMappingConfiguration mappingConfiguration = this.mapper.getMappingConfiguration(domain.getEntity().getValue0(), destinationClass.getValue0());
+				GGMappingConfiguration mappingConfiguration = this.mapper.getMappingConfiguration(domain.getEntityClass(), destinationClass.getValue0());
 				mappingRules = mappingConfiguration.destinationRules();
 			} catch (GGMapperException e) {
 				throw new GGAPIEngineException(e);
@@ -58,7 +58,7 @@ public class GGAPIFilterMapper implements IGGAPIFilterMapper {
 			}
 		}
 		
-		Object entityExample = GGAPIEntityHelper.newExampleInstance(domain.getEntity().getValue0(), filter);
+		Object entityExample = GGAPIEntityHelper.newExampleInstance(domain.getEntityClass(), filter);
 
 		for(Pair<Class<?>, IGGAPIFilter> p: filters) {
 			Object dtoExample;

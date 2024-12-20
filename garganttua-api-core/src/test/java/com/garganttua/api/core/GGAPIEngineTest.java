@@ -32,7 +32,7 @@ public class GGAPIEngineTest {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
 		IGGAPIEngine engine = GGApiBuilder.builder().propertyLoader(pl).packages(List.of("com")).beanLoader(l).build().init().start();
 		
-		assertNotNull(engine.getDomainsRegistry()); 
+		assertNotNull(engine); 
 	}
 	
 	

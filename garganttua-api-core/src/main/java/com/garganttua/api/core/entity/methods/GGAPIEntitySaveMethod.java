@@ -52,10 +52,10 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
     this.factory = factory;
     this.entityUpdater = updater;
 
-    this.beforeCreateMethodAddress = this.domain.getEntity().getValue1().beforeCreateMethodAddress();
-    this.afterCreateMethodAddress = this.domain.getEntity().getValue1().afterCreateMethodAddress();
-    this.beforeUpdateMethodAddress = this.domain.getEntity().getValue1().beforeUpdateMethodAddress();
-    this.afterUpdateMethodAddress = this.domain.getEntity().getValue1().afterUpdateMethodAddress();
+    this.beforeCreateMethodAddress = this.domain.getBeforeCreateMethodAddress();
+    this.afterCreateMethodAddress = this.domain.getAfterCreateMethodAddress();
+    this.beforeUpdateMethodAddress = this.domain.getBeforeUpdateMethodAddress();
+    this.afterUpdateMethodAddress = this.domain.getAfterUpdateMethodAddress();
 
   }
 
@@ -80,7 +80,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
         Object storedObject = this.factory.getEntityFromRepository(caller, new HashMap<String, String>(),
             GGAPIEntityIdentifier.UUID, GGAPIEntityHelper.getUuid(entity));
         Object updatedObject = this.entityUpdater.update(caller, storedObject, entity,
-            this.domain.getEntity().getValue1().updateAuthorizations());
+            this.domain.getAuthorizedUpdateFieldsAndAuthorizations());
 
         this.updateEntity(caller, parameters, updatedObject);
 
@@ -101,7 +101,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 
   private void updateEntity(IGGAPICaller caller, Map<String, String> customParameters, Object entity)
       throws GGAPIException, GGReflectionException {
-    log.info("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+    log.info("[domain [" + domain.getDomain() + "]] " + caller.toString()
         + " Updating entity with Uuid " + GGAPIEntityHelper.getUuid(entity));
     IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
     this.applyUpdateUnicityRule(domain, repository, caller, entity);
@@ -116,17 +116,17 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 
   private void applyUpdateUnicityRule(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller,
       Object entity) throws GGAPIException {
-    if (domain.getEntity().getValue1().unicityFields() != null
-        && domain.getEntity().getValue1().unicityFields().size() > 0) {
+    if (domain.getUnicityFields() != null
+        && domain.getUnicityFields().size() > 0) {
       List<Object> entities = this.checkUnicityFields(domain, repository, caller, entity,
-          domain.getEntity().getValue1().unicityFields());
+          domain.getUnicityFields());
       if (entities.size() != 1
           && !GGAPIEntityHelper.getUuid(entities.get(0)).equals(GGAPIEntityHelper.getUuid(entity))) {
-        log.warn("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+        log.warn("[domain [" + domain.getDomain() + "]] " + caller.toString()
             + " Entity with same unical fields already exists, fields "
-            + domain.getEntity().getValue1().unicityFields());
+            + domain.getUnicityFields());
         throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS,
-            "Entity with same unical fields already exists, fields " + domain.getEntity().getValue1().unicityFields());
+            "Entity with same unical fields already exists, fields " + domain.getUnicityFields());
       }
     }
   }
@@ -136,13 +136,13 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
     IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
     this.applyTenantEntityRule(domain, caller, entity);
 
-    log.info("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+    log.info("[domain [" + domain.getDomain() + "]] " + caller.toString()
         + " Creating entity with uuid {}", GGAPIEntityHelper.getUuid(entity));
 
     this.applyOwnedEntityRule(domain, caller, entity);
 
-    if (domain.getEntity().getValue1().mandatoryFields().size() > 0) {
-      this.checkMandatoryFields(domain.getEntity().getValue1().mandatoryFields(), entity);
+    if (this.domain.getMandatoryFields().size() > 0) {
+      this.checkMandatoryFields(this.domain.getMandatoryFields(), entity);
     }
 
     this.applyCreationUnicityRule(domain, repository, caller, entity);
@@ -158,21 +158,21 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
 
   private void applyCreationUnicityRule(IGGAPIDomain domain, IGGAPIRepository repository, IGGAPICaller caller,
       Object entity) throws GGAPIException {
-    if (domain.getEntity().getValue1().unicityFields() != null
-        && domain.getEntity().getValue1().unicityFields().size() > 0) {
-      if (this.checkUnicityFields(domain, repository, caller, entity, domain.getEntity().getValue1().unicityFields())
+    if (domain.getUnicityFields() != null
+        && domain.getUnicityFields().size() > 0) {
+      if (this.checkUnicityFields(domain, repository, caller, entity, domain.getUnicityFields())
           .size() > 0) {
-        log.warn("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+        log.warn("[domain [" + domain.getDomain() + "]] " + caller.toString()
             + " Entity with same unical fields already exists, fields "
-            + domain.getEntity().getValue1().unicityFields());
+            + domain.getUnicityFields());
         throw new GGAPIEntityException(GGAPIExceptionCode.ENTITY_ALREADY_EXISTS,
-            "Entity with same unical fields already exists, fields " + domain.getEntity().getValue1().unicityFields());
+            "Entity with same unical fields already exists, fields " + domain.getUnicityFields());
       }
     }
   }
 
   private void applyOwnedEntityRule(IGGAPIDomain domain, IGGAPICaller caller, Object entity) throws GGAPIException {
-    if (domain.getEntity().getValue1().ownedEntity()) {
+    if (domain.isOwnedEntity()) {
       if (caller.getOwnerId() != null && !caller.getOwnerId().isEmpty()) {
         try {
           String ownerId = caller.getOwnerId();
@@ -182,7 +182,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
                 "Invalid ownerId [" + ownerId + "] should be of format DOMAIN:UUID");
           }
 
-          GGObjectQueryFactory.objectQuery(entity).setValue(domain.getEntity().getValue1().ownerIdFieldAddress(),
+          GGObjectQueryFactory.objectQuery(entity).setValue(domain.getOwnerIdFieldAddress(),
               ownerId);
         } catch (GGReflectionException e) {
           GGAPIException.processException(e);
@@ -197,9 +197,9 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
   }
 
   private void applyTenantEntityRule(IGGAPIDomain domain, IGGAPICaller caller, Object entity) throws GGAPIException {
-    if (domain.getEntity().getValue1().tenantEntity()) {
+    if (domain.isTenantEntity()) {
       if ((caller.getRequestedTenantId() == null || caller.getRequestedTenantId().isEmpty())) {
-        log.info("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+        log.info("[domain [" + domain.getDomain() + "]] " + caller.toString()
             + " No uuid provided, generating one");
         if (GGAPIEntityHelper.getUuid(entity) == null || ((String) GGAPIEntityHelper.getUuid(entity)).isEmpty()) {
           GGAPIEntityHelper.setUuid(entity, UUID.randomUUID().toString());
@@ -210,7 +210,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
       }
     } else {
       if (GGAPIEntityHelper.getUuid(entity) == null || GGAPIEntityHelper.getUuid(entity).isEmpty()) {
-        log.info("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+        log.info("[domain [" + domain.getDomain() + "]] " + caller.toString()
             + " No uuid provided, generating one");
         GGAPIEntityHelper.setUuid(entity, UUID.randomUUID().toString());
       }
@@ -264,7 +264,7 @@ public class GGAPIEntitySaveMethod implements IGGAPIEntitySaveMethod {
       return mergeListsWithoutDuplicates(tenantScopeResult, systemScopeResult);
 
     } catch (GGReflectionException e) {
-      log.error("[domain [" + domain.getEntity().getValue1().domain() + "]] " + caller.toString()
+      log.error("[domain [" + domain.getDomain() + "]] " + caller.toString()
           + " Error during checking unicity fields for entity with Uuid " + GGAPIEntityHelper.getUuid(entity), e);
       GGAPIException.processException(e);
 

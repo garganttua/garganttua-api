@@ -35,15 +35,15 @@ public class GGAPIAuthenticatorInfosFactory {
 		}
 		
 		List<IGGAPIDomain> authenticatorDomains = domains.stream().filter(domain -> {
-			return domain.getSecurity().isAuthenticatorEntity();
+			return domain.isAuthenticatorEntity();
 		}).collect(Collectors.toList());
 		
 		authenticatorDomains.forEach(domain -> {
 			try {
-				GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(domain.getEntity().getValue0());
+				GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(domain.getEntityClass());
 				this.infos.put(domain, infos);
 
-				log.info("		Authenticator added [domain {}, authenticator {}]", domain.getEntity().getValue1().domain(), infos);
+				log.info("		Authenticator added [domain {}, authenticator {}]", domain.getDomain(), infos);
 			} catch (GGAPIException e) {
 				throw new RuntimeException(e);
 			}

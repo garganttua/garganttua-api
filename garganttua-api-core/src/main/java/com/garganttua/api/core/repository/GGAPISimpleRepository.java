@@ -50,7 +50,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 	
 	@Override
     public long getCount(IGGAPICaller caller, IGGAPIFilter filter) throws GGAPIException {
-    	log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Get Total Count, Filter {}", caller.getRequestedTenantId(), domain, filter);
+    	log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Get Total Count, Filter {}", caller.getRequestedTenantId(), domain, filter);
     	long totalCount = 0;
 		
     	IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, (GGAPILiteral) filter);
@@ -63,18 +63,18 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 
 	@Override
 	public boolean doesExist(IGGAPICaller caller, String uuid) throws GGAPIException {
-		log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Checking if entity with uuid {} exists.", caller.getRequestedTenantId(), domain);
+		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Checking if entity with uuid {} exists.", caller.getRequestedTenantId(), domain);
 
-		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getEntity().getValue1().uuidFieldAddress().toString(), uuid));
+		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getUuidFieldAddress().toString(), uuid));
 		List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 		
 		List<?> dto= this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
 		
 		if( dto.size() >= 1 ){
-			log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+"Entity with uuid "+uuid+" exists.");
+			log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+"Entity with uuid "+uuid+" exists.");
 			return true;
 		} 
-		log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with uuid "+uuid+" does not exists.", caller.getRequestedTenantId(), domain);
+		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Entity with uuid "+uuid+" does not exists.", caller.getRequestedTenantId(), domain);
 		return false;
 		
 	}
@@ -93,7 +93,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 
 	@Override
 	public List<Object> getEntities(IGGAPICaller caller, IGGAPIPageable pageable, IGGAPIFilter filter, IGGAPISort sort) throws GGAPIException {
-		log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Getting entities", caller.getRequestedTenantId(), domain);
+		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Getting entities", caller.getRequestedTenantId(), domain);
 
 		List<Object> entities = new ArrayList<Object>();
 		List<?> objects = null;
@@ -104,7 +104,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 		try {
 			if( objects != null ) {
 				for( Object object: objects) {
-					entities.add(this.entityMapper.map(object, this.domain.getEntity().getValue0()));
+					entities.add(this.entityMapper.map(object, this.domain.getEntityClass()));
 				}
 			}
 		} catch (GGMapperException e) {
@@ -116,7 +116,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 	@Override
 	public void save(IGGAPICaller caller, Object entity) throws GGAPIException {
 		try {
-			log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Saving entity with uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
+			log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Saving entity with uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
 			this.daoRepository.save( this.entityMapper.map(entity, this.domain.getDtos().get(0).getValue0()) );
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
@@ -125,19 +125,19 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 
 	@Override
 	public Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
-		log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Looking for object with uuid "+uuid, caller.getRequestedTenantId(), this.domain);
-		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getEntity().getValue1().uuidFieldAddress().toString(), uuid));
+		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Looking for object with uuid "+uuid, caller.getRequestedTenantId(), this.domain);
+		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getUuidFieldAddress().toString(), uuid));
 
 		try {
 			List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 			List<Object> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
 			
 			if( dto.size() >= 1 ){
-				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Object with uuid "+uuid+" found !", caller.getRequestedTenantId(), this.domain);
-				return this.entityMapper.map(dto.get(0), this.domain.getEntity().getValue0());
+				log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with uuid "+uuid+" found !", caller.getRequestedTenantId(), this.domain);
+				return this.entityMapper.map(dto.get(0), this.domain.getEntityClass());
 			}
 			
-			log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Object with uuid "+uuid+" not found.", caller.getRequestedTenantId(), this.domain);
+			log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with uuid "+uuid+" not found.", caller.getRequestedTenantId(), this.domain);
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
 		}
@@ -146,28 +146,28 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 	
 	@Override
 	public Object getOneById(IGGAPICaller caller, String id) throws GGAPIException {
-		log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Looking for object with id "+id, caller.getRequestedTenantId(), this.domain);
-		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getIdFilter(this.domain.getEntity().getValue1().idFieldAddress().toString(), id));
+		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Looking for object with id "+id, caller.getRequestedTenantId(), this.domain);
+		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getIdFilter(this.domain.getIdFieldAddress().toString(), id));
 		try {
 			List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 			List<?> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
 			
 			if( dto.size() >= 1 ){
-				log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Object with id "+id+" found !", caller.getRequestedTenantId(), this.domain);
-				return this.entityMapper.map(dto.get(0), this.domain.getEntity().getValue0());
+				log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with id "+id+" found !", caller.getRequestedTenantId(), this.domain);
+				return this.entityMapper.map(dto.get(0), this.domain.getEntityClass());
 			}
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
 		}
 		
-		log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Object with id "+id+" not found.", caller.getRequestedTenantId(), this.domain);
+		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with id "+id+" not found.", caller.getRequestedTenantId(), this.domain);
 		return null;
 	}
 
 	@Override
 	public void delete(IGGAPICaller caller, Object entity) throws GGAPIException {
 		try {
-			log.debug("	[domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Deleting entity with Uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
+			log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Deleting entity with Uuid "+GGAPIEntityHelper.getUuid(entity), caller.getRequestedTenantId(), domain);
 			this.daoRepository.delete(this.entityMapper.map(entity, this.domain.getDtos().get(0).getValue0()));
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
@@ -176,7 +176,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 
 	@Override
 	public String getTenant(Object entity) throws GGAPIException {		
-		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(GGAPICaller.createSuperCaller(), domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getEntity().getValue1().uuidFieldAddress().toString(), GGAPIEntityHelper.getUuid(entity)));
+		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(GGAPICaller.createSuperCaller(), domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getUuidFieldAddress().toString(), GGAPIEntityHelper.getUuid(entity)));
 		List<Pair<Class<?>, IGGAPIFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
 		List<?> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
 		if( dto.size() >= 1 ){
@@ -184,7 +184,6 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 		} else {
 			return null;
 		}
-		
 	}
 
 	@Override

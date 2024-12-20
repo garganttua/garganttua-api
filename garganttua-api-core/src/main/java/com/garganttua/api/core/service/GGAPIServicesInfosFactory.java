@@ -43,16 +43,16 @@ public class GGAPIServicesInfosFactory {
 		List<IGGAPIInterface> interfasses = this.interfacesRegistry.getInterfaces(domain.getDomain());
 
 		List<IGGAPIServiceInfos> customInfos = new ArrayList<IGGAPIServiceInfos>();
-		this.getCustomServiceFromClass(domain, domain.getEntity().getValue0(), customInfos, () -> {
+		this.getCustomServiceFromClass(domain, domain.getEntityClass(), customInfos, () -> {
 			try {
-				return GGAPIEntityHelper.newInstance(domain.getEntity().getValue0());
+				return GGAPIEntityHelper.newInstance(domain.getEntityClass());
 			} catch (GGAPIException e) {
 				throw new RuntimeException(e);
 			}
 		});
 		domain.addServicesInfos(customInfos);
 		customInfos.forEach(info -> {
-			log.info("	Method added [domain {}, service {}]", domain.getEntity().getValue1().domain(), info);
+			log.info("	Method added [domain {}, service {}]", domain.getDomain(), info);
 		});
 
 		interfasses.stream().forEach(interfasse -> {
@@ -66,7 +66,7 @@ public class GGAPIServicesInfosFactory {
 			customInfos.forEach( i -> {interfasse.addCustomService(i);});
 			
 			infos.forEach(info -> {
-				log.info("	Method added [domain {}, service {}]", domain.getEntity().getValue1().domain(), info);
+				log.info("	Method added [domain {}, service {}]", domain.getDomain(), info);
 			});
 
 			domain.addServicesInfos(infos);

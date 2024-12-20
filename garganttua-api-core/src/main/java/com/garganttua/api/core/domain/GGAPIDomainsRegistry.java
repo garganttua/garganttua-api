@@ -25,7 +25,7 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 		this.domains = domains;
 		
 		domains.stream().forEach(domain -> {
-			Class<?> entityClass = domain.getEntity().getValue0();
+			Class<?> entityClass = domain.getEntityClass();
 			domain.getDtos().stream().forEach(dto -> {
 				Class<?> dtoClass = dto.getValue0();
 				try {
@@ -41,7 +41,7 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 	@Override
 	public IGGAPIDomain getDomain(String domain) {
 		for( IGGAPIDomain ddomain: this.domains ) {
-			if( ddomain.getEntity().getValue1().domain().toLowerCase().equals(domain)) {
+			if( ddomain.getDomain().toLowerCase().equals(domain)) {
 				return ddomain;
 			}
 		}
@@ -51,7 +51,7 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 	@Override
 	public IGGAPIDomain getOwnerDomain() {
 		for( IGGAPIDomain ddomain: this.domains ) {
-			if( ddomain.getEntity().getValue1().ownerEntity() == true) {
+			if( ddomain.isOwnerEntity() == true) {
 				return ddomain;
 			}
 		}
@@ -61,7 +61,7 @@ public class GGAPIDomainsRegistry implements IGGAPIDomainsRegistry {
 	@Override
 	public IGGAPIDomain getTenantDomain() {
 		for( IGGAPIDomain ddomain: this.domains ) {
-			if( ddomain.getEntity().getValue1().tenantEntity() == true) {
+			if( ddomain.isTenantEntity() == true) {
 				return ddomain;
 			}
 		}

@@ -8,12 +8,12 @@ import java.util.Map;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.core.service.GGAPIServicesInfosBuilder;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactoriesRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactory;
@@ -40,24 +40,23 @@ public class GGAPIAuthenticationInterfacesFactory {
 	private IGGAPIAuthenticationService authenticationService;
 	private IGGBeanLoader beanLoader;
 	private Map<String, IGGAPIAuthenticationInterface> authenticationInterfaces = new HashMap<String, IGGAPIAuthenticationInterface>();
-	private IGGAPIAccessRulesRegistry accessRulesRegistry;
-	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
+//	private IGGAPIAccessRulesRegistry accessRulesRegistry;
+//	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
 	private IGGAPIAuthenticationFactoriesRegistry authenticationFactoriesRegistry;
+	private IGGAPIEngine engine;
 
 	public GGAPIAuthenticationInterfacesFactory(IGGBeanLoader beanLoader,
 			IGGAPIAuthenticatorInfosRegistry authenticatorInfosRegistry,
 			IGGAPIAuthenticationInfosRegistry authenticationInfosRegistry,
 			IGGAPIAuthenticationFactoriesRegistry authenticationFactoryRegistry,
 			IGGAPIAuthenticationService authenticationService, 
-			IGGAPIAccessRulesRegistry accessRulesRegistry,
-			IGGAPIServicesInfosRegistry servicesInfosRegistry,
+			IGGAPIEngine engine,
 			IGGAPIAuthenticationFactoriesRegistry authenticationFactoriesRegistry) {
 		this.beanLoader = beanLoader;
 		this.authenticatorInfosRegistry = authenticatorInfosRegistry;
 		this.authenticationInfosRegistry = authenticationInfosRegistry;
 		this.authenticationService = authenticationService;
-		this.accessRulesRegistry = accessRulesRegistry;
-		this.servicesInfosRegistry = servicesInfosRegistry;
+		this.engine = engine;
 		this.authenticationFactoriesRegistry = authenticationFactoriesRegistry;
 		this.createInterfaces();
 	}
@@ -135,10 +134,10 @@ public class GGAPIAuthenticationInterfacesFactory {
 
 	private void addServiceInfos(IGGAPIDomain domain, List<IGGAPIServiceInfos> authenticationServiceInfos) {
 		domain.addServicesInfos(authenticationServiceInfos);
-		this.servicesInfosRegistry.addServicesInfos(domain, authenticationServiceInfos);
+		this.engine.addServicesInfos(domain, authenticationServiceInfos);
 		authenticationServiceInfos.forEach(serviceInfos -> {
 			try {
-				this.accessRulesRegistry.addAccessRule(domain.createAccessRule(serviceInfos));
+				this.engine.addAccessRule(domain.createAccessRule(serviceInfos));
 			} catch (GGAPIException e) {
 				throw new RuntimeException(e);
 			}

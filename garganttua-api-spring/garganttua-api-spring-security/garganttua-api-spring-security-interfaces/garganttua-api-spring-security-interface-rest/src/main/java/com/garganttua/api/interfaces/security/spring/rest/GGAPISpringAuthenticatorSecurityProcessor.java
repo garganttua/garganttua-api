@@ -40,12 +40,12 @@ public class GGAPISpringAuthenticatorSecurityProcessor extends OncePerRequestFil
 			throws GGAPIException {
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
 
-		if (caller.getDomain().getSecurity().isAuthenticatorEntity()
-				&& (caller.getAccessRule().getOperation().getMethod() == GGAPIMethod.create
-						|| caller.getAccessRule().getOperation().getMethod() == GGAPIMethod.update)) {
+		if (caller.isAuthenticatorDomain()
+				&& (caller.getMethod() == GGAPIMethod.create
+						|| caller.getMethod() == GGAPIMethod.update)) {
 			if (log.isDebugEnabled()) {
 				log.debug("Pre processing security on authenticator entity "
-						+ caller.getDomain().getEntity().getValue0().getSimpleName());
+						+ caller.getDomainEntityClass().getSimpleName());
 			}
 
 			try {
@@ -58,7 +58,7 @@ public class GGAPISpringAuthenticatorSecurityProcessor extends OncePerRequestFil
 						.configure(DeserializationFeature.FAIL_ON_MISSING_CREATOR_PROPERTIES, false)
 						.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
-				Object entity = mapper.readValue(originalBody, caller.getDomain().getEntity().getValue0());
+				Object entity = mapper.readValue(originalBody, caller.getDomainEntityClass());
 
 				this.security.authenticatorEntitySecurityPreProcessing(caller, entity, new HashMap<String, String>());
 

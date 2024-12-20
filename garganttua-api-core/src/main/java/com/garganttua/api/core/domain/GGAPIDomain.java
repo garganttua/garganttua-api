@@ -1,12 +1,13 @@
 package com.garganttua.api.core.domain;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.javatuples.Pair;
 
@@ -26,11 +27,13 @@ import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.entity.GGAPIEntityDocumentationInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityInfos;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.entity.annotations.GGAPIUnicityScope;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.security.annotations.GGAPICustomServiceSecurity;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
+import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.AllArgsConstructor;
@@ -257,5 +260,175 @@ public class GGAPIDomain implements IGGAPIDomain {
 	@Override
 	public String getEntityName() {
 		return this.entity.getValue0().getSimpleName().toLowerCase();
+	}
+
+	@Override
+	public Collection<IGGAPIAccessRule> getAccessRules() {
+		return this.security.getAccessRules().values();
+	}
+
+	@Override
+	public Collection<String> getUpdateAuthorizations() {
+		return this.entity.getValue1().updateAuthorizations().values().stream().map(val -> {return val;}).collect(Collectors.toList());
+	}
+
+	@Override
+	public Class<?> getEntityClass() {
+		return this.entity.getValue0();
+	}
+
+	@Override
+	public boolean isOwnerEntity() {
+		return this.entity.getValue1().ownerEntity();
+	}
+
+	@Override
+	public boolean isTenantEntity() {
+		return this.entity.getValue1().tenantEntity();
+	}
+
+	@Override
+	public boolean isOwnedEntity() {
+		return this.entity.getValue1().ownedEntity();
+	}
+
+	@Override
+	public boolean isSharedEntity() {
+		return this.entity.getValue1().sharedEntity();
+	}
+
+	@Override
+	public boolean isHiddenableEntity() {
+		return this.entity.getValue1().hiddenableEntity();
+	}
+
+	@Override
+	public boolean isPublicEntity() {
+		return this.entity.getValue1().publicEntity();
+	}
+
+	@Override
+	public GGObjectAddress getSuperOnwerIdFieldAddress() {
+		return this.entity.getValue1().superOnwerIdFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getSuperTenantFieldAddress() {
+		return this.entity.getValue1().superTenantFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getBeforeDeleteMethodAddress() {
+		return this.entity.getValue1().beforeDeleteMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getAfterDeleteMethodAddress() {
+		return this.entity.getValue1().afterDeleteMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getBeforeCreateMethodAddress() {
+		return this.entity.getValue1().beforeCreateMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getAfterCreateMethodAddress() {
+		return this.entity.getValue1().afterCreateMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getBeforeUpdateMethodAddress() {
+		return this.entity.getValue1().beforeUpdateMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getAfterUpdateMethodAddress() {
+		return this.entity.getValue1().afterUpdateMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getOwnerIdFieldAddress() {
+		return this.entity.getValue1().ownerIdFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getAfterGetMethodAddress() {
+		return this.entity.getValue1().afterGetMethodAddress();
+	}
+
+	@Override
+	public GGObjectAddress getShareFieldAddress() {
+		return this.entity.getValue1().shareFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getTenantIdFieldAddress() {
+		return this.entity.getValue1().tenantIdFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getHiddenFieldAddress() {
+		return this.entity.getValue1().hiddenFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getUuidFieldAddress() {
+		return this.entity.getValue1().uuidFieldAddress();
+	}
+
+	@Override
+	public GGObjectAddress getIdFieldAddress() {
+		return this.entity.getValue1().idFieldAddress();
+	}
+
+	@Override
+	public Map<GGObjectAddress, String> getAuthorizedUpdateFieldsAndAuthorizations() {
+		return this.entity.getValue1().updateAuthorizations();
+	}
+
+	@Override
+	public List<Pair<GGObjectAddress, GGAPIUnicityScope>> getUnicityFields() {
+		return this.entity.getValue1().unicityFields();
+	}
+
+	@Override
+	public List<GGObjectAddress> getMandatoryFields() {
+		return this.entity.getValue1().mandatoryFields();
+	}
+
+	@Override
+	public boolean isAuthenticatorEntity() {
+		return this.security.isAuthenticatorEntity();
+	}
+
+	@Override
+	public Collection<Class<?>> getAuthorizationProtocols() {
+		return List.of(this.security.getAuthorizationProtocols());
+	}
+
+	@Override
+	public Collection<Class<?>> getAuthorizations() {
+		return List.of(this.security.getAuthorizations());
+	}
+
+	@Override
+	public boolean isGeolocalizedEntity() {
+		return this.entity.getValue1().geolocalizedEntity();
+	}
+
+	@Override
+	public GGObjectAddress getLocationFieldAddress() {
+		return this.entity.getValue1().locationFieldAddress();
+	}
+
+	@Override
+	public GGAPIServiceAccess getAccess(IGGAPIServiceInfos info) {
+		return this.security.getAccess(info);
+	}
+
+	@Override
+	public String getAuthority(IGGAPIServiceInfos info) {
+		return this.security.getAuthority(info);
 	}
 }

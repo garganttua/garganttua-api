@@ -12,13 +12,24 @@ public class GGAPIRepositoryFilterTools {
 		String ownerId = caller.getOwnerId();
 		boolean superOwner = caller.isSuperOwner();
 		boolean superTenant = caller.isSuperTenant();
-		String shared = domain.getEntity().getValue1().shareFieldAddress()==null?null:domain.getEntity().getValue1().shareFieldAddress().toString();
+		boolean sharedEntity = domain.isSharedEntity();
+		boolean hiddenableEntity = domain.isHiddenableEntity();
+		boolean ownedEntity = domain.isOwnedEntity();
+		boolean publicEntity = domain.isPublicEntity();
 		
 		GGAPILiteral and = GGAPILiteral.and();
-		GGAPILiteral tenantIdFilter = requestedTenantId==null?null:GGAPILiteral.eq(domain.getEntity().getValue1().tenantIdFieldAddress().toString(), requestedTenantId);
-		GGAPILiteral shareFieldFilter = GGAPILiteral.eq(shared, requestedTenantId);
-		GGAPILiteral visibleFilter = GGAPILiteral.eq(domain.getEntity().getValue1().hiddenFieldAddress()==null?null:domain.getEntity().getValue1().hiddenFieldAddress().toString(), false);
-		GGAPILiteral ownerIdFilter = ownerId==null||domain.getEntity().getValue1().ownerIdFieldAddress()==null?null:GGAPILiteral.eq(domain.getEntity().getValue1().ownerIdFieldAddress().toString(), ownerId);
+		GGAPILiteral tenantIdFilter = requestedTenantId==null?null:GGAPILiteral.eq(domain.getTenantIdFieldAddress().toString(), requestedTenantId);
+		GGAPILiteral shareFieldFilter = null;
+		GGAPILiteral visibleFilter = null;
+		GGAPILiteral ownerIdFilter = ownerId==null||ownedEntity==true?null:GGAPILiteral.eq(domain.getOwnerIdFieldAddress().toString(), ownerId);
+		
+		if( hiddenableEntity ) {
+			visibleFilter = GGAPILiteral.eq(domain.getHiddenFieldAddress().toString(), false);
+		}
+		
+		if( sharedEntity ) {
+			shareFieldFilter = GGAPILiteral.eq(domain.getShareFieldAddress().toString(), requestedTenantId);
+		}
 		
 		if( filter != null ) {
 			and.andOperator(filter);
@@ -27,9 +38,9 @@ public class GGAPIRepositoryFilterTools {
 		if( superTenant && (requestedTenantId == null || requestedTenantId.isEmpty()) ){
 			
 		} else {
-			if( !domain.getEntity().getValue1().publicEntity() && !domain.getEntity().getValue1().hiddenableEntity() ) {
+			if( !publicEntity && !hiddenableEntity ) {
 				
-				if( shared != null && !shared.isEmpty() ) {
+				if( sharedEntity ) {
 					if( tenantIdFilter != null ) {
 						and.andOperator(shareFieldFilter.orOperator(tenantIdFilter));
 					} else {
@@ -39,8 +50,8 @@ public class GGAPIRepositoryFilterTools {
 					if( tenantIdFilter != null )
 						and.andOperator(tenantIdFilter);
 				}
-			} else if( !domain.getEntity().getValue1().publicEntity() && domain.getEntity().getValue1().hiddenableEntity() ) {
-				if( shared != null && !shared.isEmpty() ) {
+			} else if( !domain.isPublicEntity() && hiddenableEntity ) {
+				if( sharedEntity ) {
 					GGAPILiteral and__ = visibleFilter.andOperator(shareFieldFilter);
 					
 					if( tenantIdFilter != null ) {
@@ -53,7 +64,7 @@ public class GGAPIRepositoryFilterTools {
 					if( tenantIdFilter != null )
 						and.andOperator(tenantIdFilter);
 				}
-			} else if( domain.getEntity().getValue1().publicEntity() && domain.getEntity().getValue1().hiddenableEntity() ) {
+			} else if( domain.isPublicEntity() && hiddenableEntity ) {
 				
 				if( tenantIdFilter != null ) {
 					and.andOperator(GGAPILiteral.or(tenantIdFilter, visibleFilter));
@@ -62,7 +73,7 @@ public class GGAPIRepositoryFilterTools {
 				}
 			} 
 			
-			if( ownerIdFilter != null && domain.getEntity().getValue1().ownedEntity() && !superOwner ) {
+			if( ownerIdFilter != null && ownedEntity && !superOwner ) {
 				and.andOperator(ownerIdFilter);
 			}
 		}

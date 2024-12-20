@@ -11,7 +11,6 @@ import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
-import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,18 +23,15 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 
 	private Set<IGGAPIDomain> domains;
 
-	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
-
-	public GGAPIAccessRulesRegistry(Set<IGGAPIDomain> domains, IGGAPIServicesInfosRegistry servicesInfosRegistry) {
+	public GGAPIAccessRulesRegistry(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
-		this.servicesInfosRegistry = servicesInfosRegistry;
 		this.init();
 	}
 
 	private void init() {
 		log.info("Creating Access Rules ...");
 		for (IGGAPIDomain domain : this.domains) {
-			accessRules.addAll(domain.getSecurity().getAccessRules().values());
+			this.accessRules.addAll(domain.getAccessRules());
 		}
 		this.accessRules.forEach(ar -> {
 			log.info("	Access Rule added {}", ar);
@@ -73,7 +69,7 @@ public class GGAPIAccessRulesRegistry implements IGGAPIAccessRulesRegistry {
 	@Override
 	public List<String> getAuthorities() {
 		List<String> list = this.domains.stream()
-				.flatMap(domain -> domain.getEntity().getValue1().updateAuthorizations().values().stream())
+				.flatMap(domain -> domain.getUpdateAuthorizations().stream())
 				.collect(Collectors.toList());
 		list.addAll(this.accessRules.stream().map(rule -> {
 			return rule.getAuthority();

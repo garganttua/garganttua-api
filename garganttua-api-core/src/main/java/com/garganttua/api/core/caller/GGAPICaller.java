@@ -4,10 +4,13 @@ import java.util.List;
 import java.util.Objects;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -108,5 +111,55 @@ public class GGAPICaller implements IGGAPICaller {
 
 	public static IGGAPICaller createTenantCallerWithOwnerId(String tenantId, String ownerId) throws GGAPIEngineException {
 		return new GGAPICaller(tenantId, tenantId, null, ownerId, false, false, null, null, false, null);
+	}
+
+	@Override
+	public String getEndpoint() {
+		return this.accessRule.getEndpoint();
+	}
+
+	@Override
+	public String getEndpointAuthority() {
+		return this.accessRule.getEndpoint();
+	}
+
+	@Override
+	public Class<?> getEntity() {
+		return this.domain.getEntityClass();
+	}
+
+	@Override
+	public GGAPIMethod getMethod() {
+		return this.accessRule.getOperation().getMethod();
+	}
+
+	@Override
+	public boolean isActionOnAllEntities() {
+		return this.accessRule.getOperation().isActionOnAllEntities();
+	}
+
+	@Override
+	public boolean isCustom() {
+		return this.accessRule.getOperation().isCustom();
+	}
+
+	@Override
+	public GGAPIServiceAccess getAccess() {
+		return this.accessRule.getAccess();
+	}
+
+	@Override
+	public GGAPIEntityOperation getOperation() {
+		return this.accessRule.getOperation();
+	}
+
+	@Override
+	public boolean isAuthenticatorDomain() {
+		return this.domain.isAuthenticatorEntity();
+	}
+
+	@Override
+	public Class<?> getDomainEntityClass() {
+		return this.domain.getEntityClass();
 	}
 }

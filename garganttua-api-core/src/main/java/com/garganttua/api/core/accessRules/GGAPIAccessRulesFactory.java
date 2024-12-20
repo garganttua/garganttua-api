@@ -4,22 +4,19 @@ import java.util.Set;
 
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIAccessRulesRegistry;
-import com.garganttua.api.spec.service.IGGAPIServicesInfosRegistry;
 
 public class GGAPIAccessRulesFactory {
 
-	private IGGAPIServicesInfosRegistry servicesInfosRegistry;
 	private IGGAPIAccessRulesRegistry registry;
 	private Set<IGGAPIDomain> domains;
 
-	public GGAPIAccessRulesFactory(Set<IGGAPIDomain> domains, IGGAPIServicesInfosRegistry servicesInfosRegistry) {
+	public GGAPIAccessRulesFactory(Set<IGGAPIDomain> domains) {
 		this.domains = domains;
-		this.servicesInfosRegistry = servicesInfosRegistry;
 		this.init();
 	}
 
 	private void init() {
-		this.registry = new GGAPIAccessRulesRegistry(domains, servicesInfosRegistry);
+		this.registry = new GGAPIAccessRulesRegistry(domains);
 	}
 
 	public IGGAPIAccessRulesRegistry getRegistry() {

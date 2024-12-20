@@ -84,7 +84,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		}
 		
 		try {
-			return (boolean) GGObjectQueryFactory.objectQuery(owner).getValue(this.ownerDomains.get(ownerId.split(":")[0]).getEntity().getValue1().superOnwerIdFieldAddress());
+			return (boolean) GGObjectQueryFactory.objectQuery(owner).getValue(this.ownerDomains.get(ownerId.split(":")[0]).getSuperOnwerIdFieldAddress());
 		} catch (GGReflectionException e) {
 			throw new GGAPIEngineException(e);
 		}
@@ -116,7 +116,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 	}
 
 	private String setTenantIdToNullIfThisIsTenantCreationRequest(IGGAPIAccessRule accessRule, String tenantIdTemp) {
-		if( accessRule.getOperation().equals(GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntity().getValue0())) && this.domain.getDomain().equals(this.tenantsDomain.getDomain()) )
+		if( accessRule.getOperation().equals(GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntityClass())) && this.domain.getDomain().equals(this.tenantsDomain.getDomain()) )
 			return null;
 		return tenantIdTemp;
 	}
@@ -137,7 +137,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		}
 		
 		try {
-			return (boolean) GGObjectQueryFactory.objectQuery(tenant).getValue(this.tenantsDomain.getEntity().getValue1().superTenantFieldAddress());
+			return (boolean) GGObjectQueryFactory.objectQuery(tenant).getValue(this.tenantsDomain.getSuperTenantFieldAddress());
 		} catch (GGReflectionException e) {
 			throw new GGAPIEngineException(e);
 		}

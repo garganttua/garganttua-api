@@ -5,7 +5,6 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.security.IGGAPITenantVerifier;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
@@ -13,10 +12,8 @@ public class GGAPITenantVerifier implements IGGAPITenantVerifier {
 
 	@Override
 	public void verifyTenant(IGGAPICaller caller, Object authorization) throws GGAPIException {
-		
-		IGGAPIAccessRule rule = caller.getAccessRule();
 
-		if ( rule != null && (rule.getAccess() == GGAPIServiceAccess.tenant || rule.getAccess() == GGAPIServiceAccess.owner) ) {
+		if ( caller.getAccess() == GGAPIServiceAccess.tenant || caller.getAccess() == GGAPIServiceAccess.owner ) {
 			String authentifiedTenantId = GGAPIAuthenticationHelper.getTenantId(authorization);
 			String tenantId = caller.getTenantId();
 			String requestedTenantId = caller.getRequestedTenantId();

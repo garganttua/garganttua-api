@@ -17,6 +17,11 @@
 
 		<dependency>
 			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-native-image-utils</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-objects-mapper</artifactId>
 		</dependency>
 
@@ -24,7 +29,7 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-reflection</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-executor-chain</artifactId>
@@ -54,18 +59,51 @@
 			<artifactId>jjwt-api</artifactId>
 			<version>0.11.5</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
 			<version>0.11.5</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
 			<version>0.11.5</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-native-image-config</artifactId>
+		</dependency>
+
 	</dependencies>
+
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						<phase>process-classes</phase>
+						<configuration>
+							<classpathScope>compile</classpathScope>
+							<mainClass>
+								com.garganttua.api.core.NativeImageConfigBuilder</mainClass>
+							<arguments>
+								<argument>${project.build.outputDirectory}</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
 </project>

@@ -1,5 +1,7 @@
 package com.garganttua.api.security.spring.core.authentication;
 
+import java.util.Optional;
+
 import javax.inject.Inject;
 
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -11,7 +13,6 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
-import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
@@ -33,21 +34,19 @@ public class GGAPISpringAuthenticationProvider implements AuthenticationProvider
 	public Authentication authenticate(Authentication auth) throws AuthenticationException {
 		GGAPISpringAuthenticationRequest authentication = (GGAPISpringAuthenticationRequest) auth;
 		IGGAPIAuthenticationRequest request = (IGGAPIAuthenticationRequest) authentication.getCredentials();
-		IGGAPIAuthenticationService authenticationServicesRegistry = this.security.getAuthenticationService();
-		
-		if( authenticationServicesRegistry != null ) {
-			IGGAPIDomain domain = this.engine.getDomainsRegistry().getDomain(request.getDomain().getDomain());
-			if( domain != null ) {
-				IGGAPIServiceResponse response = authenticationServicesRegistry.authenticate(request);
-				if( response.getResponseCode() == GGAPIServiceResponseCode.OK ) {
-					return new GGAPISpringAuthentication(response.getResponse()) ;
-				}
-				log.atWarn().log("Authentication failed");
-				throw new AuthenticationException("Authentication failed"){
-					private static final long serialVersionUID = -1494230305460118934L;
-				};
-			} 
-		}
+
+		Optional<IGGAPIDomain> domain = this.engine.getDomain(request.getDomain().getDomain());
+		if( domain.isPresent() ) {
+			IGGAPIServiceResponse response = this.security.authenticate(request);
+			if( response.getResponseCode() == GGAPIServiceResponseCode.OK ) {
+				return new GGAPISpringAuthentication(response.getResponse()) ;
+			}
+			log.atWarn().log("Authentication failed");
+			throw new AuthenticationException("Authentication failed"){
+				private static final long serialVersionUID = -1494230305460118934L;
+			};
+		} 
+			
 		log.atWarn().log("Authentication failed");
 		throw new AuthenticationException("Authentication failed"){
 			private static final long serialVersionUID = -1494230305460118934L;

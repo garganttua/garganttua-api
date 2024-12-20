@@ -106,7 +106,7 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 			query.with(Sort.by(direction, sort.getFieldName()));
 		}
 		if( filter != null ) {
-			log.debug("		[domain ["+this.domain.getEntity().getValue1().domain()+"]] Finding objects using "+query.toString());
+			log.debug("		[domain ["+this.domain.getDomain()+"]] Finding objects using "+query.toString());
 		}
 		results = this.mongo.find(query, this.dtoClass);
 
@@ -293,8 +293,8 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 	@Override
 	public void setDomain(IGGAPIDomain domain) {
 		this.domain = domain;
-		if( domain.getEntity().getValue1().geolocalizedEntity() ) {
-			GGObjectAddress geolocField = domain.getEntity().getValue1().locationFieldAddress();
+		if( domain.isGeolocalizedEntity() ) {
+			GGObjectAddress geolocField = domain.getLocationFieldAddress();
 			if( geolocField != null ) {
 				
 				try {

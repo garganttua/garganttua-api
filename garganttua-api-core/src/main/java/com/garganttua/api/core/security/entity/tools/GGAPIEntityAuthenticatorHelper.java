@@ -17,7 +17,7 @@ public class GGAPIEntityAuthenticatorHelper {
 	
 	public static IGGAPIDomain getAuthenticatorDomain(IGGAPIDomainsRegistry domainsRegistry) {
 		return domainsRegistry.getDomains().parallelStream().filter(e -> 
-			e.getEntity().getValue0().getAnnotation(GGAPIAuthenticator.class)==null?false:true
+			e.getEntityClass().getAnnotation(GGAPIAuthenticator.class)==null?false:true
 		).findFirst().get();
 	}
 

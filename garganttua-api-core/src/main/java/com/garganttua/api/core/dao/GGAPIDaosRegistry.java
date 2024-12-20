@@ -11,8 +11,6 @@ import com.garganttua.api.spec.dao.IGGAPIDaosRegistry;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 
-import lombok.Setter;
-
 public class GGAPIDaosRegistry implements IGGAPIDaosRegistry {
 
 	private Map<String, List<Pair<Class<?>, IGGAPIDao<?>>>> daos;

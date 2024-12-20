@@ -81,6 +81,12 @@
 
 			<dependency>
 				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-native-image-utils</artifactId>
+				<version>${com.garganttua.tooling.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-executor-chain</artifactId>
 				<version>${com.garganttua.tooling.version}</version>
 			</dependency>
@@ -100,6 +106,12 @@
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-spring-interface-rest</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-native-image-config</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
@@ -132,7 +144,7 @@
 			<groupId>org.reflections</groupId>
 			<artifactId>reflections</artifactId>
 			<version>0.10.2</version>
-			<scope>test</scope>
+			<scope>compile</scope>
 		</dependency>
 
 	</dependencies>
@@ -182,5 +194,6 @@
 		<module>garganttua-api-core</module>
 		<module>garganttua-api-spring</module>
 		<module>garganttua-api-security</module>
+		<module>garganttua-api-native-image</module>
 	</modules>
 </project>

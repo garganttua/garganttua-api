@@ -20,6 +20,10 @@
 			<artifactId>garganttua-reflection</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-native-image-utils</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>de.grundid.opendatalab</groupId>
 			<artifactId>geojson-jackson</artifactId>
 			<version>1.14</version>

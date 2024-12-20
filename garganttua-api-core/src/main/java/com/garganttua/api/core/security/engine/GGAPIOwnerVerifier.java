@@ -5,7 +5,6 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.security.IGGAPIOwnerVerifier;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
@@ -13,9 +12,8 @@ public class GGAPIOwnerVerifier implements IGGAPIOwnerVerifier {
 
 	@Override
 	public void verifyOwner(IGGAPICaller caller, Object authorization) throws GGAPIException {
-		IGGAPIAccessRule rule = caller.getAccessRule();
 
-		if (rule != null && rule.getAccess() == GGAPIServiceAccess.owner ) {
+		if ( caller.getAccess() == GGAPIServiceAccess.owner ) {
 			String authentifiedOwnerId = GGAPIAuthenticationHelper.getOwnerId(authorization);
 			String ownerId = caller.getOwnerId();
 

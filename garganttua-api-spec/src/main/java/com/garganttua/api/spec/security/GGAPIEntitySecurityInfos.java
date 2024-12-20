@@ -1,6 +1,7 @@
 package com.garganttua.api.spec.security;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,4 +157,5 @@ public class GGAPIEntitySecurityInfos {
 		this.authorizationProtocols = authorizationProtocols;
 		this.domainName = domainName;
 	}
+
 }

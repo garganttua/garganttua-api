@@ -25,8 +25,8 @@ public class GGAPIAuthenticationServicesInfosBuilder {
     	String baseUrl = "/"+GGAPIServicesInfosBuilder.CONTEXT_PATH+"/"+domain.getDomain();
     	
     	try {
-			if (domain.getSecurity().isAuthenticatorEntity()) {
-				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getAuthenticateMethod(), baseUrl+"/authenticate", "", GGAPIEntityOperation.authenticate(domain.getDomain(), domain.getEntity().getValue0()), () -> {return interfasse;}));
+			if (domain.isAuthenticatorEntity()) {
+				services.add(getInfos(domain.getDomain(), interfasse.getClass(), interfasse.getAuthenticateMethod(), baseUrl+"/authenticate", "", GGAPIEntityOperation.authenticate(domain.getDomain(), domain.getEntityClass()), () -> {return interfasse;}));
 			}
 		} catch (GGAPIException | SecurityException e) {
 			throw new GGAPIEngineException(e);

@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.IGGInjector;
 
@@ -13,9 +12,7 @@ public interface IGGAPISecurityBuilder {
 	IGGAPISecurityBuilder scanPackages(List<String> packages);
 	
 	IGGAPISecurityBuilder injector(IGGInjector injector); 
-	
-	IGGAPISecurityBuilder servicesRegistry(IGGAPIServicesRegistry registry);
-	
+
 	IGGAPISecurityEngine build() throws GGAPIException;
 
 	IGGAPISecurityBuilder loader(IGGBeanLoader loader);

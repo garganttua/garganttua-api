@@ -28,7 +28,7 @@ public class GGAPIServicesFactory {
 			GGAPIService service = new GGAPIService(domain);
 			this.services.put(domain.getDomain(), service);
 			
-			log.info("	Service added [domain {}, service {}]", domain.getEntity().getValue1().domain(), service);
+			log.info("	Service added [domain {}, service {}]", domain.getDomain(), service);
 		}
 	}
 

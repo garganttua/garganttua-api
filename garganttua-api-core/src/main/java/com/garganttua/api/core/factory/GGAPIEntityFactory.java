@@ -59,9 +59,9 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 	public GGAPIEntityFactory(IGGAPIDomain domain) throws GGAPIException {
 		this.domain = domain;
 
-		this.afterGetMethodAddress = this.domain.getEntity().getValue1().afterGetMethodAddress();
+		this.afterGetMethodAddress = this.domain.getAfterGetMethodAddress();
 		try {
-			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntity().getValue0());
+			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntityClass());
 		} catch (GGReflectionException e) {
 			GGAPIException.processException(e);
 		}
@@ -112,8 +112,8 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 		}
 		
 		if( entity == null ) {
-			log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Entity with Uuid " + uuid + " not found");
-			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Entity [Uuid: "+uuid+", Type: "+this.domain.getEntity().getValue0().getSimpleName()+"] does not exist");
+			log.warn("[Domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Entity with Uuid " + uuid + " not found");
+			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Entity [Uuid: "+uuid+", Type: "+this.domain.getEntityClass().getSimpleName()+"] does not exist");
 		}
 
 		GGAPIEntityHelper.setRepository( entity, repository );
@@ -152,12 +152,12 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			}
 		} catch (GGReflectionException e) {
 			try {
-				log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" Error during processing AfterGet Method on entity with uuid "+GGAPIEntityHelper.getUuid(entity));
+				log.warn("[Domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Error during processing AfterGet Method on entity with uuid "+GGAPIEntityHelper.getUuid(entity));
 			} catch (GGAPIEntityException e1) {
 				throw new GGAPIEngineException(e);
 			}
 			if(log.isDebugEnabled()) {
-				log.warn("[Domain ["+this.domain.getEntity().getValue1().domain()+"]] "+caller.toString()+" The error :", e);
+				log.warn("[Domain ["+this.domain.getDomain()+"]] "+caller.toString()+" The error :", e);
 			}
 			GGAPIException.processException(e);
 			//should be never reached

@@ -115,7 +115,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 		
 		GGAPIChallengeAuthenticatorInfos challengeInfos = GGAPIChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entity.getClass());
 
-		GGAPIMethod method = caller.getAccessRule().getOperation().getMethod();
+		GGAPIMethod method = caller.getMethod();
 	
 		if( method  == GGAPIMethod.create) {
 			this.getKey(caller, entity, uuid, challengeInfos, realmName);
@@ -140,8 +140,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 				challengeInfos.keyLifeTimeUnit(),
 				GGAPIEntityHelper.getOwnerId(entity), 
 				caller.getRequestedTenantId(), 
-				this.engine.getTenantsDomain(), 
-				this.engine.getServicesRegistry(), 
+				this.engine, 
 				challengeInfos.encryptionMode(), 
 				challengeInfos.encryptionPadding(), 
 				challengeInfos.signatureAlgorithm());
@@ -170,7 +169,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 			Map<String, String> customParameters, String uuid) {
 
 		IGGAPIServiceCommand command = (event) -> {
-			IGGAPIService authenticatorService = this.engine.getServicesRegistry().getService(this.domain.getDomain());
+			IGGAPIService authenticatorService = this.engine.getService(this.domain.getDomain());
 			IGGAPIServiceResponse getAuthenticatorResponse = authenticatorService.getEntity(caller, uuid,
 					new HashMap<String, String>());
 	
@@ -196,7 +195,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 			Map<String, String> customParameters, String uuid) {
 		
 		IGGAPIServiceCommand command = (event) -> {
-			IGGAPIService authenticatorService = this.engine.getServicesRegistry().getService(this.domain.getDomain());
+			IGGAPIService authenticatorService = this.engine.getService(this.domain.getDomain());
 			IGGAPIServiceResponse getAuthenticatorResponse = authenticatorService.getEntity(caller, uuid,
 					new HashMap<String, String>());
 	
@@ -208,14 +207,14 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 			
 			Object entity = getAuthenticatorResponse.getResponse();
 			
-			GGAPIChallengeAuthenticatorInfos infos = GGAPIChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(this.domain.getEntity().getValue0());
+			GGAPIChallengeAuthenticatorInfos infos = GGAPIChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(this.domain.getEntityClass());
 			
 			GGAPIKeyHelper.revokeAllForOwner(
 					uuid+GGAPIChallengeAuthentication.CHALLENGE_KEY_REALM_NAME_PREFIX, 
 					caller.getTenantId(), 
 					GGAPIEntityHelper.getOwnerId(entity), 
 					infos.key(), 
-					this.engine.getServicesRegistry());
+					this.engine);
 			IGGAPIKeyRealm key;
 			key = GGAPIKeyHelper.getKey(
 					uuid+GGAPIChallengeAuthentication.CHALLENGE_KEY_REALM_NAME_PREFIX,
@@ -227,8 +226,7 @@ public class GGAPIChallengeAuthentication extends AbstractGGAPIAuthentication {
 					infos.keyLifeTimeUnit(),
 					GGAPIEntityHelper.getOwnerId(entity), 
 					caller.getRequestedTenantId(), 
-					this.engine.getTenantsDomain(), 
-					this.engine.getServicesRegistry(), 
+					this.engine, 
 					infos.encryptionMode(), 
 					infos.encryptionPadding(), 
 					infos.signatureAlgorithm());

@@ -46,15 +46,15 @@ public class GGAPISpringAuthorizationFilter extends GGAPISpringHttpApiFilter {
 	protected HttpServletRequest doFilter(HttpServletRequest request, HttpServletResponse response) throws GGAPIException {
 		IGGAPICaller caller = (IGGAPICaller) request.getAttribute(GGAPICallerFilter.CALLER_ATTRIBUTE_NAME);
 		IGGAPIDomain domain = caller.getDomain();
-		if( caller.getAccessRule().getAccess() != GGAPIServiceAccess.anonymous ) {
+		if( caller.getAccess() != GGAPIServiceAccess.anonymous ) {
 			byte[] authorizationRaw = this.security.decodeAuthorizationFromRequest(request, caller);
 			if( authorizationRaw != null && authorizationRaw.length > 0 ) {
 				Object authorization = this.security.decodeRawAuthorization(authorizationRaw, caller);
 				if( authorization != null ) {
 					if( GGAPIEntityAuthenticatorHelper.isAuthenticator(authorization.getClass()) ) {		
 						GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(authorization);
-						Optional<IGGAPIDomain> authorizationsDomain = this.engine.getDomainsRegistry().getDomains().stream().filter(d -> {
-							return d.getEntity().getValue0().equals(authorization.getClass());
+						Optional<IGGAPIDomain> authorizationsDomain = this.engine.getDomains().stream().filter(d -> {
+							return d.getEntityClass().equals(authorization.getClass());
 						}).findFirst();
 						
 						if( authorizationsDomain.isPresent() ) {

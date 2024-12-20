@@ -67,7 +67,7 @@ public abstract class GGAPIAbstractInterfaceSpringRest extends GGAPIInterfaceSpr
   @Override
   public void start() throws GGAPIException {
     try {
-      this.entityClass = this.domain.getEntity().getValue0();
+      this.entityClass = this.domain.getEntityClass();
       this.createRequestMappings();
       this.createCustomMappings();
       this.createCustomMappings(this.requestMappingHandlerMapping);

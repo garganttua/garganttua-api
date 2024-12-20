@@ -5,8 +5,8 @@ import java.util.Map;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterfacesRegistry;
-import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
-import com.garganttua.api.spec.security.authenticator.IGGAPIAuthenticatorServicesRegistry;
+import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
+import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
 public interface IGGAPISecurityEngine {
 	
@@ -30,10 +30,6 @@ public interface IGGAPISecurityEngine {
 
 	Object decodeRawAuthorization(byte[] authorizationRaw, IGGAPICaller caller);
 
-	IGGAPIAuthenticationService getAuthenticationService();
-	
-	IGGAPIAuthenticatorServicesRegistry getAuthenticatorServicesRegistry();
-
 	boolean isStorableAuthorization(Object authorization);
 
 	void authenticatorEntitySecurityPreProcessing(IGGAPICaller caller, Object entity,
@@ -41,5 +37,7 @@ public interface IGGAPISecurityEngine {
 	
 	void authenticatorEntitySecurityPostProcessing(IGGAPICaller caller, Object entity,
 			Map<String, String> params) throws GGAPIException;
+
+	IGGAPIServiceResponse authenticate(IGGAPIAuthenticationRequest request);
 
 }

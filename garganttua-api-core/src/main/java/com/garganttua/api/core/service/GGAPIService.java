@@ -78,7 +78,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCreation();}, command, customParameters, GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowCreation();}, command, customParameters, GGAPIEntityOperation.createOne(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadAll();}, command, customParameters, GGAPIEntityOperation.readAll(this.domain.getDomain(), this.domain.getEntity().getValue0()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadAll();}, command, customParameters, GGAPIEntityOperation.readAll(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
 	@Override
@@ -152,7 +152,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadOne();}, command, customParameters, GGAPIEntityOperation.readOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowReadOne();}, command, customParameters, GGAPIEntityOperation.readOne(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
 	@Override
@@ -167,7 +167,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowUpdateOne();}, command, customParameters, GGAPIEntityOperation.updateOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowUpdateOne();}, command, customParameters, GGAPIEntityOperation.updateOne(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
 	@Override
@@ -181,7 +181,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteOne();}, command, customParameters, GGAPIEntityOperation.deleteOne(this.domain.getDomain(), this.domain.getEntity().getValue0()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteOne();}, command, customParameters, GGAPIEntityOperation.deleteOne(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
 	@Override
@@ -198,7 +198,7 @@ public class GGAPIService implements IGGAPIService {
 			return event;
 		};
 		
-		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.deleteAll(this.domain.getDomain(), this.domain.getEntity().getValue0()));
+		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.deleteAll(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
 	protected IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation) {
@@ -206,7 +206,7 @@ public class GGAPIService implements IGGAPIService {
 		try {
 			if (allowed.isAllowed()) {
 				
-				if( !caller.isSuperTenant() && !this.checkTenantIdIsPresent(caller) && this.domain.isTenantIdMandatoryForOperation(caller.getAccessRule().getOperation())) {
+				if( !caller.isSuperTenant() && !this.checkTenantIdIsPresent(caller) && this.domain.isTenantIdMandatoryForOperation(caller.getOperation())) {
 					event.setOut("TenantId not provided");
 					event.setCode(GGAPIServiceResponseCode.CLIENT_ERROR);
 				} else {
@@ -247,5 +247,10 @@ public class GGAPIService implements IGGAPIService {
 		if( !caller.isAnonymous() && (caller.getTenantId() == null || caller.getTenantId().isEmpty()) )
 			return false;
 		return true;
+	}
+
+	@Override
+	public Class<?> getDomainEntityClass() {
+		return this.domain.getEntityClass();
 	}
 }
