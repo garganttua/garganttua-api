@@ -23,6 +23,10 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-spec</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-objects-mapper</artifactId>
+		</dependency>
 	</dependencies>
 	<modules>
 		<module>garganttua-api-native-image-config</module>

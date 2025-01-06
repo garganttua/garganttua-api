@@ -38,10 +38,12 @@ import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@NoArgsConstructor
 @GGBean(name = "SpringMongoDao", strategy = GGBeanLoadingStrategy.newInstance)
 public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 

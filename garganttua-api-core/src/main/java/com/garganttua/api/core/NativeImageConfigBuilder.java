@@ -58,8 +58,8 @@ public class NativeImageConfigBuilder {
 		ResourceConfig.addResource(resourceConfigFile, GenericGGAPIDto.class);
 		ResourceConfig.addResource(resourceConfigFile, GenericGGAPIEntity.class);
 		ResourceConfig.addResource(resourceConfigFile, GenericGGAPITenantEntity.class);
-		ResourceConfig.addResource(resourceConfigFile, GGAPIAuthorization.class);
 		ResourceConfig.addResource(resourceConfigFile, GGAPISignableAuthorization.class);
+		ResourceConfig.addResource(resourceConfigFile, GGAPIAuthorization.class);
 		ResourceConfig.addResource(resourceConfigFile, GGAPIKeyRealm.class);
 
 	}
@@ -71,7 +71,10 @@ public class NativeImageConfigBuilder {
 
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
 		
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIKeyRealm.class).queryAllDeclaredConstructors(true).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
 		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericGGAPIDto.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPISignableAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
 		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGApiEngine.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
 				.method("addAccessRule", IGGAPIAccessRule.class)
 				.method("addServicesInfos", IGGAPIAccessRule.class, List.class)

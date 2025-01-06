@@ -26,9 +26,6 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationValidateAg
 import lombok.Getter;
 
 @GGAPIEntityOwned
-//@GGAPIAuthenticator(
-//		authentications = GGAPIAuthorizationAuthentication.class
-//	)
 public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 
 	public GGAPIAuthorization(String uuid, String id, String tenantId, String ownerId, List<String> authorities,
