@@ -10,6 +10,7 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
@@ -56,5 +57,7 @@ public interface IGGAPIEngine {
 	Collection<IGGAPIService> getServices();
 
 	IGGAPIEntityFactory<?> getFactory(String domainName);
+
+	IGGAPIRepository getRepository(String domainName);
 
 }

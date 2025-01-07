@@ -29,6 +29,18 @@
 		</repository>
 	</repositories>
 
+<!--	<pluginRepositories>-->
+<!--		<pluginRepository>-->
+<!--			<id>github garganttua tooling</id>-->
+<!--			<name>github garganttua tooling</name>-->
+<!--			<url>https://maven.pkg.github.com/garganttua/garganttua-tooling</url>-->
+<!--			<layout>default</layout>-->
+<!--			<snapshots>-->
+<!--				<enabled>false</enabled>-->
+<!--			</snapshots>-->
+<!--		</pluginRepository>-->
+<!--	</pluginRepositories>-->
+
 	<distributionManagement>
 		<snapshotRepository>
 			<id>github garganttua api</id>

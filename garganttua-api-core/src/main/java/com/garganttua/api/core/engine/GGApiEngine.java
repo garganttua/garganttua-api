@@ -240,4 +240,9 @@ public class GGApiEngine implements IGGAPIEngine {
 	public IGGAPIEntityFactory<?> getFactory(String domainName) {
 		return this.factoriesRegistry.getFactory(domainName);
 	}
+
+	@Override
+	public IGGAPIRepository getRepository(String domainName) {
+		return this.repositoriesRegistry.getRepository(domainName);
+	}
 }

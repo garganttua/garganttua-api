@@ -288,7 +288,6 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 				query.addCriteria(geolocCriteria);
 		}
 		
-		
 		return this.mongo.count(query, this.dtoClass);
 	}
 
@@ -309,7 +308,7 @@ public class GGAPIMongoRepository implements IGGAPIDao<Object> {
 					Field field = GGObjectReflectionHelper.getField(this.dtoClass, templist.get(0).destinationFieldAddress().getElement(templist.get(0).destinationFieldAddress().length()-1));
 					
 					if( templist.size()>0 ) {
-						this.mongo.indexOps(this.dtoClass).ensureIndex(new GeospatialIndex(field.getName()).typed(GeoSpatialIndexType.GEO_2DSPHERE) );
+						this.mongo.indexOps(this.dtoClass).ensureIndex(new GeospatialIndex(field.getName()).typed(GeoSpatialIndexType.GEO_2DSPHERE));
 					}
 					
 				} catch (GGMapperException e) {
