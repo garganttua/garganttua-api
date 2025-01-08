@@ -16,8 +16,25 @@ import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPI
 import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeDelete;
 import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethod;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethodProvider;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityEngine;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityGotFromRepository;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityHidden;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityId;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityLocation;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityRepository;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethod;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethodProvider;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityShare;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperOwner;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperTenant;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
+import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorization;
@@ -38,14 +55,17 @@ import lombok.extern.slf4j.Slf4j;
 public class NativeImageConfigBuilder {
 
 	public static void createConfiguration(String pathToConfiguration, List<String> packages) throws IOException {
-		log.atInfo().log("Creation of reflection configuration in directory "+pathToConfiguration);
-		
 		File reflectConfigFile = NativeImageConfig.getReflectConfigFile(pathToConfiguration);
-		if( !reflectConfigFile.exists() ) reflectConfigFile.createNewFile();
-		
+		if (!reflectConfigFile.exists()) {
+			log.info("Creation of reflection configuration in directory " + pathToConfiguration);
+			reflectConfigFile.createNewFile();
+		}
+
 		File resourceConfigFile = NativeImageConfig.getResourceConfigFile(pathToConfiguration);
-		if (!resourceConfigFile.exists())
+		if (!resourceConfigFile.exists()) {
+			log.info("Creation of resources configuration in directory " + pathToConfiguration);
 			resourceConfigFile.createNewFile();
+		}
 		
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
 
@@ -135,23 +155,23 @@ public class NativeImageConfigBuilder {
 		
 		entryBuilder.allDeclaredFields(true);
 		
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityUuid.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityMandatory.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityUnicity.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityTenantId.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityId.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityAuthorizeUpdate.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySuperTenant.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySuperOwner.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityOwnerId.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityLocation.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityHidden.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityShare.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityGotFromRepository.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySaveMethodProvider.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityDeleteMethodProvider.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityRepository.class);
-//		entryBuilder.fieldsAnnotatedWith(GGAPIEntityEngine.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityUuid.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityMandatory.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityUnicity.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityTenantId.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityId.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityAuthorizeUpdate.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySuperTenant.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySuperOwner.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityOwnerId.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityLocation.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityHidden.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityShare.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityGotFromRepository.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySaveMethodProvider.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityDeleteMethodProvider.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityRepository.class);
+		entryBuilder.fieldsAnnotatedWith(GGAPIEntityEngine.class);
 		
 		return entryBuilder.build();
 	}

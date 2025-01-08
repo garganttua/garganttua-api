@@ -1,12 +1,17 @@
-package com.garganttua.api.daos.spring.mongodb;
+package com.garganttua.api.security.authentication.interfaces.spring.rest;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
+import com.garganttua.api.interfaces.spring.rest.GGAPIInterfaceSpringCustomizable;
+import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.nativve.image.config.resources.ResourceConfig;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 public class NativeImageConfigBuilder {
 
@@ -19,8 +24,8 @@ public class NativeImageConfigBuilder {
 		File resourceConfigFile = NativeImageConfig.getResourceConfigFile(path);
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
-		
-		ResourceConfig.addResource(resourceConfigFile, GGAPIMongoRepository.class);
+
+		ResourceConfig.addResource(resourceConfigFile, GGAPISpringAuthenticationRestInterface.class);
 
 	}
 
@@ -30,9 +35,14 @@ public class NativeImageConfigBuilder {
 			reflectConfigFile.createNewFile();
 
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
-		
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIMongoRepository.class).field("mongo").constructor(GGAPIMongoRepository.class.getDeclaredConstructor()).build());
-		
+
+		reflectConfig.addEntry(
+				ReflectConfigEntryBuilder.builder(GGAPISpringAuthenticationRestInterface.class)
+					.constructor(GGAPISpringAuthenticationRestInterface.class.getDeclaredConstructor())
+					.method(GGAPISpringAuthenticationRestInterface.class.getMethod("authenticate", IGGAPICaller.class, GGAPISpringRestAuthenticationRequest.class))
+					.build());
+
+
 		reflectConfig.saveToFile(reflectConfigFile);
 	}
 }
