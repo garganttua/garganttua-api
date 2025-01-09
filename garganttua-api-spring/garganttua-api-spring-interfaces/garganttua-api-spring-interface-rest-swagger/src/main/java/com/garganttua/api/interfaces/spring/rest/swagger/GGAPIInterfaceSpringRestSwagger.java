@@ -19,12 +19,15 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.entity.GGAPIEntityDocumentationInfos;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
+import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.github.victools.jsonschema.generator.Option;
@@ -95,16 +98,15 @@ public class GGAPIInterfaceSpringRestSwagger {
 		GGAPIEntityDocumentationInfos documentation = domain.getDocumentation();
 
 		String tagName = "Domain " + domain.getDomain().toLowerCase();
-		Tag tag = new Tag().name(tagName)
-				.description(this.getDocumentation(domain));
+		Tag tag = new Tag().name(tagName).description(this.getDocumentation(domain));
 		this.openApi.addTagsItem(tag);
 
 		String entityClassSchema = this.test(entityClass);
 
 		OpenAPI templateOpenApi = this.openApiHelper.getOpenApi(domain.getDomain().toLowerCase(),
 				entityClass.getSimpleName(), entityClassSchema);
-		
-		Map<String, PathItem> pathItems= new HashMap<String, PathItem>();
+
+		Map<String, PathItem> pathItems = new HashMap<String, PathItem>();
 
 		this.openApi.getComponents().addSchemas(entityClass.getSimpleName(),
 				templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()));
@@ -114,106 +116,109 @@ public class GGAPIInterfaceSpringRestSwagger {
 				templateOpenApi.getComponents().getSchemas().get("SortQuery"));
 		this.openApi.getComponents().addSchemas("FilterQuery",
 				templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
-		
-		if( domain.isAuthenticatorEntity() ) {
+
+		if (domain.isAuthenticatorEntity()) {
 			this.openApi.getComponents().addSchemas("AuthenticationRequest",
 					templateOpenApi.getComponents().getSchemas().get("AuthenticationRequest"));
-			this.openApi.getComponents().addSchemas(new String(entityClass.getSimpleName()+"AuthenticationResponse"),
-					templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()+"AuthenticationResponse"));
+			this.openApi.getComponents().addSchemas(new String(entityClass.getSimpleName() + "AuthenticationResponse"),
+					templateOpenApi.getComponents().getSchemas()
+							.get(entityClass.getSimpleName() + "AuthenticationResponse"));
 		}
-		
+
 		Map<GGAPIEntityOperation, IGGAPIServiceInfos> infos = domain.getServiceInfos();
 
 		infos.forEach((operation, info) -> {
 			PathItem pathItem = pathItems.get(info.getPath());
-			if( pathItem == null ) {
+			if (pathItem == null) {
 				pathItem = new PathItem();
 				pathItems.put(info.getPath(), pathItem);
 			}
 
-			if( !info.getOperation().isCustom() ) {
-				this.ceateStandardDocumentation(domain, domainName, documentation, templateOpenApi, pathItem, operation, info);
-			} else {
-				this.createCustomDocumentation(domain, domainName, documentation, pathItem, operation, info, tagName);
+			try {
+				if (!info.getOperation().isCustom()) {
+					this.ceateStandardDocumentation(domain, domainName, documentation, templateOpenApi, pathItem,
+							operation, info);
+				} else {
+					this.createCustomDocumentation(domain, domainName, documentation, pathItem, operation, info,
+							tagName);
+				}
+			} catch (GGAPIException e) {
+				throw new RuntimeException(e);
 			}
 		});
 	}
 
 	private void createCustomDocumentation(IGGAPIDomain domain, String domainName,
-			GGAPIEntityDocumentationInfos documentation, PathItem pathItemBase,
-			GGAPIEntityOperation operation, IGGAPIServiceInfos info, String tagName) {
+			GGAPIEntityDocumentationInfos documentation, PathItem pathItemBase, GGAPIEntityOperation operation,
+			IGGAPIServiceInfos info, String tagName) throws GGAPIException {
 		GGAPIServiceAccess access = domain.getAccess(info);
 		String authority = domain.getAuthority(info);
-		String description = this.getOperationDescription(domainName,
-				access, !(authority==null||authority.isEmpty()), operation, documentation == null ? null : documentation.readAll(), authority);
-		
+		String description = this.getOperationDescription(domainName, access,
+				!(authority == null || authority.isEmpty()), operation,
+				documentation == null ? null : documentation.readAll(), authority, domain.getEntityClass());
+
 		String entityClassSchema = this.test(info.getOperation().getEntity());
-		
+
 		Operation httpOperation = new Operation();
 		httpOperation.addTagsItem(tagName);
 		Operation httpOperationDescription = httpOperation.description(description);
-		
+
 		PathItem pathItem = this.getPathItem(pathItemBase, httpOperationDescription, info.getOperation().getMethod());
-		
+
 		this.openApi.path(info.getPath(), pathItem);
-		
+
 		this.setAdditionalInfos(domain, operation, httpOperation);
-				
-		for( Parameter param: info.getMethod().getParameters()) {
+
+		for (Parameter param : info.getMethod().getParameters()) {
 			this.handleParameter(param, httpOperationDescription);
 		}
 	}
-	
+
 	private void handleParameter(Parameter param, Operation operation) {
-        List<Annotation> annotations = List.of(param.getAnnotations());
+		List<Annotation> annotations = List.of(param.getAnnotations());
 
-        for (Annotation annotation : annotations) {
-            if (annotation instanceof RequestParam) {
-            	RequestParam rp = (RequestParam) annotation;
-                QueryParameter queryParam = new QueryParameter();
-                queryParam.name(rp.name())
-                        .required(rp.required())
-                        .schema(new StringSchema());
-                operation.addParametersItem(queryParam);
+		for (Annotation annotation : annotations) {
+			if (annotation instanceof RequestParam) {
+				RequestParam rp = (RequestParam) annotation;
+				QueryParameter queryParam = new QueryParameter();
+				queryParam.name(rp.name()).required(rp.required()).schema(new StringSchema());
+				operation.addParametersItem(queryParam);
 
-            } else if (annotation instanceof PathVariable) {
-            	PathVariable pv = (PathVariable) annotation;
-                PathParameter pathParam = new PathParameter();
-                pathParam.name(pv.name())
-                        .required(pv.required())
-                        .schema(new StringSchema());
-                operation.addParametersItem(pathParam);
+			} else if (annotation instanceof PathVariable) {
+				PathVariable pv = (PathVariable) annotation;
+				PathParameter pathParam = new PathParameter();
+				pathParam.name(pv.name()).required(pv.required()).schema(new StringSchema());
+				operation.addParametersItem(pathParam);
 
-            } else if (annotation instanceof RequestHeader) {
-            	RequestHeader rh = (RequestHeader) annotation;
-            	HeaderParameter headerParam = new HeaderParameter();
-                headerParam.in("header")
-                        .name(rh.name())
-                        .required(rh.required())
-                        .schema(new StringSchema());
-                operation.addParametersItem(headerParam);
+			} else if (annotation instanceof RequestHeader) {
+				RequestHeader rh = (RequestHeader) annotation;
+				HeaderParameter headerParam = new HeaderParameter();
+				headerParam.in("header").name(rh.name()).required(rh.required()).schema(new StringSchema());
+				operation.addParametersItem(headerParam);
 
-            } else if (annotation instanceof RequestBody) {
-                RequestBody requestBody = new RequestBody();
-                operation.setRequestBody(requestBody);
-            }
-        }
-    }
+			} else if (annotation instanceof RequestBody) {
+				RequestBody requestBody = new RequestBody();
+				operation.setRequestBody(requestBody);
+			}
+		}
+	}
 
-
-	private void ceateStandardDocumentation(IGGAPIDomain domain, String domainName, GGAPIEntityDocumentationInfos documentation,
-			OpenAPI templateOpenApi, PathItem pathItemBase, GGAPIEntityOperation operation, IGGAPIServiceInfos info) {
+	private void ceateStandardDocumentation(IGGAPIDomain domain, String domainName,
+			GGAPIEntityDocumentationInfos documentation, OpenAPI templateOpenApi, PathItem pathItemBase,
+			GGAPIEntityOperation operation, IGGAPIServiceInfos info) throws GGAPIException {
 		GGAPIServiceAccess access = domain.getAccess(info);
 		String authority = domain.getAuthority(info);
-		String description = this.getOperationDescription(domainName,
-				access, !(authority==null||authority.isEmpty()), operation, documentation == null ? null : documentation.readAll(), authority);
+		String description = this.getOperationDescription(domainName, access,
+				!(authority == null || authority.isEmpty()), operation,
+				documentation == null ? null : documentation.readAll(), authority, domain.getEntityClass());
 
-		Operation httpOperation = this.getHttpOperationFromTemplate(templateOpenApi, info.getPath(), info.getOperation().getMethod());
+		Operation httpOperation = this.getHttpOperationFromTemplate(templateOpenApi, info.getPath(),
+				info.getOperation().getMethod());
 
 		Operation httpOperationDescription = httpOperation.description(description);
-		
+
 		PathItem pathItem = this.getPathItem(pathItemBase, httpOperationDescription, info.getOperation().getMethod());
-		
+
 		this.openApi.path(info.getPath(), pathItem);
 
 		if (!(domain.isTenantEntity() && info.getOperation().getMethod() == GGAPIMethod.create)) {
@@ -258,39 +263,56 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void setAdditionalInfos(IGGAPIDomain domain, GGAPIEntityOperation entityOperation, Operation operation) {
 		this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(entityOperation));
-		if( entityOperation.getMethod() != GGAPIMethod.authenticate )
+		if (entityOperation.getMethod() != GGAPIMethod.authenticate)
 			this.addRequestedTenantIdHeader(operation);
 		this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(entityOperation));
 	}
 
 	private String getOperationDescription(String domainName, GGAPIServiceAccess access, boolean hasAuthority,
-			GGAPIEntityOperation operation, String documentation, String authority) {
-		String description = "<b>Access </b>: [" + access + "] <br> <b>Authority</b>: ["
-				+ (hasAuthority == false ? "none"
-						: authority)
-				+ "]";
+			GGAPIEntityOperation operation, String documentation, String authority, Class<?> entityClass)
+			throws GGAPIException {
+
+		String description = "<br><h2><strong><u><b>Method informations</b></u></strong></h2><br>";
+
+		description += "<br><h3><strong><u><b>Security informations</b></u></strong></h3><br>";
+		description += "<b>Access </b>: [" + access + "] <br> <b>Authority</b>: ["
+				+ (hasAuthority == false ? "none" : authority) + "]";
+
+		if (operation.getMethod() == GGAPIMethod.authenticate) {
+			GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entityClass);
+
+			description += "<br><h3><strong><u><b>Authentication informations</b></u></strong></h3><br>";
+			description += "<b>Scope </b> [" + infos.scope() + "] <br>";
+			description += "<b>Authentication Types</b> [" + List.of(infos.authenticationTypes()) + "] <br> ";
+			description += "<b>Authorization Key Algorithm</b> [" + infos.authorizationKeyAlgorithm() + "] <br>";
+			description += "<b>Authorization Key Life Time</b> [" + infos.authorizationKeyLifeTime() + "] ";
+			description += "<b>Unit</b> [" + infos.authorizationKeyLifeTimeUnit() + "] <br>";
+			description += "<b>Authorization Key Type</b> [" + infos.authorizationKeyType() + "] <br>";
+			description += "<b>Authorization Key Usage</b> [" + infos.authorizationKeyUsage() + "] <br>";
+			description += "<b>Authorization Type</b> [" + infos.authorizationType() + "] <br>";
+			description += "<b>Authorization Life Time</b> [" + infos.authorizationLifeTime() + "] ";
+			description += "<b>Unit</b> [" + infos.authorizationLifeTimeUnit() + "] <br>";
+		}
+
 		if (documentation != null && !documentation.isEmpty()) {
 			description += "<br><h3><strong><u><b>Documentation</b></u></strong></h3><br>" + documentation + "<br>";
 		}
 		return description;
 	}
 
-	private String getDocumentation(IGGAPIDomain domain) {
-		String authenticatorEntity = String.valueOf(domain.isAuthenticatorEntity());
-		String description = "<b>Public Entity</b> [" + domain.isPublicEntity() + "] <br> "
-				+ "<b>Shared Entity</b> ["
-				+ (domain.isSharedEntity() ? "false"
-						: domain.getShareFieldAddress())
-				+ "] <br> " + "<b>Hiddenable Entity</b> [" + domain.isHiddenableEntity()
-				+ "] <br> " + "<b>Geolocalized</b> ["
-				+ (!domain.isGeolocalizedEntity() ? "false"
-						: domain.getLocationFieldAddress())
-				+ "]<br>" + "<b>Onwed Entity</b> [" + domain.isOwnedEntity() + "] <br> "
-				+ "<b>Owner Entity</b> [" + domain.isOwnerEntity() + "] <br> "
-				+ "<b>Tenant Entity</b> [" + domain.isTenantEntity() + "] <br> "
-				+ "<b>Authenticator Entity</b> [" + authenticatorEntity + "] <b> Scope </b> [" + domain.getAuthenticatorScope() + "] <br>"
+	private String getDocumentation(IGGAPIDomain domain) throws GGAPIException {
+
+		String description = "<br><h2><strong><u><b>Domain informations</b></u></strong></h2><br>"
+				+ "<br><h3><strong><u><b>Entities informations</b></u></strong></h3><br>" + "<b>Public Entity</b> ["
+				+ domain.isPublicEntity() + "] <br> " + "<b>Shared Entity</b> ["
+				+ (domain.isSharedEntity() ? "false" : domain.getShareFieldAddress()) + "] <br> "
+				+ "<b>Hiddenable Entity</b> [" + domain.isHiddenableEntity() + "] <br> " + "<b>Geolocalized</b> ["
+				+ (!domain.isGeolocalizedEntity() ? "false" : domain.getLocationFieldAddress()) + "]<br>"
+				+ "<b>Onwed Entity</b> [" + domain.isOwnedEntity() + "] <br> " + "<b>Owner Entity</b> ["
+				+ domain.isOwnerEntity() + "] <br> " + "<b>Tenant Entity</b> [" + domain.isTenantEntity() + "] <br> "
+				+ "<br><h3><strong><u><b>Security and access informations</b></u></strong></h3><br>"
 				+ "<b>Authorization protocols </b> [" + domain.getAuthorizationProtocols() + "] <br> "
-				+ "<b>Authorizations </b> [" + domain.getAuthorizations() + "] <br> ";;
+				+ "<b>Authorizations </b> [" + domain.getAuthorizations() + "] <br> ";
 
 		if (domain.getDocumentation() != null && domain.getDocumentation().general() != null
 				&& !domain.getDocumentation().general().isEmpty()) {
@@ -303,7 +325,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 	private void addOwnerIdHeader(Operation operation, boolean tenantIdMandatoryForOperation) {
 		if (tenantIdMandatoryForOperation) {
 			List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
-			if( params == null ) {
+			if (params == null) {
 				params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 			}
 			HeaderParameter param = new HeaderParameter();
@@ -317,7 +339,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void addCustomParamsPathParameter(Operation operation) {
 		List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
-		if( params == null ) {
+		if (params == null) {
 			params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 		}
 		QueryParameter param = new QueryParameter();
@@ -330,7 +352,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void addRequestedTenantIdHeader(Operation operation) {
 		List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
-		if( params == null ) {
+		if (params == null) {
 			params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 		}
 		HeaderParameter param = new HeaderParameter();
@@ -343,7 +365,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void addTenantIdHeader(Operation operation, boolean mandatory) {
 		List<io.swagger.v3.oas.models.parameters.Parameter> params = operation.getParameters();
-		if( params == null ) {
+		if (params == null) {
 			params = new ArrayList<io.swagger.v3.oas.models.parameters.Parameter>();
 		}
 		HeaderParameter param = new HeaderParameter();
@@ -362,8 +384,7 @@ public class GGAPIInterfaceSpringRestSwagger {
 				.withRequiredCheck(method -> method.getAnnotationConsideringFieldAndGetter(NotNull.class) != null);
 		configBuilder.forFields()
 				.withRequiredCheck(field -> field.getAnnotationConsideringFieldAndGetter(Nullable.class) == null)
-				.withRequiredCheck(
-						field -> field.getAnnotation(GGAPIEntityMandatory.class) != null)
+				.withRequiredCheck(field -> field.getAnnotation(GGAPIEntityMandatory.class) != null)
 				.withArrayUniqueItemsResolver(scope -> scope.getType().getErasedType() == (List.class) ? true : null);
 		SchemaGeneratorConfig config = configBuilder.with(Option.EXTRA_OPEN_API_FORMAT_VALUES).with(module)
 				.without(Option.FLATTENED_ENUMS_FROM_TOSTRING).build();
@@ -372,19 +393,19 @@ public class GGAPIInterfaceSpringRestSwagger {
 		JsonNode jsonSchema = generator.generateSchema(clazz);
 		return jsonSchema.toString();
 	}
-	
+
 	public List<String> extractSubstringsBetweenBraces(String input) {
-        List<String> substrings = new ArrayList<>();
-        if (input == null || input.isEmpty()) {
-            return substrings;
-        }
+		List<String> substrings = new ArrayList<>();
+		if (input == null || input.isEmpty()) {
+			return substrings;
+		}
 
-        Pattern pattern = Pattern.compile("\\{([^}]+)\\}");
-        Matcher matcher = pattern.matcher(input);
+		Pattern pattern = Pattern.compile("\\{([^}]+)\\}");
+		Matcher matcher = pattern.matcher(input);
 
-        while (matcher.find()) {
-            substrings.add(matcher.group(1));
-        }
-        return substrings;
-    }
+		while (matcher.find()) {
+			substrings.add(matcher.group(1));
+		}
+		return substrings;
+	}
 }
