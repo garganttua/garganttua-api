@@ -35,6 +35,6 @@ public @interface GGAPIAuthenticator {
 
 	int authorizationKeyLifeTime() default 60;
 
-  GGAPIAuthenticatorScope scope() default GGAPIAuthenticatorScope.tenant;
+	GGAPIAuthenticatorScope scope() default GGAPIAuthenticatorScope.tenant;
 
 }

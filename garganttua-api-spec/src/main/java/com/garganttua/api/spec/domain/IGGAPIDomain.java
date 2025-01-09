@@ -12,6 +12,7 @@ import com.garganttua.api.spec.dto.GGAPIDtoInfos;
 import com.garganttua.api.spec.entity.GGAPIEntityDocumentationInfos;
 import com.garganttua.api.spec.entity.annotations.GGAPIUnicityScope;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
+import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorScope;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.GGObjectAddress;
@@ -121,4 +122,6 @@ public interface IGGAPIDomain {
 	String getAuthority(IGGAPIServiceInfos info);
 
 	Map<GGAPIEntityOperation, IGGAPIServiceInfos> getServiceInfos();
+
+	GGAPIAuthenticatorScope getAuthenticatorScope();
 }

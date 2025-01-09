@@ -115,7 +115,15 @@ public class GGAPIInterfaceSpringRestSwagger {
 		this.openApi.getComponents().addSchemas("FilterQuery",
 				templateOpenApi.getComponents().getSchemas().get("FilterQuery"));
 		
+		if( domain.isAuthenticatorEntity() ) {
+			this.openApi.getComponents().addSchemas("AuthenticationRequest",
+					templateOpenApi.getComponents().getSchemas().get("AuthenticationRequest"));
+			this.openApi.getComponents().addSchemas(new String(entityClass.getSimpleName()+"AuthenticationResponse"),
+					templateOpenApi.getComponents().getSchemas().get(entityClass.getSimpleName()+"AuthenticationResponse"));
+		}
+		
 		Map<GGAPIEntityOperation, IGGAPIServiceInfos> infos = domain.getServiceInfos();
+
 		infos.forEach((operation, info) -> {
 			PathItem pathItem = pathItems.get(info.getPath());
 			if( pathItem == null ) {
@@ -250,7 +258,8 @@ public class GGAPIInterfaceSpringRestSwagger {
 
 	private void setAdditionalInfos(IGGAPIDomain domain, GGAPIEntityOperation entityOperation, Operation operation) {
 		this.addTenantIdHeader(operation, domain.isTenantIdMandatoryForOperation(entityOperation));
-		this.addRequestedTenantIdHeader(operation);
+		if( entityOperation.getMethod() != GGAPIMethod.authenticate )
+			this.addRequestedTenantIdHeader(operation);
 		this.addOwnerIdHeader(operation, domain.isOwnerIdMandatoryForOperation(entityOperation));
 	}
 
@@ -279,7 +288,9 @@ public class GGAPIInterfaceSpringRestSwagger {
 				+ "]<br>" + "<b>Onwed Entity</b> [" + domain.isOwnedEntity() + "] <br> "
 				+ "<b>Owner Entity</b> [" + domain.isOwnerEntity() + "] <br> "
 				+ "<b>Tenant Entity</b> [" + domain.isTenantEntity() + "] <br> "
-				+ "<b>Authenticator Entity</b> [" + authenticatorEntity + "] <br> ";
+				+ "<b>Authenticator Entity</b> [" + authenticatorEntity + "] <b> Scope </b> [" + domain.getAuthenticatorScope() + "] <br>"
+				+ "<b>Authorization protocols </b> [" + domain.getAuthorizationProtocols() + "] <br> "
+				+ "<b>Authorizations </b> [" + domain.getAuthorizations() + "] <br> ";;
 
 		if (domain.getDocumentation() != null && domain.getDocumentation().general() != null
 				&& !domain.getDocumentation().general().isEmpty()) {

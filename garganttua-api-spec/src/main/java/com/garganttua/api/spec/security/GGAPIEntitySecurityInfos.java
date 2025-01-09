@@ -1,13 +1,13 @@
 package com.garganttua.api.spec.security;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import com.garganttua.api.spec.GGAPIEntityOperation;
+import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorScope;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
@@ -33,6 +33,7 @@ public class GGAPIEntitySecurityInfos {
 	private boolean deleteAllAuthority;
 	private boolean countAuthority;
 	private boolean isAuthenticatorEntity;
+	private GGAPIAuthenticatorScope authenticatorScope;
 	private boolean isAuthorizationEntity;
 	private Class<?>[] authorizations;
 	private Class<?>[] authorizationProtocols;
@@ -68,6 +69,7 @@ public class GGAPIEntitySecurityInfos {
                 ", deleteAllAuthority=" + deleteAllAuthority +
                 ", countAuthority=" + countAuthority +
                 ", isAuthenticatorEntity=" + isAuthenticatorEntity +
+                ", authenticatorScope=" + authenticatorScope +
                 ", isAuthorizationEntity=" + isAuthorizationEntity +
                 ", authorizations=" + Arrays.toString(authorizations) +
                 ", authorizationProtocols=" + Arrays.toString(authorizationProtocols) +
@@ -89,6 +91,7 @@ public class GGAPIEntitySecurityInfos {
                 countAuthority == that.countAuthority &&
                 isAuthenticatorEntity == that.isAuthenticatorEntity &&
                 isAuthorizationEntity == that.isAuthorizationEntity &&
+                Objects.equals(authenticatorScope, that.authenticatorScope) &&
                 Objects.equals(creationAccess, that.creationAccess) &&
                 Objects.equals(readAllAccess, that.readAllAccess) &&
                 Objects.equals(readOneAccess, that.readOneAccess) &&
@@ -105,7 +108,7 @@ public class GGAPIEntitySecurityInfos {
     public int hashCode() {
         int result = Objects.hash(creationAccess, readAllAccess, readOneAccess, updateOneAccess, deleteOneAccess, deleteAllAccess, countAccess,
                 creationAuthority, readAllAuthority, readOneAuthority, updateOneAuthority, deleteOneAuthority, deleteAllAuthority,
-                countAuthority, isAuthenticatorEntity, isAuthorizationEntity, domainName);
+                countAuthority, isAuthenticatorEntity, isAuthorizationEntity, domainName, authenticatorScope);
         result = 31 * result + Arrays.hashCode(authorizations)+ Arrays.hashCode(authorizationProtocols);
         return result;
     }
@@ -134,7 +137,7 @@ public class GGAPIEntitySecurityInfos {
 			GGAPIServiceAccess readOneAccess, GGAPIServiceAccess updateOneAccess, GGAPIServiceAccess deleteOneAccess,
 			GGAPIServiceAccess deleteAllAccess, GGAPIServiceAccess countAccess, boolean creationAuthority,
 			boolean readAllAuthority, boolean readOneAuthority, boolean updateOneAuthority, boolean deleteOneAuthority,
-			boolean deleteAllAuthority, boolean countAuthority, boolean isAuthenticatorEntity, boolean isAuthorizationEntity,
+			boolean deleteAllAuthority, boolean countAuthority, boolean isAuthenticatorEntity, GGAPIAuthenticatorScope authenticatorScope, boolean isAuthorizationEntity,
 			Class<?>[] authorizations, Class<?>[] authorizationProtocols,
 			String domainName) {
 		this.creationAccess = creationAccess;
@@ -155,6 +158,7 @@ public class GGAPIEntitySecurityInfos {
 		this.isAuthorizationEntity = isAuthorizationEntity;
 		this.authorizations = authorizations;
 		this.authorizationProtocols = authorizationProtocols;
+		this.authenticatorScope = authenticatorScope;
 		this.domainName = domainName;
 	}
 

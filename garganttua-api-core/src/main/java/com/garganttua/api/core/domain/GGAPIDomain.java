@@ -31,6 +31,7 @@ import com.garganttua.api.spec.entity.annotations.GGAPIUnicityScope;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
 import com.garganttua.api.spec.security.IGGAPIAccessRule;
 import com.garganttua.api.spec.security.annotations.GGAPICustomServiceSecurity;
+import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorScope;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.reflection.GGObjectAddress;
@@ -221,6 +222,11 @@ public class GGAPIDomain implements IGGAPIDomain {
 	public boolean isTenantIdMandatoryForOperation(GGAPIEntityOperation operation) {
 		IGGAPIServiceInfos info = this.serviceInfos.get(operation);
 		GGAPIServiceAccess access = this.security.getAccess(info);
+		
+		if( operation.getMethod() == GGAPIMethod.authenticate && this.security.getAuthenticatorScope() == GGAPIAuthenticatorScope.tenant ) {
+			return true;
+		}
+		
 		return (!this.entity.getValue1().publicEntity()
 				&& (access == GGAPIServiceAccess.tenant || access == GGAPIServiceAccess.owner));
 	}
@@ -430,5 +436,11 @@ public class GGAPIDomain implements IGGAPIDomain {
 	@Override
 	public String getAuthority(IGGAPIServiceInfos info) {
 		return this.security.getAuthority(info);
+	}
+
+	@Override
+	public GGAPIAuthenticatorScope getAuthenticatorScope() {
+		// TODO Auto-generated method stub
+		return this.security.getAuthenticatorScope();
 	}
 }
