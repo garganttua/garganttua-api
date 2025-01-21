@@ -99,7 +99,7 @@ public class GGAPISpringSecurityRestConfiguration {
       http.authorizeHttpRequests().and().addFilterAfter(this.ownerVerifier, GGAPISpringTenantVerifierFilter.class);
       http.authorizeHttpRequests().and().addFilterAfter(this.securityProcessor, AuthorizationFilter.class);
       http.authorizeHttpRequests().and().authorizeHttpRequests().requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll();
-
+      http.authorizeHttpRequests().and().authorizeHttpRequests().requestMatchers("*/**").permitAll();
 
       return http.build();
 
