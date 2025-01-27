@@ -41,8 +41,8 @@ public class GGAPIServicesFactory {
 			
 			if( domain.getEvent() != null && !domain.getEvent().isEmpty() ) {
 				IGGAPIEventPublisher event = (IGGAPIEventPublisher) this.loader.getBeanNamed(domain.getEvent());
-				service.setEventPublisher(Optional.ofNullable(event));
 			}
+			service.setEventPublisher(Optional.ofNullable(event));
 
 			log.info("	Service added [domain {}, service {}]", domain.getDomain(), service);
 		}
