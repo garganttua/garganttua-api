@@ -11,15 +11,18 @@ import com.garganttua.api.core.domain.GGAPIDomainsFactory;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
+import com.garganttua.reflection.beans.GGBeanLoaderFactory;
+import com.garganttua.reflection.beans.IGGBeanLoader;
 
 public class GGAPIServicesFactoryTest {
 
 	@Test
 	public void test() throws GGAPIException {
+		IGGBeanLoader beanLoader = GGBeanLoaderFactory.getLoader(null, List.of("com"));
 		GGAPIDomainsFactory dof = new GGAPIDomainsFactory(List.of("com"));
 		Collection<IGGAPIDomain> domains = dof.getDomains();
 		
-		GGAPIServicesFactory daf = new GGAPIServicesFactory(domains);
+		GGAPIServicesFactory daf = new GGAPIServicesFactory(domains, beanLoader);
 		IGGAPIServicesRegistry reg = daf.getRegistry();
 
 		assertNotNull(daf);
