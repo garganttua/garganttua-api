@@ -3,13 +3,20 @@ package com.garganttua.api.core.entity.checker;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class GGAPIEntityCheckerTest {
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	
 	@Test
 	public void testGeolocEntity() throws GGAPIException {

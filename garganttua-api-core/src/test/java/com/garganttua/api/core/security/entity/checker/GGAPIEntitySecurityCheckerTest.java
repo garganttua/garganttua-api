@@ -3,14 +3,20 @@ package com.garganttua.api.core.security.entity.checker;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.security.GGAPIEntitySecurityInfos;
 import com.garganttua.api.spec.service.GGAPIServiceAccess;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class GGAPIEntitySecurityCheckerTest {
-
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	@Test
 	public void testEntityWithNoAnnotation() throws GGAPIException {
 		GGAPIEntitySecurityInfos infos = GGAPIEntitySecurityChecker.checkEntityClass(TestEntityWithNoSecurityAnnotation.class, null);

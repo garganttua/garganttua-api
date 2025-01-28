@@ -1,6 +1,16 @@
 package com.garganttua.api.core.repository;
 
+import org.junit.jupiter.api.BeforeAll;
+
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+
 public class GGAPIRepositoryTest {
+	
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	
 //	@Test
 //	public void testFilterPublicEntityAndNotSuperTenant() throws JsonProcessingException {

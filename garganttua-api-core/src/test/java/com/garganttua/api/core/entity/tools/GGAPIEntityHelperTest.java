@@ -7,8 +7,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
@@ -23,6 +25,7 @@ import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.api.spec.pageable.IGGAPIPageable;
 import com.garganttua.api.spec.repository.IGGAPIRepository;
 import com.garganttua.api.spec.sort.IGGAPISort;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.NoArgsConstructor;
 
@@ -37,6 +40,10 @@ class GenericEntity extends GenericGGAPIEntity {
 }
 
 public class GGAPIEntityHelperTest {
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	
 	@Test
 	public void testSetAndGetMethods() throws GGAPIException {

@@ -5,15 +5,23 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.core.domain.GGAPIDomainsFactory;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class GGAPIFactoryFactoryTest {
 
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
+	
 	@Test
 	public void test() throws GGAPIException {
 		GGAPIDomainsFactory dof = new GGAPIDomainsFactory(List.of("com"));

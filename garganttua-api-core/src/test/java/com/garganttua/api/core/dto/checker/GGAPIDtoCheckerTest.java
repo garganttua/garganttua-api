@@ -6,16 +6,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.core.dto.exceptions.GGAPIDtoException;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
 import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.dto.annotations.GGAPIDtoTenantId;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 
 public class GGAPIDtoCheckerTest {
 
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
+	
     @Test
     void testCheckDtos() {
         List<Class<?>> dtoClasses = Arrays.asList(DtoClass1.class, DtoClass2.class);
