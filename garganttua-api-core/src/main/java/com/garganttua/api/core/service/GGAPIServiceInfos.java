@@ -2,6 +2,7 @@ package com.garganttua.api.core.service;
 
 import java.lang.reflect.Method;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
@@ -25,6 +26,7 @@ public class GGAPIServiceInfos implements IGGAPIServiceInfos {
     @Getter
     private String description;
     @Getter
+	@JsonIgnore
 	private Method method;
     
 	private IGGAPIObjectInstanciator objectInstanciator;

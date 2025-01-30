@@ -3,7 +3,9 @@ package com.garganttua.api.spec;
 import java.util.Objects;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class GGAPIEntityOperation {
 	
 	public static GGAPIEntityOperation readOne(String domainName, Class<?> entity) {

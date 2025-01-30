@@ -2,14 +2,10 @@ package com.garganttua.api.spec.caller;
 
 import java.util.List;
 
-import com.garganttua.api.spec.security.IGGAPIAccessRule;
-import com.garganttua.api.spec.service.GGAPIServiceAccess;
-
-import lombok.Getter;
-
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 
 public interface IGGAPICaller {
 
