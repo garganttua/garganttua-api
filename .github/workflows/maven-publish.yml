@@ -3,11 +3,7 @@ name: Maven Package
 on:
   push:
     branches: 
-<<<<<<< HEAD
       - "*"  # Build on any branch push
-=======
-      - "**"  # Build on any branch push
->>>>>>> 6a4a702 (Update maven-publish.yml)
     tags:
       - "*"  # Trigger on any tag creation
 
@@ -33,31 +29,12 @@ jobs:
       uses: whelk-io/maven-settings-xml-action@v22
       with:
         output_file: package-settings.xml
-<<<<<<< HEAD
-        servers: >
-=======
-        repositories: >
->>>>>>> 1401c7b (Update maven-publish.yml)
-          [
-            {
-<<<<<<< HEAD
-              "id": "github garganttua tooling",
-=======
-              "id": "github",
-              "url": "https://maven.pkg.github.com/garganttua/garganttua-tooling"
-            }
-          ]
         servers: >
           [
             {
               "id": "github",
->>>>>>> 3e270c2 (Update maven-publish.yml)
               "username": "${{ github.actor }}",
-<<<<<<< HEAD
               "password": "${{ github.token }}"
-=======
-              "password": " ${{ github.token }}"
->>>>>>> ba2e248 (Update maven-publish.yml)
             }
           ]
 
@@ -68,11 +45,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: |
-<<<<<<< HEAD
       startsWith(github.ref, 'refs/tags/')
-=======
-      github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/tags/')
->>>>>>> 297b44c (Update maven-publish.yml)
+	  
     permissions:
       contents: read
       packages: write
@@ -85,19 +59,11 @@ jobs:
       with:
         java-version: '18'
         distribution: 'temurin'
-<<<<<<< HEAD
         server-id: github garganttua api
-		
-=======
-        server-id: github
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+        settings-path: ${{ github.workspace }} 
 
->>>>>>> 297b44c (Update maven-publish.yml)
+
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
-<<<<<<< HEAD
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-=======
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
->>>>>>> 6a4a702 (Update maven-publish.yml)
