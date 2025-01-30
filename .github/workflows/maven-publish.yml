@@ -32,7 +32,7 @@ jobs:
         servers: >
           [
             {
-              "id": "github",
+              "id": "github garganttua tooling",
               "username": "${{ github.actor }}",
               "password": "${{ github.token }}"
             }
@@ -61,7 +61,6 @@ jobs:
         distribution: 'temurin'
         server-id: github garganttua api
         settings-path: ${{ github.workspace }} 
-
 
     - name: Deploy to GitHub Packages Apache Maven
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
