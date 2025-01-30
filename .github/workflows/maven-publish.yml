@@ -9,38 +9,38 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-   
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 18
-      uses: actions/setup-java@v3
-      with:
-        java-version: '18'
-        distribution: 'temurin'
-        server-id: github-garganttua-api
-        settings-path: ${{ github.workspace }}
+      - uses: actions/checkout@v3
 
-    - name: Generate Maven Settings
-      uses: whelk-io/maven-settings-xml-action@v22
-      with:
-        output_file: package-settings.xml
-        servers: >
-          [
-            {
-              "id": "github garganttua tooling",
-              "username": "${{ github.actor }}",
-              "password": "${{ github.token }}"
-            }
-          ]
+      - name: Set up JDK 18
+        uses: actions/setup-java@v3
+        with:
+          java-version: '18'
+          distribution: 'temurin'
+          server-id: github-garganttua-api
+          settings-path: ${{ github.workspace }}
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml -s $GITHUB_WORKSPACE/package-settings.xml
-      
+      - name: Generate Maven Settings
+        uses: whelk-io/maven-settings-xml-action@v22
+        with:
+          output_file: package-settings.xml
+          servers: >
+            [
+              {
+                "id": "github garganttua tooling",
+                "username": "${{ github.actor }}",
+                "password": "${{ github.token }}"
+              }
+            ]
+
+      - name: Build with Maven
+        run: mvn -B package --file pom.xml -s $GITHUB_WORKSPACE/package-settings.xml
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
@@ -52,17 +52,17 @@ jobs:
       packages: write
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up JDK 18
-      uses: actions/setup-java@v4
-      with:
-        java-version: '18'
-        distribution: 'temurin'
-        server-id: github garganttua api
-        settings-path: ${{ github.workspace }} 
+      - name: Set up JDK 18
+        uses: actions/setup-java@v4
+        with:
+          java-version: '18'
+          distribution: 'temurin'
+          server-id: github garganttua api
+          settings-path: ${{ github.workspace }} 
 
-    - name: Generate Maven Settings
+      - name: Generate Maven Settings
         uses: whelk-io/maven-settings-xml-action@v22
         with:
           output_file: custom-settings.xml
@@ -75,7 +75,7 @@ jobs:
               }
             ]
 
-    - name: Deploy to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/custom-settings.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to GitHub Packages Apache Maven
+        run: mvn deploy -s $GITHUB_WORKSPACE/custom-settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
