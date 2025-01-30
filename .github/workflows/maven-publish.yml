@@ -61,8 +61,21 @@ jobs:
         distribution: 'temurin'
         server-id: github garganttua api
         settings-path: ${{ github.workspace }} 
+		
+    - name: Generate Maven Settings
+        uses: whelk-io/maven-settings-xml-action@v22
+        with:
+          output_file: custom-settings.xml
+          servers: |
+            [
+              {
+                "id": "github garganttua tooling",
+                "username": "${{ github.actor }}",
+                "password": "${{ github.token }}"
+              }
+            ]
 
     - name: Deploy to GitHub Packages Apache Maven
-      run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
+      run: mvn deploy -s $GITHUB_WORKSPACE/custom-settings.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
