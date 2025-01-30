@@ -33,3 +33,5 @@ replay_pid*
 bin/
 
 **/target/
+
+*.versionsBackup
