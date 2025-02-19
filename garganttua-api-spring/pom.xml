@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-api</artifactId>
-		<version>2.0.0</version>
+		<version>2.0.1</version>
 	</parent>
 	<packaging>pom</packaging>
 	<artifactId>garganttua-api-spring</artifactId>
 
 	<properties>
-		<spring.version>3.3.1</spring.version>
+		<spring.version>3.3.3</spring.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
