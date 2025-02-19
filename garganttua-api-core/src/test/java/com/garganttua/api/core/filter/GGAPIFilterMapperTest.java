@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.List;
 
 import org.javatuples.Pair;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.core.domain.GGAPIDomain;
 import com.garganttua.api.core.dto.GenericGGAPIDto;
 import com.garganttua.api.core.entity.GenericGGAPIEntity;
@@ -15,6 +17,7 @@ import com.garganttua.api.spec.dto.annotations.GGAPIDto;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
 import com.garganttua.api.spec.filter.IGGAPIFilter;
 import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.NoArgsConstructor;
 
@@ -38,6 +41,11 @@ class Dto extends GenericGGAPIDto {
 }
 
 public class GGAPIFilterMapperTest {
+	
+	@BeforeAll
+	public static void setupAnnotationScanner() {
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
+	}
 	
 	@Test
 	public void testUniqueDtoForEntity() throws GGAPIException {
