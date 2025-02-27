@@ -49,8 +49,6 @@ public class GGAPIService implements IGGAPIService {
 
 	public GGAPIService(IGGAPIDomain domain) {
 		this.domain = domain;
-		
-		
 	}
 
 	@Override

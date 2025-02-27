@@ -21,7 +21,7 @@ public class GGAPIRepositoryFilterTools {
 		GGAPILiteral tenantIdFilter = requestedTenantId==null?null:GGAPILiteral.eq(domain.getTenantIdFieldAddress().toString(), requestedTenantId);
 		GGAPILiteral shareFieldFilter = null;
 		GGAPILiteral visibleFilter = null;
-		GGAPILiteral ownerIdFilter = ownerId==null||ownedEntity==true?null:GGAPILiteral.eq(domain.getOwnerIdFieldAddress().toString(), ownerId);
+		GGAPILiteral ownerIdFilter = ownedEntity==false?null:GGAPILiteral.eq(domain.getOwnerIdFieldAddress().toString(), ownerId);
 		
 		if( hiddenableEntity ) {
 			visibleFilter = GGAPILiteral.eq(domain.getHiddenFieldAddress().toString(), false);
