@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-api-security</artifactId>
-		<version>2.0.3</version>
+		<version>2.0.2</version>
 	</parent>
 	<artifactId>garganttua-api-security-authentication-login-password</artifactId>
 </project>
