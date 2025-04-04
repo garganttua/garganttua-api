@@ -12,6 +12,9 @@ import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
+import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.service.GGAPICustomService;
@@ -26,10 +29,13 @@ public class GGAPIServicesInfosFactory {
 	private Set<IGGAPIDomain> domains;
 	private IGGAPIInterfacesRegistry interfacesRegistry;
 	private Map<String, List<IGGAPIServiceInfos>> servicesInfos = new HashMap<String, List<IGGAPIServiceInfos>>();
+	private IGGAPIFactoriesRegistry factoriesRegistry;
 
-	public GGAPIServicesInfosFactory(Set<IGGAPIDomain> domains, IGGAPIInterfacesRegistry interfacesRegistry) {
+	public GGAPIServicesInfosFactory(Set<IGGAPIDomain> domains, IGGAPIInterfacesRegistry interfacesRegistry,
+			IGGAPIFactoriesRegistry factoriesRegistry) {
 		this.domains = domains;
 		this.interfacesRegistry = interfacesRegistry;
+		this.factoriesRegistry = factoriesRegistry;
 		this.init();
 	}
 
@@ -45,7 +51,11 @@ public class GGAPIServicesInfosFactory {
 		List<IGGAPIServiceInfos> customInfos = new ArrayList<IGGAPIServiceInfos>();
 		this.getCustomServiceFromClass(domain, domain.getEntityClass(), customInfos, () -> {
 			try {
-				return GGAPIEntityHelper.newInstance(domain.getEntityClass());
+				Object newInstance = GGAPIEntityHelper.newInstance(domain.getEntityClass());
+				IGGAPIEntityFactory<Object> factory = (IGGAPIEntityFactory<Object>) factoriesRegistry.getFactory(domain.getDomain());
+				newInstance = factory.prepareNewEntity(new HashMap<String, String>(), newInstance, null, null);
+				
+				return newInstance;
 			} catch (GGAPIException e) {
 				throw new RuntimeException(e);
 			}

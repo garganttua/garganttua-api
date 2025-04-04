@@ -154,7 +154,7 @@ public class GGApiEngine implements IGGAPIEngine {
 		this.factoriesRegistry = new GGAPIEntityFactoriesFactory(this.domainRegistry.getDomains(), this.injector).getRegistry();
 		this.servicesRegistry = new GGAPIServicesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.interfacesRegistry = new GGAPIInterfacesFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
-		this.servicesInfosRegistry = new GGAPIServicesInfosFactory(this.domainRegistry.getDomains(), this.interfacesRegistry).getRegistry();
+		this.servicesInfosRegistry = new GGAPIServicesInfosFactory(this.domainRegistry.getDomains(), this.interfacesRegistry, this.factoriesRegistry).getRegistry();
 		this.accessRulesRegistry = new GGAPIAccessRulesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.callerFactoriesRegistry = new GGAPICallerFactoriesFactory(this.domainRegistry.getDomains(), this.factoriesRegistry, this.accessRulesRegistry).getRegistry();
 
