@@ -18,7 +18,6 @@ import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.caller.IGGAPICallerFactory;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 
@@ -72,13 +71,14 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 		for (Entry<IGGAPIServiceInfos, PathPattern> pattern : patterns.entrySet()) {
 			if (pattern.getKey().getPath().equals(uri)) {
 				if (pattern.getKey().getOperation().getMethod() == GGAPIServiceMethodToHttpMethodBinder
-						.fromHttpMethodAndEndpoint(method) || pattern.getKey().getOperation().getMethod() == GGAPIMethod.authenticate)
+						.fromHttpMethodAndEndpoint(method)
+						|| pattern.getKey().getOperation().getMethod() == GGAPIMethod.authenticate)
 					return pattern.getKey();
 			}
 		}
 
 		for (Entry<IGGAPIServiceInfos, PathPattern> pattern : patterns.entrySet()) {
-			log.atDebug().log(pathContainer.toString()+ " matching "+pattern.getValue().getPatternString());
+			log.atDebug().log(pathContainer.toString() + " matching " + pattern.getValue().getPatternString());
 			if (pattern.getValue().matches(pathContainer)) {
 				if (pattern.getKey().getOperation().getMethod() == GGAPIServiceMethodToHttpMethodBinder
 						.fromHttpMethodAndEndpoint(method))
@@ -132,20 +132,31 @@ public class GGAPICallerFilter extends GGAPISpringHttpApiFilter {
 			log.warn("* There should be developped soon           *");
 			log.warn("*********************************************");
 //			return request;
+
+			IGGAPICaller caller = this.engine.getCaller(this.getDomainNameFromRequestUri((HttpServletRequest) request),
+					infos.getOperation(), infos.getPath(), "0", null, null, null);
+			
+			if (log.isDebugEnabled()) {
+				log.debug("Generated caller " + caller);
+			}
+
+			request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
+
+		} else {
+
+			String tenantId = ((HttpServletRequest) request).getHeader(this.tenantIdHeaderName);
+			String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
+			String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
+
+			IGGAPICaller caller = this.engine.getCaller(this.getDomainNameFromRequestUri((HttpServletRequest) request),
+					infos.getOperation(), infos.getPath(), tenantId, ownerId, requestedtenantId, null);
+
+			if (log.isDebugEnabled()) {
+				log.debug("Generated caller " + caller);
+			}
+
+			request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
 		}
-
-		String tenantId = ((HttpServletRequest) request).getHeader(this.tenantIdHeaderName);
-		String requestedtenantId = ((HttpServletRequest) request).getHeader(this.requestedTenantIdHeaderName);
-		String ownerId = ((HttpServletRequest) request).getHeader(this.ownerIdHeaderName);
-
-		IGGAPICaller caller = this.engine.getCaller(this.getDomainNameFromRequestUri((HttpServletRequest) request), infos.getOperation(), infos.getPath(), tenantId, ownerId,
-				requestedtenantId, null);
-
-		if (log.isDebugEnabled()) {
-			log.debug("Generated caller " + caller);
-		}
-
-		request.setAttribute(CALLER_ATTRIBUTE_NAME, caller);
 		return request;
 	}
 

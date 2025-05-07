@@ -74,7 +74,7 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 			superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(tenantId, ownerIdTemp) || superOwnerTemp;
 		} 
 				
-		return new GGAPICaller(tenantIdTemp, requestedTenantIdTemp, callerIdTemp, ownerIdTemp, superTenantTemp, superOwnerTemp, accessRule, domain, anonymousTemp, null);
+		return new GGAPICaller(tenantIdTemp, requestedTenantIdTemp, callerIdTemp, ownerIdTemp, superTenantTemp, superOwnerTemp, accessRule, this.domain, anonymousTemp, null);
 	}
 
 	private boolean checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(String tenantId, String ownerId) throws GGAPIException {

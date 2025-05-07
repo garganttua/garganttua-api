@@ -1,6 +1,7 @@
 package com.garganttua.api.core.entity;
 
 import java.util.Map;
+import java.util.Objects;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -42,6 +43,15 @@ public abstract class GenericGGAPIEntity {
 	@GGAPIEntityAuthorizeUpdate(authority = "entity-tenant-update")
 	protected String tenantId;
 	
+	protected GenericGGAPIEntity(String uuid) {
+		this(uuid, uuid);
+	}
+	
+	protected GenericGGAPIEntity(String tenantId, String uuid, String id) {
+		this(uuid, id);
+		this.tenantId = tenantId;
+	}
+	
 	protected GenericGGAPIEntity(String uuid, String id) {
 		this.uuid = uuid;
 		this.id = id;
@@ -73,5 +83,22 @@ public abstract class GenericGGAPIEntity {
 	@GGAPIEntityDeleteMethod
 	public void delete(IGGAPICaller caller, Map<String, String> parameters) throws GGAPIException {
 		this.deleteMethod.delete(caller, parameters, this);
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		GenericGGAPIEntity that = (GenericGGAPIEntity) o;
+
+		return Objects.equals(uuid, that.uuid) &&
+				Objects.equals(id, that.id) &&
+			   Objects.equals(tenantId, that.tenantId);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), uuid, id, tenantId);
 	}
 }
