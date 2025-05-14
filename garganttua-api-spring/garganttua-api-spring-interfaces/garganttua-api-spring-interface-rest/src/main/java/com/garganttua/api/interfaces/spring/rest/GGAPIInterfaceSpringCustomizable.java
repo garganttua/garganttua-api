@@ -1,5 +1,8 @@
 package com.garganttua.api.interfaces.spring.rest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,9 +61,16 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 					GGAPIResponseObject.BAD_REQUEST), HttpStatus.BAD_REQUEST);
 		}
 
-		GGAPIMethodConciliator conciliator = new GGAPIMethodConciliator(infos.getMethod());
-		Object[] parameters = conciliator.setCaller(caller).setCustomParameters(customParameters)
-				.setReferencePath(infos.getPath()).setValuedPath(servletPath).setBody("body").getParameters();
+		GGAPIMethodConciliator conciliator = new GGAPIMethodConciliator(infos.getMethod()).setCaller(caller)
+				.setCustomParameters(customParameters)
+				.setReferencePath(infos.getPath()).setValuedPath(servletPath);
+
+		if (request.getMethod().equalsIgnoreCase("POST") || request.getMethod().equalsIgnoreCase("PUT")
+				|| request.getMethod().equalsIgnoreCase("PATCH")) {
+			conciliator.setBody(getBodyAsByteObjectArray(request));
+		}
+		
+		Object[] parameters = conciliator.getParameters();
 
 		try {
 			Object returnedObject = infos.invoke(parameters);
@@ -118,4 +128,27 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 		this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, handler, method);
 	}
 
+	public static Byte[] getBodyAsByteObjectArray(HttpServletRequest request) throws IOException {
+		byte[] primitiveBytes;
+
+		try (InputStream inputStream = request.getInputStream();
+				ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
+
+			byte[] temp = new byte[1024];
+			int bytesRead;
+
+			while ((bytesRead = inputStream.read(temp)) != -1) {
+				buffer.write(temp, 0, bytesRead);
+			}
+
+			primitiveBytes = buffer.toByteArray();
+		}
+
+		Byte[] objectBytes = new Byte[primitiveBytes.length];
+		for (int i = 0; i < primitiveBytes.length; i++) {
+			objectBytes[i] = primitiveBytes[i];
+		}
+
+		return objectBytes;
+	}
 }

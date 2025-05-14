@@ -15,7 +15,7 @@ public class GGAPIMethodConciliator {
     private Map<String, String> customParameters = new HashMap<>();
     private String referencePath;
     private String valuedPath;
-    private String body;
+    private Byte[] body;
 
     public GGAPIMethodConciliator(Method method) {
         this.method = method;
@@ -41,7 +41,7 @@ public class GGAPIMethodConciliator {
         return this;
     }
 
-    public GGAPIMethodConciliator setBody(String body) {
+    public GGAPIMethodConciliator setBody(Byte[] body) {
         this.body = body;
         return this;
     }
