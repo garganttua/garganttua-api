@@ -1,6 +1,7 @@
 package com.garganttua.api.core.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.javatuples.Pair;
 
@@ -48,9 +49,9 @@ public class GGAPIMultipleRepository implements IGGAPIRepository {
 //	}
 
 	@Override
-	public Object getOneById(IGGAPICaller caller, String id) throws GGAPIException {
+	public Optional<Object> getOneById(IGGAPICaller caller, String id) throws GGAPIException {
 		// TODO Auto-generated method stub
-		return null;
+		return Optional.empty();
 	}
 
 	@Override
@@ -66,9 +67,9 @@ public class GGAPIMultipleRepository implements IGGAPIRepository {
 	}
 
 	@Override
-	public Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
+	public Optional<Object> getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
 		// TODO Auto-generated method stub
-		return null;
+		return Optional.empty();
 	}
 
 	@Override

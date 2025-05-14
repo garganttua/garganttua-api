@@ -26,22 +26,22 @@ public class GGAPIEntityAuthenticatorHelper {
 				GGAPIAuthenticatorInfos::authoritiesFieldAddress);
 	}
 
-	public static boolean isAccountNonExpired(Object entity) throws GGAPIException {
+	public static Boolean isAccountNonExpired(Object entity) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
 				GGAPIAuthenticatorInfos::isAccountNonExpiredFieldAddress);
 	}
 
-	public static boolean isAccountNonLocked(Object entity) throws GGAPIException {
+	public static Boolean isAccountNonLocked(Object entity) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
 				GGAPIAuthenticatorInfos::isAccountNonLockedFieldAddress);
 	}
 
-	public static boolean isCredentialsNonExpired(Object entity) throws GGAPIException {
+	public static Boolean isCredentialsNonExpired(Object entity) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
 				GGAPIAuthenticatorInfos::isCredentialsNonExpiredFieldAddress);
 	}
 
-	public static boolean isEnabled(Object entity) throws GGAPIException {
+	public static Boolean isEnabled(Object entity) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
 				GGAPIAuthenticatorInfos::isEnabledFieldAddress);
 	}
@@ -76,12 +76,12 @@ public class GGAPIEntityAuthenticatorHelper {
 		return false;
 	}
 
-	public static void setCredentialsNonExpired(Object entity, boolean b) throws GGAPIException {
+	public static void setCredentialsNonExpired(Object entity, Boolean b) throws GGAPIException {
 		GGAPIInfosHelper.setValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
 				GGAPIAuthenticatorInfos::isCredentialsNonExpiredFieldAddress, b);
 	}
 
-	public static void setAccountNonlocked(Object entity, boolean b) throws GGAPIException {
+	public static void setAccountNonlocked(Object entity, Boolean b) throws GGAPIException {
 		GGAPIInfosHelper.setValue(entity, GGAPIEntityAuthenticatorChecker::checkEntityAuthenticatorClass,
 				GGAPIAuthenticatorInfos::isAccountNonLockedFieldAddress, b);
 	}

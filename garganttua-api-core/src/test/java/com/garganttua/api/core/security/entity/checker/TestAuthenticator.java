@@ -36,7 +36,7 @@ public class TestAuthenticator {
 	@GGAPIAuthenticatorAccountNonLocked
 	@GGAPIAuthenticatorCredentialsNonExpired
 	@GGAPIAuthenticatorEnabled
-	private boolean bool;
+	private Boolean bool;
 	
 	@GGAPIAuthenticatorAuthorities
 	private List<String> list;

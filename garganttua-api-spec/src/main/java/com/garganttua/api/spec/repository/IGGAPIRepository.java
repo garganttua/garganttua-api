@@ -4,6 +4,7 @@
 package com.garganttua.api.spec.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.javatuples.Pair;
 
@@ -29,13 +30,13 @@ public interface IGGAPIRepository extends IGGAPIEngineObject {
 
 	void save(IGGAPICaller caller, Object entity) throws GGAPIException;
 
-	Object getOneById(IGGAPICaller caller, String id) throws GGAPIException;
+	Optional<Object> getOneById(IGGAPICaller caller, String id) throws GGAPIException;
 
 	void delete(IGGAPICaller caller, Object entity) throws GGAPIException;
 
 	boolean doesExist(IGGAPICaller caller, String uuid) throws GGAPIException;
 	
-	Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException;
+	Optional<Object> getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException;
 
 	long getCount(IGGAPICaller caller, IGGAPIFilter filter) throws GGAPIException;
 

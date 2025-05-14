@@ -99,28 +99,28 @@ public class GGAPIEntityFactory implements IGGAPIEntityFactory<Object> {
 			throw new GGAPIEngineException(GGAPIExceptionCode.GENERIC_FACTORY_EXCEPTION, "Uuid is null");
 		}
 		
-		Object entity = null;
+		Optional<Object> entity = null;
 
 		switch (identifier) {
 			default:
 			case UUID:
-				entity = (Object) repository.getOneByUuid(caller, uuid);
+				entity = repository.getOneByUuid(caller, uuid);
 				break;
 			case ID:
-				entity = (Object) repository.getOneById(caller, uuid);
+				entity = repository.getOneById(caller, uuid);
 				break;
 		}
-		
-		if( entity == null ) {
+
+		if( !entity.isPresent() ) {
 			log.warn("[Domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Entity with Uuid " + uuid + " not found");
 			throw new GGAPIEngineException(GGAPIExceptionCode.ENTITY_NOT_FOUND, "Entity [Uuid: "+uuid+", Type: "+this.domain.getEntityClass().getSimpleName()+"] does not exist");
 		}
 
-		GGAPIEntityHelper.setRepository( entity, repository );
-		this.executeAfterGetProcedure(caller, customParameters, entity, repository);
-		this.setEntityMethodsAndFields(customParameters, this.domain, entity);
-		GGAPIEntityHelper.setGotFromRepository(entity, true);
-		return entity;
+		GGAPIEntityHelper.setRepository( entity.get(), repository );
+		this.executeAfterGetProcedure(caller, customParameters, entity.get(), repository);
+		this.setEntityMethodsAndFields(customParameters, this.domain, entity.get());
+		GGAPIEntityHelper.setGotFromRepository(entity.get(), true);
+		return entity.get();
 	}
 
 	@Override

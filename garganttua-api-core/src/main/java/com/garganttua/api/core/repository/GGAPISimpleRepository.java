@@ -5,6 +5,7 @@ package com.garganttua.api.core.repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.javatuples.Pair;
 
@@ -124,7 +125,7 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 	}
 
 	@Override
-	public Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
+	public Optional<Object> getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
 		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Looking for object with uuid "+uuid, caller.getRequestedTenantId(), this.domain);
 		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getUuidFilter(this.domain.getUuidFieldAddress().toString(), uuid));
 
@@ -134,18 +135,18 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 			
 			if( dto.size() >= 1 ){
 				log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with uuid "+uuid+" found !", caller.getRequestedTenantId(), this.domain);
-				return this.entityMapper.map(dto.get(0), this.domain.getEntityClass());
+				return Optional.ofNullable(this.entityMapper.map(dto.get(0), this.domain.getEntityClass()));
 			}
 			
 			log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with uuid "+uuid+" not found.", caller.getRequestedTenantId(), this.domain);
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	@Override
-	public Object getOneById(IGGAPICaller caller, String id) throws GGAPIException {
+	public Optional<Object> getOneById(IGGAPICaller caller, String id) throws GGAPIException {
 		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Looking for object with id "+id, caller.getRequestedTenantId(), this.domain);
 		IGGAPIFilter filterUp = GGAPIRepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(caller, domain, GGAPIRepositoryFilterTools.getIdFilter(this.domain.getIdFieldAddress().toString(), id));
 		try {
@@ -154,14 +155,14 @@ public class GGAPISimpleRepository implements IGGAPIRepository {
 			
 			if( dto.size() >= 1 ){
 				log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with id "+id+" found !", caller.getRequestedTenantId(), this.domain);
-				return this.entityMapper.map(dto.get(0), this.domain.getEntityClass());
+				return Optional.ofNullable(this.entityMapper.map(dto.get(0), this.domain.getEntityClass()));
 			}
 		} catch (GGMapperException e) {
 			throw new GGAPIEngineException(e);
 		}
 		
 		log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with id "+id+" not found.", caller.getRequestedTenantId(), this.domain);
-		return null;
+		return Optional.empty();
 	}
 
 	@Override

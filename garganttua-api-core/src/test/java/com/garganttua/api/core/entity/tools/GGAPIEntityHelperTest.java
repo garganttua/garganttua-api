@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -97,9 +98,9 @@ public class GGAPIEntityHelperTest {
 			}
 
 			@Override
-			public Object getOneById(IGGAPICaller caller, String id) throws GGAPIException {
+			public Optional<Object> getOneById(IGGAPICaller caller, String id) throws GGAPIException {
 				// TODO Auto-generated method stub
-				return null;
+				return Optional.empty();
 			}
 
 			@Override
@@ -115,9 +116,9 @@ public class GGAPIEntityHelperTest {
 			}
 
 			@Override
-			public Object getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
+			public Optional<Object> getOneByUuid(IGGAPICaller caller, String uuid) throws GGAPIException {
 				// TODO Auto-generated method stub
-				return null;
+				return Optional.empty();
 			}
 
 

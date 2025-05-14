@@ -146,7 +146,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		String fieldAddress;
 		try {
 			fieldAddress = GGObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass,
-					GGAPIAuthenticatorEnabled.class, boolean.class);
+					GGAPIAuthenticatorEnabled.class, Boolean.class);
 			if (fieldAddress == null) {
 				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
@@ -166,7 +166,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		String fieldAddress;
 		try {
 			fieldAddress = GGObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass,
-					GGAPIAuthenticatorCredentialsNonExpired.class, boolean.class);
+					GGAPIAuthenticatorCredentialsNonExpired.class, Boolean.class);
 			if (fieldAddress == null) {
 				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
@@ -186,7 +186,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		String fieldAddress;
 		try {
 			fieldAddress = GGObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass,
-					GGAPIAuthenticatorAccountNonLocked.class, boolean.class);
+					GGAPIAuthenticatorAccountNonLocked.class, Boolean.class);
 			if (fieldAddress == null) {
 				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
@@ -206,7 +206,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		String fieldAddress;
 		try {
 			fieldAddress = GGObjectReflectionHelper.getFieldAddressAnnotatedWithAndCheckType(entityAuthenticatorClass,
-					GGAPIAuthenticatorAccountNonExpired.class, boolean.class);
+					GGAPIAuthenticatorAccountNonExpired.class, Boolean.class);
 			if (fieldAddress == null) {
 				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()

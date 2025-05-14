@@ -62,13 +62,13 @@ public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 	@GGAPIEntityAuthorizeUpdate
 	@Getter
 	@GGAPIAuthorizationRevoked
-	protected boolean revoked = false;
+	protected Boolean revoked = false;
 	
 	@GGAPIAuthenticatorAccountNonExpired
 	@GGAPIAuthenticatorAccountNonLocked
 	@GGAPIAuthenticatorCredentialsNonExpired
 	@GGAPIAuthenticatorEnabled
-	protected boolean enabled = true;
+	protected Boolean enabled = true;
 	
 	public void revoke() {
 		this.revoked = true;

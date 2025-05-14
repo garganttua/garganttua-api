@@ -75,7 +75,7 @@ public class GGAPIEntityAuthorizationChecker {
 				GGAPIAuthorizationType.class, String.class, true);
 
 		String revoked = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass,
-				GGAPIAuthorizationRevoked.class, boolean.class, true);
+				GGAPIAuthorizationRevoked.class, Boolean.class, true);
 		String ownerUuid = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass,
 				GGAPIEntityOwnerId.class, String.class, true);
 		String authorities = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass,
