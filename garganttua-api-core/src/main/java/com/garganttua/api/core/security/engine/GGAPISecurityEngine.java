@@ -3,6 +3,7 @@ package com.garganttua.api.core.security.engine;
 import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,20 +12,22 @@ import java.util.stream.Collectors;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationFactoryFactory;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationInfosFactory;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationInterfacesFactory;
+import com.garganttua.api.core.security.authentication.GGAPIAuthenticationRequest;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationService;
 import com.garganttua.api.core.security.authenticator.GGAPIAuthenticatorInfosFactory;
 import com.garganttua.api.core.security.authenticator.GGAPIAuthenticatorServicesFactory;
+import com.garganttua.api.core.security.authorization.GGAPIAuthorization;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationInfosFactory;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationServicesFactory;
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
 import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
-import com.garganttua.api.core.security.key.GGAPIKeyHelper;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
@@ -46,7 +49,6 @@ import com.garganttua.api.spec.security.authenticator.IGGAPIAuthenticatorService
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationInfosRegistry;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationProtocol;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationServicesRegistry;
-import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
@@ -70,11 +72,15 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	private IGGAPIAuthenticatorInfosRegistry authenticatorInfosRegistry;
 	private IGGAPIAuthenticationInfosRegistry authenticationInfosRegistry;
 	private IGGAPIAuthorizationInfosRegistry authorizationInfosRegistry;
-	@Getter private IGGAPIAuthenticatorServicesRegistry authenticatorServicesRegistry;
-	@Getter private IGGAPIAuthorizationServicesRegistry authorizationsServicesRegistry;
-	@Getter private IGGAPIAuthenticationService authenticationService;
+	@Getter
+	private IGGAPIAuthenticatorServicesRegistry authenticatorServicesRegistry;
+	@Getter
+	private IGGAPIAuthorizationServicesRegistry authorizationsServicesRegistry;
+	@Getter
+	private IGGAPIAuthenticationService authenticationService;
 	private IGGAPIAuthenticationFactoriesRegistry authenticationFactoryRegistry;
-	@Getter private IGGAPIAuthenticationInterfacesRegistry authenticationInterfacesRegistry;
+	@Getter
+	private IGGAPIAuthenticationInterfacesRegistry authenticationInterfacesRegistry;
 
 	private IGGBeanLoader loader;
 
@@ -106,7 +112,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		log.info("Injecting engine");
 
 		log.info("Starting interfaces");
-
+		
 		for (IGGAPIAuthenticationInterface interfasse : this.authenticationInterfacesRegistry.getInterfaces()) {
 			log.info("*** Starting authentication interface " + interfasse.getName());
 			interfasse.start();
@@ -151,102 +157,139 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 				this.authorizationInfosRegistry, this.engine).getRegistry();
 		this.authenticationFactoryRegistry = new GGAPIAuthenticationFactoryFactory(this.authenticationInfosRegistry,
 				this.injector).getRegistry();
-		
+
 		this.authenticationService = this.createAuthenticationService();
-		
+
 		this.authenticationInterfacesRegistry = new GGAPIAuthenticationInterfacesFactory(this.loader,
 				this.authenticatorInfosRegistry, this.authenticationInfosRegistry, this.authenticationFactoryRegistry,
 				this.authenticationService, this.engine, this.authenticationFactoryRegistry).getRegistry();
 
 		return this;
 	}
-	
+
+	private Object renewAuthorization(IGGAPICaller caller, Object authorization) throws GGAPIException {
+		Optional<IGGAPIService> authorizationService = this.engine.getServices().stream().filter(service -> {
+			return service.getDomain().getEntityClass().equals(authorization.getClass());
+		}).findFirst();
+
+		if (authorizationService.isPresent()) {
+			IGGAPIService service = authorizationService.get();
+			IGGAPIServiceResponse response = service.getEntity(caller, GGAPIEntityHelper.getUuid(authorization),
+					new HashMap<>());
+
+			if (response.getResponseCode() == GGAPIServiceResponseCode.OK) {
+				GGAPIAuthorization storedAuthorization = (GGAPIAuthorization) response.getResponse();
+
+			} else {
+				log.atDebug().log("Cannot renew authorization as authorization cannot be found in db : "
+						+ response.getResponse().toString());
+			}
+		} else {
+			log.atDebug().log("Cannot renew authorization as no service found for type " + authorization.getClass());
+		}
+
+		return null;
+	}
+
 	private IGGAPIAuthenticationService createAuthenticationService() {
 		log.info("*** Creating Authentication Service ...");
-		
-		Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> services = this.domains.stream().filter(domain -> {
-			return GGAPIEntityAuthenticatorHelper.isAuthenticator(domain.getEntityClass());
-		}).map(domain -> {
-			Pair<GGAPIAuthenticatorInfos, IGGAPIService> service = this.authenticatorServicesRegistry.getService(domain.getDomain());
-			return new SimpleEntry<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>>(domain, service);
-		}).collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
-		
+
+		Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> services = this.domains.stream()
+				.filter(domain -> {
+					return GGAPIEntityAuthenticatorHelper.isAuthenticator(domain.getEntityClass());
+				}).map(domain -> {
+					Pair<GGAPIAuthenticatorInfos, IGGAPIService> service = this.authenticatorServicesRegistry
+							.getService(domain.getDomain());
+					return new SimpleEntry<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>>(domain, service);
+				}).collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
+
 		return new GGAPIAuthenticationService(services, this.authenticationFactoryRegistry.getFactories(), this.engine);
 	}
 
-	//TODO to be refactored
 	private Object getAuthorization(byte[] authorizationRaw, IGGAPICaller caller) {
 		Collection<Class<?>> supportedAuthorizations = caller.getDomain().getAuthorizations();
 		Object authorization = null;
-		for(Class<?> supportedAuthorization: supportedAuthorizations ) {
-			log.atDebug().log("Triing authorization type "+supportedAuthorization.getSimpleName() );
+		for (Class<?> supportedAuthorization : supportedAuthorizations) {
+			log.atDebug().log("Triing authorization type " + supportedAuthorization.getSimpleName());
 			try {
-				if( GGAPIEntityAuthorizationHelper.isSignable(supportedAuthorization) ) {
-
-					authorization = GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization, authorizationRaw, null);
-					
-					String ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(authorization);
-					
-					if( ownerId == null ) {
-						return null;
-					} 
-					
-					String domainName = ownerId.split(":")[0];
-					
-					Optional<IGGAPIDomain> authenticatorDomain = this.engine.getDomain(domainName);
-					
-					if( authenticatorDomain.isEmpty() ) {
-						return authorization;
-					}
-					
-					if( !GGAPIEntityAuthenticatorHelper.isAuthenticator(authenticatorDomain.get().getEntityClass()) ) {
-						return authorization;
-					}
-					
-					GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(authenticatorDomain.get().getEntityClass());
-					
-					IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
-							GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-							authenticatorInfos.authorizationKeyType(), 
-							authenticatorInfos.authorizationKeyUsage(),
-							authenticatorInfos.autoCreateAuthorizationKey(),
-							authenticatorInfos.authorizationKeyAlgorithm(),
-							authenticatorInfos.authorizationKeyLifeTime(),
-							authenticatorInfos.authorizationKeyLifeTimeUnit(),
-							ownerId, 
-							caller.getTenantId(),  
-							this.engine,
-							null,
-							null,
-							null);
-					
-					if( key != null ) {
-						authorization = GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization, authorizationRaw, key);
-					} 
-
-				} else {
-					authorization = GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization, authorizationRaw);
-				}
+				authorization = GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization, authorizationRaw);
+				/*
+				 * if (GGAPIEntityAuthorizationHelper.isSignable(supportedAuthorization)) {
+				 * 
+				 * 
+				 * 
+				 * String ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(authorization);
+				 * 
+				 * if (ownerId == null) {
+				 * return null;
+				 * }
+				 * 
+				 * String domainName = ownerId.split(":")[0];
+				 * 
+				 * Optional<IGGAPIDomain> authenticatorDomain =
+				 * this.engine.getDomain(domainName);
+				 * 
+				 * if (authenticatorDomain.isEmpty()) {
+				 * return authorization;
+				 * }
+				 * 
+				 * if
+				 * (!GGAPIEntityAuthenticatorHelper.isAuthenticator(authenticatorDomain.get().
+				 * getEntityClass())) {
+				 * return authorization;
+				 * }
+				 * 
+				 * GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker
+				 * .checkEntityAuthenticatorClass(authenticatorDomain.get().getEntityClass());
+				 * 
+				 * IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
+				 * GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
+				 * authenticatorInfos.authorizationKeyType(),
+				 * authenticatorInfos.authorizationKeyUsage(),
+				 * authenticatorInfos.autoCreateAuthorizationKey(),
+				 * authenticatorInfos.authorizationKeyAlgorithm(),
+				 * authenticatorInfos.authorizationKeyLifeTime(),
+				 * authenticatorInfos.authorizationKeyLifeTimeUnit(),
+				 * ownerId,
+				 * caller.getTenantId(),
+				 * this.engine,
+				 * null,
+				 * null,
+				 * null);
+				 * 
+				 * if (key != null) {
+				 * authorization =
+				 * GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization,
+				 * authorizationRaw);
+				 * }
+				 * 
+				 * } else {
+				 * authorization =
+				 * GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization,
+				 * authorizationRaw);
+				 * }
+				 */
 			} catch (GGAPIException e) {
 				log.atDebug().log("Error during authorization decoding ", e);
 			}
 		}
-		return authorization; 
+		return authorization;
 	}
 
 	private byte[] decodeAuthorizationFromProtocols(Object request, IGGAPICaller caller) throws GGAPISecurityException {
 		byte[] authorization = null;
-		for( Class<?> protocolType: caller.getDomain().getAuthorizationProtocols() ) {
+		for (Class<?> protocolType : caller.getDomain().getAuthorizationProtocols()) {
 			authorization = this.decodeAuthorizationFromProtocol(request, caller, protocolType);
-			if( authorization != null ) {
+			if (authorization != null) {
 				break;
 			}
 		}
 		return authorization;
 	}
 
-	private byte[] decodeAuthorizationFromProtocol(Object request, IGGAPICaller caller, Class<?> protocolType) throws GGAPISecurityException {
-		log.atDebug().log("Triing authorization protocol "+protocolType.getSimpleName() );
+	private byte[] decodeAuthorizationFromProtocol(Object request, IGGAPICaller caller, Class<?> protocolType)
+			throws GGAPISecurityException {
+		log.atDebug().log("Triing authorization protocol " + protocolType.getSimpleName());
 		byte[] authorization = null;
 		IGGAPIAuthorizationProtocol protocol = null;
 		try {
@@ -257,8 +300,8 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		}
 		try {
 			authorization = protocol.getAuthorization(request);
-		} catch(GGAPIException e) {
-			log.atDebug().log("Error during authorization protocol decoding ", e );
+		} catch (GGAPIException e) {
+			log.atDebug().log("Error during authorization protocol decoding ", e);
 		}
 		return authorization;
 	}
@@ -280,38 +323,102 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 	}
 
 	@Override
-	public void authenticatorEntitySecurityPreProcessing(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
-		if( GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass()) ) {
-			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
-			for( Class<?> authenticationType: authenticatorInfos.authenticationTypes() ) {;
-			log.atDebug().log("Pre processing authenticator security on entity of type "+entity.getClass().getSimpleName()+" with authentication type "+authenticationType.getSimpleName());
-				Object authentication = this.authenticationFactoryRegistry.getFactory(authenticationType).createDummy(caller.getDomain());
-				GGAPIAuthenticationHelper.applyPreProcessingSecurity(authentication, caller, entity, params);			
+	public void authenticatorEntitySecurityPreProcessing(IGGAPICaller caller, Object entity, Map<String, String> params)
+			throws GGAPIException {
+		if (GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass())) {
+			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker
+					.checkEntityAuthenticator(entity);
+			for (Class<?> authenticationType : authenticatorInfos.authenticationTypes()) {
+				;
+				log.atDebug()
+						.log("Pre processing authenticator security on entity of type "
+								+ entity.getClass().getSimpleName() + " with authentication type "
+								+ authenticationType.getSimpleName());
+				Object authentication = this.authenticationFactoryRegistry.getFactory(authenticationType)
+						.createDummy(caller.getDomain());
+				GGAPIAuthenticationHelper.applyPreProcessingSecurity(authentication, caller, entity, params);
 			}
 		} else {
-			log.atDebug().log("Cannot pre process authenticator security on entity of type "+entity.getClass().getSimpleName()+" as it is not an authenticator entity");
+			log.atDebug().log("Cannot pre process authenticator security on entity of type "
+					+ entity.getClass().getSimpleName() + " as it is not an authenticator entity");
 		}
 	}
-	
+
 	@Override
-	public void authenticatorEntitySecurityPostProcessing(IGGAPICaller caller, Object entity, Map<String, String> params) throws GGAPIException {
-		if( GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass()) ) {
-			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(entity);
-			for( Class<?> authenticationType: authenticatorInfos.authenticationTypes() ) {;
-			log.atDebug().log("Post processing authenticator security on entity of type "+entity.getClass().getSimpleName()+" with authentication type "+authenticationType.getSimpleName());
-				Object authentication = this.authenticationFactoryRegistry.getFactory(authenticationType).createDummy(caller.getDomain());
-				GGAPIAuthenticationHelper.applyPostProcessingSecurity(authentication, caller, entity, params);			
+	public void authenticatorEntitySecurityPostProcessing(IGGAPICaller caller, Object entity,
+			Map<String, String> params) throws GGAPIException {
+		if (GGAPIEntityAuthenticatorHelper.isAuthenticator(entity.getClass())) {
+			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker
+					.checkEntityAuthenticator(entity);
+			for (Class<?> authenticationType : authenticatorInfos.authenticationTypes()) {
+				;
+				log.atDebug()
+						.log("Post processing authenticator security on entity of type "
+								+ entity.getClass().getSimpleName() + " with authentication type "
+								+ authenticationType.getSimpleName());
+				Object authentication = this.authenticationFactoryRegistry.getFactory(authenticationType)
+						.createDummy(caller.getDomain());
+				GGAPIAuthenticationHelper.applyPostProcessingSecurity(authentication, caller, entity, params);
 			}
 		} else {
-			log.atDebug().log("Cannot post process authenticator security on entity of type "+entity.getClass().getSimpleName()+" as it is not an authenticator entity");
+			log.atDebug().log("Cannot post process authenticator security on entity of type "
+					+ entity.getClass().getSimpleName() + " as it is not an authenticator entity");
 		}
 	}
 
 	@Override
 	public IGGAPIServiceResponse authenticate(IGGAPIAuthenticationRequest request) {
-		if( this.authenticationService != null ) {
+		if (this.authenticationService != null) {
 			return this.authenticationService.authenticate(request);
 		}
 		return new GGAPIServiceResponse("No authentication service", GGAPIServiceResponseCode.NOT_AVAILABLE);
+	}
+
+	public IGGAPIAuthenticationRequest createAuthenticationRequestFromAuthorization(IGGAPICaller caller,
+			Object authorization)
+			throws GGAPIException {
+
+		IGGAPIDomain domain = caller.getDomain();
+
+		if (GGAPIEntityAuthenticatorHelper.isAuthenticator(authorization.getClass())) {
+			GGAPIAuthenticatorInfos infos = GGAPIEntityAuthenticatorChecker
+					.checkEntityAuthenticator(authorization);
+			Optional<IGGAPIDomain> authorizationsDomain = this.engine.getDomains().stream().filter(d -> {
+				return d.getEntityClass().equals(authorization.getClass());
+			}).findFirst();
+
+			if (authorizationsDomain.isPresent()) {
+				domain = authorizationsDomain.get();
+			}
+
+			return new GGAPIAuthenticationRequest(domain,
+					caller.getTenantId(),
+					GGAPIEntityAuthorizationHelper.getUuid(authorization), authorization,
+					infos.authenticationTypes()[0]);
+
+		} else {
+			log.atWarn().log("Cannot create authentication request from authorization of type "
+					+ authorization.getClass());
+		}
+
+		return null;
+	}
+
+	@Override
+	public Optional<Object> getAuthorizationFromRequest(IGGAPICaller caller, Object request) throws GGAPIException {
+		byte[] authorizationRaw = this.decodeAuthorizationFromRequest(request, caller);
+		if (authorizationRaw != null && authorizationRaw.length > 0) {
+			Object authorization = this.decodeRawAuthorization(authorizationRaw,
+					caller);
+			if (authorization != null) {
+				return Optional.of(authorization);
+			} else {
+				log.atWarn().log("Undecodable authorization " + new String(authorizationRaw));
+			}
+		} else {
+			log.atWarn().log("Undecodable authorization");
+		}
+
+		return Optional.empty();
 	}
 }

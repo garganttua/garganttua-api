@@ -6,4 +6,6 @@ public interface IGGAPIAuthorizationInfosRegistry {
 
 	List<Class<?>> getAuthorizationsTypes();
 
+	List<GGAPIAuthorizationInfos> getAuthorizationsInfos();
+
 }

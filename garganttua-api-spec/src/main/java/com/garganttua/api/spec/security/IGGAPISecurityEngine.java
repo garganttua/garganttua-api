@@ -1,6 +1,7 @@
 package com.garganttua.api.spec.security;
 
 import java.util.Map;
+import java.util.Optional;
 
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
@@ -39,5 +40,9 @@ public interface IGGAPISecurityEngine {
 			Map<String, String> params) throws GGAPIException;
 
 	IGGAPIServiceResponse authenticate(IGGAPIAuthenticationRequest request);
+
+	IGGAPIAuthenticationRequest createAuthenticationRequestFromAuthorization(IGGAPICaller caller, Object authorization) throws GGAPIException;
+
+	Optional<Object> getAuthorizationFromRequest(IGGAPICaller caller, Object request) throws GGAPIException;
 
 }

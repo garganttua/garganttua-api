@@ -67,9 +67,14 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 
 		if (request.getMethod().equalsIgnoreCase("POST") || request.getMethod().equalsIgnoreCase("PUT")
 				|| request.getMethod().equalsIgnoreCase("PATCH")) {
-			conciliator.setBody(getBodyAsByteObjectArray(request));
+			try {
+				conciliator.setBody(getBodyAsByteObjectArray(request));
+			} catch (IOException e) {
+				return new ResponseEntity<>(new GGAPIResponseObject("unable to read body", GGAPIResponseObject.BAD_REQUEST),
+						HttpStatus.INTERNAL_SERVER_ERROR);
+			}
 		}
-		
+
 		Object[] parameters = conciliator.getParameters();
 
 		try {
@@ -128,7 +133,7 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 		this.requestMappingHandlerMapping.registerMapping(requestMappingInfoCreate, handler, method);
 	}
 
-	public static Byte[] getBodyAsByteObjectArray(HttpServletRequest request) throws IOException {
+	public static byte[] getBodyAsByteObjectArray(HttpServletRequest request) throws IOException {
 		byte[] primitiveBytes;
 
 		try (InputStream inputStream = request.getInputStream();
@@ -143,12 +148,6 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 
 			primitiveBytes = buffer.toByteArray();
 		}
-
-		Byte[] objectBytes = new Byte[primitiveBytes.length];
-		for (int i = 0; i < primitiveBytes.length; i++) {
-			objectBytes[i] = primitiveBytes[i];
-		}
-
-		return objectBytes;
+		return primitiveBytes;
 	}
 }

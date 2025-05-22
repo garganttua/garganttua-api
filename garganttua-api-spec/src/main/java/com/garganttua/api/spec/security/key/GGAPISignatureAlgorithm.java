@@ -12,20 +12,11 @@ public enum GGAPISignatureAlgorithm {
     SHA3_384("SHA3-384"),
     SHA3_512("SHA3-512"),
     
-    // HmacSHA1
-//    HMAC_SHA1("HmacSHA1"),
-//
-//    // HmacSHA224
-//    HMAC_SHA224("HmacSHA224"),
-//
-//    // HmacSHA256
-//    HMAC_SHA256("HmacSHA256"),
-//
-//    // HmacSHA384
-//    HMAC_SHA384("HmacSHA384"),
-//
-//    // HmacSHA512
-//    HMAC_SHA512_128("HmacSHA512"),
+    HMAC_SHA1("HmacSHA1"),
+    HMAC_SHA224("HmacSHA224"),
+    HMAC_SHA256("HmacSHA256"),
+    HMAC_SHA384("HmacSHA384"),
+    HMAC_SHA512("HmacSHA512"),
 
 
     // MD-based signature algorithms

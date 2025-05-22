@@ -6,11 +6,11 @@ import java.util.List;
 
 import com.garganttua.api.core.GGAPIInfosHelper;
 import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthorizationChecker;
+import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
+import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.security.authorization.GGAPIAuthorizationInfos;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
 
 public class GGAPIEntityAuthorizationHelper {
 
@@ -35,14 +35,22 @@ public class GGAPIEntityAuthorizationHelper {
 		return false;
 	}
 
-	public static void validateAgainst(Object authorization, Object authorizationRef) throws GGAPIException {
+	public static void validateAgainst(Object authorization, Object authorizationRef, Object ...args) throws GGAPIException {
 		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
-				GGAPIAuthorizationInfos::validateAgainstMethodAddress, authorizationRef);
+				GGAPIAuthorizationInfos::validateAgainstMethodAddress, authorizationRef, new Object[]{args});
 	}
 
-	public static void validate(Object authorization) throws GGAPIException {
+	public static void validate(Object authorization, Object ...args) throws GGAPIException {
 		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
-				GGAPIAuthorizationInfos::validateMethodAddress);
+				GGAPIAuthorizationInfos::validateMethodAddress, new Object[]{args});
+	}
+
+	public static void sign(Object authorization, IGGAPIKeyRealm key) throws GGAPIException {
+		if( !isSignable(authorization.getClass()) )
+			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Authorization class " + authorization.getClass().getSimpleName() + " is not signable");
+		
+		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::signMethodAddress, key);
 	}
 
 	public static List<String> getAuthorities(Object authorization) throws GGAPIException {
@@ -75,33 +83,11 @@ public class GGAPIEntityAuthorizationHelper {
 			return null;
 		}
 	}
-
-	public static Object newObject(Class<?> authorization, byte[] authorizationRaw, IGGAPIKeyRealm keyRealm) throws GGAPIException {
-		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization);
-		try {
-			return infos.rawConstructor().newInstance(authorizationRaw, keyRealm);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException e) {
-			GGAPIException.processException(e);
-			return null;
-		}
-	}
 	
-	public static Object newObject(Class<?> authorization, String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate) throws GGAPIException {
+	public static Object newObject(Class<?> authorization, String uuid, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate) throws GGAPIException {
 		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization);
 		try {
-			return infos.completeConstructor().newInstance(uuid, id, tenantId, ownerUuid, authorities, creationDate, expirationDate);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException e) {
-			GGAPIException.processException(e);
-			return null;
-		}
-	}
-
-	public static Object newObject(Class<?> authorization, String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate, IGGAPIKeyRealm keyRealm) throws GGAPIException {
-		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization);
-		try {
-			return infos.completeConstructor().newInstance(uuid, id, tenantId, ownerUuid, authorities, creationDate, expirationDate, keyRealm);
+			return infos.completeConstructor().newInstance(uuid, tenantId, ownerUuid, authorities, creationDate, expirationDate);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
 			GGAPIException.processException(e);

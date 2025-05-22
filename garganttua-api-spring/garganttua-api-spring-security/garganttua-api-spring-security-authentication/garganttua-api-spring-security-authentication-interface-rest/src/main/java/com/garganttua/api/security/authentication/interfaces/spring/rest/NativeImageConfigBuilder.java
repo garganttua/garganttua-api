@@ -2,16 +2,12 @@ package com.garganttua.api.security.authentication.interfaces.spring.rest;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
-import com.garganttua.api.interfaces.spring.rest.GGAPIInterfaceSpringCustomizable;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.nativve.image.config.resources.ResourceConfig;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 public class NativeImageConfigBuilder {
 

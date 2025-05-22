@@ -111,6 +111,7 @@ public class GGAPIKeyRealm extends GenericGGAPIEntity implements IGGAPIKeyRealm 
 
 	protected GGAPIEncryptionPaddingMode paddingMode;
 
+	@Getter
 	protected GGAPISignatureAlgorithm signatureAlgorithm;
 
 	@GGAPIEntityMandatory
@@ -267,4 +268,8 @@ public class GGAPIKeyRealm extends GenericGGAPIEntity implements IGGAPIKeyRealm 
 		this.encryptionKey = null;
 	}
 
+	@Override
+	public boolean isAbleToSign() {
+		return this.signatureAlgorithm != null && this.keyAlgorithm != null;
+	}
 }

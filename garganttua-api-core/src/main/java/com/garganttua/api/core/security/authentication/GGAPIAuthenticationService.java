@@ -36,7 +36,6 @@ import com.garganttua.api.spec.service.GGAPIReadOutputMode;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
-import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 import com.garganttua.api.spec.sort.GGAPISort;
 import com.garganttua.api.spec.sort.GGAPISortDirection;
 import com.garganttua.executor.chain.GGExecutorChain;
@@ -260,7 +259,6 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
 		Object authorization = null;
 		String uuid = UUID.randomUUID().toString();
-		String id = request.getPrincipal();
 		List<String> authorities = GGAPIAuthenticationHelper.getAuthorities(authentication);
 		int lifeTime = authenticatorInfos.authorizationLifeTime();
 		TimeUnit lifeTimeUnit = authenticatorInfos.authorizationLifeTimeUnit();
@@ -270,6 +268,7 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 		Date expirationDate = Date.from(Instant.ofEpochSecond(lifeTimeInseconds));
 
 		if (GGAPIEntityAuthorizationHelper.isSignable(authenticatorInfos.authorizationType())) {
+
 			IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
 					AUTHORIZATION_SIGNING_KEY_REALM_NAME,
 					authenticatorInfos.authorizationKeyType(), 
@@ -283,17 +282,25 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 					this.engine,
 					null, 
 					null, 
-					null);
+					authenticatorInfos.authorizationSignatureAlgorithm());
+
+			if( !key.isAbleToSign() ) {
+				log.atDebug().log("The authenticator misses information to sign the authorization");
+				throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "The authenticator misses information to sign the authorization");
+			} 
 
 			if( foundAuthorization != null && this.revalidateAuthorizationWithKey(foundAuthorization, key) ) {
 				return foundAuthorization;
 			}
+
 			log.atDebug().log("Generating new authorization");
-			authorization = GGAPIEntityAuthorizationHelper.newObject(authenticatorInfos.authorizationType(), uuid, id,
-					tenantId, ownerUuid, authorities, new Date(), expirationDate, key);
+			authorization = GGAPIEntityAuthorizationHelper.newObject(authenticatorInfos.authorizationType(), uuid,
+					tenantId, ownerUuid, authorities, new Date(), expirationDate);
+			GGAPIEntityAuthorizationHelper.sign(authorization, key);
+			
 		} else {
 			log.atDebug().log("Generating new authorization");
-			authorization = GGAPIEntityAuthorizationHelper.newObject(authenticatorInfos.authorizationType(), uuid, id,
+			authorization = GGAPIEntityAuthorizationHelper.newObject(authenticatorInfos.authorizationType(), uuid,
 					tenantId, ownerUuid, authorities, new Date(), expirationDate);
 		}
 		return authorization;
@@ -302,8 +309,8 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 	private boolean revalidateAuthorizationWithKey(Object foundAuthorization, IGGAPIKeyRealm key) {
 		try {
 			log.atDebug().log("Found one authorization, revalidating it with key");
-			Object authToCheck = GGAPIEntityAuthorizationHelper.newObject(foundAuthorization.getClass(), GGAPIEntityAuthorizationHelper.toByteArray(foundAuthorization), key);
-			GGAPIEntityAuthorizationHelper.validate(authToCheck);
+			Object authToCheck = GGAPIEntityAuthorizationHelper.newObject(foundAuthorization.getClass(), GGAPIEntityAuthorizationHelper.toByteArray(foundAuthorization));
+			GGAPIEntityAuthorizationHelper.validate(authToCheck, ((Object) key));
 		} catch (GGAPIException e) {
 			log.atWarn().log("Cannot revalidate found euthorization with key");
 			return false;

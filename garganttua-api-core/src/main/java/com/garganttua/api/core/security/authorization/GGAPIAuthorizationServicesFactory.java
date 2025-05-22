@@ -13,7 +13,6 @@ import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationInfosRegistry;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationServicesRegistry;
 import com.garganttua.api.spec.service.IGGAPIService;
-import com.garganttua.api.spec.service.IGGAPIServicesRegistry;
 
 import lombok.extern.slf4j.Slf4j;
 

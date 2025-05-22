@@ -20,6 +20,7 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorEnabled;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorInfos;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
+import com.garganttua.api.spec.security.key.GGAPISignatureAlgorithm;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -62,6 +63,7 @@ public class GGAPIEntityAuthenticatorChecker {
 		Class<?> keyType = annotation.authorizationKey();
 		boolean autoCreateKey = annotation.autoCreateAuthorizationKey();
 		GGAPIKeyAlgorithm keyAlgorithm = annotation.authorizationKeyAlgorithm();
+		GGAPISignatureAlgorithm signatureAlgorithm = annotation.authorizationSignatureAlgorithm();
 		int keyLifeTime = annotation.authorizationKeyLifeTime();
 		TimeUnit keyLifeTimeUnit = annotation.authorizationKeyLifeTimeUnit();
 
@@ -108,7 +110,7 @@ public class GGAPIEntityAuthenticatorChecker {
 
 			GGAPIAuthenticatorInfos authenticatorinfos = new GGAPIAuthenticatorInfos(entityAuthenticatorClass,
 					authentications, authenticationInterfaces, authorizationType, keyType, keyUsage,
-					autoCreateKey, keyAlgorithm, keyLifeTime, keyLifeTimeUnit, annotation.authorizationLifeTime(),
+					autoCreateKey, keyAlgorithm, signatureAlgorithm, keyLifeTime, keyLifeTimeUnit, annotation.authorizationLifeTime(),
 					annotation.authorizationLifeTimeUnit(), q.address(autoritiesFieldName),
 					q.address(accountNonExpiredFieldName), q.address(accountNonLockedFieldName),
 					q.address(credentialsNonExpiredFieldName), q.address(enabledFieldName), annotation.scope());

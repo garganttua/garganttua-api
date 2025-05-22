@@ -23,7 +23,7 @@ public class GGAPIMethodConciliatorTest {
                 .setReferencePath("/api/devices/{uuid}/alarms/{alarmId}")
                 .setValuedPath("/api/devices/123456789/alarms/154851245")
                 .setCustomParameters(Map.of("extra", "customValue"))
-                .setBody("example body");
+                .setBody("example body".getBytes());
 
         Object[] parameters = conciliator.getParameters();
        

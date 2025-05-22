@@ -52,6 +52,7 @@ public enum GGAPIExceptionCode {
 	 * Security API error codes 
 	 */
 	GENERIC_SECURITY_ERROR			(200), 
+	AUTHORIZATION_NOT_SIGNED		(201),
 	
 	//Token error codes
 	TOKEN_NOT_FOUND					(210), 

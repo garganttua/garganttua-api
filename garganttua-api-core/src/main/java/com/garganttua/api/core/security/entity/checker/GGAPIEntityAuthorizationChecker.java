@@ -22,6 +22,7 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationAuthoritie
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationCreation;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationExpiration;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRevoked;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationSign;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationToByteArray;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationType;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationValidate;
@@ -59,7 +60,8 @@ public class GGAPIEntityAuthorizationChecker {
 		}
 
 		// must be authenticator
-		Annotation authenticatorAnnotation = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass, GGAPIAuthenticator.class);
+		Annotation authenticatorAnnotation = GGAPIEntityChecker.checkIfAnnotatedEntity(entityClass,
+				GGAPIAuthenticator.class);
 		if (authenticatorAnnotation == null) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Authorization entity "
 					+ entityClass.getSimpleName() + " must be annotated with @AuthenticatorAnnotation");
@@ -85,60 +87,48 @@ public class GGAPIEntityAuthorizationChecker {
 		String expirationDate = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass,
 				GGAPIAuthorizationExpiration.class, Date.class, true);
 
+		// is renewable ?
+		boolean renewable = authorizationAnnotation.renewable();
+
 		// is signable ?
 		boolean signable = authorizationAnnotation.signable();
 		Constructor<?> rawConstructor = null;
 		Constructor<?> completeConstructor = null;
 		String validateMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
-				GGAPIAuthorizationValidate.class, true, void.class);
+				GGAPIAuthorizationValidate.class, true, void.class, Object[].class);
 		String validateAgainstMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
-				GGAPIAuthorizationValidateAgainst.class, true, void.class, entityClass);
+				GGAPIAuthorizationValidateAgainst.class, true, void.class, entityClass, Object[].class);
 		String toByteArrayMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
 				GGAPIAuthorizationToByteArray.class, true, byte[].class);
+		String signMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
+				GGAPIAuthorizationSign.class, true, void.class, IGGAPIKeyRealm.class);
 
-		if (signable) {
-			try {
-				rawConstructor = entityClass.getDeclaredConstructor(byte[].class, IGGAPIKeyRealm.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
-						"Authorization entity " + entityClass.getSimpleName()
-								+ " must have one constructor with parameters (byte[] raw, IGGAPIKeyRealm key)");
-			}
-			try {
-				completeConstructor = entityClass.getDeclaredConstructor(String.class, String.class, String.class,
-						String.class, List.class, Date.class, Date.class, IGGAPIKeyRealm.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Authorization entity "
-						+ entityClass.getSimpleName()
-						+ " must have one constructor with parameters (String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate, IGGAPIKeyRealm key)");
-			}
-		} else {
-			try {
-				rawConstructor = entityClass.getDeclaredConstructor(Byte[].class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Authorization entity "
-						+ entityClass.getSimpleName() + " must have one constructor with parameters (byte[] raw)");
-			}
-			try {
-				completeConstructor = entityClass.getDeclaredConstructor(String.class, String.class, String.class,
-						String.class, List.class, Date.class, Date.class);
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Authorization entity "
-						+ entityClass.getSimpleName()
-						+ " must have one constructor with parameters (String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate)");
-			}
+		try {
+			rawConstructor = entityClass.getDeclaredConstructor(byte[].class);
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Authorization entity "
+					+ entityClass.getSimpleName() + " must have one constructor with parameters (byte[] raw)");
+		}
+		try {
+			completeConstructor = entityClass.getDeclaredConstructor(String.class, String.class,
+					String.class, List.class, Date.class, Date.class);
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Authorization entity "
+					+ entityClass.getSimpleName()
+					+ " must have one constructor with parameters (String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate)");
 		}
 
 		IGGObjectQuery q;
 		try {
 			q = GGObjectQueryFactory.objectQuery(entityClass);
 
-			GGAPIAuthorizationInfos authorizationInfos = new GGAPIAuthorizationInfos(signable, completeConstructor,
+			GGAPIAuthorizationInfos authorizationInfos = new GGAPIAuthorizationInfos(signable, renewable,
+					completeConstructor,
 					rawConstructor, q.address(uuidFieldAddress), q.address(idFieldAddress),
 					q.address(tenantIdFieldAddress), q.address(ownerUuid), q.address(authorities),
 					q.address(creationDate), q.address(expirationDate), q.address(revoked),
 					q.address(validateAgainstMethod), q.address(validateMethod), q.address(authorizationTypeFieldName),
-					q.address(toByteArrayMethod));
+					q.address(toByteArrayMethod), q.address(signMethod));
 
 			GGAPIEntityAuthorizationChecker.infos.put(entityClass, authorizationInfos);
 

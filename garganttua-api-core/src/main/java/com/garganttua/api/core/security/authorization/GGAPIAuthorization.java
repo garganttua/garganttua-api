@@ -22,11 +22,18 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationExpiration
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRevoked;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationValidate;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationValidateAgainst;
+import com.garganttua.api.spec.security.authorization.IGGAPIAuthorization;
 
 import lombok.Getter;
 
 @GGAPIEntityOwned
-public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
+public abstract class GGAPIAuthorization extends GenericGGAPIEntity implements IGGAPIAuthorization {
+
+	public GGAPIAuthorization(byte[] raw) throws GGAPISecurityException {
+		this.decodeFromRaw(raw);
+	}
+
+	protected abstract void decodeFromRaw(byte[] raw) throws GGAPISecurityException;
 
 	public GGAPIAuthorization(String uuid, String id, String tenantId, String ownerId, List<String> authorities,
 			Date creationDate, Date expirationDate) {
@@ -36,6 +43,10 @@ public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 		this.authorities = authorities;
 		this.creationDate = creationDate;
 		this.expirationDate = expirationDate;
+	}
+
+	public GGAPIAuthorization(){
+		super();
 	}
 
 	@GGAPIEntityMandatory
@@ -70,34 +81,36 @@ public abstract class GGAPIAuthorization extends GenericGGAPIEntity {
 	@GGAPIAuthenticatorEnabled
 	protected Boolean enabled = true;
 	
+	@Override
 	public void revoke() {
 		this.revoked = true;
 	}
 	
 	@GGAPIAuthorizationValidateAgainst
-	public void validateAgainst(GGAPIAuthorization authorizationReference) throws GGAPIException {
+	@Override
+	public void validateAgainst(IGGAPIAuthorization authorizationReference, Object ...args) throws GGAPIException {
 		isRevokedOrExpired(authorizationReference);
-		this.validate();
-		this.doValidationAgainst(authorizationReference);
+		this.doValidationAgainst(authorizationReference, args);
 	}
 	
-	protected abstract void doValidationAgainst(GGAPIAuthorization authorization) throws GGAPISecurityException;
+	protected abstract void doValidationAgainst(IGGAPIAuthorization authorization, Object ...args) throws GGAPISecurityException;
 
 	@GGAPIAuthorizationValidate
-	public void validate() throws GGAPIException {
+	@Override
+	public void validate(Object ...args) throws GGAPIException {
 		isRevokedOrExpired(this);
-		this.doValidation();
+		this.doValidation(args);
 	}
 
-	private static void isRevokedOrExpired(GGAPIAuthorization authorization) throws GGAPISecurityException {
-		if( authorization.revoked ) {
+	private static void isRevokedOrExpired(IGGAPIAuthorization authorization) throws GGAPISecurityException {
+		if( ((GGAPIAuthorization) authorization).revoked ) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_REVOKED, "Token revoked");
 		}
-		if( new Date().after(authorization.expirationDate) ) {
-			authorization.enabled = false;
+		if( new Date().after( ((GGAPIAuthorization) authorization).expirationDate) ) {
+			 ((GGAPIAuthorization) authorization).enabled = false;
 			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_EXPIRED, "Token expired");
 		}
 	}
 
-	protected abstract void doValidation() throws GGAPIException;
+	protected abstract void doValidation(Object ...args) throws GGAPISecurityException;
 }

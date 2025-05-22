@@ -19,4 +19,9 @@ public class GGAPIAuthorizationInfosRegistry implements IGGAPIAuthorizationInfos
 		return List.copyOf(this.authorizations.keySet());
 	}
 
+	@Override
+	public List<GGAPIAuthorizationInfos> getAuthorizationsInfos() {
+		return List.copyOf(this.authorizations.values());
+	}
+
 }

@@ -7,6 +7,8 @@ public interface IGGAPIKeyRealm {
 	String getName();
 	
 	GGAPIKeyAlgorithm getKeyAlgorithm();
+
+	GGAPISignatureAlgorithm getSignatureAlgorithm();
 	
 	boolean equals(IGGAPIKeyRealm object);
 
@@ -43,5 +45,7 @@ public interface IGGAPIKeyRealm {
 	void revoke();
 
 	void removeKeyForEncryption();
+
+    boolean isAbleToSign();
 
 }

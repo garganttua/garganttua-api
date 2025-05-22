@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.spec.security.authenticator.GGAPIAuthenticatorScope;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
+import com.garganttua.api.spec.security.key.GGAPISignatureAlgorithm;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
@@ -30,6 +31,8 @@ public @interface GGAPIAuthenticator {
 	boolean autoCreateAuthorizationKey() default false;
 
 	GGAPIKeyAlgorithm authorizationKeyAlgorithm() default GGAPIKeyAlgorithm.RSA_4096;
+
+	GGAPISignatureAlgorithm authorizationSignatureAlgorithm() default GGAPISignatureAlgorithm.SHA512;
 
 	TimeUnit authorizationKeyLifeTimeUnit() default TimeUnit.MINUTES;
 

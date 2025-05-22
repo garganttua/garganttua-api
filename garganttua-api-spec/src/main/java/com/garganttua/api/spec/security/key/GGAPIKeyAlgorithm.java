@@ -317,7 +317,16 @@ public enum GGAPIKeyAlgorithm implements IGGAPIKeyAlgorithm {
         String algorithmName = this.algorithm;
         if( this.algorithm.equals("EC") )
         	algorithmName = "ECDSA";
-        
+        if( signatureAlgorithm == GGAPISignatureAlgorithm.HMAC_SHA1)
+            return GGAPISignatureAlgorithm.HMAC_SHA1.getName();
+        if( signatureAlgorithm == GGAPISignatureAlgorithm.HMAC_SHA224)
+            return GGAPISignatureAlgorithm.HMAC_SHA224.getName();
+        if( signatureAlgorithm == GGAPISignatureAlgorithm.HMAC_SHA256)
+            return GGAPISignatureAlgorithm.HMAC_SHA256.getName();
+        if( signatureAlgorithm == GGAPISignatureAlgorithm.HMAC_SHA384)
+            return GGAPISignatureAlgorithm.HMAC_SHA384.getName();
+        if( signatureAlgorithm == GGAPISignatureAlgorithm.HMAC_SHA512)
+            return GGAPISignatureAlgorithm.HMAC_SHA512.getName();
         
 		return signatureAlgorithm.getName()+"with"+algorithmName;
 	}

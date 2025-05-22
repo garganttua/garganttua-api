@@ -1,5 +1,6 @@
 package com.garganttua.api.core.security.key;
 
+import java.lang.reflect.Array;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -20,6 +21,7 @@ import java.util.Base64.Encoder;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
@@ -71,8 +73,10 @@ public class GGAPIKey implements IGGAPIKey {
 
 	@JsonProperty
 	private GGAPISignatureAlgorithm signatureAlgorithm;
-	
-	public GGAPIKey(GGAPIKeyType type, GGAPIKeyAlgorithm algorithm, byte[] rawKey, byte[] initializationVector, GGAPIEncryptionMode encryptionMode, GGAPIEncryptionPaddingMode paddingMode, GGAPISignatureAlgorithm signatureAlgorithm) {
+
+	public GGAPIKey(GGAPIKeyType type, GGAPIKeyAlgorithm algorithm, byte[] rawKey, byte[] initializationVector,
+			GGAPIEncryptionMode encryptionMode, GGAPIEncryptionPaddingMode paddingMode,
+			GGAPISignatureAlgorithm signatureAlgorithm) {
 		super();
 		this.type = type;
 		this.algorithm = algorithm;
@@ -120,12 +124,13 @@ public class GGAPIKey implements IGGAPIKey {
 		Cipher cipher;
 		try {
 			cipher = Cipher.getInstance(this.algorithm.geCipherName(this.encryptionMode, this.encryptionPaddingMode));
-			if( this.initializationVector != null )
-				if( this.encryptionMode == GGAPIEncryptionMode.GCM )
-					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(), new GCMParameterSpec(128, this.initializationVector));
-				else 	
+			if (this.initializationVector != null)
+				if (this.encryptionMode == GGAPIEncryptionMode.GCM)
+					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(),
+							new GCMParameterSpec(128, this.initializationVector));
+				else
 					cipher.init(Cipher.ENCRYPT_MODE, this.getKey(), new IvParameterSpec(this.initializationVector));
-			else 
+			else
 				cipher.init(Cipher.ENCRYPT_MODE, this.getKey());
 			return cipher.doFinal(clear);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException
@@ -141,12 +146,13 @@ public class GGAPIKey implements IGGAPIKey {
 		Cipher cipher;
 		try {
 			cipher = Cipher.getInstance(this.algorithm.geCipherName(this.encryptionMode, this.encryptionPaddingMode));
-			if( this.initializationVector != null )
-				if( this.encryptionMode == GGAPIEncryptionMode.GCM )
-					cipher.init(Cipher.DECRYPT_MODE, this.getKey(), new GCMParameterSpec(128, this.initializationVector));
-				else 	
+			if (this.initializationVector != null)
+				if (this.encryptionMode == GGAPIEncryptionMode.GCM)
+					cipher.init(Cipher.DECRYPT_MODE, this.getKey(),
+							new GCMParameterSpec(128, this.initializationVector));
+				else
 					cipher.init(Cipher.DECRYPT_MODE, this.getKey(), new IvParameterSpec(this.initializationVector));
-			else 
+			else
 				cipher.init(Cipher.DECRYPT_MODE, this.getKey());
 			return cipher.doFinal(encoded);
 		} catch (NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | BadPaddingException
@@ -158,39 +164,88 @@ public class GGAPIKey implements IGGAPIKey {
 
 	@Override
 	public byte[] sign(byte[] data) throws GGAPIException {
-		if (this.type != GGAPIKeyType.PRIVATE) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
-					"Cannot sign with other than Private key");
+		byte[] signed = null;
+		String signatureName = this.algorithm.geSignatureName(this.signatureAlgorithm);
+		switch (this.type) {
+			case SECRET:
+				Mac mac;
+				try {
+					mac = Mac.getInstance(signatureName);
+					mac.init(this.getKey());
+					signed = mac.doFinal(data);
+				} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+					log.atWarn().log("Signature error", e);
+					throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Signature error", e);
+				}
+				break;
+			case PRIVATE:
+				try {
+					Signature signature = Signature.getInstance(signatureName);
+					signature.initSign((PrivateKey) this.getKey());
+					signature.update(data);
+					signed = signature.sign();
+				} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+					log.atWarn().log("Signature error", e);
+					throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Signature error", e);
+				}
+				break;
+			case PUBLIC:
+			default:
+				throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Public key cannot sign");
 		}
-		try {
-			String geSignatureName = this.algorithm.geSignatureName(this.signatureAlgorithm);
-			Signature signature = Signature.getInstance(geSignatureName);
-			signature.initSign((PrivateKey) this.getKey());
-			signature.update(data);
-			return signature.sign();
-		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-			log.atWarn().log("Signature error", e);
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Signature error", e);
-		}
+
+		return signed;
 	}
 
 	@Override
 	public boolean verifySignature(byte[] signature, byte[] originalData)
 			throws GGAPIException {
-		if (this.type != GGAPIKeyType.PUBLIC) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
-					"Cannot verify signature with other than Public key");
+
+		String signatureName = this.algorithm.geSignatureName(this.signatureAlgorithm);
+
+		switch (this.type) {
+			case SECRET:
+				Mac mac;
+				try {
+					mac = Mac.getInstance(signatureName);
+					mac.init(this.getKey());
+					byte[] signed = mac.doFinal(originalData);
+
+					if (!Arrays.equals(signature, signed)) {
+						log.atWarn().log("Signature verification error");
+						throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH,
+								"Signature verification error");
+					}
+				} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+					log.atWarn().log("Signature verification error", e);
+					throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Signature error", e);
+				}
+				break;
+			case PUBLIC:
+				try {
+					Signature signatureVerify = Signature
+							.getInstance(signatureName);
+					signatureVerify.initVerify((PublicKey) this.getKey());
+					signatureVerify.update(originalData);
+					signatureVerify.verify(signature);
+				} catch (NoSuchAlgorithmException | InvalidKeyException e) {
+					log.atWarn().log("Signature verification error", e);
+					throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
+							"Signature verification error",
+							e);
+				} catch (SignatureException e) {
+					log.atWarn().log("Signature verification error", e);
+					throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH,
+							"Signature verification error",
+							e);
+				}
+				break;
+			case PRIVATE:
+			default:
+				throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
+						"private key cannot verify");
 		}
-		try {
-			Signature signatureVerify = Signature.getInstance(this.algorithm.geSignatureName(this.signatureAlgorithm));
-			signatureVerify.initVerify((PublicKey) this.getKey());
-			signatureVerify.update(originalData);
-			return signatureVerify.verify(signature);
-		} catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
-			log.atWarn().log("Signature verification error", e);
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Signature verification error",
-					e);
-		}
+		return true;
 	}
 
 }
