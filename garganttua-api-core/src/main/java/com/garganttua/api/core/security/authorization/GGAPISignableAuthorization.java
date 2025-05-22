@@ -11,7 +11,6 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationSign;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorization;
 import com.garganttua.api.spec.security.authorization.IGGAPISignableAuthorization;
 import com.garganttua.api.spec.security.key.GGAPIKeyAlgorithm;
-import com.garganttua.api.spec.security.key.GGAPIKeyRealmType;
 import com.garganttua.api.spec.security.key.GGAPISignatureAlgorithm;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 
@@ -30,7 +29,7 @@ public abstract class GGAPISignableAuthorization extends GGAPIAuthorization impl
 		this.signature = this.getSignatureFromRaw(raw);
 	}
 	
-	public GGAPISignableAuthorization(String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate) {
+	public GGAPISignableAuthorization(String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate) throws GGAPISecurityException {
 		super(uuid, id, tenantId, ownerUuid, authorities, creationDate, expirationDate);
 	}
 	
@@ -40,7 +39,7 @@ public abstract class GGAPISignableAuthorization extends GGAPIAuthorization impl
 		this.keyAlgorithm = key.getKeyAlgorithm();
 		byte[] dataToSign = this.getDataToSign();
 		try {
-			this.signatureAlgorithm = key.getKeyForSigning().getSignatureAlgorithm();;
+			this.signatureAlgorithm = key.getKeyForSigning().getSignatureAlgorithm();
 			this.signature = key.getKeyForSigning().sign(dataToSign);
 		} catch (GGAPIException e) {
 			throw new GGAPISecurityException(e);
@@ -64,10 +63,6 @@ public abstract class GGAPISignableAuthorization extends GGAPIAuthorization impl
 		} catch (GGAPIException e) {
 			throw new GGAPISecurityException(e);
 		}
-
-		/* if( !Arrays.equals(this.signature, signatureTemp) ) {
-			throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_SIGNATURE_MISMATCH, "Invalid signature");
-		} */
 	}
 
 	@Override

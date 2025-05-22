@@ -7,33 +7,34 @@ import java.util.List;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.garganttua.api.core.security.authorization.GGAPISignableAuthorization;
+import com.garganttua.api.core.security.authorization.GGAPIRefreshableAuthorization;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
 import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwned;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationToByteArray;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationType;
+import com.garganttua.api.spec.security.authorization.IGGAPIRefreshableAuthorization;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 
 @GGAPIEntityOwned
-public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
+public class GGAPIJWTRefreshableAuthorization extends GGAPIRefreshableAuthorization {
 
 	@GGAPIAuthorizationType
 	private String type = "JWT";
 	
 	private String alg;
 
-	public GGAPIJWTAuthorization() {
+	public GGAPIJWTRefreshableAuthorization() {
 		super();
 	}
 
-	public GGAPIJWTAuthorization(byte[] raw) throws GGAPIException {
+	public GGAPIJWTRefreshableAuthorization(byte[] raw) throws GGAPIException {
 		super(raw);
 	}
 
-	public GGAPIJWTAuthorization(String uuid, String tenantId, String ownerUuid, List<String> authorities,
+	public GGAPIJWTRefreshableAuthorization(String uuid, String tenantId, String ownerUuid, List<String> authorities,
 			Date creationDate, Date expirationDate) throws GGAPIException {
 		super(uuid, uuid, tenantId, ownerUuid, authorities,
 				creationDate, expirationDate);
@@ -119,5 +120,10 @@ public class GGAPIJWTAuthorization extends GGAPISignableAuthorization {
 	protected byte[] getDataToSign() {
 		return this.toJWTJsonString().getBytes();
 	}
+
+    @Override
+    public IGGAPIRefreshableAuthorization refresh(Date newExpirationDate) {
+        return this;
+    }
 
 }

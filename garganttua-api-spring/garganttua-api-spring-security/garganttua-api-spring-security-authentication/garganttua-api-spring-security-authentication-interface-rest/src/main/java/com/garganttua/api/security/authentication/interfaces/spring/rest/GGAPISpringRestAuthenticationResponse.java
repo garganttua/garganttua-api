@@ -1,10 +1,11 @@
 package com.garganttua.api.security.authentication.interfaces.spring.rest;
 
 import java.io.IOException;
+import java.util.Base64;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationHelper;
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
@@ -26,6 +27,11 @@ public class GGAPISpringRestAuthenticationResponse {
 	private String authorization;
 	@JsonProperty
 	private String authorizationType;
+	@JsonProperty
+	@JsonFormat(shape = JsonFormat.Shape.ARRAY)
+	private String refreshToken;
+	@JsonProperty
+	private Date refreshTokenExpirationDate;
 
 	public GGAPISpringRestAuthenticationResponse(Object authentication) throws GGAPIException {
 		this.domain = GGAPIAuthenticationHelper.getAuthenticatorService(authentication).getDomain().getDomain();
@@ -34,6 +40,10 @@ public class GGAPISpringRestAuthenticationResponse {
 		if( authorization != null ) {
 			this.authorization = new String(GGAPIEntityAuthorizationHelper.toByteArray(authorization));
 			this.authorizationType = GGAPIEntityAuthorizationHelper.getType(authorization);
+			if( GGAPIEntityAuthorizationHelper.isRenewable(authorization.getClass()) ) {
+				this.refreshToken = new String(Base64.getEncoder().encodeToString(GGAPIEntityAuthorizationHelper.getRefreshToken(authorization)));
+				this.refreshTokenExpirationDate = GGAPIEntityAuthorizationHelper.getRefreshTokenExpirationDate(authorization);
+			}
 		}
 	}
 	

@@ -6,7 +6,9 @@ public interface IGGAPIAuthorization {
 
     void revoke();
 
-    boolean isRevoked();
+    void isRevoked() throws GGAPIException;
+
+    void isExpired() throws GGAPIException;
 
     void validateAgainst(IGGAPIAuthorization authorizationReference, Object ...args) throws GGAPIException;
     

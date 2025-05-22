@@ -21,6 +21,8 @@ public record GGAPIAuthenticatorInfos(
 	TimeUnit authorizationKeyLifeTimeUnit,
 	int authorizationLifeTime,
 	TimeUnit authorizationLifeTimeUnit,
+	int authorizationRefreshTokenLifeTime,
+	TimeUnit authorizationRefreshTokenLifeTimeUnit,
 	GGObjectAddress authoritiesFieldAddress,
 	GGObjectAddress isAccountNonExpiredFieldAddress,
 	GGObjectAddress isAccountNonLockedFieldAddress,

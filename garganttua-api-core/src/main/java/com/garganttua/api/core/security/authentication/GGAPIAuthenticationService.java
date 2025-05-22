@@ -297,6 +297,11 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 			authorization = GGAPIEntityAuthorizationHelper.newObject(authenticatorInfos.authorizationType(), uuid,
 					tenantId, ownerUuid, authorities, new Date(), expirationDate);
 			GGAPIEntityAuthorizationHelper.sign(authorization, key);
+
+			if( GGAPIEntityAuthorizationHelper.isRenewable(authenticatorInfos.authorizationType()) ){
+				log.atDebug().log("Generating refresh token");
+				GGAPIEntityAuthorizationHelper.createRefreshToken(authorization, key, expirationDate);
+			}
 			
 		} else {
 			log.atDebug().log("Generating new authorization");

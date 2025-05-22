@@ -19,6 +19,10 @@ public @interface GGAPIAuthenticator {
 	int authorizationLifeTime() default 60;
 	
 	TimeUnit authorizationLifeTimeUnit() default TimeUnit.MINUTES;
+
+	int authorizationRefreshTokenLifeTime() default 120;
+	
+	TimeUnit authorizationRefreshTokenLifeTimeUnit() default TimeUnit.MINUTES;
 	
 	String[] interfaces() default {};
 	

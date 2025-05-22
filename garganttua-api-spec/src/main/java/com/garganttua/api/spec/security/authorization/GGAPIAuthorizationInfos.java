@@ -9,6 +9,10 @@ public record GGAPIAuthorizationInfos(boolean signable, boolean renewable, Const
 		GGObjectAddress tenantIdFieldAddress, GGObjectAddress ownerIdFieldAddress,
 		GGObjectAddress authoritiesFieldAddress, GGObjectAddress creationFieldAddress,
 		GGObjectAddress expirationFieldAddress, GGObjectAddress revokedFieldAddress,
-		GGObjectAddress validateAgainstMethodAddress, GGObjectAddress validateMethodAddress, GGObjectAddress authorizationTypeFieldAddress, GGObjectAddress toByteArrayMethodAddress, GGObjectAddress signMethodAddress) {
+		GGObjectAddress validateAgainstMethodAddress, GGObjectAddress validateMethodAddress,
+		GGObjectAddress authorizationTypeFieldAddress, GGObjectAddress toByteArrayMethodAddress,
+		GGObjectAddress signMethodAddress, GGObjectAddress getRefreshTokenMethodAddress,
+		GGObjectAddress createRefreshTokenMethodAddress, GGObjectAddress validateRefreshTokenMethodAddress,
+		GGObjectAddress revokeRefreshTokenMethodAddress, GGObjectAddress refreshTokenExpirationFielddAddress) {
 
 }

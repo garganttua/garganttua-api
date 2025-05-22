@@ -21,13 +21,19 @@ public class GGAPIEntityAuthorizationHelper {
 
 	public static boolean isSignable(Class<?> authorization) throws GGAPIException {
 		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization);
-		return infos.signable();		
+		return infos.signable();
+	}
+
+	public static boolean isRenewable(Class<?> authorization) throws GGAPIException {
+		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization);
+		return infos.renewable();
 	}
 
 	public static boolean isAuthorization(Object object) {
 		try {
-			GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(object.getClass());
-			if( infos != null )
+			GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker
+					.checkEntityAuthorizationClass(object.getClass());
+			if (infos != null)
 				return true;
 		} catch (GGAPIException e) {
 			return false;
@@ -35,20 +41,22 @@ public class GGAPIEntityAuthorizationHelper {
 		return false;
 	}
 
-	public static void validateAgainst(Object authorization, Object authorizationRef, Object ...args) throws GGAPIException {
+	public static void validateAgainst(Object authorization, Object authorizationRef, Object... args)
+			throws GGAPIException {
 		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
-				GGAPIAuthorizationInfos::validateAgainstMethodAddress, authorizationRef, new Object[]{args});
+				GGAPIAuthorizationInfos::validateAgainstMethodAddress, authorizationRef, new Object[] { args });
 	}
 
-	public static void validate(Object authorization, Object ...args) throws GGAPIException {
+	public static void validate(Object authorization, Object... args) throws GGAPIException {
 		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
-				GGAPIAuthorizationInfos::validateMethodAddress, new Object[]{args});
+				GGAPIAuthorizationInfos::validateMethodAddress, new Object[] { args });
 	}
 
 	public static void sign(Object authorization, IGGAPIKeyRealm key) throws GGAPIException {
-		if( !isSignable(authorization.getClass()) )
-			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "Authorization class " + authorization.getClass().getSimpleName() + " is not signable");
-		
+		if (!isSignable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not signable");
+
 		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
 				GGAPIAuthorizationInfos::signMethodAddress, key);
 	}
@@ -69,7 +77,8 @@ public class GGAPIEntityAuthorizationHelper {
 	}
 
 	public static byte[] toByteArray(Object authorization) throws GGAPIException {
-		return (byte[]) GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+		return (byte[]) GGAPIInfosHelper.invoke(authorization,
+				GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
 				GGAPIAuthorizationInfos::toByteArrayMethodAddress);
 	}
 
@@ -83,11 +92,13 @@ public class GGAPIEntityAuthorizationHelper {
 			return null;
 		}
 	}
-	
-	public static Object newObject(Class<?> authorization, String uuid, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate) throws GGAPIException {
+
+	public static Object newObject(Class<?> authorization, String uuid, String tenantId, String ownerUuid,
+			List<String> authorities, Date creationDate, Date expirationDate) throws GGAPIException {
 		GGAPIAuthorizationInfos infos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authorization);
 		try {
-			return infos.completeConstructor().newInstance(uuid, tenantId, ownerUuid, authorities, creationDate, expirationDate);
+			return infos.completeConstructor().newInstance(uuid, tenantId, ownerUuid, authorities, creationDate,
+					expirationDate);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException e) {
 			GGAPIException.processException(e);
@@ -98,5 +109,48 @@ public class GGAPIEntityAuthorizationHelper {
 	public static String getType(Object authorization) throws GGAPIException {
 		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
 				GGAPIAuthorizationInfos::authorizationTypeFieldAddress);
+	}
+
+	public static void createRefreshToken(Object authorization, IGGAPIKeyRealm key, Date expirationDate)
+			throws GGAPIException {
+		if (!isRenewable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
+		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::createRefreshTokenMethodAddress, key, expirationDate);
+	}
+
+	public static byte[] getRefreshToken(Object authorization) throws GGAPIException {
+		if (!isRenewable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
+		return (byte[]) GGAPIInfosHelper.invoke(authorization,
+				GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::getRefreshTokenMethodAddress);
+	}
+
+	public static void revokefreshToken(Object authorization) throws GGAPIException {
+		if (!isRenewable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
+		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::revokeRefreshTokenMethodAddress);
+	}
+
+	public static void validatefreshToken(Object authorization, IGGAPIKeyRealm key, byte[] refreshToken)
+			throws GGAPIException {
+		if (!isRenewable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
+		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::validateRefreshTokenMethodAddress, key, refreshToken);
+	}
+
+	public static Date getRefreshTokenExpirationDate(Object authorization) throws GGAPIException {
+		if (!isRenewable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
+		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::refreshTokenExpirationFielddAddress);
 	}
 }

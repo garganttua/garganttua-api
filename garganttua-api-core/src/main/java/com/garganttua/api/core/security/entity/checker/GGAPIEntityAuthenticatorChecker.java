@@ -50,14 +50,15 @@ public class GGAPIEntityAuthenticatorChecker {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "
 					+ entityAuthenticatorClass.getSimpleName() + " is not annotated with @GGAPIAuthenticator");
 		}
-		
+
 		Class<?> authorizationType = annotation.authorization();
 
-		if (authorizationType != void.class && entityAuthenticatorClass.getDeclaredAnnotation(GGAPIEntityOwner.class) == null) {
+		if (authorizationType != void.class
+				&& entityAuthenticatorClass.getDeclaredAnnotation(GGAPIEntityOwner.class) == null) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION, "Entity Authenticator "
 					+ entityAuthenticatorClass.getSimpleName() + " is not annotated with @GGAPIEntityOwner");
 		}
-		
+
 		Class<?>[] authentications = annotation.authentications();
 		String[] authenticationInterfaces = annotation.interfaces();
 		Class<?> keyType = annotation.authorizationKey();
@@ -87,7 +88,8 @@ public class GGAPIEntityAuthenticatorChecker {
 							+ keyType.getSimpleName() + " annotated with @GGAPIEntityOwned");
 		}
 
-		if (authenticationInterfaces != null && authenticationInterfaces.length > 0 && authentications[0] == void.class) {
+		if (authenticationInterfaces != null && authenticationInterfaces.length > 0
+				&& authentications[0] == void.class) {
 			throw new GGAPISecurityException(GGAPIExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " cannot have interface configured but no authentication");
@@ -110,8 +112,10 @@ public class GGAPIEntityAuthenticatorChecker {
 
 			GGAPIAuthenticatorInfos authenticatorinfos = new GGAPIAuthenticatorInfos(entityAuthenticatorClass,
 					authentications, authenticationInterfaces, authorizationType, keyType, keyUsage,
-					autoCreateKey, keyAlgorithm, signatureAlgorithm, keyLifeTime, keyLifeTimeUnit, annotation.authorizationLifeTime(),
-					annotation.authorizationLifeTimeUnit(), q.address(autoritiesFieldName),
+					autoCreateKey, keyAlgorithm, signatureAlgorithm, keyLifeTime, keyLifeTimeUnit,
+					annotation.authorizationLifeTime(),
+					annotation.authorizationLifeTimeUnit(), annotation.authorizationRefreshTokenLifeTime(),
+					annotation.authorizationRefreshTokenLifeTimeUnit(), q.address(autoritiesFieldName),
 					q.address(accountNonExpiredFieldName), q.address(accountNonLockedFieldName),
 					q.address(credentialsNonExpiredFieldName), q.address(enabledFieldName), annotation.scope());
 
