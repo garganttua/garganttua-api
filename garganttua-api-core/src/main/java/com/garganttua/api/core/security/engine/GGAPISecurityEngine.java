@@ -31,12 +31,14 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPIOwnerVerifier;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.security.IGGAPITenantVerifier;
+import com.garganttua.api.spec.security.annotations.GGAPICustomServiceSecurity;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactoriesRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInfosRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterface;
@@ -49,8 +51,11 @@ import com.garganttua.api.spec.security.authenticator.IGGAPIAuthenticatorService
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationInfosRegistry;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationProtocol;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationServicesRegistry;
+import com.garganttua.api.spec.service.GGAPICustomService;
+import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.spec.service.IGGAPIServiceCommand;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.IGGInjector;
@@ -167,30 +172,6 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		return this;
 	}
 
-	private Object renewAuthorization(IGGAPICaller caller, Object authorization) throws GGAPIException {
-		Optional<IGGAPIService> authorizationService = this.engine.getServices().stream().filter(service -> {
-			return service.getDomain().getEntityClass().equals(authorization.getClass());
-		}).findFirst();
-
-		if (authorizationService.isPresent()) {
-			IGGAPIService service = authorizationService.get();
-			IGGAPIServiceResponse response = service.getEntity(caller, GGAPIEntityHelper.getUuid(authorization),
-					new HashMap<>());
-
-			if (response.getResponseCode() == GGAPIServiceResponseCode.OK) {
-				GGAPIAuthorization storedAuthorization = (GGAPIAuthorization) response.getResponse();
-
-			} else {
-				log.atDebug().log("Cannot renew authorization as authorization cannot be found in db : "
-						+ response.getResponse().toString());
-			}
-		} else {
-			log.atDebug().log("Cannot renew authorization as no service found for type " + authorization.getClass());
-		}
-
-		return null;
-	}
-
 	private IGGAPIAuthenticationService createAuthenticationService() {
 		log.info("*** Creating Authentication Service ...");
 
@@ -213,62 +194,6 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 			log.atDebug().log("Triing authorization type " + supportedAuthorization.getSimpleName());
 			try {
 				authorization = GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization, authorizationRaw);
-				/*
-				 * if (GGAPIEntityAuthorizationHelper.isSignable(supportedAuthorization)) {
-				 * 
-				 * 
-				 * 
-				 * String ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(authorization);
-				 * 
-				 * if (ownerId == null) {
-				 * return null;
-				 * }
-				 * 
-				 * String domainName = ownerId.split(":")[0];
-				 * 
-				 * Optional<IGGAPIDomain> authenticatorDomain =
-				 * this.engine.getDomain(domainName);
-				 * 
-				 * if (authenticatorDomain.isEmpty()) {
-				 * return authorization;
-				 * }
-				 * 
-				 * if
-				 * (!GGAPIEntityAuthenticatorHelper.isAuthenticator(authenticatorDomain.get().
-				 * getEntityClass())) {
-				 * return authorization;
-				 * }
-				 * 
-				 * GGAPIAuthenticatorInfos authenticatorInfos = GGAPIEntityAuthenticatorChecker
-				 * .checkEntityAuthenticatorClass(authenticatorDomain.get().getEntityClass());
-				 * 
-				 * IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
-				 * GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-				 * authenticatorInfos.authorizationKeyType(),
-				 * authenticatorInfos.authorizationKeyUsage(),
-				 * authenticatorInfos.autoCreateAuthorizationKey(),
-				 * authenticatorInfos.authorizationKeyAlgorithm(),
-				 * authenticatorInfos.authorizationKeyLifeTime(),
-				 * authenticatorInfos.authorizationKeyLifeTimeUnit(),
-				 * ownerId,
-				 * caller.getTenantId(),
-				 * this.engine,
-				 * null,
-				 * null,
-				 * null);
-				 * 
-				 * if (key != null) {
-				 * authorization =
-				 * GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization,
-				 * authorizationRaw);
-				 * }
-				 * 
-				 * } else {
-				 * authorization =
-				 * GGAPIEntityAuthorizationHelper.newObject(supportedAuthorization,
-				 * authorizationRaw);
-				 * }
-				 */
 			} catch (GGAPIException e) {
 				log.atDebug().log("Error during authorization decoding ", e);
 			}
@@ -421,4 +346,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 
 		return Optional.empty();
 	}
+
+	
+	
 }

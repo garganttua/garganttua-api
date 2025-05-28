@@ -15,6 +15,7 @@ import com.garganttua.api.core.caller.GGAPICaller;
 import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
+import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthenticatorChecker;
 import com.garganttua.api.core.security.entity.checker.GGAPIEntityAuthorizationChecker;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
@@ -49,7 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
 	public static final String AUTHORIZATION_SIGNING_KEY_REALM_NAME = "authorization-signing-key";
-	
+
 	private Map<IGGAPIDomain, Pair<GGAPIAuthenticatorInfos, IGGAPIService>> authenticatorServices;
 	private Map<Class<?>, IGGAPIAuthenticationFactory> authenticationFactories;
 	private Map<Class<?>, IGGAPIService> authorizationServices;
@@ -65,9 +66,10 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
 		this.authorizationServices = this.engine.getServices().stream().filter(service -> {
 			return this.authenticatorServices.entrySet().stream().filter(authenticatorService -> {
-				return authenticatorService.getValue().getValue0().authorizationType().equals(service.getDomainEntityClass());
+				return authenticatorService.getValue().getValue0().authorizationType()
+						.equals(service.getDomainEntityClass());
 			}).findFirst().isPresent();
-		}).collect(Collectors.toMap(key -> key.getDomain().getEntityClass(), key -> key ));
+		}).collect(Collectors.toMap(key -> key.getDomain().getEntityClass(), key -> key));
 	}
 
 	@Override
@@ -76,9 +78,9 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
 		try {
 			Object authentication = this.doAuthentication(authenticationRequest);
-			if( authentication != null )
+			if (authentication != null)
 				response = new GGAPIServiceResponse(authentication, GGAPIServiceResponseCode.OK);
-			else 
+			else
 				response = new GGAPIServiceResponse(authentication, GGAPIServiceResponseCode.UNAUTHORIZED);
 		} catch (GGAPIException e) {
 			response = new GGAPIServiceResponse(e.getMessage(), GGAPIServiceResponseCode.UNAUTHORIZED);
@@ -124,19 +126,23 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 		return authenticationRequest.getAuthentication();
 	}
 
-	private void storeAuthorization(IGGAPIAuthenticationRequest request, IGGExecutorChain<IGGAPIAuthenticationRequest> chain)
+	private void storeAuthorization(IGGAPIAuthenticationRequest request,
+			IGGExecutorChain<IGGAPIAuthenticationRequest> chain)
 			throws GGExecutorException {
 		try {
-			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIAuthenticationHelper.getAuthenticatorInfos(request.getAuthentication());
-			if( authenticatorInfos != null ) {
-				IGGAPIService authorizationService = this.authorizationServices.get(authenticatorInfos.authorizationType());
-	
+			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIAuthenticationHelper
+					.getAuthenticatorInfos(request.getAuthentication());
+			if (authenticatorInfos != null) {
+				IGGAPIService authorizationService = this.authorizationServices
+						.get(authenticatorInfos.authorizationType());
+
 				Object authorization = GGAPIAuthenticationHelper.getAuthorization(request.getAuthentication());
-	
-				if (authorization != null && authorizationService != null ) {
+
+				if (authorization != null && authorizationService != null) {
 					// store authorization
-					IGGAPICaller caller = GGAPICaller.createTenantCallerWithOwnerId(request.getTenantId(), GGAPIEntityAuthorizationHelper.getOwnerId(authorization));
-					
+					IGGAPICaller caller = GGAPICaller.createTenantCallerWithOwnerId(request.getTenantId(),
+							GGAPIEntityAuthorizationHelper.getOwnerId(authorization));
+
 					authorizationService.createEntity(caller, authorization, new HashMap<String, String>());
 				}
 			}
@@ -149,12 +155,11 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 	private void createAuthorization(IGGAPIAuthenticationRequest request,
 			IGGExecutorChain<IGGAPIAuthenticationRequest> chain) throws GGExecutorException {
 		try {
-			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIAuthenticationHelper
-					.getAuthenticatorInfos(request.getAuthentication());
-			Object foundAuthorization = GGAPIAuthenticationHelper.getAuthorization(request.getAuthentication());
+			GGAPIAuthenticatorInfos authenticatorInfos = this
+					.getAuthenticatorInfosFromAuthentication(request.getAuthentication());
 			if (authenticatorInfos != null && authenticatorInfos.authorizationType() != void.class) {
 				Object authorization = this.createAuthorization(request.getDomain(), request, authenticatorInfos,
-						request.getAuthentication(), foundAuthorization);
+						request.getAuthentication());
 				// It doesn't matter if authorization is null or not
 				GGAPIAuthenticationHelper.setAuthorization(request.getAuthentication(), authorization);
 			}
@@ -163,41 +168,61 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 			throw new GGExecutorException(e);
 		}
 	}
- 
+
 	@SuppressWarnings("unchecked")
-	private void findAuthorization(IGGAPIAuthenticationRequest request, IGGExecutorChain<IGGAPIAuthenticationRequest> chain)
+	private void findAuthorization(IGGAPIAuthenticationRequest request,
+			IGGExecutorChain<IGGAPIAuthenticationRequest> chain)
 			throws GGExecutorException {
 		try {
-			GGAPIAuthenticatorInfos authenticatorInfos = GGAPIAuthenticationHelper.getAuthenticatorInfos(request.getAuthentication());
-			if( authenticatorInfos != null && authenticatorInfos.authorizationType() != void.class) {
-				GGAPIAuthorizationInfos authorizationInfos = GGAPIEntityAuthorizationChecker.checkEntityAuthorizationClass(authenticatorInfos.authorizationType());
-				IGGAPIService authorizationService = this.authorizationServices.get(authenticatorInfos.authorizationType());
-				Object principal = GGAPIAuthenticationHelper
-						.getPrincipal(request.getAuthentication());
-	
+			GGAPIAuthenticatorInfos authenticatorInfos = this
+					.getAuthenticatorInfosFromAuthentication(request.getAuthentication());
+
+			if (authenticatorInfos != null && authenticatorInfos.authorizationType() != void.class) {
+				GGAPIAuthorizationInfos authorizationInfos = GGAPIEntityAuthorizationChecker
+						.checkEntityAuthorizationClass(authenticatorInfos.authorizationType());
+				IGGAPIService authorizationService = this.authorizationServices
+						.get(authenticatorInfos.authorizationType());
+
 				Object authorization = null;
-	
-				if (authorizationService != null && GGAPIEntityAuthenticatorHelper.isAuthenticator(principal) ) {
+				Object principal = GGAPIAuthenticationHelper.getPrincipal(request.getAuthentication());
+
+				if (authorizationService != null && principal != null
+						&& GGAPIEntityAuthenticatorHelper.isAuthenticator(principal)) {
 					// Find existing authorization
-					IGGAPICaller caller = GGAPICaller.createTenantCallerWithOwnerId(request.getTenantId(), GGAPIEntityHelper.getOwnerId(principal));
+					IGGAPICaller caller = GGAPICaller.createTenantCallerWithOwnerId(request.getTenantId(),
+							GGAPIEntityHelper.getOwnerId(principal));
 					IGGAPIFilter filter = this.buildFilterAuthorization(authorizationInfos);
-					
-					GGAPISort sort = new GGAPISort(authorizationInfos.expirationFieldAddress().toString(), GGAPISortDirection.desc);
-					
-					IGGAPIServiceResponse response = authorizationService.getEntities(caller, GGAPIReadOutputMode.full, null, filter, sort, new HashMap<String, String>());
-	
-					if( response.getResponseCode() == GGAPIServiceResponseCode.OK && ((List<Object>) response.getResponse()).size()>0) {
+
+					GGAPISort sort = new GGAPISort(authorizationInfos.expirationFieldAddress().toString(),
+							GGAPISortDirection.desc);
+
+					IGGAPIServiceResponse response = authorizationService.getEntities(caller, GGAPIReadOutputMode.full,
+							null, filter, sort, new HashMap<String, String>());
+
+					if (response.getResponseCode() == GGAPIServiceResponseCode.OK
+							&& ((List<Object>) response.getResponse()).size() > 0) {
 						authorization = ((List<Object>) response.getResponse()).get(0);
 					}
-					
+
 					// It doesn't matter if authorization is null or not
 					GGAPIAuthenticationHelper.setAuthorization(request.getAuthentication(), authorization);
 				}
 			}
-			
+
 			chain.execute(request);
 		} catch (GGAPIException e) {
 			throw new GGExecutorException(e);
+		}
+	}
+
+	private GGAPIAuthenticatorInfos getAuthenticatorInfosFromAuthentication(Object authentication) throws GGAPIException {
+		Object principal = GGAPIAuthenticationHelper.getPrincipal(authentication);
+
+		if (principal != null && GGAPIEntityAuthenticatorHelper.isAuthenticator(principal)) {
+			return GGAPIEntityAuthenticatorChecker.checkEntityAuthenticator(principal);
+		} else {
+			return GGAPIAuthenticationHelper
+					.getAuthenticatorInfos(authentication);
 		}
 	}
 
@@ -211,7 +236,7 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 			}
 			String tenantId = GGAPIAuthenticationHelper.getTenantId(request.getAuthentication());
 			request.setTenantId(tenantId);
-			
+
 			chain.execute(request);
 		} catch (GGAPIException e) {
 			throw new GGExecutorException(e);
@@ -237,8 +262,10 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 			IGGExecutorChain<IGGAPIAuthenticationRequest> chain) throws GGExecutorException {
 		Object authentication;
 		try {
-			Pair<GGAPIAuthenticatorInfos, IGGAPIService> authenticatorService = this.authenticatorServices.get(request.getDomain());
-			authentication = this.authenticationFactories.get(request.getAuthenticationType()).createNewAuthentication((IGGAPIAuthenticationRequest) request,
+			Pair<GGAPIAuthenticatorInfos, IGGAPIService> authenticatorService = this.authenticatorServices
+					.get(request.getDomain());
+			authentication = this.authenticationFactories.get(request.getAuthenticationType()).createNewAuthentication(
+					(IGGAPIAuthenticationRequest) request,
 					authenticatorService == null ? null : authenticatorService.getValue1(),
 					authenticatorService == null ? null : authenticatorService.getValue0());
 			request.setAuthentication(authentication);
@@ -249,13 +276,15 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 	}
 
 	private Object createAuthorization(IGGAPIDomain domain, IGGAPIAuthenticationRequest request,
-			GGAPIAuthenticatorInfos authenticatorInfos, Object authentication, Object foundAuthorization) throws GGAPIException {
+			GGAPIAuthenticatorInfos authenticatorInfos, Object authentication) throws GGAPIException {
 		Object principal = GGAPIAuthenticationHelper.getPrincipal(authentication);
 		if (principal == null || !GGAPIEntityAuthenticatorHelper.isAuthenticator(principal)) {
 			log.atDebug().log("Authorization creation for authenticator " + request.getPrincipal()
 					+ " aborded as the authentication principal is either null or not an authenticator entity");
 			return null;
 		}
+
+		Object foundAuthorization = GGAPIAuthenticationHelper.getAuthorization(request.getAuthentication());
 
 		Object authorization = null;
 		String uuid = UUID.randomUUID().toString();
@@ -271,25 +300,26 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 
 			IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
 					AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-					authenticatorInfos.authorizationKeyType(), 
+					authenticatorInfos.authorizationKeyType(),
 					authenticatorInfos.authorizationKeyUsage(),
 					authenticatorInfos.autoCreateAuthorizationKey(),
 					authenticatorInfos.authorizationKeyAlgorithm(),
 					authenticatorInfos.authorizationKeyLifeTime(),
 					authenticatorInfos.authorizationKeyLifeTimeUnit(),
-					ownerUuid, 
-					tenantId, 
+					ownerUuid,
+					tenantId,
 					this.engine,
-					null, 
-					null, 
+					null,
+					null,
 					authenticatorInfos.authorizationSignatureAlgorithm());
 
-			if( !key.isAbleToSign() ) {
+			if (!key.isAbleToSign()) {
 				log.atDebug().log("The authenticator misses information to sign the authorization");
-				throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR, "The authenticator misses information to sign the authorization");
-			} 
+				throw new GGAPISecurityException(GGAPIExceptionCode.GENERIC_SECURITY_ERROR,
+						"The authenticator misses information to sign the authorization");
+			}
 
-			if( foundAuthorization != null && this.revalidateAuthorizationWithKey(foundAuthorization, key) ) {
+			if (foundAuthorization != null && this.revalidateAuthorizationWithKey(foundAuthorization, key)) {
 				return foundAuthorization;
 			}
 
@@ -298,11 +328,11 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 					tenantId, ownerUuid, authorities, new Date(), expirationDate);
 			GGAPIEntityAuthorizationHelper.sign(authorization, key);
 
-			if( GGAPIEntityAuthorizationHelper.isRenewable(authenticatorInfos.authorizationType()) ){
+			if (GGAPIEntityAuthorizationHelper.isRenewable(authenticatorInfos.authorizationType())) {
 				log.atDebug().log("Generating refresh token");
 				GGAPIEntityAuthorizationHelper.createRefreshToken(authorization, key, expirationDate);
 			}
-			
+
 		} else {
 			log.atDebug().log("Generating new authorization");
 			authorization = GGAPIEntityAuthorizationHelper.newObject(authenticatorInfos.authorizationType(), uuid,
@@ -314,7 +344,8 @@ public class GGAPIAuthenticationService implements IGGAPIAuthenticationService {
 	private boolean revalidateAuthorizationWithKey(Object foundAuthorization, IGGAPIKeyRealm key) {
 		try {
 			log.atDebug().log("Found one authorization, revalidating it with key");
-			Object authToCheck = GGAPIEntityAuthorizationHelper.newObject(foundAuthorization.getClass(), GGAPIEntityAuthorizationHelper.toByteArray(foundAuthorization));
+			Object authToCheck = GGAPIEntityAuthorizationHelper.newObject(foundAuthorization.getClass(),
+					GGAPIEntityAuthorizationHelper.toByteArray(foundAuthorization));
 			GGAPIEntityAuthorizationHelper.validate(authToCheck, ((Object) key));
 		} catch (GGAPIException e) {
 			log.atWarn().log("Cannot revalidate found euthorization with key");

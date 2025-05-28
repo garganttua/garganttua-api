@@ -13,6 +13,6 @@ public record GGAPIAuthorizationInfos(boolean signable, boolean renewable, Const
 		GGObjectAddress authorizationTypeFieldAddress, GGObjectAddress toByteArrayMethodAddress,
 		GGObjectAddress signMethodAddress, GGObjectAddress getRefreshTokenMethodAddress,
 		GGObjectAddress createRefreshTokenMethodAddress, GGObjectAddress validateRefreshTokenMethodAddress,
-		GGObjectAddress revokeRefreshTokenMethodAddress, GGObjectAddress refreshTokenExpirationFielddAddress) {
+		GGObjectAddress refreshTokenExpirationFielddAddress) {
 
 }

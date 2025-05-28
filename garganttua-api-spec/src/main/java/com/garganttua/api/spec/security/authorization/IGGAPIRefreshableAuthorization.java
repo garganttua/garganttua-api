@@ -7,10 +7,6 @@ import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 
 public interface IGGAPIRefreshableAuthorization extends IGGAPISignableAuthorization {
 
-    void revokeRefreshToken();
-
-    boolean isRefreshTokenRevoked() throws GGAPIException;
-
     boolean isRefreshTokenExpired() throws GGAPIException;
 
     void createRefreshToken(IGGAPIKeyRealm key, Date expirationDate) throws GGAPIException;

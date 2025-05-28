@@ -1,6 +1,7 @@
 package com.garganttua.api.core.security.authorization;
 
 import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -129,14 +130,6 @@ public class GGAPIEntityAuthorizationHelper {
 				GGAPIAuthorizationInfos::getRefreshTokenMethodAddress);
 	}
 
-	public static void revokefreshToken(Object authorization) throws GGAPIException {
-		if (!isRenewable(authorization.getClass()))
-			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
-					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
-		GGAPIInfosHelper.invoke(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
-				GGAPIAuthorizationInfos::revokeRefreshTokenMethodAddress);
-	}
-
 	public static void validatefreshToken(Object authorization, IGGAPIKeyRealm key, byte[] refreshToken)
 			throws GGAPIException {
 		if (!isRenewable(authorization.getClass()))
@@ -152,5 +145,46 @@ public class GGAPIEntityAuthorizationHelper {
 					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
 		return GGAPIInfosHelper.getValue(authorization, GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
 				GGAPIAuthorizationInfos::refreshTokenExpirationFielddAddress);
+	}
+
+	public static boolean isExpired(Object authorization) throws GGAPIException {
+		Date authorizationExpirationDate = GGAPIInfosHelper.getValue(authorization,
+				GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::expirationFieldAddress);
+
+		if (Instant.now().isAfter(authorizationExpirationDate.toInstant())) {
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean isRefreshTokenExpired(Object authorization) throws GGAPIException {
+		if (!isRenewable(authorization.getClass()))
+			throw new GGAPISecurityException(GGAPIExceptionCode.CORE_GENERIC_CODE,
+					"Authorization class " + authorization.getClass().getSimpleName() + " is not renewable");
+
+		Date refreshTokenExpirationDate = GGAPIInfosHelper.getValue(authorization,
+				GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::refreshTokenExpirationFielddAddress);
+
+		if (Instant.now().isAfter(refreshTokenExpirationDate.toInstant())) {
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean isRevoked(Object authorization) throws GGAPIException {
+		if ((boolean) GGAPIInfosHelper.getValue(authorization,
+				GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::revokedFieldAddress)) {
+			return true;
+		}
+		return false;
+	}
+
+	public static void revoke(Object authorization) throws GGAPIException {
+		GGAPIInfosHelper.setValue(authorization,
+				GGAPIEntityAuthorizationChecker::checkEntityAuthorizationClass,
+				GGAPIAuthorizationInfos::revokedFieldAddress, true);
 	}
 }

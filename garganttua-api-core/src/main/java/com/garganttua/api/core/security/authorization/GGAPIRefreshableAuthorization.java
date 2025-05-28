@@ -6,10 +6,10 @@ import java.util.List;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
+import com.garganttua.api.spec.security.annotations.GGAPIAuthenticatorRefreshToken;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationCreateRefreshToken;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRefreshToken;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRefreshTokenExpiration;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRevokeRefreshToken;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationValidateRefreshToken;
 import com.garganttua.api.spec.security.authorization.IGGAPIRefreshableAuthorization;
 import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
@@ -17,6 +17,7 @@ import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
 public abstract class GGAPIRefreshableAuthorization extends GGAPISignableAuthorization
         implements IGGAPIRefreshableAuthorization {
 
+    @GGAPIAuthenticatorRefreshToken
     protected byte[] refreshToken = null;
     
     @GGAPIAuthorizationRefreshTokenExpiration
@@ -37,23 +38,10 @@ public abstract class GGAPIRefreshableAuthorization extends GGAPISignableAuthori
     }
 
     @Override
-    @GGAPIAuthorizationRevokeRefreshToken
-    public void revokeRefreshToken() {
-        this.revoked = true;
-    }
-
-    @Override
     public boolean isRefreshTokenExpired() throws GGAPISecurityException {
         if (new Date().after(this.refreshTokenExpirationDate)) {
             throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_EXPIRED, "Refresh token expired");
         }
-        return false;
-    }
-
-    @Override
-    public boolean isRefreshTokenRevoked() throws GGAPISecurityException {
-        if (this.revoked)
-            throw new GGAPISecurityException(GGAPIExceptionCode.TOKEN_REVOKED, "Refresh token revoked");
         return false;
     }
 
@@ -86,4 +74,5 @@ public abstract class GGAPIRefreshableAuthorization extends GGAPISignableAuthori
                 + "_" + this.expirationDate.getTime();
         return tokenRaw;
     }
+
 }

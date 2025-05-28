@@ -24,7 +24,6 @@ import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationCreation;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationExpiration;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRefreshToken;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRefreshTokenExpiration;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRevokeRefreshToken;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationRevoked;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationSign;
 import com.garganttua.api.spec.security.annotations.GGAPIAuthorizationToByteArray;
@@ -110,7 +109,6 @@ public class GGAPIEntityAuthorizationChecker {
 
 		String getRefreshTokenMethod = null;
 		String validateRefreshTokenMethod = null;
-		String revokeRefreshTokenMethod = null;
 		String createRefreshTokenMethod = null;
 		String refreshTokenExpirationField = null;
 
@@ -123,8 +121,6 @@ public class GGAPIEntityAuthorizationChecker {
 					GGAPIAuthorizationRefreshToken.class, true, byte[].class);
 			validateRefreshTokenMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
 					GGAPIAuthorizationValidateRefreshToken.class, true, void.class, IGGAPIKeyRealm.class, byte[].class);
-			revokeRefreshTokenMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
-					GGAPIAuthorizationRevokeRefreshToken.class, true, void.class);
 			createRefreshTokenMethod = GGAPIEntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(entityClass,
 					GGAPIAuthorizationCreateRefreshToken.class, true, void.class, IGGAPIKeyRealm.class, Date.class);
 			refreshTokenExpirationField = GGAPIEntityChecker.getFieldAddressAnnotatedWithAndCheckType(entityClass,
@@ -160,7 +156,6 @@ public class GGAPIEntityAuthorizationChecker {
 					getRefreshTokenMethod == null ? null : q.address(getRefreshTokenMethod),
 					createRefreshTokenMethod == null ? null : q.address(createRefreshTokenMethod),
 					validateRefreshTokenMethod == null ? null : q.address(validateRefreshTokenMethod),
-					revokeRefreshTokenMethod == null ? null : q.address(revokeRefreshTokenMethod),
 					refreshTokenExpirationField == null ? null : q.address(refreshTokenExpirationField));
 
 			GGAPIEntityAuthorizationChecker.infos.put(entityClass, authorizationInfos);

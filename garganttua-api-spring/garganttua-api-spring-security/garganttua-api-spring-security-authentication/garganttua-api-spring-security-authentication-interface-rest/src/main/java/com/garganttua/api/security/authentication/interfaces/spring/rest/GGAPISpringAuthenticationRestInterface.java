@@ -79,7 +79,7 @@ public class GGAPISpringAuthenticationRestInterface extends GGAPIInterfaceSpring
 		this.createCustomMappings();
 	}
 
-	public ResponseEntity<?> authenticate(
+	public ResponseEntity<?> authenticate (
 			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
 			@RequestBody(required = true) GGAPISpringRestAuthenticationRequest request) throws GGAPIException {
 
@@ -132,5 +132,4 @@ public class GGAPISpringAuthenticationRestInterface extends GGAPIInterfaceSpring
 			throw new RuntimeException(e);
 		}
 	}
-
 }

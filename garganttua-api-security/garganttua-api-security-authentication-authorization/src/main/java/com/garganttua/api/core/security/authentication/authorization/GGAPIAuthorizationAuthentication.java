@@ -39,40 +39,45 @@ public class GGAPIAuthorizationAuthentication extends AbstractGGAPIAuthenticatio
 	private IGGAPIEngine engine;
 
 	@Override
-	protected void doAuthentication() throws GGAPIException {
-		this.ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(this.credential);
+	protected void doAuthentication() {
+		try {
+			this.ownerId = GGAPIEntityAuthorizationHelper.getOwnerId(this.credential);
 
-		String ownerDomainName = GGAPIEntityHelper.getDomainNameFromOwnerId(this.ownerId);
-		Optional<IGGAPIDomain> ownerDomain = this.engine.getDomain(ownerDomainName);
+			String ownerDomainName = GGAPIEntityHelper.getDomainNameFromOwnerId(this.ownerId);
+			Optional<IGGAPIDomain> ownerDomain = this.engine.getDomain(ownerDomainName);
 
-		ownerDomain.ifPresent((domain) -> {
-			try {
-				if (GGAPIEntityAuthorizationHelper.isSignable(this.credential.getClass())) {
-					GGAPIAuthenticatorInfos ownerAuthenticatorInfos = GGAPIEntityAuthenticatorChecker.checkEntityAuthenticatorClass(domain.getEntityClass());
-					IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
-							GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-							ownerAuthenticatorInfos.authorizationKeyType(),
-							ownerAuthenticatorInfos.authorizationKeyUsage(),
-							ownerAuthenticatorInfos.autoCreateAuthorizationKey(),
-							ownerAuthenticatorInfos.authorizationKeyAlgorithm(),
-							ownerAuthenticatorInfos.authorizationKeyLifeTime(),
-							ownerAuthenticatorInfos.authorizationKeyLifeTimeUnit(),
-							this.ownerId,
-							tenantId,
-							this.engine,
-							null,
-							null,
-							ownerAuthenticatorInfos.authorizationSignatureAlgorithm());
-					GGAPIEntityAuthorizationHelper.validate(this.credential, key);
-				} else {
-					GGAPIEntityAuthorizationHelper.validate(this.credential);
+			ownerDomain.ifPresent((domain) -> {
+				try {
+					if (GGAPIEntityAuthorizationHelper.isSignable(this.credential.getClass())) {
+						GGAPIAuthenticatorInfos ownerAuthenticatorInfos = GGAPIEntityAuthenticatorChecker
+								.checkEntityAuthenticatorClass(domain.getEntityClass());
+						IGGAPIKeyRealm key = GGAPIKeyHelper.getKey(
+								GGAPIAuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
+								ownerAuthenticatorInfos.authorizationKeyType(),
+								ownerAuthenticatorInfos.authorizationKeyUsage(),
+								ownerAuthenticatorInfos.autoCreateAuthorizationKey(),
+								ownerAuthenticatorInfos.authorizationKeyAlgorithm(),
+								ownerAuthenticatorInfos.authorizationKeyLifeTime(),
+								ownerAuthenticatorInfos.authorizationKeyLifeTimeUnit(),
+								this.ownerId,
+								tenantId,
+								this.engine,
+								null,
+								null,
+								ownerAuthenticatorInfos.authorizationSignatureAlgorithm());
+						GGAPIEntityAuthorizationHelper.validate(this.credential, key);
+					} else {
+						GGAPIEntityAuthorizationHelper.validate(this.credential);
+					}
+					this.authorities = GGAPIEntityAuthorizationHelper.getAuthorities(this.credential);
+					this.authenticated = true;
+				} catch (GGAPIException e) {
+					log.atDebug().log("Authentication failed", e);
 				}
-				this.authorities = GGAPIEntityAuthorizationHelper.getAuthorities(this.credential);
-				this.authenticated = true;
-			} catch (GGAPIException e) {
-				log.atDebug().log("Authentication failed", e);
-			}
-		});
+			});
+		} catch (GGAPIException e) {
+			log.atDebug().log("Authentication failed", e);
+		}
 	}
 
 	@Override
