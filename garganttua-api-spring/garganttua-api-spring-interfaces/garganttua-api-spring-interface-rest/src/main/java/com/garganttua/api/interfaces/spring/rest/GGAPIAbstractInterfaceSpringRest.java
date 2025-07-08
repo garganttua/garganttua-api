@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,8 +53,8 @@ public abstract class GGAPIAbstractInterfaceSpringRest extends GGAPIInterfaceSpr
 
 	protected IGGAPIService service;
 
-	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-			false);
+	@Inject
+	private ObjectMapper mapper;
 
 	private Class<?> entityClass;
 
