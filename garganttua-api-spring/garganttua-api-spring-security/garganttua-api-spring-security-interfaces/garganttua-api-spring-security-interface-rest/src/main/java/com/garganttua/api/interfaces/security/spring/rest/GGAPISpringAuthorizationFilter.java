@@ -9,6 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
+import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPISpringHttpApiFilter;
 import com.garganttua.api.security.spring.core.authentication.GGAPISpringAuthenticationRequest;
@@ -54,6 +56,7 @@ public class GGAPISpringAuthorizationFilter extends GGAPISpringHttpApiFilter {
 				SecurityContextHolder.getContext().setAuthentication(springAuthentication);
 	
 				request.setAttribute(DECODED_AUTHORIZATION, authenticationRequest.getCredentials());
+				caller.setCallerId(GGAPIEntityHelper.getUuidFromOwnerId(GGAPIEntityAuthorizationHelper.getOwnerId(auth)));
 			} catch (GGAPIException e) {
 				log.atDebug().log("errror while creating authentication request from authorization", e);
 			}

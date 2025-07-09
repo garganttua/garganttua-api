@@ -61,16 +61,19 @@ public class GGAPICallerFactory implements IGGAPICallerFactory {
 		boolean superOwnerTemp = false;
 		
 		//TenantId rules
-		if( this.throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(accessRule, tenantId) ) {
+		this.throwExceptionIfTenantIdIsMandatoryAndTenantIdNotProvided(accessRule, tenantId);
+		if( tenantId != null ){
 			this.sendExceptionIfAccessRuleIsTenantOrOwnerAndTenantIdIsNull(accessRule, tenantId);
 			superTenantTemp = this.checkIfTenantExistsAndSetSuperTenantIfTenantIsSuperTenant(tenantId) || superTenantTemp;
 			this.checkIfRequestedTenantExistsIfRequestedTenantIdHasBeenProvided(requestedTenantIdTemp);
 			tenantIdTemp = this.setTenantIdToNullIfThisIsTenantCreationRequest(accessRule, tenantIdTemp);
 			requestedTenantIdTemp = this.setRequestedTenantIdToNullIfThisIsTenantCreationRequest(accessRule, requestedTenantIdTemp);
-		} 
+		}
+
 		
 		//OwnerId rules
-		if( this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp) ) {
+		this.throwExceptionIfOwnerIdIsMandatoryAndOwnerIdNotProvidedOrOwnersDomainIsNull(accessRule, ownerIdTemp);
+		if( ownerIdTemp != null ){
 			superOwnerTemp = this.checkIfOwnerExistsAndSetSuperOwnerIfOwnerIsSuperOwner(tenantId, ownerIdTemp) || superOwnerTemp;
 		} 
 				

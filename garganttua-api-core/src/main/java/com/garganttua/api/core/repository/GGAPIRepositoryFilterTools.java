@@ -23,7 +23,7 @@ public class GGAPIRepositoryFilterTools {
 		GGAPILiteral visibleFilter = null;
 		GGAPILiteral ownerIdFilter = ownedEntity==true&&ownerId!=null?GGAPILiteral.eq(domain.getOwnerIdFieldAddress().toString(), ownerId):null;
 		
-		if( hiddenableEntity ) {
+		if( hiddenableEntity && !superOwner ) {
 			visibleFilter = GGAPILiteral.eq(domain.getHiddenFieldAddress().toString(), false);
 		}
 		
@@ -66,7 +66,7 @@ public class GGAPIRepositoryFilterTools {
 				}
 			} else if( domain.isPublicEntity() && hiddenableEntity ) {
 				
-				if( tenantIdFilter != null ) {
+				if( tenantIdFilter != null && visibleFilter != null ) {
 					and.andOperator(GGAPILiteral.or(tenantIdFilter, visibleFilter));
 				} else {
 				  and.andOperator(visibleFilter);

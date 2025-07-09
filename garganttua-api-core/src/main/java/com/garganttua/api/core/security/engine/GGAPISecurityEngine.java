@@ -3,7 +3,6 @@ package com.garganttua.api.core.security.engine;
 import java.lang.reflect.InvocationTargetException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,7 +20,6 @@ import com.garganttua.api.core.security.authentication.GGAPIAuthenticationReques
 import com.garganttua.api.core.security.authentication.GGAPIAuthenticationService;
 import com.garganttua.api.core.security.authenticator.GGAPIAuthenticatorInfosFactory;
 import com.garganttua.api.core.security.authenticator.GGAPIAuthenticatorServicesFactory;
-import com.garganttua.api.core.security.authorization.GGAPIAuthorization;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationInfosFactory;
 import com.garganttua.api.core.security.authorization.GGAPIAuthorizationServicesFactory;
 import com.garganttua.api.core.security.authorization.GGAPIEntityAuthorizationHelper;
@@ -31,14 +29,12 @@ import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.core.service.GGAPIServiceResponse;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.GGAPIExceptionCode;
-import com.garganttua.api.spec.GGAPIMethod;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.security.IGGAPIOwnerVerifier;
 import com.garganttua.api.spec.security.IGGAPISecurityEngine;
 import com.garganttua.api.spec.security.IGGAPITenantVerifier;
-import com.garganttua.api.spec.security.annotations.GGAPICustomServiceSecurity;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationFactoriesRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInfosRegistry;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterface;
@@ -51,11 +47,8 @@ import com.garganttua.api.spec.security.authenticator.IGGAPIAuthenticatorService
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationInfosRegistry;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationProtocol;
 import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationServicesRegistry;
-import com.garganttua.api.spec.service.GGAPICustomService;
-import com.garganttua.api.spec.service.GGAPIServiceAccess;
 import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
 import com.garganttua.api.spec.service.IGGAPIService;
-import com.garganttua.api.spec.service.IGGAPIServiceCommand;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.IGGInjector;
@@ -201,7 +194,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		return authorization;
 	}
 
-	private byte[] decodeAuthorizationFromProtocols(Object request, IGGAPICaller caller) throws GGAPISecurityException {
+	private byte[] decodeAuthorizationFromProtocols(Object request, IGGAPICaller caller) throws GGAPIException {
 		byte[] authorization = null;
 		for (Class<?> protocolType : caller.getDomain().getAuthorizationProtocols()) {
 			authorization = this.decodeAuthorizationFromProtocol(request, caller, protocolType);
@@ -231,7 +224,7 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		return authorization;
 	}
 
-	public byte[] decodeAuthorizationFromRequest(Object request, IGGAPICaller caller) throws GGAPISecurityException {
+	public byte[] decodeAuthorizationFromRequest(Object request, IGGAPICaller caller) throws GGAPIException {
 		return this.decodeAuthorizationFromProtocols(request, caller);
 	}
 
@@ -347,6 +340,4 @@ public class GGAPISecurityEngine implements IGGAPISecurityEngine {
 		return Optional.empty();
 	}
 
-	
-	
 }

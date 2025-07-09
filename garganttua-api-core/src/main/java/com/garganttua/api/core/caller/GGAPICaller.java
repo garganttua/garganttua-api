@@ -40,7 +40,8 @@ public class GGAPICaller implements IGGAPICaller {
 	@Getter
 	protected String requestedTenantId;
 	
-	@Getter 
+	@Getter
+	@Setter
 	protected String callerId;
 
 	@Getter
@@ -77,6 +78,7 @@ public class GGAPICaller implements IGGAPICaller {
                 ", domain=" + domain +
                 ", anonymous=" + anonymous +
                 ", authorities=" + authorities +
+				", callerId=" + callerId +
                 '}';
     }
 
@@ -162,4 +164,5 @@ public class GGAPICaller implements IGGAPICaller {
 	public Class<?> getDomainEntityClass() {
 		return this.domain.getEntityClass();
 	}
+
 }

@@ -51,4 +51,6 @@ public interface IGGAPICaller {
 
 	Class<?> getDomainEntityClass();
 
+	void setCallerId(String callerUuid);
+
 }
