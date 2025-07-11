@@ -1,6 +1,5 @@
 package com.garganttua.api.core.security.key;
 
-import java.lang.reflect.Array;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
