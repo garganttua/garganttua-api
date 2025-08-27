@@ -7,38 +7,38 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.api.spec.dto.annotations.GGAPIDto;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterCreate;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterDelete;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterGet;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityAfterUpdate;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeCreate;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeDelete;
-import com.garganttua.api.spec.entity.annotations.GGAPIBusinessAnnotations.GGAPIEntityBeforeUpdate;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityAuthorizeUpdate;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethod;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityDeleteMethodProvider;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityEngine;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityGotFromRepository;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityHidden;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityLocation;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityMandatory;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityOwnerId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityRepository;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethod;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySaveMethodProvider;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityShare;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperOwner;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntitySuperTenant;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityUnicity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityUuid;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthentication;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthenticator;
-import com.garganttua.api.spec.security.annotations.GGAPIAuthorization;
-import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
+import com.garganttua.api.spec.dto.annotations.Dto;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityAfterCreate;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityAfterDelete;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityAfterGet;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityAfterUpdate;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityBeforeCreate;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityBeforeDelete;
+import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityBeforeUpdate;
+import com.garganttua.api.spec.entity.annotations.Entity;
+import com.garganttua.api.spec.entity.annotations.EntityAuthorizeUpdate;
+import com.garganttua.api.spec.entity.annotations.EntityDeleteMethod;
+import com.garganttua.api.spec.entity.annotations.EntityDeleteMethodProvider;
+import com.garganttua.api.spec.entity.annotations.EntityEngine;
+import com.garganttua.api.spec.entity.annotations.EntityGotFromRepository;
+import com.garganttua.api.spec.entity.annotations.EntityHidden;
+import com.garganttua.api.spec.entity.annotations.EntityId;
+import com.garganttua.api.spec.entity.annotations.EntityLocation;
+import com.garganttua.api.spec.entity.annotations.EntityMandatory;
+import com.garganttua.api.spec.entity.annotations.EntityOwnerId;
+import com.garganttua.api.spec.entity.annotations.EntityRepository;
+import com.garganttua.api.spec.entity.annotations.EntitySaveMethod;
+import com.garganttua.api.spec.entity.annotations.EntitySaveMethodProvider;
+import com.garganttua.api.spec.entity.annotations.EntityShare;
+import com.garganttua.api.spec.entity.annotations.EntitySuperOwner;
+import com.garganttua.api.spec.entity.annotations.EntitySuperTenant;
+import com.garganttua.api.spec.entity.annotations.EntityTenantId;
+import com.garganttua.api.spec.entity.annotations.EntityUnicity;
+import com.garganttua.api.spec.entity.annotations.EntityUuid;
+import com.garganttua.api.spec.security.annotations.Authentication;
+import com.garganttua.api.spec.security.annotations.Authenticator;
+import com.garganttua.api.spec.security.annotations.Authorization;
+import com.garganttua.api.spec.security.key.IKeyRealm;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.IReflectConfigEntryBuilder;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
@@ -78,12 +78,12 @@ public class NativeImageConfigBuilder {
 		
 		packages.forEach(p -> {
 			log.atInfo().log("Scanning package {}", p);
-			entityClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, GGAPIEntity.class));
-			dtoClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, GGAPIDto.class));
+			entityClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, Entity.class));
+			dtoClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, Dto.class));
 			ggBeanClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, GGBean.class));
-			authenticatorClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, GGAPIAuthenticator.class));
-			authenticationClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, GGAPIAuthentication.class));
-			authorizationClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, GGAPIAuthorization.class));
+			authenticatorClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, Authenticator.class));
+			authenticationClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, Authentication.class));
+			authorizationClasses.addAll(GGObjectReflectionHelper.getClassesWithAnnotation(p, Authorization.class));
 		});
 
 		processClasses(reflectConfig, resourceConfigFile, entityClasses, NativeImageConfigBuilder::processEntityClass);
@@ -129,8 +129,8 @@ public class NativeImageConfigBuilder {
 		log.atInfo().log("Processing authorization "+entityClass.getSimpleName());
 		IReflectConfigEntryBuilder entryBuilder = getReflectConfigEntryBuilder(reflectConfig, entityClass);
 		
-		entryBuilder.constructor(entityClass.getConstructor(byte[].class, IGGAPIKeyRealm.class));
-		entryBuilder.constructor(entityClass.getConstructor(String.class, String.class, String.class, String.class, List.class, Date.class, Date.class, IGGAPIKeyRealm.class));
+		entryBuilder.constructor(entityClass.getConstructor(byte[].class, IKeyRealm.class));
+		entryBuilder.constructor(entityClass.getConstructor(String.class, String.class, String.class, String.class, List.class, Date.class, Date.class, IKeyRealm.class));
 		
 		return entryBuilder.build();
 	}
@@ -142,36 +142,36 @@ public class NativeImageConfigBuilder {
 		
 		entryBuilder.constructor(entityClass.getConstructor());
 		
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityAfterGet.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityAfterCreate.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityAfterUpdate.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityAfterDelete.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityBeforeCreate.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityBeforeUpdate.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityBeforeDelete.class);
+		entryBuilder.methodsAnnotatedWith(EntityAfterGet.class);
+		entryBuilder.methodsAnnotatedWith(EntityAfterCreate.class);
+		entryBuilder.methodsAnnotatedWith(EntityAfterUpdate.class);
+		entryBuilder.methodsAnnotatedWith(EntityAfterDelete.class);
+		entryBuilder.methodsAnnotatedWith(EntityBeforeCreate.class);
+		entryBuilder.methodsAnnotatedWith(EntityBeforeUpdate.class);
+		entryBuilder.methodsAnnotatedWith(EntityBeforeDelete.class);
 		
-		entryBuilder.methodsAnnotatedWith(GGAPIEntityDeleteMethod.class);
-		entryBuilder.methodsAnnotatedWith(GGAPIEntitySaveMethod.class);
+		entryBuilder.methodsAnnotatedWith(EntityDeleteMethod.class);
+		entryBuilder.methodsAnnotatedWith(EntitySaveMethod.class);
 		
 		entryBuilder.allDeclaredFields(true);
 		
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityUuid.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityMandatory.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityUnicity.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityTenantId.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityId.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityAuthorizeUpdate.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySuperTenant.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySuperOwner.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityOwnerId.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityLocation.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityHidden.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityShare.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityGotFromRepository.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntitySaveMethodProvider.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityDeleteMethodProvider.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityRepository.class);
-		entryBuilder.fieldsAnnotatedWith(GGAPIEntityEngine.class);
+		entryBuilder.fieldsAnnotatedWith(EntityUuid.class);
+		entryBuilder.fieldsAnnotatedWith(EntityMandatory.class);
+		entryBuilder.fieldsAnnotatedWith(EntityUnicity.class);
+		entryBuilder.fieldsAnnotatedWith(EntityTenantId.class);
+		entryBuilder.fieldsAnnotatedWith(EntityId.class);
+		entryBuilder.fieldsAnnotatedWith(EntityAuthorizeUpdate.class);
+		entryBuilder.fieldsAnnotatedWith(EntitySuperTenant.class);
+		entryBuilder.fieldsAnnotatedWith(EntitySuperOwner.class);
+		entryBuilder.fieldsAnnotatedWith(EntityOwnerId.class);
+		entryBuilder.fieldsAnnotatedWith(EntityLocation.class);
+		entryBuilder.fieldsAnnotatedWith(EntityHidden.class);
+		entryBuilder.fieldsAnnotatedWith(EntityShare.class);
+		entryBuilder.fieldsAnnotatedWith(EntityGotFromRepository.class);
+		entryBuilder.fieldsAnnotatedWith(EntitySaveMethodProvider.class);
+		entryBuilder.fieldsAnnotatedWith(EntityDeleteMethodProvider.class);
+		entryBuilder.fieldsAnnotatedWith(EntityRepository.class);
+		entryBuilder.fieldsAnnotatedWith(EntityEngine.class);
 		
 		return entryBuilder.build();
 	}

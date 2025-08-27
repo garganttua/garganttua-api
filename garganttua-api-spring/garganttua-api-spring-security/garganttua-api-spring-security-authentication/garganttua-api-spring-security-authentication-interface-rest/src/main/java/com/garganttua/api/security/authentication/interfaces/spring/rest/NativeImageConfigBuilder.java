@@ -3,7 +3,7 @@ package com.garganttua.api.security.authentication.interfaces.spring.rest;
 import java.io.File;
 import java.io.IOException;
 
-import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
@@ -21,7 +21,7 @@ public class NativeImageConfigBuilder {
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 
-		ResourceConfig.addResource(resourceConfigFile, GGAPISpringAuthenticationRestInterface.class);
+		ResourceConfig.addResource(resourceConfigFile, SpringAuthenticationRestInterface.class);
 
 	}
 
@@ -33,9 +33,9 @@ public class NativeImageConfigBuilder {
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
 
 		reflectConfig.addEntry(
-				ReflectConfigEntryBuilder.builder(GGAPISpringAuthenticationRestInterface.class)
-					.constructor(GGAPISpringAuthenticationRestInterface.class.getDeclaredConstructor())
-					.method(GGAPISpringAuthenticationRestInterface.class.getMethod("authenticate", IGGAPICaller.class, GGAPISpringRestAuthenticationRequest.class))
+				ReflectConfigEntryBuilder.builder(SpringAuthenticationRestInterface.class)
+					.constructor(SpringAuthenticationRestInterface.class.getDeclaredConstructor())
+					.method(SpringAuthenticationRestInterface.class.getMethod("authenticate", ICaller.class, SpringRestAuthenticationRequest.class))
 					.build());
 
 

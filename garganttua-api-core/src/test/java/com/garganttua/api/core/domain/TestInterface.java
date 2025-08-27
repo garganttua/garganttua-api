@@ -2,38 +2,38 @@ package com.garganttua.api.core.domain;
 
 import java.lang.reflect.Method;
 
-import com.garganttua.api.core.entity.exceptions.GGAPIEntityException;
-import com.garganttua.api.spec.GGAPIException;
-import com.garganttua.api.spec.domain.IGGAPIDomain;
-import com.garganttua.api.spec.engine.IGGAPIEngine;
-import com.garganttua.api.spec.interfasse.GGAPIInterfaceMethod;
-import com.garganttua.api.spec.interfasse.IGGAPIInterface;
-import com.garganttua.api.spec.service.IGGAPIService;
+import com.garganttua.api.core.entity.exceptions.EntityException;
+import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.domain.IDomain;
+import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.interfasse.InterfaceMethod;
+import com.garganttua.api.spec.interfasse.IInterface;
+import com.garganttua.api.spec.service.IService;
 import com.garganttua.reflection.beans.annotation.GGBean;
 
 @GGBean(name = "test")
-public class TestInterface implements IGGAPIInterface {
+public class TestInterface implements IInterface {
 
 	@Override
-	public void setEngine(IGGAPIEngine engine) {
+	public void setEngine(IEngine engine) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void start() throws GGAPIException {
+	public void start() throws CoreException {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void setDomain(IGGAPIDomain domain) {
+	public void setDomain(IDomain domain) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void setService(IGGAPIService service) {
+	public void setService(IService service) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -45,11 +45,11 @@ public class TestInterface implements IGGAPIInterface {
 	}
 
 	@Override
-	public Method getMethod(GGAPIInterfaceMethod method) throws GGAPIEntityException {
+	public Method getMethod(InterfaceMethod method) throws EntityException {
 		try {
 			return this.getClass().getDeclaredMethod("getName");
 		} catch (NoSuchMethodException | SecurityException e) {
-			throw new GGAPIEntityException(e);
+			throw new EntityException(e);
 		}
 	}
 

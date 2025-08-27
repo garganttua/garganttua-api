@@ -11,19 +11,19 @@ import java.util.stream.Collectors;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
-import com.garganttua.api.core.dto.GenericGGAPIDto;
-import com.garganttua.api.core.engine.GGApiEngine;
-import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.core.entity.GenericGGAPITenantEntity;
-import com.garganttua.api.core.security.authorization.GGAPIAuthorization;
-import com.garganttua.api.core.security.authorization.GGAPISignableAuthorization;
-import com.garganttua.api.core.security.engine.GGAPISecurityEngine;
-import com.garganttua.api.core.security.key.GGAPIKeyRealm;
-import com.garganttua.api.core.service.GGAPIService;
-import com.garganttua.api.spec.GGAPIEntityOperation;
-import com.garganttua.api.spec.caller.IGGAPICaller;
-import com.garganttua.api.spec.security.IGGAPIAccessRule;
-import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
+import com.garganttua.api.core.dto.GenericDto;
+import com.garganttua.api.core.engine.Engine;
+import com.garganttua.api.core.entity.GenericEntity;
+import com.garganttua.api.core.entity.GenericTenantEntity;
+import com.garganttua.api.core.security.authorization.Authorization;
+import com.garganttua.api.core.security.authorization.SignableAuthorization;
+import com.garganttua.api.core.security.engine.SecurityEngine;
+import com.garganttua.api.core.security.key.KeyRealm;
+import com.garganttua.api.core.service.Service;
+import com.garganttua.api.spec.EntityOperation;
+import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.security.IAccessRule;
+import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
@@ -55,12 +55,12 @@ public class NativeImageConfigBuilder {
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 		
-		ResourceConfig.addResource(resourceConfigFile, GenericGGAPIDto.class);
-		ResourceConfig.addResource(resourceConfigFile, GenericGGAPIEntity.class);
-		ResourceConfig.addResource(resourceConfigFile, GenericGGAPITenantEntity.class);
-		ResourceConfig.addResource(resourceConfigFile, GGAPISignableAuthorization.class);
-		ResourceConfig.addResource(resourceConfigFile, GGAPIAuthorization.class);
-		ResourceConfig.addResource(resourceConfigFile, GGAPIKeyRealm.class);
+		ResourceConfig.addResource(resourceConfigFile, GenericDto.class);
+		ResourceConfig.addResource(resourceConfigFile, GenericEntity.class);
+		ResourceConfig.addResource(resourceConfigFile, GenericTenantEntity.class);
+		ResourceConfig.addResource(resourceConfigFile, SignableAuthorization.class);
+		ResourceConfig.addResource(resourceConfigFile, Authorization.class);
+		ResourceConfig.addResource(resourceConfigFile, KeyRealm.class);
 
 	}
 
@@ -71,20 +71,20 @@ public class NativeImageConfigBuilder {
 
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
 		
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIKeyRealm.class).queryAllDeclaredConstructors(true).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericGGAPIDto.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPISignableAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGApiEngine.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
-				.method("addAccessRule", IGGAPIAccessRule.class)
-				.method("addServicesInfos", IGGAPIAccessRule.class, List.class)
-				.method("addServicesInfos", IGGAPIAccessRule.class, List.class)
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(KeyRealm.class).queryAllDeclaredConstructors(true).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericDto.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(SignableAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(Authorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(Engine.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
+				.method("addAccessRule", IAccessRule.class)
+				.method("addServicesInfos", IAccessRule.class, List.class)
+				.method("addServicesInfos", IAccessRule.class, List.class)
 				.method("close")
 				.method("flush")
 				.method("getAccessRules")
 				.method("getAuthorities")
-				.method("getAuthority", GGAPIEntityOperation.class)
-				.method("getCaller", String.class, GGAPIEntityOperation.class, String.class, String.class, String.class, String.class, Object.class)
+				.method("getAuthority", EntityOperation.class)
+				.method("getCaller", String.class, EntityOperation.class, String.class, String.class, String.class, String.class, Object.class)
 				.method("getDomain", String.class)
 				.method("getDomains")
 				.method("getFactory", String.class)
@@ -100,21 +100,21 @@ public class NativeImageConfigBuilder {
 				.method("start")
 				.method("stop")
 				.build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericGGAPIEntity.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
-				.method("save", IGGAPICaller.class, Map.class)
-				.method("delete", IGGAPICaller.class, Map.class)
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericEntity.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
+				.method("save", ICaller.class, Map.class)
+				.method("delete", ICaller.class, Map.class)
 				.build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericGGAPITenantEntity.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
-				.method("save", IGGAPICaller.class, Map.class)
-				.method("delete", IGGAPICaller.class, Map.class)
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GenericTenantEntity.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
+				.method("save", ICaller.class, Map.class)
+				.method("delete", ICaller.class, Map.class)
 				.build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPISecurityEngine.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
-				.method("authenticate", IGGAPIAuthenticationRequest.class)
-				.method("authenticatorEntitySecurityPostProcessing", IGGAPICaller.class, Object.class, Map.class)
-				.method("authenticatorEntitySecurityPreProcessing", IGGAPICaller.class, Object.class, Map.class)
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(SecurityEngine.class).allDeclaredFields(true).queryAllDeclaredMethods(true)
+				.method("authenticate", IAuthenticationRequest.class)
+				.method("authenticatorEntitySecurityPostProcessing", ICaller.class, Object.class, Map.class)
+				.method("authenticatorEntitySecurityPreProcessing", ICaller.class, Object.class, Map.class)
 				.method("close")
-				.method("decodeAuthorizationFromRequest", Object.class, IGGAPICaller.class)
-				.method("decodeRawAuthorization", byte[].class, IGGAPICaller.class)
+				.method("decodeAuthorizationFromRequest", Object.class, ICaller.class)
+				.method("decodeRawAuthorization", byte[].class, ICaller.class)
 				.method("flush")
 				.method("getAuthenticationInterfacesRegistry")
 				.method("init")
@@ -123,10 +123,10 @@ public class NativeImageConfigBuilder {
 				.method("shutdown")
 				.method("start")
 				.method("stop")
-				.method("verifyOwner", IGGAPICaller.class, Object.class)
-				.method("verifyTenant", IGGAPICaller.class, Object.class)
+				.method("verifyOwner", ICaller.class, Object.class)
+				.method("verifyTenant", ICaller.class, Object.class)
 				.build());
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIService.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(Service.class).allDeclaredFields(true).queryAllDeclaredMethods(true).build());
 		reflectConfig.saveToFile(reflectConfigFile);
 	}
 }

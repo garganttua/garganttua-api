@@ -2,11 +2,11 @@ package com.garganttua.api.security.spring.password.encoders;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-public class GGAPISpringPasswordEncoderBcrypt implements IGGAPISpringPasswordEncoder {
+public class SpringPasswordEncoderBcrypt implements ISpringPasswordEncoder {
 
 	private BCryptPasswordEncoder bCryptPasswordEncoder;
 
-	public GGAPISpringPasswordEncoderBcrypt(BCryptPasswordEncoder bCryptPasswordEncoder) {
+	public SpringPasswordEncoderBcrypt(BCryptPasswordEncoder bCryptPasswordEncoder) {
 		this.bCryptPasswordEncoder = bCryptPasswordEncoder;
 	}
 

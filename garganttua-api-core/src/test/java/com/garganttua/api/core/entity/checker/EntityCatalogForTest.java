@@ -1,18 +1,18 @@
 package com.garganttua.api.core.entity.checker;
 
-import com.garganttua.api.core.entity.GenericGGAPIEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityGeolocalized;
+import com.garganttua.api.core.entity.GenericEntity;
+import com.garganttua.api.spec.entity.annotations.Entity;
+import com.garganttua.api.spec.entity.annotations.EntityGeolocalized;
 
 import lombok.NoArgsConstructor;
 
-@GGAPIEntity(
+@Entity(
 		domain = "test", 
 		interfaces = { "" }		
 )
-@GGAPIEntityGeolocalized(location = "test")
+@EntityGeolocalized(location = "test")
 @NoArgsConstructor
-class GeolocEntity extends GenericGGAPIEntity {
+class GeolocEntity extends GenericEntity {
 	protected GeolocEntity(String uuid, String id) {
 		super(uuid, id);
 	}
@@ -22,22 +22,22 @@ class GeolocEntity extends GenericGGAPIEntity {
 
 
 
-//@GGAPIEntity (
+//@Entity (
 //		domain = "tenants"
 //	)
-//	class TestGenericEntity extends GenericGGAPIEntity {
+//	class TestGenericEntity extends GenericEntity {
 //
 //	}
 //
-//@GGAPIEntity (
+//@Entity (
 //		domain = "tenants",
-//		creation_access = GGAPIServiceAccess.anonymous,
-//		count_access = GGAPIServiceAccess.tenant,
-//		delete_one_access = GGAPIServiceAccess.tenant,
-//		read_one_access = GGAPIServiceAccess.tenant,
-//		update_one_access = GGAPIServiceAccess.tenant,
-//		read_all_access = GGAPIServiceAccess.tenant,
-//		delete_all_access = GGAPIServiceAccess.tenant,
+//		creation_access = ServiceAccess.anonymous,
+//		count_access = ServiceAccess.tenant,
+//		delete_one_access = ServiceAccess.tenant,
+//		read_one_access = ServiceAccess.tenant,
+//		update_one_access = ServiceAccess.tenant,
+//		read_all_access = ServiceAccess.tenant,
+//		delete_all_access = ServiceAccess.tenant,
 //		allow_count = true,
 //		allow_creation = true,
 //		allow_delete_all = true,
@@ -54,28 +54,28 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		delete_all_authority = true
 //	)
 //	@Getter
-//	@GGAPIAuthenticator
-//	@GGAPIEntityTenant
-//	@GGAPIEntityOwner
-//	@GGAPIEntityHiddenable
-//	@GGAPIEntityGeolocalized
-//	@GGAPIEntityPublic 
-//	@GGAPIEntityShared
-//	class TestValidationResult  extends GenericGGAPIEntity {
+//	@Authenticator
+//	@EntityTenant
+//	@EntityOwner
+//	@EntityHiddenable
+//	@EntityGeolocalized
+//	@EntityPublic 
+//	@EntityShared
+//	class TestValidationResult  extends GenericEntity {
 ////		public TestValidationResult() {
 ////			
 ////		}
-//		@GGAPIEntityUuid
-//		@GGAPIEntityOwnerId
-//		@GGAPIEntityTenantId
+//		@EntityUuid
+//		@EntityOwnerId
+//		@EntityTenantId
 //		protected String uuid;
 //		
-//		@GGAPIEntityId
-//		@GGAPIEntityUnicity
-//		@GGAPIEntityMandatory
+//		@EntityId
+//		@EntityUnicity
+//		@EntityMandatory
 //		protected String id;
 //		
-//		@GGAPIAuthenticatorLogin
+//		@AuthenticatorLogin
 //		@JsonProperty
 //		protected String email;
 //		
@@ -83,56 +83,56 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		private String name;
 //		
 //		@JsonInclude
-//		@GGAPIEntityShare
+//		@EntityShare
 //		private String surname;
 //		
 //		@JsonInclude
-//		@GGAPIAuthenticatorPassword
-//		@GGAPIEntityMandatory
+//		@AuthenticatorPassword
+//		@EntityMandatory
 //		private String password;
 //		
 //		@JsonInclude
 //		@Setter
-//		@GGAPIAuthenticatorAuthorities
+//		@AuthenticatorAuthorities
 //		private List<String> userAuthorities;
 //		
 //		@JsonIgnore
-//		@GGAPIAuthenticatorAccountNonExpired
-//		@GGAPIAuthenticatorAccountNonLocked
-//		@GGAPIAuthenticatorCredentialsNonExpired
-//		@GGAPIAuthenticatorEnabled
-//		@GGAPIEntityHidden
+//		@AuthenticatorAccountNonExpired
+//		@AuthenticatorAccountNonLocked
+//		@AuthenticatorCredentialsNonExpired
+//		@AuthenticatorEnabled
+//		@EntityHidden
 //		private boolean enabled = true;
 //		
-//		@GGAPIEntitySuperTenant
-//		@GGAPIEntityGotFromRepository
+//		@EntitySuperTenant
+//		@EntityGotFromRepository
 //		private boolean superTenant;
 //		
-//		@GGAPIEntitySuperOwner
+//		@EntitySuperOwner
 //		private boolean superOwner;
 //		
-//		@GGAPIEntityLocation
-//		@GGAPIEntityUnicity
+//		@EntityLocation
+//		@EntityUnicity
 //		private Point location;
 //
 //		@Inject
 //		@JsonIgnore
-//		private IGGAPIAccessRulesRegistry accessRulesRegistry;
+//		private IAccessRulesRegistry accessRulesRegistry;
 //
 //	}
 //
 //
 //
 //
-//@GGAPIEntity (
+//@Entity (
 //		domain = "tenants",
-//		creation_access = GGAPIServiceAccess.anonymous,
-//		count_access = GGAPIServiceAccess.tenant,
-//		delete_one_access = GGAPIServiceAccess.tenant,
-//		read_one_access = GGAPIServiceAccess.tenant,
-//		update_one_access = GGAPIServiceAccess.tenant,
-//		read_all_access = GGAPIServiceAccess.tenant,
-//		delete_all_access = GGAPIServiceAccess.tenant,
+//		creation_access = ServiceAccess.anonymous,
+//		count_access = ServiceAccess.tenant,
+//		delete_one_access = ServiceAccess.tenant,
+//		read_one_access = ServiceAccess.tenant,
+//		update_one_access = ServiceAccess.tenant,
+//		read_all_access = ServiceAccess.tenant,
+//		delete_all_access = ServiceAccess.tenant,
 //		allow_count = true,
 //		allow_creation = true,
 //		allow_delete_all = true,
@@ -149,29 +149,29 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		delete_all_authority = true
 //	)
 //	@Getter
-//	@GGAPIAuthenticator
-//	@GGAPIEntityTenant
-//	@GGAPIEntityOwned
-//	@GGAPIEntityHiddenable
-//	@GGAPIEntityGeolocalized
-//	@GGAPIEntityPublic 
-//	@GGAPIEntityShared
-//	class TestValidationResult2 extends GenericGGAPIEntity {
+//	@Authenticator
+//	@EntityTenant
+//	@EntityOwned
+//	@EntityHiddenable
+//	@EntityGeolocalized
+//	@EntityPublic 
+//	@EntityShared
+//	class TestValidationResult2 extends GenericEntity {
 ////		public TestValidationResult2() {
 ////			
 ////		}
 //
-//		@GGAPIEntityUuid
-//		@GGAPIEntityOwnerId
-//		@GGAPIEntityTenantId
+//		@EntityUuid
+//		@EntityOwnerId
+//		@EntityTenantId
 //		protected String uuid;
 //		
-//		@GGAPIEntityId
-//		@GGAPIEntityUnicity
-//		@GGAPIEntityMandatory
+//		@EntityId
+//		@EntityUnicity
+//		@EntityMandatory
 //		protected String id;
 //		
-//		@GGAPIAuthenticatorLogin
+//		@AuthenticatorLogin
 //		@JsonProperty
 //		protected String email;
 //		
@@ -179,53 +179,53 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		private String name;
 //		
 //		@JsonInclude
-//		@GGAPIEntityShare
+//		@EntityShare
 //		private String surname;
 //		
 //		@JsonInclude
-//		@GGAPIAuthenticatorPassword
-//		@GGAPIEntityMandatory
+//		@AuthenticatorPassword
+//		@EntityMandatory
 //		private String password;
 //		
 //		@JsonInclude
 //		@Setter
-//		@GGAPIAuthenticatorAuthorities
+//		@AuthenticatorAuthorities
 //		private List<String> userAuthorities;
 //		
 //		@JsonIgnore
-//		@GGAPIAuthenticatorAccountNonExpired
-//		@GGAPIAuthenticatorAccountNonLocked
-//		@GGAPIAuthenticatorCredentialsNonExpired
-//		@GGAPIAuthenticatorEnabled
-//		@GGAPIEntityHidden
+//		@AuthenticatorAccountNonExpired
+//		@AuthenticatorAccountNonLocked
+//		@AuthenticatorCredentialsNonExpired
+//		@AuthenticatorEnabled
+//		@EntityHidden
 //		private boolean enabled = true;
 //		
-//		@GGAPIEntitySuperTenant
-//		@GGAPIEntityGotFromRepository
+//		@EntitySuperTenant
+//		@EntityGotFromRepository
 //		private boolean superTenant;
 //		
-//		@GGAPIEntitySuperOwner
+//		@EntitySuperOwner
 //		private boolean superOwner;
 //		
-//		@GGAPIEntityLocation
-//		@GGAPIEntityUnicity
+//		@EntityLocation
+//		@EntityUnicity
 //		private Point location;
 //
 //		@Inject
 //		@JsonIgnore
-//		private IGGAPIAccessRulesRegistry accessRulesRegistry;
+//		private IAccessRulesRegistry accessRulesRegistry;
 //
 //	}
 //
-//@GGAPIEntity (
+//@Entity (
 //		domain = "tenants", 
-//		creation_access = GGAPIServiceAccess.anonymous,
-//		count_access = GGAPIServiceAccess.tenant,
-//		delete_one_access = GGAPIServiceAccess.tenant,
-//		read_one_access = GGAPIServiceAccess.tenant,
-//		update_one_access = GGAPIServiceAccess.tenant,
-//		read_all_access = GGAPIServiceAccess.tenant,
-//		delete_all_access = GGAPIServiceAccess.tenant,
+//		creation_access = ServiceAccess.anonymous,
+//		count_access = ServiceAccess.tenant,
+//		delete_one_access = ServiceAccess.tenant,
+//		read_one_access = ServiceAccess.tenant,
+//		update_one_access = ServiceAccess.tenant,
+//		read_all_access = ServiceAccess.tenant,
+//		delete_all_access = ServiceAccess.tenant,
 //		allow_count = true,
 //		allow_creation = true,
 //		allow_delete_all = true,
@@ -243,26 +243,26 @@ class GeolocEntity extends GenericGGAPIEntity {
 //	)
 //	@NoArgsConstructor
 //	@Getter
-//	@GGAPIAuthenticator
-//	@GGAPIEntityTenant
-//	@GGAPIEntityOwned
-//	@GGAPIEntityHiddenable
-//	@GGAPIEntityGeolocalized
-//	@GGAPIEntityPublic 
-//	@GGAPIEntityShared
-//	class TestBusinessMethodsPresence  extends GenericGGAPIEntity {
+//	@Authenticator
+//	@EntityTenant
+//	@EntityOwned
+//	@EntityHiddenable
+//	@EntityGeolocalized
+//	@EntityPublic 
+//	@EntityShared
+//	class TestBusinessMethodsPresence  extends GenericEntity {
 //
-//		@GGAPIEntityUuid
-//		@GGAPIEntityOwnerId
-//		@GGAPIEntityTenantId
+//		@EntityUuid
+//		@EntityOwnerId
+//		@EntityTenantId
 //		protected String uuid;
 //		
-//		@GGAPIEntityId
-//		@GGAPIEntityUnicity
-//		@GGAPIEntityMandatory
+//		@EntityId
+//		@EntityUnicity
+//		@EntityMandatory
 //		protected String id;
 //		
-//		@GGAPIAuthenticatorLogin
+//		@AuthenticatorLogin
 //		@JsonProperty
 //		protected String email;
 //		
@@ -270,81 +270,81 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		private String name;
 //		
 //		@JsonInclude
-//		@GGAPIEntityShare
+//		@EntityShare
 //		private String surname;
 //		
 //		@JsonInclude
-//		@GGAPIAuthenticatorPassword
-//		@GGAPIEntityMandatory
+//		@AuthenticatorPassword
+//		@EntityMandatory
 //		private String password;
 //		
 //		@JsonInclude
 //		@Setter
-//		@GGAPIAuthenticatorAuthorities
+//		@AuthenticatorAuthorities
 //		private List<String> userAuthorities;
 //		
 //		@JsonIgnore
-//		@GGAPIAuthenticatorAccountNonExpired
-//		@GGAPIAuthenticatorAccountNonLocked
-//		@GGAPIAuthenticatorCredentialsNonExpired
-//		@GGAPIAuthenticatorEnabled
-//		@GGAPIEntityHidden
+//		@AuthenticatorAccountNonExpired
+//		@AuthenticatorAccountNonLocked
+//		@AuthenticatorCredentialsNonExpired
+//		@AuthenticatorEnabled
+//		@EntityHidden
 //		private boolean enabled = true;
 //		
-//		@GGAPIEntitySuperTenant
-//		@GGAPIEntityGotFromRepository
+//		@EntitySuperTenant
+//		@EntityGotFromRepository
 //		private boolean superTenant;
 //		
-//		@GGAPIEntitySuperOwner
+//		@EntitySuperOwner
 //		private boolean superOwner;
 //		
-//		@GGAPIEntityLocation
-//		@GGAPIEntityUnicity
+//		@EntityLocation
+//		@EntityUnicity
 //		private Point location;
 //
 //		@Inject
 //		@JsonIgnore
-//		private IGGAPIAccessRulesRegistry accessRulesRegistry;
+//		private IAccessRulesRegistry accessRulesRegistry;
 //		
-//		@GGAPIEntityAfterGet
-//		private void afterGet(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityAfterGet
+//		private void afterGet(ICaller caller, Map<String, String> params) {
 //		}
 //		
-//		@GGAPIEntityBeforeCreate
-//		private void beforeCreate(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityBeforeCreate
+//		private void beforeCreate(ICaller caller, Map<String, String> params) {
 //		}
 //		
-//		@GGAPIEntityAfterCreate
-//		private void afterCreate(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityAfterCreate
+//		private void afterCreate(ICaller caller, Map<String, String> params) {
 //		}
 //		
-//		@GGAPIEntityBeforeUpdate
-//		private void beforeUpdate(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityBeforeUpdate
+//		private void beforeUpdate(ICaller caller, Map<String, String> params) {
 //		}
 //		
-//		@GGAPIEntityAfterUpdate
-//		private void afterUpdate(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityAfterUpdate
+//		private void afterUpdate(ICaller caller, Map<String, String> params) {
 //		}
 //		
-//		@GGAPIEntityBeforeDelete
-//		private void beforeDelete(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityBeforeDelete
+//		private void beforeDelete(ICaller caller, Map<String, String> params) {
 //		}
 //		
-//		@GGAPIEntityAfterDelete
-//		private void afterDelete(IGGAPICaller caller, Map<String, String> params) {
+//		@EntityAfterDelete
+//		private void afterDelete(ICaller caller, Map<String, String> params) {
 //		}
 //
 //	}
 //
-//@GGAPIEntity (
+//@Entity (
 //		domain = "tenants", 
-//		creation_access = GGAPIServiceAccess.anonymous,
-//		count_access = GGAPIServiceAccess.tenant,
-//		delete_one_access = GGAPIServiceAccess.tenant,
-//		read_one_access = GGAPIServiceAccess.tenant,
-//		update_one_access = GGAPIServiceAccess.tenant,
-//		read_all_access = GGAPIServiceAccess.tenant,
-//		delete_all_access = GGAPIServiceAccess.tenant,
+//		creation_access = ServiceAccess.anonymous,
+//		count_access = ServiceAccess.tenant,
+//		delete_one_access = ServiceAccess.tenant,
+//		read_one_access = ServiceAccess.tenant,
+//		update_one_access = ServiceAccess.tenant,
+//		read_all_access = ServiceAccess.tenant,
+//		delete_all_access = ServiceAccess.tenant,
 //		allow_count = true,
 //		allow_creation = true,
 //		allow_delete_all = true,
@@ -361,14 +361,14 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		delete_all_authority = true
 //	)
 //	@Getter
-//	@GGAPIAuthenticator
-//	@GGAPIEntityTenant
-//	@GGAPIEntityOwned
-//	@GGAPIEntityHiddenable
-//	@GGAPIEntityGeolocalized
-//	@GGAPIEntityPublic 
-//	@GGAPIEntityShared
-//	class TestAuthorizeUpdate extends GenericGGAPIEntity {
+//	@Authenticator
+//	@EntityTenant
+//	@EntityOwned
+//	@EntityHiddenable
+//	@EntityGeolocalized
+//	@EntityPublic 
+//	@EntityShared
+//	class TestAuthorizeUpdate extends GenericEntity {
 //		
 //		public TestAuthorizeUpdate() {
 //			super();
@@ -380,17 +380,17 @@ class GeolocEntity extends GenericGGAPIEntity {
 //			this.uuid = "hdusoidhqs";
 //		}
 //
-//		@GGAPIEntityUuid
-//		@GGAPIEntityOwnerId
-//		@GGAPIEntityTenantId
+//		@EntityUuid
+//		@EntityOwnerId
+//		@EntityTenantId
 //		protected String uuid;
 //		
-//		@GGAPIEntityId
-//		@GGAPIEntityUnicity
-//		@GGAPIEntityMandatory
+//		@EntityId
+//		@EntityUnicity
+//		@EntityMandatory
 //		protected String id;
 //		
-//		@GGAPIAuthenticatorLogin
+//		@AuthenticatorLogin
 //		@JsonProperty
 //		protected String email;
 //		
@@ -398,66 +398,66 @@ class GeolocEntity extends GenericGGAPIEntity {
 //		private String name;
 //		
 //		@JsonInclude
-//		@GGAPIEntityShare
+//		@EntityShare
 //		private String surname;
 //		
 //		@JsonInclude
-//		@GGAPIAuthenticatorPassword
-//		@GGAPIEntityMandatory
+//		@AuthenticatorPassword
+//		@EntityMandatory
 //		private String password;
 //		
 //		@JsonInclude
 //		@Setter
-//		@GGAPIAuthenticatorAuthorities
+//		@AuthenticatorAuthorities
 //		private List<String> userAuthorities;
 //		
 //		@JsonIgnore
-//		@GGAPIAuthenticatorAccountNonExpired
-//		@GGAPIAuthenticatorAccountNonLocked
-//		@GGAPIAuthenticatorCredentialsNonExpired
-//		@GGAPIAuthenticatorEnabled
-//		@GGAPIEntityHidden
+//		@AuthenticatorAccountNonExpired
+//		@AuthenticatorAccountNonLocked
+//		@AuthenticatorCredentialsNonExpired
+//		@AuthenticatorEnabled
+//		@EntityHidden
 //		private boolean enabled = true;
 //		
-//		@GGAPIEntitySuperTenant
-//		@GGAPIEntityGotFromRepository
+//		@EntitySuperTenant
+//		@EntityGotFromRepository
 //		private boolean superTenant;
 //		
-//		@GGAPIEntitySuperOwner
-//		@GGAPIEntityAuthorizeUpdate(authority = "test")
+//		@EntitySuperOwner
+//		@EntityAuthorizeUpdate(authority = "test")
 //		private boolean superOwner;
 //		
-//		@GGAPIEntityLocation
-//		@GGAPIEntityUnicity
+//		@EntityLocation
+//		@EntityUnicity
 //		private Point location;
 //
 //		@Inject
 //		@JsonIgnore
-//		private IGGAPIAccessRulesRegistry accessRulesRegistry;
+//		private IAccessRulesRegistry accessRulesRegistry;
 //	
 //	}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//class TestAnnotationEntityUuid extends GenericGGAPIEntity {
+//class TestAnnotationEntityUuid extends GenericEntity {
 //	public TestAnnotationEntityUuid() {
 //		
 //	}
-//	@GGAPIEntityUuid
+//	@EntityUuid
 //	private String uuid;
-//	@GGAPIEntityId
+//	@EntityId
 //	private String id;
-//	@GGAPIEntityGotFromRepository
+//	@EntityGotFromRepository
 //	private boolean t;
 //	
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityOwner(ownerId = "uuid", superOwner = "superOwner")
-//class TestOwnerEntityWithFieldValue  extends GenericGGAPIEntity {
+//@EntityOwner(ownerId = "uuid", superOwner = "superOwner")
+//class TestOwnerEntityWithFieldValue  extends GenericEntity {
 ////	public TestOwnerEntityWithFieldValue() {
 ////		
 ////	}
@@ -466,141 +466,141 @@ class GeolocEntity extends GenericGGAPIEntity {
 //	
 //	private boolean superOwner;
 //	
-//	@GGAPIEntityUuid
+//	@EntityUuid
 //	private String tuuid;
 //	
-//	@GGAPIEntityId
+//	@EntityId
 //	private String id;
-//	@GGAPIEntityGotFromRepository
+//	@EntityGotFromRepository
 //	private boolean t;
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//class TestAnnotationEntityUuidFromSuperClass extends GenericGGAPIEntity {
+//class TestAnnotationEntityUuidFromSuperClass extends GenericEntity {
 ////	public TestAnnotationEntityUuidFromSuperClass() {
 ////		
 ////	}
 //	private String uuid;
-//	@GGAPIEntityGotFromRepository
+//	@EntityGotFromRepository
 //	private boolean t;
 //	
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityGeolocalized(location = "location")
-//class TestAnnotationGeolocalized extends GenericGGAPIEntity {
+//@EntityGeolocalized(location = "location")
+//class TestAnnotationGeolocalized extends GenericEntity {
 ////	public TestAnnotationGeolocalized() {
 ////		
 ////	}
-//	@GGAPIEntityGotFromRepository
+//	@EntityGotFromRepository
 //	private boolean t;
 //	Point location;
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityOwner
-//@GGAPIEntityOwned
-//class TestAnnotationOwnedAndOwner extends GenericGGAPIEntity{
+//@EntityOwner
+//@EntityOwned
+//class TestAnnotationOwnedAndOwner extends GenericEntity{
 //	
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//class TestAnnotationEntityIdFromSuperClass extends GenericGGAPIEntity {
+//class TestAnnotationEntityIdFromSuperClass extends GenericEntity {
 ////	public TestAnnotationEntityIdFromSuperClass() {
 ////		
 ////	}
 //	private String uuid;
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityOwned(ownerId = "uuid")
-//class TestOwnedEntityWithFieldValue  extends GenericGGAPIEntity {
+//@EntityOwned(ownerId = "uuid")
+//class TestOwnedEntityWithFieldValue  extends GenericEntity {
 ////	public TestOwnedEntityWithFieldValue() {
 ////		
 ////	}
 //	private String uuid;
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//class TestAnnotationEntityId extends GenericGGAPIEntity {
+//class TestAnnotationEntityId extends GenericEntity {
 ////	public TestAnnotationEntityId() {
 ////		
 ////	}
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityTenant(tenantId = "uuid", superTenant = "superTenant")
-//class TestTenantEntityWithFieldValue  extends GenericGGAPIEntity{
+//@EntityTenant(tenantId = "uuid", superTenant = "superTenant")
+//class TestTenantEntityWithFieldValue  extends GenericEntity{
 ////	public TestTenantEntityWithFieldValue() {
 ////		
 ////	}
 //	private String uuid;
 //	
 //	private boolean superTenant;
-//	@GGAPIEntityUuid
+//	@EntityUuid
 //	private String tuuid;
-//	@GGAPIEntityId
+//	@EntityId
 //	private String id;
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityOwner(superOwner = "superOwner")
-//class TestOwnerEntityWithAnnotatedField  extends GenericGGAPIEntity{
+//@EntityOwner(superOwner = "superOwner")
+//class TestOwnerEntityWithAnnotatedField  extends GenericEntity{
 ////	public TestOwnerEntityWithAnnotatedField() {
 ////		
 ////	}
-//	@GGAPIEntityOwnerId
+//	@EntityOwnerId
 //	private String uuid;
 //	
 //	private boolean superOwner;
 //	
-//	@GGAPIEntityUuid
+//	@EntityUuid
 //	private String tuuid;
-//	@GGAPIEntityId
+//	@EntityId
 //	private String id;
 //	
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityTenant(superTenant = "superTenant")
-//class TestTenantEntityWithAnnotatedField  extends GenericGGAPIEntity{
+//@EntityTenant(superTenant = "superTenant")
+//class TestTenantEntityWithAnnotatedField  extends GenericEntity{
 ////	public TestTenantEntityWithAnnotatedField() {
 ////		
 ////	}
-//	@GGAPIEntityTenantId
+//	@EntityTenantId
 //	private String uuid;
 //	
 //	private boolean superTenant;
-//	@GGAPIEntityUuid
+//	@EntityUuid
 //	private String tuuid;
-//	@GGAPIEntityId
+//	@EntityId
 //	private String id;
 //	
 //}
 //
-//@GGAPIEntity(
+//@Entity(
 //		domain = "entity"
 //)
-//@GGAPIEntityShared(share = "uuid")
-//class TestSharedEntityWithFieldValue  extends GenericGGAPIEntity {
+//@EntityShared(share = "uuid")
+//class TestSharedEntityWithFieldValue  extends GenericEntity {
 //	
 //	private String uuid;
 //}

@@ -1,7 +1,7 @@
 # Garganttua API Spring MongoDB DAO
 
 
-Usable setting the gg:SpringMongoDao property in db field of GGAPIDto annotation
+Usable setting the gg:SpringMongoDao property in db field of Dto annotation
 
 ## Disclaimer
 

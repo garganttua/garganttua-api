@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
-import com.garganttua.api.spec.security.IGGAPIPasswordEncoder;
-import com.garganttua.api.spec.security.authorization.IGGAPIAuthorizationProtocol;
-import com.garganttua.api.spec.security.key.IGGAPIKeyRealm;
+import com.garganttua.api.spec.security.IPasswordEncoder;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
+import com.garganttua.api.spec.security.key.IKeyRealm;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.resources.ResourceConfig;
@@ -43,9 +43,9 @@ public class NativeImageConfigBuilder {
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 		
-		ResourceConfig.addResource(resourceConfigFile, IGGAPIPasswordEncoder.class);
-		ResourceConfig.addResource(resourceConfigFile, IGGAPIAuthorizationProtocol.class);
-		ResourceConfig.addResource(resourceConfigFile, IGGAPIKeyRealm.class);
+		ResourceConfig.addResource(resourceConfigFile, IPasswordEncoder.class);
+		ResourceConfig.addResource(resourceConfigFile, IAuthorizationProtocol.class);
+		ResourceConfig.addResource(resourceConfigFile, IKeyRealm.class);
 	}
 
 	private static void createReflectConfig(String path) throws IOException {

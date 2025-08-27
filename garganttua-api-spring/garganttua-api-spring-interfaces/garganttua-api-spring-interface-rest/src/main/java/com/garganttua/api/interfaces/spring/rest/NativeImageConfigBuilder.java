@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
@@ -24,7 +24,7 @@ public class NativeImageConfigBuilder {
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 
-		ResourceConfig.addResource(resourceConfigFile, GGAPIInterfaceSpringRest.class);
+		ResourceConfig.addResource(resourceConfigFile, InterfaceSpringRest.class);
 
 	}
 
@@ -36,34 +36,34 @@ public class NativeImageConfigBuilder {
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
 
 		reflectConfig.addEntry(
-				ReflectConfigEntryBuilder.builder(GGAPIInterfaceSpringRest.class)
+				ReflectConfigEntryBuilder.builder(InterfaceSpringRest.class)
 					.field("requestMappingHandlerMapping")
-					.constructor(GGAPIInterfaceSpringRest.class.getDeclaredConstructor())
-					.method(GGAPIInterfaceSpringRest.class.getMethod("getEntities", IGGAPICaller.class, Map.class))
-					.method(GGAPIInterfaceSpringRest.class.getMethod("deleteAll", IGGAPICaller.class, Map.class))
-					.method(GGAPIInterfaceSpringRest.class.getMethod("createEntity", IGGAPICaller.class, String.class, Map.class))
-					.method(GGAPIInterfaceSpringRest.class.getMethod("getEntity", IGGAPICaller.class, String.class, Map.class))
-					.method(GGAPIInterfaceSpringRest.class.getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, Map.class))
-					.method(GGAPIInterfaceSpringRest.class.getMethod("deleteEntity", IGGAPICaller.class, String.class, Map.class))
+					.constructor(InterfaceSpringRest.class.getDeclaredConstructor())
+					.method(InterfaceSpringRest.class.getMethod("getEntities", ICaller.class, Map.class))
+					.method(InterfaceSpringRest.class.getMethod("deleteAll", ICaller.class, Map.class))
+					.method(InterfaceSpringRest.class.getMethod("createEntity", ICaller.class, String.class, Map.class))
+					.method(InterfaceSpringRest.class.getMethod("getEntity", ICaller.class, String.class, Map.class))
+					.method(InterfaceSpringRest.class.getMethod("updateEntity", ICaller.class, String.class, String.class, Map.class))
+					.method(InterfaceSpringRest.class.getMethod("deleteEntity", ICaller.class, String.class, Map.class))
 					.build());
 	
 		reflectConfig.addEntry(
-				ReflectConfigEntryBuilder.builder(GGAPIAbstractInterfaceSpringRest.class)
+				ReflectConfigEntryBuilder.builder(AbstractInterfaceSpringRest.class)
 					.field("requestMappingHandlerMapping")
-					.constructor(GGAPIAbstractInterfaceSpringRest.class.getDeclaredConstructor())
-					.method(GGAPIAbstractInterfaceSpringRest.class.getMethod("getEntities", IGGAPICaller.class, Map.class))
-					.method(GGAPIAbstractInterfaceSpringRest.class.getMethod("deleteAll", IGGAPICaller.class, Map.class))
-					.method(GGAPIAbstractInterfaceSpringRest.class.getMethod("createEntity", IGGAPICaller.class, String.class, Map.class))
-					.method(GGAPIAbstractInterfaceSpringRest.class.getMethod("getEntity", IGGAPICaller.class, String.class, Map.class))
-					.method(GGAPIAbstractInterfaceSpringRest.class.getMethod("updateEntity", IGGAPICaller.class, String.class, String.class, Map.class))
-					.method(GGAPIAbstractInterfaceSpringRest.class.getMethod("deleteEntity", IGGAPICaller.class, String.class, Map.class))
+					.constructor(AbstractInterfaceSpringRest.class.getDeclaredConstructor())
+					.method(AbstractInterfaceSpringRest.class.getMethod("getEntities", ICaller.class, Map.class))
+					.method(AbstractInterfaceSpringRest.class.getMethod("deleteAll", ICaller.class, Map.class))
+					.method(AbstractInterfaceSpringRest.class.getMethod("createEntity", ICaller.class, String.class, Map.class))
+					.method(AbstractInterfaceSpringRest.class.getMethod("getEntity", ICaller.class, String.class, Map.class))
+					.method(AbstractInterfaceSpringRest.class.getMethod("updateEntity", ICaller.class, String.class, String.class, Map.class))
+					.method(AbstractInterfaceSpringRest.class.getMethod("deleteEntity", ICaller.class, String.class, Map.class))
 					.build());
 		
 		reflectConfig.addEntry(
-				ReflectConfigEntryBuilder.builder(GGAPIInterfaceSpringCustomizable.class)
+				ReflectConfigEntryBuilder.builder(InterfaceSpringCustomizable.class)
 					.field("requestMappingHandlerMapping")
-					.constructor(GGAPIInterfaceSpringCustomizable.class.getDeclaredConstructor())
-					.method(GGAPIInterfaceSpringCustomizable.class.getMethod("customService", IGGAPICaller.class, Map.class, HttpServletRequest.class))
+					.constructor(InterfaceSpringCustomizable.class.getDeclaredConstructor())
+					.method(InterfaceSpringCustomizable.class.getMethod("customService", ICaller.class, Map.class, HttpServletRequest.class))
 					.build());
 
 		reflectConfig.saveToFile(reflectConfigFile);

@@ -1,9 +1,9 @@
 package com.garganttua.api.core.domain;
 
-import com.garganttua.api.core.dto.GenericGGAPIDto;
-import com.garganttua.api.spec.dto.annotations.GGAPIDto;
+import com.garganttua.api.core.dto.GenericDto;
+import com.garganttua.api.spec.dto.annotations.Dto;
 
-@GGAPIDto(entityClass = TestEntity.class)
-public class TestDto extends GenericGGAPIDto {
+@Dto(entityClass = TestEntity.class)
+public class TestDto extends GenericDto {
 
 }

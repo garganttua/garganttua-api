@@ -1,8 +1,8 @@
 package com.garganttua.api.core.security.entity.checker;
 
-import com.garganttua.api.spec.security.annotations.GGAPIEntitySecurity;
+import com.garganttua.api.spec.security.annotations.EntitySecurity;
 
-@GGAPIEntitySecurity()
+@EntitySecurity()
 public class TestEntityWithAnnotationButEmpty {
 
 }

@@ -1,13 +1,13 @@
 package com.garganttua.api.core.domain;
 
-import com.garganttua.api.core.entity.GenericGGAPITenantEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntity;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenant;
-import com.garganttua.api.spec.entity.annotations.GGAPIEntityTenantId;
+import com.garganttua.api.core.entity.GenericTenantEntity;
+import com.garganttua.api.spec.entity.annotations.Entity;
+import com.garganttua.api.spec.entity.annotations.EntityTenant;
+import com.garganttua.api.spec.entity.annotations.EntityTenantId;
 
-@GGAPIEntity(domain = "test", interfaces = { "gg:test" })
-@GGAPIEntityTenant
-public class TestEntity extends GenericGGAPITenantEntity {
+@Entity(domain = "test", interfaces = { "gg:test" })
+@EntityTenant
+public class TestEntity extends GenericTenantEntity {
 	
 
 

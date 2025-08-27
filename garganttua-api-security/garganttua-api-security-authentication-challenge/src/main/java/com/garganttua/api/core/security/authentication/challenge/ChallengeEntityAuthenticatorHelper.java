@@ -1,0 +1,87 @@
+package com.garganttua.api.core.security.authentication.challenge;
+
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import com.garganttua.api.core.InfosHelper;
+import com.garganttua.api.core.entity.tools.EntityHelper;
+import com.garganttua.api.core.security.ExpirationTools;
+import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
+import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.security.key.IKeyRealm;
+
+public class ChallengeEntityAuthenticatorHelper {
+	
+	public static Challenge getChallenge(Object entity) throws CoreException {
+		ChallengeAuthenticatorInfos infos = ChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entity.getClass());
+		
+		final byte[] rawChallenge = InfosHelper.getValue(entity, ChallengeEntityAuthenticatorChecker::checkEntityAuthenticatorClass, ChallengeAuthenticatorInfos::challengeFieldAddress);
+		Date challengeExpiration = InfosHelper.getValue(entity, ChallengeEntityAuthenticatorChecker::checkEntityAuthenticatorClass, ChallengeAuthenticatorInfos::challengeExpirationFieldAddress);
+		ChallengeType type = infos.challengeType();
+		return new Challenge(rawChallenge, type, challengeExpiration);
+	}
+
+	public static Challenge getOrCreateChallengeAndSave(ICaller caller, Object entity) throws CoreException {
+		ChallengeAuthenticatorInfos infos = ChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entity.getClass());
+		ChallengeType type = infos.challengeType();
+		int lifeTime = infos.challengeLifeTime();
+		TimeUnit unit = infos.challengeLifeTimeUnit();
+		
+		Challenge challenge = getChallenge(entity);
+		
+		String newChallenge = UUID.randomUUID().toString();
+
+		switch (type) {
+		case TIME_LIMITED:
+			if( challenge.getChallenge() == null ) {
+				challenge.setChallenge(newChallenge.getBytes());
+			}
+			if( challenge.getExpiration() == null || Instant.now().isAfter(challenge.getExpiration().toInstant()) 
+					|| !EntityAuthenticatorHelper.isCredentialsNonExpired(entity) ) {
+				Date expiration = ExpirationTools.getExpirationDateFromNow(lifeTime, unit);
+				challenge.setExpiration(expiration);
+				challenge.setChallenge(newChallenge.getBytes());
+				EntityAuthenticatorHelper.setCredentialsNonExpired(entity, true);
+			}
+			break;
+		case ONE_TIME:
+			challenge.setChallenge(newChallenge.getBytes());
+
+			if( challenge.getExpiration() == null || Instant.now().isAfter(challenge.getExpiration().toInstant())
+					|| !EntityAuthenticatorHelper.isCredentialsNonExpired(entity) ) {
+				Date expiration = ExpirationTools.getExpirationDateFromNow(lifeTime, unit);
+				challenge.setExpiration(expiration);
+				challenge.setChallenge(newChallenge.getBytes());
+				EntityAuthenticatorHelper.setCredentialsNonExpired(entity, true);
+			}
+			break;
+		case UNLIMITED:
+			if( challenge.getChallenge() == null ) {
+				challenge.setChallenge(newChallenge.getBytes());
+			}
+			challenge.setExpiration(null);
+			EntityAuthenticatorHelper.setCredentialsNonExpired(entity, true);
+			break;
+		}
+		setChallenge(entity, challenge);
+		EntityHelper.save(entity, caller, new HashMap<String, String>());		
+		return challenge;
+	}
+
+	public static IKeyRealm getKeyRealm(Object entity) throws CoreException {
+		return InfosHelper.getValue(entity, ChallengeEntityAuthenticatorChecker::checkEntityAuthenticatorClass, ChallengeAuthenticatorInfos::keyRealmFieldAddress);
+	}
+
+	public static void setkeyRealm(Object entity, IKeyRealm key) throws CoreException {
+		InfosHelper.setValue(entity, ChallengeEntityAuthenticatorChecker::checkEntityAuthenticatorClass, ChallengeAuthenticatorInfos::keyRealmFieldAddress, key);
+	}
+
+	public static void setChallenge(Object entity, Challenge challenge) throws CoreException {
+		InfosHelper.setValue(entity, ChallengeEntityAuthenticatorChecker::checkEntityAuthenticatorClass, ChallengeAuthenticatorInfos::challengeFieldAddress, challenge.getChallenge());
+		InfosHelper.setValue(entity, ChallengeEntityAuthenticatorChecker::checkEntityAuthenticatorClass, ChallengeAuthenticatorInfos::challengeExpirationFieldAddress, challenge.getExpiration());		
+	}
+}

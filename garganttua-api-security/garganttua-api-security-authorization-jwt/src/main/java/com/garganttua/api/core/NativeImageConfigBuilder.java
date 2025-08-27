@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 
-import com.garganttua.api.core.security.authorization.jwt.GGAPIJWTAuthorization;
+import com.garganttua.api.core.security.authorization.jwt.JWTAuthorization;
 import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
@@ -42,7 +42,7 @@ public class NativeImageConfigBuilder {
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 		
-		ResourceConfig.addResource(resourceConfigFile, GGAPIJWTAuthorization.class);
+		ResourceConfig.addResource(resourceConfigFile, JWTAuthorization.class);
 	}
 
 	private static void createReflectConfig(String path) throws IOException {
@@ -51,7 +51,7 @@ public class NativeImageConfigBuilder {
 			reflectConfigFile.createNewFile();
 
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIJWTAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).queryAllDeclaredConstructors(true).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(JWTAuthorization.class).allDeclaredFields(true).queryAllDeclaredMethods(true).queryAllDeclaredConstructors(true).build());
 		reflectConfig.saveToFile(reflectConfigFile);
 	}
 }

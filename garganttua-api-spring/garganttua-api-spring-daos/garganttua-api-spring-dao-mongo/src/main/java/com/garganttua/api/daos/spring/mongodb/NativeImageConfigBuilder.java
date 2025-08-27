@@ -20,7 +20,7 @@ public class NativeImageConfigBuilder {
 		if (!resourceConfigFile.exists())
 			resourceConfigFile.createNewFile();
 		
-		ResourceConfig.addResource(resourceConfigFile, GGAPIMongoRepository.class);
+		ResourceConfig.addResource(resourceConfigFile, MongoRepository.class);
 
 	}
 
@@ -31,7 +31,7 @@ public class NativeImageConfigBuilder {
 
 		ReflectConfig reflectConfig = ReflectConfig.loadFromFile(reflectConfigFile);
 		
-		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(GGAPIMongoRepository.class).field("mongo").constructor(GGAPIMongoRepository.class.getDeclaredConstructor()).build());
+		reflectConfig.addEntry(ReflectConfigEntryBuilder.builder(MongoRepository.class).field("mongo").constructor(MongoRepository.class.getDeclaredConstructor()).build());
 		
 		reflectConfig.saveToFile(reflectConfigFile);
 	}

@@ -1,10 +1,10 @@
 package com.garganttua.api.core.service;
 
-import com.garganttua.api.spec.caller.IGGAPICaller;
+import com.garganttua.api.spec.caller.ICaller;
 
 public class ExampleService {
 
-	public void exampleMethod(IGGAPICaller caller, String uuid, int alarmId) {
+	public void exampleMethod(ICaller caller, String uuid, int alarmId) {
 		
 	}
 	
