@@ -72,6 +72,7 @@ public class GGAPIAuthenticationInterfacesFactory {
 					IGGAPIAuthenticationInterface authenticationInterface = (IGGAPIAuthenticationInterface) this.beanLoader
 							.getBeanNamed(ref.getValue0(), ref.getValue1());
 
+					authenticationInterface.setService(this.engine.getService(domain.getDomain()));
 					authenticationInterface.setAuthenticationService(this.authenticationService);
 					
 					List<IGGAPIServiceInfos> authenticationServiceInfos = GGAPIAuthenticationServicesInfosBuilder

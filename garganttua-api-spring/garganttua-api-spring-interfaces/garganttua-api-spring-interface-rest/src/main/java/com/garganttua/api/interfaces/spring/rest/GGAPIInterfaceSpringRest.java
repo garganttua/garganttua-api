@@ -9,11 +9,14 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @GGBean(name = "SpringRestInterface", strategy = GGBeanLoadingStrategy.newInstance)
-public class GGAPIInterfaceSpringRest extends GGAPIAbstractInterfaceSpringRest {
-
+public class GGAPIInterfaceSpringRest extends GGAPIInterfaceSpringCustomizable {
+	
 	@Override
-	protected void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping) {
-		//Nothing to do
+	protected void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping)
+			throws NoSuchMethodException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'createCustomMappings'");
 	}
+	
 
 }

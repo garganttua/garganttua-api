@@ -31,11 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class GGAPIService implements IGGAPIService {
-	
-	@FunctionalInterface
-	protected interface Allowed {
-		boolean isAllowed();
-	}
 
 	@Setter
 	protected IGGAPIEngine engine;
@@ -201,7 +196,8 @@ public class GGAPIService implements IGGAPIService {
 		return this.executeServiceCommand(caller, () -> {return this.domain.isAllowDeleteAll();}, command, customParameters, GGAPIEntityOperation.deleteAll(this.domain.getDomain(), this.domain.getEntityClass()));
 	}
 
-	protected IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation) {
+	@Override
+	public IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation) {
 		IGGAPIEvent event = this.prepareEvent(caller, operation, customParameters);
 		try {
 			if (allowed.isAllowed()) {

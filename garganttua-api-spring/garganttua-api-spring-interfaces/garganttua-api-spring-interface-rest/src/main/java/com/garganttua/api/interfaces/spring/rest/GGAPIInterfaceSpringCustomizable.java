@@ -28,13 +28,14 @@ import com.garganttua.api.core.service.GGAPIMethodConciliator;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.interfasse.IGGAPICustomizableInterface;
+import com.garganttua.api.spec.service.IGGAPIService;
 import com.garganttua.api.spec.service.IGGAPIServiceInfos;
 import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
-public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInterface {
+public abstract class GGAPIInterfaceSpringCustomizable extends GGAPIAbstractInterfaceSpringRest implements IGGAPICustomizableInterface {
 
 	private List<IGGAPIServiceInfos> customServicesInfos = new ArrayList<IGGAPIServiceInfos>();
 	private Map<IGGAPIServiceInfos, PathPattern> patterns = new HashMap<>();
@@ -42,6 +43,13 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 
 	@Inject
 	protected RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+	protected IGGAPIService service;
+
+	@Override
+	public void setService(IGGAPIService service) {
+		this.service = service;
+	}
 
 	@Override
 	public void addCustomService(IGGAPIServiceInfos serviceInfos) {
@@ -70,7 +78,8 @@ public class GGAPIInterfaceSpringCustomizable implements IGGAPICustomizableInter
 			try {
 				conciliator.setBody(getBodyAsByteObjectArray(request));
 			} catch (IOException e) {
-				return new ResponseEntity<>(new GGAPIResponseObject("unable to read body", GGAPIResponseObject.BAD_REQUEST),
+				return new ResponseEntity<>(
+						new GGAPIResponseObject("unable to read body", GGAPIResponseObject.BAD_REQUEST),
 						HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 		}

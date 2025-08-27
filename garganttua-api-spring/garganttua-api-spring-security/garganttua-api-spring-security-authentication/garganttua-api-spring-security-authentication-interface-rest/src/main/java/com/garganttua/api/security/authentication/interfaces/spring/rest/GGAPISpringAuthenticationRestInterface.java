@@ -2,6 +2,7 @@ package com.garganttua.api.security.authentication.interfaces.spring.rest;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPatternParser;
 
 import com.garganttua.api.core.engine.GGAPIEngineException;
@@ -18,16 +20,23 @@ import com.garganttua.api.core.security.authentication.GGAPIAuthenticationReques
 import com.garganttua.api.interfaces.spring.rest.GGAPICallerFilter;
 import com.garganttua.api.interfaces.spring.rest.GGAPIInterfaceSpringCustomizable;
 import com.garganttua.api.interfaces.spring.rest.GGAPIResponseObject;
+import com.garganttua.api.interfaces.spring.rest.GGAPIServiceResponseUtils;
 import com.garganttua.api.security.spring.core.authentication.GGAPISpringAuthentication;
 import com.garganttua.api.security.spring.core.authentication.GGAPISpringAuthenticationRequest;
 import com.garganttua.api.security.spring.core.authentication.IGGAPISpringAuthenticationInterface;
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.GGAPIException;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
+import com.garganttua.api.spec.engine.IGGAPIEngine;
+import com.garganttua.api.spec.interfasse.GGAPIInterfaceMethod;
 import com.garganttua.api.spec.security.authentication.GGAPIAuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationInterface;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IGGAPIAuthenticationService;
+import com.garganttua.api.spec.service.GGAPIServiceResponseCode;
+import com.garganttua.api.spec.service.IGGAPIServiceCommand;
+import com.garganttua.api.spec.service.IGGAPIServiceResponse;
 import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 
@@ -70,47 +79,65 @@ public class GGAPISpringAuthenticationRestInterface extends GGAPIInterfaceSpring
 		options.setPatternParser(new PathPatternParser());
 
 		Object handler = this;
-		
-		String path = "/api/" + this.domain.getDomain()+"/authenticate";
+
+		String path = "/api/" + this.domain.getDomain() + "/authenticate";
 		RequestMethod requestMethod = RequestMethod.POST;
-		Method method = handler.getClass().getDeclaredMethod("authenticate", IGGAPICaller.class, GGAPISpringRestAuthenticationRequest.class);
+		Method method = handler.getClass().getDeclaredMethod("authenticate", IGGAPICaller.class,
+				GGAPISpringRestAuthenticationRequest.class);
 
 		this.createMapping(path, method, handler, options, requestMethod);
 		this.createCustomMappings();
 	}
 
-	public ResponseEntity<?> authenticate (
+	private ResponseEntity<?> authenticate(
 			@RequestAttribute(name = GGAPICallerFilter.CALLER_ATTRIBUTE_NAME) IGGAPICaller caller,
 			@RequestBody(required = true) GGAPISpringRestAuthenticationRequest request) throws GGAPIException {
 
-		log.atInfo()
-		.log("Authenticating principal " + request.getPrincipal() + " of tenant "
-				+ caller.getTenantId() );
-		for (GGAPIAuthenticationInfos infos : this.authenticationInfos) {
+				En fait c'est GGAPIInterfaceSpringCustomizable qui doit appeler le service
+		IGGAPIServiceCommand command = (event) -> {
+			event.setIn("Authenticating principal " + request.getPrincipal() + " of tenant "
+					+ caller.getTenantId());
 			log.atInfo()
-					.log("Triing to authenticate principal " + request.getPrincipal() + " of tenant "
-							+ caller.getTenantId() + " with authentication of type "
-							+ infos.authenticationType().getSimpleName());
-			IGGAPIAuthenticationRequest authenticationRequest = new GGAPIAuthenticationRequest(caller.getDomain(),
-					caller.getTenantId(), request.getPrincipal(), request.getCredentials(), infos.authenticationType());
+					.log("Authenticating principal " + request.getPrincipal() + " of tenant "
+							+ caller.getTenantId());
+			for (GGAPIAuthenticationInfos infos : this.authenticationInfos) {
+				log.atInfo()
+						.log("Triing to authenticate principal " + request.getPrincipal() + " of tenant "
+								+ caller.getTenantId() + " with authentication of type "
+								+ infos.authenticationType().getSimpleName());
+				IGGAPIAuthenticationRequest authenticationRequest = new GGAPIAuthenticationRequest(caller.getDomain(),
+						caller.getTenantId(), request.getPrincipal(), request.getCredentials(),
+						infos.authenticationType());
 
-			try {
-				GGAPISpringAuthentication authentication = (GGAPISpringAuthentication) this.authenticationManager
-						.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));
-				if (authentication.isAuthenticated())
-					return new ResponseEntity<>(
-							new GGAPISpringRestAuthenticationResponse(authentication.getAuthentication()), HttpStatus.OK);
-			} catch(Exception e) {
-				log.atWarn().log(infos.authenticationType().getSimpleName()+" authentication failed for principal " + request.getPrincipal() + " of tenant "
-						+ caller.getTenantId());
+				try {
+					GGAPISpringAuthentication authentication = (GGAPISpringAuthentication) this.authenticationManager
+							.authenticate(new GGAPISpringAuthenticationRequest(authenticationRequest));
+					if (authentication.isAuthenticated()) {
+						event.setOut("Authentication successfull");
+						event.setCode(GGAPIServiceResponseCode.OK);
+						return event;
+					}
+				} catch (Exception e) {
+					log.atWarn()
+							.log(infos.authenticationType().getSimpleName() + " authentication failed for principal "
+									+ request.getPrincipal() + " of tenant "
+									+ caller.getTenantId());
+				}
+
 			}
+			log.atWarn().log("Authentication failed for principal " + request.getPrincipal() + " of tenant "
+					+ caller.getTenantId());
+			event.setOut("Authentication failed");
+			event.setCode(GGAPIServiceResponseCode.UNAUTHORIZED);
 
-		}
-		log.atWarn().log("Authentication failed for principal " + request.getPrincipal() + " of tenant "
-				+ caller.getTenantId());
-		
-		return new ResponseEntity<>(new GGAPIResponseObject("Authentication Failed", GGAPIResponseObject.BAD_REQUEST),
-				HttpStatus.UNAUTHORIZED);
+			return event;
+		};
+
+		IGGAPIServiceResponse response = this.service.executeServiceCommand(caller, () -> {
+			return true;
+		}, command, new HashMap<>(), GGAPIEntityOperation.authenticate(getName(), getClass()));
+
+		return GGAPIServiceResponseUtils.toResponseEntity(response);
 	}
 
 	@Override
@@ -132,4 +159,12 @@ public class GGAPISpringAuthenticationRestInterface extends GGAPIInterfaceSpring
 			throw new RuntimeException(e);
 		}
 	}
+
+	@Override
+	protected void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping)
+			throws NoSuchMethodException {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'createCustomMappings'");
+	}
+
 }

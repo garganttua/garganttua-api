@@ -15,6 +15,7 @@ import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngine;
 import com.garganttua.api.spec.factory.IGGAPIEntityFactory;
 import com.garganttua.api.spec.factory.IGGAPIFactoriesRegistry;
+import com.garganttua.api.spec.interfasse.IGGAPICustomizableInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterface;
 import com.garganttua.api.spec.interfasse.IGGAPIInterfacesRegistry;
 import com.garganttua.api.spec.service.GGAPICustomService;
@@ -65,7 +66,9 @@ public class GGAPIServicesInfosFactory {
 			log.info("	Method added [domain {}, service {}]", domain.getDomain(), info);
 		});
 
-		interfasses.stream().forEach(interfasse -> {
+		interfasses.stream().filter(interfasse -> {
+			return IGGAPICustomizableInterface.class.isAssignableFrom(interfasse.getClass());
+		}).forEach(interfasse -> {
 			List<IGGAPIServiceInfos> infos;
 			try {
 				infos = GGAPIServicesInfosBuilder.buildGGAPIServices(domain, interfasse);
@@ -73,7 +76,7 @@ public class GGAPIServicesInfosFactory {
 				throw new RuntimeException(e);
 			}
 			this.getCustomServicesFromObject(domain, interfasse, infos);
-			customInfos.forEach( i -> {interfasse.addCustomService(i);});
+			customInfos.forEach( i -> {((IGGAPICustomizableInterface) interfasse).addCustomService(i);});
 			
 			infos.forEach(info -> {
 				log.info("	Method added [domain {}, service {}]", domain.getDomain(), info);

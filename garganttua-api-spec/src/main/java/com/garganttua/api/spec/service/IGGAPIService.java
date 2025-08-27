@@ -3,6 +3,7 @@ package com.garganttua.api.spec.service;
 import java.util.Map;
 import java.util.Optional;
 
+import com.garganttua.api.spec.GGAPIEntityOperation;
 import com.garganttua.api.spec.caller.IGGAPICaller;
 import com.garganttua.api.spec.domain.IGGAPIDomain;
 import com.garganttua.api.spec.engine.IGGAPIEngineObject;
@@ -14,15 +15,20 @@ import com.garganttua.api.spec.sort.IGGAPISort;
 
 public interface IGGAPIService extends IGGAPIEngineObject {
 
+	@FunctionalInterface
+	interface Allowed {
+		boolean isAllowed();
+	}
+
 	IGGAPIServiceResponse createEntity(IGGAPICaller caller, Object entity,
 			Map<String, String> customParameters);
 		
 	IGGAPIServiceResponse getEntities (
-			IGGAPICaller caller, 
+			IGGAPICaller caller,
 			GGAPIReadOutputMode mode,
 			IGGAPIPageable pageable,
 			IGGAPIFilter filter,
-			IGGAPISort sort, 
+			IGGAPISort sort,
 			Map<String, String> customParameters);
 
 	IGGAPIServiceResponse getEntity(IGGAPICaller caller, String uuid,
@@ -45,5 +51,7 @@ public interface IGGAPIService extends IGGAPIEngineObject {
 	IGGAPIDomain getDomain();
 
 	Class<?> getDomainEntityClass();
+
+	IGGAPIServiceResponse executeServiceCommand(IGGAPICaller caller, Allowed allowed, IGGAPIServiceCommand command, Map<String, String> customParameters, GGAPIEntityOperation operation);
 
 }

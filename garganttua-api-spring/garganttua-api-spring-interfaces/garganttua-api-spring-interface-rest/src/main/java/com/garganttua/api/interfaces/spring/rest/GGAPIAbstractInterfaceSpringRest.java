@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,7 +16,6 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.core.engine.GGAPIEngineException;
 import com.garganttua.api.core.filter.GGAPILiteral;
@@ -42,16 +40,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @NoArgsConstructor
 @Slf4j
-public abstract class GGAPIAbstractInterfaceSpringRest extends GGAPIInterfaceSpringCustomizable
-		implements IGGAPIInterface {
+public abstract class GGAPIAbstractInterfaceSpringRest implements IGGAPIInterface {
 
 	private static final String REQUEST_PARAM_MODE = "mode";
 	private static final String REQUEST_PARAM_PAGE_SIZE = "pageSize";
 	private static final String REQUEST_PARAM_PAGE_INDEX = "pageIndex";
 	private static final String REQUEST_PARAM_SORT = "sort";
 	private static final String REQUEST_PARAM_FILTER = "filter";
-
-	protected IGGAPIService service;
 
 	@Inject
 	private ObjectMapper mapper;
@@ -67,12 +62,14 @@ public abstract class GGAPIAbstractInterfaceSpringRest extends GGAPIInterfaceSpr
 	@Setter
 	protected IGGAPIEngine engine;
 
+	@Setter
+	protected IGGAPIService service;
+
 	@Override
 	public void start() throws GGAPIException {
 		try {
 			this.entityClass = this.domain.getEntityClass();
 			this.createRequestMappings();
-			this.createCustomMappings();
 			this.createCustomMappings(this.requestMappingHandlerMapping);
 		} catch (NoSuchMethodException e) {
 			throw new GGAPIEngineException(e);
@@ -81,11 +78,6 @@ public abstract class GGAPIAbstractInterfaceSpringRest extends GGAPIInterfaceSpr
 
 	protected abstract void createCustomMappings(RequestMappingHandlerMapping requestMappingHandlerMapping)
 			throws NoSuchMethodException;
-
-	@Override
-	public void setService(IGGAPIService service) {
-		this.service = service;
-	}
 
 	private void createRequestMappings() throws NoSuchMethodException {
 		RequestMappingInfo.BuilderConfiguration options = new RequestMappingInfo.BuilderConfiguration();
