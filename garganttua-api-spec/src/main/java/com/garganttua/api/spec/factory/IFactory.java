@@ -14,19 +14,19 @@ import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.updater.IEntityUpdater;
 import com.garganttua.reflection.injection.IGGInjector;
 
-public interface IEntityFactory<Entity> extends IEngineObject {
+public interface IFactory extends IEngineObject {
 
-	Entity getEntityFromRepository(ICaller caller, Map<String, String> customParameters, EntityIdentifier identifier, String uuid) throws CoreException;
+	Object getEntityFromRepository(ICaller caller, Map<String, String> customParameters, EntityIdentifier identifier, String uuid) throws CoreException;
 
-	List<Entity> getEntitiesFromRepository(ICaller caller, IPageable pageable, IFilter filter, ISort sort, Map<String, String> customParameters) throws CoreException;
+	List<?> getEntitiesFromRepository(ICaller caller, IPageable pageable, IFilter filter, ISort sort, Map<String, String> customParameters) throws CoreException;
 
-	Entity prepareNewEntity(Map<String, String> customParameters, Entity entity, String uuid, String tenantId) throws CoreException;
+	Object prepareNewEntity(Map<String, String> customParameters, Object entity, String uuid, String tenantId) throws CoreException;
 
 	long countEntities(ICaller caller, IFilter filter, Map<String, String> customParameters) throws CoreException;
 	
 	void setRepository(IRepository repo);
 
-	void setEntityUpdater(IEntityUpdater<Entity> updater);
+	void setEntityUpdater(IEntityUpdater updater);
 	
 	void setInjector(Optional<IGGInjector> injector);
 

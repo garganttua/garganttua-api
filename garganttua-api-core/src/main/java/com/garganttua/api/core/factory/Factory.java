@@ -16,7 +16,7 @@ import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.factory.EntityIdentifier;
-import com.garganttua.api.spec.factory.IEntityFactory;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @NoArgsConstructor
 @AllArgsConstructor
-public class EntityFactory implements IEntityFactory<Object> {
+public class Factory implements IFactory {
 
 	@Setter
 	private IDomain domain;
@@ -54,9 +54,9 @@ public class EntityFactory implements IEntityFactory<Object> {
 	private IEngine engine;
 
 	@Setter
-	private IEntityUpdater<Object> entityUpdater;
+	private IEntityUpdater entityUpdater;
 
-	public EntityFactory(IDomain domain) throws CoreException {
+	public Factory(IDomain domain) throws CoreException {
 		this.domain = domain;
 
 		this.afterGetMethodAddress = this.domain.getAfterGetMethodAddress();

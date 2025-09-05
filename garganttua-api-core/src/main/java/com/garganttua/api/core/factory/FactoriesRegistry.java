@@ -6,24 +6,24 @@ import java.util.Map;
 
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IEngine;
-import com.garganttua.api.spec.factory.IEntityFactory;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
+import com.garganttua.api.spec.factory.IFactory;
 
 public class FactoriesRegistry implements IFactoriesRegistry {
 
-	private Map<String, IEntityFactory<?>> factories;
+	private Map<String, IFactory> factories;
 	
-	public FactoriesRegistry(Map<String, IEntityFactory<?>> factories) {
+	public FactoriesRegistry(Map<String, IFactory> factories) {
 		this.factories = factories;
 	}
 
 	@Override
-	public List<IEntityFactory<?>> getFactories() {
-		return new ArrayList<IEntityFactory<?>>(this.factories.values());
+	public List<IFactory> getFactories() {
+		return new ArrayList<IFactory>(this.factories.values());
 	}
 
 	@Override
-	public IEntityFactory<?> getFactory(String domain) {
+	public IFactory getFactory(String domain) {
 		return this.factories.get(domain);
 	}
 

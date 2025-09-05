@@ -6,7 +6,10 @@ import java.util.Optional;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.engine.IBuilder;
+import com.garganttua.api.spec.engine.IContextStartupBinderBuilder;
+import com.garganttua.api.spec.engine.IDomainBuilder;
 import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.engine.IObjectSupplier;
 import com.garganttua.reflection.beans.IGGBeanLoader;
 import com.garganttua.reflection.injection.IGGInjector;
 import com.garganttua.reflection.properties.IGGPropertyLoader;
@@ -20,6 +23,9 @@ public class Builder implements IBuilder {
 	private List<String> packages;
 	private IGGPropertyLoader propLoader;
 	private IGGInjector injector;
+	private boolean autoDetect = true;
+	private String superTenantId = "0";
+	private List<IContextStartupBinderBuilder> startupBinderBuilders;
 	
 	@Override
 	public IBuilder beanLoader(IGGBeanLoader loader) {
@@ -57,6 +63,37 @@ public class Builder implements IBuilder {
 	public IBuilder injector(IGGInjector injector) {
 		this.injector = injector;
 		return this;
+	}
+
+	@Override
+	public IBuilder autoDetect(boolean b) {
+		this.autoDetect = b;
+		return this;
+	}
+
+	@Override
+	public IBuilder superTenantId(String uuid) {
+		this.superTenantId = uuid;
+		return this;
+	}
+
+	@Override
+	public IContextStartupBinderBuilder startup(IObjectSupplier<?> supplier) {
+		ContextStartupBinderBuilder binder = new ContextStartupBinderBuilder(this, supplier);
+		this.startupBinderBuilders.add(binder);
+		return binder;
+	}
+
+	@Override
+	public IDomainBuilder domain(String string) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'domain'");
+	}
+
+	@Override
+	public IBuilder supertenantAutoCreate(boolean b) {
+		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException("Unimplemented method 'supertenantAutoCreate'");
 	}
 
 }

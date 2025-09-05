@@ -19,4 +19,14 @@ public interface IBuilder {
 
 	IBuilder propertyLoader(IGGPropertyLoader loader);
 
+    IBuilder autoDetect(boolean b);
+
+    IBuilder superTenantId(String string);
+
+	IContextStartupBinderBuilder startup(IObjectSupplier<?> supplier);
+    
+	IDomainBuilder domain(String string);
+
+	IBuilder supertenantAutoCreate(boolean b);
+
 }

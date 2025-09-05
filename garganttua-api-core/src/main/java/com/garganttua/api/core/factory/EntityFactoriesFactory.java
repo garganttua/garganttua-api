@@ -8,8 +8,8 @@ import java.util.Optional;
 import com.garganttua.api.core.updater.EntityUpdater;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.factory.IEntityFactory;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.reflection.injection.IGGInjector;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class EntityFactoriesFactory {
 
 	private Collection<IDomain> domains;
-	private Map<String, IEntityFactory<?>> factories = new HashMap<String, IEntityFactory<?>>();
+	private Map<String, IFactory> factories = new HashMap<String, IFactory>();
 	private Optional<IGGInjector> injector;
 
 	public EntityFactoriesFactory(Collection<IDomain> domains, Optional<IGGInjector> injector) throws CoreException {
@@ -31,7 +31,7 @@ public class EntityFactoriesFactory {
 		log.info("*** Creating Factories ...");
 
 		for( IDomain domain: this.domains ) {
-			IEntityFactory<Object> factory = new EntityFactory(domain);
+			IFactory factory = new Factory(domain);
 			factory.setEntityUpdater(new EntityUpdater());
 			factory.setInjector(this.injector);
 			

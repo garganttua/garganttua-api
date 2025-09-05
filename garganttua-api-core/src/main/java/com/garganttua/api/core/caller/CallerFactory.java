@@ -3,15 +3,15 @@ package com.garganttua.api.core.caller;
 import java.util.Map;
 
 import com.garganttua.api.core.engine.EngineException;
-import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.caller.ICallerFactory;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IAccessRulesRegistry;
 import com.garganttua.api.spec.factory.EntityIdentifier;
-import com.garganttua.api.spec.factory.IEntityFactory;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.security.IAccessRule;
 import com.garganttua.api.spec.service.ServiceAccess;
 import com.garganttua.reflection.GGReflectionException;
@@ -26,11 +26,11 @@ public class CallerFactory implements ICallerFactory {
 	
 	private IDomain tenantsDomain;
 	
-	private IEntityFactory<?> tenantsFactory;
+	private IFactory tenantsFactory;
 	
 	private Map<String, IDomain> ownerDomains;
 	
-	private Map<String, IEntityFactory<?>> ownerFactories;
+	private Map<String, IFactory> ownerFactories;
 	
 	private IAccessRulesRegistry accessRulesRegistry;
 

@@ -6,7 +6,7 @@ import com.garganttua.api.spec.engine.IEngineObject;
 
 public interface IFactoriesRegistry extends IEngineObject {
 
-	List<IEntityFactory<?>> getFactories();
+	List<IFactory> getFactories();
 	
-	IEntityFactory<?> getFactory(String domain);
+	IFactory getFactory(String domain);
 }

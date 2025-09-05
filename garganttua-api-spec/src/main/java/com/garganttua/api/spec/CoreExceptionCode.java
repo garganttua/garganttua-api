@@ -64,7 +64,11 @@ public enum CoreExceptionCode {
 	KEY_EXPIRED						(220),
 	KEY_ERROR						(221), 
 	KEY_REVOKED						(222), 
-	FAILED_AUTHENTICATION			(230),
+	FAILED_AUTHENTICATION			(230), 
+	
+	
+	
+	BUILDER_CODE					(300),
 	
 	// Authentication error codes
 	

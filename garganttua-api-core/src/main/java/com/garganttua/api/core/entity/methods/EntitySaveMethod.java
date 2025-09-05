@@ -23,7 +23,7 @@ import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.entity.IEntitySaveMethod;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.api.spec.factory.EntityIdentifier;
-import com.garganttua.api.spec.factory.IEntityFactory;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.updater.IEntityUpdater;
 import com.garganttua.reflection.GGObjectAddress;
@@ -42,11 +42,11 @@ public class EntitySaveMethod implements IEntitySaveMethod {
   private GGObjectAddress beforeUpdateMethodAddress;
   private GGObjectAddress afterCreateMethodAddress;
   private GGObjectAddress beforeCreateMethodAddress;
-  private IEntityUpdater<Object> entityUpdater;
-  private IEntityFactory<Object> factory;
+  private IEntityUpdater entityUpdater;
+  private IFactory factory;
 
-  public EntitySaveMethod(IDomain domain, IRepository repository, IEntityFactory<Object> factory,
-      IEntityUpdater<Object> updater) throws CoreException {
+  public EntitySaveMethod(IDomain domain, IRepository repository, IFactory factory,
+      IEntityUpdater updater) throws CoreException {
     this.domain = domain;
     this.repository = repository;
     this.factory = factory;

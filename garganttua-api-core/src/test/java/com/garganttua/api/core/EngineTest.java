@@ -32,7 +32,7 @@ public class EngineTest {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(null, List.of("com"));
 		IEngine engine = Builder.builder().propertyLoader(pl).packages(List.of("com")).beanLoader(l).build().init().start();
 		
-		assertNotNull(engine); 
+		assertNotNull(engine);
 	}
 	
 	

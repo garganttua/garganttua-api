@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.factory.IEntityFactory;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.IAccessRule;
 import com.garganttua.api.spec.service.IService;
@@ -56,7 +56,7 @@ public interface IEngine {
 
 	Collection<IService> getServices();
 
-	IEntityFactory<?> getFactory(String domainName);
+	IFactory getFactory(String domainName);
 
 	IRepository getRepository(String domainName);
 

@@ -16,9 +16,9 @@ import com.garganttua.api.core.interfasse.InterfacesFactory;
 import com.garganttua.api.core.repository.RepositoriesFactory;
 import com.garganttua.api.core.service.ServicesFactory;
 import com.garganttua.api.core.service.ServicesInfosFactory;
-import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.caller.ICallerFactoriesRegistry;
 import com.garganttua.api.spec.caller.ICallerFactory;
@@ -28,8 +28,8 @@ import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.domain.IDomainsRegistry;
 import com.garganttua.api.spec.engine.IAccessRulesRegistry;
 import com.garganttua.api.spec.engine.IEngine;
-import com.garganttua.api.spec.factory.IEntityFactory;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
 import com.garganttua.api.spec.repository.IRepositoriesRegistry;
@@ -104,7 +104,7 @@ public class Engine implements IEngine {
 		
 		List<Pair<Class<?>, IDao<?>>> daos = this.daosRegistry.getDao(domainName);
 		IRepository repository = (IRepository) this.repositoriesRegistry.getRepository(domainName);
-		IEntityFactory<Object> factory = (IEntityFactory<Object>) this.factoriesRegistry.getFactory(domainName);
+		IFactory factory = (IFactory) this.factoriesRegistry.getFactory(domainName);
 		IService service = this.servicesRegistry.getService(domainName);
 		List<IInterface> interfaces = this.interfacesRegistry.getInterfaces(domainName);
 		
@@ -148,7 +148,7 @@ public class Engine implements IEngine {
 		log.info("Version: {}", this.getClass().getPackage().getImplementationVersion());
 		log.info("== INITIALIZING GARGANTTUA API ENGINE ==");
 		
-		this.domainRegistry = new DomainsFactory(this.packages).getRegistry(); 
+		this.domainRegistry = new DomainsFactory(this.packages).getRegistry();
 		this.daosRegistry =  new DaosFactory(this.domainRegistry.getDomains(), this.loader).getRegistry();
 		this.repositoriesRegistry = new RepositoriesFactory(this.domainRegistry.getDomains()).getRegistry();
 		this.factoriesRegistry = new EntityFactoriesFactory(this.domainRegistry.getDomains(), this.injector).getRegistry();
@@ -237,7 +237,7 @@ public class Engine implements IEngine {
 	}
 
 	@Override
-	public IEntityFactory<?> getFactory(String domainName) {
+	public IFactory getFactory(String domainName) {
 		return this.factoriesRegistry.getFactory(domainName);
 	}
 

@@ -8,7 +8,7 @@ import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IEngineObject;
 import com.garganttua.api.spec.event.IEventPublisher;
-import com.garganttua.api.spec.factory.IEntityFactory;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
@@ -46,7 +46,7 @@ public interface IService extends IEngineObject {
 
 	void setEventPublisher(Optional<IEventPublisher> eventObj);
 	
-	void setFactory(IEntityFactory<Object> factory);
+	void setFactory(IFactory factory);
 	
 	IDomain getDomain();
 

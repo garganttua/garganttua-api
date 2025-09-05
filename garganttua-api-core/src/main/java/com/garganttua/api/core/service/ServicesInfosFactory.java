@@ -9,12 +9,11 @@ import java.util.Set;
 
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.entity.tools.EntityHelper;
-import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
-import com.garganttua.api.spec.factory.IEntityFactory;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.interfasse.ICustomizableInterface;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
@@ -53,7 +52,7 @@ public class ServicesInfosFactory {
 		this.getCustomServiceFromClass(domain, domain.getEntityClass(), customInfos, () -> {
 			try {
 				Object newInstance = EntityHelper.newInstance(domain.getEntityClass());
-				IEntityFactory<Object> factory = (IEntityFactory<Object>) factoriesRegistry.getFactory(domain.getDomain());
+				IFactory factory = this.factoriesRegistry.getFactory(domain.getDomain());
 				newInstance = factory.prepareNewEntity(new HashMap<String, String>(), newInstance, null, null);
 				
 				return newInstance;

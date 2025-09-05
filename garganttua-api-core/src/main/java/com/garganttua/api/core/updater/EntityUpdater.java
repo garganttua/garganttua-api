@@ -15,7 +15,7 @@ import com.garganttua.reflection.query.IGGObjectQuery;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class EntityUpdater implements IEntityUpdater<Object> {
+public class EntityUpdater implements IEntityUpdater {
 
 	@Override
 	public Object update(ICaller caller, Object storedEntity, Object updatedEntity,

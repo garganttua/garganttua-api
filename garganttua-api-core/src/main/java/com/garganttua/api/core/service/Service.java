@@ -7,22 +7,22 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.core.entity.tools.EntityHelper;
-import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.event.IEvent;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.factory.EntityIdentifier;
-import com.garganttua.api.spec.factory.IEntityFactory;
+import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.service.ReadOutputMode;
-import com.garganttua.api.spec.service.ServiceResponseCode;
 import com.garganttua.api.spec.service.IService;
 import com.garganttua.api.spec.service.IServiceCommand;
 import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.ReadOutputMode;
+import com.garganttua.api.spec.service.ServiceResponseCode;
 import com.garganttua.api.spec.sort.ISort;
 
 import lombok.Getter;
@@ -40,7 +40,7 @@ public class Service implements IService {
 	@Setter
 	protected Optional<IEventPublisher> eventPublisher = Optional.empty();
 	@Setter
-	protected IEntityFactory<Object> factory;
+	protected IFactory factory;
 
 	public Service(IDomain domain) {
 		this.domain = domain;
@@ -89,8 +89,8 @@ public class Service implements IService {
 			if( sort != null )
 				customParameters.put("sortString", sort.toString());
 			
-			List<Object> entities = this.factory.getEntitiesFromRepository(caller, pageable, filter, sort, customParameters);
-			List<Object> finalEntityList = null;
+			List<?> entities = this.factory.getEntitiesFromRepository(caller, pageable, filter, sort, customParameters);
+			List<?> finalEntityList = null;
 			
 			switch(mode) {
 			case id:

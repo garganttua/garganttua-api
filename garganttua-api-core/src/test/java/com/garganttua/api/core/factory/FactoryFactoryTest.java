@@ -31,6 +31,6 @@ public class FactoryFactoryTest {
 		IFactoriesRegistry reg = daf.getRegistry();
 
 		assertNotNull(daf);
-		assertNotNull(reg);	
+		assertNotNull(reg);
 	}
 }
