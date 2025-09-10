@@ -2,7 +2,6 @@ package com.garganttua.api.core.engine;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
-import com.garganttua.reflection.GGReflectionException;
 
 public class BuilderException extends CoreException{
 
@@ -10,7 +9,7 @@ public class BuilderException extends CoreException{
         super(coreGenericCode, message);
     }
 
-    public BuilderException(CoreExceptionCode coreGenericCode, String message, GGReflectionException e) {
+    public BuilderException(CoreExceptionCode coreGenericCode, String message, Exception e) {
         super(coreGenericCode, message, e);
     }
 

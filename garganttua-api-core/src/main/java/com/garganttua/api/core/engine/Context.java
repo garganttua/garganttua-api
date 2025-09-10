@@ -1,5 +1,6 @@
 package com.garganttua.api.core.engine;
 
+import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.engine.IContext;
 import com.garganttua.api.spec.engine.IObjectSupplier;
 import com.garganttua.api.spec.factory.IFactory;
@@ -19,6 +20,11 @@ public class Context implements IContext {
     }
 
     public static IObjectSupplier<IFactory> factory(String className) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'bean'");
+    }
+
+        public static IObjectSupplier<ICaller> caller() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'bean'");
     }

@@ -8,14 +8,14 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
-import com.garganttua.api.spec.engine.IBuilder;
+import com.garganttua.api.spec.engine.IContextBuilder;
 import com.garganttua.api.spec.engine.IObjectSupplier;
 
 public class ContextStartupBinderBuilderTest {
 
     @Test
     public void testMethod() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
@@ -36,7 +36,7 @@ public class ContextStartupBinderBuilderTest {
 
     @Test
     public void testMethodWithName() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
@@ -52,13 +52,13 @@ public class ContextStartupBinderBuilderTest {
 
         assertDoesNotThrow(() -> {
             binderBuilder.method("equals");
-            binderBuilder.withParam(new Object());
+            binderBuilder.withParam(0, new Object());
         });
     }
 
     @Test
     public void testAddParameter() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
@@ -74,15 +74,15 @@ public class ContextStartupBinderBuilderTest {
 
         assertDoesNotThrow(() -> {
             binderBuilder.method(Object.class.getDeclaredMethod("equals", Object.class));
-            binderBuilder.withParam(new Object());
+            binderBuilder.withParam(0, new Object());
         });
     }
 
     @Test
     public void testNullParamsInCtor() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         NullPointerException exception1 = assertThrows(NullPointerException.class, () -> {
-            ContextStartupBinderBuilder binderBuilder1 = new ContextStartupBinderBuilder(null,
+            new ContextStartupBinderBuilder(null,
                     new IObjectSupplier<Object>() {
                         @Override
                         public Object getObject() throws CoreException {
@@ -99,14 +99,14 @@ public class ContextStartupBinderBuilderTest {
             new ContextStartupBinderBuilder(builder, null);
         });
 
-        assertEquals("Builder cannot be null", exception1.getMessage());
+        assertEquals("Up cannot be null", exception1.getMessage());
         assertEquals("Supplier cannot be null", exception2.getMessage());
 
     }
 
     @Test
     public void testWrongParamNumber() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
@@ -123,7 +123,7 @@ public class ContextStartupBinderBuilderTest {
         CoreException exception = assertThrows(CoreException.class, () -> {
             binderBuilder
                     .method(Object.class.getDeclaredMethod("toString"))
-                    .withParam("null");
+                    .withParam(0, "null");
         });
 
         assertEquals("Method toString has only 0 parameters", exception.getMessage());
@@ -132,7 +132,7 @@ public class ContextStartupBinderBuilderTest {
 
     @Test
     public void testWrongParamNumber2() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
@@ -149,11 +149,11 @@ public class ContextStartupBinderBuilderTest {
         assertDoesNotThrow(() -> {
             binderBuilder
                     .method(Object.class.getDeclaredMethod("equals", Object.class))
-                    .withParam(new Object());
+                    .withParam(0, new Object());
         });
 
         CoreException exception = assertThrows(CoreException.class, () -> {
-            binderBuilder.withParam(new Object());
+            binderBuilder.withParam(0, new Object());
         });
 
         assertEquals("Method equals has only 1 parameters", exception.getMessage());
@@ -162,7 +162,7 @@ public class ContextStartupBinderBuilderTest {
 
     @Test
     public void testWrongParameterType() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<String>() {
                     @Override
@@ -179,16 +179,16 @@ public class ContextStartupBinderBuilderTest {
        CoreException exception = assertThrows(CoreException.class, () -> {
             binderBuilder
                     .method(String.class.getDeclaredMethod("indexOf", String.class))
-                    .withParam(new Builder());
+                    .withParam(0, new ContextBuilder());
         });
 
-        assertEquals("Parameter 0 of method indexOf is of type java.lang.String and cannot be assigned a value of type com.garganttua.api.core.engine.Builder", exception.getMessage());
+        assertEquals("Parameter 0 of method indexOf is of type java.lang.String and cannot be assigned a value of type com.garganttua.api.core.engine.ContextBuilder", exception.getMessage());
         assertEquals(CoreExceptionCode.BUILDER_CODE, exception.getCode());
     }
 
      @Test
     public void testMethodFromAnotherType() {
-        IBuilder builder = new Builder();
+        IContextBuilder builder = new ContextBuilder();
         ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
                 new IObjectSupplier<String>() {
                     @Override

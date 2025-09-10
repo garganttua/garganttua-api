@@ -1,81 +1,160 @@
 package com.garganttua.api.core.engine;
 
-import static com.garganttua.api.spec.engine.Beans.bean;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import static com.garganttua.api.core.engine.Context.*;
+import static com.garganttua.api.core.engine.Context.factory;
+import static com.garganttua.api.core.engine.Context.repository;
+import static com.garganttua.api.core.engine.Context.service;
+import static com.garganttua.api.core.engine.ContextBuilder.bean;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.DummyEntity;
+import com.garganttua.api.core.DummyInterface;
+import com.garganttua.api.core.ReflectionsAnnotationScanner;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.engine.Action;
-import com.garganttua.api.spec.engine.IBuilder;
+import com.garganttua.api.spec.engine.ContextBuildingStage;
 import com.garganttua.api.spec.engine.IContext;
+import com.garganttua.api.spec.engine.IContextBuilder;
+import com.garganttua.api.spec.entity.annotations.Entity;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
+import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
 import com.garganttua.api.spec.service.ServiceAccess;
 import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.reflection.beans.GGBeanLoaderFactory;
+import com.garganttua.reflection.beans.GGBeanSupplier;
+import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.reflection.properties.IGGPropertyLoader;
+import com.garganttua.reflection.utils.GGObjectReflectionHelper;
 
 public class BuilderTest {
 
-    @Test
-    public void test() throws CoreException{
 
-        assertEquals(getClass(), getClass());
+
+    @Test
+    public void test() throws CoreException, NoSuchMethodException, SecurityException {
+
+		GGObjectReflectionHelper.annotationScanner = new ReflectionsAnnotationScanner();
 
         Field field = null;
         Method method = null;
         GGObjectAddress fieldAddress = null;
+        IGGPropertyLoader propLoader = new IGGPropertyLoader() {
 
-        IBuilder b = new Builder();
-        IContext context = b.autoDetect(true)
+            @Override
+            public String getProperty(String propertyName) {
+                return "dummy";
+            }
+        };
+
+        IGGBeanLoader beanloader = GGBeanLoaderFactory.getLoader(propLoader, List.of("com.garganttua"), List.of(new GGBeanSupplier(List.of("com.garganttua"), propLoader)));
+
+        IContextBuilder b = new ContextBuilder();
+        IContext context = b
+        .propertyLoader(propLoader)
+        .beanLoader(beanloader)
+        .autoDetect(true)
         .superTenantId("0")
-        .supertenantAutoCreate(true)
-        .startup(bean(Object.class)) // Startup methods are called once the garganttua context is initilized and started
-            .method(method)
-                .withParam(0, service("domainName"))
+        .superTenantAutoCreate(true)
+        .startup(ContextBuildingStage.initial, new Object()) // Startup methods are called once the garganttua context is initilized and started
+            .method(Object.class.getDeclaredMethod("equals", Object.class))
+                .withParam(0, new String("1234"))
+                /*.withParam(0, service("domainName"))
                 .withParam(0, repository("domainName"))
                 .withParam(0, factory("domainName"))
-/*              .withParam(0, body())
+                .withParam(0, body())
                 .withParam(0, pathParam("domainName"))
                 .withParam(0, queryParam("domainName"))
-                .withParam(0, header("domainName")) */
-                .withParam(0, bean("domainName")).up()
+                .withParam(0, header("domainName")) 
+                .withParam(0, bean("domainName")) */
+                .up()
 
-        .domain("entities")
-            .startup(bean(Object.class)) // Startup methods are called once the garganttua context is initilized and started
-            .method(method)
-                .withParam(0, service("domainName"))
-                .withParam(0, repository("domainName"))
-                .withParam(0, factory("domainName"))
-/*              .withParam(0, body())
-                .withParam(0, pathParam("domainName"))
-                .withParam(0, queryParam("domainName"))
-                .withParam(0, header("domainName")) */
-                .withParam(0, bean("domainName")).up()
-            .interfasse(bean(Object.class))
-            .interfasse(bean("events"))
+        .domain("dummies")
+            .create(new String()) // create a new entity at startup if does not exists. TenantId must exists otherwise an error is thrown. No error thrown if already exists
+            .upsert(new String()) // create or update a new entity at startup. TenantId must exists otherwise an error is thrown
+            .startup(ContextBuildingStage.initial, bean(Object.class)) // Startup methods are called once the garganttua context is initilized and started
+                .method(Object.class.getDeclaredMethod("equals", Object.class))
+                    .withParam(0, new String("1234"))
+                    /*.withParam(0, service("domainName"))
+                    .withParam(0, repository("domainName"))
+                    .withParam(0, factory("domainName"))
+                    .withParam(0, body())
+                    .withParam(0, pathParam("domainName"))
+                    .withParam(0, queryParam("domainName"))
+                    .withParam(0, header("domainName")) 
+                    .withParam(0, bean("domainName")) */
+                    .up()
+            .interfasse(new DummyInterface())
             .creation(true)
             .readAll(true)
             .readOne(true)
             .update(true)
             .deleteAll(true)
             .deleteOne(true)
-            .events(bean(Object.class))
-            .events(bean("events"))
+            .events(bean(IEventPublisher.class))
 
             .tenant(true)
 
-            .tenant("id")
-            .tenant(field)
-            .tenant(fieldAddress)
+            .entity(DummyEntity.class)
+                .autoDetect(true)
+                .id("id")
+/*                 .id(field)
+                .id(fieldAddress) */
+                .uuid("uuid")
+/*                 .uuid(field)
+                .uuid(fieldAddress) */
+                .tenantId("tenantId")
+/*                 .tenantId(field)
+                .tenantId(fieldAddress) */
+                .mandatory("id")
+/*                 .mandatory(field)
+                .mandatory(fieldAddress) */
+                .unicity("id")
+ /*                .unicity(field)
+                .unicity(fieldAddress) */
+                .unicity("id", UnicityScope.system)
+/*                 .unicity(field, UnicityScope.system)
+                .unicity(fieldAddress, UnicityScope.system) */
+                .update("id")
+/*                 .update(field)
+                .update(fieldAddress) */
+                .update("id", "authority")
+/*                 .update(field, "authority")
+                .update(fieldAddress, "authority") */
+                .annotation("id", Entity.class)
+                .annotation(field, Entity.class)
+                .annotation(method, Entity.class)
+                .annotation(fieldAddress, Entity.class)
+                .afterGet("id")
+                .afterGet(method)
+                .afterGet(fieldAddress)
+                .beforeCreate("id")
+                .beforeCreate(method)
+                .beforeCreate(fieldAddress)
+                .beforeUpdate("id")
+                .beforeUpdate(method)
+                .beforeUpdate(fieldAddress)
+                .beforeDelete("id")
+                .beforeDelete(method)
+                .beforeDelete(fieldAddress)
+                .afterCreate("id")
+                .afterCreate(method)
+                .afterCreate(fieldAddress)
+                .afterUpdate("id")
+                .afterUpdate(method)
+                .afterUpdate(fieldAddress)
+                .afterDelete("id")
+                .afterDelete(method)
+                .afterDelete(fieldAddress)
+                .up()
 
             .owner("id")
             .owner(field)
@@ -206,58 +285,6 @@ public class BuilderTest {
                         .autoCreate(true)
                         .up()
                     .up()
-                .up()
-
-            .entity(Object.class)
-                .autoDetect(true)
-                .id("id")
-                .id(field)
-                .id(fieldAddress)
-                .uuid("id")
-                .uuid(field)
-                .uuid(fieldAddress)
-                .tenantId("id")
-                .tenantId(field)
-                .tenantId(fieldAddress)
-                .mandatory("id")
-                .mandatory(field)
-                .mandatory(fieldAddress)
-                .unicity("id")
-                .unicity(field)
-                .unicity(fieldAddress)
-                .unicity("id", UnicityScope.system)
-                .unicity(field, UnicityScope.system)
-                .unicity(fieldAddress, UnicityScope.system)
-                .update("id")
-                .update(field)
-                .update(fieldAddress)
-                .update("id", "authority")
-                .update(field, "authority")
-                .update(fieldAddress, "authority")
-                .annotation("id", Object.class)
-                .annotation(field, Object.class)
-                .annotation(fieldAddress, Object.class)
-                .afterGet("id")
-                .afterGet(method)
-                .afterGet(fieldAddress)
-                .beforeCreate("id")
-                .beforeCreate(method)
-                .beforeCreate(fieldAddress)
-                .beforeUpdate("id")
-                .beforeUpdate(method)
-                .beforeUpdate(fieldAddress)
-                .beforeDelete("id")
-                .beforeDelete(method)
-                .beforeDelete(fieldAddress)
-                .afterCreate("id")
-                .afterCreate(method)
-                .afterCreate(fieldAddress)
-                .afterUpdate("id")
-                .afterUpdate(method)
-                .afterUpdate(fieldAddress)
-                .afterDelete("id")
-                .afterDelete(method)
-                .afterDelete(fieldAddress)
                 .up()
             .security()
                 .autoDetect(true)

@@ -2,14 +2,19 @@ package com.garganttua.api.spec.engine;
 
 import java.lang.reflect.Field;
 
+import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.event.IEventPublisher;
+import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.security.ISecurityBuilder;
 import com.garganttua.reflection.GGObjectAddress;
 
 public interface IDomainBuilder {
 
-    IDomainStartupBinderBuilder startup(IObjectSupplier<?> method);
+    IMethodBinderBuilder<IDomainStartupBinderBuilder, Object, IDomainBuilder>  startup(ContextBuildingStage stage, IObjectSupplier<?> method);
 
-    IDomainBuilder interfasse(IObjectSupplier<?> bean);
+    IDomainBuilder interfasse(IObjectSupplier<?> bean) throws CoreException;
+
+    IDomainBuilder interfasse(IInterface interfasse) throws CoreException;
 
     IDomainBuilder creation(boolean b);
 
@@ -23,58 +28,58 @@ public interface IDomainBuilder {
 
     IDomainBuilder deleteOne(boolean b);
 
-    IDomainBuilder events(IObjectSupplier<?> bean);
+    IDomainBuilder events(IObjectSupplier<?> bean) throws CoreException;
 
-    IDomainBuilder tenant(String field);
+    IDomainBuilder events(IEventPublisher eventPublisher) throws CoreException;
 
-    IDomainBuilder tenant(Field field);
+    IDomainBuilder tenant(boolean b) throws CoreException;
 
-    IDomainBuilder tenant(GGObjectAddress fieldAddress);
+    IDomainBuilder owner(String string) throws CoreException;
 
-    IDomainBuilder owner(String string);
+    IDomainBuilder owner(Field field) throws CoreException;
 
-    IDomainBuilder owner(Field field);
+    IDomainBuilder owner(GGObjectAddress fieldAddress) throws CoreException;
 
-    IDomainBuilder owner(GGObjectAddress fieldAddress);
+    IDomainBuilder owned(String string) throws CoreException;
 
-    IDomainBuilder owned(String string);
+    IDomainBuilder owned(Field field) throws CoreException;
 
-    IDomainBuilder owned(Field field);
-
-    IDomainBuilder owned(GGObjectAddress fieldAddress);
+    IDomainBuilder owned(GGObjectAddress fieldAddress) throws CoreException;
 
     IDomainBuilder publik();
 
-    IDomainBuilder shared(Field field);
+    IDomainBuilder shared(Field field) throws CoreException;
 
-    IDomainBuilder shared(String string);
+    IDomainBuilder shared(String string) throws CoreException;
 
-    IDomainBuilder shared(GGObjectAddress fieldAddress);
+    IDomainBuilder shared(GGObjectAddress fieldAddress) throws CoreException;
 
-    IDomainBuilder hiddenable(String string);
+    IDomainBuilder hiddenable(String string) throws CoreException;
 
-    IDomainBuilder hiddenable(Field field);
+    IDomainBuilder hiddenable(Field field) throws CoreException;
 
-    IDomainBuilder hiddenable(GGObjectAddress fieldAddress);
+    IDomainBuilder hiddenable(GGObjectAddress fieldAddress) throws CoreException;
 
     IAuthorizationBuilder authorization();
 
     IAuthenticatorBuilder authenticator();
 
-    IEntityBuilder entity(Class<Object> class1);
+    IEntityBuilder entity(Class<?> class1) throws CoreException;
 
     ISecurityBuilder security();
 
     IDomainBuilder autoDetectDtos(boolean b);
 
-    IDtoBuilder dto(Class<Object> class1);
+    IDtoBuilder dto(Class<?> class1);
 
     IUseCaseBuilder useCase(String string);
 
     IContext build();
 
-    IDomainBuilder tenant(boolean b);
-
     IDomainBuilder autoDetectUseCases(boolean b);
+
+    IDomainBuilder create(Object entity);
+
+    IDomainBuilder upsert(Object entity);
 
 }

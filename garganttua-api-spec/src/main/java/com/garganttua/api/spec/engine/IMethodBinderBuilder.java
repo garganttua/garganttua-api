@@ -5,20 +5,20 @@ import java.lang.reflect.Method;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IMethodBinderBuilder <T extends IMethodBinderBuilder<T>> {
+public interface IMethodBinderBuilder <Returned extends IMethodBinderBuilder<Returned, Built, Up>, Built, Up> extends IBuilder<Built, Up> {
 
-    T method(Method method) throws CoreException;
+    Returned method(Method method) throws CoreException;
 
-    T method(GGObjectAddress method) throws CoreException;
+    Returned method(GGObjectAddress method) throws CoreException;
 
-    T method(String method) throws CoreException;
+    Returned method(String method) throws CoreException;
 
-    T withParam(int i, Object service) throws CoreException;
+    Returned withParam(int i, Object parameter) throws CoreException;
 
-    T withParam(Object service) throws CoreException;
+   /*  Returned withParam(Object service) throws CoreException; */
 
-    T withParam(IObjectSupplier<?> service) throws CoreException;
+    /* Returned withParam(IObjectSupplier<?> service) throws CoreException; */
 
-    T withParam(int i, IObjectSupplier<?> service) throws CoreException;
+    Returned withParam(int i, IObjectSupplier<?> supplier) throws CoreException;
 
 }

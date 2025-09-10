@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.garganttua.api.core.engine.Builder;
 import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IBuilder;
+import com.garganttua.api.spec.engine.IContextBuilder;
 import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.annotation.scanner.GGSpringAnnotationScanner;
@@ -39,7 +39,7 @@ public class SpringConfiguration {
 	@Bean(name = "IEngine")
 	public IEngine createGarganttuaApiEngine() throws CoreException, GGReflectionException {
 		IGGBeanLoader l = GGBeanLoaderFactory.getLoader(this.propLoader, List.of(deduplicate(this.packages)), List.of(this.springBeanSupplier));
-		IBuilder builder = Builder.builder().propertyLoader(this.propLoader).packages(List.of(deduplicate(this.packages))).beanLoader(l).injector(GGInjector.injector(l));
+		IContextBuilder builder = Builder.builder().propertyLoader(this.propLoader).packages(List.of(deduplicate(this.packages))).beanLoader(l).injector(GGInjector.injector(l));
 		return builder.build().init().start();
 	}
 	
