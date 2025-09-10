@@ -8,8 +8,8 @@ import com.garganttua.api.spec.engine.IEngineObject;
 
 public interface IDaosRegistry extends IEngineObject {
 
-	List<Pair<Class<?>, IDao<?>>> getDao(String domain);
+	List<Pair<Class<?>, IDao>> getDao(String domain);
 
-	List<Pair<Class<?>, IDao<?>>> getDaos();
+	List<Pair<Class<?>, IDao>> getDaos();
 
 }

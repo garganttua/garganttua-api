@@ -2,9 +2,12 @@ package com.garganttua.api.core.engine;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
+import com.garganttua.api.core.security.engine.SecurityBuilder;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.engine.ContextBuildingStage;
@@ -25,8 +28,6 @@ import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
-
-import lombok.Builder;
 
 public class DomainBuilder implements IDomainBuilder {
 
@@ -51,10 +52,21 @@ public class DomainBuilder implements IDomainBuilder {
     private List<Object> upsertEntities = new ArrayList<>();
     private IGGObjectQuery objectQuery;
     private Field owner;
+    private Field owned;
+    private Field shared;
+    private Field hiddenable;
+    private boolean autoDetectDtos = false;
+    private boolean autoDetectUseCases = false;
+    private ISecurityBuilder securityBuilder;
+    private Map<Class<?>, IDtoBuilder> dtos = new HashMap<>();
+    private Map<String, IUseCaseBuilder> useCases = new HashMap<>();
+    private IAuthorizationBuilder authorization;
+    private IAuthenticatorBuilder authenticator;
 
     public DomainBuilder(IContextBuilder builder, String domainName) throws BuilderException {
         this.builder = Objects.requireNonNull(builder, "Builder cannot be null");
         this.domainName = Objects.requireNonNull(domainName, "Domain name cannot be null");
+        this.securityBuilder = new SecurityBuilder();
     }
 
     @Override
@@ -177,21 +189,39 @@ public class DomainBuilder implements IDomainBuilder {
     }
 
     @Override
-    public IDomainBuilder owned(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'owned'");
+    public IDomainBuilder owned(String fieldName) throws BuilderException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.owned = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder owned(Field field) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'owned'");
+    public IDomainBuilder owned(Field field) throws BuilderException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.owned = FieldResolver.fieldByField(field, this.entityClass, String.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder owned(GGObjectAddress fieldAddress) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'owned'");
+    public IDomainBuilder owned(GGObjectAddress fieldAddress) throws BuilderException {
+        Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.owned = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
+
+        return this;
     }
 
     @Override
@@ -201,51 +231,91 @@ public class DomainBuilder implements IDomainBuilder {
     }
 
     @Override
-    public IDomainBuilder shared(Field field) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'shared'");
+    public IDomainBuilder shared(Field field) throws BuilderException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.shared = FieldResolver.fieldByField(field, this.entityClass, String.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder shared(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'shared'");
+    public IDomainBuilder shared(String fieldName) throws BuilderException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.shared = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder shared(GGObjectAddress fieldAddress) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'shared'");
+    public IDomainBuilder shared(GGObjectAddress fieldAddress) throws BuilderException {
+        Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.shared = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder hiddenable(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'hiddenable'");
+    public IDomainBuilder hiddenable(String fieldName) throws BuilderException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.hiddenable = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder hiddenable(Field field) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'hiddenable'");
+    public IDomainBuilder hiddenable(Field field) throws BuilderException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.hiddenable = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
+
+        return this;
     }
 
     @Override
-    public IDomainBuilder hiddenable(GGObjectAddress fieldAddress) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'hiddenable'");
+    public IDomainBuilder hiddenable(GGObjectAddress fieldAddress) throws BuilderException {
+        Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+
+        this.hiddenable = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
+
+        return this;
     }
 
     @Override
     public IAuthorizationBuilder authorization() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'authorization'");
+        if( this.authorization != null ){
+            this.authorization = new AuthorizationBuilder(this);
+        }
+        return this.authorization;
     }
 
     @Override
     public IAuthenticatorBuilder authenticator() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'authenticator'");
+        if( this.authenticator != null ){
+            this.authenticator = new AuthenticatorBuilder(this);
+        }
+        return this.authenticator;
     }
 
     @Override
@@ -271,26 +341,37 @@ public class DomainBuilder implements IDomainBuilder {
 
     @Override
     public ISecurityBuilder security() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'security'");
+        return this.securityBuilder;
     }
 
     @Override
     public IDomainBuilder autoDetectDtos(boolean b) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'autoDetectDtos'");
+        this.autoDetectDtos = true;
+        return this;
     }
 
     @Override
-    public IDtoBuilder dto(Class<?> class1) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'dto'");
+    public IDtoBuilder dto(Class<?> dtoClass) {
+        IDtoBuilder dtoBuilder = this.dtos.get(dtoClass);
+
+        if (dtoBuilder == null) {
+            dtoBuilder = new DtoBuilder(dtoClass, this);
+            this.dtos.put(dtoClass, dtoBuilder);
+        }
+
+        return dtoBuilder;
     }
 
     @Override
-    public IUseCaseBuilder useCase(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'useCase'");
+    public IUseCaseBuilder useCase(String useCaseName) {
+        IUseCaseBuilder useCaseBuilder = this.useCases.get(useCaseName);
+
+        if (useCaseBuilder == null) {
+            useCaseBuilder = new UseCaseBuilder(useCaseName, this);
+            this.useCases.put(useCaseName, useCaseBuilder);
+        }
+
+        return useCaseBuilder;
     }
 
     @Override
@@ -301,8 +382,8 @@ public class DomainBuilder implements IDomainBuilder {
 
     @Override
     public IDomainBuilder autoDetectUseCases(boolean b) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'autoDetectUseCases'");
+        this.autoDetectUseCases = b;
+        return this;
     }
 
     @Override

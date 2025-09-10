@@ -147,11 +147,6 @@ public class EntityHelperTest {
 				return 0;
 			}
 
-			@Override
-			public String getTenant(Object entity) throws CoreException {
-				// TODO Auto-generated method stub
-				return null;
-			}
 
 			
 		});

@@ -11,15 +11,15 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 
-public interface IDao<Dto> extends IEngineObject {
+public interface IDao extends IEngineObject {
 	
-	void setDtoClass(Class<Dto> dtoClass);
+	void setDtoClass(Class<?> dtoClass);
 	
-	List<Dto> find(IPageable pageable, IFilter filter, ISort sort) throws CoreException;
+	List<?> find(IPageable pageable, IFilter filter, ISort sort) throws CoreException;
 
-	Dto save(Dto object) throws CoreException;
+	Object save(Object object) throws CoreException;
 
-	void delete(Dto object) throws CoreException;
+	void delete(Object object) throws CoreException;
 	
 	long count(IFilter filter) throws CoreException;
 }

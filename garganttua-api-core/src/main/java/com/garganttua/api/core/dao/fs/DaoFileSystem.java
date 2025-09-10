@@ -13,7 +13,7 @@ import com.garganttua.reflection.beans.annotation.GGBean;
 import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 
 @GGBean(name = "FsDao", strategy = GGBeanLoadingStrategy.newInstance)
-public class DaoFileSystem implements IDao<Object> {
+public class DaoFileSystem implements IDao {
 
 	@Override
 	public void setEngine(IEngine engine) {
@@ -28,7 +28,7 @@ public class DaoFileSystem implements IDao<Object> {
 	}
 
 	@Override
-	public void setDtoClass(Class<Object> dtoClass) {
+	public void setDtoClass(Class<?> dtoClass) {
 		// TODO Auto-generated method stub
 		
 	}

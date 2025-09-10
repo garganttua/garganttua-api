@@ -40,8 +40,6 @@ public interface IRepository extends IEngineObject {
 
 	long getCount(ICaller caller, IFilter filter) throws CoreException;
 
-	String getTenant(Object entity) throws CoreException;
-
-	void setDaos(List<Pair<Class<?>, IDao<?>>> daos);
+	void setDaos(List<Pair<Class<?>, IDao>> daos);
 
 }

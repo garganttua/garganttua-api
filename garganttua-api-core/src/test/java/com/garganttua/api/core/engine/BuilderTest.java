@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.DummyDao;
 import com.garganttua.api.core.DummyEntity;
 import com.garganttua.api.core.DummyInterface;
 import com.garganttua.api.core.ReflectionsAnnotationScanner;
@@ -93,6 +94,7 @@ public class BuilderTest {
                     .withParam(0, bean("domainName")) */
                     .up()
             .interfasse(new DummyInterface())
+            .interfasse(bean("gg", DummyInterface.class))
             .creation(true)
             .readAll(true)
             .readOne(true)
@@ -157,22 +159,22 @@ public class BuilderTest {
                 .up()
 
             .owner("id")
-            .owner(field)
+           /*  .owner(field)
             .owner(fieldAddress)
-
+ */
             .owned("id")
-            .owned(field)
+           /*  .owned(field)
             .owned(fieldAddress)
-
+ */
             .publik()
 
             .shared("id")
-            .shared(field)
-            .shared(fieldAddress)
+            /* .shared(field)
+            .shared(fieldAddress) */
 
             .hiddenable("id")
-            .hiddenable(field)
-            .hiddenable(fieldAddress)
+            /* .hiddenable(field)
+            .hiddenable(fieldAddress) */
 
             .authorization() //if authorization , must be owned
                 .autoDetect(true)
@@ -268,8 +270,8 @@ public class BuilderTest {
 
                 .scope(AuthenticatorScope.system)
 
-                .interfasse(bean(Object.class))
-                .interfasse(bean("gg:events"))
+                .interfasse(bean(DummyInterface.class))
+                .interfasse(bean("gg", DummyInterface.class))
 
                 .authentication(Object.class)
                 .authentication(Object.class)
@@ -308,7 +310,7 @@ public class BuilderTest {
             .autoDetectDtos(true)
             .dto(Object.class)
                 .autoDetect(true)
-                .db("gg:SpringMongoDao")
+                .db(bean("gg", DummyDao.class))
                 .tenantId("id")
                 .tenantId(field)
                 .tenantId(fieldAddress)
@@ -334,7 +336,7 @@ public class BuilderTest {
                         .withParam(0, pathParam("domainName"))
                         .withParam(0, queryParam("domainName"))
                         .withParam(0, header("domainName")) */
-                        .withParam(0, bean("domainName"))
+                        .withParam(0, bean("gg", Object.class))
     /*                  .withParam(0, caller()) */
     //INJECT : service() factory() repository()
                     .up()

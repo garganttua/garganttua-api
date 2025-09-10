@@ -13,20 +13,20 @@ import com.garganttua.api.spec.engine.IEngine;
 
 public class DaosRegistry implements IDaosRegistry {
 
-	private Map<String, List<Pair<Class<?>, IDao<?>>>> daos;
+	private Map<String, List<Pair<Class<?>, IDao>>> daos;
 	
-	public DaosRegistry(Map<String, List<Pair<Class<?>, IDao<?>>>> daos) {
+	public DaosRegistry(Map<String, List<Pair<Class<?>, IDao>>> daos) {
 		this.daos = daos;
 	}
 
 	@Override
-	public List<Pair<Class<?>, IDao<?>>> getDao(String domain) {
+	public List<Pair<Class<?>, IDao>> getDao(String domain) {
 		return this.daos.get(domain);
 	}
 
 	@Override
-	public List<Pair<Class<?>, IDao<?>>> getDaos() {
-		List<Pair<Class<?>, IDao<?>>> daos = new ArrayList<Pair<Class<?>,IDao<?>>>();
+	public List<Pair<Class<?>, IDao>> getDaos() {
+		List<Pair<Class<?>, IDao>> daos = new ArrayList<Pair<Class<?>,IDao>>();
 		this.daos.forEach((k,v) -> {
 			daos.addAll(v);
 		});

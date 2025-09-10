@@ -41,13 +41,7 @@ public class MultipleRepository implements IRepository {
 		// TODO Auto-generated method stub
 		
 	}
-
-//	@Override
-//	public Object update(ICaller caller, Object entity) throws CoreException {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
-
+	
 	@Override
 	public Optional<Object> getOneById(ICaller caller, String id) throws CoreException {
 		// TODO Auto-generated method stub
@@ -79,13 +73,7 @@ public class MultipleRepository implements IRepository {
 	}
 
 	@Override
-	public String getTenant(Object entity) throws CoreException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setDaos(List<Pair<Class<?>, IDao<?>>> daos) {
+	public void setDaos(List<Pair<Class<?>, IDao>> daos) {
 		// TODO Auto-generated method stub
 		
 	}

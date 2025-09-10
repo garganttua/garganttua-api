@@ -102,7 +102,7 @@ public class Engine implements IEngine {
 		String domainName = domain.getDomain();
 		log.info("*** Assembling domain "+domainName);
 		
-		List<Pair<Class<?>, IDao<?>>> daos = this.daosRegistry.getDao(domainName);
+		List<Pair<Class<?>, IDao>> daos = this.daosRegistry.getDao(domainName);
 		IRepository repository = (IRepository) this.repositoriesRegistry.getRepository(domainName);
 		IFactory factory = (IFactory) this.factoriesRegistry.getFactory(domainName);
 		IService service = this.servicesRegistry.getService(domainName);

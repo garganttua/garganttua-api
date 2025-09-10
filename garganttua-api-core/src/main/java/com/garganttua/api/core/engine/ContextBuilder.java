@@ -31,23 +31,23 @@ public class ContextBuilder implements IContextBuilder {
 		return new TypedBeanSupplier<>(ContextBuilder.loader, beanClass);
     }
 
-    public static IObjectSupplier<?> bean(String beanName) throws BuilderException {
+    /* public static IObjectSupplier<?> bean(String beanName) throws BuilderException {
         Objects.requireNonNull(beanName, "Bean name class cannot be null");
 		if( ContextBuilder.loader == null ) {
 			throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "BeanLoader cannnot be null");
 		}
 		return new NamedBeanSupplier(loader, beanName);
-    }
+    } */
 
-    public static IObjectSupplier<?> bean(String supplier, String beanName) throws BuilderException {
+    /* public static IObjectSupplier<?> bean(String supplier, String beanName) throws BuilderException {
 		Objects.requireNonNull(beanName, "Bean name class cannot be null");
          if( ContextBuilder.loader == null ) {
 			throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "BeanLoader cannnot be null");
 		}
 				return new NamedBeanSupplier(loader, beanName, Optional.ofNullable(supplier));
-    }
+    } */
 
-    public static IObjectSupplier<?> bean(String supplier, Class<Object> beanClass) throws BuilderException {
+    public static IObjectSupplier<?> bean(String supplier, Class<?> beanClass) throws BuilderException {
         Objects.requireNonNull(beanClass, "Bean class cannot be null");
 		if( ContextBuilder.loader == null ) {
 			throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "BeanLoader cannnot be null");
@@ -115,19 +115,18 @@ public class ContextBuilder implements IContextBuilder {
 	}
 
 	@Override
-	public IContextStartupBinderBuilder  startup(ContextBuildingStage stage, IObjectSupplier<?> supplier) {
+	public IContextStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplier<?> supplier) {
 		ContextStartupBinderBuilder binder = new ContextStartupBinderBuilder(this, supplier);
 		this.startupBinderBuilders.add(binder);
 		return binder;
 	}
 
 	@Override
-	public IContextStartupBinderBuilder  startup(ContextBuildingStage stage, Object object) {
+	public IContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object) {
 		ContextStartupBinderBuilder binder = new ContextStartupBinderBuilder(this, object);
 		this.startupBinderBuilders.add(binder);
 		return binder;
 	}
-
 
 	@Override
 	public IDomainBuilder domain(String domainName) throws BuilderException {

@@ -36,7 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SimpleRepository implements IRepository {
 
-	private IDao<Object> daoRepository;
+	private IDao daoRepository;
 	
 	@Setter
 	private IFilterMapper filterMapper = new FilterMapper();
@@ -131,7 +131,7 @@ public class SimpleRepository implements IRepository {
 
 		try {
 			List<Pair<Class<?>, IFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
-			List<Object> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
+			List<?> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
 			
 			if( dto.size() >= 1 ){
 				log.debug("	[domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Object with uuid "+uuid+" found !", caller.getRequestedTenantId(), this.domain);
@@ -176,26 +176,13 @@ public class SimpleRepository implements IRepository {
 	}
 
 	@Override
-	public String getTenant(Object entity) throws CoreException {		
-		IFilter filterUp = RepositoryFilterTools.getFilterFromCallerInfosAndDomainInfos(Caller.createSuperCaller(), domain, RepositoryFilterTools.getUuidFilter(this.domain.getUuidFieldAddress().toString(), EntityHelper.getUuid(entity)));
-		List<Pair<Class<?>, IFilter>> dtoFilters = this.filterMapper.map(this.domain, filterUp);
-		List<?> dto = this.daoRepository.find(null, dtoFilters.get(0).getValue1(), null);
-		if( dto.size() >= 1 ){
-			return DtoHelper.getTenantId(dto.get(0));
-		} else {
-			return null;
-		}
-	}
-
-	@Override
 	public void setEngine(IEngine engine) {
 		this.engine = engine;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public void setDaos(List<Pair<Class<?>, IDao<?>>> daos) {
-		this.daoRepository = (IDao<Object>) daos.get(0).getValue1();
+	public void setDaos(List<Pair<Class<?>, IDao>> daos) {
+		this.daoRepository = (IDao) daos.get(0).getValue1();
 	}
 
 }
