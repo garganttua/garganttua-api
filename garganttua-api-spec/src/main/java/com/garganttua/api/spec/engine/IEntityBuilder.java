@@ -8,9 +8,7 @@ import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IEntityBuilder {
-
-    IEntityBuilder autoDetect(boolean b);
+public interface IEntityBuilder extends IAutomaticLinkedBuilder<Object, IDomainBuilder, IEntityBuilder> {
 
     IEntityBuilder id(String string) throws CoreException;
 
@@ -64,52 +62,50 @@ public interface IEntityBuilder {
 
     IEntityBuilder annotation(Field field, Class<? extends Annotation> annotation) throws CoreException;
 
-    IEntityBuilder annotation(GGObjectAddress fieldAddress, Class<? extends Annotation> annotation) throws CoreException;
+    IEntityBuilder annotation(GGObjectAddress elementAddress, Class<? extends Annotation> annotation) throws CoreException;
 
-    IEntityBuilder afterGet(String string) throws CoreException;
+    IEntityBuilder annotation(Method method, Class<? extends Annotation> annotation) throws CoreException;
 
-    IEntityBuilder afterGet(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterGet(String methodName) throws CoreException;
 
-    IEntityBuilder afterGet(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterGet(Method method) throws CoreException;
 
-    IEntityBuilder beforeCreate(String string) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterGet(GGObjectAddress methodAddress) throws CoreException;
 
-    IEntityBuilder beforeCreate(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeCreate(String methodName) throws CoreException;
 
-    IEntityBuilder beforeCreate(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeCreate(Method method) throws CoreException;
 
-    IEntityBuilder beforeUpdate(String string) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeCreate(GGObjectAddress methodAddress) throws CoreException;
 
-    IEntityBuilder beforeUpdate(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeUpdate(String methodName) throws CoreException;
 
-    IEntityBuilder beforeUpdate(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeUpdate(Method method) throws CoreException;
 
-    IEntityBuilder beforeDelete(String string) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeUpdate(GGObjectAddress fieldmethodAddressAddress) throws CoreException;
 
-    IEntityBuilder beforeDelete(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeDelete(String methodName) throws CoreException;
 
-    IEntityBuilder beforeDelete(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeDelete(Method method) throws CoreException;
 
-    IEntityBuilder afterCreate(String string) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> beforeDelete(GGObjectAddress methodAddress) throws CoreException;
 
-    IEntityBuilder afterCreate(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterCreate(String methodName) throws CoreException;
 
-    IEntityBuilder afterCreate(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterCreate(Method method) throws CoreException;
 
-    IEntityBuilder afterUpdate(String string) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterCreate(GGObjectAddress methodAddress) throws CoreException;
 
-    IEntityBuilder afterUpdate(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterUpdate(String methodName) throws CoreException;
 
-    IEntityBuilder afterUpdate(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterUpdate(Method method) throws CoreException;
 
-    IEntityBuilder afterDelete(String string) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterUpdate(GGObjectAddress methodAddress) throws CoreException;
 
-    IEntityBuilder afterDelete(Method method) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterDelete(String methodName) throws CoreException;
 
-    IEntityBuilder afterDelete(GGObjectAddress fieldAddress) throws CoreException;
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterDelete(Method method) throws CoreException;
 
-    IDomainBuilder up();
-
-    IEntityBuilder annotation(Method method, Class<? extends Annotation> annotation);
+    IMethodBinderBuilder<IEntityMethodBinderBuilder, Object, IEntityBuilder> afterDelete(GGObjectAddress methodAddress) throws CoreException;
 
 }

@@ -9,14 +9,12 @@ import java.util.Optional;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.core.caller.Caller;
-import com.garganttua.api.core.dto.tools.DtoHelper;
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.entity.exceptions.EntityException;
 import com.garganttua.api.core.entity.tools.EntityHelper;
 import com.garganttua.api.core.filter.FilterMapper;
-import com.garganttua.api.core.filter.Literal;
 import com.garganttua.api.core.filter.IFilterMapper;
+import com.garganttua.api.core.filter.Literal;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.caller.ICaller;

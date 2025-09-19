@@ -3,15 +3,13 @@ package com.garganttua.api.spec.engine;
 import com.garganttua.api.spec.Method;
 import com.garganttua.api.spec.service.ServiceAccess;
 
-public interface IUseCaseBuilder {
+public interface IUseCaseBuilder extends IAutomaticLinkedBuilder<Object, IDomainBuilder, IUseCaseBuilder> {
 
     IUseCaseBuilder pathSuffix(String string);
 
     IUseCaseBuilder completePath(String string);
 
     IUseCaseBuilder action(Action allentities);
-
-    IUseCaseBuilder method(Method create);
 
     IUseCaseBuilder input(Class<Object> class1);
 
@@ -21,10 +19,9 @@ public interface IUseCaseBuilder {
 
     IUseCaseBuilder access(ServiceAccess anonymous);
 
-    IUseCaseBinderBuilder bind(IObjectSupplier<?> supplier);
+    IUseCaseBinderBuilder bind(IObjectSupplierBuilder<?> supplier);
 
     IUseCaseBinderBuilder bind(Object object);
 
-    IDomainBuilder up();
-
+    IUseCaseBuilder method(Method create);
 }

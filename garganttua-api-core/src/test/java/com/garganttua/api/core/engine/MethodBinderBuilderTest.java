@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.engine.IObjectSupplier;
+import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
 
 class TestClass {
     public void noParamMethod() {}
@@ -22,7 +23,7 @@ class TestClass {
 
 // Implémentation concrète minimale pour tester
 class TestMethodBinderBuilder extends MethodBinderBuilder<TestMethodBinderBuilder, Object, Object> {
-    protected TestMethodBinderBuilder(Object up, IObjectSupplier<?> supplier) {
+    protected TestMethodBinderBuilder(Object up, IObjectSupplierBuilder<?> supplier) throws BuilderException {
         super(up, supplier);
     }
 
@@ -35,17 +36,18 @@ class TestMethodBinderBuilder extends MethodBinderBuilder<TestMethodBinderBuilde
     public Object build() throws CoreException {
         return "build-ok";
     }
+
 }
 
 public class MethodBinderBuilderTest {
 
-    private IObjectSupplier<TestClass> supplier;
+    private IObjectSupplierBuilder<TestClass> supplier;
     private TestMethodBinderBuilder builder;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() throws CoreException {
-        supplier = mock(IObjectSupplier.class);
+        supplier = mock(IObjectSupplierBuilder.class);
         when(supplier.getObjectClass()).thenReturn(TestClass.class);
         builder = new TestMethodBinderBuilder("UP", supplier);
     }

@@ -5,14 +5,14 @@ import java.lang.reflect.Field;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.security.ISecurityBuilder;
+import com.garganttua.api.spec.security.IDomainSecurityBuilder;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IDomainBuilder {
+public interface IDomainBuilder extends IAutomaticLinkedBuilder<Object, IApplicationContextBuilder, IDomainBuilder> {
 
-    IMethodBinderBuilder<IDomainStartupBinderBuilder, Object, IDomainBuilder>  startup(ContextBuildingStage stage, IObjectSupplier<?> method);
+    IMethodBinderBuilder<IDomainStartupBinderBuilder, Object, IDomainBuilder>  startup(ContextBuildingStage stage, IObjectSupplierBuilder<?> method) throws CoreException;
 
-    IDomainBuilder interfasse(IObjectSupplier<?> bean) throws CoreException;
+    IDomainBuilder interfasse(IObjectSupplierBuilder<?> bean) throws CoreException;
 
     IDomainBuilder interfasse(IInterface interfasse) throws CoreException;
 
@@ -28,7 +28,7 @@ public interface IDomainBuilder {
 
     IDomainBuilder deleteOne(boolean b);
 
-    IDomainBuilder events(IObjectSupplier<?> bean) throws CoreException;
+    IDomainBuilder events(IObjectSupplierBuilder<?> bean) throws CoreException;
 
     IDomainBuilder events(IEventPublisher eventPublisher) throws CoreException;
 
@@ -60,23 +60,19 @@ public interface IDomainBuilder {
 
     IDomainBuilder hiddenable(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder authorization();
+    IAuthorizationBuilder authorization() throws CoreException;
 
-    IAuthenticatorBuilder authenticator();
+    IAuthenticatorBuilder authenticator() throws CoreException;
 
-    IEntityBuilder entity(Class<?> class1) throws CoreException;
+    IEntityBuilder entity(Class<?> entityClass) throws CoreException;
 
-    ISecurityBuilder security();
+    Class<?> getEntityClass() throws CoreException;
 
-    IDomainBuilder autoDetectDtos(boolean b);
+    IDomainSecurityBuilder security();
 
-    IDtoBuilder dto(Class<?> class1);
+    IDtoBuilder dto(Class<?> dtoClass);
 
-    IUseCaseBuilder useCase(String string);
-
-    IContext build();
-
-    IDomainBuilder autoDetectUseCases(boolean b);
+    IUseCaseBuilder useCase(String useCaseName);
 
     IDomainBuilder create(Object entity);
 

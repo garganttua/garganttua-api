@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.engine.IMethodBinderBuilder;
 import com.garganttua.api.spec.engine.IObjectSupplier;
+import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -21,94 +23,119 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class MethodBinderBuilder<T extends IMethodBinderBuilder<T, U, V>, U, V>
         implements IMethodBinderBuilder<T, U, V> {
 
-    private IObjectSupplier<?> supplier;
+    private IObjectSupplierBuilder<?> supplier;
     private Method method = null;
-    private List<IObjectSupplier<?>> parameters;
+    private List<IObjectSupplierBuilder<?>> parameters;
     private Class<?>[] parameterTypes;
 
     protected abstract T getReturned();
 
-    private V up;
+    private final V up;
+    private IGGObjectQuery objectQuery;
 
-    protected MethodBinderBuilder(V up, IObjectSupplier<?> supplier) {
+    protected MethodBinderBuilder(V up, IObjectSupplierBuilder<?> supplier) throws BuilderException {
         log.atTrace().log("Creating MethodBinderBuilder with up={} and supplier={}", up, supplier);
         this.up = Objects.requireNonNull(up, "Up cannot be null");
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
+        try {
+            this.objectQuery = GGObjectQueryFactory.objectQuery(this.supplier.getObjectClass());
+        } catch (GGReflectionException e) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, e.getMessage(), e);
+        }
     }
 
     @Override
     public T method(Method method) throws CoreException {
         log.atDebug().log("Resolving method {} in class {}", method.getName(), this.supplier.getObjectClass());
 
-        this.method = List.of(this.supplier.getObjectClass().getDeclaredMethods()).stream()
-                .peek(m -> log.atTrace().log("Checking declared method: {}", m))
-                .filter(m -> m.equals(method))
-                .findFirst()
-                .orElseThrow(() -> {
-                    try {
-                        log.atWarn().log("Method {} not found in class {}", method.getName(),
-                                this.supplier.getObjectClass().getName());
-                        return new BuilderException(CoreExceptionCode.BUILDER_CODE,
-                                "Method " + method.getName() + " not found in class "
-                                        + this.supplier.getObjectClass().getName()
-                                        + " or does not match signature");
-                    } catch (CoreException e) {
-                        return e;
-                    }
-                });
+        this.method = MethodResolver.methodByMethod(
+                method,
+                this.supplier.getObjectClass());
 
+        this.initParameters();
+        return this.getReturned();
+    }
+
+    @Override
+    public T method(GGObjectAddress methodAddress) throws CoreException {
+        log.atDebug().log("Resolving method by GGObjectAddress={} in class {}", methodAddress,
+                this.supplier.getObjectClass());
+
+        this.method = MethodResolver.methodByAddress(
+                methodAddress,
+                this.objectQuery,
+                this.supplier.getObjectClass());
+
+        this.initParameters();
+        return this.getReturned();
+    }
+
+    @Override
+    public T method(String methodName) throws CoreException {
+        log.atDebug().log("Resolving method by name={} in class {}", methodName, this.supplier.getObjectClass());
+
+        this.method = MethodResolver.methodByName(
+                methodName,
+                this.objectQuery,
+                this.supplier.getObjectClass());
+
+        this.initParameters();
+        return this.getReturned();
+    }
+
+    @Override
+    public T method(Method method,
+            Class<?> returnType, Class<?>... parameterTypes) throws CoreException {
+        log.atDebug().log("Resolving method {} in class {}", method.getName(), this.supplier.getObjectClass());
+
+        this.method = MethodResolver.methodByMethod(
+                method,
+                this.supplier.getObjectClass(),
+                returnType,
+                parameterTypes);
+
+        this.initParameters();
+        return this.getReturned();
+    }
+
+    @Override
+    public T method(GGObjectAddress methodAddress,
+            Class<?> returnType, Class<?>... parameterTypes) throws CoreException {
+        log.atDebug().log("Resolving method by GGObjectAddress={} in class {}", methodAddress,
+                this.supplier.getObjectClass());
+
+        this.method = MethodResolver.methodByAddress(
+                methodAddress,
+                this.objectQuery,
+                this.supplier.getObjectClass(),
+                returnType,
+                parameterTypes);
+
+        this.initParameters();
+        return this.getReturned();
+    }
+
+    @Override
+    public T method(String methodName,
+            Class<?> returnType, Class<?>... parameterTypes) throws CoreException {
+        log.atDebug().log("Resolving method by name={} in class {}", methodName, this.supplier.getObjectClass());
+
+        this.method = MethodResolver.methodByName(
+                methodName,
+                this.objectQuery,
+                this.supplier.getObjectClass(),
+                returnType,
+                parameterTypes);
+
+        this.initParameters();
+        return this.getReturned();
+    }
+
+    private void initParameters() {
         this.parameterTypes = this.method.getParameterTypes();
         this.parameters = new ArrayList<>(Collections.nCopies(this.parameterTypes.length, null));
-
         log.atInfo().log("Successfully bound method {} with {} parameters",
                 this.method.getName(), this.method.getParameterCount());
-
-        return this.getReturned();
-    }
-
-    @Override
-    public T method(GGObjectAddress method) throws CoreException {
-        log.atDebug().log("Resolving method by GGObjectAddress={} in class {}", method, this.supplier.getObjectClass());
-        try {
-            IGGObjectQuery query = GGObjectQueryFactory.objectQuery(this.supplier.getObjectClass());
-            List<Object> found = query.find(method);
-
-            Object last = found.getLast();
-            log.atTrace().log("Last resolved object: {}", last);
-
-            if (!Method.class.isAssignableFrom(last.getClass())) {
-                log.atWarn().log("Object at {} is not a Method", method);
-                throw new BuilderException(CoreExceptionCode.BUILDER_CODE,
-                        "Object at address " + method.toString() + " is not a method");
-            }
-
-            this.method = (Method) last;
-            this.parameterTypes = this.method.getParameterTypes();
-            this.parameters = new ArrayList<>(Collections.nCopies(this.parameterTypes.length, null));
-
-            log.atInfo().log("Successfully bound method {} with {} parameters",
-                    this.method.getName(), this.method.getParameterCount());
-
-        } catch (GGReflectionException e) {
-            log.atError().log("Reflection error resolving method {}: {}", method, e.getMessage());
-            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, e.getMessage(), e);
-        }
-
-        return this.getReturned();
-    }
-
-    @Override
-    public T method(String method) throws CoreException {
-        log.atDebug().log("Resolving method by name={} in class {}", method, this.supplier.getObjectClass());
-        try {
-            IGGObjectQuery query = GGObjectQueryFactory.objectQuery(this.supplier.getObjectClass());
-            this.method(query.address(method));
-        } catch (GGReflectionException e) {
-            log.atError().log("Reflection error resolving method by name {}: {}", method, e.getMessage());
-            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, e.getMessage(), e);
-        }
-
-        return this.getReturned();
     }
 
     @Override
@@ -130,16 +157,18 @@ public abstract class MethodBinderBuilder<T extends IMethodBinderBuilder<T, U, V
                             + " and cannot be assigned a value of type " + object.getClass().getName());
         }
 
-        this.parameters.set(i, new IObjectSupplier<Object>() {
-            @Override
-            public Object getObject() throws CoreException {
-                return object;
-            }
-
+        this.parameters.set(i, new IObjectSupplierBuilder<>() {
+           
             @SuppressWarnings("unchecked")
             @Override
             public Class<Object> getObjectClass() {
                 return (Class<Object>) object.getClass();
+            }
+
+            @Override
+            public IObjectSupplier<Object> build() throws CoreException {
+                // TODO Auto-generated method stub
+                throw new UnsupportedOperationException("Unimplemented method 'build'");
             }
         });
 
@@ -148,7 +177,7 @@ public abstract class MethodBinderBuilder<T extends IMethodBinderBuilder<T, U, V
     }
 
     @Override
-    public T withParam(int i, IObjectSupplier<?> object) throws CoreException {
+    public T withParam(int i, IObjectSupplierBuilder<?> object) throws CoreException {
         log.atTrace().log("Binding parameter {} with supplier of type {}", i, object.getObjectClass());
         Objects.requireNonNull(this.method, "Method must be set before setting parameters");
 
@@ -169,6 +198,32 @@ public abstract class MethodBinderBuilder<T extends IMethodBinderBuilder<T, U, V
         this.parameters.set(i, object);
         log.atInfo().log("Parameter {} bound successfully with supplier type {}", i, object.getObjectClass());
         return this.getReturned();
+    }
+
+    @Override
+    public T withParam(String paramName, Object parameter)
+            throws CoreException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'withParam'");
+    }
+
+    @Override
+    public T withParam(String paramName, IObjectSupplierBuilder<?> supplier)
+            throws CoreException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'withParam'");
+    }
+
+    @Override
+    public T withParam(Object parameter) throws CoreException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'withParam'");
+    }
+
+    @Override
+    public T withParam(IObjectSupplierBuilder<?> supplier) throws CoreException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'withParam'");
     }
 
     private boolean isValidParameterIndex(int i) {

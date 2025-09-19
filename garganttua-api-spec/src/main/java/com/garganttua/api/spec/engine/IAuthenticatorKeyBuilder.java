@@ -6,7 +6,7 @@ import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
 
-public interface IAuthenticatorKeyBuilder {
+public interface IAuthenticatorKeyBuilder extends IAutomaticLinkedBuilder<Object, IAuthenticatorBuilder, IAuthenticatorAuthorizationBuilder>{
 
     IAuthenticatorKeyBuilder usage(AuthenticatorKeyUsage oneforall);
 
@@ -17,7 +17,5 @@ public interface IAuthenticatorKeyBuilder {
     IAuthenticatorKeyBuilder lifeTime(int i, TimeUnit days);
 
     IAuthenticatorKeyBuilder autoCreate(boolean b);
-
-    IAuthenticatorBuilder up();
 
 }

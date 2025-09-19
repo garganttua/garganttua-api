@@ -4,23 +4,25 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
-import com.garganttua.api.spec.engine.IContextBuilder;
+import com.garganttua.api.spec.engine.IApplicationContextBuilder;
 import com.garganttua.api.spec.engine.IObjectSupplier;
 
 public class ContextStartupBinderBuilderTest {
 
     @Test
-    public void testMethod() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testMethod() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
-                    public Object getObject() throws CoreException {
-                        return new Object();
+                    public Optional<Object> getObject() {
+                        return Optional.of(new Object());
                     }
 
                     @Override
@@ -35,13 +37,13 @@ public class ContextStartupBinderBuilderTest {
     }
 
     @Test
-    public void testMethodWithName() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testMethodWithName() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
-                    public Object getObject() throws CoreException {
-                        return new Object();
+                    public Optional<Object> getObject() {
+                        return Optional.of(new Object());
                     }
 
                     @Override
@@ -57,13 +59,13 @@ public class ContextStartupBinderBuilderTest {
     }
 
     @Test
-    public void testAddParameter() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testAddParameter() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
-                    public Object getObject() throws CoreException {
-                        return new Object();
+                    public Optional<Object> getObject() {
+                        return Optional.of(new Object());
                     }
 
                     @Override
@@ -80,14 +82,14 @@ public class ContextStartupBinderBuilderTest {
 
     @Test
     public void testNullParamsInCtor() {
-        IContextBuilder builder = new ContextBuilder();
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
         NullPointerException exception1 = assertThrows(NullPointerException.class, () -> {
-            new ContextStartupBinderBuilder(null,
+            new ApplicationContextStartupBinderBuilder(null,
                     new IObjectSupplier<Object>() {
                         @Override
-                        public Object getObject() throws CoreException {
-                            return new Object();
-                        }
+                    public Optional<Object> getObject() {
+                        return Optional.of(new Object());
+                    }
 
                         @Override
                         public Class<Object> getObjectClass() {
@@ -96,7 +98,7 @@ public class ContextStartupBinderBuilderTest {
                     });
         });
         NullPointerException exception2 = assertThrows(NullPointerException.class, () -> {
-            new ContextStartupBinderBuilder(builder, null);
+            new ApplicationContextStartupBinderBuilder(builder, null);
         });
 
         assertEquals("Up cannot be null", exception1.getMessage());
@@ -105,13 +107,13 @@ public class ContextStartupBinderBuilderTest {
     }
 
     @Test
-    public void testWrongParamNumber() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testWrongParamNumber() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
-                    public Object getObject() throws CoreException {
-                        return new Object();
+                    public Optional<Object> getObject() {
+                        return Optional.of(new Object());
                     }
 
                     @Override
@@ -131,13 +133,13 @@ public class ContextStartupBinderBuilderTest {
     }
 
     @Test
-    public void testWrongParamNumber2() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testWrongParamNumber2() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<Object>() {
                     @Override
-                    public Object getObject() throws CoreException {
-                        return new Object();
+                    public Optional<Object> getObject() {
+                        return Optional.of(new Object());
                     }
 
                     @Override
@@ -161,13 +163,13 @@ public class ContextStartupBinderBuilderTest {
     }
 
     @Test
-    public void testWrongParameterType() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testWrongParameterType() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<String>() {
                     @Override
-                    public String getObject() throws CoreException {
-                        return "hello world";
+                    public Optional<String> getObject() {
+                        return Optional.of("hello world");
                     }
 
                     @Override
@@ -179,7 +181,7 @@ public class ContextStartupBinderBuilderTest {
        CoreException exception = assertThrows(CoreException.class, () -> {
             binderBuilder
                     .method(String.class.getDeclaredMethod("indexOf", String.class))
-                    .withParam(0, new ContextBuilder());
+                    .withParam(0, new ApplicationContextBuilder());
         });
 
         assertEquals("Parameter 0 of method indexOf is of type java.lang.String and cannot be assigned a value of type com.garganttua.api.core.engine.ContextBuilder", exception.getMessage());
@@ -187,13 +189,13 @@ public class ContextStartupBinderBuilderTest {
     }
 
      @Test
-    public void testMethodFromAnotherType() {
-        IContextBuilder builder = new ContextBuilder();
-        ContextStartupBinderBuilder binderBuilder = new ContextStartupBinderBuilder(builder,
+    public void testMethodFromAnotherType() throws BuilderException {
+        IApplicationContextBuilder builder = new ApplicationContextBuilder();
+        ApplicationContextStartupBinderBuilder binderBuilder = new ApplicationContextStartupBinderBuilder(builder,
                 new IObjectSupplier<String>() {
                     @Override
-                    public String getObject() throws CoreException {
-                        return "hello world";
+                    public Optional<String> getObject() {
+                        return Optional.of("hello world");
                     }
 
                     @Override

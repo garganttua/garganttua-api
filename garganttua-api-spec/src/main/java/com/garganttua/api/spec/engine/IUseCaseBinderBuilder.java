@@ -1,5 +1,5 @@
 package com.garganttua.api.spec.engine;
 
-public interface IUseCaseBinderBuilder extends IMethodBinderBuilder<IUseCaseBinderBuilder, Object, IContextBuilder> {
+public interface IUseCaseBinderBuilder extends IMethodBinderBuilder<IUseCaseBinderBuilder, Object, IDomainBuilder> {
 
 }

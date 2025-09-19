@@ -3,66 +3,69 @@ package com.garganttua.api.spec.engine;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import com.garganttua.api.spec.CoreException;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IAuthorizationBuilder {
+public interface IAuthorizationBuilder extends IAutomaticLinkedBuilder<Object, IDomainBuilder, IAuthorizationBuilder> {
 
-    IAuthorizationBuilder autoDetect(boolean b);
+    IAuthorizationBuilder type(Field field) throws CoreException;
 
-    IAuthorizationBuilder type(Field field);
+    IAuthorizationBuilder type(String fieldName) throws CoreException;
 
-    IAuthorizationBuilder type(String string);
+    IAuthorizationBuilder type(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder type(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder authorities(String fieldName) throws CoreException;
 
-    IAuthorizationBuilder authorities(String string);
+    IAuthorizationBuilder authorities(Field field) throws CoreException;
 
-    IAuthorizationBuilder authorities(Field field);
+    IAuthorizationBuilder authorities(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder authorities(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder creation(String fieldName) throws CoreException;
 
-    IAuthorizationBuilder creation(String string);
+    IAuthorizationBuilder creation(Field field) throws CoreException;
 
-    IAuthorizationBuilder creation(Field field);
+    IAuthorizationBuilder creation(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder creation(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder expiration(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder expiration(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder expiration(Field field) throws CoreException;
 
-    IAuthorizationBuilder expiration(Field field);
+    IAuthorizationBuilder expiration(String fieldName) throws CoreException;
 
-    IAuthorizationBuilder expiration(String string);
+    IAuthorizationBuilder revoked(String fieldName) throws CoreException;
 
-    IAuthorizationBuilder revoked(String string);
+    IAuthorizationBuilder revoked(Field field) throws CoreException;
 
-    IAuthorizationBuilder revoked(Field field);
+    IAuthorizationBuilder revoked(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder revoked(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder toByteArray(Method method) throws CoreException;
 
-    IAuthorizationBuilder toByteArray(Method method);
+    IAuthorizationBuilder toByteArray(String methodName) throws CoreException;
 
-    IAuthorizationBuilder toByteArray(String string);
+    IAuthorizationBuilder toByteArray(GGObjectAddress methodAddress) throws CoreException;
 
-    IAuthorizationBuilder toByteArray(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder fromByteArray(Method method) throws CoreException;
 
-    IAuthorizationBuilder validate(String string);
+    IAuthorizationBuilder fromByteArray(String methodName) throws CoreException;
 
-    IAuthorizationBuilder validate(Method method);
+    IAuthorizationBuilder fromByteArray(GGObjectAddress methodAddress) throws CoreException;
 
-    IAuthorizationBuilder validate(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder validate(String methodName) throws CoreException;
 
-    IAuthorizationBuilder validateAgainst(String string);
+    IAuthorizationBuilder validate(Method method) throws CoreException;
 
-    IAuthorizationBuilder validateAgainst(Method method);
+    IAuthorizationBuilder validate(GGObjectAddress methodAddress) throws CoreException;
 
-    IAuthorizationBuilder validateAgainst(GGObjectAddress fieldAddress);
+    IAuthorizationBuilder validateAgainst(String methodName) throws CoreException;
 
-    ISignableAuthorizationBuilder signable();
+    IAuthorizationBuilder validateAgainst(Method method) throws CoreException;
+
+    IAuthorizationBuilder validateAgainst(GGObjectAddress methodAddress) throws CoreException;
+
+    IAuthorizationBuilder storable(boolean b);
 
     IRefreshableAuthorizationBuilder refreshable();
 
-    IDomainBuilder up();
-
-
+    ISignableAuthorizationBuilder signable(IDomainBuilder key);
 
 }

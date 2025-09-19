@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.engine;
 
-public interface IContext {
+public interface IApplicationContext {
 
     void start();
 

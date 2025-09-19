@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractAuthentication extends Service {
-	
+
 	public AbstractAuthentication(IDomain domain) {
 		super(domain);
 	}
@@ -40,13 +40,13 @@ public abstract class AbstractAuthentication extends Service {
 
 	@AuthenticationAuthenticatorInfos
 	protected AuthenticatorInfos authenticatorInfos;
-	
+
 	@AuthenticationAuthorization
 	protected Object authorization;
 
 	@AuthenticationAuthenticated
 	protected boolean authenticated = false;
-	
+
 	@AuthenticationPrincipal
 	protected Object principal;
 
@@ -55,7 +55,7 @@ public abstract class AbstractAuthentication extends Service {
 
 	@EntityTenantId
 	protected String tenantId;
-	
+
 	@EntityOwnerId
 	protected String ownerId;
 
@@ -63,63 +63,66 @@ public abstract class AbstractAuthentication extends Service {
 	protected List<String> authorities;
 
 	@AuthenticationAuthenticate
-	public void authenticate() throws CoreException {	 
+	public void authenticate() throws CoreException {
 		boolean authenticator = EntityAuthenticatorHelper.isAuthenticator(this.principal);
-		if( authenticator ) {
+		if (authenticator) {
 			this.checkPrincipal();
 		}
-		
+
 		this.doAuthentication();
-		if( this.authenticated && authenticator ) {
+		if (this.authenticated && authenticator) {
 			this.authorities = EntityAuthenticatorHelper.getAuthorities(this.principal);
-		} 
+		}
 	}
 
 	@AuthenticationFindPrincipal
 	protected void findPrincipal() throws CoreException {
-		if( this.authenticatorService != null ) {
-		  ICaller caller;
-		  
-		  if( this.authenticatorInfos.scope() == AuthenticatorScope.tenant) {
-		    caller = Caller.createTenantCaller(this.tenantId);
-		  } else {
-		    caller = Caller.createSuperCaller();
-		  }
+		if (this.authenticatorService != null) {
+			ICaller caller;
 
-      Object principal = this.doFindPrincipal(caller);
-			if( principal == null ) {
-				log.atWarn().log("Principal identified by "+this.principal+" is not found");
+			if (this.authenticatorInfos.scope() == AuthenticatorScope.tenant) {
+				caller = Caller.createTenantCaller(this.tenantId);
+			} else {
+				caller = Caller.createSuperCaller();
+			}
+
+			Object principal = this.doFindPrincipal(caller);
+			if (principal == null) {
+				log.atWarn().log("Principal identified by " + this.principal + " is not found");
 				return;
-			}	
+			}
 			this.principal = principal;
 			this.tenantId = EntityHelper.getTenantId(this.principal);
 			try {
 				this.ownerId = EntityHelper.getOwnerId(principal);
 			} catch (CoreException e) {
-				log.atTrace().log("Error triing to get ownerId of principal identified by "+this.principal, e);
+				log.atTrace().log("Error triing to get ownerId of principal identified by " + this.principal, e);
 			}
 		} else {
-			log.atWarn().log("Principal identified by "+this.principal+" indicated to be found but no authenticator service provided"); 
-			throw new SecurityException(CoreExceptionCode.UNKNOWN_ERROR, "Principal identified by "+this.principal+" indicated to be found but no authenticator service provided");
+			log.atWarn().log("Principal identified by " + this.principal
+					+ " indicated to be found but no authenticator service provided");
+			throw new SecurityException(CoreExceptionCode.UNKNOWN_ERROR, "Principal identified by " + this.principal
+					+ " indicated to be found but no authenticator service provided");
 		}
 	}
 
 	protected abstract Object doFindPrincipal(ICaller caller);
 
 	protected void checkPrincipal() throws SecurityException, CoreException {
-		if( !EntityAuthenticatorHelper.isAccountNonExpired(this.principal) ) {
+		if (!EntityAuthenticatorHelper.isAccountNonExpired(this.principal)) {
 			this.authenticated = false;
 			throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Authenticator expired");
 		}
-		if( !EntityAuthenticatorHelper.isAccountNonLocked(this.principal) ) {
+		if (!EntityAuthenticatorHelper.isAccountNonLocked(this.principal)) {
 			this.authenticated = false;
 			throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Authenticator locked");
 		}
-		if( !EntityAuthenticatorHelper.isCredentialsNonExpired(this.principal) ) {
+		if (!EntityAuthenticatorHelper.isCredentialsNonExpired(this.principal)) {
 			this.authenticated = false;
-			throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Authenticator's credentials expired");
+			throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR,
+					"Authenticator's credentials expired");
 		}
-		if( !EntityAuthenticatorHelper.isEnabled(this.principal) ) {
+		if (!EntityAuthenticatorHelper.isEnabled(this.principal)) {
 			this.authenticated = false;
 			throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Authenticator disabled");
 		}

@@ -1,6 +1,7 @@
 package com.garganttua.api.core.engine;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import com.garganttua.api.spec.engine.IObjectSupplier;
 
@@ -16,8 +17,8 @@ public class ObjectSupplier<T> implements IObjectSupplier<T> {
     }
 
     @Override
-    public T getObject() {
-        return this.object;
+    public Optional<T> getObject() {
+        return Optional.of(this.object);
     }
 
     @Override

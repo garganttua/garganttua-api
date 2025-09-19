@@ -7,23 +7,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.api.core.security.engine.SecurityBuilder;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.engine.ContextBuildingStage;
+import com.garganttua.api.spec.engine.IApplicationContextBuilder;
 import com.garganttua.api.spec.engine.IAuthenticatorBuilder;
 import com.garganttua.api.spec.engine.IAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IContext;
-import com.garganttua.api.spec.engine.IContextBuilder;
 import com.garganttua.api.spec.engine.IDomainBuilder;
 import com.garganttua.api.spec.engine.IDomainStartupBinderBuilder;
 import com.garganttua.api.spec.engine.IDtoBuilder;
 import com.garganttua.api.spec.engine.IEntityBuilder;
 import com.garganttua.api.spec.engine.IObjectSupplier;
+import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
 import com.garganttua.api.spec.engine.IUseCaseBuilder;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.security.ISecurityBuilder;
+import com.garganttua.api.spec.security.IDomainSecurityBuilder;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
 import com.garganttua.reflection.query.GGObjectQueryFactory;
@@ -31,12 +30,13 @@ import com.garganttua.reflection.query.IGGObjectQuery;
 
 public class DomainBuilder implements IDomainBuilder {
 
-    private IContextBuilder builder;
+    private IApplicationContextBuilder builder;
     private String domainName;
+    private Class<?> entityClass;
 
     private List<IDomainStartupBinderBuilder> startupBinderBuilders = new ArrayList<IDomainStartupBinderBuilder>();
-    private List<IObjectSupplier<?>> interfaces = new ArrayList<>();
-    private List<IObjectSupplier<?>> events = new ArrayList<>();
+    private List<IObjectSupplierBuilder<?>> interfaces = new ArrayList<>();
+    private List<IObjectSupplierBuilder<?>> events = new ArrayList<>();
 
     private boolean creation = true;
     private boolean readAll = true;
@@ -45,7 +45,6 @@ public class DomainBuilder implements IDomainBuilder {
     private boolean deleteAll = true;
     private boolean deleteOne = true;
     private boolean publik = false;
-    private Class<?> entityClass;
     private boolean tenant = false;
     private IEntityBuilder entityBuilder;
     private List<Object> createEntities = new ArrayList<>();
@@ -55,29 +54,36 @@ public class DomainBuilder implements IDomainBuilder {
     private Field owned;
     private Field shared;
     private Field hiddenable;
-    private boolean autoDetectDtos = false;
-    private boolean autoDetectUseCases = false;
-    private ISecurityBuilder securityBuilder;
+    private IDomainSecurityBuilder securityBuilder;
     private Map<Class<?>, IDtoBuilder> dtos = new HashMap<>();
     private Map<String, IUseCaseBuilder> useCases = new HashMap<>();
     private IAuthorizationBuilder authorization;
     private IAuthenticatorBuilder authenticator;
+    private Boolean autoDetect = false;
 
-    public DomainBuilder(IContextBuilder builder, String domainName) throws BuilderException {
+    public DomainBuilder(IApplicationContextBuilder builder, String domainName) throws BuilderException {
         this.builder = Objects.requireNonNull(builder, "Builder cannot be null");
         this.domainName = Objects.requireNonNull(domainName, "Domain name cannot be null");
-        this.securityBuilder = new SecurityBuilder();
+        this.securityBuilder = new DomainSecurityBuilder();
+    }
+
+    public DomainBuilder(IApplicationContextBuilder builder, Class<?> entityClass) throws BuilderException {
+        this.builder = Objects.requireNonNull(builder, "Builder cannot be null");
+        this.entityClass = Objects.requireNonNull(entityClass, "Entity Class cannot be null");
+        this.domainName = this.entityClass.getSimpleName();
+        this.securityBuilder = new DomainSecurityBuilder();
+        this.entityBuilder = this.entity(this.entityClass);
     }
 
     @Override
-    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplier<?> supplier) {
+    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplierBuilder<?> supplier) throws BuilderException {
         DomainStartupBinderBuilder binder = new DomainStartupBinderBuilder(this, supplier);
         this.startupBinderBuilders.add(binder);
         return binder;
     }
 
     @Override
-    public IDomainBuilder interfasse(IObjectSupplier<?> bean) throws CoreException {
+    public IDomainBuilder interfasse(IObjectSupplierBuilder<?> bean) throws CoreException {
         if (!IInterface.class.isAssignableFrom(bean.getObjectClass())) {
             throw new BuilderException(CoreExceptionCode.BUILDER_CODE,
                     "Bean " + bean.getObjectClass().getName() + " does not implement IInterface");
@@ -89,7 +95,7 @@ public class DomainBuilder implements IDomainBuilder {
     @Override
     public IDomainBuilder interfasse(IInterface interfasse) throws CoreException {
         this.interfaces
-                .add(new ObjectSupplier<IInterface>(Objects.requireNonNull(interfasse, "Interface cannot be null")));
+                .add(new FixedObjectSupplierBuilder<IInterface>(Objects.requireNonNull(interfasse, "Interface cannot be null")));
         return this;
     }
 
@@ -130,7 +136,7 @@ public class DomainBuilder implements IDomainBuilder {
     }
 
     @Override
-    public IDomainBuilder events(IObjectSupplier<?> bean) throws CoreException {
+    public IDomainBuilder events(IObjectSupplierBuilder<?> bean) throws CoreException {
         if (!IEventPublisher.class.isAssignableFrom(bean.getObjectClass())) {
             throw new BuilderException(CoreExceptionCode.BUILDER_CODE,
                     "Bean " + bean.getObjectClass().getName() + " does not implement IEventPublisher");
@@ -141,7 +147,7 @@ public class DomainBuilder implements IDomainBuilder {
 
     @Override
     public IDomainBuilder events(IEventPublisher eventPublisher) throws CoreException {
-        this.events.add(new ObjectSupplier<IEventPublisher>(
+        this.events.add(new FixedObjectSupplierBuilder<IEventPublisher>(
                 Objects.requireNonNull(eventPublisher, "EventPublisher cannot be null")));
         return this;
     }
@@ -303,17 +309,23 @@ public class DomainBuilder implements IDomainBuilder {
     }
 
     @Override
-    public IAuthorizationBuilder authorization() {
-        if( this.authorization != null ){
-            this.authorization = new AuthorizationBuilder(this);
+    public IAuthorizationBuilder authorization() throws BuilderException {
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+        if (this.authorization == null) {
+            this.authorization = new AuthorizationBuilder(this, this.objectQuery, this.entityClass);
         }
         return this.authorization;
     }
 
     @Override
-    public IAuthenticatorBuilder authenticator() {
-        if( this.authenticator != null ){
-            this.authenticator = new AuthenticatorBuilder(this);
+    public IAuthenticatorBuilder authenticator() throws BuilderException {
+        if (this.entityBuilder == null) {
+            throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class must be defined first");
+        }
+        if (this.authenticator == null) {
+            this.authenticator = new AuthenticatorBuilder(this, this.objectQuery, this.entityClass);
         }
         return this.authenticator;
     }
@@ -340,14 +352,8 @@ public class DomainBuilder implements IDomainBuilder {
     }
 
     @Override
-    public ISecurityBuilder security() {
+    public IDomainSecurityBuilder security() {
         return this.securityBuilder;
-    }
-
-    @Override
-    public IDomainBuilder autoDetectDtos(boolean b) {
-        this.autoDetectDtos = true;
-        return this;
     }
 
     @Override
@@ -375,15 +381,9 @@ public class DomainBuilder implements IDomainBuilder {
     }
 
     @Override
-    public IContext build() {
+    public Object build() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'build'");
-    }
-
-    @Override
-    public IDomainBuilder autoDetectUseCases(boolean b) {
-        this.autoDetectUseCases = b;
-        return this;
     }
 
     @Override
@@ -395,6 +395,25 @@ public class DomainBuilder implements IDomainBuilder {
     @Override
     public IDomainBuilder upsert(Object entity) {
         this.upsertEntities.add(entity);
+        return this;
+    }
+
+    @Override
+    public Class<?> getEntityClass() throws CoreException {
+        if (this.entityClass != null)
+            return this.entityClass;
+
+        throw new BuilderException(CoreExceptionCode.BUILDER_CODE, "Entity class is not set !");
+    }
+
+    @Override
+    public IApplicationContextBuilder up() {
+        return this.builder;
+    }
+
+    @Override
+    public IDomainBuilder autoDetect(boolean b) {
+        this.autoDetect = Objects.requireNonNull(b, "AutoDetect cannot be null");
         return this;
     }
 

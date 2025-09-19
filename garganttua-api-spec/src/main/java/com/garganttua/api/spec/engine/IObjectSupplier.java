@@ -1,11 +1,11 @@
 package com.garganttua.api.spec.engine;
 
-import com.garganttua.api.spec.CoreException;
+import java.util.Optional;
 
-public interface IObjectSupplier <T> {
+public interface IObjectSupplier<ObjectType> {
 
-    T getObject() throws CoreException;
+    Optional<ObjectType> getObject();
 
-    Class<T> getObjectClass() throws CoreException;
+    Class<ObjectType> getObjectClass();
 
 }

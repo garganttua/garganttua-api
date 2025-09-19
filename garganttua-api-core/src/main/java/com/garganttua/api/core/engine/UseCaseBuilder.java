@@ -1,14 +1,19 @@
 package com.garganttua.api.core.engine;
 
+import java.util.Objects;
+
+import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.Method;
 import com.garganttua.api.spec.engine.Action;
 import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplier;
+import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
 import com.garganttua.api.spec.engine.IUseCaseBinderBuilder;
 import com.garganttua.api.spec.engine.IUseCaseBuilder;
 import com.garganttua.api.spec.service.ServiceAccess;
 
 public class UseCaseBuilder implements IUseCaseBuilder {
+
+    private Boolean autoDetect = false;
 
     public UseCaseBuilder(String useCaseName, IDomainBuilder domainBuilder) {
         //TODO Auto-generated constructor stub
@@ -63,7 +68,7 @@ public class UseCaseBuilder implements IUseCaseBuilder {
     }
 
     @Override
-    public IUseCaseBinderBuilder bind(IObjectSupplier<?> supplier) {
+    public IUseCaseBinderBuilder bind(IObjectSupplierBuilder<?> supplier) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'bind'");
     }
@@ -78,6 +83,18 @@ public class UseCaseBuilder implements IUseCaseBuilder {
     public IDomainBuilder up() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'up'");
+    }
+
+    @Override
+    public IUseCaseBuilder autoDetect(boolean b) {
+        this.autoDetect = Objects.requireNonNull(b, "AutoDetect cannot be null");
+        return this;
+    }
+
+    @Override
+    public Object build() throws CoreException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'build'");
     }
 
 }
