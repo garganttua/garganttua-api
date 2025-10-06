@@ -17,7 +17,7 @@ import com.garganttua.api.spec.service.ServiceAccess;
 import com.garganttua.api.spec.service.IServiceInfos;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IDomain {
+public interface  IDomain {
 
 	String getDomain();
 

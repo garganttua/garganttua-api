@@ -5,9 +5,8 @@ import java.util.Map;
 
 import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.service.ServiceResponseCode;
 import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.ServiceResponseCode;
 
 public interface IEvent {
 
@@ -52,7 +51,7 @@ public interface IEvent {
     
     IServiceResponse toServiceResponse();
     
-	IDomain getDomain();
+	/* IDomain getDomain();
 	void setDomain(IDomain domain);
-	
+	 */
 }

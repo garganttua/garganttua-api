@@ -7,10 +7,22 @@ import com.garganttua.reflection.GGObjectAddress;
 
 public interface ISignableAuthorizationBuilder extends IAutomaticLinkedBuilder<Object, IAuthorizationBuilder, ISignableAuthorizationBuilder> {
 
-    ISignableAuthorizationBuilder sign(String string) throws CoreException;
+    ISignableAuthorizationBuilder setSignature(String string) throws CoreException;
 
-    ISignableAuthorizationBuilder sign(Method method) throws CoreException;
+    ISignableAuthorizationBuilder setSignature(Method method) throws CoreException;
 
-    ISignableAuthorizationBuilder sign(GGObjectAddress fieldAddress) throws CoreException;
+    ISignableAuthorizationBuilder setSignature(GGObjectAddress fieldAddress) throws CoreException;
+
+    ISignableAuthorizationBuilder getSignature(String string) throws CoreException;
+
+    ISignableAuthorizationBuilder getSignature(Method method) throws CoreException;
+
+    ISignableAuthorizationBuilder getSignature(GGObjectAddress fieldAddress) throws CoreException;
+
+    ISignableAuthorizationBuilder getDataToSign(String string) throws CoreException;
+
+    ISignableAuthorizationBuilder getDataToSign(Method method) throws CoreException;
+
+    ISignableAuthorizationBuilder getDataToSign(GGObjectAddress fieldAddress) throws CoreException;
 
 }

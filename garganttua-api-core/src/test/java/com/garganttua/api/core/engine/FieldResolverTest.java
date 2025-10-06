@@ -13,12 +13,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import com.garganttua.api.core.builder.BuilderException;
+import com.garganttua.api.core.builder.resolver.FieldResolver;
 import com.garganttua.reflection.GGObjectAddress;
 import com.garganttua.reflection.GGReflectionException;
+import com.garganttua.reflection.query.GGObjectQueryFactory;
 import com.garganttua.reflection.query.IGGObjectQuery;
 
 public class FieldResolverTest {
-    
+
     private IGGObjectQuery mockQuery;
     private Class<?> entityClass;
 
@@ -39,14 +42,10 @@ public class FieldResolverTest {
 
     @Test
     void fieldByFieldName_success() throws Exception {
-        GGObjectAddress mockAddress = mock(GGObjectAddress.class);
-        Field field = entityClass.getDeclaredField("name");
+        IGGObjectQuery query = GGObjectQueryFactory.objectQuery(entityClass);
 
-        when(mockQuery.address("name")).thenReturn(mockAddress);
-        when(mockQuery.find(mockAddress)).thenReturn(List.of(entityClass, field));
-
-        Field result = FieldResolver.fieldByFieldName("name", mockQuery, entityClass);
-        assertEquals("name", result.getName());
+        GGObjectAddress result = FieldResolver.fieldByFieldName("age", query, entityClass);
+        assertEquals("age", result.toString());
     }
 
     @Test
@@ -75,8 +74,8 @@ public class FieldResolverTest {
     void fieldByField_success() throws Exception {
         Field field = entityClass.getDeclaredField("age");
 
-        Field result = FieldResolver.fieldByField(field, entityClass);
-        assertEquals("age", result.getName());
+        GGObjectAddress result = FieldResolver.fieldByField(field, entityClass);
+        assertEquals("age", result.toString());
     }
 
     @Test
@@ -103,13 +102,11 @@ public class FieldResolverTest {
 
     @Test
     void fieldByAddress_success() throws Exception {
-        GGObjectAddress address = mock(GGObjectAddress.class);
-        Field field = entityClass.getDeclaredField("name");
+        IGGObjectQuery query = GGObjectQueryFactory.objectQuery(entityClass);
+        GGObjectAddress address = query.address("name");
 
-        when(mockQuery.find(address)).thenReturn(List.of(entityClass, field));
-
-        Field result = FieldResolver.fieldByAddress(address, mockQuery, entityClass, String.class);
-        assertEquals("name", result.getName());
+        GGObjectAddress result = FieldResolver.fieldByAddress(address, query, entityClass, String.class);
+        assertEquals("name", result.toString());
     }
 
     @Test

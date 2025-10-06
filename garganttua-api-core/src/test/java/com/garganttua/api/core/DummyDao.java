@@ -1,6 +1,7 @@
 package com.garganttua.api.core;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.dao.IDao;
@@ -9,8 +10,17 @@ import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
+import com.garganttua.reflection.beans.annotation.GGBean;
+import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
 
+@GGBean(strategy = GGBeanLoadingStrategy.newInstance)
 public class DummyDao implements IDao {
+
+    private List<Object> nextFind;
+
+    public void setNextFindReturn(List<Object> objects){
+        this.nextFind = objects;
+    }
 
     @Override
     public void setEngine(IEngine engine) {
@@ -31,9 +41,9 @@ public class DummyDao implements IDao {
     }
 
     @Override
-    public List<?> find(IPageable pageable, IFilter filter, ISort sort) throws CoreException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'find'");
+    public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws CoreException {
+
+        return this.nextFind;
     }
 
     @Override

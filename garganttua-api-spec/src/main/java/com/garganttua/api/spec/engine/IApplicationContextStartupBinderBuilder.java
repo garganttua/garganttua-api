@@ -1,5 +1,5 @@
 package com.garganttua.api.spec.engine;
 
-public interface IApplicationContextStartupBinderBuilder extends IMethodBinderBuilder<IApplicationContextStartupBinderBuilder, Object, IApplicationContextBuilder> {
+public interface IApplicationContextStartupBinderBuilder extends IMethodBinderBuilder<IApplicationContextStartupBinderBuilder, IApplicationContextBuilder> {
 
 }

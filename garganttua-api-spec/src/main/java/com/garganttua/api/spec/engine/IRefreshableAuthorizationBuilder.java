@@ -6,36 +6,42 @@ import java.lang.reflect.Method;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IRefreshableAuthorizationBuilder extends IAutomaticLinkedBuilder<Object, IAuthorizationBuilder, IRefreshableAuthorizationBuilder> {
+public interface IRefreshableAuthorizationBuilder
+        extends IAutomaticLinkedBuilder<Object, IAuthorizationBuilder, IRefreshableAuthorizationBuilder> {
 
-    IRefreshableAuthorizationBuilder expiration(GGObjectAddress fieldAddress) throws CoreException;
+    IRefreshableAuthorizationBuilder expirable(GGObjectAddress fieldAddress) throws CoreException;
 
-    IRefreshableAuthorizationBuilder expiration(Field field) throws CoreException;
+    IRefreshableAuthorizationBuilder expirable(Field field) throws CoreException;
 
-    IRefreshableAuthorizationBuilder expiration(String fieldName) throws CoreException;
+    IRefreshableAuthorizationBuilder expirable(String fieldName) throws CoreException;
 
-    IRefreshableAuthorizationBuilder revoked(String fieldName) throws CoreException;
+    IRefreshableAuthorizationBuilder revokable(String fieldName) throws CoreException;
 
-    IRefreshableAuthorizationBuilder revoked(Field field) throws CoreException;
+    IRefreshableAuthorizationBuilder revokable(Field field) throws CoreException;
 
-    IRefreshableAuthorizationBuilder revoked(GGObjectAddress fieldAddress) throws CoreException;
+    IRefreshableAuthorizationBuilder revokable(GGObjectAddress fieldAddress) throws CoreException;
 
-    IRefreshableAuthorizationBuilder toByteArray(Method method) throws CoreException;
+    IRefreshableAuthorizationBuilder encode(Method method) throws CoreException;
 
-    IRefreshableAuthorizationBuilder toByteArray(String methodName) throws CoreException;
+    IRefreshableAuthorizationBuilder encode(String methodName) throws CoreException;
 
-    IRefreshableAuthorizationBuilder toByteArray(GGObjectAddress fieldAddress) throws CoreException;
+    IRefreshableAuthorizationBuilder encode(GGObjectAddress fieldAddress) throws CoreException;
 
-    IRefreshableAuthorizationBuilder validate(String methodName) throws CoreException;
+    IRefreshableAuthorizationBuilder decode(Method method) throws CoreException;
 
-    IRefreshableAuthorizationBuilder validate(Method method) throws CoreException;
+    IRefreshableAuthorizationBuilder decode(String methodName) throws CoreException;
 
-    IRefreshableAuthorizationBuilder validate(GGObjectAddress fieldAddress) throws CoreException;
+    IRefreshableAuthorizationBuilder decode(GGObjectAddress fieldAddress) throws CoreException;
 
-    IRefreshableAuthorizationBuilder validateAgainst(String methodName) throws CoreException;
-
-    IRefreshableAuthorizationBuilder validateAgainst(Method method) throws CoreException;
-
-    IRefreshableAuthorizationBuilder validateAgainst(GGObjectAddress fieldAddress) throws CoreException;
+    /*
+     * IRefreshableAuthorizationBuilder validateAgainst(String methodName) throws
+     * CoreException;
+     * 
+     * IRefreshableAuthorizationBuilder validateAgainst(Method method) throws
+     * CoreException;
+     * 
+     * IRefreshableAuthorizationBuilder validateAgainst(GGObjectAddress
+     * fieldAddress) throws CoreException;
+     */
 
 }

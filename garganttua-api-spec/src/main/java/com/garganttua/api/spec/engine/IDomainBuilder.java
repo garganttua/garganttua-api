@@ -8,9 +8,9 @@ import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.security.IDomainSecurityBuilder;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IDomainBuilder extends IAutomaticLinkedBuilder<Object, IApplicationContextBuilder, IDomainBuilder> {
+public interface IDomainBuilder extends IAutomaticLinkedBuilder<IDomainContext, IApplicationContextBuilder, IDomainBuilder> {
 
-    IMethodBinderBuilder<IDomainStartupBinderBuilder, Object, IDomainBuilder>  startup(ContextBuildingStage stage, IObjectSupplierBuilder<?> method) throws CoreException;
+    IMethodBinderBuilder<IDomainStartupBinderBuilder, IDomainBuilder>  startup(ContextBuildingStage stage, IObjectSupplierBuilder<?> method) throws CoreException;
 
     IDomainBuilder interfasse(IObjectSupplierBuilder<?> bean) throws CoreException;
 
@@ -60,22 +60,22 @@ public interface IDomainBuilder extends IAutomaticLinkedBuilder<Object, IApplica
 
     IDomainBuilder hiddenable(GGObjectAddress fieldAddress) throws CoreException;
 
-    IAuthorizationBuilder authorization() throws CoreException;
-
-    IAuthenticatorBuilder authenticator() throws CoreException;
-
     IEntityBuilder entity(Class<?> entityClass) throws CoreException;
 
     Class<?> getEntityClass() throws CoreException;
 
-    IDomainSecurityBuilder security();
+    IDomainSecurityBuilder security() throws CoreException;
 
-    IDtoBuilder dto(Class<?> dtoClass);
+    IDtoBuilder dto(Class<?> dtoClass) throws CoreException;
 
-    IUseCaseBuilder useCase(String useCaseName);
+    IUseCaseBuilder<IDomainBuilder> useCase(String useCaseName);
+
+    IUseCaseBuilder<IDomainBuilder> useCase(IUseCaseBinderBuilder<IDomainBuilder> binder);
 
     IDomainBuilder create(Object entity);
 
     IDomainBuilder upsert(Object entity);
+
+    IEntityBuilder entity() throws CoreException;
 
 }

@@ -1,5 +1,7 @@
 package com.garganttua.api.spec.engine;
 
+import java.util.Optional;
+
 public interface IApplicationContext {
 
     void start();
@@ -11,5 +13,7 @@ public interface IApplicationContext {
     void init();
 
     void reload();
+
+    Optional<IDomainContext> getDomainContext(String domainName);
 
 }

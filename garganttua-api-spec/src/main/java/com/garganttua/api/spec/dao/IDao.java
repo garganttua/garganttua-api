@@ -4,6 +4,7 @@
 package com.garganttua.api.spec.dao;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.engine.IEngineObject;
@@ -15,7 +16,7 @@ public interface IDao extends IEngineObject {
 	
 	void setDtoClass(Class<?> dtoClass);
 	
-	List<?> find(IPageable pageable, IFilter filter, ISort sort) throws CoreException;
+	List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws CoreException;
 
 	Object save(Object object) throws CoreException;
 

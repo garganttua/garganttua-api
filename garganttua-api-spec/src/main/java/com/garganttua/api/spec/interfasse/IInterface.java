@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IEngineObject;
-import com.garganttua.api.spec.service.IService;
+import com.garganttua.api.spec.engine.Service;
 
 public interface IInterface extends IEngineObject {
 
@@ -13,7 +13,7 @@ public interface IInterface extends IEngineObject {
 
 	void setDomain(IDomain domain);
 
-	void setService(IService service);
+	void setService(Service service);
 
 	String getName();
 

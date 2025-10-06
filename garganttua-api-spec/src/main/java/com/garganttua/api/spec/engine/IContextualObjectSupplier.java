@@ -4,6 +4,4 @@ public interface IContextualObjectSupplier<Supplied, Context> extends IObjectSup
 
     Class<Context> getContextClass();
 
-    void setContext(Context context);
-
 }

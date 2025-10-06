@@ -5,11 +5,11 @@ import java.lang.reflect.Method;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.engine.Service;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.interfasse.InterfaceMethod;
-import com.garganttua.api.spec.service.IService;
 
-public class DummyInterface implements IInterface{
+public class DummyInterface implements IInterface {
 
     @Override
     public void setEngine(IEngine engine) {
@@ -30,7 +30,7 @@ public class DummyInterface implements IInterface{
     }
 
     @Override
-    public void setService(IService service) {
+    public void setService(Service service) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setService'");
     }

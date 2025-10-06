@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import com.garganttua.api.core.InfosHelper;
+import com.garganttua.api.core.context.InfosHelper;
 import com.garganttua.api.core.entity.tools.EntityHelper;
 import com.garganttua.api.core.security.ExpirationTools;
 import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;

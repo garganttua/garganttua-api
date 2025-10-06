@@ -7,12 +7,12 @@ public enum CoreExceptionCode {
 	/*
 	 * API error codes 
 	 */
-	CORE_GENERIC_CODE				(000),
-	UNKNOWN_ERROR					(001), 
+	/* CORE_GENERIC_CODE				(000),
 	
+	 */
 	
 	//Entities error codes
-	ENTITY_DEFINITION				(100),
+	/* ENTITY_DEFINITION				(100),
 	ENTITY_INSTANCIATION			(101),
 	SET_FIELD_VALUE					(102),
 	GET_FIELD_VALUE					(103),
@@ -20,15 +20,15 @@ public enum CoreExceptionCode {
 	ENTITY_ALREADY_EXISTS			(105),
 	BAD_REQUEST						(106),
 	INVOKE_METHOD					(107),
-	ENTITY_NOT_FOUND				(108), 
+	ENTITY_NOT_FOUND				(108),  */
 	
 	//Dto error codes
-	DTO_DEFINITION					(110),
+	/* DTO_DEFINITION					(110),
 	DTO_INSTANCIATION				(111),
-	NO_DTO_FOUND					(112),
+	NO_DTO_FOUND					(112), */
 	
 	//Mapping error codes
-	DIRECT_FIELD_MAPPING			(120),
+	/* DIRECT_FIELD_MAPPING			(120),
 	OBJECT_MAPPING					(121),
 	METHOD_FIELD_MAPPING			(122),
 	OBJECT_ADDRESS_LOOP_DETECTED	(123),
@@ -36,39 +36,43 @@ public enum CoreExceptionCode {
 	VALUE_OR_KEY_NOT_IN_ADDRESS		(126),
 	OBJECT_NOT_FOUND				(127),
 	INSTANCIATION_ERROR 			(128),
-	
+	 */
 	//Reflection error codes
-	NO_DEFAULT_CTOR					(130),
+	/* NO_DEFAULT_CTOR					(130), */
 	
 	//Entity factory codes
-	GENERIC_FACTORY_EXCEPTION		(180),
-	INJECTION_ERROR					(181),
+	/* GENERIC_FACTORY_EXCEPTION		(180),
+	INJECTION_ERROR					(181), */
 	
 	//Custom services codes
-	CUSTOM_SERVICE_ERROR            (140),
+	/* CUSTOM_SERVICE_ERROR            (140), */
 	
 	
 	/*
 	 * Security API error codes 
 	 */
-	GENERIC_SECURITY_ERROR			(200), 
-	AUTHORIZATION_NOT_SIGNED		(201),
+	/* GENERIC_SECURITY_ERROR			(200), 
+	AUTHORIZATION_NOT_SIGNED		(201), */
 	
 	//Token error codes
-	TOKEN_NOT_FOUND					(210), 
+	/* TOKEN_NOT_FOUND					(210), 
 	TOKEN_EXPIRED					(211), 
 	TOKEN_REVOKED					(212),
-	TOKEN_SIGNATURE_MISMATCH		(213),
+	TOKEN_SIGNATURE_MISMATCH		(213), */
 	
 	//Key error codes
-	KEY_EXPIRED						(220),
+	/* KEY_EXPIRED						(220),
 	KEY_ERROR						(221), 
 	KEY_REVOKED						(222), 
-	FAILED_AUTHENTICATION			(230), 
+	FAILED_AUTHENTICATION			(230),  */
 	
 	
-	
-	BUILDER_CODE					(300),
+	UNKNOWN_ERROR					(000), 
+	BUILDER_CODE					(300), 
+	SUPPLY_ERROR					(400), 
+	CONTEXT_ERROR					(500),
+	FILTER_ERROR					(600), 
+	REPOSITORY_ERROR				(700),
 	
 	// Authentication error codes
 	

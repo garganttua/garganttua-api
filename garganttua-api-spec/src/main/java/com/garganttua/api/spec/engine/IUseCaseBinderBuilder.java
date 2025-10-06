@@ -1,5 +1,7 @@
 package com.garganttua.api.spec.engine;
 
-public interface IUseCaseBinderBuilder extends IMethodBinderBuilder<IUseCaseBinderBuilder, Object, IDomainBuilder> {
+public interface IUseCaseBinderBuilder<Up> extends IMethodBinderBuilder<IUseCaseBinderBuilder<Up>, Up> {
+
+    String getMethodName();
 
 }

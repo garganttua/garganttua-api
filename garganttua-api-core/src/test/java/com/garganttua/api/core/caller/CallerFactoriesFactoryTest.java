@@ -9,8 +9,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.ReflectionsAnnotationScanner;
-import com.garganttua.api.core.domain.DomainsFactory;
-import com.garganttua.api.core.factory.EntityFactoriesFactory;
+import com.garganttua.api.core.old.caller.CallerFactoriesFactory;
+import com.garganttua.api.core.old.domain.DomainsFactory;
+import com.garganttua.api.core.old.factory.EntityFactoriesFactory;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.caller.ICallerFactoriesRegistry;
 import com.garganttua.api.spec.domain.IDomain;

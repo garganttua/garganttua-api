@@ -1,32 +1,41 @@
 package com.garganttua.api.spec.engine;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
+import com.garganttua.api.spec.CoreException;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IAuthenticationBuilder extends IAutomaticLinkedBuilder<Object, IContextSecurityBuilder, IAuthenticationBuilder> {
+public interface IAuthenticationBuilder
+                extends IAutomaticLinkedBuilder<IAuthenticationContext, IContextSecurityBuilder, IAuthenticationBuilder> {
 
         IAuthenticationBuilder findPrincipal(boolean b);
 
         IAuthenticationBuilder authenticate(
-                        String methodName);
+                        String methodName) throws CoreException;
 
         IAuthenticationBuilder authenticate(
-                        Method method);
+                        Method method) throws CoreException;
 
         IAuthenticationBuilder authenticate(
-                        GGObjectAddress methodAddress);
+                        GGObjectAddress methodAddress) throws CoreException;
 
-        // ajouter quelque chose pour que l'authentication vérifie que l'entité du
-        // domaine contient bien les infos d'authentification
-
-        IAuthenticationBuilder applySecurityOnEntity(
-                        String methodName);
+        IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(Class<? extends Annotation> annotation,
+                        Class<?> fieldType) throws CoreException;
 
         IAuthenticationBuilder applySecurityOnEntity(
-                        Method method);
+                        String methodName) throws CoreException;
 
         IAuthenticationBuilder applySecurityOnEntity(
-                        GGObjectAddress methodAddress);
+                        Method method) throws CoreException;
+
+        IAuthenticationBuilder applySecurityOnEntity(
+                        GGObjectAddress methodAddress) throws CoreException;
+
+        IUseCaseBuilder<IAuthenticationBuilder> useCase(String methodName) throws CoreException;
+
+        IUseCaseBuilder<IAuthenticationBuilder> useCase(Method method) throws CoreException;
+
+        IUseCaseBuilder<IAuthenticationBuilder> useCase(GGObjectAddress methodAddress) throws CoreException;
 
 }

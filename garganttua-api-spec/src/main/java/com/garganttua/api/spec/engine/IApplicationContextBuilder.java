@@ -19,9 +19,9 @@ public interface IApplicationContextBuilder extends IAutomaticBuilder<IApplicati
 
 	IApplicationContextBuilder superTenantId(String string);
 
-	IMethodBinderBuilder<IApplicationContextStartupBinderBuilder, Object, IApplicationContextBuilder> startup(ContextBuildingStage stage, IObjectSupplier<?> supplier) throws CoreException;
+	IMethodBinderBuilder<IApplicationContextStartupBinderBuilder, IApplicationContextBuilder> startup(ContextBuildingStage stage, IObjectSupplier<?> supplier) throws CoreException;
 
-	IMethodBinderBuilder<IApplicationContextStartupBinderBuilder, Object, IApplicationContextBuilder> startup(ContextBuildingStage stage, Object object) throws CoreException;
+	IMethodBinderBuilder<IApplicationContextStartupBinderBuilder, IApplicationContextBuilder> startup(ContextBuildingStage stage, Object object) throws CoreException;
 
 	IDomainBuilder domain(String domainName) throws CoreException;
 

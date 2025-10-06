@@ -1,27 +1,24 @@
 package com.garganttua.api.spec.engine;
 
-import com.garganttua.api.spec.Method;
-import com.garganttua.api.spec.service.ServiceAccess;
+import com.garganttua.api.spec.CoreException;
 
-public interface IUseCaseBuilder extends IAutomaticLinkedBuilder<Object, IDomainBuilder, IUseCaseBuilder> {
+public interface IUseCaseBuilder<Up> extends IAutomaticLinkedBuilder<IUseCaseContext, Up, IUseCaseBuilder<Up>> {
 
-    IUseCaseBuilder pathSuffix(String string);
+    IUseCaseBuilder<Up> pathSuffix(String string);
 
-    IUseCaseBuilder completePath(String string);
+    IUseCaseBuilder<Up> completePath(String string);
 
-    IUseCaseBuilder action(Action allentities);
+    IUseCaseBuilder<Up> action(Action allentities);
 
-    IUseCaseBuilder input(Class<Object> class1);
+    IUseCaseBuilder<Up> input(Class<Object> class1);
 
-    IUseCaseBuilder output(Class<Object> class1);
+    IUseCaseBuilder<Up> output(Class<Object> class1);
 
-    IUseCaseBuilder authority(boolean b);
+    IUseCaseBinderBuilder<IUseCaseBuilder<Up>> bind(IObjectSupplierBuilder<?> supplier) throws CoreException;
 
-    IUseCaseBuilder access(ServiceAccess anonymous);
+    IUseCaseBinderBuilder<IUseCaseBuilder<Up>> bind(Object object) throws CoreException;
 
-    IUseCaseBinderBuilder bind(IObjectSupplierBuilder<?> supplier);
+    IUseCaseBinderBuilder<IUseCaseBuilder<Up>> bind();
 
-    IUseCaseBinderBuilder bind(Object object);
-
-    IUseCaseBuilder method(Method create);
+    IUseCaseBuilder<Up> operation(TechnicalOperation operation);
 }

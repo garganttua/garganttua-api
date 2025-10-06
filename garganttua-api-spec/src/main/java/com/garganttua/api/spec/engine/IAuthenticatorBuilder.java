@@ -3,10 +3,11 @@ package com.garganttua.api.spec.engine;
 import java.lang.reflect.Field;
 
 import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
 import com.garganttua.reflection.GGObjectAddress;
 
-public interface IAuthenticatorBuilder extends IAutomaticLinkedBuilder<Object, IDomainBuilder, IAuthenticatorBuilder> {
+public interface IAuthenticatorBuilder extends IAutomaticLinkedBuilder<IAuthenticatorContext, IDomainSecurityBuilder, IAuthenticatorBuilder> {
 
     IAuthenticatorBuilder login(String string) throws CoreException;
 
@@ -48,7 +49,7 @@ public interface IAuthenticatorBuilder extends IAutomaticLinkedBuilder<Object, I
 
     IAuthenticatorBuilder scope(AuthenticatorScope system);
 
-    IAuthenticatorBuilder authentication(Class<?> authenticationClass);
+    IAuthenticatorBuilder authentication(IAuthenticationBuilder authentication) throws CoreException;
 
     IAuthenticatorAuthorizationBuilder authorization(IDomainBuilder authorization);
 

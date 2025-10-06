@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.ReflectionsAnnotationScanner;
+import com.garganttua.api.core.old.domain.DomainsFactory;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.domain.IDomainsRegistry;

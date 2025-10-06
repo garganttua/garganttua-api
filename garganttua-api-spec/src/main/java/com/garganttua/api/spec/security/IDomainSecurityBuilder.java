@@ -1,34 +1,28 @@
 package com.garganttua.api.spec.security;
 
 import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.engine.IAuthenticatorBuilder;
+import com.garganttua.api.spec.engine.IAuthorizationBuilder;
+import com.garganttua.api.spec.engine.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.engine.IAutomaticLinkedBuilder;
 import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IEngine;
-import com.garganttua.api.spec.service.ServiceAccess;
-import com.garganttua.reflection.beans.IGGBeanLoader;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.api.spec.engine.IUseCaseBuilder;
+import com.garganttua.api.spec.service.Access;
 
-public interface IDomainSecurityBuilder extends IAutomaticLinkedBuilder<Object, IDomainBuilder, IDomainSecurityBuilder> {
+public interface IDomainSecurityBuilder
+		extends IAutomaticLinkedBuilder<IDomainSecurityContext, IDomainBuilder, IDomainSecurityBuilder> {
 
-	IDomainSecurityBuilder injector(IGGInjector injector);
+	IDomainSecurityBuilder creationAccess(Access access);
 
-	ISecurityEngine build() throws CoreException;
+	IDomainSecurityBuilder readAllAccess(Access tenant);
 
-	IDomainSecurityBuilder loader(IGGBeanLoader loader);
+	IDomainSecurityBuilder readOneAccess(Access tenant);
 
-	IDomainSecurityBuilder engine(IEngine engine);
+	IDomainSecurityBuilder updateAccess(Access tenant);
 
-	IDomainSecurityBuilder creationAccess(ServiceAccess access);
+	IDomainSecurityBuilder deleteAllAccess(Access tenant);
 
-	IDomainSecurityBuilder readAllAccess(ServiceAccess tenant);
-
-	IDomainSecurityBuilder readOneAccess(ServiceAccess tenant);
-
-	IDomainSecurityBuilder updateAccess(ServiceAccess tenant);
-
-	IDomainSecurityBuilder deleteAllAccess(ServiceAccess tenant);
-
-	IDomainSecurityBuilder deleteOneAccess(ServiceAccess tenant);
+	IDomainSecurityBuilder deleteOneAccess(Access tenant);
 
 	IDomainSecurityBuilder creationAuthority(boolean b);
 
@@ -42,5 +36,15 @@ public interface IDomainSecurityBuilder extends IAutomaticLinkedBuilder<Object, 
 
 	IDomainSecurityBuilder deleteOneAuthority(boolean b);
 
-	IDomainSecurityAuthorizationBuilder authorization(IDomainBuilder authorizationDomain);
+	IAuthorizationBuilder authorization();
+
+	IDomainSecurityBuilder disable(boolean b);
+
+	IDomainSecurityBuilder authorizationProtocol(Class<?> class1, IAuthorizationProtocolBuilder protocole) throws CoreException;
+
+	IKeyBuilder key();
+
+	IAuthenticatorBuilder authenticator();
+
+    IDomainSecurityBuilder useCase(IUseCaseBuilder<?> useCaseBuilder, boolean authority, Access acceess);
 }

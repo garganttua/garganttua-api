@@ -26,7 +26,7 @@ public class EntityCheckerTest {
 		});
 		assertEquals("Entity GeolocEntity has field test with wrong type class java.lang.String, should be class org.geojson.Point",
 				exception.getMessage());
-		assertEquals(CoreExceptionCode.ENTITY_DEFINITION, exception.getCode());
+		assertEquals(CoreExceptionCode.BUILDER_CODE, exception.getCode());
 	}
 	
 	

@@ -3,6 +3,11 @@ package com.garganttua.api.core;
 import java.time.Instant;
 import java.util.List;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
 public class DummyEntity {
 
     private String tenantId;
@@ -27,6 +32,17 @@ public class DummyEntity {
 
     private Boolean active;
 
+    private String infoFromDto1;
+
+    private String infoFromDto2;
+
+    @Getter
+    private String afterGetString;
+
+    public void afterGet(String afterGetString){
+        this.afterGetString = afterGetString;
+    }
+
     public void testMethod() {
 
     }
@@ -37,6 +53,10 @@ public class DummyEntity {
 
     public Byte[] toByteArray() {
         return null;
+    }
+
+    public void fromByteArray(Byte[] array) {
+
     }
 
     public Boolean validate(DummyKey key) {
