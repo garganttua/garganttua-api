@@ -4,9 +4,7 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.spec.engine.IEngineObject;
-
-public interface IDaosRegistry extends IEngineObject {
+public interface IDaosRegistry {
 
 	List<Pair<Class<?>, IDao>> getDao(String domain);
 

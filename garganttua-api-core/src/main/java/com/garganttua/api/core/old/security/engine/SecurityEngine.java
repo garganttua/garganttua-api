@@ -26,11 +26,11 @@ import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecke
 import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.core.service.ServiceResponse;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.security.IOwnerVerifier;
 import com.garganttua.api.spec.security.ISecurityEngine;
 import com.garganttua.api.spec.security.ITenantVerifier;
@@ -49,8 +49,8 @@ import com.garganttua.api.spec.security.authorization.IAuthorizationServicesRegi
 import com.garganttua.api.spec.service.IService;
 import com.garganttua.api.spec.service.IServiceResponse;
 import com.garganttua.api.spec.service.ServiceResponseCode;
-import com.garganttua.reflection.beans.IGGBeanLoader;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.core.reflection.beans.IGGBeanLoader;
+import com.garganttua.core.reflection.injection.IGGInjector;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;

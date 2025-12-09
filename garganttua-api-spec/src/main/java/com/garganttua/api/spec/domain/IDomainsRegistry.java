@@ -2,9 +2,7 @@ package com.garganttua.api.spec.domain;
 
 import java.util.Set;
 
-import com.garganttua.api.spec.engine.IEngineObject;
-
-public interface IDomainsRegistry extends IEngineObject {
+public interface IDomainsRegistry {
 
 	Set<IDomain> getDomains();
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.filter.IFilter;
 

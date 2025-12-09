@@ -1,8 +1,6 @@
 package com.garganttua.api.core.builder;
 
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.authorization;
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.technicalRequest;
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.technicalResponse;
+import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.*;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
@@ -11,30 +9,33 @@ import javax.annotation.Nonnull;
 
 import com.garganttua.api.core.builder.binder.AuthorizationProtocolMethodBinderBuilder;
 import com.garganttua.api.core.context.application.AuthorizationProtocolContext;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IAuthorizationProtocolBuilder;
-import com.garganttua.api.spec.engine.IAuthorizationProtocolContext;
-import com.garganttua.api.spec.engine.IAuthorizationProtocolMethodBinderBuilder;
-import com.garganttua.api.spec.engine.IContextSecurityBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.api.spec.context.IAuthorizationProtocolContext;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethodBinderBuilder;
+import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public class AuthorizationProtocolBuilder
-        extends AbstractAutomaticLinkedBuilder<IAuthorizationProtocolContext, IAuthorizationProtocolBuilder, IContextSecurityBuilder>
+        extends AbstractAutomaticLinkedBuilder<IAuthorizationProtocolBuilder, IApiContextSecurityBuilder, IAuthorizationProtocol>
         implements IAuthorizationProtocolBuilder {
 
-    private @Nonnull IObjectSupplierBuilder<?> supplier;
+    private @Nonnull IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier;
     private IAuthorizationProtocolMethodBinderBuilder getAuthorization;
     private IAuthorizationProtocolMethodBinderBuilder setAuthorization;
 
     public AuthorizationProtocolBuilder(IContextSecurityBuilder contextSecurityBuilder,
-            IObjectSupplierBuilder<?> supplier) {
+            IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) {
         super(contextSecurityBuilder);
         this.supplier = Objects.requireNonNull(supplier, "Supplier class cannot be null");
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(String methodName) throws CoreException {
+    public IAuthorizationProtocolBuilder getAuthorization(String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         this.getAuthorization = new AuthorizationProtocolMethodBinderBuilder(this,
@@ -46,7 +47,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(Method method) throws CoreException {
+    public IAuthorizationProtocolBuilder getAuthorization(Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         this.getAuthorization = new AuthorizationProtocolMethodBinderBuilder(this,
@@ -58,7 +59,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(GGObjectAddress methodAddress) throws CoreException {
+    public IAuthorizationProtocolBuilder getAuthorization(ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         this.getAuthorization = new AuthorizationProtocolMethodBinderBuilder(this,
@@ -70,7 +71,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(String methodName) throws CoreException {
+    public IAuthorizationProtocolBuilder setAuthorization(String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         this.setAuthorization = new AuthorizationProtocolMethodBinderBuilder(this,
@@ -83,7 +84,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(Method method) throws CoreException {
+    public IAuthorizationProtocolBuilder setAuthorization(Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         this.setAuthorization = new AuthorizationProtocolMethodBinderBuilder(this,
@@ -96,7 +97,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(GGObjectAddress methodAddress) throws CoreException {
+    public IAuthorizationProtocolBuilder setAuthorization(ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         this.setAuthorization = new AuthorizationProtocolMethodBinderBuilder(this,
@@ -109,12 +110,12 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    protected IAuthorizationProtocolContext doBuild() throws CoreException {
+    protected IAuthorizationProtocol doBuild() throws DslException {
         return new AuthorizationProtocolContext(this.setAuthorization, this.getAuthorization);
     }
 
     @Override
-    protected void doAutoDetection() throws CoreException {
+    protected void doAutoDetection() throws DslException {
 
     }
 

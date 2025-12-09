@@ -1,18 +1,19 @@
 package com.garganttua.api.core.mapper;
 
-import com.garganttua.objects.mapper.GGMapper;
+import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.mapper.Mapper;
 
 public class DefaultMapper {
-    private static final GGMapper DEFAULT_MAPPER;
+    private static final IMapper DEFAULT_MAPPER;
 
     static {
-        DEFAULT_MAPPER = new GGMapper();
+        DEFAULT_MAPPER = new Mapper();
     }
 
     private DefaultMapper() {
     }
 
-    public static GGMapper mapper() {
+    public static IMapper mapper() {
         return DEFAULT_MAPPER;
     }
 }

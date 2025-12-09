@@ -2,9 +2,9 @@ package com.garganttua.api.core.entity;
 
 import java.util.Map;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.entity.IEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IEntitySaveMethod;
 import com.garganttua.api.spec.entity.annotations.EntityAuthorizeUpdate;

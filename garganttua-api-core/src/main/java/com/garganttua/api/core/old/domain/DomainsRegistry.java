@@ -3,10 +3,10 @@ package com.garganttua.api.core.domain;
 import java.util.Set;
 
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.domain.IDomainsRegistry;
-import com.garganttua.api.spec.engine.IEngine;
-import com.garganttua.objects.mapper.GGMapperException;
+import com.garganttua.core.mapper.MapperException;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +31,7 @@ public class DomainsRegistry implements IDomainsRegistry {
 				try {
 					DefaultMapper.mapper().recordMappingConfiguration(entityClass, dtoClass);
 					DefaultMapper.mapper().recordMappingConfiguration(dtoClass, entityClass);
-				} catch (GGMapperException e) {
+				} catch (MapperException e) {
 					log.atWarn().log("Error", e);
 				}
 			});

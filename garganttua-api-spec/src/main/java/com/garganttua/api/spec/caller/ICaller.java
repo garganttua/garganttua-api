@@ -2,10 +2,9 @@ package com.garganttua.api.spec.caller;
 
 import java.util.List;
 
-import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.Method;
+import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.service.ServiceAccess;
 
 public interface ICaller {
 
@@ -32,8 +31,6 @@ public interface ICaller {
 	String getEndpoint();
 
 	Class<?> getEntity();
-
-	Method getMethod();
 	
 	boolean isActionOnAllEntities();
 	
@@ -41,11 +38,11 @@ public interface ICaller {
 
 	String toString();
 
-	ServiceAccess getAccess();
+	Access getAccess();
 
 	String getEndpointAuthority();
 
-	EntityOperation getOperation();
+	Operation getOperation();
 
 	boolean isAuthenticatorDomain();
 

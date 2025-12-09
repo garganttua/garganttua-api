@@ -2,7 +2,7 @@ package com.garganttua.api.spec.security.key;
 
 import java.security.Key;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 
 public interface IKey {
 	

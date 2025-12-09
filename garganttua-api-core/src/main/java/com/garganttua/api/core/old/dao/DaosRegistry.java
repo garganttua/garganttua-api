@@ -6,10 +6,10 @@ import java.util.Map;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.dao.IDaosRegistry;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 
 public class DaosRegistry implements IDaosRegistry {
 

@@ -3,15 +3,15 @@ package com.garganttua.api.spec.event;
 import java.util.Date;
 import java.util.Map;
 
-import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.service.IServiceResponse;
 import com.garganttua.api.spec.service.ServiceResponseCode;
 
 public interface IEvent {
 
-	EntityOperation getOperation();
-    void setOperation(EntityOperation operation);
+	Operation getOperation();
+    void setOperation(Operation operation);
 
     Date getInDate();
     void setInDate(Date inDate);

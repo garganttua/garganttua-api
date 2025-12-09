@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.core.entity.GenericEntity;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.entity.annotations.BusinessAnnotations.EntityBeforeCreate;
 import com.garganttua.api.spec.entity.annotations.EntityAuthorizeUpdate;
@@ -26,8 +26,8 @@ import com.garganttua.api.spec.security.key.KeyType;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
 import com.garganttua.api.spec.security.key.IKey;
 import com.garganttua.api.spec.security.key.IKeyRealm;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
 
 import lombok.Getter;
 
@@ -222,37 +222,37 @@ public class KeyRealm extends GenericEntity implements IKeyRealm {
 		return this.decryptionKey;
     }
 
-	public static GGObjectAddress getExpirationFieldAddress() {
+	public static ObjectAddress getExpirationFieldAddress() {
 		try {
-			return new GGObjectAddress("expiration");
-		} catch (GGReflectionException e) {
+			return new ObjectAddress("expiration");
+		} catch (ReflectionException e) {
 			//Should never happen
 			return null;
 		}
 	}
 
-	public static GGObjectAddress getRevokedFieldAddress() {
+	public static ObjectAddress getRevokedFieldAddress() {
 		try {
-			return new GGObjectAddress("revoked");
-		} catch (GGReflectionException e) {
+			return new ObjectAddress("revoked");
+		} catch (ReflectionException e) {
 			//Should never happen
 			return null;
 		}
 	}
 
-	public static GGObjectAddress getOwnerIdFieldAddress() {
+	public static ObjectAddress getOwnerIdFieldAddress() {
 		try {
-			return new GGObjectAddress("ownerId");
-		} catch (GGReflectionException e) {
+			return new ObjectAddress("ownerId");
+		} catch (ReflectionException e) {
 			//Should never happen
 			return null;
 		}
 	}
 
-	public static GGObjectAddress getAlgorithmFieldAddress() {
+	public static ObjectAddress getAlgorithmFieldAddress() {
 		try {
-			return new GGObjectAddress("algorithm");
-		} catch (GGReflectionException e) {
+			return new ObjectAddress("algorithm");
+		} catch (ReflectionException e) {
 			//Should never happen
 			return null;
 		}

@@ -1,40 +1,38 @@
 package com.garganttua.api.core.builder;
 
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.authorization;
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.key;
+import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import com.garganttua.api.core.builder.binder.AuthorizationMethodBinderBuilder;
-import com.garganttua.api.core.builder.resolver.FieldResolver;
 import com.garganttua.api.core.context.application.AuthorizationContext;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IAuthorizationContext;
-import com.garganttua.api.spec.engine.IAuthorizationMethodBinderBuilder;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IRefreshableAuthorizationBuilder;
-import com.garganttua.api.spec.engine.ISignableAuthorizationBuilder;
-import com.garganttua.api.spec.security.IDomainSecurityBuilder;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.api.spec.context.IAuthorizationContext;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationMethodBinderBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IRefreshableAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.fields.FieldResolver;
 
 public class AuthorizationBuilder
-        extends AbstractAutomaticLinkedBuilder<IAuthorizationContext, IAuthorizationBuilder, IDomainSecurityBuilder>
+        extends AbstractAutomaticLinkedBuilder<IAuthorizationBuilder, IDomainSecurityBuilder, IAuthorizationContext>
         implements IAuthorizationBuilder {
 
-    private IGGObjectQuery objectQuery;
+    private IObjectQuery objectQuery;
     private Class<?> entityClass;
-    private GGObjectAddress type;
-    private GGObjectAddress revoked;
-    private GGObjectAddress creation;
-    private GGObjectAddress expiration;
-    private GGObjectAddress authorities;
+    private ObjectAddress type;
+    private ObjectAddress revoked;
+    private ObjectAddress creation;
+    private ObjectAddress expiration;
+    private ObjectAddress authorities;
     private IAuthorizationMethodBinderBuilder toByteArray;
     private IAuthorizationMethodBinderBuilder validate;
     private IAuthorizationMethodBinderBuilder validateAgainst;
@@ -43,14 +41,14 @@ public class AuthorizationBuilder
     private IRefreshableAuthorizationBuilder refreshable;
     private boolean storable = false;
 
-    public AuthorizationBuilder(IDomainSecurityBuilder domainBuilder, IGGObjectQuery objectQuery, Class<?> entityClass) {
+    public AuthorizationBuilder(IDomainSecurityBuilder domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
     @Override
-    public IAuthorizationBuilder type(Field field) throws BuilderException {
+    public IAuthorizationBuilder type(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.type = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -59,7 +57,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder type(String fieldName) throws BuilderException {
+    public IAuthorizationBuilder type(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.type = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -68,7 +66,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder type(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthorizationBuilder type(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.type = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -77,7 +75,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder authorities(String fieldName) throws BuilderException {
+    public IAuthorizationBuilder authorities(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, List.class);
@@ -86,7 +84,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder authorities(Field field) throws BuilderException {
+    public IAuthorizationBuilder authorities(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByField(field, this.entityClass, List.class);
@@ -95,7 +93,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder authorities(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthorizationBuilder authorities(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.authorities = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, List.class);
@@ -103,9 +101,8 @@ public class AuthorizationBuilder
         return this;
     }
 
-   
     @Override
-    public IAuthorizationBuilder expirable(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthorizationBuilder expirable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.expiration = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Instant.class);
@@ -114,7 +111,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder expirable(Field field) throws BuilderException {
+    public IAuthorizationBuilder expirable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByField(field, this.entityClass, Instant.class);
@@ -123,7 +120,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder expirable(String fieldName) throws BuilderException {
+    public IAuthorizationBuilder expirable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Instant.class);
@@ -132,7 +129,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder revokable(String fieldName) throws BuilderException {
+    public IAuthorizationBuilder revokable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         this.storable = true;
 
@@ -142,7 +139,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder revokable(Field field) throws BuilderException {
+    public IAuthorizationBuilder revokable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
         this.storable = true;
 
@@ -152,7 +149,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder revokable(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthorizationBuilder revokable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
         this.storable = true;
 
@@ -163,7 +160,7 @@ public class AuthorizationBuilder
 
     @Override
     public IAuthorizationBuilder encode(
-            Method method) throws CoreException {
+            Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         this.toByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
@@ -174,7 +171,7 @@ public class AuthorizationBuilder
 
     @Override
     public IAuthorizationBuilder encode(
-            String methodName) throws CoreException {
+            String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         this.toByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
@@ -185,7 +182,7 @@ public class AuthorizationBuilder
 
     @Override
     public IAuthorizationBuilder encode(
-            GGObjectAddress methodAddress) throws CoreException {
+            ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         this.toByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
@@ -195,7 +192,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder decode(Method method) throws CoreException {
+    public IAuthorizationBuilder decode(Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         this.fromByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
@@ -205,7 +202,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder decode(String methodName) throws CoreException {
+    public IAuthorizationBuilder decode(String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         this.fromByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
@@ -215,7 +212,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder decode(GGObjectAddress methodAddress) throws CoreException {
+    public IAuthorizationBuilder decode(ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         this.fromByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
@@ -226,7 +223,7 @@ public class AuthorizationBuilder
 
    /*  @Override
     public IAuthorizationBuilder validate(
-            String methodName) throws CoreException {
+            String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         if (this.signable != null)
@@ -242,7 +239,7 @@ public class AuthorizationBuilder
 
     @Override
     public IAuthorizationBuilder validate(
-            Method method) throws CoreException {
+            Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         if (this.signable != null)
@@ -258,7 +255,7 @@ public class AuthorizationBuilder
 
     @Override
     public AuthorizationBuilder validate(
-            GGObjectAddress methodAddress) throws CoreException {
+            ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         if (this.signable != null)
@@ -274,7 +271,7 @@ public class AuthorizationBuilder
 
     /* @Override
     public IAuthorizationBuilder validateAgainst(
-            String methodName) throws CoreException {
+            String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         this.storable = true;
@@ -296,7 +293,7 @@ public class AuthorizationBuilder
 
     @Override
     public IAuthorizationBuilder validateAgainst(
-            Method method) throws CoreException {
+            Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         this.storable = true;
@@ -318,7 +315,7 @@ public class AuthorizationBuilder
 
     @Override
     public IAuthorizationBuilder validateAgainst(
-            GGObjectAddress methodAddress) throws CoreException {
+            ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         this.storable = true;
@@ -371,7 +368,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    protected IAuthorizationContext doBuild() throws CoreException {
+    protected IAuthorizationContext doBuild() throws DslException {
         return new AuthorizationContext(
                 this.type,
                 this.revoked,
@@ -388,7 +385,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    protected void doAutoDetection() throws CoreException {
+    protected void doAutoDetection() throws DslException {
 
     }
 

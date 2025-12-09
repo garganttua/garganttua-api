@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.garganttua.api.security.spring.core.ISpringSecurityRestConfigurer;
 import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.security.ISecurityEngine;
 import com.garganttua.api.spec.service.ServiceAccess;
 

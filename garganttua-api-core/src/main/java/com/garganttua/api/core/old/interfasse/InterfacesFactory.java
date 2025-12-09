@@ -12,9 +12,9 @@ import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.beans.GGBeanRefValidator;
-import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.beans.GGBeanRefValidator;
+import com.garganttua.core.reflection.beans.IGGBeanLoader;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,12 +30,12 @@ public class InterfacesFactory {
 		this.beanLoader = beanLoader;
 		try {
 			this.collectInterfaces();
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EngineException(e);
 		}
 	}
 
-	private void collectInterfaces() throws GGReflectionException {
+	private void collectInterfaces() throws ReflectionException {
 		log.info("*** Collecting Interfaces ...");
 		
 		for( IDomain domain: this.domains ) {

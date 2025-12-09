@@ -1,25 +1,27 @@
 package com.garganttua.api.core.builder;
 
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.security.IKeyBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
 import com.garganttua.api.spec.security.IKeyContext;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.IObjectQuery;
 
-public class KeyBuilder extends AbstractAutomaticLinkedBuilder<IKeyContext, IKeyBuilder, IDomainSecurityBuilder> implements IKeyBuilder {
+public class KeyBuilder extends AbstractAutomaticLinkedBuilder<IKeyBuilder, IDomainSecurityBuilder, IKeyContext>
+        implements IKeyBuilder {
 
-    public KeyBuilder(DomainSecurityBuilder domainSecurityBuilder, IGGObjectQuery objectQuery, Class<?> entityClass) {
+    public KeyBuilder(DomainSecurityBuilder domainSecurityBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainSecurityBuilder);
     }
 
     @Override
     protected IKeyContext doBuild() throws CoreException {
-       return null;
+        return null;
     }
 
     @Override
     protected void doAutoDetection() throws CoreException {
-        
+
     }
 
 }

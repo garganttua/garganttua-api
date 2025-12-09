@@ -28,8 +28,8 @@ import com.garganttua.nativve.image.config.NativeImageConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfig;
 import com.garganttua.nativve.image.config.reflection.ReflectConfigEntryBuilder;
 import com.garganttua.nativve.image.config.resources.ResourceConfig;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
-import com.garganttua.reflection.utils.IGGAnnotationScanner;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.utils.IGGAnnotationScanner;
 
 public class NativeImageConfigBuilder {
 

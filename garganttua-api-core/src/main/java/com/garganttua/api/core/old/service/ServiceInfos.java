@@ -5,12 +5,12 @@ import java.lang.reflect.Method;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.service.IServiceInfos;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.Getter;
 
@@ -107,7 +107,7 @@ public class ServiceInfos implements IServiceInfos {
 		
 		try {
 			return GGObjectReflectionHelper.invokeMethod(object, this.getMethodName(), this.method, parameters);
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			CoreException.processException(e);
 		}
 		return object;

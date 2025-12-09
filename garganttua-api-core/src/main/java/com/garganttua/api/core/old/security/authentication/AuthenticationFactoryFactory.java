@@ -8,7 +8,7 @@ import com.garganttua.api.spec.security.authentication.AuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IAuthenticationFactoriesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationFactory;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInfosRegistry;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.core.reflection.injection.IGGInjector;
 
 import lombok.extern.slf4j.Slf4j;
 

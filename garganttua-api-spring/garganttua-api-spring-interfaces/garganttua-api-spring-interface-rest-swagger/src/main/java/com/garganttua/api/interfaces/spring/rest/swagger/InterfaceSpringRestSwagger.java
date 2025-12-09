@@ -23,8 +23,8 @@ import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecke
 import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.Method;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.entity.EntityDocumentationInfos;
 import com.garganttua.api.spec.entity.annotations.EntityMandatory;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;

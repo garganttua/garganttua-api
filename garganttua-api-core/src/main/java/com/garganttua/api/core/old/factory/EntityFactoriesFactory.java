@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.garganttua.api.core.updater.EntityUpdater;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
 import com.garganttua.api.spec.factory.IFactory;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.core.reflection.injection.IGGInjector;
 
 import lombok.extern.slf4j.Slf4j;
 

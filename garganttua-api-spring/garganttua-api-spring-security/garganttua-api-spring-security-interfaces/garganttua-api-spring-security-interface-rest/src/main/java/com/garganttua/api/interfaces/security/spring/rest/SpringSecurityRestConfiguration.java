@@ -17,7 +17,7 @@ import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.interfaces.spring.rest.CallerFilter;
 import com.garganttua.api.interfaces.spring.rest.ServiceMethodToHttpMethodBinder;
 import com.garganttua.api.security.spring.core.ISpringSecurityRestConfigurer;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.security.IAccessRule;
 import com.garganttua.api.spec.security.ISecurityEngine;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;

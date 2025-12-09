@@ -2,12 +2,10 @@ package com.garganttua.api.spec.service;
 
 import java.util.List;
 
-import com.garganttua.api.spec.engine.IEngineObject;
-
-public interface IServicesRegistry extends IEngineObject {
+public interface IServicesRegistry {
 	
-	IService getService(String name);
+	/* IService getService(String name);
 
-	List<IService> getServices();
+	List<IService> getServices(); */
 
 }

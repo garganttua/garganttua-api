@@ -1,7 +1,7 @@
 package com.garganttua.api.spec.security;
 
-import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.service.ServiceAccess;
+import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.context.Operation;
 
 public interface IAccessRule {
 	
@@ -9,9 +9,9 @@ public interface IAccessRule {
 	
 	String getAuthority();
 	
-	EntityOperation getOperation();
+	Operation getOperation();
 	
 	String toString();
 	
-	ServiceAccess getAccess();
+	Access getAccess();
 }

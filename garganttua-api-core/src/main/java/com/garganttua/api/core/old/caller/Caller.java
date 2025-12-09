@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.Method;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.domain.IDomain;

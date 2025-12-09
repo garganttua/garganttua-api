@@ -6,19 +6,19 @@ import com.garganttua.api.core.context.InfosHelper;
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.entity.checker.EntityChecker;
 import com.garganttua.api.core.filter.Literal;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.entity.EntityInfos;
 import com.garganttua.api.spec.entity.IEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IEntitySaveMethod;
 import com.garganttua.api.spec.entity.annotations.Entity;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -99,7 +99,7 @@ public class EntityHelper {
 	public static Object newInstance(Class<?> entityClass) throws CoreException {
 		try {
 			return GGObjectReflectionHelper.instanciateNewObject(entityClass);
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			CoreException.processException(e);
 		}
 		// Should never be reached
@@ -121,8 +121,8 @@ public class EntityHelper {
 			Object fieldValue = filter.getLiterals().get(0).getValue();
 			
 			try {
-				GGObjectQueryFactory.objectQuery(object).setValue(fieldAddress, fieldValue);
-			} catch (GGReflectionException e) {
+				ObjectQueryFactory.objectQuery(object).setValue(fieldAddress, fieldValue);
+			} catch (ReflectionException e) {
 				if( log.isDebugEnabled() ) {
 					log.warn("Unable to set value "+fieldValue+" to object "+object+" with address "+fieldAddress, e);
 				}

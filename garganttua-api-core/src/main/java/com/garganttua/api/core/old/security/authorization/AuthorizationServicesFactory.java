@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.security.authorization.IAuthorizationInfosRegistry;
 import com.garganttua.api.spec.security.authorization.IAuthorizationServicesRegistry;
 import com.garganttua.api.spec.service.IService;

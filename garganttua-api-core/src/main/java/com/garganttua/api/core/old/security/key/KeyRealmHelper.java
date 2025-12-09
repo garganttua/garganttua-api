@@ -5,8 +5,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 import com.garganttua.api.core.entity.exceptions.EntityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.security.key.EncryptionMode;
 import com.garganttua.api.spec.security.key.EncryptionPaddingMode;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;

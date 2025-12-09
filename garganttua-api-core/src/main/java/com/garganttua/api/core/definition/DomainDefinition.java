@@ -3,14 +3,14 @@ package com.garganttua.api.core.definition;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IMethodBinderBuilder;
-import com.garganttua.api.spec.engine.IUseCaseBuilder;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 
-public record DomainDefinition (
+public record DomainDefinition<E> (
     String domainName,
-    List<IMethodBinderBuilder<?, ?>> startupBinderBuilders,
+    EntityDefinition<E> entityDefinition,
+    List<DtoDefinition<?>> dtoDefinitions,
+    List<IMethodBinder<Void>> startupBinderBuilders,
     Boolean activateCreation,
     Boolean activateAllowReadAll,
     Boolean activateReadOne,
@@ -19,12 +19,12 @@ public record DomainDefinition (
     Boolean activateDeleteOne,
     Boolean publik,
     Boolean tenant,
-    List<Object> createEntities,
-    List<Object> upsertEntities,
-    GGObjectAddress owner,
-    GGObjectAddress owned,
-    GGObjectAddress shared,
-    GGObjectAddress hiddenable,
-    Map<String, IUseCaseBuilder<IDomainBuilder>>  useCases
+    List<E> createEntities,
+    List<E> upsertEntities,
+    ObjectAddress owner,
+    ObjectAddress owned,
+    ObjectAddress shared,
+    ObjectAddress hiddenable,
+    Map<String, UseCaseDefinition> useCases
     ) {
 }

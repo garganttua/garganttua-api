@@ -1,23 +1,23 @@
 package com.garganttua.api.spec.security.authentication;
 
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public record AuthenticationInfos(
 		Class<?> authenticationType,
-		GGObjectAddress autoritiesFieldAddress,
-		GGObjectAddress authenticatorServiceFieldAddress,
-		GGObjectAddress authorizationFieldAddress,
-		GGObjectAddress authenticatedFieldAddress,
-		GGObjectAddress principalFieldAddress,
-		GGObjectAddress credentialsFieldAddress,
-		GGObjectAddress tenantIdFieldAddress,
-		GGObjectAddress authenticateMethodAddress,
-		GGObjectAddress authenticatorInfosFieldAddress,
+		ObjectAddress autoritiesFieldAddress,
+		ObjectAddress authenticatorServiceFieldAddress,
+		ObjectAddress authorizationFieldAddress,
+		ObjectAddress authenticatedFieldAddress,
+		ObjectAddress principalFieldAddress,
+		ObjectAddress credentialsFieldAddress,
+		ObjectAddress tenantIdFieldAddress,
+		ObjectAddress authenticateMethodAddress,
+		ObjectAddress authenticatorInfosFieldAddress,
 		boolean findPrincipal,
-		GGObjectAddress findPrincipalMethodAddress,
-		GGObjectAddress ownerIdFieldAddress,
-		GGObjectAddress securityPreProcessingMethodAddress,
-		GGObjectAddress securityPostProcessingMethodAddress
+		ObjectAddress findPrincipalMethodAddress,
+		ObjectAddress ownerIdFieldAddress,
+		ObjectAddress securityPreProcessingMethodAddress,
+		ObjectAddress securityPostProcessingMethodAddress
 		) {
 
 }

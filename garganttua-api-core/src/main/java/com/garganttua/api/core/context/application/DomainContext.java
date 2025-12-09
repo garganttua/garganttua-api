@@ -1,35 +1,37 @@
 package com.garganttua.api.core.context.application;
 
+import java.lang.reflect.Method;
+import java.security.Provider.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.swing.Action;
 
 import com.garganttua.api.core.context.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
-import com.garganttua.api.spec.engine.Action;
-import com.garganttua.api.spec.engine.Business;
-import com.garganttua.api.spec.engine.IDomainContext;
-import com.garganttua.api.spec.engine.IDomainDtoContext;
-import com.garganttua.api.spec.engine.IDomainEntityContext;
-import com.garganttua.api.spec.engine.IMethodBinderBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.api.spec.engine.Method;
-import com.garganttua.api.spec.engine.Security;
-import com.garganttua.api.spec.engine.Service;
-import com.garganttua.api.spec.engine.ServiceType;
-import com.garganttua.api.spec.engine.TechnicalOperation;
+import com.garganttua.api.spec.context.Business;
+import com.garganttua.api.spec.context.IDomainDtoContext;
+import com.garganttua.api.spec.context.IDomainEntityContext;
+import com.garganttua.api.spec.context.IDtoContext;
+import com.garganttua.api.spec.context.IEntityContext;
+import com.garganttua.api.spec.context.ServiceType;
+import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.domain.IDomainContext;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
+import com.garganttua.api.spec.security.Security;
+import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.Getter;
 
-public class DomainContext implements IDomainContext {
+public class DomainContext<E> implements IDomainContext<E> {
 
-    private @Nonnull DomainDefinition domainDefinition;
-    private @Nonnull List<IObjectSupplierBuilder<?>> interfaces;
-    private @Nonnull List<IObjectSupplierBuilder<?>> events;
+    private @Nonnull DomainDefinition<E> domainDefinition;
+    private @Nonnull List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces;
+    private @Nonnull List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> events;
     private IDomainSecurityContext domainSecurityContext;
     /* private IApplicationSecurityContext applicationSecurityContext; */
 
@@ -39,11 +41,11 @@ public class DomainContext implements IDomainContext {
     @Getter
     private IRepository repository = null;
 
-    public DomainContext(DomainDefinition domainDefinition, IDomainEntityContext domainEntityContext,
+    public DomainContext(DomainDefinition<E> domainDefinition, IEntityContext<E> domainEntityContext,
             IDomainSecurityContext domainSecurityContext/* , IApplicationSecurityContext applicationSecurityContext */,
-            List<IDomainDtoContext> dtoContexts,
-            List<IObjectSupplierBuilder<?>> interfaces,
-            List<IObjectSupplierBuilder<?>> events) {
+            List<IDtoContext> dtoContexts,
+            List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces,
+            List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> events) {
         /*
          * this.applicationSecurityContext =
          * Objects.requireNonNull(applicationSecurityContext,
@@ -98,7 +100,7 @@ public class DomainContext implements IDomainContext {
     }
 
     @Override
-    public List<IMethodBinderBuilder<?, ?>> getAfterGetMethods() {
+    public List<IMethodBinderBuilder<?, ?, ?, ?>> getAfterGetMethods() {
         return this.domainEntityContext.getAfterGetMethods();
     }
 

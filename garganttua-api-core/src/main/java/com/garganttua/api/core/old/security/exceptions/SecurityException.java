@@ -1,7 +1,7 @@
 package com.garganttua.api.core.security.exceptions;
 
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 
 import lombok.Getter;
 

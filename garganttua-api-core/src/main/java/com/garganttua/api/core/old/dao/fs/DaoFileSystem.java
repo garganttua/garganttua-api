@@ -2,15 +2,15 @@ package com.garganttua.api.core.dao.fs;
 
 import java.util.List;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.reflection.beans.annotation.GGBean;
-import com.garganttua.reflection.beans.annotation.GGBeanLoadingStrategy;
+import com.garganttua.core.reflection.beans.annotation.GGBean;
+import com.garganttua.core.reflection.beans.annotation.GGBeanLoadingStrategy;
 
 @GGBean(name = "FsDao", strategy = GGBeanLoadingStrategy.newInstance)
 public class DaoFileSystem implements IDao {

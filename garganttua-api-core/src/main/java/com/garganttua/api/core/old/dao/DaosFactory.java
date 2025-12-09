@@ -9,14 +9,14 @@ import java.util.Map;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.engine.EngineException;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.dao.IDaosRegistry;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.dto.DtoInfos;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.beans.GGBeanRefValidator;
-import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.beans.GGBeanRefValidator;
+import com.garganttua.core.reflection.beans.IGGBeanLoader;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,13 +32,13 @@ public class DaosFactory {
 		this.beanLoader = beanLoader;
 		try {
 			this.collectDaos();
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EngineException(e);
 		}
 	}
 
 	@SuppressWarnings({ "unchecked" })
-	private void collectDaos() throws GGReflectionException {
+	private void collectDaos() throws ReflectionException {
 		log.info("*** Creating Daos ...");
 		for( IDomain domain: this.domains ){
 			ArrayList<Pair<Class<?>, IDao>> domainDaos = new ArrayList<Pair<Class<?>, IDao>>();

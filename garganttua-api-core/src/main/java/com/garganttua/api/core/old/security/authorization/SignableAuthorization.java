@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.List;
 
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.security.annotations.AuthorizationSign;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.security.authorization.ISignableAuthorization;

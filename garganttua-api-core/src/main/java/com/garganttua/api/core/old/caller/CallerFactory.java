@@ -3,19 +3,19 @@ package com.garganttua.api.core.caller;
 import java.util.Map;
 
 import com.garganttua.api.core.engine.EngineException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.caller.ICallerFactory;
+import com.garganttua.api.spec.context.IAccessRulesRegistry;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IAccessRulesRegistry;
 import com.garganttua.api.spec.factory.EntityIdentifier;
 import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.security.IAccessRule;
 import com.garganttua.api.spec.service.ServiceAccess;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
 import lombok.AllArgsConstructor;
 
@@ -87,8 +87,8 @@ public class CallerFactory implements ICallerFactory {
 		}
 		
 		try {
-			return (boolean) GGObjectQueryFactory.objectQuery(owner).getValue(this.ownerDomains.get(ownerId.split(":")[0]).getSuperOnwerIdFieldAddress());
-		} catch (GGReflectionException e) {
+			return (boolean) ObjectQueryFactory.objectQuery(owner).getValue(this.ownerDomains.get(ownerId.split(":")[0]).getSuperOnwerIdFieldAddress());
+		} catch (ReflectionException e) {
 			throw new EngineException(e);
 		}
 	}
@@ -140,8 +140,8 @@ public class CallerFactory implements ICallerFactory {
 		}
 		
 		try {
-			return (boolean) GGObjectQueryFactory.objectQuery(tenant).getValue(this.tenantsDomain.getSuperTenantFieldAddress());
-		} catch (GGReflectionException e) {
+			return (boolean) ObjectQueryFactory.objectQuery(tenant).getValue(this.tenantsDomain.getSuperTenantFieldAddress());
+		} catch (ReflectionException e) {
 			throw new EngineException(e);
 		}
 	}

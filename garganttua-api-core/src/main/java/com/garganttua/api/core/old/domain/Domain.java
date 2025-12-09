@@ -18,8 +18,8 @@ import com.garganttua.api.core.entity.checker.EntityChecker;
 import com.garganttua.api.core.entity.checker.EntityDocumentationChecker;
 import com.garganttua.api.core.security.entity.checker.EntitySecurityChecker;
 import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.dto.DtoInfos;
 import com.garganttua.api.spec.dto.annotations.Dto;
@@ -33,8 +33,8 @@ import com.garganttua.api.spec.security.annotations.CustomServiceSecurity;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.spec.service.ServiceAccess;
 import com.garganttua.api.spec.service.IServiceInfos;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -313,92 +313,92 @@ public class Domain implements IDomain {
 	}
 
 	@Override
-	public GGObjectAddress getSuperOnwerIdFieldAddress() {
+	public ObjectAddress getSuperOnwerIdFieldAddress() {
 		return this.entity.getValue1().superOnwerIdFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getSuperTenantFieldAddress() {
+	public ObjectAddress getSuperTenantFieldAddress() {
 		return this.entity.getValue1().superTenantFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getBeforeDeleteMethodAddress() {
+	public ObjectAddress getBeforeDeleteMethodAddress() {
 		return this.entity.getValue1().beforeDeleteMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getAfterDeleteMethodAddress() {
+	public ObjectAddress getAfterDeleteMethodAddress() {
 		return this.entity.getValue1().afterDeleteMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getBeforeCreateMethodAddress() {
+	public ObjectAddress getBeforeCreateMethodAddress() {
 		return this.entity.getValue1().beforeCreateMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getAfterCreateMethodAddress() {
+	public ObjectAddress getAfterCreateMethodAddress() {
 		return this.entity.getValue1().afterCreateMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getBeforeUpdateMethodAddress() {
+	public ObjectAddress getBeforeUpdateMethodAddress() {
 		return this.entity.getValue1().beforeUpdateMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getAfterUpdateMethodAddress() {
+	public ObjectAddress getAfterUpdateMethodAddress() {
 		return this.entity.getValue1().afterUpdateMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getOwnerIdFieldAddress() {
+	public ObjectAddress getOwnerIdFieldAddress() {
 		return this.entity.getValue1().ownerIdFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getAfterGetMethodAddress() {
+	public ObjectAddress getAfterGetMethodAddress() {
 		return this.entity.getValue1().afterGetMethodAddress();
 	}
 
 	@Override
-	public GGObjectAddress getShareFieldAddress() {
+	public ObjectAddress getShareFieldAddress() {
 		return this.entity.getValue1().shareFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getTenantIdFieldAddress() {
+	public ObjectAddress getTenantIdFieldAddress() {
 		return this.entity.getValue1().tenantIdFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getHiddenFieldAddress() {
+	public ObjectAddress getHiddenFieldAddress() {
 		return this.entity.getValue1().hiddenFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getUuidFieldAddress() {
+	public ObjectAddress getUuidFieldAddress() {
 		return this.entity.getValue1().uuidFieldAddress();
 	}
 
 	@Override
-	public GGObjectAddress getIdFieldAddress() {
+	public ObjectAddress getIdFieldAddress() {
 		return this.entity.getValue1().idFieldAddress();
 	}
 
 	@Override
-	public Map<GGObjectAddress, String> getAuthorizedUpdateFieldsAndAuthorizations() {
+	public Map<ObjectAddress, String> getAuthorizedUpdateFieldsAndAuthorizations() {
 		return this.entity.getValue1().updateAuthorizations();
 	}
 
 	@Override
-	public List<Pair<GGObjectAddress, UnicityScope>> getUnicityFields() {
+	public List<Pair<ObjectAddress, UnicityScope>> getUnicityFields() {
 		return this.entity.getValue1().unicityFields();
 	}
 
 	@Override
-	public List<GGObjectAddress> getMandatoryFields() {
+	public List<ObjectAddress> getMandatoryFields() {
 		return this.entity.getValue1().mandatoryFields();
 	}
 
@@ -423,7 +423,7 @@ public class Domain implements IDomain {
 	}
 
 	@Override
-	public GGObjectAddress getLocationFieldAddress() {
+	public ObjectAddress getLocationFieldAddress() {
 		return this.entity.getValue1().locationFieldAddress();
 	}
 

@@ -3,14 +3,14 @@ package com.garganttua.api.core.updater;
 import java.util.Map;
 
 import com.garganttua.api.core.engine.EngineException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.updater.IEntityUpdater;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,11 +19,11 @@ public class EntityUpdater implements IEntityUpdater {
 
 	@Override
 	public Object update(ICaller caller, Object storedEntity, Object updatedEntity,
-			Map<GGObjectAddress, String> updateAuthorizations) throws CoreException {
+			Map<ObjectAddress, String> updateAuthorizations) throws CoreException {
 
 		try {
-			final IGGObjectQuery storedEntityQuery = GGObjectQueryFactory.objectQuery(storedEntity);
-			final IGGObjectQuery updatedEntityQuery = GGObjectQueryFactory.objectQuery(updatedEntity);
+			final IObjectQuery storedEntityQuery = ObjectQueryFactory.objectQuery(storedEntity);
+			final IObjectQuery updatedEntityQuery = ObjectQueryFactory.objectQuery(updatedEntity);
 			if (updateAuthorizations == null) {
 				throw new EngineException(CoreExceptionCode.UNKNOWN_ERROR, "Update authorizations map is null");
 			}
@@ -39,14 +39,14 @@ public class EntityUpdater implements IEntityUpdater {
 						if (updatedValue != null)
 							storedEntityQuery.setValue(entry.getKey(), updatedValue);
 					}
-				} catch (GGReflectionException e) {
+				} catch (ReflectionException e) {
 					if (log.isDebugEnabled()) {
 						log.warn("Error during entity updating ", e);
 					}
 				}
 			});
 
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EngineException(e);
 		}
 

@@ -7,8 +7,8 @@ import java.util.stream.Collectors;
 
 import com.garganttua.api.spec.caller.ICallerFactoriesRegistry;
 import com.garganttua.api.spec.caller.ICallerFactory;
+import com.garganttua.api.spec.context.IAccessRulesRegistry;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IAccessRulesRegistry;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
 import com.garganttua.api.spec.factory.IFactory;
 

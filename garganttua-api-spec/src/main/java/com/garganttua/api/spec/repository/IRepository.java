@@ -6,10 +6,10 @@ package com.garganttua.api.spec.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
+import com.garganttua.core.CoreException;
 
 /**
  * 

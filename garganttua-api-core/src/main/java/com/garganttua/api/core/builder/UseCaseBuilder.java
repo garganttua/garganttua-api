@@ -2,21 +2,25 @@ package com.garganttua.api.core.builder;
 
 import java.util.Objects;
 
-import com.garganttua.api.core.builder.binder.UseCaseBinderBuilder;
-import com.garganttua.api.core.builder.supplier.FixedObjectSupplierBuilder;
-import com.garganttua.api.core.context.application.UseCaseContext;
-import com.garganttua.api.spec.engine.Action;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.api.spec.engine.IUseCaseBinderBuilder;
-import com.garganttua.api.spec.engine.IUseCaseBuilder;
-import com.garganttua.api.spec.engine.IUseCaseContext;
-import com.garganttua.api.spec.engine.TechnicalOperation;
+import javax.swing.Action;
 
-public class UseCaseBuilder<Up> extends AbstractAutomaticLinkedBuilder<IUseCaseContext, IUseCaseBuilder<Up>, Up>
-        implements IUseCaseBuilder<Up> {
+import com.garganttua.api.spec.context.IUseCase;
+import com.garganttua.api.spec.context.Scope;
+import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
+import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+
+public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUseCaseBuilder<I, O, E>, IDomainBuilder<E>, IUseCase<I, O>>
+        implements IUseCaseBuilder<I, O, E> {
 
     private String useCaseName;
-    private IUseCaseBinderBuilder<IUseCaseBuilder<Up>> binder;
+    private IUseCaseBinderBuilder<I, O, E> binder;
     private String suffix;
     private String path;
     private Action action;
@@ -24,77 +28,67 @@ public class UseCaseBuilder<Up> extends AbstractAutomaticLinkedBuilder<IUseCaseC
     private Class<Object> useCaseInput;
     private Class<Object> useCaseOutput;
 
-    public UseCaseBuilder(String useCaseName, Up up) {
+    public UseCaseBuilder(String useCaseName, IDomainBuilder<E> up) {
         super(up);
         this.useCaseName = Objects.requireNonNull(useCaseName, "Use case name cannot be null");
     }
-
-    public UseCaseBuilder(IUseCaseBinderBuilder<IUseCaseBuilder<Up>> binder, Up up) {
+/* 
+    public UseCaseBuilder(IDomainBuilder up) {
         super(up);
         this.binder = Objects.requireNonNull(binder, "Binder cannot be null");
         this.useCaseName = binder.getMethodName();
     }
-
+ */
     @Override
-    public IUseCaseBuilder<Up> pathSuffix(String suffix) {
+    public IUseCaseBuilder<I, O, E> pathSuffix(String suffix) {
         this.suffix = Objects.requireNonNull(suffix, "Suffix cannot be null");
         return this;
     }
 
     @Override
-    public IUseCaseBuilder<Up> completePath(String path) {
+    public IUseCaseBuilder<I, O, E> completePath(String path) {
         this.path = Objects.requireNonNull(path, "Path cannot be null");
         return this;
     }
 
     @Override
-    public IUseCaseBuilder<Up> action(Action action) {
+    public IUseCaseBuilder<I, O, E> scope(Scope scope) {
         this.action = Objects.requireNonNull(action, "Action cannot be null");
         return this;
     }
 
     @Override
-    public IUseCaseBuilder<Up> operation(TechnicalOperation operation) {
+    public IUseCaseBuilder<I, O, E> operation(TechnicalOperation operation) {
         this.operation = Objects.requireNonNull(operation, "Operation cannot be null");
         return this;
     }
 
-    @Override
-    public IUseCaseBuilder<Up> input(Class<Object> useCaseInput) {
-        this.useCaseInput = Objects.requireNonNull(useCaseInput, "Use case input cannot be null");
-        return this;
-    }
 
-    @Override
-    public IUseCaseBuilder<Up> output(Class<Object> useCaseOutput) {
-        this.useCaseOutput = Objects.requireNonNull(useCaseOutput, "Use case output cannot be null");
-        return this;
-    }
-
-    @Override
-    public IUseCaseBinderBuilder<IUseCaseBuilder<Up>> bind(IObjectSupplierBuilder<?> supplier) throws BuilderException {
+/*     @Override
+    public IUseCaseBinderBuilder<Object, IMethodBinder<Object>, IUseCaseBuilder<?, ?>, IUseCaseBuilder<Up, IUseCaseBuilder<?, ?>>> bind(
+            IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws CoreException {
         if (this.binder == null) {
-            this.binder = new UseCaseBinderBuilder<Up>(this, supplier);
+            this.binder = new UseCaseBinderBuilder<Object, IMethodBinder<Object>, IUseCaseBuilder<?, ?>, IUseCaseBuilder<Up, IUseCaseBuilder<?, ?>>>(this, supplier);
+        }
+        return this.binder;
+    }  */
+/*
+    @Override
+    public IUseCaseBinderBuilder<Up, IUseCaseBuilder<?,?>> bind(Object supplier) throws DslException {
+        if (this.binder == null) {
+            this.binder = new UseCaseBinderBuilder<Up, IUseCaseBuilder<?,?>>(this,
+                    new FixedObjectSupplier<>(supplier));
         }
         return this.binder;
     }
 
     @Override
-    public IUseCaseBinderBuilder<IUseCaseBuilder<Up>> bind(Object supplier) throws BuilderException {
-        if (this.binder == null) {
-            this.binder = new UseCaseBinderBuilder<Up>(this,
-                    new FixedObjectSupplierBuilder<>(supplier));
-        }
-        return this.binder;
-    }
-
-    @Override
-    public IUseCaseBinderBuilder<IUseCaseBuilder<Up>> bind() {
+    public IUseCaseBinderBuilder<Up, IUseCaseBuilder<?,?>> bind() {
         Objects.requireNonNull(this.binder, "Binder must be set ");
         return this.binder;
-    }
+    } */
 
-    @Override
+ /*    @Override
     protected IUseCaseContext doBuild() {
         return new UseCaseContext(
                 this.useCaseName,
@@ -106,10 +100,50 @@ public class UseCaseBuilder<Up> extends AbstractAutomaticLinkedBuilder<IUseCaseC
                 this.useCaseInput,
                 this.useCaseOutput);
     }
-
+ */
     @Override
     protected void doAutoDetection() {
 
     }
+
+    @Override
+    public IUseCaseBinderBuilder<I, O, E> bind(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier)
+            throws DslException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'bind'");
+    }
+
+    @Override
+    public IUseCaseBinderBuilder<I, O, E> bind(Object object) throws DslException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'bind'");
+    }
+
+    @Override
+    public IUseCaseBinderBuilder<I, O, E> bind() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'bind'");
+    }
+
+    @Override
+    public IUseCaseSecurityBuilder<I, O, E> security() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'security'");
+    }
+
+    @Override
+    protected IUseCase<I, O> doBuild() throws DslException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
+    }
+
+   /*  @Override
+    public IUseCaseBinderBuilder<Object, IMethodBinder<Object>, IUseCaseBuilder<?, ?>, IUseCaseBuilder<Up, IUseCaseBuilder<?, ?>>> bind(
+            IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws CoreException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'bind'");
+    } */
+
+   
 
 }

@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.garganttua.api.core.context.InfosHelper;
 import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecker;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.domain.IDomainsRegistry;
 import com.garganttua.api.spec.security.annotations.Authenticator;

@@ -10,24 +10,25 @@ import javax.annotation.Nonnull;
 
 import com.garganttua.api.core.context.application.DomainSecurityContext;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
-import com.garganttua.api.spec.engine.IAuthenticatorBuilder;
-import com.garganttua.api.spec.engine.IAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IAuthorizationProtocolBuilder;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.api.spec.engine.IUseCaseBuilder;
-import com.garganttua.api.spec.security.IDomainSecurityAuthorizationBuilder;
-import com.garganttua.api.spec.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
-import com.garganttua.api.spec.security.IKeyBuilder;
-import com.garganttua.api.spec.service.Access;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.supply.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.query.IObjectQuery;
 
 public class DomainSecurityBuilder
         extends AbstractAutomaticLinkedBuilder<IDomainSecurityContext, IDomainSecurityBuilder, IDomainBuilder>
         implements IDomainSecurityBuilder {
 
-    private @Nonnull List<IObjectSupplierBuilder<?>> interfaces;
+    private @Nonnull List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces;
     private Access creationAccess;
     private Access readAllAccess;
     private Access readOneAccess;
@@ -43,14 +44,14 @@ public class DomainSecurityBuilder
     private IDomainSecurityAuthorizationBuilder domainSecurityAuthorizationBuilder;
     private boolean disabled = false;
     private IAuthorizationBuilder authorization;
-    private IGGObjectQuery objectQuery;
+    private IObjectQuery objectQuery;
     private Class<?> entityClass;
-    private Map<IObjectSupplierBuilder<?>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
+    private Map<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
     private IAuthenticatorBuilder authenticator;
     private IKeyBuilder key;
 
-    public DomainSecurityBuilder(IDomainBuilder domainBuilder, List<IObjectSupplierBuilder<?>> interfaces,
-            IGGObjectQuery objectQuery, Class<?> entityClass) {
+    public DomainSecurityBuilder(IDomainBuilder domainBuilder, List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces,
+            IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
@@ -166,11 +167,11 @@ public class DomainSecurityBuilder
 
     @Override
     public IDomainSecurityBuilder authorizationProtocol(Class<?> interfaceClass,
-            IAuthorizationProtocolBuilder protocole) throws BuilderException {
+            IAuthorizationProtocolBuilder protocole) throws DslException {
 
-        Optional<IObjectSupplierBuilder<?>> interfaceObjectSupplierBuilder = this.interfaces.stream()
+        Optional<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
                 .filter(inter -> interfaceClass.isAssignableFrom(inter.getObjectClass())).findFirst();
-        interfaceObjectSupplierBuilder.orElseThrow(() -> new BuilderException(
+        interfaceObjectSupplierBuilder.orElseThrow(() -> new DslException(
                 "Interface object supplier builder not found for class " + interfaceClass.getSimpleName()));
         this.authorizationProtocols.put(interfaceObjectSupplierBuilder.get(), protocole);
 

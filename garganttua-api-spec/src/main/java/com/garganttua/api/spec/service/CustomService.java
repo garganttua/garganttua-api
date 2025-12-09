@@ -5,7 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.spec.Method;
+import com.garganttua.api.spec.context.Scope;
+import com.garganttua.api.spec.context.TechnicalOperation;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -15,9 +16,9 @@ public @interface CustomService {
 	
 	Class<?> entity();
 	
-	boolean actionOnAllEntities();
+	Scope scope();
 	
-	Method method();
+	TechnicalOperation operation();
 
 	String description() default "";
 

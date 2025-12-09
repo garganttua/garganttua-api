@@ -15,10 +15,10 @@ import org.geojson.Point;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.entity.exceptions.EntityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.entity.EntityInfos;
 import com.garganttua.api.spec.entity.IEntityDeleteMethod;
 import com.garganttua.api.spec.entity.IEntitySaveMethod;
@@ -60,11 +60,11 @@ import com.garganttua.api.spec.entity.annotations.EntityUnicity;
 import com.garganttua.api.spec.entity.annotations.EntityUuid;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -228,25 +228,25 @@ public class EntityChecker {
 								EntityShare.class, String.class),
 						((EntityShared) sharedAnnotation).share(), String.class, EntityShare.class);
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			log.atWarn().log("Error ", e);
 			throw new EntityException(e);
 		}
 
 		try {
-			IGGObjectQuery q = GGObjectQueryFactory.objectQuery(entityClass);
-			Map<GGObjectAddress, String> output = updateAuthorizations.entrySet().stream()
+			IObjectQuery q = ObjectQueryFactory.objectQuery(entityClass);
+			Map<ObjectAddress, String> output = updateAuthorizations.entrySet().stream()
 					.collect(Collectors.toMap(e -> {
 						try {
 							return q.address(e.getKey());
-						} catch (GGReflectionException e1) {
+						} catch (ReflectionException e1) {
 							e1.printStackTrace();
 						}
 						return null;
 					}, Map.Entry::getValue));
 
 			List<Pair<String, UnicityScope>> unicityFields = unicityFieldsTemp.stream().map(str -> {
-				GGObjectAddress address;
+				ObjectAddress address;
 				try {
 					address = q.address(str);
 					List<Object> struct = q.find(address);
@@ -254,7 +254,7 @@ public class EntityChecker {
 					EntityUnicity annot = f.getAnnotation(EntityUnicity.class);
 					UnicityScope scope = annot.scope();
 					return new Pair<String, UnicityScope>(str, scope);
-				} catch (GGReflectionException e1) {
+				} catch (ReflectionException e1) {
 					e1.printStackTrace();
 				}
 				return null;
@@ -280,16 +280,16 @@ public class EntityChecker {
 					q.address(engineFieldAddress), mandatoryFields.stream().map(s -> {
 						try {
 							return q.address(s);
-						} catch (GGReflectionException e1) {
+						} catch (ReflectionException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
 						return null;
 					}).collect(Collectors.toList()), unicityFields.stream().map(p -> {
 						try {
-							return new Pair<GGObjectAddress, UnicityScope>(q.address(p.getValue0()),
+							return new Pair<ObjectAddress, UnicityScope>(q.address(p.getValue0()),
 									p.getValue1());
-						} catch (GGReflectionException e1) {
+						} catch (ReflectionException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
 						}
@@ -306,7 +306,7 @@ public class EntityChecker {
 			EntityChecker.infos.put(entityClass, entityInfos);
 
 			return entityInfos;
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			log.atWarn().log("Error ", e);
 			throw new EntityException(e);
 		}
@@ -400,7 +400,7 @@ public class EntityChecker {
 						"Entity " + entityClass.getSimpleName() + " does not have any method annotated with @"
 								+ annotation.getSimpleName());
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EntityException(CoreExceptionCode.ENTITY_DEFINITION, "Entity " + entityClass.getSimpleName()
 					+ " does not have any method annotated with @" + annotation.getSimpleName(), e);
 		}
@@ -419,7 +419,7 @@ public class EntityChecker {
 						"Entity " + entityClass.getSimpleName() + " does not have any field annotated with @"
 								+ annotation.getSimpleName());
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EntityException(CoreExceptionCode.ENTITY_DEFINITION, "Entity " + entityClass.getSimpleName()
 					+ " does not have any field annotated with @" + annotation.getSimpleName(), e);
 		}
@@ -443,8 +443,8 @@ public class EntityChecker {
 			throws EntityException {
 		try {
 
-			List<Object> obj = GGObjectQueryFactory.objectQuery(entityClass)
-					.find(GGObjectQueryFactory.objectQuery(entityClass).address(fieldAddress));
+			List<Object> obj = ObjectQueryFactory.objectQuery(entityClass)
+					.find(ObjectQueryFactory.objectQuery(entityClass).address(fieldAddress));
 
 			Field field = (Field) obj.get(obj.size() - 1);
 			if (!field.getType().equals(fieldType)) {
@@ -454,7 +454,7 @@ public class EntityChecker {
 			} else {
 				return fieldAddress;
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EntityException(CoreExceptionCode.ENTITY_DEFINITION,
 					"Entity " + entityClass.getSimpleName() + " does not have field " + fieldAddress);
 		}

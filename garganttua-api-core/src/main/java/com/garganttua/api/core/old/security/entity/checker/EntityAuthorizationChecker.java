@@ -9,8 +9,8 @@ import java.util.Map;
 
 import com.garganttua.api.core.entity.checker.EntityChecker;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.entity.annotations.EntityId;
 import com.garganttua.api.spec.entity.annotations.EntityOwned;
 import com.garganttua.api.spec.entity.annotations.EntityOwnerId;
@@ -33,9 +33,9 @@ import com.garganttua.api.spec.security.annotations.AuthorizationValidateAgainst
 import com.garganttua.api.spec.security.annotations.AuthorizationValidateRefreshToken;
 import com.garganttua.api.spec.security.authorization.AuthorizationInfos;
 import com.garganttua.api.spec.security.key.IKeyRealm;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -142,9 +142,9 @@ public class EntityAuthorizationChecker {
 					+ " must have one constructor with parameters (String uuid, String id, String tenantId, String ownerUuid, List<String> authorities, Date creationDate, Date expirationDate)");
 		}
 
-		IGGObjectQuery q;
+		IObjectQuery q;
 		try {
-			q = GGObjectQueryFactory.objectQuery(entityClass);
+			q = ObjectQueryFactory.objectQuery(entityClass);
 
 			AuthorizationInfos authorizationInfos = new AuthorizationInfos(signable, renewable,
 					completeConstructor,
@@ -161,7 +161,7 @@ public class EntityAuthorizationChecker {
 			EntityAuthorizationChecker.infos.put(entityClass, authorizationInfos);
 
 			return authorizationInfos;
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(e);
 		}
 	}

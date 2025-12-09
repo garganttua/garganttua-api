@@ -10,11 +10,11 @@ import com.garganttua.api.core.entity.exceptions.EntityException;
 import com.garganttua.api.core.entity.methods.EntityDeleteMethod;
 import com.garganttua.api.core.entity.methods.EntitySaveMethod;
 import com.garganttua.api.core.entity.tools.EntityHelper;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.factory.EntityIdentifier;
 import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.filter.IFilter;
@@ -22,11 +22,11 @@ import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.updater.IEntityUpdater;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.injection.IGGInjector;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.injection.IGGInjector;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -41,9 +41,9 @@ public class Factory implements IFactory {
 	@Setter
 	private IDomain domain;
 
-	private IGGObjectQuery objectQuery;
+	private IObjectQuery objectQuery;
 
-	private GGObjectAddress afterGetMethodAddress;
+	private ObjectAddress afterGetMethodAddress;
 	
 	@Setter
 	private IRepository repository;
@@ -61,8 +61,8 @@ public class Factory implements IFactory {
 
 		this.afterGetMethodAddress = this.domain.getAfterGetMethodAddress();
 		try {
-			this.objectQuery = GGObjectQueryFactory.objectQuery(domain.getEntityClass());
-		} catch (GGReflectionException e) {
+			this.objectQuery = ObjectQueryFactory.objectQuery(domain.getEntityClass());
+		} catch (ReflectionException e) {
 			CoreException.processException(e);
 		}
 	}
@@ -150,7 +150,7 @@ public class Factory implements IFactory {
 			if( this.afterGetMethodAddress != null ) {
 				this.objectQuery.invoke(entity, this.afterGetMethodAddress, caller, customParameters);
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			try {
 				log.warn("[Domain ["+this.domain.getDomain()+"]] "+caller.toString()+" Error during processing AfterGet Method on entity with uuid "+EntityHelper.getUuid(entity));
 			} catch (EntityException e1) {
@@ -183,7 +183,7 @@ public class Factory implements IFactory {
 			try {
 				this.injector.get().injectBeans(entity);
 				this.injector.get().injectProperties(entity);
-			} catch (GGReflectionException e) {
+			} catch (ReflectionException e) {
 				CoreException.processException(e);
 				//should be never reached
 				return ;

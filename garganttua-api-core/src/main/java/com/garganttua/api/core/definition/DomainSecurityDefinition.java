@@ -1,6 +1,6 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.service.Access;
+import com.garganttua.api.spec.context.Access;
 
 public record DomainSecurityDefinition(
     Access creationAccess,

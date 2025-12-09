@@ -12,24 +12,25 @@ import javax.annotation.Nonnull;
 
 import com.garganttua.api.core.context.application.RepositoryException;
 import com.garganttua.api.core.mapper.DefaultMapper;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IDomainDtoContext;
+import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.objects.mapper.GGMapperException;
-import com.garganttua.objects.mapper.IGGMapper;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.mapper.MapperException;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Repository implements IRepository {
-    protected List<IDomainDtoContext> dtoContexts;
-    private final IGGMapper mapper = DefaultMapper.mapper();
+
+    private List<IDtoContext<?>> dtoContexts;
+    private final IMapper mapper = DefaultMapper.mapper();
     private final @Nonnull Class<?> entityClass;
 
-    public Repository(List<IDomainDtoContext> dtoContexts, Class<?> entityClass) {
+    public Repository(List<IDtoContext<?>> dtoContexts, Class<?> entityClass) {
         this.dtoContexts = Objects.requireNonNull(dtoContexts, "Dto contexts cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
         log.atInfo().log("Repository initialized with {} DTO contexts and entity class {}", dtoContexts.size(),
@@ -68,7 +69,8 @@ public class Repository implements IRepository {
         return entities;
     }
 
-    private Map<String, Object> buildDtoMap(IDomainDtoContext context, Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) {
+    private Map<String, Object> buildDtoMap(IDtoContext<?> context, Optional<IPageable> pageable, Optional<IFilter> filter,
+            Optional<ISort> sort) {
         log.atTrace().log("Building DTO map for context {}", context.getClass().getSimpleName());
         Map<String, Object> map = new HashMap<>();
 
@@ -100,7 +102,7 @@ public class Repository implements IRepository {
                         : mapper.map(dto, entity);
                 log.atTrace().log("Mapped DTO {} into entity {}", dto.getClass().getSimpleName(),
                         entity.getClass().getSimpleName());
-            } catch (GGMapperException e) {
+            } catch (MapperException e) {
                 log.atError().setCause(e).log("Mapping failed for DTO {}", dto);
                 return null;
             }
@@ -111,7 +113,7 @@ public class Repository implements IRepository {
     }
 
     public static Map<String, List<Object>> mergeMaps(List<Map<String, Object>> maps, boolean strict)
-            throws RepositoryException {
+            throws CoreException {
 
         log.atTrace().log("Merging {} maps (strict={})", maps.size(), strict);
         Map<String, List<Object>> result = new HashMap<>();
@@ -128,7 +130,7 @@ public class Repository implements IRepository {
                     String message = String.format("Key '%s' has %d elements, expected %d", key, list.size(),
                             expectedSize);
                     log.atError().log(message);
-                    throw new IllegalStateException(message);
+                    throw new RepositoryException(message);
                 }
             });
         }

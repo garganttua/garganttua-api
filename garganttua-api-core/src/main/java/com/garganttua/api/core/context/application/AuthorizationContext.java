@@ -1,13 +1,13 @@
 package com.garganttua.api.core.context.application;
 
-import com.garganttua.api.spec.engine.IAuthorizationContext;
-import com.garganttua.api.spec.engine.IAuthorizationMethodBinderBuilder;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.api.spec.context.IAuthorizationContext;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationMethodBinderBuilder;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public class AuthorizationContext implements IAuthorizationContext {
 
-    public AuthorizationContext(GGObjectAddress type, GGObjectAddress revoked, GGObjectAddress creation,
-            GGObjectAddress expiration, GGObjectAddress authorities, IAuthorizationMethodBinderBuilder toByteArray,
+    public AuthorizationContext(ObjectAddress type, ObjectAddress revoked, ObjectAddress creation,
+            ObjectAddress expiration, ObjectAddress authorities, IAuthorizationMethodBinderBuilder toByteArray,
             IAuthorizationMethodBinderBuilder validate, IAuthorizationMethodBinderBuilder validateAgainst,
             IAuthorizationMethodBinderBuilder fromByteArray, Object signable,
             Object refreshable, boolean storable) {

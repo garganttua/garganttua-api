@@ -3,16 +3,16 @@ package com.garganttua.api.core.builder;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import com.garganttua.api.core.context.application.AuthenticatorAuthorizationContext;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationContext;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationKeyBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorBuilder;
-import com.garganttua.api.spec.engine.IDomainBuilder;
+import com.garganttua.api.spec.context.IAuthenticatorAuthorizationContext;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
 
 public class AuthenticatorAuthorizationBuilder extends
-        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationContext, IAuthenticatorAuthorizationBuilder, IAuthenticatorBuilder>
+        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationBuilder, IAuthenticatorBuilder, IAuthenticatorAuthorizationContext>
         implements IAuthenticatorAuthorizationBuilder {
 
     private Integer duration;
@@ -47,17 +47,19 @@ public class AuthenticatorAuthorizationBuilder extends
     }
 
     @Override
-    protected IAuthenticatorAuthorizationContext doBuild() throws CoreException {
-        return new AuthenticatorAuthorizationContext(this.duration,
+    protected IAuthenticatorAuthorizationContext doBuild() throws DslException {
+        /* return new AuthenticatorAuthorizationContext(this.duration,
                 this.unit,
                 this.refreshDuration,
                 this.refreshUnit,
-                this.keyDomain.build(), this.authenticatorAuthorizationKey.build());
+                this.keyDomain.build(), this.authenticatorAuthorizationKey.build()); */
+                 throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
     }
 
     @Override
-    protected void doAutoDetection() {
-
+    protected void doAutoDetection() throws DslException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
     }
 
 }

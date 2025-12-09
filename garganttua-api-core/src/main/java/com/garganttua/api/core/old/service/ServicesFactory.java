@@ -11,8 +11,8 @@ import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.service.IService;
 import com.garganttua.api.spec.service.IServicesRegistry;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.beans.IGGBeanLoader;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,12 +28,12 @@ public class ServicesFactory {
 		this.loader = loader;
 		try {
 			this.collectService();
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new EngineException(e);
 		}
 	}
 
-	private void collectService() throws GGReflectionException {
+	private void collectService() throws ReflectionException {
 		log.info("*** Creating Services ...");
 		for( IDomain domain: this.domains ) {
 			

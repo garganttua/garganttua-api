@@ -11,11 +11,11 @@ import com.garganttua.api.core.entity.tools.EntityHelper;
 import com.garganttua.api.core.filter.Literal;
 import com.garganttua.api.core.security.ExpirationTools;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.EncryptionMode;
@@ -27,7 +27,7 @@ import com.garganttua.api.spec.service.ReadOutputMode;
 import com.garganttua.api.spec.service.ServiceResponseCode;
 import com.garganttua.api.spec.service.IService;
 import com.garganttua.api.spec.service.IServiceResponse;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -113,10 +113,10 @@ public class KeyHelper {
 
 	private static IFilter buildFilterForKeyRealm(String realmName, KeyAlgorithm algorithm,
 			IDomain domain) {
-		GGObjectAddress idFieldAddress = domain.getIdFieldAddress();
-		GGObjectAddress expirationFieldAddress = KeyRealm.getExpirationFieldAddress();
-		GGObjectAddress revokedFieldAddress = KeyRealm.getRevokedFieldAddress();
-		GGObjectAddress algorithmFieldAddress = KeyRealm.getAlgorithmFieldAddress();
+		ObjectAddress idFieldAddress = domain.getIdFieldAddress();
+		ObjectAddress expirationFieldAddress = KeyRealm.getExpirationFieldAddress();
+		ObjectAddress revokedFieldAddress = KeyRealm.getRevokedFieldAddress();
+		ObjectAddress algorithmFieldAddress = KeyRealm.getAlgorithmFieldAddress();
 		Literal idFilter = Literal.eq(idFieldAddress.toString(), realmName);
 		Literal expirationFilter = Literal.gt(expirationFieldAddress.toString(), new Date());
 		Literal revokedFilter = Literal.eq(revokedFieldAddress.toString(), false);
@@ -129,8 +129,8 @@ public class KeyHelper {
 		
 		IDomain domain = keyService.getDomain();
 		
-		GGObjectAddress idFieldAddress = domain.getIdFieldAddress();
-		GGObjectAddress revokedFieldAddress = KeyRealm.getRevokedFieldAddress();
+		ObjectAddress idFieldAddress = domain.getIdFieldAddress();
+		ObjectAddress revokedFieldAddress = KeyRealm.getRevokedFieldAddress();
 		Literal revokedFilter = Literal.eq(revokedFieldAddress.toString(), false);
 		Literal idFilter = Literal.eq(idFieldAddress.toString(), realmName);
 		

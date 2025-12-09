@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.security.EntitySecurityInfos;
 import com.garganttua.api.spec.security.annotations.Authenticator;
 import com.garganttua.api.spec.security.annotations.Authorization;

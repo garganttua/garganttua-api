@@ -2,8 +2,8 @@ package com.garganttua.api.core.security.engine;
 
 import com.garganttua.api.core.security.authentication.AuthenticationHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.ITenantVerifier;
 import com.garganttua.api.spec.service.ServiceAccess;

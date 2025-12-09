@@ -2,9 +2,7 @@ package com.garganttua.api.spec.factory;
 
 import java.util.List;
 
-import com.garganttua.api.spec.engine.IEngineObject;
-
-public interface IFactoriesRegistry extends IEngineObject {
+public interface IFactoriesRegistry {
 
 	List<IFactory> getFactories();
 	

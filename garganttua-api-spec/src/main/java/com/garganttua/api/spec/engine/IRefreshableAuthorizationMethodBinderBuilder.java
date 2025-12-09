@@ -1,5 +1,0 @@
-package com.garganttua.api.spec.engine;
-
-public interface IRefreshableAuthorizationMethodBinderBuilder extends IMethodBinderBuilder<IRefreshableAuthorizationMethodBinderBuilder, IRefreshableAuthorizationBuilder>{
-
-}

@@ -16,8 +16,8 @@ import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.entity.exceptions.EntityException;
 import com.garganttua.api.core.entity.tools.EntityHelper;
 import com.garganttua.api.core.filter.Literal;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.entity.IEntitySaveMethod;
@@ -26,10 +26,10 @@ import com.garganttua.api.spec.factory.EntityIdentifier;
 import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.updater.IEntityUpdater;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,10 +38,10 @@ public class EntitySaveMethod implements IEntitySaveMethod {
 
   private IDomain domain;
   private IRepository repository;
-  private GGObjectAddress afterUpdateMethodAddress;
-  private GGObjectAddress beforeUpdateMethodAddress;
-  private GGObjectAddress afterCreateMethodAddress;
-  private GGObjectAddress beforeCreateMethodAddress;
+  private ObjectAddress afterUpdateMethodAddress;
+  private ObjectAddress beforeUpdateMethodAddress;
+  private ObjectAddress afterCreateMethodAddress;
+  private ObjectAddress beforeCreateMethodAddress;
   private IEntityUpdater entityUpdater;
   private IFactory factory;
 
@@ -91,7 +91,7 @@ public class EntitySaveMethod implements IEntitySaveMethod {
 
         return entity;
       }
-    } catch (GGReflectionException e) {
+    } catch (ReflectionException e) {
       CoreException.processException(e);
 
       // Should never be reached
@@ -100,10 +100,10 @@ public class EntitySaveMethod implements IEntitySaveMethod {
   }
 
   private void updateEntity(ICaller caller, Map<String, String> customParameters, Object entity)
-      throws CoreException, GGReflectionException {
+      throws CoreException, ReflectionException {
     log.info("[domain [" + domain.getDomain() + "]] " + caller.toString()
         + " Updating entity with Uuid " + EntityHelper.getUuid(entity));
-    IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
+    IObjectQuery objectQuery = ObjectQueryFactory.objectQuery(entity);
     this.applyUpdateUnicityRule(domain, repository, caller, entity);
     if (this.beforeUpdateMethodAddress != null) {
       objectQuery.invoke(entity, this.beforeUpdateMethodAddress, caller, customParameters);
@@ -132,8 +132,8 @@ public class EntitySaveMethod implements IEntitySaveMethod {
   }
 
   private void createEntity(ICaller caller, Map<String, String> customParameters, Object entity)
-      throws CoreException, GGReflectionException {
-    IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
+      throws CoreException, ReflectionException {
+    IObjectQuery objectQuery = ObjectQueryFactory.objectQuery(entity);
     this.applyTenantEntityRule(domain, caller, entity);
 
     log.info("[domain [" + domain.getDomain() + "]] " + caller.toString()
@@ -182,9 +182,9 @@ public class EntitySaveMethod implements IEntitySaveMethod {
                 "Invalid ownerId [" + ownerId + "] should be of format DOMAIN:UUID");
           }
 
-          GGObjectQueryFactory.objectQuery(entity).setValue(domain.getOwnerIdFieldAddress(),
+          ObjectQueryFactory.objectQuery(entity).setValue(domain.getOwnerIdFieldAddress(),
               ownerId);
-        } catch (GGReflectionException e) {
+        } catch (ReflectionException e) {
           CoreException.processException(e);
 
           // Should never be reached
@@ -217,12 +217,12 @@ public class EntitySaveMethod implements IEntitySaveMethod {
     }
   }
 
-  protected void checkMandatoryFields(List<GGObjectAddress> mandatory, Object entity) throws CoreException {
+  protected void checkMandatoryFields(List<ObjectAddress> mandatory, Object entity) throws CoreException {
 
-    for (GGObjectAddress field : mandatory) {
+    for (ObjectAddress field : mandatory) {
       try {
 
-        IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
+        IObjectQuery objectQuery = ObjectQueryFactory.objectQuery(entity);
         Object value = objectQuery.getValue(field);
 
         if (value == null) {
@@ -230,7 +230,7 @@ public class EntitySaveMethod implements IEntitySaveMethod {
         } else if (value.toString().isEmpty()) {
           throw new EntityException(CoreExceptionCode.BAD_REQUEST, "Field " + field + " is mandatory");
         }
-      } catch (IllegalArgumentException | GGReflectionException e) {
+      } catch (IllegalArgumentException | ReflectionException e) {
         CoreException.processException(e);
 
         // Should never be reached
@@ -240,17 +240,17 @@ public class EntitySaveMethod implements IEntitySaveMethod {
   }
 
   private List<Object> checkUnicityFields(IDomain domain, IRepository repository, ICaller caller,
-      Object entity, List<Pair<GGObjectAddress, UnicityScope>> unicity) throws CoreException {
+      Object entity, List<Pair<ObjectAddress, UnicityScope>> unicity) throws CoreException {
     try {
-      IGGObjectQuery objectQuery = GGObjectQueryFactory.objectQuery(entity);
+      IObjectQuery objectQuery = ObjectQueryFactory.objectQuery(entity);
 
-      List<GGObjectAddress> systemScopeUnicities = unicity.stream().filter(u -> {
+      List<ObjectAddress> systemScopeUnicities = unicity.stream().filter(u -> {
         return u.getValue1() == UnicityScope.system;
       }).map(u -> {
         return u.getValue0();
       }).collect(Collectors.toList());
 
-      List<GGObjectAddress> tenantScopeUnicities = unicity.stream().filter(u -> {
+      List<ObjectAddress> tenantScopeUnicities = unicity.stream().filter(u -> {
         return u.getValue1() == UnicityScope.tenant;
       }).map(u -> {
         return u.getValue0();
@@ -263,7 +263,7 @@ public class EntitySaveMethod implements IEntitySaveMethod {
       
       return mergeListsWithoutDuplicates(tenantScopeResult, systemScopeResult);
 
-    } catch (GGReflectionException e) {
+    } catch (ReflectionException e) {
       log.error("[domain [" + domain.getDomain() + "]] " + caller.toString()
           + " Error during checking unicity fields for entity with Uuid " + EntityHelper.getUuid(entity), e);
       CoreException.processException(e);
@@ -294,15 +294,15 @@ public class EntitySaveMethod implements IEntitySaveMethod {
     }
   }
 
-  private List<Object> getUnicities(IRepository repository, ICaller caller, List<GGObjectAddress> unicity,
-      IGGObjectQuery objectQuery) throws GGReflectionException, CoreException, EngineException {
+  private List<Object> getUnicities(IRepository repository, ICaller caller, List<ObjectAddress> unicity,
+      IObjectQuery objectQuery) throws ReflectionException, CoreException, EngineException {
 
 	  if( unicity.size() == 0 ) {
 		  return List.of();
 	  }
 	  
     List<String> values = new ArrayList<String>();
-    for (GGObjectAddress fieldName : unicity) {
+    for (ObjectAddress fieldName : unicity) {
       values.add(objectQuery.getValue(fieldName).toString());
     }
     String[] fieldValues = new String[values.size()];

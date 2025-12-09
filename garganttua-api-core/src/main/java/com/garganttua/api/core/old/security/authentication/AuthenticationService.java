@@ -21,11 +21,11 @@ import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.core.security.key.KeyHelper;
 import com.garganttua.api.core.service.ServiceResponse;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.security.authentication.IAuthenticationFactory;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
@@ -42,7 +42,7 @@ import com.garganttua.api.spec.sort.SortDirection;
 import com.garganttua.executor.chain.GGExecutorChain;
 import com.garganttua.executor.chain.GGExecutorException;
 import com.garganttua.executor.chain.IGGExecutorChain;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -355,8 +355,8 @@ public class AuthenticationService implements IAuthenticationService {
 	}
 
 	private IFilter buildFilterAuthorization(AuthorizationInfos infos) {
-		GGObjectAddress expirationFieldAddress = infos.expirationFieldAddress();
-		GGObjectAddress revokedFieldAddress = infos.revokedFieldAddress();
+		ObjectAddress expirationFieldAddress = infos.expirationFieldAddress();
+		ObjectAddress revokedFieldAddress = infos.revokedFieldAddress();
 		Literal expirationFilter = Literal.gt(expirationFieldAddress.toString(), new Date());
 		Literal revokedFilter = Literal.eq(revokedFieldAddress.toString(), false);
 		return Literal.and(expirationFilter, revokedFilter);

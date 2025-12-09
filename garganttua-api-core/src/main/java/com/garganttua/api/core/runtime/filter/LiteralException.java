@@ -1,7 +1,7 @@
 package com.garganttua.api.core.runtime.filter;
 
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 
 public class LiteralException extends CoreException {
 

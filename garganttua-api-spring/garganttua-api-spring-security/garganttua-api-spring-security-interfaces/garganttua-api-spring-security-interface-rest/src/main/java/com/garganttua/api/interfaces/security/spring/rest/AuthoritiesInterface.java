@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.garganttua.api.security.spring.core.ISpringSecurityRestConfigurer;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IEngine;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 

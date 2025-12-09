@@ -8,12 +8,12 @@ import java.util.Set;
 import com.garganttua.api.core.dto.exceptions.DtoException;
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.entity.exceptions.EntityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.domain.IDomainsRegistry;
 import com.garganttua.api.spec.entity.annotations.Entity;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 

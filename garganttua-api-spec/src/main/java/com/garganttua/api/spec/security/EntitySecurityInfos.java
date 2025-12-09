@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.api.spec.EntityOperation;
+import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
-import com.garganttua.api.spec.service.ServiceAccess;
 import com.garganttua.api.spec.service.IServiceInfos;
 
 import lombok.AllArgsConstructor;
@@ -18,13 +18,13 @@ import lombok.Getter;
 @AllArgsConstructor
 public class EntitySecurityInfos {
 
-	private ServiceAccess creationAccess;
-	private ServiceAccess readAllAccess;
-	private ServiceAccess readOneAccess;
-	private ServiceAccess updateOneAccess;
-	private ServiceAccess deleteOneAccess;
-	private ServiceAccess deleteAllAccess;
-	private ServiceAccess countAccess;
+	private Access creationAccess;
+	private Access readAllAccess;
+	private Access readOneAccess;
+	private Access updateOneAccess;
+	private Access deleteOneAccess;
+	private Access deleteAllAccess;
+	private Access countAccess;
 	private boolean creationAuthority;
 	private boolean readAllAuthority;
 	private boolean readOneAuthority;
@@ -39,7 +39,7 @@ public class EntitySecurityInfos {
 	private Class<?>[] authorizationProtocols;
 	private String domainName;
 
-	private Map<EntityOperation, IAccessRule> accessRules = new HashMap<EntityOperation, IAccessRule>();
+	private Map<Operation, IAccessRule> accessRules = new HashMap<>();
 
 	public void addAccessRules(List<IAccessRule> rules) {
 		rules.forEach(rule -> {
@@ -125,17 +125,17 @@ public class EntitySecurityInfos {
 		return this.authorizations;
 	}
 	
-	public ServiceAccess getAccess(IServiceInfos infos) {
+	public Access getAccess(IServiceInfos infos) {
 		IAccessRule rule = this.accessRules.get(infos.getOperation());
 		if (rule != null)
 			return rule.getAccess();
 
-		return ServiceAccess.tenant;
+		return Access.tenant;
 	}
 
-	public EntitySecurityInfos(ServiceAccess creationAccess, ServiceAccess readAllAccess,
-			ServiceAccess readOneAccess, ServiceAccess updateOneAccess, ServiceAccess deleteOneAccess,
-			ServiceAccess deleteAllAccess, ServiceAccess countAccess, boolean creationAuthority,
+	public EntitySecurityInfos(Access creationAccess, Access readAllAccess,
+			Access readOneAccess, Access updateOneAccess, Access deleteOneAccess,
+			Access deleteAllAccess, Access countAccess, boolean creationAuthority,
 			boolean readAllAuthority, boolean readOneAuthority, boolean updateOneAuthority, boolean deleteOneAuthority,
 			boolean deleteAllAuthority, boolean countAuthority, boolean isAuthenticatorEntity, AuthenticatorScope authenticatorScope, boolean isAuthorizationEntity,
 			Class<?>[] authorizations, Class<?>[] authorizationProtocols,

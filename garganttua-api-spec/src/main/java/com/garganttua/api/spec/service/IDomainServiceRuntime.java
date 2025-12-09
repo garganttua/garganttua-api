@@ -2,8 +2,8 @@ package com.garganttua.api.spec.service;
 
 import java.util.Map;
 
-import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.engine.IExecutionContext;
+import com.garganttua.api.spec.context.IExecutionContext;
+import com.garganttua.api.spec.context.Operation;
 
 public interface IDomainServiceRuntime {
 
@@ -27,6 +27,6 @@ public interface IDomainServiceRuntime {
 			IExecutionContext executionContext);
 
 	IServiceResponse executeServiceCommand(IExecutionContext executionContext, Allowed allowed, IServiceCommand command,
-			Map<String, String> customParameters, EntityOperation operation);
+			Map<String, String> customParameters, Operation operation);
 
 }

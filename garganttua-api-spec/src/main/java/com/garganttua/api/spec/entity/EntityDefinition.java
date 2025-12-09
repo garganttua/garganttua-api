@@ -7,36 +7,36 @@ import java.util.Objects;
 import org.javatuples.Pair;
 
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public record EntityDefinition(
 		String domain,
-		GGObjectAddress uuidFieldAddress,
-		GGObjectAddress idFieldAddress,
+		ObjectAddress uuidFieldAddress,
+		ObjectAddress idFieldAddress,
 		boolean tenantEntity,
 		boolean ownerEntity,
 		boolean ownedEntity,
-		GGObjectAddress tenantIdFieldAddress,
-		GGObjectAddress superTenantFieldAddress,
-		GGObjectAddress ownerIdFieldAddress,
-		GGObjectAddress superOnwerIdFieldAddress,
+		ObjectAddress tenantIdFieldAddress,
+		ObjectAddress superTenantFieldAddress,
+		ObjectAddress ownerIdFieldAddress,
+		ObjectAddress superOnwerIdFieldAddress,
 		boolean publicEntity,
 		boolean hiddenableEntity,
-		GGObjectAddress hiddenFieldAddress,
+		ObjectAddress hiddenFieldAddress,
 		boolean geolocalizedEntity,
-		GGObjectAddress locationFieldAddress,
+		ObjectAddress locationFieldAddress,
 		boolean sharedEntity,
-		GGObjectAddress shareFieldAddress,
-		List<GGObjectAddress> mandatoryFields,
-		List<Pair<GGObjectAddress, UnicityScope>> unicityFields,
-		GGObjectAddress afterGetMethodAddress,
-		GGObjectAddress beforeCreateMethodAddress,
-		GGObjectAddress afterCreateMethodAddress,
-		GGObjectAddress beforeUpdateMethodAddress,
-		GGObjectAddress afterUpdateMethodAddress,
-		GGObjectAddress beforeDeleteMethodAddress,
-		GGObjectAddress afterDeleteMethodAddress,
-		Map<GGObjectAddress, String> updateAuthorizations) {
+		ObjectAddress shareFieldAddress,
+		List<ObjectAddress> mandatoryFields,
+		List<Pair<ObjectAddress, UnicityScope>> unicityFields,
+		ObjectAddress afterGetMethodAddress,
+		ObjectAddress beforeCreateMethodAddress,
+		ObjectAddress afterCreateMethodAddress,
+		ObjectAddress beforeUpdateMethodAddress,
+		ObjectAddress afterUpdateMethodAddress,
+		ObjectAddress beforeDeleteMethodAddress,
+		ObjectAddress afterDeleteMethodAddress,
+		Map<ObjectAddress, String> updateAuthorizations) {
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

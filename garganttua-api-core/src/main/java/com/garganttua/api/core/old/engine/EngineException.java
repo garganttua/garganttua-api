@@ -1,7 +1,7 @@
 package com.garganttua.api.core.engine;
 
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 
 public class EngineException extends CoreException {
 

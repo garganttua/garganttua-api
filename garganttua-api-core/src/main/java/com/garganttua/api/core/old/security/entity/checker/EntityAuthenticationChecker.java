@@ -6,7 +6,7 @@ import java.util.Map;
 
 import com.garganttua.api.core.entity.checker.EntityChecker;
 import com.garganttua.api.core.entity.exceptions.EntityException;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.entity.annotations.EntityOwnerId;
 import com.garganttua.api.spec.entity.annotations.EntityTenantId;
@@ -25,10 +25,10 @@ import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProc
 import com.garganttua.api.spec.security.authentication.AuthenticationInfos;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.service.IService;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -65,7 +65,7 @@ public class EntityAuthenticationChecker {
 		String securityPreProcessingMethodName = EntityChecker.getMethodAnnotationAndMethodParamsHaveGoodTypes(authenticationClass, AuthenticatorSecurityPreProcessing.class, true, void.class, ICaller.class, Object.class, GGObjectReflectionHelper.getParameterizedType(Map.class, String.class, String.class));
 		
 		try {
-			IGGObjectQuery q = GGObjectQueryFactory.objectQuery(authenticationClass);
+			IObjectQuery q = ObjectQueryFactory.objectQuery(authenticationClass);
 			AuthenticationInfos infos = new AuthenticationInfos(
 					authenticationClass,
 					q.address(autoritiesFieldName),
@@ -85,7 +85,7 @@ public class EntityAuthenticationChecker {
 			
 			EntityAuthenticationChecker.infos.put(authenticationClass, infos);
 			return infos;		
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			log.atWarn().log("Error ", e);
 			throw new EntityException(e);
 		}

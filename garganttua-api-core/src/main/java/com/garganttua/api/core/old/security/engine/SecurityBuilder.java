@@ -4,15 +4,15 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.api.core.engine.EngineException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
+import com.garganttua.api.spec.context.IEngine;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.security.ISecurityBuilder;
 import com.garganttua.api.spec.security.ISecurityEngine;
 import com.garganttua.api.spec.service.ServiceAccess;
-import com.garganttua.reflection.beans.IGGBeanLoader;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.core.reflection.beans.IGGBeanLoader;
+import com.garganttua.core.reflection.injection.IGGInjector;
 
 public class SecurityBuilder implements ISecurityBuilder {
 

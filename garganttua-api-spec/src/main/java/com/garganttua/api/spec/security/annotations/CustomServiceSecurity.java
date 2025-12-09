@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.spec.service.ServiceAccess;
+import com.garganttua.api.spec.context.Access;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -13,6 +13,6 @@ public @interface CustomServiceSecurity {
 	
 	boolean authority() default false;
 
-	ServiceAccess access();
+	Access access();
 
 }

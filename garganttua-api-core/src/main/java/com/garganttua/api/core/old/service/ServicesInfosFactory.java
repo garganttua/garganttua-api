@@ -9,7 +9,7 @@ import java.util.Set;
 
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.entity.tools.EntityHelper;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;

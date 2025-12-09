@@ -1,40 +1,36 @@
 package com.garganttua.api.core.builder;
 
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.authorization;
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.key;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
-import com.garganttua.api.core.builder.binder.RefreshableAuthorizationMethodBinderBuilder;
-import com.garganttua.api.core.builder.resolver.FieldResolver;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IRefreshableAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IRefreshableAuthorizationMethodBinderBuilder;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IRefreshableAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IRefreshableAuthorizationMethodBinderBuilder;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.fields.FieldResolver;
 
 public class RefreshableAuthorizationBuilder
-        extends AbstractAutomaticLinkedBuilder<Object, IRefreshableAuthorizationBuilder, IAuthorizationBuilder>
+        extends AbstractAutomaticLinkedBuilder<IRefreshableAuthorizationBuilder, IAuthorizationBuilder, Object>
         implements IRefreshableAuthorizationBuilder {
 
-    private @Nonnull IGGObjectQuery objectQuery;
+    private @Nonnull IObjectQuery objectQuery;
     private @Nonnull Class<?> entityClass;
-    private GGObjectAddress revoked;
-    private GGObjectAddress expiration;
-    private GGObjectAddress authorities;
+    private ObjectAddress revoked;
+    private ObjectAddress expiration;
+    private ObjectAddress authorities;
     private IRefreshableAuthorizationMethodBinderBuilder toByteArray;
     private IRefreshableAuthorizationMethodBinderBuilder validate;
     private IRefreshableAuthorizationMethodBinderBuilder validateAgainst;
 
-    public RefreshableAuthorizationBuilder(IAuthorizationBuilder authorizationBuilder, IGGObjectQuery objectQuery,
+    public RefreshableAuthorizationBuilder(IAuthorizationBuilder authorizationBuilder, IObjectQuery objectQuery,
             Class<?> entityClass) {
         super(authorizationBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
@@ -42,7 +38,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder expirable(GGObjectAddress fieldAddress) throws BuilderException {
+    public IRefreshableAuthorizationBuilder expirable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.expiration = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Instant.class);
@@ -51,7 +47,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder expirable(Field field) throws BuilderException {
+    public IRefreshableAuthorizationBuilder expirable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByField(field, this.entityClass, Instant.class);
@@ -60,7 +56,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder expirable(String fieldName) throws BuilderException {
+    public IRefreshableAuthorizationBuilder expirable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Instant.class);
@@ -69,7 +65,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder revokable(String fieldName) throws BuilderException {
+    public IRefreshableAuthorizationBuilder revokable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.revoked = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
@@ -78,7 +74,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder revokable(Field field) throws BuilderException {
+    public IRefreshableAuthorizationBuilder revokable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.revoked = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -87,7 +83,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder revokable(GGObjectAddress fieldAddress) throws BuilderException {
+    public IRefreshableAuthorizationBuilder revokable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.revoked = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
@@ -99,9 +95,9 @@ public class RefreshableAuthorizationBuilder
     public IRefreshableAuthorizationBuilder encode(Method method) throws CoreException {
         Objects.requireNonNull(method, "Method cannot be null");
 
-        this.toByteArray = new RefreshableAuthorizationMethodBinderBuilder(this,
+       /*  this.toByteArray = new RefreshableAuthorizationMethodBinderBuilder(this,
                 authorization(this.entityClass))
-                .method(method, Byte[].class);
+                .method(method, Byte[].class); */
 
         return this;
     }
@@ -110,21 +106,21 @@ public class RefreshableAuthorizationBuilder
     public IRefreshableAuthorizationBuilder encode(String methodName) throws CoreException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
-        this.toByteArray = new RefreshableAuthorizationMethodBinderBuilder(this,
+        /* this.toByteArray = new RefreshableAuthorizationMethodBinderBuilder(this,
                 authorization(this.entityClass))
-                .method(methodName, Byte[].class);
+                .method(methodName, Byte[].class); */
 
         return this;
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder encode(GGObjectAddress methodAddress) throws CoreException {
+    public IRefreshableAuthorizationBuilder encode(ObjectAddress methodAddress) throws CoreException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
-        this.toByteArray = new RefreshableAuthorizationMethodBinderBuilder(this,
+        /* this.toByteArray = new RefreshableAuthorizationMethodBinderBuilder(this,
                 authorization(this.entityClass))
                 .method(methodAddress, Byte[].class);
-
+ */
         return this;
     }
 
@@ -153,7 +149,7 @@ public class RefreshableAuthorizationBuilder
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder decode(GGObjectAddress fieldAddress) throws CoreException {
+    public IRefreshableAuthorizationBuilder decode(ObjectAddress fieldAddress) throws CoreException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'decode'");
     }

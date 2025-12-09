@@ -2,15 +2,15 @@ package com.garganttua.api.core.security.authentication;
 
 import java.util.Optional;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.security.authentication.AuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IAuthenticationFactory;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.service.IService;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.injection.IGGInjector;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,7 +51,7 @@ public class AuthenticationFactory implements IAuthenticationFactory {
 			try {
 				injector.injectBeans(authentication);
 				injector.injectProperties(authentication);
-			} catch (GGReflectionException e) {
+			} catch (ReflectionException e) {
 				log.atWarn().log( "Injection failed for authentication of type "+authentication.getClass().getSimpleName(), e);
 			}
 		});

@@ -2,19 +2,16 @@ package com.garganttua.api.spec.factory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.engine.IEngineObject;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.updater.IEntityUpdater;
-import com.garganttua.reflection.injection.IGGInjector;
+import com.garganttua.core.CoreException;
 
-public interface IFactory extends IEngineObject {
+public interface IFactory {
 
 	Object getEntityFromRepository(ICaller caller, Map<String, String> customParameters, EntityIdentifier identifier, String uuid) throws CoreException;
 
@@ -27,7 +24,6 @@ public interface IFactory extends IEngineObject {
 	void setRepository(IRepository repo);
 
 	void setEntityUpdater(IEntityUpdater updater);
-	
-	void setInjector(Optional<IGGInjector> injector);
+
 
 }

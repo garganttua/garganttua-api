@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.security.authenticator.IAuthenticatorInfosRegistry;
 import com.garganttua.api.spec.security.authenticator.IAuthenticatorServicesRegistry;

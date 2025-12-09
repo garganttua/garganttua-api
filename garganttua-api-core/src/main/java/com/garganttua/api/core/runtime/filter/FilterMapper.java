@@ -8,17 +8,17 @@ import org.javatuples.Pair;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.core.old.engine.EngineException;
 import com.garganttua.api.core.old.entity.tools.EntityHelper;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.dto.DtoInfos;
 import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.objects.mapper.GGMapper;
-import com.garganttua.objects.mapper.GGMapperException;
-import com.garganttua.objects.mapper.GGMappingConfiguration;
-import com.garganttua.objects.mapper.rules.GGMappingRule;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
+import com.garganttua.core.mapper.GGMapper;
+import com.garganttua.core.mapper.MapperException;
+import com.garganttua.core.mapper.GGMappingConfiguration;
+import com.garganttua.core.mapper.rules.GGMappingRule;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,7 +46,7 @@ public class FilterMapper implements IFilterMapper {
 				GGMappingConfiguration mappingConfiguration = this.mapper
 						.getMappingConfiguration(domain.getEntityClass(), destinationClass.getValue0());
 				mappingRules = mappingConfiguration.destinationRules();
-			} catch (GGMapperException e) {
+			} catch (MapperException e) {
 				throw new EngineException(e);
 			}
 			if (log.isDebugEnabled()) {
@@ -65,7 +65,7 @@ public class FilterMapper implements IFilterMapper {
 			Object dtoExample;
 			try {
 				dtoExample = this.mapper.map(entityExample, p.getValue0());
-			} catch (GGMapperException e) {
+			} catch (MapperException e) {
 				throw new EngineException(e);
 			}
 			this.setCorrespondingValuesToFilter(p.getValue1(), dtoExample);
@@ -82,8 +82,8 @@ public class FilterMapper implements IFilterMapper {
 			String fieldAddress = (String) filter.getValue();
 			Object value = null;
 			try {
-				value = GGObjectQueryFactory.objectQuery(dtoExample.getClass()).getValue(dtoExample, fieldAddress);
-			} catch (GGReflectionException e) {
+				value = ObjectQueryFactory.objectQuery(dtoExample.getClass()).getValue(dtoExample, fieldAddress);
+			} catch (ReflectionException e) {
 				throw new EngineException(e);
 			}
 			if (value != null)
@@ -108,12 +108,12 @@ public class FilterMapper implements IFilterMapper {
 			boolean found = false;
 			for (GGMappingRule rule : mappingRules) {
 				try {
-					if (rule.sourceFieldAddress().equals(new GGObjectAddress(fieldAddress))) {
+					if (rule.sourceFieldAddress().equals(new ObjectAddress(fieldAddress))) {
 						filterCloned.setValue(rule.destinationFieldAddress().toString());
 						found = true;
 						break;
 					}
-				} catch (GGReflectionException e) {
+				} catch (ReflectionException e) {
 					throw new EngineException(e);
 				}
 			}

@@ -6,12 +6,12 @@ import java.util.Map;
 
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.security.entity.checker.EntityAuthorizationChecker;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.security.annotations.Authorization;
 import com.garganttua.api.spec.security.authorization.AuthorizationInfos;
 import com.garganttua.api.spec.security.authorization.IAuthorizationInfosRegistry;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 

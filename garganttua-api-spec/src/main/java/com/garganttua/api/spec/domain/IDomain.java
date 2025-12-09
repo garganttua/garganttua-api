@@ -1,127 +1,31 @@
 package com.garganttua.api.spec.domain;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+/**
+ * Runtime interface representing a domain in the API framework.
+ * This interface provides access to the domain's context and configuration.
+ *
+ * @param <E> the entity type for this domain
+ */
+public interface IDomain<E> {
 
-import org.javatuples.Pair;
+	/**
+	 * Gets the domain context containing all configuration and metadata.
+	 *
+	 * @return the domain context
+	 */
+	IDomainContext<E> getContext();
 
-import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.dto.DtoInfos;
-import com.garganttua.api.spec.entity.EntityDocumentationInfos;
-import com.garganttua.api.spec.entity.annotations.UnicityScope;
-import com.garganttua.api.spec.security.IAccessRule;
-import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
-import com.garganttua.api.spec.service.ServiceAccess;
-import com.garganttua.api.spec.service.IServiceInfos;
-import com.garganttua.reflection.GGObjectAddress;
+	/**
+	 * Gets the domain name.
+	 *
+	 * @return the domain name
+	 */
+	String getName();
 
-public interface  IDomain {
-
-	String getDomain();
-
-	List<Pair<Class<?>, DtoInfos>> getDtos();
-
-	String[] getInterfaces();
-
-	String getEvent();
-
-	boolean isAllowCreation();
-
-	boolean isAllowReadAll();
-
-	boolean isAllowReadOne();
-
-	boolean isAllowUpdateOne();
-
-	boolean isAllowDeleteOne();
-
-	boolean isAllowDeleteAll();
-
-	boolean isTenantIdMandatoryForOperation(EntityOperation operation);
-
-	boolean isOwnerIdMandatoryForOperation(EntityOperation operation);
-
-	EntityDocumentationInfos getDocumentation();
-
-	void addServicesInfos(List<IServiceInfos> servicesInfos);
-	
-	String getEntityName();
-	
-	void addServiceInfos(IServiceInfos servicesInfos);
-
-	Collection<IAccessRule> getAccessRules();
-
-	Collection<String> getUpdateAuthorizations();
-
-	Class<?> getEntityClass();
-
-	boolean isOwnerEntity();
-
-	boolean isTenantEntity();
-
-	boolean isOwnedEntity();
-
-	boolean isSharedEntity();
-
-	boolean isHiddenableEntity();
-
-	boolean isPublicEntity();
-	
-	boolean isGeolocalizedEntity();
-	
-	boolean isAuthenticatorEntity();
-
-	GGObjectAddress getSuperOnwerIdFieldAddress();
-
-	GGObjectAddress getSuperTenantFieldAddress();
-
-	GGObjectAddress getBeforeDeleteMethodAddress();
-
-	GGObjectAddress getAfterDeleteMethodAddress();
-
-	GGObjectAddress getBeforeCreateMethodAddress();
-
-	GGObjectAddress getAfterCreateMethodAddress();
-
-	GGObjectAddress getBeforeUpdateMethodAddress();
-
-	GGObjectAddress getAfterUpdateMethodAddress();
-
-	GGObjectAddress getOwnerIdFieldAddress();
-	
-	GGObjectAddress getAfterGetMethodAddress();
-
-	GGObjectAddress getShareFieldAddress();
-
-	GGObjectAddress getTenantIdFieldAddress();
-
-	GGObjectAddress getHiddenFieldAddress();
-	
-	GGObjectAddress getUuidFieldAddress();
-	
-	GGObjectAddress getIdFieldAddress();
-
-	GGObjectAddress getLocationFieldAddress();
-
-	Map<GGObjectAddress, String> getAuthorizedUpdateFieldsAndAuthorizations();
-
-	List<Pair<GGObjectAddress, UnicityScope>> getUnicityFields();
-
-	List<GGObjectAddress> getMandatoryFields();
-
-	IAccessRule createAccessRule(IServiceInfos serviceInfos) throws CoreException;
-
-	Collection<Class<?>> getAuthorizationProtocols();
-
-	Collection<Class<?>> getAuthorizations();
-
-	ServiceAccess getAccess(IServiceInfos info);
-
-	String getAuthority(IServiceInfos info);
-
-	Map<EntityOperation, IServiceInfos> getServiceInfos();
-
-	AuthenticatorScope getAuthenticatorScope();
+	/**
+	 * Gets the entity class for this domain.
+	 *
+	 * @return the entity class
+	 */
+	Class<E> getEntityClass();
 }

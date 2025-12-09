@@ -5,25 +5,25 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.spec.service.ServiceAccess;
+import com.garganttua.api.spec.context.Access;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface EntitySecurity {
 	
-	ServiceAccess creation_access() default ServiceAccess.tenant;
+	Access creation_access() default Access.tenant;
 
-	ServiceAccess read_all_access() default ServiceAccess.tenant;
+	Access read_all_access() default Access.tenant;
 
-	ServiceAccess read_one_access() default ServiceAccess.tenant;
+	Access read_one_access() default Access.tenant;
 
-	ServiceAccess update_one_access() default ServiceAccess.tenant;
+	Access update_one_access() default Access.tenant;
 
-	ServiceAccess delete_one_access() default ServiceAccess.tenant;
+	Access delete_one_access() default Access.tenant;
 
-	ServiceAccess delete_all_access() default ServiceAccess.tenant;
+	Access delete_all_access() default Access.tenant;
 
-	ServiceAccess count_access() default ServiceAccess.tenant;
+	Access count_access() default Access.tenant;
 	
 	boolean creation_authority() default true;
 

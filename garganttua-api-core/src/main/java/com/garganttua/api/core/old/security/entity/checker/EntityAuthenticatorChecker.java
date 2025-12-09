@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 import com.garganttua.api.core.entity.checker.EntityChecker;
 import com.garganttua.api.core.entity.tools.EntityHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.entity.annotations.EntityOwner;
 import com.garganttua.api.spec.security.annotations.Authenticator;
 import com.garganttua.api.spec.security.annotations.AuthenticatorAccountNonExpired;
@@ -22,10 +22,10 @@ import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
 import com.garganttua.api.spec.security.key.IKeyRealm;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -106,9 +106,9 @@ public class EntityAuthenticatorChecker {
 		String autoritiesFieldName = EntityAuthenticatorChecker
 				.checkAuthoritiesAnnotationPresentAndFieldHasGoodType(entityAuthenticatorClass);
 
-		IGGObjectQuery q;
+		IObjectQuery q;
 		try {
-			q = GGObjectQueryFactory.objectQuery(entityAuthenticatorClass);
+			q = ObjectQueryFactory.objectQuery(entityAuthenticatorClass);
 
 			AuthenticatorInfos authenticatorinfos = new AuthenticatorInfos(entityAuthenticatorClass,
 					authentications, authenticationInterfaces, authorizationType, keyType, keyUsage,
@@ -122,7 +122,7 @@ public class EntityAuthenticatorChecker {
 			EntityAuthenticatorChecker.infos.put(entityAuthenticatorClass, authenticatorinfos);
 
 			return authenticatorinfos;
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(e);
 		}
 	}
@@ -138,7 +138,7 @@ public class EntityAuthenticatorChecker {
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 								+ " does not have any field annotated with @AuthenticatorAutorities");
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(CoreExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " does not have any field annotated with @AuthenticatorAutorities",
@@ -158,7 +158,7 @@ public class EntityAuthenticatorChecker {
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 								+ " does not have any field annotated with @AuthenticatorEnabled");
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(CoreExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " does not have any field annotated with @AuthenticatorEnabled",
@@ -178,7 +178,7 @@ public class EntityAuthenticatorChecker {
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 								+ " does not have any field annotated with @AuthenticatorCredentialsNonExpired");
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(CoreExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " does not have any field annotated with @AuthenticatorCredentialsNonExpired",
@@ -198,7 +198,7 @@ public class EntityAuthenticatorChecker {
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 								+ " does not have any field annotated with @AuthenticatorAccountNonLocked");
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(CoreExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " does not have any field annotated with @AuthenticatorAccountNonLocked",
@@ -218,7 +218,7 @@ public class EntityAuthenticatorChecker {
 						"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 								+ " does not have any field annotated with @AuthenticatorAccountNonExpired");
 			}
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new SecurityException(CoreExceptionCode.ENTITY_DEFINITION,
 					"Entity Authenticator " + entityAuthenticatorClass.getSimpleName()
 							+ " does not have any field annotated with @AuthenticatorAccountNonExpired",

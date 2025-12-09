@@ -9,47 +9,52 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.core.builder.binder.DomainStartupBinderBuilder;
-import com.garganttua.api.core.builder.resolver.FieldResolver;
-import com.garganttua.api.core.builder.supplier.FixedObjectSupplierBuilder;
 import com.garganttua.api.core.context.application.DomainContext;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
-import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.Pluralizer;
-import com.garganttua.api.spec.engine.ContextBuildingStage;
-import com.garganttua.api.spec.engine.IApplicationContextBuilder;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IDomainContext;
-import com.garganttua.api.spec.engine.IDomainDtoContext;
-import com.garganttua.api.spec.engine.IDomainStartupBinderBuilder;
-import com.garganttua.api.spec.engine.IDtoBuilder;
-import com.garganttua.api.spec.engine.IEntityBuilder;
-import com.garganttua.api.spec.engine.IMethodBinderBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.api.spec.engine.IUseCaseBinderBuilder;
-import com.garganttua.api.spec.engine.IUseCaseBuilder;
+import com.garganttua.api.spec.context.ContextBuildingStage;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.IDomainStartupBinderBuilder;
+import com.garganttua.api.spec.context.dsl.IDtoBuilder;
+import com.garganttua.api.spec.context.dsl.IEntityBuilder;
+import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
+import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.domain.IDomainContext;
+import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.security.IDomainSecurityBuilder;
-import com.garganttua.objects.mapper.GGMapperException;
-import com.garganttua.objects.mapper.IGGMapper;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.mapper.Mapper;
+import com.garganttua.core.mapper.MapperException;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
+import com.garganttua.core.reflection.fields.FieldResolver;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.FixedObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.IObjectSupplier;
 
-public class DomainBuilder
-        extends AbstractAutomaticLinkedBuilder<IDomainContext, IDomainBuilder, IApplicationContextBuilder>
-        implements IDomainBuilder {
+public class DomainBuilder<E>
+        extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContext, IDomainContext<E>>
+        implements IDomainBuilder<E> {
 
     private String domainName;
     private Class<?> entityClass;
 
-    private IGGMapper mapper = DefaultMapper.mapper();
+    private Mapper mapper = DefaultMapper.mapper();
 
     private List<IDomainStartupBinderBuilder> startupBinderBuilders = new ArrayList<IDomainStartupBinderBuilder>();
-    private List<IObjectSupplierBuilder<?>> interfaces = new ArrayList<>();
-    private List<IObjectSupplierBuilder<?>> events = new ArrayList<>();
+    private List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces = new ArrayList<>();
+    private List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> events = new ArrayList<>();
 
     private boolean creation = true;
     private boolean readAll = true;
@@ -60,31 +65,31 @@ public class DomainBuilder
 
     private boolean publik = false;
     private boolean tenant = false;
-    private IEntityBuilder entityBuilder;
+    private IEntityBuilder<E> entityBuilder;
     private List<Object> createEntities = new ArrayList<>();
     private List<Object> upsertEntities = new ArrayList<>();
-    private IGGObjectQuery objectQuery;
-    private GGObjectAddress owner;
-    private GGObjectAddress owned;
-    private GGObjectAddress shared;
-    private GGObjectAddress hiddenable;
-    private IDomainSecurityBuilder securityBuilder;
+    private IObjectQuery objectQuery;
+    private ObjectAddress owner;
+    private ObjectAddress owned;
+    private ObjectAddress shared;
+    private ObjectAddress hiddenable;
+    private IDomainSecurityBuilder<E> securityBuilder;
     private Map<Class<?>, IDtoBuilder> dtos = new HashMap<>();
-    private Map<String, IUseCaseBuilder<IDomainBuilder>> useCases = new HashMap<>();
+    private Map<String, IUseCaseBuilder<?, ?, E>> useCases = new HashMap<>();
 
-    public DomainBuilder(IApplicationContextBuilder builder, String domainName)
-            throws BuilderException {
+    public DomainBuilder(IApiContextBuilder builder, String domainName)
+            throws DslException {
         super(builder);
         this.domainName = Objects.requireNonNull(domainName, "Domain name cannot be null");
     }
 
-    public DomainBuilder(IApplicationContextBuilder builder, Class<?> entityClass) throws BuilderException {
+    public DomainBuilder(IApiContextBuilder builder, Class<?> entityClass) throws DslException {
         super(builder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity Class cannot be null");
         try {
-            this.objectQuery = GGObjectQueryFactory.objectQuery(this.entityClass);
-        } catch (GGReflectionException e) {
-            throw new BuilderException(e.getMessage(), e);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass);
+        } catch (ReflectionException e) {
+            throw new DslException(e.getMessage(), e);
         }
         this.domainName = Pluralizer.toPlural(this.entityClass.getSimpleName().toLowerCase());
         this.securityBuilder = new DomainSecurityBuilder(this, this.interfaces, this.objectQuery, this.entityClass);
@@ -92,71 +97,63 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplierBuilder<?> supplier)
-            throws BuilderException {
+    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier)
+            throws DslException {
         DomainStartupBinderBuilder binder = new DomainStartupBinderBuilder(this, supplier);
         this.startupBinderBuilders.add(binder);
         return binder;
     }
 
     @Override
-    public IDomainBuilder interfasse(IObjectSupplierBuilder<?> bean) throws CoreException {
-        if (!IInterface.class.isAssignableFrom(bean.getObjectClass())) {
-            throw new BuilderException(
-                    "Bean " + bean.getObjectClass().getName() + " does not implement IInterface");
+    public IDomainBuilder<E> interfasse(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> bean) throws DslException {
+        if (!IInterface.class.isAssignableFrom(bean.getSuppliedType())) {
+            throw new DslException(
+                    "Bean " + bean.getSuppliedType().getName() + " does not implement IInterface");
         }
         this.interfaces.add(bean);
         return this;
     }
 
     @Override
-    public IDomainBuilder interfasse(IInterface interfasse) throws CoreException {
-        this.interfaces
-                .add(new FixedObjectSupplierBuilder<IInterface>(
-                        Objects.requireNonNull(interfasse, "Interface cannot be null")));
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder creation(boolean b) {
+    public IDomainBuilder<E> creation(boolean b) {
         this.creation = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder readAll(boolean b) {
+    public IDomainBuilder<E> readAll(boolean b) {
         this.readAll = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder readOne(boolean b) {
+    public IDomainBuilder<E> readOne(boolean b) {
         this.readOne = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder update(boolean b) {
+    public IDomainBuilder<E> update(boolean b) {
         this.update = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder deleteAll(boolean b) {
+    public IDomainBuilder<E> deleteAll(boolean b) {
         this.deleteAll = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder deleteOne(boolean b) {
+    public IDomainBuilder<E> deleteOne(boolean b) {
         this.deleteOne = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder events(IObjectSupplierBuilder<?> bean) throws CoreException {
+    public IDomainBuilder<E> events(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> bean) throws DslException {
         if (!IEventPublisher.class.isAssignableFrom(bean.getObjectClass())) {
-            throw new BuilderException(
+            throw new DslException(
                     "Bean " + bean.getObjectClass().getName() + " does not implement IEventPublisher");
         }
         this.events.add(bean);
@@ -164,23 +161,23 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder events(IEventPublisher eventPublisher) throws CoreException {
-        this.events.add(new FixedObjectSupplierBuilder<IEventPublisher>(
+    public IDomainBuilder<E> events(IEventPublisher eventPublisher) throws DslException {
+        this.events.add(new FixedObjectSupplier<IEventPublisher>(
                 Objects.requireNonNull(eventPublisher, "EventPublisher cannot be null")));
         return this;
     }
 
     @Override
-    public IDomainBuilder tenant(boolean b) {
+    public IDomainBuilder<E> tenant(boolean b) throws DslException {
         this.tenant = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder owner(String fieldName) throws BuilderException {
+    public IDomainBuilder<E> owner(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.owner = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -189,10 +186,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder owner(Field field) throws BuilderException {
+    public IDomainBuilder<E> owner(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.owner = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -201,10 +198,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder owner(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDomainBuilder<E> owner(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.owner = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -213,10 +210,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder owned(String fieldName) throws BuilderException {
+    public IDomainBuilder<E> owned(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.owned = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -225,10 +222,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder owned(Field field) throws BuilderException {
+    public IDomainBuilder<E> owned(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.owned = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -237,10 +234,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder owned(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDomainBuilder<E> owned(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.owned = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -249,16 +246,16 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder publik() {
+    public IDomainBuilder<E> publik() {
         this.publik = true;
         return this;
     }
 
     @Override
-    public IDomainBuilder shared(Field field) throws BuilderException {
+    public IDomainBuilder<E> shared(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.shared = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -267,10 +264,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder shared(String fieldName) throws BuilderException {
+    public IDomainBuilder<E> shared(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.shared = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -279,10 +276,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder shared(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDomainBuilder<E> shared(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.shared = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -291,10 +288,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder hiddenable(String fieldName) throws BuilderException {
+    public IDomainBuilder<E> hiddenable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.hiddenable = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
@@ -303,10 +300,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder hiddenable(Field field) throws BuilderException {
+    public IDomainBuilder<E> hiddenable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.hiddenable = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -315,10 +312,10 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainBuilder hiddenable(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDomainBuilder<E> hiddenable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new BuilderException("Entity class must be defined first");
+            throw new DslException("Entity class must be defined first");
         }
 
         this.hiddenable = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
@@ -327,11 +324,11 @@ public class DomainBuilder
     }
 
     @Override
-    public IEntityBuilder entity(Class<?> entityClass) throws BuilderException {
+    public IEntityBuilder<E> entity(Class<?> entityClass) throws DslException {
         Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
         if (this.entityBuilder != null && Objects.equals(entityClass, this.entityClass)) {
-            throw new BuilderException(
+            throw new DslException(
                     "Entity Class is already set with class " + entityClass.getSimpleName());
         }
 
@@ -339,9 +336,9 @@ public class DomainBuilder
         this.entityClass = entityClass;
 
         try {
-            this.objectQuery = GGObjectQueryFactory.objectQuery(this.entityClass);
-        } catch (GGReflectionException e) {
-            throw new BuilderException(e.getMessage(), e);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass);
+        } catch (ReflectionException e) {
+            throw new DslException(e.getMessage(), e);
         }
 
         this.securityBuilder = new DomainSecurityBuilder(this, this.interfaces, this.objectQuery, this.entityClass);
@@ -350,18 +347,19 @@ public class DomainBuilder
     }
 
     @Override
-    public IDomainSecurityBuilder security() throws BuilderException {
+    public IDomainSecurityBuilder<E> security() throws DslException {
         if (this.securityBuilder == null)
-            throw new BuilderException("Security builder is null, please set entity class first");
+            throw new DslException("Security builder is null, please set entity class first");
         return this.securityBuilder;
     }
 
     @Override
-    public IDtoBuilder dto(Class<?> dtoClass) throws BuilderException {
+    public <D> IDtoBuilder<E, D> dto(Class<D> dtoClass) throws DslException {
         if( this.entityClass == null )
-            throw new BuilderException("Entity class must be set before declaring a dto");
+            throw new DslException("Entity class must be set before declaring a dto");
 
-        IDtoBuilder dtoBuilder = this.dtos.get(dtoClass);
+        @SuppressWarnings("unchecked")
+        IDtoBuilder<E, D> dtoBuilder = (IDtoBuilder<E, D>) this.dtos.get(dtoClass);
 
         if (dtoBuilder == null) {
             dtoBuilder = new DtoBuilder(dtoClass, this);
@@ -370,20 +368,21 @@ public class DomainBuilder
 
         try {
             this.mapper.recordMappingConfiguration(this.entityClass, dtoClass);
-        } catch (GGMapperException e) {
-            throw new BuilderException(e.getMessage(), e);
+        } catch (MapperException e) {
+            throw new DslException(e.getMessage(), e);
         }
 
         return dtoBuilder;
     }
 
     @Override
-    public IUseCaseBuilder<IDomainBuilder> useCase(String useCaseName) {
+    public <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, Class<I> inputType, Class<O> outputType) {
         Objects.requireNonNull(useCaseName, "Use case name cannot be null");
-        IUseCaseBuilder<IDomainBuilder> useCaseBuilder = this.useCases.get(useCaseName);
+        @SuppressWarnings("unchecked")
+        IUseCaseBuilder<I, O, E> useCaseBuilder = (IUseCaseBuilder<I, O, E>) this.useCases.get(useCaseName);
 
         if (useCaseBuilder == null) {
-            useCaseBuilder = new UseCaseBuilder<IDomainBuilder>(useCaseName, this);
+            useCaseBuilder = new UseCaseBuilder<I, O, E>(useCaseName, this);
             this.useCases.put(useCaseName, useCaseBuilder);
         }
 
@@ -391,38 +390,26 @@ public class DomainBuilder
     }
 
     @Override
-    public IUseCaseBuilder<IDomainBuilder> useCase(IUseCaseBinderBuilder<IDomainBuilder> binder) {
-        Objects.requireNonNull(binder, "Binder cannot be null");
-
-        String useCaseName = binder.getMethodName();
-        IUseCaseBuilder<IDomainBuilder> useCaseBuilder = this.useCases.get(useCaseName);
-
-        if (useCaseBuilder == null) {
-            useCaseBuilder = new UseCaseBuilder<IDomainBuilder>(useCaseName, this);
-            this.useCases.put(useCaseName, useCaseBuilder);
-        }
-
-        return useCaseBuilder;
-    }
-
-    @Override
-    public IDomainBuilder create(Object entity) {
+    public IDomainBuilder<E> create(Object entity) {
         this.createEntities.add(entity);
         return this;
     }
 
     @Override
-    public IDomainBuilder upsert(Object entity) {
+    public IDomainBuilder<E> upsert(Object entity) {
         this.upsertEntities.add(entity);
         return this;
     }
 
     @Override
-    public Class<?> getEntityClass() throws CoreException {
-        if (this.entityClass != null)
-            return this.entityClass;
+    public Class<E> getEntityClass() throws DslException {
+        if (this.entityClass != null) {
+            @SuppressWarnings("unchecked")
+            Class<E> result = (Class<E>) this.entityClass;
+            return result;
+        }
 
-        throw new BuilderException("Entity class is not set !");
+        throw new DslException("Entity class is not set !");
     }
 
     @Override
@@ -430,7 +417,7 @@ public class DomainBuilder
 
         this.throwExceptionIfNoDto();
 
-        List<IMethodBinderBuilder<?, ?>> binderBuilders = this.startupBinderBuilders.stream().map(builder -> builder)
+        List<IMethodBinderBuilder<?, ?, ?>> binderBuilders = this.startupBinderBuilders.stream().map(builder -> builder)
                 .collect(Collectors.toList());
 
         List<IDomainDtoContext> dtoContexts = new ArrayList<>();
@@ -464,9 +451,9 @@ public class DomainBuilder
                 this.events);
     }
 
-    private void throwExceptionIfNoDto() throws BuilderException {
+    private void throwExceptionIfNoDto() throws DslException {
         if (this.dtos.size() == 0) {
-            throw new BuilderException("No dto declared for domain " + this.domainName);
+            throw new DslException("No dto declared for domain " + this.domainName);
         }
     }
 
@@ -476,14 +463,28 @@ public class DomainBuilder
     }
 
     @Override
-    public IEntityBuilder entity() throws BuilderException {
+    public IEntityBuilder entity() throws DslException {
         if( this.entityClass == null )
-            throw new BuilderException("Entity class is not set");
+            throw new DslException("Entity class is not set");
 
         if( this.entityBuilder == null)
             this.entityBuilder = new EntityBuilder(entityClass, this);
 
         return this.entityBuilder;
+    }
+
+    @Override
+    public IDomainBuilder<E> interfasse(Class<? extends IInterface> interfasse) throws DslException {
+        Objects.requireNonNull(interfasse, "Interface class cannot be null");
+        // TODO: Implement interface instantiation or supplier creation
+        throw new UnsupportedOperationException("Unimplemented method 'interfasse(Class)'");
+    }
+
+    @Override
+    public IEntityBuilder<E> name(String name) throws DslException {
+        Objects.requireNonNull(name, "Name cannot be null");
+        this.domainName = name;
+        return this.entity();
     }
 
 }

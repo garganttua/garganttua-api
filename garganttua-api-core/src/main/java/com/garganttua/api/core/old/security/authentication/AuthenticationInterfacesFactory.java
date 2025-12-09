@@ -10,9 +10,9 @@ import org.javatuples.Pair;
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.service.ServicesInfosBuilder;
 import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.context.IEngine;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
 import com.garganttua.api.spec.security.authentication.AuthenticationInfos;
 import com.garganttua.api.spec.security.authentication.IAuthenticationFactoriesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationFactory;
@@ -24,9 +24,9 @@ import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.security.authenticator.IAuthenticatorInfosRegistry;
 import com.garganttua.api.spec.service.CustomService;
 import com.garganttua.api.spec.service.IServiceInfos;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.beans.GGBeanRefValidator;
-import com.garganttua.reflection.beans.IGGBeanLoader;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.beans.GGBeanRefValidator;
+import com.garganttua.core.reflection.beans.IGGBeanLoader;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -93,7 +93,7 @@ public class AuthenticationInterfacesFactory {
 
 					log.info("	Authentication Interface added [domain {}, service {}]", domain.getDomain(),
 							authenticationInterface);
-				} catch (GGReflectionException | EngineException e) {
+				} catch (ReflectionException | EngineException e) {
 					throw new RuntimeException(e);
 				}
 			}

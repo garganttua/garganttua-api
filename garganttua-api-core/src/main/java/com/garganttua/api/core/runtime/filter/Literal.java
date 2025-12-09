@@ -11,7 +11,7 @@ import org.geojson.GeoJsonObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.filter.IFilter;
 
 import lombok.Getter;

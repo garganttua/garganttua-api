@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecker;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.security.authenticator.IAuthenticatorInfosRegistry;

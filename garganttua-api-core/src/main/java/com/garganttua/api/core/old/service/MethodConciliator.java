@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 public class MethodConciliator {
 

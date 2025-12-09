@@ -16,23 +16,23 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-native-image-utils</artifactId>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-native</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-objects-mapper</artifactId>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-mapper</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>com.garganttua</groupId>
+			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflection</artifactId>
 		</dependency>
 
 		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-executor-chain</artifactId>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-execution</artifactId>
 		</dependency>
 
 		<dependency>
@@ -65,6 +65,17 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/old/**</exclude>
+						<exclude>**/runtime/**</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<!-- Commented out until NativeImageConfigBuilder is fixed
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>3.1.0</version>
@@ -85,6 +96,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 

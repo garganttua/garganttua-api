@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.garganttua.api.core.dto.exceptions.DtoException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.dto.DtoInfos;
 import com.garganttua.api.spec.dto.annotations.Dto;
 import com.garganttua.api.spec.dto.annotations.DtoTenantId;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
-import com.garganttua.reflection.utils.GGObjectReflectionHelper;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.query.IObjectQuery;
+import com.garganttua.core.reflection.utils.GGObjectReflectionHelper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,19 +53,19 @@ public class DtoChecker {
 			if( tenantIdFieldName == null )
 				throw new DtoException(CoreExceptionCode.DTO_DEFINITION,
 						"Dto " + dtoClass.getSimpleName() + " does not have any field annotated with @DtoTenantId");
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new DtoException(CoreExceptionCode.DTO_DEFINITION,
 					"Dto " + dtoClass.getSimpleName() + " does not have any field annotated with @DtoTenantId");
 		}
 
-		IGGObjectQuery q;
+		IObjectQuery q;
 		try {
-			q = GGObjectQueryFactory.objectQuery(dtoClass);
+			q = ObjectQueryFactory.objectQuery(dtoClass);
 			DtoInfos dtoInfos = new DtoInfos(annotation.db(), q.address(tenantIdFieldName));
 			DtoChecker.infos.put(dtoClass, dtoInfos);
 			
 			return dtoInfos;
-		} catch (GGReflectionException e) {
+		} catch (ReflectionException e) {
 			throw new DtoException(e);
 		}
 	}

@@ -4,7 +4,7 @@
 package com.garganttua.api.core.dto;
 
 import com.garganttua.api.spec.dto.annotations.DtoTenantId;
-import com.garganttua.objects.mapper.annotations.GGFieldMappingRule;
+import com.garganttua.core.mapper.annotations.GGFieldMappingRule;
 
 import lombok.Data;
 

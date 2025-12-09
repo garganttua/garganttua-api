@@ -6,8 +6,8 @@ import java.util.List;
 
 import com.garganttua.api.core.engine.EngineException;
 import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.interfasse.InterfaceMethod;
 import com.garganttua.api.spec.interfasse.IInterface;

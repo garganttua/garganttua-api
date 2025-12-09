@@ -6,17 +6,18 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
 import com.garganttua.api.core.context.application.AuthenticatorAuthorizationKeyContext;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationKeyBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationKeyContext;
-import com.garganttua.api.spec.engine.IDomainBuilder;
+import com.garganttua.api.spec.context.IAuthenticatorAuthorizationKeyContext;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
 public class AuthenticatorAuthorizationKeyBuilder extends
-        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationKeyContext, IAuthenticatorAuthorizationKeyBuilder, IAuthenticatorAuthorizationBuilder>
+        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationKeyBuilder, IAuthenticatorAuthorizationBuilder, IAuthenticatorAuthorizationKeyContext>
         implements IAuthenticatorAuthorizationKeyBuilder {
 
     private Integer duration;
@@ -25,7 +26,6 @@ public class AuthenticatorAuthorizationKeyBuilder extends
     private KeyAlgorithm algorithm;
     private SignatureAlgorithm signAlgorithm;
     private @Nonnull IDomainBuilder key;
-    private boolean autoCreate = false;
 
     public AuthenticatorAuthorizationKeyBuilder(IAuthenticatorAuthorizationBuilder authenticatorAuthorizationBuilder,
             IDomainBuilder key) {
@@ -71,11 +71,5 @@ public class AuthenticatorAuthorizationKeyBuilder extends
     @Override
     protected void doAutoDetection() throws CoreException {
 
-    }
-
-    @Override
-    public IAuthenticatorAuthorizationKeyBuilder autoCreate(boolean b) {
-        this.autoCreate = b;
-        return this;
     }
 }

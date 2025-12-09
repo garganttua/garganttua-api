@@ -5,23 +5,24 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
-import com.garganttua.api.spec.engine.IAuthorizationProtocolBuilder;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.security.IDomainSecurityAuthorizationBuilder;
-import com.garganttua.api.spec.security.IDomainSecurityBuilder;
+import com.garganttua.core.supply.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
 public class DomainSecurityAuthorizationBuilder
         extends AbstractAutomaticLinkedBuilder<Object, IDomainSecurityAuthorizationBuilder, IDomainSecurityBuilder>
         implements IDomainSecurityAuthorizationBuilder {
 
     private @Nonnull IDomainBuilder authorizationDomain;
-    private @Nonnull List<IObjectSupplierBuilder<?>> interfaces;
+    private @Nonnull List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces;
     private IAuthorizationProtocolBuilder protocol;
 
     public DomainSecurityAuthorizationBuilder(DomainSecurityBuilder domainSecurityBuilder,
-            IDomainBuilder authorizationDomain, List<IObjectSupplierBuilder<?>> interfaces) {
+            IDomainBuilder authorizationDomain, List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces) {
         super(domainSecurityBuilder);
         this.authorizationDomain = Objects.requireNonNull(authorizationDomain, "AuthorizationDomain cannot be null");
         this.interfaces = Objects.requireNonNull(interfaces, "Interfaces cannot be null");
@@ -29,10 +30,10 @@ public class DomainSecurityAuthorizationBuilder
 
     @Override
     public IDomainSecurityAuthorizationBuilder interfasse(Class<? extends IInterface> interfaceClass)
-            throws BuilderException {
+            throws DslException {
         Objects.requireNonNull(interfaceClass, "Interface class cannot be null");
         if (this.interfaces.stream().noneMatch(i -> i.getObjectClass().equals(interfaceClass))) {
-            throw new BuilderException("Interface " + interfaceClass.getName() + " is not part of the domain");
+            throw new DslException("Interface " + interfaceClass.getName() + " is not part of the domain");
         }
         return this;
     }

@@ -2,9 +2,9 @@ package com.garganttua.api.spec.security.authentication;
 
 import java.lang.reflect.Method;
 
-import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.interfasse.ICustomizableInterface;
+import com.garganttua.core.CoreException;
 
 public interface IAuthenticationInterface extends ICustomizableInterface {
 

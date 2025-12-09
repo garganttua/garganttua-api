@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.security.authorization;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 
 public interface IAuthorization {
 

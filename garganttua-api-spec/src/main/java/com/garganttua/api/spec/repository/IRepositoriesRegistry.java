@@ -2,9 +2,7 @@ package com.garganttua.api.spec.repository;
 
 import java.util.List;
 
-import com.garganttua.api.spec.engine.IEngineObject;
-
-public interface IRepositoriesRegistry extends IEngineObject {
+public interface IRepositoriesRegistry {
 	
 	IRepository getRepository(String domain);
 

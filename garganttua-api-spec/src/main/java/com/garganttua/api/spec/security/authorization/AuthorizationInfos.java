@@ -2,17 +2,17 @@ package com.garganttua.api.spec.security.authorization;
 
 import java.lang.reflect.Constructor;
 
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public record AuthorizationInfos(boolean signable, boolean renewable, Constructor<?> completeConstructor,
-		Constructor<?> rawConstructor, GGObjectAddress uuidFieldAddress, GGObjectAddress idFieldAddress,
-		GGObjectAddress tenantIdFieldAddress, GGObjectAddress ownerIdFieldAddress,
-		GGObjectAddress authoritiesFieldAddress, GGObjectAddress creationFieldAddress,
-		GGObjectAddress expirationFieldAddress, GGObjectAddress revokedFieldAddress,
-		GGObjectAddress validateAgainstMethodAddress, GGObjectAddress validateMethodAddress,
-		GGObjectAddress authorizationTypeFieldAddress, GGObjectAddress toByteArrayMethodAddress,
-		GGObjectAddress signMethodAddress, GGObjectAddress getRefreshTokenMethodAddress,
-		GGObjectAddress createRefreshTokenMethodAddress, GGObjectAddress validateRefreshTokenMethodAddress,
-		GGObjectAddress refreshTokenExpirationFielddAddress) {
+		Constructor<?> rawConstructor, ObjectAddress uuidFieldAddress, ObjectAddress idFieldAddress,
+		ObjectAddress tenantIdFieldAddress, ObjectAddress ownerIdFieldAddress,
+		ObjectAddress authoritiesFieldAddress, ObjectAddress creationFieldAddress,
+		ObjectAddress expirationFieldAddress, ObjectAddress revokedFieldAddress,
+		ObjectAddress validateAgainstMethodAddress, ObjectAddress validateMethodAddress,
+		ObjectAddress authorizationTypeFieldAddress, ObjectAddress toByteArrayMethodAddress,
+		ObjectAddress signMethodAddress, ObjectAddress getRefreshTokenMethodAddress,
+		ObjectAddress createRefreshTokenMethodAddress, ObjectAddress validateRefreshTokenMethodAddress,
+		ObjectAddress refreshTokenExpirationFielddAddress) {
 
 }

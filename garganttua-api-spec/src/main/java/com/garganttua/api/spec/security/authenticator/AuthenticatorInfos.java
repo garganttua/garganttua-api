@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public record AuthenticatorInfos(
 	Class<?> authenticatorType,
@@ -23,11 +23,11 @@ public record AuthenticatorInfos(
 	TimeUnit authorizationLifeTimeUnit,
 	int authorizationRefreshTokenLifeTime,
 	TimeUnit authorizationRefreshTokenLifeTimeUnit,
-	GGObjectAddress authoritiesFieldAddress,
-	GGObjectAddress isAccountNonExpiredFieldAddress,
-	GGObjectAddress isAccountNonLockedFieldAddress,
-	GGObjectAddress isCredentialsNonExpiredFieldAddress,
-	GGObjectAddress isEnabledFieldAddress,
+	ObjectAddress authoritiesFieldAddress,
+	ObjectAddress isAccountNonExpiredFieldAddress,
+	ObjectAddress isAccountNonLockedFieldAddress,
+	ObjectAddress isCredentialsNonExpiredFieldAddress,
+	ObjectAddress isEnabledFieldAddress,
 	AuthenticatorScope scope) {
 
 }

@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.service;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 
 public enum ServiceResponseCode {
 	NOT_AVAILABLE, SERVER_ERROR, CLIENT_ERROR, CREATED, NOT_FOUND, OK, UPDATED, DELETED, UNAUTHORIZED, FORBIDDEN;
@@ -12,7 +12,7 @@ public enum ServiceResponseCode {
 		default:
 			code = SERVER_ERROR;
 			break;
-		case ENTITY_ALREADY_EXISTS:
+		/* case ENTITY_ALREADY_EXISTS:
 		case BAD_REQUEST: 
 			code = CLIENT_ERROR;
 			break;
@@ -26,9 +26,9 @@ public enum ServiceResponseCode {
 		case GENERIC_SECURITY_ERROR:
 		case KEY_ERROR:
 		case KEY_EXPIRED:
-		case KEY_REVOKED:
+		case KEY_REVOKED: 
 			code = UNAUTHORIZED;
-			break;
+			break;*/
 		}
 
 		return code;

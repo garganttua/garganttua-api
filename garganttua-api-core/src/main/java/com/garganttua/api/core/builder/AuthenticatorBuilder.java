@@ -8,43 +8,44 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
-import com.garganttua.api.core.builder.resolver.FieldResolver;
 import com.garganttua.api.core.context.application.AuthenticatorContext;
-import com.garganttua.api.spec.CoreException;
-import com.garganttua.api.spec.engine.IAuthenticationBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorAuthorizationBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorBuilder;
-import com.garganttua.api.spec.engine.IAuthenticatorContext;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.context.IAuthenticatorContext;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.fields.FieldResolver;
 
-public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticatorContext, IAuthenticatorBuilder, IDomainSecurityBuilder>
+public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticatorBuilder, IDomainSecurityBuilder, IAuthenticatorContext>
         implements IAuthenticatorBuilder {
 
-    private @Nonnull IGGObjectQuery objectQuery;
+    private @Nonnull IObjectQuery objectQuery;
     private @Nonnull Class<?> entityClass;
     private boolean alwaysEnabled = false;
-    private GGObjectAddress login;
-    private GGObjectAddress authorities;
-    private GGObjectAddress credentialsNonExpired;
-    private GGObjectAddress enabled;
-    private GGObjectAddress accountNonLocked;
-    private GGObjectAddress accountNonExpired;
+    private ObjectAddress login;
+    private ObjectAddress authorities;
+    private ObjectAddress credentialsNonExpired;
+    private ObjectAddress enabled;
+    private ObjectAddress accountNonLocked;
+    private ObjectAddress accountNonExpired;
     private AuthenticatorScope scope;
     private List<IAuthenticationBuilder> selectedAuthentications = new ArrayList<>();
     private IAuthenticatorAuthorizationBuilder authenticatorAuthorizationBuilder;
 
-    public AuthenticatorBuilder(IDomainSecurityBuilder domainBuilder, IGGObjectQuery objectQuery, Class<?> entityClass) {
+    public AuthenticatorBuilder(IDomainSecurityBuilder domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
     @Override
-    public IAuthenticatorBuilder login(String fieldName) throws BuilderException {
+    public IAuthenticatorBuilder login(String fieldName) throws CoreException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.login = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -53,7 +54,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder login(Field field) throws BuilderException {
+    public IAuthenticatorBuilder login(Field field) throws CoreException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.login = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -62,7 +63,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder login(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthenticatorBuilder login(ObjectAddress fieldAddress) throws CoreException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.login = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -71,7 +72,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(String fieldName) throws BuilderException {
+    public IAuthenticatorBuilder authorities(String fieldName) throws CoreException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, List.class);
@@ -80,7 +81,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(Field field) throws BuilderException {
+    public IAuthenticatorBuilder authorities(Field field) throws CoreException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByField(field, this.entityClass, List.class);
@@ -89,7 +90,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthenticatorBuilder authorities(ObjectAddress fieldAddress) throws CoreException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.authorities = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, List.class);
@@ -104,7 +105,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(String fieldName) throws BuilderException {
+    public IAuthenticatorBuilder credentialsNonExpired(String fieldName) throws CoreException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.credentialsNonExpired = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass,
@@ -114,7 +115,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(Field field) throws BuilderException {
+    public IAuthenticatorBuilder credentialsNonExpired(Field field) throws CoreException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.credentialsNonExpired = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -123,7 +124,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthenticatorBuilder credentialsNonExpired(ObjectAddress fieldAddress) throws CoreException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.credentialsNonExpired = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass,
@@ -133,7 +134,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(String fieldName) throws BuilderException {
+    public IAuthenticatorBuilder enabled(String fieldName) throws CoreException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.enabled = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
@@ -142,7 +143,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(Field field) throws BuilderException {
+    public IAuthenticatorBuilder enabled(Field field) throws CoreException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.enabled = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -151,7 +152,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthenticatorBuilder enabled(ObjectAddress fieldAddress) throws CoreException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.enabled = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
@@ -160,7 +161,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(String fieldName) throws BuilderException {
+    public IAuthenticatorBuilder accountNonExpired(String fieldName) throws CoreException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.accountNonExpired = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass,
@@ -170,7 +171,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(Field field) throws BuilderException {
+    public IAuthenticatorBuilder accountNonExpired(Field field) throws CoreException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.accountNonExpired = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -179,7 +180,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthenticatorBuilder accountNonExpired(ObjectAddress fieldAddress) throws CoreException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.accountNonExpired = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass,
@@ -189,7 +190,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(Field field) throws BuilderException {
+    public IAuthenticatorBuilder accountNonLocked(Field field) throws CoreException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.accountNonLocked = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -198,7 +199,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(String fieldName) throws BuilderException {
+    public IAuthenticatorBuilder accountNonLocked(String fieldName) throws CoreException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.accountNonLocked = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass,
@@ -208,7 +209,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(GGObjectAddress fieldAddress) throws BuilderException {
+    public IAuthenticatorBuilder accountNonLocked(ObjectAddress fieldAddress) throws CoreException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.accountNonLocked = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass,
@@ -224,7 +225,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     }
 
     @Override
-    public IAuthenticatorBuilder authentication(IAuthenticationBuilder authentication) throws BuilderException {
+    public IAuthenticatorBuilder authentication(IAuthenticationBuilder authentication) throws CoreException {
         Objects.requireNonNull(authentication, "Authentication cannot be null");
         this.selectedAuthentications.add(authentication);
         return this;

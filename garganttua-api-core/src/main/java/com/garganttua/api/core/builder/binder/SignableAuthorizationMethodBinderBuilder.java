@@ -1,20 +1,24 @@
 package com.garganttua.api.core.builder.binder;
 
-import com.garganttua.api.core.builder.BuilderException;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.api.spec.engine.ISignableAuthorizationBuilder;
-import com.garganttua.api.spec.engine.ISignableAuthorizationMethodBinderBuilder;
+import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilder;
+import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationMethodBinderBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
-public class SignableAuthorizationMethodBinderBuilder extends MethodBinderBuilder<ISignableAuthorizationMethodBinderBuilder, ISignableAuthorizationBuilder> implements ISignableAuthorizationMethodBinderBuilder{
+public class SignableAuthorizationMethodBinderBuilder extends AbstractMethodBinderBuilder<Object, ISignableAuthorizationMethodBinderBuilder, ISignableAuthorizationBuilder, IMethodBinder<Object>> implements ISignableAuthorizationMethodBinderBuilder{
 
-    public SignableAuthorizationMethodBinderBuilder(ISignableAuthorizationBuilder up, IObjectSupplierBuilder<?> supplier)
-            throws BuilderException {
+    public SignableAuthorizationMethodBinderBuilder(ISignableAuthorizationBuilder up, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier)
+            {
         super(up, supplier);
     }
 
     @Override
-    protected ISignableAuthorizationMethodBinderBuilder getReturned() {
-        return this;
+    protected void doAutoDetection() throws DslException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
     }
 
 }

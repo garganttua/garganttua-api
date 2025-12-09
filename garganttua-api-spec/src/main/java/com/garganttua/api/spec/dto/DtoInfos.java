@@ -2,9 +2,9 @@ package com.garganttua.api.spec.dto;
 
 import java.util.Objects;
 
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
-public record DtoInfos(String db, GGObjectAddress tenantIdFieldAddress) {
+public record DtoInfos(String db, ObjectAddress tenantIdFieldAddress) {
 	@Override
 	public String toString() {
 		return "DtoInfos{tenantIdFieldName='" + tenantIdFieldAddress + "', db='" + db + "'}";

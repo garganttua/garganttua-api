@@ -1,7 +1,7 @@
 package com.garganttua.api.core.context.application;
 
-import com.garganttua.api.spec.engine.IAuthorizationProtocolContext;
-import com.garganttua.api.spec.engine.IAuthorizationProtocolMethodBinderBuilder;
+import com.garganttua.api.spec.context.IAuthorizationProtocolContext;
+import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethodBinderBuilder;
 
 public class AuthorizationProtocolContext implements IAuthorizationProtocolContext {
 

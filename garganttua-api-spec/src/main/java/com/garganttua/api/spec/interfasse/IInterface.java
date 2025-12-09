@@ -2,21 +2,20 @@ package com.garganttua.api.spec.interfasse;
 
 import java.lang.reflect.Method;
 
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngineObject;
-import com.garganttua.api.spec.engine.Service;
+import com.garganttua.core.CoreException;
 
-public interface IInterface extends IEngineObject {
+public interface IInterface {
 
 	void start() throws CoreException;
 
 	void setDomain(IDomain domain);
 
-	void setService(Service service);
-
+/* 	void setService(Service service);
+ */
 	String getName();
 
-	Method getMethod(InterfaceMethod method) throws CoreException;
+	Method getMethod(BusinessOperation method) throws CoreException;
 
 }

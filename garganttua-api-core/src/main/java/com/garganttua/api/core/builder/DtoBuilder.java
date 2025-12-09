@@ -5,49 +5,52 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.api.core.builder.resolver.FieldResolver;
-import com.garganttua.api.core.builder.supplier.FixedObjectSupplierBuilder;
 import com.garganttua.api.core.context.application.DomainDtoContext;
-import com.garganttua.api.core.definition.DomainDtoDefinition;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.api.core.definition.DtoDefinition;
+import com.garganttua.api.spec.context.IDomainDtoContext;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.IDtoBuilder;
 import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.api.spec.engine.IDomainBuilder;
-import com.garganttua.api.spec.engine.IDomainDtoContext;
-import com.garganttua.api.spec.engine.IDtoBuilder;
-import com.garganttua.api.spec.engine.IObjectSupplierBuilder;
-import com.garganttua.reflection.GGObjectAddress;
-import com.garganttua.reflection.GGReflectionException;
-import com.garganttua.reflection.query.GGObjectQueryFactory;
-import com.garganttua.reflection.query.IGGObjectQuery;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.fields.FieldResolver;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.FixedObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext, IDtoBuilder, IDomainBuilder>
+public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext, IDomainBuilder, IDtoBuilder>
         implements IDtoBuilder {
 
     private Class<?> dtoClass;
-    private GGObjectAddress id;
-    private GGObjectAddress uuid;
-    private GGObjectAddress tenantId;
-    private List<IObjectSupplierBuilder<?>> daos = new ArrayList<>();
-    private IGGObjectQuery objectQuery;
+    private ObjectAddress id;
+    private ObjectAddress uuid;
+    private ObjectAddress tenantId;
+    private List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> daos = new ArrayList<>();
+    private IObjectQuery objectQuery;
 
-    public DtoBuilder(Class<?> dtoClass, IDomainBuilder domainBuilder) throws BuilderException {
+    public DtoBuilder(Class<?> dtoClass, IDomainBuilder domainBuilder) throws DslException {
         super(domainBuilder);
         this.dtoClass = Objects.requireNonNull(dtoClass, "Dto class cannot be null");
         try {
-            this.objectQuery = GGObjectQueryFactory.objectQuery(this.dtoClass);
-        } catch (GGReflectionException e) {
-            throw new BuilderException(e.getMessage(), e);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.dtoClass);
+        } catch (ReflectionException e) {
+            throw new DslException(e.getMessage(), e);
         }
     }
 
     @Override
-    public IDtoBuilder db(IObjectSupplierBuilder<?> daoSupplier) throws BuilderException {
-        if (!IDao.class.isAssignableFrom(daoSupplier.getObjectClass())) {
-            throw new BuilderException(
-                    "Bean " + daoSupplier.getObjectClass().getName() + " does not implement IDao");
+    public IDtoBuilder db(IObjectSupplierBuilder<? extends IDao, IObjectSupplier<? extends IDao>> daoSupplier) throws DslException {
+        if (!IDao.class.isAssignableFrom(daoSupplier.getSuppliedType())) {
+            throw new DslException(
+                    "Bean " + daoSupplier.getSuppliedType().getName() + " does not implement IDao");
         }
         this.daos.add(daoSupplier);
         return this;
@@ -56,13 +59,13 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     @Override
     public IDtoBuilder db(IDao dao) {
         this.daos
-                .add(new FixedObjectSupplierBuilder<IDao>(
+                .add(new FixedObjectSupplier<IDao>(
                         Objects.requireNonNull(dao, "Dao cannot be null")));
         return this;
     }
 
     @Override
-    public IDtoBuilder id(String fieldName) throws BuilderException {
+    public IDtoBuilder id(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.id = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
@@ -71,7 +74,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder id(Field field) throws BuilderException {
+    public IDtoBuilder id(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.id = FieldResolver.fieldByField(field, this.dtoClass, String.class);
@@ -80,7 +83,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder id(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDtoBuilder id(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.id = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
@@ -89,7 +92,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder uuid(String fieldName) throws BuilderException {
+    public IDtoBuilder uuid(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.uuid = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
@@ -98,7 +101,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder uuid(Field field) throws BuilderException {
+    public IDtoBuilder uuid(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.uuid = FieldResolver.fieldByField(field, this.dtoClass, String.class);
@@ -107,7 +110,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder uuid(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDtoBuilder uuid(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.uuid = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
@@ -116,7 +119,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder tenantId(String fieldName) throws BuilderException {
+    public IDtoBuilder tenantId(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.tenantId = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
@@ -125,7 +128,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder tenantId(Field field) throws BuilderException {
+    public IDtoBuilder tenantId(Field field) throws DslException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.tenantId = FieldResolver.fieldByField(field, this.dtoClass, String.class);
@@ -134,7 +137,7 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
     }
 
     @Override
-    public IDtoBuilder tenantId(GGObjectAddress fieldAddress) throws BuilderException {
+    public IDtoBuilder tenantId(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.tenantId = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
@@ -153,22 +156,22 @@ public class DtoBuilder extends AbstractAutomaticLinkedBuilder<IDomainDtoContext
                     this.dtoClass.getSimpleName());
         }
 
-        return new DomainDtoContext(new DomainDtoDefinition(this.dtoClass, this.uuid, this.id, this.tenantId), this.daos.get(0).build());
+        return new DomainDtoContext(new DtoDefinition<>(this.dtoClass, this.uuid, this.id, this.tenantId), this.daos.get(0).build());
     }
 
-    private void throwExceptionIfNoUuid() throws BuilderException {
+    private void throwExceptionIfNoUuid() throws DslException {
         if( this.uuid == null )
-            throw new BuilderException("No uuid defined for dto "+this.dtoClass.getSimpleName());
+            throw new DslException("No uuid defined for dto "+this.dtoClass.getSimpleName());
     }
 
-    private void throwExceptionIfNoTenantId() throws BuilderException {
+    private void throwExceptionIfNoTenantId() throws DslException {
         if( this.tenantId == null )
-            throw new BuilderException("No tenant id defined for dto "+this.dtoClass.getSimpleName());
+            throw new DslException("No tenant id defined for dto "+this.dtoClass.getSimpleName());
     }
 
-    private void throwExceptionIfNoId() throws BuilderException {
+    private void throwExceptionIfNoId() throws DslException {
         if( this.id == null )
-            throw new BuilderException("No id defined for dto "+this.dtoClass.getSimpleName());
+            throw new DslException("No id defined for dto "+this.dtoClass.getSimpleName());
     }
 
     @Override

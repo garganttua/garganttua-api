@@ -2,8 +2,8 @@ package com.garganttua.api.spec.security.authorization;
 
 import java.util.Date;
 
-import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.security.key.IKeyRealm;
+import com.garganttua.core.CoreException;
 
 public interface IRefreshableAuthorization extends ISignableAuthorization {
 

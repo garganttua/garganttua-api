@@ -1,0 +1,37 @@
+package com.garganttua.api.spec.context.dsl;
+
+import java.lang.reflect.Field;
+
+import com.garganttua.api.spec.context.IDtoContext;
+import com.garganttua.api.spec.dao.IDao;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+
+public interface IDtoBuilder<E, D> extends IAutomaticLinkedBuilder<IDtoBuilder<E, D>, IDomainBuilder<E>, IDtoContext<D>> {
+
+    IDtoBuilder<E, D> db(IObjectSupplierBuilder<? extends IDao, IObjectSupplier<? extends IDao>> daoSupplier) throws DslException;
+
+    IDtoBuilder<E, D> db(IDao dao);
+
+    IDtoBuilder<E, D> id(String string) throws DslException;
+
+    IDtoBuilder<E, D> id(Field field) throws DslException;
+
+    IDtoBuilder<E, D> id(ObjectAddress fieldAddress) throws DslException;
+
+    IDtoBuilder<E, D> uuid(String string) throws DslException;
+
+    IDtoBuilder<E, D> uuid(Field field) throws DslException;
+
+    IDtoBuilder<E, D> uuid(ObjectAddress fieldAddress) throws DslException;
+
+    IDtoBuilder<E, D> tenantId(String string) throws DslException;
+
+    IDtoBuilder<E, D> tenantId(Field field) throws DslException;
+
+    IDtoBuilder<E, D> tenantId(ObjectAddress fieldAddress) throws DslException;
+
+}
