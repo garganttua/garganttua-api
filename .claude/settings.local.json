@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(tree:*)",
+      "Bash(grep:*)",
+      "Bash(cd:*)",
+      "Bash(xargs:*)",
+      "Bash(mvn clean install:*)",
+      "Bash(mvn dependency:tree:*)",
+      "Bash(jar tf:*)",
+      "Bash(javap:*)",
+      "Bash(mvn clean compile:*)",
+      "Bash(mvn compile:*)",
+      "Bash(mvn:*)",
+      "Bash(jar:*)",
+      "Bash(unzip:*)",
+      "Bash(java:*)",
+      "Bash(for jar in ~/.m2/repository/com/garganttua/core/*/2.0.0-ALPHA01/*-sources.jar)",
+      "Bash(do jar:*)",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(git stash:*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
