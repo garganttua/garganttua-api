@@ -5,24 +5,23 @@ import com.garganttua.api.spec.context.dsl.IEntityMethodBinderBuilder;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class EntityMethodBinderBuilder extends AbstractMethodBinderBuilder<Void, IEntityMethodBinderBuilder, IEntityBuilder, IMethodBinder<Void>>
-        implements IEntityMethodBinderBuilder {
+public class EntityMethodBinderBuilder<E> extends AbstractMethodBinderBuilder<Void, IEntityMethodBinderBuilder<E>, IEntityBuilder<E>, IMethodBinder<Void>>
+        implements IEntityMethodBinderBuilder<E> {
 
-    public EntityMethodBinderBuilder(IEntityBuilder up, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) {
+    public EntityMethodBinderBuilder(IEntityBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(up, supplier);
     }
 
-    public EntityMethodBinderBuilder(IEntityBuilder up, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier, boolean collection) {
+    public EntityMethodBinderBuilder(IEntityBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, boolean collection) {
         super(up, supplier, collection);
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
+        // No auto-detection for entity method binders - all configuration is explicit
     }
 
 }

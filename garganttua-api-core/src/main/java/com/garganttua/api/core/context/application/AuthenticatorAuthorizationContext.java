@@ -2,15 +2,25 @@ package com.garganttua.api.core.context.application;
 
 import java.util.concurrent.TimeUnit;
 
+import com.garganttua.api.core.definition.DomainAuthenticatorAuthorizationDefinition;
 import com.garganttua.api.spec.context.IAuthenticatorAuthorizationContext;
 import com.garganttua.api.spec.context.IAuthenticatorAuthorizationKeyContext;
+import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
+import com.garganttua.api.spec.context.IDomainContext;
 
 public class AuthenticatorAuthorizationContext implements IAuthenticatorAuthorizationContext {
 
+    private DomainAuthenticatorAuthorizationDefinition authenticatorAuthorizationDefinition;
+
     public AuthenticatorAuthorizationContext(Integer duration, TimeUnit unit, Integer refreshDuration,
-            TimeUnit refreshUnit, IDomain iDomainContext,
+            TimeUnit refreshUnit, IDomainContext<?> iDomainContext,
             IAuthenticatorAuthorizationKeyContext iAuthenticatorAuthorizationKeyContext) {
-        //TODO Auto-generated constructor stub
+        this.authenticatorAuthorizationDefinition = new DomainAuthenticatorAuthorizationDefinition();
+    }
+
+    @Override
+    public IDomainAuthenticatorAuthorizationDefinition getAuthenticatorAuthorizationDefinition() {
+        return this.authenticatorAuthorizationDefinition;
     }
 
 }

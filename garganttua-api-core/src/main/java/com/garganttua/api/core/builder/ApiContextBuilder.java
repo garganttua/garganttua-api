@@ -1,197 +1,300 @@
 package com.garganttua.api.core.builder;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.garganttua.api.core.builder.binder.ApiContextStartupBinderBuilder;
+import com.garganttua.api.core.context.application.ApiContext;
+import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.context.ContextBuildingStage;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.core.CoreException;
+import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.context.dsl.DiContextBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.core.dsl.annotations.Scan;
+import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
+import com.garganttua.core.dsl.dependency.DependencyPhase;
+import com.garganttua.core.dsl.dependency.DependencySpec;
+import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.BeanStrategy;
+import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.Predefined;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class ApiContextBuilder extends DiContextBuilder implements IApiContextBuilder {
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Bootstrap
+@Scan(scan = "com.garganttua.api.core")
+public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiContextBuilder, IApiContext>
+		implements IApiContextBuilder {
+
+	private ApiContextBuilder(Set<DependencySpec> dependencies) {
+		super(dependencies);
+	}
+
+	private final Set<String> packages = ConcurrentHashMap.newKeySet();
+
+	private volatile String superTenantId;
+
+	private volatile boolean superTenantAutoCreate = false;
+
+	private final Map<Class<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
+	private volatile ContextSecurityBuilder securityBuilder;
+	private final List<ApiContextStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
+
+	private volatile IInjectionContextBuilder injectionContextBuilder;
+	private volatile IExpressionContextBuilder expressionContextBuilder;
+	private volatile IInjectionContext injectionContext;
 
 	public static IApiContextBuilder builder() {
-		return new ApiContextBuilder();
+		return new ApiContextBuilder(
+				Set.of(
+						DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
+						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD)));
 	}
 
 	@Override
-	public IApiContextBuilder superTenantId(String string) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'superTenantId'");
+	public IApiContextBuilder superTenantId(String superTenantId) {
+		this.superTenantId = Objects.requireNonNull(superTenantId, "Super tenant ID cannot be null");
+		return this;
 	}
 
 	@Override
 	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage,
-			IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'startup'");
+			ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
+		ApiContextStartupBinderBuilder binder = new ApiContextStartupBinderBuilder(this, supplier);
+		this.startupBinderBuilders.add(binder);
+		return binder;
 	}
 
 	@Override
 	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object) throws DslException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'startup'");
+		ApiContextStartupBinderBuilder binder = new ApiContextStartupBinderBuilder(this, object);
+		this.startupBinderBuilders.add(binder);
+		return binder;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public IDomainBuilder domain(String domainName) throws DslException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'domain'");
-	}
+	public <E> IDomainBuilder<E> domain(Class<E> entityClass) throws DslException {
+		Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
-	@Override
-	public IDomainBuilder domain(Class<?> entityClass) throws DslException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'domain'");
+		return (IDomainBuilder<E>) this.domainBuilders.computeIfAbsent(entityClass, clazz -> {
+			try {
+				return new DomainBuilder<>(this, clazz);
+			} catch (DslException e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 	@Override
 	public IApiContextBuilder superTenantAutoCreate(boolean b) throws DslException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'superTenantAutoCreate'");
-	}
-
-	@Override
-	public IApiContextSecurityBuilder security() {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'security'");
-	}
-
-	/* private static IGGBeanLoader loader;
-
-	private List<String> packages;
-	private IGGPropertyLoader propLoader;
-	private IGGInjector injector;
-	private String superTenantId = "0";
-	private List<IApplicationContextStartupBinderBuilder> startupBinderBuilders = new ArrayList<IApplicationContextStartupBinderBuilder>();
-	private boolean autoCreateSuperTenant;
-	private IContextSecurityBuilder security;
-	private Map<String, IDomainBuilder> domains = new HashMap<String, IDomainBuilder>();
-
-	@Override
-	public ApplicationContextBuilder beanLoader(IGGBeanLoader loader) {
-		ApplicationContextBuilder.loader = Objects.requireNonNull(loader, "Loader cannot be null");
+		this.superTenantAutoCreate = b;
 		return this;
 	}
 
 	@Override
-	public ApplicationContextBuilder packages(List<String> packages) {
-		this.packages = Objects.requireNonNull(packages, "Packages cannot be null");
-
-		return this;
-	}
-
-	@Override
-	public ApplicationContextBuilder propertyLoader(IGGPropertyLoader loader) {
-		propLoader = Objects.requireNonNull(loader, "Loader cannot be null");
-
-		return this;
-	}
-
-	@Override
-	public ApplicationContextBuilder injector(IGGInjector injector) {
-		this.injector = Objects.requireNonNull(injector, "Injector cannot be null");
-
-		return this;
-	}
-
-	@Override
-	public ApplicationContextBuilder superTenantId(String uuid) {
-		this.superTenantId = Objects.requireNonNull(uuid, "Uuid cannot be null");
-
-		return this;
-	}
-
-	@Override
-	public IApplicationContextStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplier<?> supplier)
-			throws DslException {
-		IApplicationContextStartupBinderBuilder binder = new ApplicationContextStartupBinderBuilder(this,
-				Objects.requireNonNull(supplier, "Supplier cannot be null"));
-		this.startupBinderBuilders.add(binder);
-		return binder;
-	}
-
-	@Override
-	public IApplicationContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object)
-			throws DslException {
-		IApplicationContextStartupBinderBuilder binder = new ApplicationContextStartupBinderBuilder(this,
-				Objects.requireNonNull(object, "Object cannot be null"));
-		this.startupBinderBuilders.add(binder);
-		return binder;
-	}
-
-	@Override
-	public IDomainBuilder domain(String domainName) throws DslException {
-		Objects.requireNonNull(domainName, "Domain name cannot be null");
-		Objects.requireNonNull(security, "Security is not configured");
-		IDomainBuilder domain;
-		if (!this.domains.containsKey(domainName)) {
-			domain = new DomainBuilder(this, domainName);
-			this.domains.put(domainName, domain);
-		} else {
-			domain = this.domains.get(domainName);
+	public synchronized IApiContextSecurityBuilder security() {
+		if (this.securityBuilder == null) {
+			this.securityBuilder = new ContextSecurityBuilder(this.packages, this);
 		}
-		return domain;
+		return this.securityBuilder;
 	}
 
 	@Override
-	public ApplicationContextBuilder superTenantAutoCreate(boolean b) throws DslException {
-		if (this.superTenantId == null) {
-			throw new DslException("Super tenant ID must be set before setting auto create");
-		}
-		this.autoCreateSuperTenant = b;
+	public String[] getPackages() {
+		return this.packages.toArray(new String[0]);
+	}
+
+	@Override
+	public IApiContextBuilder withPackage(String packageName) {
+		log.atDebug().log("Adding package: {}", packageName);
+		this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
 		return this;
 	}
 
 	@Override
-	public IApiContext build() throws DslException {
+	public IApiContextBuilder withPackages(String[] packageNames) {
+		log.atDebug().log("Adding {} packages", packageNames.length);
+		Objects.requireNonNull(packageNames, "Package names cannot be null");
+		for (String pkg : packageNames) {
+			this.withPackage(pkg);
+		}
+		return this;
+	}
 
-		List<IDomainContext> builtDomains = new ArrayList<>();
-		for (IDomainBuilder builder : this.domains.values()) {
-			builtDomains.add(builder.build());
+	@Override
+	protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+		log.atTrace().log("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
+
+		if (dependency instanceof IInjectionContext context) {
+			// Auto-detect entities and domains from injection context
+			// This could scan for @Entity annotated classes
+			log.atDebug().log("Auto-detecting domains from InjectionContext");
+			// TODO: Implement entity/domain auto-detection from injection context
 		}
 
-		return null;/* new ApplicationContext(
-				this.loader,
-				this.packages,
-				this.propLoader,
-				this.injector,
-				this.superTenantId,
-				this.startupBinderBuilders,
-				this.autoCreateSuperTenant,
-				this.security.build(),
-				builtDomains); */
-/* 	}
-
-	@Override
-	public IDomainBuilder domain(Class<?> entityClass) throws DslException {
-		Objects.requireNonNull(entityClass, "Entity class cannot be null");
-		Objects.requireNonNull(security, "Security is not configured");
-		IDomainBuilder domain;
-		if (!this.domains.containsKey(entityClass.getSimpleName())) {
-			domain = new DomainBuilder(this, entityClass);
-			this.domains.put(entityClass.getSimpleName(), domain);
-		} else {
-			domain = this.domains.get(entityClass.getSimpleName());
-		}
-		return domain;
+		log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
 	}
 
 	@Override
-	public IContextSecurityBuilder security() {
-		if (this.security != null) {
-			return this.security;
+	protected void doPreBuildWithDependency(Object dependency) {
+		log.atTrace().log("Entering doPreBuildWithDependency() with dependency: {}", dependency);
+
+		if (dependency instanceof IInjectionContext context) {
+			this.injectionContext = context;
+			log.atDebug().log("InjectionContext captured in pre-build phase");
 		}
-		return this.security = new ContextSecurityBuilder(this.packages, this);
+
+		log.atTrace().log("Exiting doPreBuildWithDependency() method");
 	}
 
 	@Override
-	protected IApplicationContext doBuild() throws DslException {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
-	} */
+	protected void doPostBuildWithDependency(Object dependency) {
+		log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
+		if (dependency instanceof IInjectionContext context) {
+			registerBuiltObjectInContext(context, this.built);
+		}
+
+		log.atTrace().log("Exiting doPostBuildWithDependency() method");
+	}
+
+	private void registerBuiltObjectInContext(IInjectionContext context, IApiContext apiContext) {
+		log.atDebug().log("Registering IApiContext as bean in InjectionContext");
+		String providerName = Predefined.BeanProviders.garganttua.toString();
+
+		BeanReference<IApiContext> beanRef = new BeanReference<>(
+				IApiContext.class,
+				Optional.of(BeanStrategy.singleton),
+				Optional.of("ApiContext"),
+				Set.of());
+		context.addBean(providerName, beanRef, apiContext);
+		log.atDebug().log("IApiContext successfully registered as bean with 'ApiContext' name");
+
+		// Register each domain context
+		for (Map.Entry<String, IDomainContext<?>> entry : ((ApiContext) apiContext).getDomainContexts().entrySet()) {
+			String domainName = entry.getKey();
+			IDomainContext<?> domainContext = entry.getValue();
+
+			BeanReference<IDomainContext<?>> domainBeanRef = new BeanReference<>(
+					(Class<IDomainContext<?>>) (Class<?>) IDomainContext.class,
+					Optional.of(BeanStrategy.singleton),
+					Optional.of("domain." + domainName),
+					Set.of());
+			context.addBean(providerName, domainBeanRef, domainContext);
+			log.atDebug().log("IDomainContext successfully registered as bean with 'domain.{}' name", domainName);
+		}
+	}
+
+	private void registerMapperBean() {
+		log.atDebug().log("Registering IMapper as bean in InjectionContext");
+		String providerName = Predefined.BeanProviders.garganttua.toString();
+
+		BeanReference<IMapper> beanRef = new BeanReference<>(
+				IMapper.class,
+				Optional.of(BeanStrategy.singleton),
+				Optional.of("mapper"),
+				Set.of());
+		this.injectionContext.addBean(providerName, beanRef, DefaultMapper.mapper());
+		log.atDebug().log("IMapper successfully registered as bean with 'mapper' name");
+	}
+
+	@Override
+	protected synchronized IApiContext doBuild() throws DslException {
+		log.atTrace().log("Entering doBuild() method");
+
+		try {
+			// Ensure we have an injection context
+			if (this.injectionContext == null) {
+				throw new DslException("InjectionContext is required but not provided");
+			}
+
+			// Register default mapper as bean
+			registerMapperBean();
+
+			// Build all domain contexts
+			Map<String, IDomainContext<?>> domainContexts = new HashMap<>();
+			for (DomainBuilder<?> domainBuilder : this.domainBuilders.values()) {
+				domainBuilder.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
+				IDomainContext<?> domainContext = domainBuilder.build();
+				domainContexts.put(domainContext.getDomain(), domainContext);
+				log.atDebug().log("Built domain context: {}", domainContext.getDomain());
+			}
+
+			// Build security context if configured
+			if (this.securityBuilder != null) {
+				this.securityBuilder.build();
+				log.atDebug().log("Built security context");
+			}
+
+			// Build startup binders
+			List<IMethodBinder<Void>> startupBinders = new ArrayList<>();
+			for (ApiContextStartupBinderBuilder binder : this.startupBinderBuilders) {
+				startupBinders.add(binder.build());
+			}
+			log.atDebug().log("Built {} startup binders", startupBinders.size());
+
+			// Create and return API context
+			IApiContext apiContext = new ApiContext(this.injectionContext, domainContexts,
+					this.superTenantId, this.superTenantAutoCreate, startupBinders);
+
+			log.atDebug().log("Built ApiContext with {} domains", domainContexts.size());
+			log.atTrace().log("Exiting doBuild() method");
+
+			return apiContext;
+
+		} catch (CoreException e) {
+			throw new DslException("Failed to build API context: " + e.getMessage(), e);
+		}
+	}
+
+	@Override
+	protected void doAutoDetection() throws DslException {
+		log.atTrace().log("Entering doAutoDetection() method");
+		// Base auto-detection without dependencies
+		// Could scan for @Entity annotated classes in packages
+		log.atTrace().log("Exiting doAutoDetection() method");
+	}
+
+	@Override
+	public IApiContextBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
+		if (dependency instanceof IInjectionContextBuilder builder) {
+			this.injectionContextBuilder = builder;
+			log.atDebug().log("IInjectionContextBuilder captured via provide()");
+		} else if (dependency instanceof IExpressionContextBuilder builder) {
+			this.expressionContextBuilder = builder;
+			log.atDebug().log("IExpressionContextBuilder captured via provide()");
+		}
+		return super.provide(dependency);
+	}
+
+	IInjectionContextBuilder getInjectionContextBuilder() {
+		return this.injectionContextBuilder;
+	}
+
+	IExpressionContextBuilder getExpressionContextBuilder() {
+		return this.expressionContextBuilder;
+	}
 
 }

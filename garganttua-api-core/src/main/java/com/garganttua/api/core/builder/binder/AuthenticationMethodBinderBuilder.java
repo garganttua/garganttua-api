@@ -5,19 +5,18 @@ import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderB
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class AuthenticationMethodBinderBuilder<ExecutionReturn> extends AbstractMethodBinderBuilder<ExecutionReturn, IAuthenticationMethodBinderBuilder<ExecutionReturn>, IAuthenticationBuilder, IMethodBinder<ExecutionReturn>> implements IAuthenticationMethodBinderBuilder<ExecutionReturn>{
 
-    public AuthenticationMethodBinderBuilder(IAuthenticationBuilder up, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) {
+    public AuthenticationMethodBinderBuilder(IAuthenticationBuilder up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(up, supplier);
     }
 
     @Override
     protected void doAutoDetection() throws DslException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
+        // No auto-detection for authentication method binders - all configuration is explicit
     }
 
 }

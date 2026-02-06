@@ -1,5 +1,7 @@
 package com.garganttua.api.core.definition;
 
-public record DomainKeyDefinition() {
+import com.garganttua.api.spec.definition.IDomainKeyDefinition;
+
+public record DomainKeyDefinition() implements IDomainKeyDefinition {
 
 }

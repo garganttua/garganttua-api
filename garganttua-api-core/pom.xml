@@ -5,62 +5,80 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-api</artifactId>
-		<version>3.0.0</version>
+		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-core</artifactId>
 
 	<dependencies>
+		<!-- Garganttua API -->
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-spec</artifactId>
 		</dependency>
 
+		<!-- Garganttua Core -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-script</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-native</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-mapper</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflection</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-execution</artifactId>
 		</dependency>
-
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.11.4</version>
-			<scope>test</scope>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-injection</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-workflow</artifactId>
 		</dependency>
 
+		<!-- Third-party -->
 		<dependency>
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
-			<version>1</version>
 		</dependency>
-
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
-			<version>2.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
 		</dependency>
 
+		<!-- Native image config - commented out until module is enabled
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-native-image-config</artifactId>
 		</dependency>
+		-->
 
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-
 
 	<build>
 		<plugins>
@@ -70,34 +88,11 @@
 				<configuration>
 					<excludes>
 						<exclude>**/old/**</exclude>
-						<exclude>**/runtime/**</exclude>
+						<exclude>**/legacy/**</exclude>
+						<exclude>**/examples/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
-			<!-- Commented out until NativeImageConfigBuilder is fixed
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.1.0</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-						<phase>process-classes</phase>
-						<configuration>
-							<classpathScope>compile</classpathScope>
-							<mainClass>
-								com.garganttua.api.core.NativeImageConfigBuilder</mainClass>
-							<arguments>
-								<argument>${project.build.outputDirectory}</argument>
-							</arguments>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			-->
 		</plugins>
 	</build>
-
 </project>

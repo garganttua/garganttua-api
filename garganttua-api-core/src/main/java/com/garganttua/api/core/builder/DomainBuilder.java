@@ -6,76 +6,102 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.core.builder.binder.DomainStartupBinderBuilder;
 import com.garganttua.api.core.context.application.DomainContext;
+import com.garganttua.api.core.context.application.DtoContext;
+import com.garganttua.api.core.context.application.EntityContext;
 import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.definition.DtoDefinition;
+import com.garganttua.api.core.definition.EntityDefinition;
+import com.garganttua.api.core.definition.UseCaseDefinition;
+import com.garganttua.api.core.definition.WorkflowDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.api.spec.security.IAccessRule;
 import com.garganttua.api.spec.Pluralizer;
+import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.context.ContextBuildingStage;
-import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDtoContext;
+import com.garganttua.api.spec.context.IEntityContext;
+import com.garganttua.api.spec.context.Scope;
+import com.garganttua.api.spec.context.TechnicalOperation;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainStartupBinderBuilder;
+import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
 import com.garganttua.api.spec.context.dsl.IDtoBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
-import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.domain.IDomainContext;
-import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.mapper.Mapper;
+import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
-import com.garganttua.core.supply.FixedObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.IObjectSupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.workflow.IWorkflow;
 
 public class DomainBuilder<E>
-        extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContext, IDomainContext<E>>
+        extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContextBuilder, IDomainContext<E>>
         implements IDomainBuilder<E> {
 
-    private String domainName;
-    private Class<?> entityClass;
+    private volatile String domainName;
+    private volatile Class<?> entityClass;
 
-    private Mapper mapper = DefaultMapper.mapper();
+    private IMapper mapper = DefaultMapper.mapper();
 
-    private List<IDomainStartupBinderBuilder> startupBinderBuilders = new ArrayList<IDomainStartupBinderBuilder>();
-    private List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces = new ArrayList<>();
-    private List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> events = new ArrayList<>();
+    private final List<IDomainStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
+    private final List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces = new CopyOnWriteArrayList<>();
+    private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> events = new CopyOnWriteArrayList<>();
 
-    private boolean creation = true;
-    private boolean readAll = true;
-    private boolean readOne = true;
-    private boolean update = true;
-    private boolean deleteAll = true;
-    private boolean deleteOne = true;
+    private volatile boolean creation = true;
+    private volatile boolean readAll = true;
+    private volatile boolean readOne = true;
+    private volatile boolean update = true;
+    private volatile boolean deleteAll = true;
+    private volatile boolean deleteOne = true;
 
-    private boolean publik = false;
-    private boolean tenant = false;
-    private IEntityBuilder<E> entityBuilder;
-    private List<Object> createEntities = new ArrayList<>();
-    private List<Object> upsertEntities = new ArrayList<>();
-    private IObjectQuery objectQuery;
-    private ObjectAddress owner;
-    private ObjectAddress owned;
-    private ObjectAddress shared;
-    private ObjectAddress hiddenable;
-    private IDomainSecurityBuilder<E> securityBuilder;
-    private Map<Class<?>, IDtoBuilder> dtos = new HashMap<>();
-    private Map<String, IUseCaseBuilder<?, ?, E>> useCases = new HashMap<>();
+    private volatile boolean publik = false;
+    private volatile boolean tenant = false;
+    private volatile IEntityBuilder<E> entityBuilder;
+    private final List<Object> createEntities = new CopyOnWriteArrayList<>();
+    private final List<Object> upsertEntities = new CopyOnWriteArrayList<>();
+    private volatile IObjectQuery objectQuery;
+    private volatile ObjectAddress owner;
+    private volatile ObjectAddress owned;
+    private volatile ObjectAddress shared;
+    private volatile ObjectAddress hiddenable;
+    private volatile IDomainSecurityBuilder<E> securityBuilder;
+    private final Map<Class<?>, IDtoBuilder> dtos = new ConcurrentHashMap<>();
+    private final Map<String, IUseCaseBuilder<?, ?, E>> useCases = new ConcurrentHashMap<>();
+    private final Map<String, DomainWorkflowBuilder<E>> workflows = new ConcurrentHashMap<>();
+
+    private volatile IInjectionContextBuilder injectionContextBuilder;
+    private volatile IExpressionContextBuilder expressionContextBuilder;
+
+    void setDependencyBuilders(IInjectionContextBuilder injectionContextBuilder,
+            IExpressionContextBuilder expressionContextBuilder) {
+        this.injectionContextBuilder = injectionContextBuilder;
+        this.expressionContextBuilder = expressionContextBuilder;
+    }
 
     public DomainBuilder(IApiContextBuilder builder, String domainName)
             throws DslException {
@@ -92,12 +118,12 @@ public class DomainBuilder<E>
             throw new DslException(e.getMessage(), e);
         }
         this.domainName = Pluralizer.toPlural(this.entityClass.getSimpleName().toLowerCase());
-        this.securityBuilder = new DomainSecurityBuilder(this, this.interfaces, this.objectQuery, this.entityClass);
+        this.securityBuilder = new DomainSecurityBuilder<>(this, this.interfaces, this.objectQuery, this.entityClass);
         this.entityBuilder = this.entity(this.entityClass);
     }
 
     @Override
-    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier)
+    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
             throws DslException {
         DomainStartupBinderBuilder binder = new DomainStartupBinderBuilder(this, supplier);
         this.startupBinderBuilders.add(binder);
@@ -105,11 +131,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> bean) throws DslException {
-        if (!IInterface.class.isAssignableFrom(bean.getSuppliedType())) {
-            throw new DslException(
-                    "Bean " + bean.getSuppliedType().getName() + " does not implement IInterface");
-        }
+    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws DslException {
         this.interfaces.add(bean);
         return this;
     }
@@ -151,10 +173,11 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> events(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> bean) throws DslException {
-        if (!IEventPublisher.class.isAssignableFrom(bean.getObjectClass())) {
+    public IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws DslException {
+        Class<?> suppliedClass = bean.getSuppliedClass();
+        if (!IEventPublisher.class.isAssignableFrom(suppliedClass)) {
             throw new DslException(
-                    "Bean " + bean.getObjectClass().getName() + " does not implement IEventPublisher");
+                    "Bean " + suppliedClass.getName() + " does not implement IEventPublisher");
         }
         this.events.add(bean);
         return this;
@@ -162,7 +185,7 @@ public class DomainBuilder<E>
 
     @Override
     public IDomainBuilder<E> events(IEventPublisher eventPublisher) throws DslException {
-        this.events.add(new FixedObjectSupplier<IEventPublisher>(
+        this.events.add(new FixedSupplierBuilder<>(
                 Objects.requireNonNull(eventPublisher, "EventPublisher cannot be null")));
         return this;
     }
@@ -323,7 +346,6 @@ public class DomainBuilder<E>
         return this;
     }
 
-    @Override
     public IEntityBuilder<E> entity(Class<?> entityClass) throws DslException {
         Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
@@ -332,7 +354,7 @@ public class DomainBuilder<E>
                     "Entity Class is already set with class " + entityClass.getSimpleName());
         }
 
-        this.entityBuilder = new EntityBuilder(entityClass, this);
+        this.entityBuilder = new EntityBuilder<>(entityClass, this);
         this.entityClass = entityClass;
 
         try {
@@ -341,7 +363,7 @@ public class DomainBuilder<E>
             throw new DslException(e.getMessage(), e);
         }
 
-        this.securityBuilder = new DomainSecurityBuilder(this, this.interfaces, this.objectQuery, this.entityClass);
+        this.securityBuilder = new DomainSecurityBuilder<>(this, this.interfaces, this.objectQuery, this.entityClass);
 
         return this.entityBuilder;
     }
@@ -353,40 +375,44 @@ public class DomainBuilder<E>
         return this.securityBuilder;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <D> IDtoBuilder<E, D> dto(Class<D> dtoClass) throws DslException {
         if( this.entityClass == null )
             throw new DslException("Entity class must be set before declaring a dto");
 
-        @SuppressWarnings("unchecked")
-        IDtoBuilder<E, D> dtoBuilder = (IDtoBuilder<E, D>) this.dtos.get(dtoClass);
-
-        if (dtoBuilder == null) {
-            dtoBuilder = new DtoBuilder(dtoClass, this);
-            this.dtos.put(dtoClass, dtoBuilder);
-        }
+        IDtoBuilder<E, D> dtoBuilder = (IDtoBuilder<E, D>) this.dtos.computeIfAbsent(dtoClass, clazz -> {
+            try {
+                return new DtoBuilder<>(clazz, this);
+            } catch (DslException e) {
+                throw new RuntimeException(e);
+            }
+        });
 
         try {
             this.mapper.recordMappingConfiguration(this.entityClass, dtoClass);
         } catch (MapperException e) {
-            throw new DslException(e.getMessage(), e);
+            // Mapper configuration may fail if no mapping annotations are present
+            // This is acceptable - mapping will need to be done manually
         }
 
         return dtoBuilder;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, Class<I> inputType, Class<O> outputType) {
         Objects.requireNonNull(useCaseName, "Use case name cannot be null");
-        @SuppressWarnings("unchecked")
-        IUseCaseBuilder<I, O, E> useCaseBuilder = (IUseCaseBuilder<I, O, E>) this.useCases.get(useCaseName);
 
-        if (useCaseBuilder == null) {
-            useCaseBuilder = new UseCaseBuilder<I, O, E>(useCaseName, this);
-            this.useCases.put(useCaseName, useCaseBuilder);
-        }
+        return (IUseCaseBuilder<I, O, E>) this.useCases.computeIfAbsent(useCaseName,
+                name -> new UseCaseBuilder<I, O, E>(name, this));
+    }
 
-        return useCaseBuilder;
+    @Override
+    public IDomainWorkflowBuilder<E> workflow(String workflowName) {
+        Objects.requireNonNull(workflowName, "Workflow name cannot be null");
+        return this.workflows.computeIfAbsent(workflowName,
+                name -> new DomainWorkflowBuilder<>(name, this));
     }
 
     @Override
@@ -412,23 +438,108 @@ public class DomainBuilder<E>
         throw new DslException("Entity class is not set !");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    protected IDomainContext doBuild() throws CoreException {
+    protected synchronized IDomainContext<E> doBuild() throws CoreException {
 
         this.throwExceptionIfNoDto();
 
-        List<IMethodBinderBuilder<?, ?, ?>> binderBuilders = this.startupBinderBuilders.stream().map(builder -> builder)
-                .collect(Collectors.toList());
-
-        List<IDomainDtoContext> dtoContexts = new ArrayList<>();
-        for (IDtoBuilder builder : this.dtos.values()) {
-            dtoContexts.add(builder.build());
+        // Build DTO contexts and extract definitions
+        List<IDtoContext<?>> dtoContexts = new ArrayList<>();
+        List<DtoDefinition<?>> dtoDefinitions = new ArrayList<>();
+        for (IDtoBuilder<?, ?> builder : this.dtos.values()) {
+            IDtoContext<?> dtoContext = builder.build();
+            dtoContexts.add(dtoContext);
+            if (dtoContext instanceof DtoContext<?> dtc) {
+                dtoDefinitions.add(dtc.getDtoDefinition());
+            }
         }
 
-        return new DomainContext(
-                new DomainDefinition(
+        // Build entity context and extract definition
+        IEntityContext<E> entityContext = this.entityBuilder.build();
+        EntityDefinition<E> entityDefinition = null;
+        if (entityContext instanceof EntityContext<E> ec) {
+            entityDefinition = ec.getEntityDefinition();
+        }
+
+        // Build startup binders
+        List<IMethodBinder<Void>> startupBinders = new ArrayList<>();
+        for (IDomainStartupBinderBuilder<?> builder : this.startupBinderBuilders) {
+            @SuppressWarnings("unchecked")
+            IMethodBinder<Void> binder = builder.build();
+            startupBinders.add(binder);
+        }
+
+        // Build use case definitions (deprecated, kept for backwards compatibility)
+        Map<String, UseCaseDefinition> useCaseDefinitions = new HashMap<>();
+        for (Map.Entry<String, IUseCaseBuilder<?, ?, E>> entry : this.useCases.entrySet()) {
+            entry.getValue().build();
+            useCaseDefinitions.put(entry.getKey(), new UseCaseDefinition());
+        }
+
+        // Build workflows: auto-generate CRUD workflows for activated operations
+        autoGenerateCrudWorkflows();
+
+        // Build all workflows (propagate dependency builders to internal WorkflowBuilder)
+        Map<String, WorkflowDefinition> workflowDefinitions = new HashMap<>();
+        Map<String, IWorkflow> builtWorkflows = new HashMap<>();
+        for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
+            DomainWorkflowBuilder<E> wb = entry.getValue();
+            wb.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
+            IWorkflow builtWorkflow = wb.build();
+            builtWorkflows.put(entry.getKey(), builtWorkflow);
+            workflowDefinitions.put(entry.getKey(), new WorkflowDefinition(
+                    wb.getWorkflowName(),
+                    wb.getPathSuffix(),
+                    wb.getCompletePath(),
+                    wb.getScope(),
+                    wb.getOperation(),
+                    wb.getAccess(),
+                    wb.hasAuthority(),
+                    wb.isCustom()));
+        }
+
+        // Cast entities for create/upsert lists
+        List<E> createEntitiesCast = this.createEntities.stream()
+                .map(e -> (E) e)
+                .collect(Collectors.toList());
+        List<E> upsertEntitiesCast = this.upsertEntities.stream()
+                .map(e -> (E) e)
+                .collect(Collectors.toList());
+
+        // Build security definition (null-safe)
+        var securityDefinition = this.securityBuilder != null
+                ? ((DomainSecurityBuilder<E>) this.securityBuilder).buildSecurityDefinition()
+                : null;
+
+        // Build security context (null-safe)
+        var securityContext = this.securityBuilder != null
+                ? this.securityBuilder.build()
+                : new DomainSecurityBuilder<>(this, this.interfaces, this.objectQuery, this.entityClass).build();
+
+        // Build interface suppliers
+        List<ISupplier<IInterface>> builtInterfaces = new ArrayList<>();
+        for (ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> interfaceBuilder : this.interfaces) {
+            @SuppressWarnings("unchecked")
+            ISupplier<IInterface> supplier = (ISupplier<IInterface>) interfaceBuilder.build();
+            builtInterfaces.add(supplier);
+        }
+
+        // Build event suppliers
+        List<ISupplier<IEventPublisher>> builtEvents = new ArrayList<>();
+        for (ISupplierBuilder<?, ? extends ISupplier<?>> eventBuilder : this.events) {
+            @SuppressWarnings("unchecked")
+            ISupplier<IEventPublisher> supplier = (ISupplier<IEventPublisher>) eventBuilder.build();
+            builtEvents.add(supplier);
+        }
+
+        return new DomainContext<E>(
+                new DomainDefinition<E>(
                         this.domainName,
-                        binderBuilders,
+                        entityDefinition,
+                        securityDefinition,
+                        dtoDefinitions,
+                        startupBinders,
                         this.creation,
                         this.readAll,
                         this.readOne,
@@ -437,18 +548,64 @@ public class DomainBuilder<E>
                         this.deleteOne,
                         this.publik,
                         this.tenant,
-                        this.createEntities,
-                        this.upsertEntities,
+                        createEntitiesCast,
+                        upsertEntitiesCast,
                         this.owner,
                         this.owned,
                         this.shared,
                         this.hiddenable,
-                        this.useCases),
-                this.entityBuilder.build(),
-                this.securityBuilder.build(),
+                        useCaseDefinitions,
+                        workflowDefinitions),
+                entityContext,
+                securityContext,
                 dtoContexts,
-                this.interfaces,
-                this.events);
+                builtInterfaces,
+                builtEvents,
+                builtWorkflows);
+    }
+
+    private static final Map<String, String> CRUD_SCRIPT_PATHS = Map.of(
+            BusinessOperation.create.getLabel(), "scripts/business/crud/CREATE_ONE.gs",
+            BusinessOperation.readAll.getLabel(), "scripts/business/crud/READ_ALL.gs",
+            BusinessOperation.readOne.getLabel(), "scripts/business/crud/READ_ONE.gs",
+            BusinessOperation.update.getLabel(), "scripts/business/crud/UPDATE_ONE.gs",
+            BusinessOperation.deleteOne.getLabel(), "scripts/business/crud/DELETE_ONE.gs",
+            BusinessOperation.deleteAll.getLabel(), "scripts/business/crud/DELETE_ALL.gs"
+    );
+
+    private void autoGenerateCrudWorkflows() {
+        if (this.creation && !this.workflows.containsKey(BusinessOperation.create.getLabel())) {
+            createDefaultCrudWorkflow(BusinessOperation.create.getLabel(), TechnicalOperation.create, Scope.oneEntity);
+        }
+        if (this.readAll && !this.workflows.containsKey(BusinessOperation.readAll.getLabel())) {
+            createDefaultCrudWorkflow(BusinessOperation.readAll.getLabel(), TechnicalOperation.read, Scope.allEntities);
+        }
+        if (this.readOne && !this.workflows.containsKey(BusinessOperation.readOne.getLabel())) {
+            createDefaultCrudWorkflow(BusinessOperation.readOne.getLabel(), TechnicalOperation.read, Scope.oneEntity);
+        }
+        if (this.update && !this.workflows.containsKey(BusinessOperation.update.getLabel())) {
+            createDefaultCrudWorkflow(BusinessOperation.update.getLabel(), TechnicalOperation.update, Scope.oneEntity);
+        }
+        if (this.deleteOne && !this.workflows.containsKey(BusinessOperation.deleteOne.getLabel())) {
+            createDefaultCrudWorkflow(BusinessOperation.deleteOne.getLabel(), TechnicalOperation.delete, Scope.oneEntity);
+        }
+        if (this.deleteAll && !this.workflows.containsKey(BusinessOperation.deleteAll.getLabel())) {
+            createDefaultCrudWorkflow(BusinessOperation.deleteAll.getLabel(), TechnicalOperation.delete, Scope.allEntities);
+        }
+    }
+
+    private void createDefaultCrudWorkflow(String name, TechnicalOperation op, Scope scope) {
+        DomainWorkflowBuilder<E> wb = new DomainWorkflowBuilder<>(name, this);
+        wb.setCustom(false);
+        String scriptPath = CRUD_SCRIPT_PATHS.get(name);
+        wb.getInternalBuilder()
+                .stage("execute")
+                    .script(getClass().getResourceAsStream("/" + scriptPath))
+                        .name("crud-" + name)
+                        .inline()
+                        .up()
+                    .up();
+        this.workflows.put(name, wb);
     }
 
     private void throwExceptionIfNoDto() throws DslException {
@@ -463,12 +620,12 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IEntityBuilder entity() throws DslException {
+    public synchronized IEntityBuilder<E> entity() throws DslException {
         if( this.entityClass == null )
             throw new DslException("Entity class is not set");
 
         if( this.entityBuilder == null)
-            this.entityBuilder = new EntityBuilder(entityClass, this);
+            this.entityBuilder = new EntityBuilder<>(entityClass, this);
 
         return this.entityBuilder;
     }

@@ -12,7 +12,8 @@ public enum BusinessOperation {
     deleteOne("deleteOne"),
     deleteAll("deleteAll"),
     authenticate("authenticate"),
-    useCase("useCase");
+    useCase("useCase"),
+    workflow("workflow");
 
     @Getter
     private final String label;

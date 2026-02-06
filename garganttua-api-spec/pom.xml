@@ -5,20 +5,37 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-api</artifactId>
-		<version>3.0.0</version>
+		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-spec</artifactId>
 
 	<dependencies>
+		<!-- Garganttua Core -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-execution</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-reflection</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-injection</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-workflow</artifactId>
+		</dependency>
+
+		<!-- Third-party -->
 		<dependency>
 			<groupId>org.javatuples</groupId>
 			<artifactId>javatuples</artifactId>
-			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>de.grundid.opendatalab</groupId>
 			<artifactId>geojson-jackson</artifactId>
-			<version>1.14</version>
 			<exclusions>
 				<exclusion>
 					<groupId>com.fasterxml.jackson.core</groupId>
@@ -35,10 +52,8 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.11.4</version>
-			<scope>test</scope>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
 		</dependency>
 	</dependencies>
 </project>

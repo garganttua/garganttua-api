@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
@@ -25,6 +26,6 @@ public record EntityDefinition<E>(
     List<IMethodBinder<Void>>  beforeUpdateMethodBuilders,
     List<IMethodBinder<Void>>  afterUpdateMethodBuilders,
     List<IMethodBinder<Void>>  beforeDeleteMethodBuilders,
-    List<IMethodBinder<Void>>  afterDeleteMethodBuilders) {
+    List<IMethodBinder<Void>>  afterDeleteMethodBuilders) implements IEntityDefinition<E> {
 
 }

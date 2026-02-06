@@ -19,16 +19,19 @@ import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilde
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
+import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
-import com.garganttua.core.supply.IObjectSupplierBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.reflection.query.IObjectQuery;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class DomainSecurityBuilder
-        extends AbstractAutomaticLinkedBuilder<IDomainSecurityContext, IDomainSecurityBuilder, IDomainBuilder>
-        implements IDomainSecurityBuilder {
+public class DomainSecurityBuilder<E>
+        extends AbstractAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext>
+        implements IDomainSecurityBuilder<E> {
 
-    private @Nonnull List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces;
+    private @Nonnull List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces;
     private Access creationAccess;
     private Access readAllAccess;
     private Access readOneAccess;
@@ -46,11 +49,12 @@ public class DomainSecurityBuilder
     private IAuthorizationBuilder authorization;
     private IObjectQuery objectQuery;
     private Class<?> entityClass;
-    private Map<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
+    private Map<ISupplierBuilder<?, ? extends ISupplier<?>>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
     private IAuthenticatorBuilder authenticator;
     private IKeyBuilder key;
 
-    public DomainSecurityBuilder(IDomainBuilder domainBuilder, List<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaces,
+    public DomainSecurityBuilder(IDomainBuilder<E> domainBuilder,
+            List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces,
             IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
@@ -59,80 +63,85 @@ public class DomainSecurityBuilder
     }
 
     @Override
-    public IDomainSecurityBuilder creationAccess(Access access) {
+    public IDomainSecurityBuilder<E> creationAccess(Access access) {
         this.creationAccess = Objects.requireNonNull(access, "Access cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder readAllAccess(Access access) {
+    public IDomainSecurityBuilder<E> readAllAccess(Access access) {
         this.readAllAccess = Objects.requireNonNull(access, "Access cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder readOneAccess(Access access) {
+    public IDomainSecurityBuilder<E> readOneAccess(Access access) {
         this.readOneAccess = Objects.requireNonNull(access, "Access cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder updateAccess(Access access) {
+    public IDomainSecurityBuilder<E> updateAccess(Access access) {
         this.updateAccess = Objects.requireNonNull(access, "Access cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder deleteAllAccess(Access access) {
+    public IDomainSecurityBuilder<E> deleteAllAccess(Access access) {
         this.deleteAllAccess = Objects.requireNonNull(access, "Access cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder deleteOneAccess(Access access) {
+    public IDomainSecurityBuilder<E> deleteOneAccess(Access access) {
         this.deleteOneAccess = Objects.requireNonNull(access, "Access cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder creationAuthority(boolean authority) {
+    public IDomainSecurityBuilder<E> creationAuthority(boolean authority) {
         this.creationAuthority = Objects.requireNonNull(authority, "Authority cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder readAllAuthority(boolean authority) {
+    public IDomainSecurityBuilder<E> readAllAuthority(boolean authority) {
         this.readAllAuthority = Objects.requireNonNull(authority, "Authority cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder readOneAuthority(boolean authority) {
+    public IDomainSecurityBuilder<E> readOneAuthority(boolean authority) {
         this.readOneAuthority = Objects.requireNonNull(authority, "Authority cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder updateAuthority(boolean authority) {
+    public IDomainSecurityBuilder<E> updateAuthority(boolean authority) {
         this.updateAuthority = Objects.requireNonNull(authority, "Authority cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder deleteAllAuthority(boolean authority) {
+    public IDomainSecurityBuilder<E> deleteAllAuthority(boolean authority) {
         this.deleteAllAuthority = Objects.requireNonNull(authority, "Authority cannot be null");
         return this;
     }
 
     @Override
-    public IDomainSecurityBuilder deleteOneAuthority(boolean authority) {
+    public IDomainSecurityBuilder<E> deleteOneAuthority(boolean authority) {
         this.deleteOneAuthority = Objects.requireNonNull(authority, "Authority cannot be null");
         return this;
     }
 
     @Override
-    protected IDomainSecurityContext doBuild() {
-        return new DomainSecurityContext(new DomainSecurityDefinition(this.creationAccess,
+    protected synchronized IDomainSecurityContext doBuild() {
+        return new DomainSecurityContext(buildSecurityDefinition());
+    }
+
+    public DomainSecurityDefinition buildSecurityDefinition() {
+        return new DomainSecurityDefinition(
+                this.creationAccess,
                 this.readAllAccess,
                 this.readOneAccess,
                 this.updateAccess,
@@ -144,7 +153,7 @@ public class DomainSecurityBuilder
                 this.readOneAuthority,
                 this.updateAuthority,
                 this.deleteAllAuthority,
-                this.disabled));
+                this.disabled);
     }
 
     @Override
@@ -153,7 +162,7 @@ public class DomainSecurityBuilder
     }
 
     @Override
-    public IDomainSecurityBuilder disable(boolean b) {
+    public IDomainSecurityBuilder<E> disable(boolean b) {
         this.disabled = b;
         return this;
     }
@@ -166,11 +175,11 @@ public class DomainSecurityBuilder
     }
 
     @Override
-    public IDomainSecurityBuilder authorizationProtocol(Class<?> interfaceClass,
+    public IDomainSecurityBuilder<E> authorizationProtocol(Class<?> interfaceClass,
             IAuthorizationProtocolBuilder protocole) throws DslException {
 
-        Optional<IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
-                .filter(inter -> interfaceClass.isAssignableFrom(inter.getObjectClass())).findFirst();
+        Optional<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
+                .filter(inter -> interfaceClass.isAssignableFrom(inter.getSuppliedClass())).findFirst();
         interfaceObjectSupplierBuilder.orElseThrow(() -> new DslException(
                 "Interface object supplier builder not found for class " + interfaceClass.getSimpleName()));
         this.authorizationProtocols.put(interfaceObjectSupplierBuilder.get(), protocole);
@@ -193,7 +202,7 @@ public class DomainSecurityBuilder
     }
 
     @Override
-    public IDomainSecurityBuilder useCase(IUseCaseBuilder<?> useCaseBuilder, boolean authority, Access acceess) {
+    public IDomainSecurityBuilder<E> useCase(IUseCaseBuilder<?, ?, ?> useCaseBuilder, boolean authority, Access acceess) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'useCase'");
     }

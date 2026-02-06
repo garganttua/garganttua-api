@@ -5,13 +5,17 @@ import com.garganttua.api.spec.context.Operation;
 
 public interface IAccessRule {
 	
-	String getEndpoint();
+	default String endpoint(){
+		return operation().getPath();
+	}
 	
-	String getAuthority();
+	String authority();
 	
-	Operation getOperation();
+	Operation operation();
 	
-	String toString();
-	
-	Access getAccess();
+	Access access();
+
+	default String key() {
+		return operation().key();
+	}
 }

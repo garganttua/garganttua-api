@@ -1,6 +1,7 @@
 package com.garganttua.api.core.context;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,11 +9,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
+import org.javatuples.Pair;
 
 import com.garganttua.api.core.context.application.RepositoryException;
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
+import com.garganttua.api.spec.definition.IDomainDefinition;
+import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
@@ -20,159 +24,256 @@ import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.MapperException;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class Repository implements IRepository {
 
-    private List<IDtoContext<?>> dtoContexts;
+    private final List<IDtoContext<?>> dtoContexts;
+    private final Class<?> entityClass;
     private final IMapper mapper = DefaultMapper.mapper();
-    private final @Nonnull Class<?> entityClass;
+    private final IFilterMapper filterMapper = new FilterMapper();
+
+    private IDomainContext<?> domainContext;
+    private final Object domainContextLock = new Object();
 
     public Repository(List<IDtoContext<?>> dtoContexts, Class<?> entityClass) {
-        this.dtoContexts = Objects.requireNonNull(dtoContexts, "Dto contexts cannot be null");
+        this.dtoContexts = Collections.unmodifiableList(new ArrayList<>(
+                Objects.requireNonNull(dtoContexts, "Dto contexts cannot be null")));
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
-        log.atInfo().log("Repository initialized with {} DTO contexts and entity class {}", dtoContexts.size(),
-                entityClass.getSimpleName());
     }
 
-    @Override
-    public boolean doesExist(Object entity) throws CoreException {
-        log.atDebug().log("Checking existence of entity {}", entity);
-        throw new UnsupportedOperationException("Unimplemented method 'doesExist'");
+    public void setDomainContext(IDomainContext<?> domainContext) {
+        synchronized (domainContextLock) {
+            this.domainContext = Objects.requireNonNull(domainContext, "Domain context cannot be null");
+        }
     }
+
+    private IDomainContext<?> getDomainContext() {
+        synchronized (domainContextLock) {
+            return this.domainContext;
+        }
+    }
+
+    // --- Read operations ---
 
     @Override
     public List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
             throws CoreException {
-
-        log.atInfo().log("Fetching entities for pageable={}, filter={}, sort={}", pageable, filter,
-                sort);
-
-        log.atDebug().log("Building DTO maps for {} contexts...", dtoContexts.size());
-        List<Map<String, Object>> dtoMaps = dtoContexts.stream()
-                .map(context -> buildDtoMap(context, pageable, filter, sort))
-                .collect(Collectors.toList());
-
-        log.atDebug().log("Merging {} DTO maps into a unified structure...", dtoMaps.size());
-        Map<String, List<Object>> mergedDtos = Repository.mergeMaps(dtoMaps, false);
-
-        log.atDebug().log("Mapping merged DTOs ({}) to entities of type {}", mergedDtos.size(),
-                entityClass.getSimpleName());
-        List<Object> entities = mergedDtos.values().stream()
-                .map(this::mapDtosToEntity)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        log.atInfo().log("Successfully built {} entities", entities.size());
-        return entities;
-    }
-
-    private Map<String, Object> buildDtoMap(IDtoContext<?> context, Optional<IPageable> pageable, Optional<IFilter> filter,
-            Optional<ISort> sort) {
-        log.atTrace().log("Building DTO map for context {}", context.getClass().getSimpleName());
-        Map<String, Object> map = new HashMap<>();
-
-        try {
-            List<Object> dtos = context.getDao().find(pageable, filter, sort);
-            log.atDebug().log("Context {} returned {} DTOs", context.getClass().getSimpleName(), dtos.size());
-
-            for (Object dto : dtos) {
-                String uuid = context.getUuid(dto);
-                map.put(uuid, dto);
-            }
-            log.atTrace().log("Built map with {} UUID entries", map.size());
-
-        } catch (CoreException e) {
-            log.atError().setCause(e).log("Error building DTO map for context {}", context.getClass().getSimpleName());
-        }
-
-        return map;
-    }
-
-    private Object mapDtosToEntity(List<Object> dtoList) {
-        log.atTrace().log("Mapping {} DTOs into a single entity", dtoList.size());
-        Object entity = null;
-
-        for (Object dto : dtoList) {
-            try {
-                entity = (entity == null)
-                        ? mapper.map(dto, this.entityClass)
-                        : mapper.map(dto, entity);
-                log.atTrace().log("Mapped DTO {} into entity {}", dto.getClass().getSimpleName(),
-                        entity.getClass().getSimpleName());
-            } catch (MapperException e) {
-                log.atError().setCause(e).log("Mapping failed for DTO {}", dto);
-                return null;
-            }
-        }
-
-        log.atDebug().log("Successfully merged {} DTOs into an entity {}", dtoList.size(), entityClass.getSimpleName());
-        return entity;
-    }
-
-    public static Map<String, List<Object>> mergeMaps(List<Map<String, Object>> maps, boolean strict)
-            throws CoreException {
-
-        log.atTrace().log("Merging {} maps (strict={})", maps.size(), strict);
-        Map<String, List<Object>> result = new HashMap<>();
-
-        maps.forEach(
-                map -> map.forEach((key, value) -> result.computeIfAbsent(key, k -> new ArrayList<>()).add(value)));
-
-        if (strict && !result.isEmpty()) {
-            int expectedSize = result.values().iterator().next().size();
-            log.atDebug().log("Strict mode enabled, expecting {} elements per key", expectedSize);
-
-            result.forEach((key, list) -> {
-                if (list.size() != expectedSize) {
-                    String message = String.format("Key '%s' has %d elements, expected %d", key, list.size(),
-                            expectedSize);
-                    log.atError().log(message);
-                    throw new RepositoryException(message);
-                }
-            });
-        }
-
-        log.atTrace().log("Merged maps into {} keys", result.size());
-        return result;
-    }
-
-    @Override
-    public void save(Object entity) throws CoreException {
-        log.atWarn().log("save() called but not implemented (entity={})", entity);
-        throw new UnsupportedOperationException("Unimplemented method 'save'");
-    }
-
-    @Override
-    public Optional<Object> getOneById(String id) throws CoreException {
-        log.atWarn().log("getOneById() called but not implemented (id={})", id);
-        throw new UnsupportedOperationException("Unimplemented method 'getOneById'");
-    }
-
-    @Override
-    public void delete(Object entity) throws CoreException {
-        log.atWarn().log("delete() called but not implemented (entity={})", entity);
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
-    }
-
-    @Override
-    public boolean doesExist(String uuid) throws CoreException {
-        log.atWarn().log("doesExist() called but not implemented (uuid={})", uuid);
-        throw new UnsupportedOperationException("Unimplemented method 'doesExist'");
+        log.debug("Fetching entities with filter={}", filter.orElse(null));
+        List<Map<String, Object>> dtoMaps = queryAllDtos(pageable, filter, sort);
+        return mergeAndMapToEntities(dtoMaps);
     }
 
     @Override
     public Optional<Object> getOneByUuid(String uuid) throws CoreException {
-        log.atWarn().log("getOneByUuid() called but not implemented (uuid={})", uuid);
-        throw new UnsupportedOperationException("Unimplemented method 'getOneByUuid'");
+        Objects.requireNonNull(uuid, "UUID cannot be null");
+        log.debug("Fetching entity by uuid={}", uuid);
+        return findOneByField(ctx -> ctx.getDtoDefinition().uuid(), uuid);
     }
 
     @Override
-    public long getCount(IFilter filter) throws CoreException {
-        log.atWarn().log("getCount() called but not implemented (filter={})", filter);
-        throw new UnsupportedOperationException("Unimplemented method 'getCount'");
+    public Optional<Object> getOneById(String id) throws CoreException {
+        Objects.requireNonNull(id, "ID cannot be null");
+        log.debug("Fetching entity by id={}", id);
+        return findOneByField(ctx -> ctx.getDtoDefinition().id(), id);
     }
 
+    // --- Write operations ---
+
+    @Override
+    public void save(Object entity) throws CoreException {
+        Objects.requireNonNull(entity, "Entity cannot be null");
+        log.debug("Saving entity of type {}", entity.getClass().getSimpleName());
+
+        for (IDtoContext<?> dtoContext : dtoContexts) {
+            Object dto = mapEntityToDto(entity, dtoContext.getDtoDefinition());
+            dtoContext.save(dto);
+        }
+    }
+
+    @Override
+    public void delete(Object entity) throws CoreException {
+        Objects.requireNonNull(entity, "Entity cannot be null");
+        log.debug("Deleting entity of type {}", entity.getClass().getSimpleName());
+
+        for (IDtoContext<?> dtoContext : dtoContexts) {
+            Object dto = mapEntityToDto(entity, dtoContext.getDtoDefinition());
+            dtoContext.delete(dto);
+        }
+    }
+
+    // --- Existence checks ---
+
+    @Override
+    public boolean doesExist(Object entity) throws CoreException {
+        Objects.requireNonNull(entity, "Entity cannot be null");
+        String uuid = extractUuidFromEntity(entity);
+        return doesExist(uuid);
+    }
+
+    @Override
+    public boolean doesExist(String uuid) throws CoreException {
+        Objects.requireNonNull(uuid, "UUID cannot be null");
+        return getOneByUuid(uuid).isPresent();
+    }
+
+    // --- Count ---
+
+    @Override
+    public long getCount(IFilter filter) throws CoreException {
+        if (dtoContexts.isEmpty()) {
+            return 0;
+        }
+        return dtoContexts.get(0).count(filter);
+    }
+
+    // --- Internal: querying ---
+
+    private List<Map<String, Object>> queryAllDtos(Optional<IPageable> pageable, Optional<IFilter> filter,
+            Optional<ISort> sort) throws CoreException {
+        IDomainContext<?> dc = getDomainContext();
+        if (dc != null) {
+            return queryWithFilterMapping(dc, pageable, filter, sort);
+        }
+        return dtoContexts.stream()
+                .map(ctx -> queryDtoContext(ctx, pageable, filter, sort))
+                .toList();
+    }
+
+    private List<Map<String, Object>> queryWithFilterMapping(IDomainContext<?> dc, Optional<IPageable> pageable,
+            Optional<IFilter> filter, Optional<ISort> sort) throws CoreException {
+        IDomainDefinition<?> definition = dc.getDomainDefinition();
+        List<Pair<Class<?>, IFilter>> mappedFilters = filterMapper.map(definition, filter.orElse(null));
+
+        List<Map<String, Object>> dtoMaps = new ArrayList<>();
+        for (Pair<Class<?>, IFilter> mapped : mappedFilters) {
+            IDtoContext<?> dtoContext = findDtoContextByClass(mapped.getValue0());
+            if (dtoContext != null) {
+                dtoMaps.add(queryDtoContext(dtoContext, pageable, Optional.ofNullable(mapped.getValue1()), sort));
+            }
+        }
+        return dtoMaps;
+    }
+
+    private Optional<Object> findOneByField(FieldAddressExtractor extractor, String value) throws CoreException {
+        List<Map<String, Object>> dtoMaps = new ArrayList<>();
+        for (IDtoContext<?> dtoContext : dtoContexts) {
+            ObjectAddress fieldAddress = extractor.extract(dtoContext);
+            if (fieldAddress == null) {
+                continue;
+            }
+            IFilter filter = Filter.eq(fieldAddress.toString(), value);
+            dtoMaps.add(queryDtoContext(dtoContext, Optional.empty(), Optional.of(filter), Optional.empty()));
+        }
+
+        Map<String, List<Object>> merged = mergeMaps(dtoMaps, false);
+        if (merged.isEmpty()) {
+            return Optional.empty();
+        }
+        List<Object> dtos = merged.values().iterator().next();
+        return Optional.ofNullable(mapDtosToEntity(dtos));
+    }
+
+    private Map<String, Object> queryDtoContext(IDtoContext<?> dtoContext, Optional<IPageable> pageable,
+            Optional<IFilter> filter, Optional<ISort> sort) {
+        Map<String, Object> map = new HashMap<>();
+        try {
+            List<Object> dtos = dtoContext.find(pageable, filter, sort);
+            for (Object dto : dtos) {
+                String uuid = dtoContext.getUuid(dto);
+                map.put(uuid, dto);
+            }
+        } catch (CoreException e) {
+            log.error("Error querying DTO context for {}",
+                    dtoContext.getDtoDefinition().dtoClass().getSimpleName(), e);
+        }
+        return map;
+    }
+
+    // --- Internal: mapping ---
+
+    private List<Object> mergeAndMapToEntities(List<Map<String, Object>> dtoMaps) throws CoreException {
+        Map<String, List<Object>> merged = mergeMaps(dtoMaps, false);
+        return merged.values().stream()
+                .map(this::mapDtosToEntity)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    private Object mapDtosToEntity(List<Object> dtoList) {
+        Object entity = null;
+        for (Object dto : dtoList) {
+            try {
+                entity = (entity == null)
+                        ? mapper.map(dto, entityClass)
+                        : mapper.map(dto, entity);
+            } catch (MapperException e) {
+                log.error("Mapping failed for DTO {}", dto.getClass().getSimpleName(), e);
+                return null;
+            }
+        }
+        return entity;
+    }
+
+    private Object mapEntityToDto(Object entity, IDtoDefinition<?> dtoDefinition) throws CoreException {
+        try {
+            return mapper.map(entity, dtoDefinition.dtoClass());
+        } catch (MapperException e) {
+            throw new RepositoryException(
+                    "Failed to map entity to DTO " + dtoDefinition.dtoClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private String extractUuidFromEntity(Object entity) throws CoreException {
+        IDomainContext<?> dc = getDomainContext();
+        if (dc == null) {
+            throw new RepositoryException("Domain context not set, cannot extract UUID from entity");
+        }
+        ObjectAddress uuidAddress = dc.getEntityDefinition().uuid();
+        try {
+            Object value = ObjectQueryFactory.objectQuery(entity).getValue(uuidAddress);
+            return value != null ? value.toString() : null;
+        } catch (Exception e) {
+            throw new RepositoryException("Failed to extract UUID from entity: " + e.getMessage());
+        }
+    }
+
+    // --- Internal: lookup ---
+
+    private IDtoContext<?> findDtoContextByClass(Class<?> dtoClass) {
+        for (IDtoContext<?> ctx : dtoContexts) {
+            if (ctx.getDtoDefinition().dtoClass().equals(dtoClass)) {
+                return ctx;
+            }
+        }
+        return null;
+    }
+
+    @FunctionalInterface
+    private interface FieldAddressExtractor {
+        ObjectAddress extract(IDtoContext<?> dtoContext);
+    }
+
+    // --- Internal: merge ---
+
+    static Map<String, List<Object>> mergeMaps(List<Map<String, Object>> maps, boolean strict) throws CoreException {
+        Map<String, List<Object>> result = new HashMap<>();
+        maps.forEach(map -> map.forEach((key, value) ->
+                result.computeIfAbsent(key, k -> new ArrayList<>()).add(value)));
+
+        if (strict && !result.isEmpty()) {
+            int expectedSize = result.values().iterator().next().size();
+            result.forEach((key, list) -> {
+                if (list.size() != expectedSize) {
+                    throw new RepositoryException(
+                            String.format("Key '%s' has %d DTOs, expected %d", key, list.size(), expectedSize));
+                }
+            });
+        }
+        return result;
+    }
 }

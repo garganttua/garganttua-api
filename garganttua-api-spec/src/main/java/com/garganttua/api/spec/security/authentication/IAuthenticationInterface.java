@@ -2,7 +2,7 @@ package com.garganttua.api.spec.security.authentication;
 
 import java.lang.reflect.Method;
 
-import com.garganttua.api.spec.domain.IDomain;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.interfasse.ICustomizableInterface;
 import com.garganttua.core.CoreException;
 
@@ -16,7 +16,7 @@ public interface IAuthenticationInterface extends ICustomizableInterface {
 
 	String getName();
 
-	void setDomain(IDomain domain);
+	void setDomainDefinition(IDomainDefinition<?> domainDefinition);
 
 	Method getAuthenticateMethod();
 

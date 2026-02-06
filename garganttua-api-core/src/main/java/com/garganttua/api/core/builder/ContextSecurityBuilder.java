@@ -1,65 +1,64 @@
 package com.garganttua.api.core.builder;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-import com.garganttua.api.core.context.application.ApplicationSecurityContext;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.core.context.application.ApiSecurityContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.api.spec.security.IApiSecurityContext;
+import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class ContextSecurityBuilder
         extends
         AbstractAutomaticLinkedBuilder<IApiContextSecurityBuilder, IApiContextBuilder, IApiSecurityContext>
         implements IApiContextSecurityBuilder {
 
-    private List<String> packages;
+    private Set<String> packages;
     private Map<Class<?>, IAuthorizationProtocolBuilder> protocols = new HashMap<Class<?>, IAuthorizationProtocolBuilder>();
     private Map<Class<?>, IAuthenticationBuilder> authentications = new HashMap<Class<?>, IAuthenticationBuilder>();
     private boolean disabled = false;
 
-    public ContextSecurityBuilder(List<String> packages, IApiContextBuilder up) {
+    public ContextSecurityBuilder(Set<String> packages, IApiContextBuilder up) {
         super(up);
         this.packages = packages;
     }
 
     @Override
-    public IAuthenticationBuilder authentication(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException {
+    public IAuthenticationBuilder authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
         Objects.requireNonNull(supplier, "Authentication class cannot be null");
-        Objects.requireNonNull(supplier.getSuppliedType(), "Supplier should provide an object class");
+        Objects.requireNonNull(supplier.getSuppliedClass(), "Supplier should provide an object class");
 
         IAuthenticationBuilder builder;
-        if (!this.authentications.containsKey(supplier.getSuppliedType())) {
+        if (!this.authentications.containsKey(supplier.getSuppliedClass())) {
             builder = new AuthenticationBuilder(this);
-            this.authentications.put(supplier.getSuppliedType(), builder);
+            this.authentications.put(supplier.getSuppliedClass(), builder);
         } else {
-            builder = this.authentications.get(supplier.getSuppliedType());
+            builder = this.authentications.get(supplier.getSuppliedClass());
         }
         return builder;
     }
 
     @Override
-    public IAuthorizationProtocolBuilder authorizationProtocol(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier)
+    public IAuthorizationProtocolBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
             throws DslException {
         Objects.requireNonNull(supplier, "Supplier class cannot be null");
-        Objects.requireNonNull(supplier.getSuppliedType(), "Supplier should provide an object class");
+        Objects.requireNonNull(supplier.getSuppliedClass(), "Supplier should provide an object class");
 
         IAuthorizationProtocolBuilder builder;
-        if (!this.protocols.containsKey(supplier.getSuppliedType())) {
+        if (!this.protocols.containsKey(supplier.getSuppliedClass())) {
             builder = new AuthorizationProtocolBuilder(this, supplier);
-            this.protocols.put(supplier.getSuppliedType(), builder);
+            this.protocols.put(supplier.getSuppliedClass(), builder);
         } else {
-            builder = this.protocols.get(supplier.getSuppliedType());
+            builder = this.protocols.get(supplier.getSuppliedClass());
         }
         return builder;
     }
@@ -89,27 +88,16 @@ public class ContextSecurityBuilder
     }
 
     @Override
-    protected IApiSecurityContext doBuild() throws DslException {
-        return new ApplicationSecurityContext(
-                this.packages,
-                this.authentications.values().stream().map(builder -> {
-                    try {
-                        return builder.build();
-                    } catch (DslException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    return null;
-                }).collect(Collectors.toList()),
-                this.protocols.values().stream().map(builder -> {
-                    try {
-                        return builder.build();
-                    } catch (DslException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    return null;
-                }).collect(Collectors.toList()));
+    protected synchronized IApiSecurityContext doBuild() throws DslException {
+        // Build all authentication and protocol contexts
+        for (IAuthenticationBuilder authBuilder : this.authentications.values()) {
+            authBuilder.build();
+        }
+        for (IAuthorizationProtocolBuilder protocolBuilder : this.protocols.values()) {
+            protocolBuilder.build();
+        }
+
+        return new ApiSecurityContext(this.disabled);
     }
 
     @Override
@@ -124,6 +112,25 @@ public class ContextSecurityBuilder
     public IApiContextSecurityBuilder disable(boolean b) {
         this.disabled = b;
         return this;
+    }
+
+    @Override
+    public IApiContextSecurityBuilder withPackage(String packageName) {
+        this.packages.add(packageName);
+        return this;
+    }
+
+    @Override
+    public IApiContextSecurityBuilder withPackages(String[] packageNames) {
+        for (String pkg : packageNames) {
+            this.packages.add(pkg);
+        }
+        return this;
+    }
+
+    @Override
+    public String[] getPackages() {
+        return this.packages.toArray(new String[0]);
     }
 
 }

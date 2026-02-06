@@ -13,13 +13,13 @@ import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 
-public class SignableAuthorizationBuilder extends AbstractAutomaticLinkedBuilder<ISignableAuthorizationBuilder, IAuthorizationBuilder, Object> implements ISignableAuthorizationBuilder {
+public class SignableAuthorizationBuilder<E> extends AbstractAutomaticLinkedBuilder<ISignableAuthorizationBuilder<E>, IAuthorizationBuilder<E>, Object> implements ISignableAuthorizationBuilder<E> {
 
     private @Nonnull IObjectQuery objectQuery;
     private @Nonnull Class<?> entityClass;
-    private ISignableAuthorizationMethodBinderBuilder sign;
+    private ISignableAuthorizationMethodBinderBuilder<E> sign;
 
-    public SignableAuthorizationBuilder(IAuthorizationBuilder authorizationBuilder, IObjectQuery objectQuery,
+    public SignableAuthorizationBuilder(IAuthorizationBuilder<E> authorizationBuilder, IObjectQuery objectQuery,
             Class<?> entityClass) {
                 super(authorizationBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
@@ -28,65 +28,65 @@ public class SignableAuthorizationBuilder extends AbstractAutomaticLinkedBuilder
 
     @Override
     protected void doAutoDetection() {
-        
+
     }
 
     @Override
-    public ISignableAuthorizationBuilder setSignature(String string) throws DslException {
+    public ISignableAuthorizationBuilder<E> setSignature(String string) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSignature'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder setSignature(Method method) throws DslException {
+    public ISignableAuthorizationBuilder<E> setSignature(Method method) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSignature'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder setSignature(ObjectAddress fieldAddress) throws DslException {
+    public ISignableAuthorizationBuilder<E> setSignature(ObjectAddress fieldAddress) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setSignature'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder getSignature(String string) throws DslException {
+    public ISignableAuthorizationBuilder<E> getSignature(String string) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSignature'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder getSignature(Method method) throws DslException {
+    public ISignableAuthorizationBuilder<E> getSignature(Method method) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSignature'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder getSignature(ObjectAddress fieldAddress) throws DslException {
+    public ISignableAuthorizationBuilder<E> getSignature(ObjectAddress fieldAddress) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSignature'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder getDataToSign(String string) throws DslException {
+    public ISignableAuthorizationBuilder<E> getDataToSign(String string) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getDataToSign'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder getDataToSign(Method method) throws DslException {
+    public ISignableAuthorizationBuilder<E> getDataToSign(Method method) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getDataToSign'");
     }
 
     @Override
-    public ISignableAuthorizationBuilder getDataToSign(ObjectAddress fieldAddress) throws DslException {
+    public ISignableAuthorizationBuilder<E> getDataToSign(ObjectAddress fieldAddress) throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getDataToSign'");
     }
 
     @Override
-    protected Object doBuild() throws DslException {
+    protected synchronized Object doBuild() throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
     }

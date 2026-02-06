@@ -5,8 +5,11 @@ import java.util.Objects;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.spec.context.IEntityContext;
 
+import lombok.Getter;
+
 public class EntityContext<E> implements IEntityContext<E> {
 
+    @Getter
     private EntityDefinition<E> entityDefinition;
 
     public EntityContext(

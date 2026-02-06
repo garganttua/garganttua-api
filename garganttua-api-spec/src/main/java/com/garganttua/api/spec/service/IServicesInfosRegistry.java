@@ -2,7 +2,7 @@ package com.garganttua.api.spec.service;
 
 import java.util.List;
 
-import com.garganttua.api.spec.domain.IDomain;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 
 public interface IServicesInfosRegistry {
 
@@ -10,6 +10,6 @@ public interface IServicesInfosRegistry {
 
 	List<IServiceInfos> getServicesInfos();
 
-	void addServicesInfos(IDomain domain, List<IServiceInfos> authenticationServiceInfos);
+	void addServicesInfos(IDomainDefinition<?> domainDefinition, List<IServiceInfos> authenticationServiceInfos);
 
 }

@@ -7,15 +7,15 @@ import com.garganttua.core.CoreException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IObjectQuery;
 
-public class KeyBuilder extends AbstractAutomaticLinkedBuilder<IKeyBuilder, IDomainSecurityBuilder, IKeyContext>
-        implements IKeyBuilder {
+public class KeyBuilder<E> extends AbstractAutomaticLinkedBuilder<IKeyBuilder<E>, IDomainSecurityBuilder<E>, IKeyContext>
+        implements IKeyBuilder<E> {
 
-    public KeyBuilder(DomainSecurityBuilder domainSecurityBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
+    public KeyBuilder(DomainSecurityBuilder<E> domainSecurityBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainSecurityBuilder);
     }
 
     @Override
-    protected IKeyContext doBuild() throws CoreException {
+    protected synchronized IKeyContext doBuild() throws CoreException {
         return null;
     }
 

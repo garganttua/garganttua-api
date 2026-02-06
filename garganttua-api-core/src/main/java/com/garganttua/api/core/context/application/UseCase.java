@@ -1,20 +1,38 @@
 package com.garganttua.api.core.context.application;
 
+import java.lang.reflect.Type;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.swing.Action;
-
 import com.garganttua.api.spec.context.IUseCase;
+import com.garganttua.api.spec.context.Scope;
 import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
+import com.garganttua.core.supply.SupplyException;
 
 public class UseCase<I,O> implements IUseCase<I,O> {
 
-    public UseCase(String useCaseName, IMethodBinderBuilder<?, ?, ?, ?> methodBinder, String suffix, String path, Action action,
+    private final String useCaseName;
+    private final IMethodBinderBuilder<?, ?, ?, ?> methodBinder;
+    private final String suffix;
+    private final String path;
+    private final Scope scope;
+    private final TechnicalOperation operation;
+    private final Class<Object> useCaseInput;
+    private final Class<Object> useCaseOutput;
+
+    public UseCase(String useCaseName, IMethodBinderBuilder<?, ?, ?, ?> methodBinder, String suffix, String path, Scope scope,
             TechnicalOperation operation, Class<Object> useCaseInput, Class<Object> useCaseOutput) {
-        //TODO Auto-generated constructor stub
+        this.useCaseName = useCaseName;
+        this.methodBinder = methodBinder;
+        this.suffix = suffix;
+        this.path = path;
+        this.scope = scope;
+        this.operation = operation;
+        this.useCaseInput = useCaseInput;
+        this.useCaseOutput = useCaseOutput;
     }
 
     @Override
@@ -24,15 +42,31 @@ public class UseCase<I,O> implements IUseCase<I,O> {
     }
 
     @Override
-    public Optional<O> execute() throws ReflectionException {
+    public Optional<IMethodReturn<O>> execute() throws ReflectionException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'execute'");
     }
 
     @Override
-    public Set<Class<?>> getDependencies() {
+    public Set<Class<?>> dependencies() {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDependencies'");
+        throw new UnsupportedOperationException("Unimplemented method 'dependencies'");
+    }
+
+    @Override
+    public Optional<IMethodReturn<O>> supply() throws SupplyException {
+        // Delegate to execute()
+        try {
+            return execute();
+        } catch (ReflectionException e) {
+            throw new SupplyException(e);
+        }
+    }
+
+    @Override
+    public Type getSuppliedType() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
     }
 
 }

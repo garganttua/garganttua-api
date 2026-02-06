@@ -7,12 +7,12 @@ import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public interface IDtoBuilder<E, D> extends IAutomaticLinkedBuilder<IDtoBuilder<E, D>, IDomainBuilder<E>, IDtoContext<D>> {
 
-    IDtoBuilder<E, D> db(IObjectSupplierBuilder<? extends IDao, IObjectSupplier<? extends IDao>> daoSupplier) throws DslException;
+    IDtoBuilder<E, D> db(ISupplierBuilder<? extends IDao, ISupplier<? extends IDao>> daoSupplier) throws DslException;
 
     IDtoBuilder<E, D> db(IDao dao);
 

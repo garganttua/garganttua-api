@@ -1,8 +1,9 @@
 package com.garganttua.api.core.definition;
 
 import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.definition.IDomainSecurityDefinition;
 
-public record DomainSecurityDefinition(
+public record DomainSecurityDefinition (
     Access creationAccess,
     Access readAllAccess,
     Access readOneAccess,
@@ -15,6 +16,6 @@ public record DomainSecurityDefinition(
     Boolean readOneAuthority,
     Boolean updateAuthority,
     Boolean deleteAllAuthority,
-    boolean disabled) {
+    boolean disabled) implements IDomainSecurityDefinition {
 
 }

@@ -3,22 +3,21 @@ package com.garganttua.api.spec.context.dsl;
 import java.lang.reflect.Field;
 
 import com.garganttua.api.spec.context.ContextBuildingStage;
-import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.domain.IDomainContext;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContext, IDomainContext<E>> {
+public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContextBuilder, IDomainContext<E>> {
 
-    IDomainStartupBinderBuilder<E> startup(ContextBuildingStage stage, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> method) throws DslException;
+    IDomainStartupBinderBuilder<E> startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> method) throws DslException;
 
-    IDomainBuilder<E> interfasse(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> bean) throws DslException;
+    IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws DslException;
 
     IDomainBuilder<E> interfasse(Class<? extends IInterface> interfasse) throws DslException;
 
@@ -34,7 +33,7 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainBuilder<E> deleteOne(boolean b);
 
-    IDomainBuilder<E> events(IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> bean) throws DslException;
+    IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws DslException;
 
     IDomainBuilder<E> events(IEventPublisher eventPublisher) throws DslException;
 
@@ -74,7 +73,10 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     <D> IDtoBuilder<E, D> dto(Class<D> dtoClass) throws DslException;
 
+    @Deprecated
     <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, Class<I> inputType, Class<O> outputType);
+
+    IDomainWorkflowBuilder<E> workflow(String workflowName);
 
     IDomainBuilder<E> create(Object entity);
 

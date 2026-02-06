@@ -10,14 +10,14 @@ public interface IFilter extends Cloneable {
 
 	IFilter clone();
 
-	List<IFilter> getLiterals();
+	List<IFilter> getFilters();
 
 	String getName();
 
-	void setLiterals(List<IFilter> valuesLiterals);
+	void setFilters(List<IFilter> valuesFilters);
 
-	void removeSubLiteral(IFilter filter);
+	void removeSubFilter(IFilter filter);
 
-	void replaceSubLiteral(IFilter literal, IFilter mappedFilter);
+	void replaceSubFilter(IFilter literal, IFilter mappedFilter);
 
 }

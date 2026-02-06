@@ -11,9 +11,9 @@ import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.dsl.DslException;
 
-public class AuthenticatorAuthorizationBuilder extends
-        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationBuilder, IAuthenticatorBuilder, IAuthenticatorAuthorizationContext>
-        implements IAuthenticatorAuthorizationBuilder {
+public class AuthenticatorAuthorizationBuilder<E> extends
+        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationBuilder<E>, IAuthenticatorBuilder<E>, IAuthenticatorAuthorizationContext>
+        implements IAuthenticatorAuthorizationBuilder<E> {
 
     private Integer duration;
     private TimeUnit unit;
@@ -22,7 +22,7 @@ public class AuthenticatorAuthorizationBuilder extends
     private IDomainBuilder keyDomain;
     private AuthenticatorAuthorizationKeyBuilder authenticatorAuthorizationKey;
 
-    public AuthenticatorAuthorizationBuilder(IAuthenticatorBuilder authenticatorBuilder) {
+    public AuthenticatorAuthorizationBuilder(IAuthenticatorBuilder<E> authenticatorBuilder) {
         super(authenticatorBuilder);
     }
 
@@ -47,7 +47,7 @@ public class AuthenticatorAuthorizationBuilder extends
     }
 
     @Override
-    protected IAuthenticatorAuthorizationContext doBuild() throws DslException {
+    protected synchronized IAuthenticatorAuthorizationContext doBuild() throws DslException {
         /* return new AuthenticatorAuthorizationContext(this.duration,
                 this.unit,
                 this.refreshDuration,

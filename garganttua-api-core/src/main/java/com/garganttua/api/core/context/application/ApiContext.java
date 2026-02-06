@@ -1,126 +1,170 @@
 package com.garganttua.api.core.context.application;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.core.injection.context.DiContext;
+import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.repository.IRepository;
+import com.garganttua.core.injection.BeanReference;
+import com.garganttua.core.injection.DiException;
+import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.lifecycle.AbstractLifecycle;
+import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.lifecycle.LifecycleException;
+import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 
-public class ApiContext extends DiContext implements IApiContext {
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class ApiContext extends AbstractLifecycle implements IApiContext {
+
+    private final IInjectionContext injectionContext;
+    private final Map<String, IDomainContext<?>> domainContexts;
+    private final String superTenantId;
+    private final boolean superTenantAutoCreate;
+    private final List<IMethodBinder<Void>> startupBinders;
+
+    public ApiContext(IInjectionContext injectionContext, Map<String, IDomainContext<?>> domainContexts,
+            String superTenantId, boolean superTenantAutoCreate, List<IMethodBinder<Void>> startupBinders) {
+        this.injectionContext = Objects.requireNonNull(injectionContext, "Injection context cannot be null");
+        this.domainContexts = Collections.unmodifiableMap(new HashMap<>(
+                Objects.requireNonNull(domainContexts, "Domain contexts cannot be null")));
+        this.superTenantId = superTenantId;
+        this.superTenantAutoCreate = superTenantAutoCreate;
+        this.startupBinders = Collections.unmodifiableList(new ArrayList<>(
+                Objects.requireNonNull(startupBinders, "Startup binders cannot be null")));
+    }
 
     @Override
-    public Optional<IDomain> getDomainContext(String domainName) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getDomainContext'");
+    public Optional<IDomainContext<?>> getDomainContext(String domainName) {
+        return Optional.ofNullable(this.domainContexts.get(domainName));
     }
 
-   /*  public static IApplicationContext context;
-    private IGGBeanLoader loader;
-    private List<String> packages;
-    private IGGPropertyLoader propLoader;
-    private IGGInjector injector;
-    private String superTenantId;
-    private List<IApplicationContextStartupBinderBuilder> startupBinderBuilders;
-    private boolean autoCreateSuperTenant;
-    private IApplicationSecurityContext securityContext;
-    private Collection<IDomainContext> domainContexts;
-
-    public ApiContext(IGGBeanLoader loader, List<String> packages, IGGPropertyLoader propLoader,
-            IGGInjector injector, String superTenantId,
-            List<IApplicationContextStartupBinderBuilder> startupBinderBuilders, boolean autoCreateSuperTenant,
-            IApplicationSecurityContext securityContext, Collection<IDomainContext> domainContexts) {
-        this.loader = Objects.requireNonNull(loader, "Loader cannot be null");
-        this.packages = Objects.requireNonNull(packages, "Packages cannot be null");
-        this.propLoader = Objects.requireNonNull(propLoader, "Prop loader cannot be null");
-        this.injector = Objects.requireNonNull(injector, "Injector cannot be null");
-        this.superTenantId = Objects.requireNonNull(superTenantId, "Super tenant id cannot be null");
-        this.startupBinderBuilders = Objects.requireNonNull(startupBinderBuilders,
-                "Startup Binder Builder cannot be null");
-        this.autoCreateSuperTenant = autoCreateSuperTenant;
-        this.securityContext = Objects.requireNonNull(securityContext, "Security context cannot be null");
-        this.domainContexts = Objects.requireNonNull(domainContexts, "Domain contexts cannot be null");
-
+    public IInjectionContext getInjectionContext() {
+        return this.injectionContext;
     }
 
-    public ApplicationContext() {
-        // TODO Auto-generated constructor stub
+    public String getSuperTenantId() {
+        return this.superTenantId;
     }
 
-    public class Suppliers {
+    public boolean isSuperTenantAutoCreate() {
+        return this.superTenantAutoCreate;
+    }
 
-        public static <Supplied> INewObjectSupplierBuilder<Supplied> newObject(Class<Supplied> beanClass) {
-            ISupplyObject<Supplied, IApplicationContext> supply = (context) -> Optional.empty();
+    public Map<String, IDomainContext<?>> getDomainContexts() {
+        return this.domainContexts;
+    }
 
-            INewObjectSupplierBuilder<Supplied> builder = new NewObjectSupplierBuilder<>(beanClass);
+    @Override
+    protected ILifecycle doInit() {
+        // Create and register repositories for each domain
+        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+            String domainName = entry.getKey();
+            IDomainContext<?> domainContext = entry.getValue();
+            // Initialize the domain context
+            try {
+                domainContext.onInit();
+                log.info("Initialized domain '{}'", domainName);
+            } catch (LifecycleException e) {
+                log.error("Failed to initialize domain '{}': {}", domainName, e.getMessage());
+            }
 
-            return builder;
-        }
+            // Get the repository from the domain context
+            IRepository repository = domainContext.getRepository();
 
-        public static <Supplied> IObjectSupplierBuilder<Supplied> bean(Class<Supplied> beanClass) {
-            ISupplyObject<Supplied, IApplicationContext> supply = (context) -> Optional.empty();
-
-            IObjectSupplierBuilder<Supplied> builder = new ApplicationContextObjectSupplierBuilder<>(supply, beanClass);
-
-            return builder;
-        }
-
-        public static <Supplied> IObjectSupplierBuilder<Supplied> bean(String supplier, Class<Supplied> beanClass) {
-            ISupplyObject<Supplied, IApplicationContext> supply = (context) -> Optional.empty();
-
-            IObjectSupplierBuilder<Supplied> builder = new ApplicationContextObjectSupplierBuilder<>(supply, beanClass);
-
-            return builder;
-        }
-
-        public static IObjectSupplierBuilder<IDomainServiceRuntime> service(String domainName) {
-            ISupplyObject<IDomainServiceRuntime, IApplicationContext> supply = (context) -> Optional.empty();
-
-            IObjectSupplierBuilder<IDomainServiceRuntime> builder = new ApplicationContextObjectSupplierBuilder<>(
-                    supply,
-                    IDomainServiceRuntime.class);
-
-            return builder;
-        }
-
-        public static IObjectSupplier<IRepository> repository(String domainName) throws CoreException {
-            ISupplyObject<IRepository, IApplicationContext> supply = (context) -> {
-                Optional<IDomainContext> dContext = context.getDomainContext(domainName);
-                if( dContext.isPresent() ){
-                    return Optional.of(dContext.get().getRepository());
+            if (repository != null) {
+                // Register the repository in the injection context
+                String repositoryName = domainName + "-repository";
+                try {
+                    BeanReference<IRepository> beanRef = new BeanReference<>(
+                            IRepository.class,
+                            Optional.empty(),
+                            Optional.of(repositoryName),
+                            new HashSet<>());
+                    this.injectionContext.addBean(repositoryName, beanRef, repository);
+                    log.info("Registered repository '{}' for domain '{}'", repositoryName, domainName);
+                } catch (DiException e) {
+                    log.error("Failed to register repository '{}' for domain '{}': {}", repositoryName, domainName, e.getMessage());
                 }
-                return null;
-            };
+            }
 
-            IObjectSupplierBuilder<IRepository> builder = new ApplicationContextObjectSupplierBuilder<>(supply,
-                    IRepository.class);
-
-            return builder.build();
         }
-
-        public static IObjectSupplierBuilder<IFactory> factory(String domainName) {
-            ISupplyObject<IFactory, IApplicationContext> supply = (context) -> Optional.empty();
-
-            IObjectSupplierBuilder<IFactory> builder = new ApplicationContextObjectSupplierBuilder<>(supply,
-                    IFactory.class);
-
-            return builder;
-        }
-
+        return this;
     }
 
     @Override
-    public Optional<IDomainContext> getDomainContext(String domainName) {
-        return this.domainContexts.stream().filter(domain -> domain.getDomainName().equals(domainName)).findFirst();
+    protected ILifecycle doStart() {
+        // Start all domain contexts
+        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+            String domainName = entry.getKey();
+            IDomainContext<?> domainContext = entry.getValue();
+            try {
+                domainContext.onStart();
+                log.info("Started domain '{}'", domainName);
+            } catch (LifecycleException e) {
+                log.error("Failed to start domain '{}': {}", domainName, e.getMessage());
+            }
+        }
+
+        // Execute startup binders
+        for (IMethodBinder<Void> binder : this.startupBinders) {
+            try {
+                log.trace("Executing startup binder: {}", binder.getExecutableReference());
+                binder.execute();
+            } catch (Exception e) {
+                log.error("Failed to execute startup binder '{}': {}", binder.getExecutableReference(), e.getMessage(), e);
+            }
+        }
+
+        return this;
     }
 
     @Override
-    public void doInjection(Object entity) throws ContextException {
-        try {
-            this.injector.injectBeans(entity);
-            this.injector.injectProperties(entity);
-        } catch (ReflectionException e) {
-            throw new ContextException(e);
+    protected ILifecycle doStop() {
+        // Stop all domain contexts
+        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+            String domainName = entry.getKey();
+            IDomainContext<?> domainContext = entry.getValue();
+            try {
+                domainContext.onStop();
+                log.info("Stopped domain '{}'", domainName);
+            } catch (LifecycleException e) {
+                log.error("Failed to stop domain '{}': {}", domainName, e.getMessage());
+            }
         }
-    } */
+        return this;
+    }
+
+    @Override
+    protected ILifecycle doFlush() {
+        // Flush all domain contexts
+        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+            String domainName = entry.getKey();
+            IDomainContext<?> domainContext = entry.getValue();
+            try {
+                domainContext.onFlush();
+                log.info("Flushed domain '{}'", domainName);
+            } catch (LifecycleException e) {
+                log.error("Failed to flush domain '{}': {}", domainName, e.getMessage());
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
+        // TODO: Implement native configuration collection from domain contexts
+        return Collections.emptySet();
+    }
 
 }

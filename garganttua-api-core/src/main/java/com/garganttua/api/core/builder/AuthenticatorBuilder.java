@@ -22,8 +22,8 @@ import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
 
-public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticatorBuilder, IDomainSecurityBuilder, IAuthenticatorContext>
-        implements IAuthenticatorBuilder {
+public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAuthenticatorBuilder<E>, IDomainSecurityBuilder<E>, IAuthenticatorContext>
+        implements IAuthenticatorBuilder<E> {
 
     private @Nonnull IObjectQuery objectQuery;
     private @Nonnull Class<?> entityClass;
@@ -36,9 +36,9 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
     private ObjectAddress accountNonExpired;
     private AuthenticatorScope scope;
     private List<IAuthenticationBuilder> selectedAuthentications = new ArrayList<>();
-    private IAuthenticatorAuthorizationBuilder authenticatorAuthorizationBuilder;
+    private IAuthenticatorAuthorizationBuilder<E> authenticatorAuthorizationBuilder;
 
-    public AuthenticatorBuilder(IDomainSecurityBuilder domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
+    public AuthenticatorBuilder(IDomainSecurityBuilder<E> domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
@@ -236,14 +236,14 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
         Objects.requireNonNull(authorization, "Authentication cannot be null");
 
         if (this.authenticatorAuthorizationBuilder == null) {
-            this.authenticatorAuthorizationBuilder = new AuthenticatorAuthorizationBuilder(this);
+            this.authenticatorAuthorizationBuilder = new AuthenticatorAuthorizationBuilder<>(this);
         }
 
         return this.authenticatorAuthorizationBuilder;
     }
 
     @Override
-    protected IAuthenticatorContext doBuild() throws CoreException {
+    protected synchronized IAuthenticatorContext doBuild() throws CoreException {
         return new AuthenticatorContext(
                 this.alwaysEnabled,
                 this.login,
@@ -262,7 +262,7 @@ public class AuthenticatorBuilder extends AbstractAutomaticLinkedBuilder<IAuthen
                     }
                     return null;
                 }).collect(Collectors.toList()),
-                this.authenticatorAuthorizationBuilder.build());
+                this.authenticatorAuthorizationBuilder != null ? this.authenticatorAuthorizationBuilder.build() : null);
     }
 
     @Override

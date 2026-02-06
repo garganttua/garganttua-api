@@ -16,9 +16,9 @@ import com.garganttua.api.spec.security.key.SignatureAlgorithm;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
-public class AuthenticatorAuthorizationKeyBuilder extends
-        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationKeyBuilder, IAuthenticatorAuthorizationBuilder, IAuthenticatorAuthorizationKeyContext>
-        implements IAuthenticatorAuthorizationKeyBuilder {
+public class AuthenticatorAuthorizationKeyBuilder<E> extends
+        AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationKeyBuilder<E>, IAuthenticatorAuthorizationBuilder<E>, IAuthenticatorAuthorizationKeyContext>
+        implements IAuthenticatorAuthorizationKeyBuilder<E> {
 
     private Integer duration;
     private TimeUnit unit;
@@ -27,8 +27,8 @@ public class AuthenticatorAuthorizationKeyBuilder extends
     private SignatureAlgorithm signAlgorithm;
     private @Nonnull IDomainBuilder key;
 
-    public AuthenticatorAuthorizationKeyBuilder(IAuthenticatorAuthorizationBuilder authenticatorAuthorizationBuilder,
-            IDomainBuilder key) {
+    public AuthenticatorAuthorizationKeyBuilder(IAuthenticatorAuthorizationBuilder<E> authenticatorAuthorizationBuilder,
+            IDomainBuilder<E> key) {
         super(authenticatorAuthorizationBuilder);
         this.key = Objects.requireNonNull(key, "Key cannot be null");
     }
@@ -59,7 +59,7 @@ public class AuthenticatorAuthorizationKeyBuilder extends
     }
 
     @Override
-    protected IAuthenticatorAuthorizationKeyContext doBuild() throws CoreException {
+    protected synchronized IAuthenticatorAuthorizationKeyContext doBuild() throws CoreException {
         return new AuthenticatorAuthorizationKeyContext(this.duration,
                 this.unit,
                 this.usage,

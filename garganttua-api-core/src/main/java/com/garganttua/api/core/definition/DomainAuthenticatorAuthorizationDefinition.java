@@ -1,5 +1,7 @@
 package com.garganttua.api.core.definition;
 
-public record DomainAuthenticatorAuthorizationDefinition() {
+import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
+
+public record DomainAuthenticatorAuthorizationDefinition() implements IDomainAuthenticatorAuthorizationDefinition {
 
 }

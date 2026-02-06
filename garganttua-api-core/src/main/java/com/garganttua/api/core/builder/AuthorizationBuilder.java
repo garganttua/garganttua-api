@@ -1,7 +1,5 @@
 package com.garganttua.api.core.builder;
 
-import static com.garganttua.api.core.context.execution.ExecutionContext.Suppliers.*;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.Instant;
@@ -22,9 +20,9 @@ import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
 
-public class AuthorizationBuilder
-        extends AbstractAutomaticLinkedBuilder<IAuthorizationBuilder, IDomainSecurityBuilder, IAuthorizationContext>
-        implements IAuthorizationBuilder {
+public class AuthorizationBuilder<E>
+        extends AbstractAutomaticLinkedBuilder<IAuthorizationBuilder<E>, IDomainSecurityBuilder<E>, IAuthorizationContext>
+        implements IAuthorizationBuilder<E> {
 
     private IObjectQuery objectQuery;
     private Class<?> entityClass;
@@ -33,22 +31,22 @@ public class AuthorizationBuilder
     private ObjectAddress creation;
     private ObjectAddress expiration;
     private ObjectAddress authorities;
-    private IAuthorizationMethodBinderBuilder toByteArray;
-    private IAuthorizationMethodBinderBuilder validate;
-    private IAuthorizationMethodBinderBuilder validateAgainst;
-    private IAuthorizationMethodBinderBuilder fromByteArray;
-    private ISignableAuthorizationBuilder signable;
-    private IRefreshableAuthorizationBuilder refreshable;
+    private IAuthorizationMethodBinderBuilder<E> toByteArray;
+    private IAuthorizationMethodBinderBuilder<E> validate;
+    private IAuthorizationMethodBinderBuilder<E> validateAgainst;
+    private IAuthorizationMethodBinderBuilder<E> fromByteArray;
+    private ISignableAuthorizationBuilder<E> signable;
+    private IRefreshableAuthorizationBuilder<E> refreshable;
     private boolean storable = false;
 
-    public AuthorizationBuilder(IDomainSecurityBuilder domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
+    public AuthorizationBuilder(IDomainSecurityBuilder<E> domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
         super(domainBuilder);
         this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
     @Override
-    public IAuthorizationBuilder type(Field field) throws DslException {
+    public IAuthorizationBuilder<E> type(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.type = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -57,7 +55,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder type(String fieldName) throws DslException {
+    public IAuthorizationBuilder<E> type(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.type = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -66,7 +64,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder type(ObjectAddress fieldAddress) throws DslException {
+    public IAuthorizationBuilder<E> type(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.type = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -75,7 +73,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder authorities(String fieldName) throws DslException {
+    public IAuthorizationBuilder<E> authorities(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, List.class);
@@ -84,7 +82,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder authorities(Field field) throws DslException {
+    public IAuthorizationBuilder<E> authorities(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByField(field, this.entityClass, List.class);
@@ -93,7 +91,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder authorities(ObjectAddress fieldAddress) throws DslException {
+    public IAuthorizationBuilder<E> authorities(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.authorities = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, List.class);
@@ -102,7 +100,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder expirable(ObjectAddress fieldAddress) throws DslException {
+    public IAuthorizationBuilder<E> expirable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.expiration = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Instant.class);
@@ -111,7 +109,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder expirable(Field field) throws DslException {
+    public IAuthorizationBuilder<E> expirable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByField(field, this.entityClass, Instant.class);
@@ -120,7 +118,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder expirable(String fieldName) throws DslException {
+    public IAuthorizationBuilder<E> expirable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Instant.class);
@@ -129,7 +127,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder revokable(String fieldName) throws DslException {
+    public IAuthorizationBuilder<E> revokable(String fieldName) throws DslException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         this.storable = true;
 
@@ -139,7 +137,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder revokable(Field field) throws DslException {
+    public IAuthorizationBuilder<E> revokable(Field field) throws DslException {
         Objects.requireNonNull(field, "Field name cannot be null");
         this.storable = true;
 
@@ -149,7 +147,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder revokable(ObjectAddress fieldAddress) throws DslException {
+    public IAuthorizationBuilder<E> revokable(ObjectAddress fieldAddress) throws DslException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
         this.storable = true;
 
@@ -159,66 +157,48 @@ public class AuthorizationBuilder
     }
 
     @Override
-    public IAuthorizationBuilder encode(
+    public IAuthorizationMethodBinderBuilder<E> encode(
             Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
-
-        this.toByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                .method(method, Byte[].class);
-
-        return this;
+        // TODO: Implement when ISupplierBuilder for authorization context is available
+        throw new UnsupportedOperationException("Unimplemented method 'encode'");
     }
 
     @Override
-    public IAuthorizationBuilder encode(
+    public IAuthorizationMethodBinderBuilder<E> encode(
             String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        this.toByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                .method(methodName, Byte[].class);
-
-        return this;
+        // TODO: Implement when ISupplierBuilder for authorization context is available
+        throw new UnsupportedOperationException("Unimplemented method 'encode'");
     }
 
     @Override
-    public IAuthorizationBuilder encode(
+    public IAuthorizationMethodBinderBuilder<E> encode(
             ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
-
-        this.toByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                .method(methodAddress, Byte[].class);
-
-        return this;
+        // TODO: Implement when ISupplierBuilder for authorization context is available
+        throw new UnsupportedOperationException("Unimplemented method 'encode'");
     }
 
     @Override
-    public IAuthorizationBuilder decode(Method method) throws DslException {
+    public IAuthorizationMethodBinderBuilder<E> decode(Method method) throws DslException {
         Objects.requireNonNull(method, "Method cannot be null");
-
-        this.fromByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                .method(method, void.class, Byte[].class);
-
-        return this;
+        // TODO: Implement when ISupplierBuilder for authorization context is available
+        throw new UnsupportedOperationException("Unimplemented method 'decode'");
     }
 
     @Override
-    public IAuthorizationBuilder decode(String methodName) throws DslException {
+    public IAuthorizationMethodBinderBuilder<E> decode(String methodName) throws DslException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        this.fromByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                .method(methodName, void.class, Byte[].class);
-
-        return this;
+        // TODO: Implement when ISupplierBuilder for authorization context is available
+        throw new UnsupportedOperationException("Unimplemented method 'decode'");
     }
 
     @Override
-    public IAuthorizationBuilder decode(ObjectAddress methodAddress) throws DslException {
+    public IAuthorizationMethodBinderBuilder<E> decode(ObjectAddress methodAddress) throws DslException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
-
-        this.fromByteArray = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                .method(methodAddress, void.class, Byte[].class);
-
-        return this;
+        // TODO: Implement when ISupplierBuilder for authorization context is available
+        throw new UnsupportedOperationException("Unimplemented method 'decode'");
     }
 
    /*  @Override
@@ -336,23 +316,23 @@ public class AuthorizationBuilder
     } */
 
     @Override
-    public ISignableAuthorizationBuilder signable() {
+    public ISignableAuthorizationBuilder<E> signable() {
         if (this.signable == null) {
-            this.signable = new SignableAuthorizationBuilder(this, this.objectQuery, this.entityClass);
+            this.signable = new SignableAuthorizationBuilder<>(this, this.objectQuery, this.entityClass);
         }
         return this.signable;
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder refreshable() {
+    public IRefreshableAuthorizationBuilder<E> refreshable() {
         if (this.refreshable == null) {
-            this.refreshable = new RefreshableAuthorizationBuilder(this, this.objectQuery, this.entityClass);
+            this.refreshable = new RefreshableAuthorizationBuilder<>(this, this.objectQuery, this.entityClass);
         }
         return this.refreshable;
     }
 
     @Override
-    public IAuthorizationBuilder storable(boolean b) {
+    public IAuthorizationBuilder<E> storable(boolean b) {
         this.storable = b;
         return this;
     }
@@ -368,7 +348,7 @@ public class AuthorizationBuilder
     }
 
     @Override
-    protected IAuthorizationContext doBuild() throws DslException {
+    protected synchronized IAuthorizationContext doBuild() throws DslException {
         return new AuthorizationContext(
                 this.type,
                 this.revoked,

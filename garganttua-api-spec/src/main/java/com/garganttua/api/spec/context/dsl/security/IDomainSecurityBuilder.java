@@ -2,12 +2,13 @@ package com.garganttua.api.spec.context.dsl.security;
 
 import com.garganttua.api.spec.context.Access;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 
 public interface IDomainSecurityBuilder<E>
-		extends IAutomaticLinkedBuilder<IDomainSecurityContext, IDomainBuilder<E>, IDomainSecurityBuilder<E>> {
+		extends IAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext> {
 
 	IDomainSecurityBuilder<E> creationAccess(Access access);
 
@@ -42,5 +43,7 @@ public interface IDomainSecurityBuilder<E>
 	IKeyBuilder<E> key();
 
 	IAuthenticatorBuilder<E> authenticator();
+
+	IDomainSecurityBuilder<E> useCase(IUseCaseBuilder<?, ?, ?> useCaseBuilder, boolean authority, Access access);
 
 }

@@ -5,7 +5,7 @@
 	<groupId>com.garganttua</groupId>
 	<artifactId>garganttua-api</artifactId>
 	<packaging>pom</packaging>
-	<version>3.0.0</version>
+	<version>3.0.0-ALPHA01</version>
 
 	<licenses>
 		<license>
@@ -43,178 +43,253 @@
 	</distributionManagement>
 
 	<properties>
-		<com.garganttua.core.version>2.0.0-ALPHA01</com.garganttua.core.version>
+		<!-- Encoding -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>21</java.version>
+
+		<!-- Garganttua Core -->
+		<garganttua.core.version>2.0.0-ALPHA01</garganttua.core.version>
+
+		<!-- Third-party dependencies -->
+		<lombok.version>1.18.30</lombok.version>
+		<slf4j.version>2.0.13</slf4j.version>
+		<reflections.version>0.10.2</reflections.version>
+		<javatuples.version>1.2</javatuples.version>
+		<geojson-jackson.version>1.14</geojson-jackson.version>
+		<javax.inject.version>1</javax.inject.version>
+		<json-path.version>2.9.0</json-path.version>
+		<jackson.version>2.17.0</jackson.version>
+
+		<!-- Test dependencies -->
+		<junit.version>5.11.4</junit.version>
+		<mockito.version>5.14.2</mockito.version>
+
+		<!-- Plugin versions -->
+		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+		<maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+		<maven-source-plugin.version>3.3.1</maven-source-plugin.version>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- Garganttua API modules -->
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-spec</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-
-			<dependency>
-				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-spring-security-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-interface-spring-rest</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-spring-core</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-spring-security-core</artifactId>
+				<version>${project.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-spring-interface-rest</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-native-image-config</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
+			<!-- Garganttua Core dependencies -->
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
-				<artifactId>garganttua-native</artifactId>
-				<version>${com.garganttua.core.version}</version>
+				<artifactId>garganttua-script</artifactId>
+				<version>${garganttua.core.version}</version>
 			</dependency>
-
-			<dependency>
-				<groupId>com.garganttua.core</groupId>
-				<artifactId>garganttua-mapper</artifactId>
-				<version>${com.garganttua.core.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>com.garganttua.core</groupId>
-				<artifactId>garganttua-reflection</artifactId>
-				<version>${com.garganttua.core.version}</version>
-			</dependency>
-
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
 				<artifactId>garganttua-execution</artifactId>
-				<version>${com.garganttua.core.version}</version>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-runtime</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-injection</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-mapper</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-native</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-reflection</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-workflow</artifactId>
+				<version>${garganttua.core.version}</version>
 			</dependency>
 
+			<!-- Third-party dependencies -->
+			<dependency>
+				<groupId>org.projectlombok</groupId>
+				<artifactId>lombok</artifactId>
+				<version>${lombok.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-simple</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.reflections</groupId>
+				<artifactId>reflections</artifactId>
+				<version>${reflections.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.javatuples</groupId>
+				<artifactId>javatuples</artifactId>
+				<version>${javatuples.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.grundid.opendatalab</groupId>
+				<artifactId>geojson-jackson</artifactId>
+				<version>${geojson-jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.inject</groupId>
+				<artifactId>javax.inject</artifactId>
+				<version>${javax.inject.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.jayway.jsonpath</groupId>
+				<artifactId>json-path</artifactId>
+				<version>${json-path.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+
+			<!-- Test dependencies -->
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter-engine</artifactId>
+				<version>${junit.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>${mockito.version}</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-junit-jupiter</artifactId>
+				<version>${mockito.version}</version>
+				<scope>test</scope>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
+	<!-- Common dependencies inherited by all modules -->
 	<dependencies>
-
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-execution</artifactId>
-			<version>${com.garganttua.core.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-runtime</artifactId>
-			<version>${com.garganttua.core.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-injection</artifactId>
-			<version>${com.garganttua.core.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-mapper</artifactId>
-			<version>${com.garganttua.core.version}</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-native</artifactId>
-			<version>${com.garganttua.core.version}</version>
-		</dependency>
-
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.30</version>
-			<scope>provided</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<scope>provided</scope>
-			<version>2.0.13</version>
 		</dependency>
-
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
-			<version>2.0.13</version>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections</artifactId>
-			<version>0.10.2</version>
-			<scope>compile</scope>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
-			<version>5.14.2</version>
-			<scope>test</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-junit-jupiter</artifactId>
-			<version>5.14.2</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven-compiler-plugin.version}</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+						<compilerArgs>
+							<arg>-parameters</arg>
+						</compilerArgs>
+						<annotationProcessorPaths>
+							<path>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+								<version>${lombok.version}</version>
+							</path>
+						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+				<plugin>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>${maven-surefire-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>${maven-source-plugin.version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
-				<configuration>
-					<source>21</source>
-					<target>21</target>
-					<compilerArgs>
-						<arg>-parameters</arg>
-					</compilerArgs>
-				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.1</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.3.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>

@@ -42,6 +42,11 @@ public record Operation(String domainName, TechnicalOperation operation, Class<?
 				OperationType.authentication);
 	}
 
+	public static Operation workflow(String domainName, TechnicalOperation operation, Class<?> entity,
+			Scope scope) {
+		return new Operation(domainName, operation, entity, scope, OperationType.workflow);
+	}
+
 	public String getPath() {
 		if( this.type == OperationType.authentication )
 			return "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase()) + "/authenticate";
@@ -73,6 +78,8 @@ public record Operation(String domainName, TechnicalOperation operation, Class<?
 			return BusinessOperation.authenticate;
 		if (this.type == OperationType.usesCase)
 			return BusinessOperation.useCase;
+		if (this.type == OperationType.workflow)
+			return BusinessOperation.workflow;
 
 		switch (operation) {
 			case create:
@@ -92,6 +99,10 @@ public record Operation(String domainName, TechnicalOperation operation, Class<?
 			case update:
 				return BusinessOperation.update;
 		}
+	}
+
+	public String key(){
+		return this.toString();
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.garganttua.api.core.definition;
 
-public record AuthenticationDefinition() {
+import com.garganttua.api.spec.definition.IAuthenticationDefinition;
+
+public record AuthenticationDefinition() implements IAuthenticationDefinition {
 
 }

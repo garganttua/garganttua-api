@@ -86,7 +86,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    protected IAuthenticationContext doBuild() throws DslException {
+    protected synchronized IAuthenticationContext doBuild() throws DslException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
     }
@@ -98,13 +98,13 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
    /*  private Boolean findPrincipal;
-    private @Nonnull IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier;
+    private @Nonnull ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
     private IAuthenticationMethodBinderBuilder<Boolean> authenticate;
     private List<Pair<Class<? extends Annotation>, Class<?>>> fieldAnnotations = new ArrayList<>();
     private IAuthenticationMethodBinderBuilder<Void> applySecurityOnEntity;
     private Map<String, IUseCaseBuilder<?, IAuthenticationBuilder>> useCases = new HashMap<>();
 
-    public AuthenticationBuilder(IContextSecurityBuilder contextSecurityBuilder, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) {
+    public AuthenticationBuilder(IContextSecurityBuilder contextSecurityBuilder, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(contextSecurityBuilder);
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
     }

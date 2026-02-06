@@ -1,17 +1,19 @@
 package com.garganttua.api.spec.context.dsl;
 
 import com.garganttua.api.spec.context.ContextBuildingStage;
+import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.injection.context.dsl.IDiContextBuilder;
-import com.garganttua.core.supply.IObjectSupplier;
-import com.garganttua.core.supply.dsl.IObjectSupplierBuilder;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.nativve.INativeBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public interface IApiContextBuilder extends IDiContextBuilder {
+public interface IApiContextBuilder extends IDependentBuilder<IApiContextBuilder, IApiContext>, INativeBuilder<IApiContextBuilder, IApiContext> {
 
 	IApiContextBuilder superTenantId(String string);
 
-	IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, IObjectSupplierBuilder<?, ? extends IObjectSupplier<?>> supplier) throws DslException;
+	IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException;
 
 	IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object) throws DslException;
 
@@ -19,6 +21,6 @@ public interface IApiContextBuilder extends IDiContextBuilder {
 
 	IApiContextBuilder superTenantAutoCreate(boolean b) throws DslException;
 
-    IApiContextSecurityBuilder security();
+	IApiContextSecurityBuilder security();
 
 }

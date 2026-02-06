@@ -5,6 +5,7 @@ import java.util.Objects;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public record DtoInfos(String db, ObjectAddress tenantIdFieldAddress) {
+	
 	@Override
 	public String toString() {
 		return "DtoInfos{tenantIdFieldName='" + tenantIdFieldAddress + "', db='" + db + "'}";

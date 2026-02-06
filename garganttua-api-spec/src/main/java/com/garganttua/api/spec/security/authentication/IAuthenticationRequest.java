@@ -1,23 +1,23 @@
 package com.garganttua.api.spec.security.authentication;
 
-import com.garganttua.api.spec.domain.IDomain;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 
 public interface IAuthenticationRequest {
 
-	IDomain getDomain();
+	IDomainDefinition<?> getDomainDefinition();
 
 	String getTenantId();
 
 	String getPrincipal();
 
 	Object getCredentials();
-	
+
 	Class<?> getAuthenticationType();
-	
+
 	Object getAuthentication();
 
 	void setAuthentication(Object authentication);
 
-  void setTenantId(String tenantId);
+	void setTenantId(String tenantId);
 
 }

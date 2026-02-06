@@ -1,5 +1,7 @@
 package com.garganttua.api.core.definition;
 
-public record UseCaseDefinition() {
+import com.garganttua.api.spec.definition.IUseCaseDefinition;
+
+public record UseCaseDefinition() implements IUseCaseDefinition {
 
 }
