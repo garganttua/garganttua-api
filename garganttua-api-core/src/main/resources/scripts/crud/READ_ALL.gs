@@ -1,33 +1,15 @@
-// ============================================
-// READ ALL - Recuperation de toutes les entites
-// ============================================
-// Inputs: $0 = ServiceRequest, $1 = Pageable, $2 = Filter, $3 = Sort
+#!/usr/bin/env gs
 
-// Phase 1: Validation et preparation du caller
-caller <- :createCaller($0) -> 100
-  ! CallerException => :rejectRequest("Invalid caller")
-  * => :logError("Caller creation failed", _)
+#@workflow
+#  Reads all entities from the repository with optional filtering, pagination and sorting.
+#
+#  @in operationRequest: IOperationRequest
+#  @out entities -> output: List
+#  @return 0: SUCCESS
+#@end
 
-// Phase 2: Validation des acces
-:validateAccess(caller, $0) -> 110
-  ! AccessDeniedException => :rejectRequest("Access denied")
+// Build security filter from caller permissions
+filter <- buildFilter(@0)
 
-// Phase 3: Mapping du filtre selon le domaine
-mappedFilter <- :mapFilter($2, $0.domainDefinition()) -> 120
-  ! FilterMappingException => :rejectRequest("Invalid filter")
-
-// Phase 4: Application du filtre de securite (tenant/owner)
-securityFilter <- :applySecurityFilter(mappedFilter, caller, $0.domainDefinition()) -> 130
-
-// Phase 5: Appel repository
-entities <- :repositoryFindAll($0.domainDefinition(), securityFilter, $1, $3) -> 200
-  ! RepositoryException => :errorResponse("Repository error", _)
-  * => :rollbackAndError("Read all failed", _)
-
-// Phase 6: Post-traitement des entites
-processedEntities <- :executeAfterGetHooks(entities, caller) -> 210
-  ! HookException => :logWarning("AfterGet hook failed", _)
-    | => _  // Continue avec les entites non traitees
-
-// Phase 7: Construction de la reponse
-:successResponse(processedEntities, "READ_ALL")
+// Read all entities from the repository (extracts page, filter, sort from the request)
+output <- :readAll(@repository, @0) -> 0

@@ -12,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.garganttua.api.core.builder.binder.ApiContextStartupBinderBuilder;
 import com.garganttua.api.core.context.application.ApiContext;
+import com.garganttua.api.core.expression.ApiExpressions;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IApiContext;
@@ -20,15 +21,16 @@ import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.expression.functions.Expressions;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IInjectionContext;
@@ -38,6 +40,7 @@ import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -80,35 +83,30 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 	@Override
 	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage,
-			ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
+			ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
 		ApiContextStartupBinderBuilder binder = new ApiContextStartupBinderBuilder(this, supplier);
 		this.startupBinderBuilders.add(binder);
 		return binder;
 	}
 
 	@Override
-	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object) throws DslException {
+	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object) throws ApiException {
 		ApiContextStartupBinderBuilder binder = new ApiContextStartupBinderBuilder(this, object);
 		this.startupBinderBuilders.add(binder);
 		return binder;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <E> IDomainBuilder<E> domain(Class<E> entityClass) throws DslException {
+	public <E> IDomainBuilder<E> domain(Class<E> entityClass) throws ApiException {
 		Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
 		return (IDomainBuilder<E>) this.domainBuilders.computeIfAbsent(entityClass, clazz -> {
-			try {
-				return new DomainBuilder<>(this, clazz);
-			} catch (DslException e) {
-				throw new RuntimeException(e);
-			}
+			return new DomainBuilder<>(this, clazz);
 		});
 	}
 
 	@Override
-	public IApiContextBuilder superTenantAutoCreate(boolean b) throws DslException {
+	public IApiContextBuilder superTenantAutoCreate(boolean b) throws ApiException {
 		this.superTenantAutoCreate = b;
 		return this;
 	}
@@ -144,7 +142,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	protected void doAutoDetectionWithDependency(Object dependency) throws DslException {
+	protected void doAutoDetectionWithDependency(Object dependency) throws ApiException {
 		log.atTrace().log("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
 
 		if (dependency instanceof IInjectionContext context) {
@@ -221,13 +219,13 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	protected synchronized IApiContext doBuild() throws DslException {
+	protected synchronized IApiContext doBuild() throws ApiException {
 		log.atTrace().log("Entering doBuild() method");
 
 		try {
 			// Ensure we have an injection context
 			if (this.injectionContext == null) {
-				throw new DslException("InjectionContext is required but not provided");
+				throw new ApiException("InjectionContext is required but not provided");
 			}
 
 			// Register default mapper as bean
@@ -264,13 +262,13 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 			return apiContext;
 
-		} catch (CoreException e) {
-			throw new DslException("Failed to build API context: " + e.getMessage(), e);
+		} catch (ApiException e) {
+			throw new ApiException("Failed to build API context: " + e.getMessage(), e);
 		}
 	}
 
 	@Override
-	protected void doAutoDetection() throws DslException {
+	protected void doAutoDetection() throws ApiException {
 		log.atTrace().log("Entering doAutoDetection() method");
 		// Base auto-detection without dependencies
 		// Could scan for @Entity annotated classes in packages
@@ -278,12 +276,20 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public IApiContextBuilder provide(IObservableBuilder<?, ?> dependency) throws DslException {
+	public IApiContextBuilder provide(IObservableBuilder<?, ?> dependency) throws ApiException {
 		if (dependency instanceof IInjectionContextBuilder builder) {
 			this.injectionContextBuilder = builder;
 			log.atDebug().log("IInjectionContextBuilder captured via provide()");
 		} else if (dependency instanceof IExpressionContextBuilder builder) {
 			this.expressionContextBuilder = builder;
+			this.expressionContextBuilder
+					.expression(NullSupplierBuilder.of(Expressions.class), String.class)
+					.encapsulatedMethod("string", String.class, Object.class)
+					.withName("string");
+			this.expressionContextBuilder
+					.expression(NullSupplierBuilder.of(ApiExpressions.class), IFilter.class)
+					.encapsulatedMethod("buildFilter", IFilter.class, Object.class)
+					.withName("buildFilter");
 			log.atDebug().log("IExpressionContextBuilder captured via provide()");
 		}
 		return super.provide(dependency);
