@@ -1,4 +1,4 @@
-package com.garganttua.api.core.builder;
+package com.garganttua.api.core.unit.builder;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -12,6 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.builder.ApiContextBuilder;
+import com.garganttua.api.core.builder.DomainBuilder;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
@@ -21,11 +23,12 @@ import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.expression.dsl.IExpressionMethodBinderBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 
@@ -51,8 +54,11 @@ class DomainBuilderTest {
 
     // Test DTO class
     public static class TestDto {
+        @FieldMappingRule(sourceFieldAddress = "id")
         private String id;
+        @FieldMappingRule(sourceFieldAddress = "uuid")
         private String uuid;
+        @FieldMappingRule(sourceFieldAddress = "tenantId")
         private String tenantId;
 
         public String getId() { return id; }
@@ -73,23 +79,23 @@ class DomainBuilderTest {
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
-                throws CoreException {
+                throws ApiException {
             return new ArrayList<>(storage);
         }
 
         @Override
-        public Object save(Object object) throws CoreException {
+        public Object save(Object object) throws ApiException {
             storage.add(object);
             return object;
         }
 
         @Override
-        public void delete(Object object) throws CoreException {
+        public void delete(Object object) throws ApiException {
             storage.remove(object);
         }
 
         @Override
-        public long count(IFilter filter) throws CoreException {
+        public long count(IFilter filter) throws ApiException {
             return storage.size();
         }
     }
@@ -98,7 +104,7 @@ class DomainBuilderTest {
     private IApiContextBuilder contextBuilder;
 
     @BeforeEach
-    void setUp() throws DslException {
+    void setUp() throws ApiException {
         contextBuilder = ApiContextBuilder.builder();
         domainBuilder = contextBuilder.domain(TestEntity.class);
     }
@@ -109,14 +115,14 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("entity() returns entity builder")
-        void entityReturnsEntityBuilder() throws DslException {
+        void entityReturnsEntityBuilder() throws ApiException {
             IEntityBuilder<TestEntity> entityBuilder = domainBuilder.entity();
             assertNotNull(entityBuilder);
         }
 
         @Test
         @DisplayName("entity() returns same builder on multiple calls")
-        void entityReturnsSameBuilder() throws DslException {
+        void entityReturnsSameBuilder() throws ApiException {
             IEntityBuilder<TestEntity> first = domainBuilder.entity();
             IEntityBuilder<TestEntity> second = domainBuilder.entity();
             assertSame(first, second);
@@ -129,64 +135,17 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("dto() returns DTO builder")
-        void dtoReturnsDtoBuilder() throws DslException {
+        void dtoReturnsDtoBuilder() throws ApiException {
             var dtoBuilder = domainBuilder.dto(TestDto.class);
             assertNotNull(dtoBuilder);
         }
 
         @Test
         @DisplayName("dto() returns same builder for same class")
-        void dtoReturnsSameBuilderForSameClass() throws DslException {
+        void dtoReturnsSameBuilderForSameClass() throws ApiException {
             var first = domainBuilder.dto(TestDto.class);
             var second = domainBuilder.dto(TestDto.class);
             assertSame(first, second);
-        }
-    }
-
-    @Nested
-    @DisplayName("CRUD Operation Configuration")
-    class CrudOperationConfiguration {
-
-        @Test
-        @DisplayName("creation() configures create operation")
-        void creationConfiguresCreateOperation() {
-            IDomainBuilder<TestEntity> result = domainBuilder.creation(true);
-            assertSame(domainBuilder, result);
-        }
-
-        @Test
-        @DisplayName("readAll() configures read all operation")
-        void readAllConfiguresReadAllOperation() {
-            IDomainBuilder<TestEntity> result = domainBuilder.readAll(true);
-            assertSame(domainBuilder, result);
-        }
-
-        @Test
-        @DisplayName("readOne() configures read one operation")
-        void readOneConfiguresReadOneOperation() {
-            IDomainBuilder<TestEntity> result = domainBuilder.readOne(true);
-            assertSame(domainBuilder, result);
-        }
-
-        @Test
-        @DisplayName("update() configures update operation")
-        void updateConfiguresUpdateOperation() {
-            IDomainBuilder<TestEntity> result = domainBuilder.update(true);
-            assertSame(domainBuilder, result);
-        }
-
-        @Test
-        @DisplayName("deleteOne() configures delete one operation")
-        void deleteOneConfiguresDeleteOneOperation() {
-            IDomainBuilder<TestEntity> result = domainBuilder.deleteOne(true);
-            assertSame(domainBuilder, result);
-        }
-
-        @Test
-        @DisplayName("deleteAll() configures delete all operation")
-        void deleteAllConfiguresDeleteAllOperation() {
-            IDomainBuilder<TestEntity> result = domainBuilder.deleteAll(true);
-            assertSame(domainBuilder, result);
         }
     }
 
@@ -196,7 +155,7 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("tenant() configures tenant flag")
-        void tenantConfiguresTenantFlag() throws DslException {
+        void tenantConfiguresTenantFlag() throws ApiException {
             IDomainBuilder<TestEntity> result = domainBuilder.tenant(true);
             assertSame(domainBuilder, result);
         }
@@ -210,7 +169,7 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("owner() configures owner field")
-        void ownerConfiguresOwnerField() throws DslException {
+        void ownerConfiguresOwnerField() throws ApiException {
             IDomainBuilder<TestEntity> result = domainBuilder.owner("ownerId");
             assertSame(domainBuilder, result);
         }
@@ -222,7 +181,7 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("security() returns security builder")
-        void securityReturnsSecurityBuilder() throws DslException {
+        void securityReturnsSecurityBuilder() throws ApiException {
             var securityBuilder = domainBuilder.security();
             assertNotNull(securityBuilder);
         }
@@ -241,7 +200,7 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("getEntityClass() returns configured class")
-        void getEntityClassReturnsConfiguredClass() throws DslException {
+        void getEntityClassReturnsConfiguredClass() throws ApiException {
             assertEquals(TestEntity.class, domainBuilder.getEntityClass());
         }
     }
@@ -255,7 +214,7 @@ class DomainBuilderTest {
 
         @BeforeEach
         @SuppressWarnings("unchecked")
-        void setUpDependencies() throws DslException {
+        void setUpDependencies() throws ApiException {
             mockInjectionContextBuilder = mock(IInjectionContextBuilder.class);
             IInjectionContext mockInjectionContext = mock(IInjectionContext.class);
             when(mockInjectionContextBuilder.build()).thenReturn(mockInjectionContext);
@@ -263,6 +222,10 @@ class DomainBuilderTest {
             mockExpressionContextBuilder = mock(IExpressionContextBuilder.class);
             IExpressionContext mockExpressionContext = mock(IExpressionContext.class);
             when(mockExpressionContextBuilder.build()).thenReturn(mockExpressionContext);
+            IExpressionMethodBinderBuilder mockBinderBuilder = mock(IExpressionMethodBinderBuilder.class);
+            when(mockExpressionContextBuilder.expression(any(), any())).thenReturn(mockBinderBuilder);
+            when(mockBinderBuilder.encapsulatedMethod(any(String.class), any(Class.class), any(Class[].class))).thenReturn(mockBinderBuilder);
+            when(mockBinderBuilder.withName(any())).thenReturn(mockBinderBuilder);
 
             ((IDependentBuilder<IApiContextBuilder, IApiContext>) contextBuilder).provide(mockInjectionContextBuilder);
             ((IDependentBuilder<IApiContextBuilder, IApiContext>) contextBuilder).provide(mockExpressionContextBuilder);
@@ -270,18 +233,18 @@ class DomainBuilderTest {
 
         @Test
         @DisplayName("build() fails without DTO")
-        void buildFailsWithoutDto() throws DslException {
+        void buildFailsWithoutDto() throws ApiException {
             domainBuilder.entity()
                     .id("id")
                     .uuid("uuid")
                     .tenantId("tenantId");
 
-            assertThrows(DslException.class, () -> domainBuilder.build());
+            assertThrows(ApiException.class, () -> domainBuilder.build());
         }
 
         @Test
         @DisplayName("build() succeeds with complete configuration")
-        void buildSucceedsWithCompleteConfiguration() throws DslException {
+        void buildSucceedsWithCompleteConfiguration() throws ApiException {
             domainBuilder.entity()
                     .id("id")
                     .uuid("uuid")

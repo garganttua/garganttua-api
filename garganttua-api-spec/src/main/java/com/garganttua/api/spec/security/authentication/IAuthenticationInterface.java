@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.interfasse.ICustomizableInterface;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IAuthenticationInterface extends ICustomizableInterface {
 
@@ -12,7 +12,7 @@ public interface IAuthenticationInterface extends ICustomizableInterface {
 
 	void addAuthenticationInfos(AuthenticationInfos authenticationInfos);
 
-	void start() throws CoreException;
+	void start() throws ApiException;
 
 	String getName();
 

@@ -13,7 +13,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationK
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
 public class AuthenticatorAuthorizationKeyBuilder<E> extends
@@ -59,7 +59,7 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     }
 
     @Override
-    protected synchronized IAuthenticatorAuthorizationKeyContext doBuild() throws CoreException {
+    protected synchronized IAuthenticatorAuthorizationKeyContext doBuild() throws ApiException {
         return new AuthenticatorAuthorizationKeyContext(this.duration,
                 this.unit,
                 this.usage,
@@ -69,7 +69,7 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     }
 
     @Override
-    protected void doAutoDetection() throws CoreException {
+    protected void doAutoDetection() throws ApiException {
 
     }
 }

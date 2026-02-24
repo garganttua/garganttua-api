@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.api.spec.context.Operation;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IServiceInfos {
 	
@@ -25,6 +25,6 @@ public interface IServiceInfos {
 
 	Operation getOperation();
 	
-	Object invoke(Object[] parameters) throws CoreException;
+	Object invoke(Object[] parameters) throws ApiException;
 
 }

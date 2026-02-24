@@ -13,7 +13,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -33,7 +33,7 @@ public class ContextSecurityBuilder
     }
 
     @Override
-    public IAuthenticationBuilder authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException {
+    public IAuthenticationBuilder authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
         Objects.requireNonNull(supplier, "Authentication class cannot be null");
         Objects.requireNonNull(supplier.getSuppliedClass(), "Supplier should provide an object class");
 
@@ -49,7 +49,7 @@ public class ContextSecurityBuilder
 
     @Override
     public IAuthorizationProtocolBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
-            throws DslException {
+            throws ApiException {
         Objects.requireNonNull(supplier, "Supplier class cannot be null");
         Objects.requireNonNull(supplier.getSuppliedClass(), "Supplier should provide an object class");
 
@@ -69,26 +69,26 @@ public class ContextSecurityBuilder
     }
 
     @Override
-    public IAuthenticationBuilder authentication(Class<?> authenticationClass) throws DslException {
+    public IAuthenticationBuilder authentication(Class<?> authenticationClass) throws ApiException {
         IAuthenticationBuilder authenticationBuilder = this.authentications.get(authenticationClass);
         if (authenticationBuilder != null) {
             return authenticationBuilder;
         }
-        throw new DslException("No authentication found for class " + authenticationClass.getName());
+        throw new ApiException("No authentication found for class " + authenticationClass.getName());
     }
 
     @Override
     public IAuthorizationProtocolBuilder authorizationProtocol(Class<?> authorizationProtocolClass)
-            throws DslException {
+            throws ApiException {
         IAuthorizationProtocolBuilder protocol = this.protocols.get(authorizationProtocolClass);
         if (protocol != null) {
             return protocol;
         }
-        throw new DslException("No protocol found for class " + authorizationProtocolClass.getName());
+        throw new ApiException("No protocol found for class " + authorizationProtocolClass.getName());
     }
 
     @Override
-    protected synchronized IApiSecurityContext doBuild() throws DslException {
+    protected synchronized IApiSecurityContext doBuild() throws ApiException {
         // Build all authentication and protocol contexts
         for (IAuthenticationBuilder authBuilder : this.authentications.values()) {
             authBuilder.build();
@@ -101,9 +101,9 @@ public class ContextSecurityBuilder
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         if (this.packages == null) {
-            throw new DslException(
+            throw new ApiException(
                     "Packages must be set before setting autoDetect");
         }
     }

@@ -1,4 +1,4 @@
-package com.garganttua.api.core.builder;
+package com.garganttua.api.core.unit.builder;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.builder.ApiContextBuilder;
 import com.garganttua.api.core.context.application.ApiContext;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
@@ -21,12 +22,12 @@ import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
-import com.garganttua.core.dsl.DslException;
-import com.garganttua.core.dsl.IObservableBuilder;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.expression.context.IExpressionContext;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.expression.dsl.IExpressionMethodBinderBuilder;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 
@@ -52,9 +53,13 @@ class ApiContextBuilderTest {
 
     // Test DTO class
     public static class TestDto {
+        @FieldMappingRule(sourceFieldAddress = "id")
         private String id;
+        @FieldMappingRule(sourceFieldAddress = "uuid")
         private String uuid;
+        @FieldMappingRule(sourceFieldAddress = "tenantId")
         private String tenantId;
+        @FieldMappingRule(sourceFieldAddress = "name")
         private String name;
 
         public String getId() { return id; }
@@ -77,23 +82,23 @@ class ApiContextBuilderTest {
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
-                throws CoreException {
+                throws ApiException {
             return new ArrayList<>(storage);
         }
 
         @Override
-        public Object save(Object object) throws CoreException {
+        public Object save(Object object) throws ApiException {
             storage.add(object);
             return object;
         }
 
         @Override
-        public void delete(Object object) throws CoreException {
+        public void delete(Object object) throws ApiException {
             storage.remove(object);
         }
 
         @Override
-        public long count(IFilter filter) throws CoreException {
+        public long count(IFilter filter) throws ApiException {
             return storage.size();
         }
     }
@@ -140,7 +145,7 @@ class ApiContextBuilderTest {
 
         @Test
         @DisplayName("superTenantAutoCreate() accepts boolean")
-        void superTenantAutoCreateAcceptsBoolean() throws DslException {
+        void superTenantAutoCreateAcceptsBoolean() throws ApiException {
             assertDoesNotThrow(() -> builder.superTenantAutoCreate(true));
             assertDoesNotThrow(() -> builder.superTenantAutoCreate(false));
         }
@@ -159,7 +164,7 @@ class ApiContextBuilderTest {
 
         @Test
         @DisplayName("domain() returns IDomainBuilder")
-        void domainReturnsDomainBuilder() throws DslException {
+        void domainReturnsDomainBuilder() throws ApiException {
             IDomainBuilder<TestEntity> domainBuilder = builder.domain(TestEntity.class);
             assertNotNull(domainBuilder);
         }
@@ -172,7 +177,7 @@ class ApiContextBuilderTest {
 
         @Test
         @DisplayName("domain() returns same builder for same class")
-        void domainReturnsSameBuilderForSameClass() throws DslException {
+        void domainReturnsSameBuilderForSameClass() throws ApiException {
             IDomainBuilder<TestEntity> first = builder.domain(TestEntity.class);
             IDomainBuilder<TestEntity> second = builder.domain(TestEntity.class);
             assertSame(first, second);
@@ -212,7 +217,7 @@ class ApiContextBuilderTest {
         // @Test
         // @DisplayName("injection() returns non-null when provided")
         // @SuppressWarnings("unchecked")
-        // void injectionReturnsNonNullWhenProvided() throws DslException {
+        // void injectionReturnsNonNullWhenProvided() throws ApiException {
         //     IInjectionContextBuilder mockBuilder = mock(IInjectionContextBuilder.class);
         //     ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(mockBuilder);
         //     assertNotNull(builder.injection());
@@ -230,7 +235,7 @@ class ApiContextBuilderTest {
 
         @BeforeEach
         @SuppressWarnings("unchecked")
-        void setUpInjection() throws DslException {
+        void setUpInjection() throws ApiException {
             mockInjectionContextBuilder = mock(IInjectionContextBuilder.class);
             mockInjectionContext = mock(IInjectionContext.class);
             when(mockInjectionContextBuilder.build()).thenReturn(mockInjectionContext);
@@ -238,6 +243,10 @@ class ApiContextBuilderTest {
             mockExpressionContextBuilder = mock(IExpressionContextBuilder.class);
             mockExpressionContext = mock(IExpressionContext.class);
             when(mockExpressionContextBuilder.build()).thenReturn(mockExpressionContext);
+            IExpressionMethodBinderBuilder mockBinderBuilder = mock(IExpressionMethodBinderBuilder.class);
+            when(mockExpressionContextBuilder.expression(any(), any())).thenReturn(mockBinderBuilder);
+            when(mockBinderBuilder.encapsulatedMethod(any(String.class), any(Class.class), any(Class[].class))).thenReturn(mockBinderBuilder);
+            when(mockBinderBuilder.withName(any())).thenReturn(mockBinderBuilder);
 
             ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(mockInjectionContextBuilder);
             ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(mockExpressionContextBuilder);
@@ -245,7 +254,7 @@ class ApiContextBuilderTest {
 
         @Test
         @DisplayName("build() creates valid context with domain")
-        void buildCreatesValidContext() throws DslException {
+        void buildCreatesValidContext() throws ApiException {
             builder.superTenantId("SUPER")
                    .superTenantAutoCreate(true)
                    .domain(TestEntity.class)
@@ -270,7 +279,7 @@ class ApiContextBuilderTest {
 
         @Test
         @DisplayName("build() includes domain context")
-        void buildIncludesDomainContext() throws DslException {
+        void buildIncludesDomainContext() throws ApiException {
             builder.domain(TestEntity.class)
                    .entity()
                        .id("id")
@@ -294,7 +303,7 @@ class ApiContextBuilderTest {
 
         @Test
         @DisplayName("build() returns domain name based on entity class")
-        void buildReturnsDomainNameBasedOnEntityClass() throws DslException {
+        void buildReturnsDomainNameBasedOnEntityClass() throws ApiException {
             builder.domain(TestEntity.class)
                    .entity()
                        .id("id")

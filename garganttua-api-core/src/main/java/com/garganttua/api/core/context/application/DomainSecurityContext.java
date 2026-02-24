@@ -13,7 +13,7 @@ public class DomainSecurityContext implements IDomainSecurityContext {
     public DomainSecurityContext(DomainSecurityDefinition domainSecurityDefinition) {
         this.domainSecurityDefinition = Objects.requireNonNull(domainSecurityDefinition,"Domain security definition cannot be null");
     }
-
+    
     @Override
     public IDomainSecurityDefinition getDomainSecurityDefinition() {
         return this.domainSecurityDefinition;

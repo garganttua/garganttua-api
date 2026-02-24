@@ -5,13 +5,11 @@ import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.security.IAccessRule;
 
 public record AccessRule(
-        Operation operation,
         String authority,
-        Access access
-) implements IAccessRule {
+        Access access) implements IAccessRule {
 
-    public static AccessRule of(Operation operation, Access access) {
-        return new AccessRule(operation, operation.getOperationName().toUpperCase().replace("-", "_"), access);
+    public static AccessRule of(Operation operation, boolean authority, Access access) {
+        return new AccessRule(authority ? operation.getOperationName().toUpperCase().replace("-", "_") : null, access);
     }
 
 }

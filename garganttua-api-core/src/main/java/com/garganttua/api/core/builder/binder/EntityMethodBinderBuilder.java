@@ -2,7 +2,7 @@ package com.garganttua.api.core.builder.binder;
 
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityMethodBinderBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
@@ -20,7 +20,7 @@ public class EntityMethodBinderBuilder<E> extends AbstractMethodBinderBuilder<Vo
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // No auto-detection for entity method binders - all configuration is explicit
     }
 

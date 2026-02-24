@@ -13,6 +13,7 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.core.context.application.RepositoryException;
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.definition.IDomainDefinition;
@@ -21,7 +22,6 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -59,24 +59,23 @@ public class Repository implements IRepository {
     }
 
     // --- Read operations ---
-
     @Override
     public List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
-            throws CoreException {
+            throws ApiException {
         log.debug("Fetching entities with filter={}", filter.orElse(null));
         List<Map<String, Object>> dtoMaps = queryAllDtos(pageable, filter, sort);
         return mergeAndMapToEntities(dtoMaps);
     }
 
     @Override
-    public Optional<Object> getOneByUuid(String uuid) throws CoreException {
+    public Optional<Object> getOneByUuid(String uuid) throws ApiException {
         Objects.requireNonNull(uuid, "UUID cannot be null");
         log.debug("Fetching entity by uuid={}", uuid);
         return findOneByField(ctx -> ctx.getDtoDefinition().uuid(), uuid);
     }
 
     @Override
-    public Optional<Object> getOneById(String id) throws CoreException {
+    public Optional<Object> getOneById(String id) throws ApiException {
         Objects.requireNonNull(id, "ID cannot be null");
         log.debug("Fetching entity by id={}", id);
         return findOneByField(ctx -> ctx.getDtoDefinition().id(), id);
@@ -85,7 +84,7 @@ public class Repository implements IRepository {
     // --- Write operations ---
 
     @Override
-    public void save(Object entity) throws CoreException {
+    public void save(Object entity) throws ApiException {
         Objects.requireNonNull(entity, "Entity cannot be null");
         log.debug("Saving entity of type {}", entity.getClass().getSimpleName());
 
@@ -96,7 +95,7 @@ public class Repository implements IRepository {
     }
 
     @Override
-    public void delete(Object entity) throws CoreException {
+    public void delete(Object entity) throws ApiException {
         Objects.requireNonNull(entity, "Entity cannot be null");
         log.debug("Deleting entity of type {}", entity.getClass().getSimpleName());
 
@@ -109,14 +108,14 @@ public class Repository implements IRepository {
     // --- Existence checks ---
 
     @Override
-    public boolean doesExist(Object entity) throws CoreException {
+    public boolean doesExist(Object entity) throws ApiException {
         Objects.requireNonNull(entity, "Entity cannot be null");
         String uuid = extractUuidFromEntity(entity);
         return doesExist(uuid);
     }
 
     @Override
-    public boolean doesExist(String uuid) throws CoreException {
+    public boolean doesExist(String uuid) throws ApiException {
         Objects.requireNonNull(uuid, "UUID cannot be null");
         return getOneByUuid(uuid).isPresent();
     }
@@ -124,7 +123,7 @@ public class Repository implements IRepository {
     // --- Count ---
 
     @Override
-    public long getCount(IFilter filter) throws CoreException {
+    public long getCount(IFilter filter) throws ApiException {
         if (dtoContexts.isEmpty()) {
             return 0;
         }
@@ -134,7 +133,7 @@ public class Repository implements IRepository {
     // --- Internal: querying ---
 
     private List<Map<String, Object>> queryAllDtos(Optional<IPageable> pageable, Optional<IFilter> filter,
-            Optional<ISort> sort) throws CoreException {
+            Optional<ISort> sort) throws ApiException {
         IDomainContext<?> dc = getDomainContext();
         if (dc != null) {
             return queryWithFilterMapping(dc, pageable, filter, sort);
@@ -145,7 +144,7 @@ public class Repository implements IRepository {
     }
 
     private List<Map<String, Object>> queryWithFilterMapping(IDomainContext<?> dc, Optional<IPageable> pageable,
-            Optional<IFilter> filter, Optional<ISort> sort) throws CoreException {
+            Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
         IDomainDefinition<?> definition = dc.getDomainDefinition();
         List<Pair<Class<?>, IFilter>> mappedFilters = filterMapper.map(definition, filter.orElse(null));
 
@@ -159,7 +158,7 @@ public class Repository implements IRepository {
         return dtoMaps;
     }
 
-    private Optional<Object> findOneByField(FieldAddressExtractor extractor, String value) throws CoreException {
+    private Optional<Object> findOneByField(FieldAddressExtractor extractor, String value) throws ApiException {
         List<Map<String, Object>> dtoMaps = new ArrayList<>();
         for (IDtoContext<?> dtoContext : dtoContexts) {
             ObjectAddress fieldAddress = extractor.extract(dtoContext);
@@ -187,7 +186,7 @@ public class Repository implements IRepository {
                 String uuid = dtoContext.getUuid(dto);
                 map.put(uuid, dto);
             }
-        } catch (CoreException e) {
+        } catch (ApiException e) {
             log.error("Error querying DTO context for {}",
                     dtoContext.getDtoDefinition().dtoClass().getSimpleName(), e);
         }
@@ -196,7 +195,7 @@ public class Repository implements IRepository {
 
     // --- Internal: mapping ---
 
-    private List<Object> mergeAndMapToEntities(List<Map<String, Object>> dtoMaps) throws CoreException {
+    private List<Object> mergeAndMapToEntities(List<Map<String, Object>> dtoMaps) throws ApiException {
         Map<String, List<Object>> merged = mergeMaps(dtoMaps, false);
         return merged.values().stream()
                 .map(this::mapDtosToEntity)
@@ -219,7 +218,7 @@ public class Repository implements IRepository {
         return entity;
     }
 
-    private Object mapEntityToDto(Object entity, IDtoDefinition<?> dtoDefinition) throws CoreException {
+    private Object mapEntityToDto(Object entity, IDtoDefinition<?> dtoDefinition) throws ApiException {
         try {
             return mapper.map(entity, dtoDefinition.dtoClass());
         } catch (MapperException e) {
@@ -228,7 +227,7 @@ public class Repository implements IRepository {
         }
     }
 
-    private String extractUuidFromEntity(Object entity) throws CoreException {
+    private String extractUuidFromEntity(Object entity) throws ApiException {
         IDomainContext<?> dc = getDomainContext();
         if (dc == null) {
             throw new RepositoryException("Domain context not set, cannot extract UUID from entity");
@@ -260,7 +259,7 @@ public class Repository implements IRepository {
 
     // --- Internal: merge ---
 
-    static Map<String, List<Object>> mergeMaps(List<Map<String, Object>> maps, boolean strict) throws CoreException {
+    public static Map<String, List<Object>> mergeMaps(List<Map<String, Object>> maps, boolean strict) throws ApiException {
         Map<String, List<Object>> result = new HashMap<>();
         maps.forEach(map -> map.forEach((key, value) ->
                 result.computeIfAbsent(key, k -> new ArrayList<>()).add(value)));

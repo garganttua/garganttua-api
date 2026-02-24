@@ -5,7 +5,7 @@ import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
 import com.garganttua.api.spec.security.IUseCaseSecurity;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 
 public class UseCaseSecurityBuilder<I, O, E>
         extends AbstractAutomaticLinkedBuilder<IUseCaseSecurityBuilder<I, O, E>, IUseCaseBuilder<I, O, E>, IUseCaseSecurity>
@@ -37,14 +37,22 @@ public class UseCaseSecurityBuilder<I, O, E>
         return this;
     }
 
+    boolean hasAuthority() {
+        return this.authority;
+    }
+
+    Access getAccess() {
+        return this.access;
+    }
+
     @Override
-    protected synchronized IUseCaseSecurity doBuild() throws DslException {
+    protected synchronized IUseCaseSecurity doBuild() throws ApiException {
         // Return a simple implementation of IUseCaseSecurity
         return new UseCaseSecurityImpl(this.disabled, this.authority, this.access);
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // No auto-detection for use case security - all configuration is explicit
     }
 

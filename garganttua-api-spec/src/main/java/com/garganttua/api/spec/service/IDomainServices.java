@@ -29,7 +29,7 @@ public interface IDomainServices<E> {
      * @param sort     optional sort
      * @return the service response containing a list of entities
      */
-    IServiceResponse readAll(IServiceRequest request, Optional<IPageable> pageable,
+    IOperationResponse readAll(IOperationRequest request, Optional<IPageable> pageable,
             Optional<IFilter> filter, Optional<ISort> sort);
 
     /**
@@ -39,7 +39,7 @@ public interface IDomainServices<E> {
      * @param uuid    the entity UUID
      * @return the service response containing the entity
      */
-    IServiceResponse readOne(IServiceRequest request, String uuid);
+    IOperationResponse readOne(IOperationRequest request, String uuid);
 
     /**
      * Creates a new entity.
@@ -48,7 +48,7 @@ public interface IDomainServices<E> {
      * @param entityData the entity data as a map
      * @return the service response containing the created entity
      */
-    IServiceResponse createOne(IServiceRequest request, Map<String, Object> entityData);
+    IOperationResponse createOne(IOperationRequest request, Map<String, Object> entityData);
 
     /**
      * Updates an existing entity.
@@ -58,7 +58,7 @@ public interface IDomainServices<E> {
      * @param updateData the update data as a map
      * @return the service response containing the updated entity
      */
-    IServiceResponse updateOne(IServiceRequest request, String uuid, Map<String, Object> updateData);
+    IOperationResponse updateOne(IOperationRequest request, String uuid, Map<String, Object> updateData);
 
     /**
      * Deletes a single entity by UUID.
@@ -67,7 +67,7 @@ public interface IDomainServices<E> {
      * @param uuid    the entity UUID
      * @return the service response
      */
-    IServiceResponse deleteOne(IServiceRequest request, String uuid);
+    IOperationResponse deleteOne(IOperationRequest request, String uuid);
 
     /**
      * Deletes all entities matching the filter.
@@ -76,7 +76,7 @@ public interface IDomainServices<E> {
      * @param filter  optional filter
      * @return the service response containing the count of deleted entities
      */
-    IServiceResponse deleteAll(IServiceRequest request, Optional<IFilter> filter);
+    IOperationResponse deleteAll(IOperationRequest request, Optional<IFilter> filter);
 
     // ========== Use Cases ==========
 
@@ -88,7 +88,7 @@ public interface IDomainServices<E> {
      * @param args        additional arguments
      * @return the service response
      */
-    IServiceResponse invokeUseCase(String useCaseName, IServiceRequest request, Object... args);
+    IOperationResponse invokeUseCase(String useCaseName, IOperationRequest request, Object... args);
 
     /**
      * Checks if a use case exists.
@@ -114,7 +114,7 @@ public interface IDomainServices<E> {
      * @param args         arguments to pass to the script
      * @return the service response
      */
-    IServiceResponse executeScript(String scriptSource, Object... args);
+    IOperationResponse executeScript(String scriptSource, Object... args);
 
     // ========== Pipeline Access ==========
 

@@ -3,8 +3,8 @@ package com.garganttua.api.spec.service.pipeline;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.service.IServiceRequest;
-import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.service.IOperationResponse;
 
 /**
  * Context shared between pipeline phases during execution.
@@ -18,25 +18,25 @@ public interface IPipelineContext {
      * Gets the service request.
      * @return the current request
      */
-    IServiceRequest getRequest();
+    IOperationRequest getRequest();
 
     /**
      * Sets the service request (can be modified by phases).
      * @param request the request
      */
-    void setRequest(IServiceRequest request);
+    void setRequest(IOperationRequest request);
 
     /**
      * Gets the service response.
      * @return the current response, or null if not yet set
      */
-    IServiceResponse getResponse();
+    IOperationResponse getResponse();
 
     /**
      * Sets the service response.
      * @param response the response
      */
-    void setResponse(IServiceResponse response);
+    void setResponse(IOperationResponse response);
 
     // ========== Business Operation ==========
 
@@ -84,7 +84,7 @@ public interface IPipelineContext {
      * No further phases will be executed.
      * @param response the response to return
      */
-    void abort(IServiceResponse response);
+    void abort(IOperationResponse response);
 
     /**
      * Checks if the pipeline has been aborted.

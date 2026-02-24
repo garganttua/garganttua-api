@@ -3,7 +3,7 @@ package com.garganttua.api.core.builder.binder;
 import com.garganttua.api.spec.context.IUseCase;
 import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -19,7 +19,7 @@ public class UseCaseBinderBuilder<I, O, E>
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // No auto-detection for use case binders - all configuration is explicit
     }
 

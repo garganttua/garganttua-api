@@ -7,8 +7,8 @@ import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.service.IServiceResponse;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;
@@ -24,13 +24,13 @@ public class ApiSecurityContext implements IApiSecurityContext {
     }
 
     @Override
-    public void verifyTenant(ICaller caller, Object authentication) throws CoreException {
+    public void verifyTenant(ICaller caller, Object authentication) throws ApiException {
         if (disabled) return;
         // Stub implementation
     }
 
     @Override
-    public void verifyOwner(ICaller caller, Object authentication) throws CoreException {
+    public void verifyOwner(ICaller caller, Object authentication) throws ApiException {
         if (disabled) return;
         // Stub implementation
     }
@@ -42,7 +42,7 @@ public class ApiSecurityContext implements IApiSecurityContext {
     }
 
     @Override
-    public byte[] decodeAuthorizationFromRequest(Object request, ICaller caller) throws CoreException {
+    public byte[] decodeAuthorizationFromRequest(Object request, ICaller caller) throws ApiException {
         // Stub implementation
         return new byte[0];
     }
@@ -61,33 +61,33 @@ public class ApiSecurityContext implements IApiSecurityContext {
 
     @Override
     public void authenticatorEntitySecurityPreProcessing(ICaller caller, Object entity,
-            Map<String, String> params) throws CoreException {
+            Map<String, String> params) throws ApiException {
         if (disabled) return;
         // Stub implementation
     }
 
     @Override
     public void authenticatorEntitySecurityPostProcessing(ICaller caller, Object entity,
-            Map<String, String> params) throws CoreException {
+            Map<String, String> params) throws ApiException {
         if (disabled) return;
         // Stub implementation
     }
 
     @Override
-    public IServiceResponse authenticate(IAuthenticationRequest request) {
+    public IOperationResponse authenticate(IAuthenticationRequest request) {
         // Stub implementation
         return null;
     }
 
     @Override
     public IAuthenticationRequest createAuthenticationRequestFromAuthorization(ICaller caller, Object authorization)
-            throws CoreException {
+            throws ApiException {
         // Stub implementation
         return null;
     }
 
     @Override
-    public Optional<Object> getAuthorizationFromRequest(ICaller caller, Object request) throws CoreException {
+    public Optional<Object> getAuthorizationFromRequest(ICaller caller, Object request) throws ApiException {
         // Stub implementation
         return Optional.empty();
     }

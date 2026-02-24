@@ -3,7 +3,7 @@ package com.garganttua.api.core.builder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
 import com.garganttua.api.spec.security.IKeyContext;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IObjectQuery;
 
@@ -15,12 +15,12 @@ public class KeyBuilder<E> extends AbstractAutomaticLinkedBuilder<IKeyBuilder<E>
     }
 
     @Override
-    protected synchronized IKeyContext doBuild() throws CoreException {
+    protected synchronized IKeyContext doBuild() throws ApiException {
         return null;
     }
 
     @Override
-    protected void doAutoDetection() throws CoreException {
+    protected void doAutoDetection() throws ApiException {
 
     }
 

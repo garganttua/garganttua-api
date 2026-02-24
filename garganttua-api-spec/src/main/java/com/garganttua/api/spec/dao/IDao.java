@@ -9,17 +9,17 @@ import java.util.Optional;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IDao {
 	
 	void setDtoClass(Class<?> dtoClass);
 	
-	List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws CoreException;
+	List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws ApiException;
 
-	Object save(Object object) throws CoreException;
+	Object save(Object object) throws ApiException;
 
-	void delete(Object object) throws CoreException;
+	void delete(Object object) throws ApiException;
 	
-	long count(IFilter filter) throws CoreException;
+	long count(IFilter filter) throws ApiException;
 }

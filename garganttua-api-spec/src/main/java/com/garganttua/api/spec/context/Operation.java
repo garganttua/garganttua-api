@@ -6,53 +6,86 @@ import com.garganttua.api.spec.Pluralizer;
 import com.garganttua.api.spec.Singularizer;
 
 public record Operation(String domainName, TechnicalOperation operation, Class<?> entity, Scope scope,
-		OperationType type) {
+		OperationType type, boolean authority, Access access) {
 
-	public static Operation readOne(String domainName, Class<?> entity) {
-		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard);
+	public static Operation readOneWithStandardSecurity(String domainName, Class<?> entity) {
+		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation createOne(String domainName, Class<?> entity) {
-		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard);
+	public static Operation createOneWithStandardSecurity(String domainName, Class<?> entity) {
+		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation useCase(String domainName, TechnicalOperation operation, Class<?> entity,
+	public static Operation useCaseWithStandardSecurity(String domainName, TechnicalOperation operation, Class<?> entity,
 			Scope scope) {
-		return new Operation(domainName, operation, entity, scope, OperationType.usesCase);
+		return new Operation(domainName, operation, entity, scope, OperationType.usesCase, true, Access.tenant);
 	}
 
-	public static Operation deleteAll(String domainName, Class<?> entity) {
-		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard);
+	public static Operation deleteAllWithStandardSecurity(String domainName, Class<?> entity) {
+		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation deleteOne(String domainName, Class<?> entity) {
-		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard);
+	public static Operation deleteOneWithStandardSecurity(String domainName, Class<?> entity) {
+		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation updateOne(String domainName, Class<?> entity) {
-		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard);
+	public static Operation updateOneWithStandardSecurity(String domainName, Class<?> entity) {
+		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation readAll(String domainName, Class<?> entity) {
-		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard);
+	public static Operation readAllWithStandardSecurity(String domainName, Class<?> entity) {
+		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
 	}
 
 	public static Operation authenticate(String domainName, Class<?> entity) {
 		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity,
-				OperationType.authentication);
+				OperationType.authentication, false, Access.anonymous);
 	}
 
-	public static Operation workflow(String domainName, TechnicalOperation operation, Class<?> entity,
+	public static Operation workflowWithStandardSecurity(String domainName, TechnicalOperation operation, Class<?> entity,
 			Scope scope) {
-		return new Operation(domainName, operation, entity, scope, OperationType.workflow);
+		return new Operation(domainName, operation, entity, scope, OperationType.workflow, true, Access.authenticated);
 	}
 
-	public String getPath() {
-		if( this.type == OperationType.authentication )
-			return "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase()) + "/authenticate";
+	public static Operation readOne(String domainName, Class<?> entity, boolean authority, Access access) {
+		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	}
+
+	public static Operation createOne(String domainName, Class<?> entity, boolean authority, Access access) {
+		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	}
+
+	public static Operation readAll(String domainName, Class<?> entity, boolean authority, Access access) {
+		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, authority, access);
+	}
+
+	public static Operation updateOne(String domainName, Class<?> entity, boolean authority, Access access) {
+		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	}
+
+	public static Operation deleteOne(String domainName, Class<?> entity, boolean authority, Access access) {
+		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	}
+
+	public static Operation deleteAll(String domainName, Class<?> entity, boolean authority, Access access) {
+		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, authority, access);
+	}
+
+	public static Operation useCase(String domainName, TechnicalOperation operation, Class<?> entity, Scope scope, boolean authority, Access access) {
+		return new Operation(domainName, operation, entity, scope, OperationType.usesCase, authority, access);
+	}
+
+	public static Operation workflow(String domainName, TechnicalOperation operation, Class<?> entity, Scope scope, boolean authority, Access access) {
+		return new Operation(domainName, operation, entity, scope, OperationType.workflow, authority, access);
+	}
+
+	public OperationPath getPath() {
+		String base = "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase());
+		if (this.type == OperationType.authentication)
+			return new OperationPath(base + "/authenticate");
 		if (this.scope == Scope.oneEntity)
-			return "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase()) + "/${uuid}";
-		return "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase());
+			return new OperationPath(base + "/${uuid}");
+		return new OperationPath(base);
 	}
 
 	public String getOperationName() {

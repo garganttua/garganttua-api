@@ -1,4 +1,6 @@
-package com.garganttua.api.core.builder;
+package com.garganttua.api.core.unit.builder;
+
+import com.garganttua.api.core.builder.ApiContextBuilder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -10,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 
 @DisplayName("EntityBuilder Tests")
 class EntityBuilderTest {
@@ -39,7 +41,7 @@ class EntityBuilderTest {
     private IDomainBuilder<TestEntity> domainBuilder;
 
     @BeforeEach
-    void setUp() throws DslException {
+    void setUp() throws ApiException {
         domainBuilder = ApiContextBuilder.builder().domain(TestEntity.class);
         entityBuilder = domainBuilder.entity();
     }
@@ -50,7 +52,7 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("id() accepts valid field name")
-        void idAcceptsValidFieldName() throws DslException {
+        void idAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.id("id"));
         }
 
@@ -62,7 +64,7 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("uuid() accepts valid field name")
-        void uuidAcceptsValidFieldName() throws DslException {
+        void uuidAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.uuid("uuid"));
         }
 
@@ -74,7 +76,7 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("tenantId() accepts valid field name")
-        void tenantIdAcceptsValidFieldName() throws DslException {
+        void tenantIdAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.tenantId("tenantId"));
         }
 
@@ -86,7 +88,7 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("Field methods return builder for chaining")
-        void fieldMethodsReturnBuilder() throws DslException {
+        void fieldMethodsReturnBuilder() throws ApiException {
             IEntityBuilder<TestEntity> result = entityBuilder.id("id");
             assertSame(entityBuilder, result);
 
@@ -104,13 +106,13 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("mandatory() accepts valid field name")
-        void mandatoryAcceptsValidFieldName() throws DslException {
+        void mandatoryAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.mandatory("name"));
         }
 
         @Test
         @DisplayName("mandatory() can be called multiple times")
-        void mandatoryCanBeCalledMultipleTimes() throws DslException {
+        void mandatoryCanBeCalledMultipleTimes() throws ApiException {
             entityBuilder.mandatory("name");
             assertDoesNotThrow(() -> entityBuilder.mandatory("optionalField"));
         }
@@ -122,13 +124,13 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("unicity() accepts valid field name")
-        void unicityAcceptsValidFieldName() throws DslException {
+        void unicityAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.unicity("name"));
         }
 
         @Test
         @DisplayName("unicity() can be called multiple times")
-        void unicityCanBeCalledMultipleTimes() throws DslException {
+        void unicityCanBeCalledMultipleTimes() throws ApiException {
             entityBuilder.unicity("name");
             assertDoesNotThrow(() -> entityBuilder.unicity("uuid"));
         }
@@ -140,13 +142,13 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("update() accepts valid field name")
-        void updateAcceptsValidFieldName() throws DslException {
+        void updateAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.update("name"));
         }
 
         @Test
         @DisplayName("update() with authority accepts valid parameters")
-        void updateWithAuthorityAcceptsValidParams() throws DslException {
+        void updateWithAuthorityAcceptsValidParams() throws ApiException {
             assertDoesNotThrow(() -> entityBuilder.update("name", "users:update"));
         }
     }
@@ -157,7 +159,7 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("up() returns parent domain builder")
-        void upReturnsParentDomainBuilder() throws DslException {
+        void upReturnsParentDomainBuilder() throws ApiException {
             IDomainBuilder<TestEntity> parent = entityBuilder
                     .id("id")
                     .uuid("uuid")
@@ -174,28 +176,28 @@ class EntityBuilderTest {
 
         @Test
         @DisplayName("build() fails without id configured")
-        void buildFailsWithoutId() throws DslException {
+        void buildFailsWithoutId() throws ApiException {
             entityBuilder.uuid("uuid").tenantId("tenantId");
-            assertThrows(DslException.class, () -> entityBuilder.build());
+            assertThrows(ApiException.class, () -> entityBuilder.build());
         }
 
         @Test
         @DisplayName("build() fails without uuid configured")
-        void buildFailsWithoutUuid() throws DslException {
+        void buildFailsWithoutUuid() throws ApiException {
             entityBuilder.id("id").tenantId("tenantId");
-            assertThrows(DslException.class, () -> entityBuilder.build());
+            assertThrows(ApiException.class, () -> entityBuilder.build());
         }
 
         @Test
         @DisplayName("build() fails without tenantId configured")
-        void buildFailsWithoutTenantId() throws DslException {
+        void buildFailsWithoutTenantId() throws ApiException {
             entityBuilder.id("id").uuid("uuid");
-            assertThrows(DslException.class, () -> entityBuilder.build());
+            assertThrows(ApiException.class, () -> entityBuilder.build());
         }
 
         @Test
         @DisplayName("build() succeeds with all required fields")
-        void buildSucceedsWithAllRequiredFields() throws DslException {
+        void buildSucceedsWithAllRequiredFields() throws ApiException {
             entityBuilder.id("id").uuid("uuid").tenantId("tenantId");
             IEntityContext<TestEntity> context = entityBuilder.build();
 

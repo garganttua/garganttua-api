@@ -16,6 +16,7 @@ import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionContext;
+import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -67,6 +68,9 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
 
     @Override
     protected ILifecycle doInit() {
+        // Initialize the injection context first
+        this.injectionContext.onInit();
+
         // Create and register repositories for each domain
         for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
@@ -91,7 +95,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
                             Optional.empty(),
                             Optional.of(repositoryName),
                             new HashSet<>());
-                    this.injectionContext.addBean(repositoryName, beanRef, repository);
+                    this.injectionContext.addBean(Predefined.BeanProviders.garganttua.toString(), beanRef, repository);
                     log.info("Registered repository '{}' for domain '{}'", repositoryName, domainName);
                 } catch (DiException e) {
                     log.error("Failed to register repository '{}' for domain '{}': {}", repositoryName, domainName, e.getMessage());
@@ -104,6 +108,9 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
 
     @Override
     protected ILifecycle doStart() {
+        // Start the injection context
+        this.injectionContext.onStart();
+
         // Start all domain contexts
         for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
@@ -131,7 +138,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
 
     @Override
     protected ILifecycle doStop() {
-        // Stop all domain contexts
+        // Stop all domain contexts first
         for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
             IDomainContext<?> domainContext = entry.getValue();
@@ -142,6 +149,10 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
                 log.error("Failed to stop domain '{}': {}", domainName, e.getMessage());
             }
         }
+
+        // Stop the injection context
+        this.injectionContext.onStop();
+
         return this;
     }
 

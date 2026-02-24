@@ -8,7 +8,7 @@ import org.javatuples.Pair;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class FilterMapper implements IFilterMapper {
 
     @Override
-    public List<Pair<Class<?>, IFilter>> map(IDomainDefinition<?> domainDefinition, IFilter filter) throws CoreException {
+    public List<Pair<Class<?>, IFilter>> map(IDomainDefinition<?> domainDefinition, IFilter filter) throws ApiException {
         if (log.isDebugEnabled()) {
             log.debug("Mapping Filter {} for domain {}", filter, domainDefinition.domainName());
         }

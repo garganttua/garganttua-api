@@ -1,17 +1,17 @@
 package com.garganttua.api.spec.security.authorization;
 
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IAuthorization {
 
     void revoke();
 
-    void isRevoked() throws CoreException;
+    void isRevoked() throws ApiException;
 
-    void isExpired() throws CoreException;
+    void isExpired() throws ApiException;
 
-    void validateAgainst(IAuthorization authorizationReference, Object ...args) throws CoreException;
+    void validateAgainst(IAuthorization authorizationReference, Object ...args) throws ApiException;
     
-    void validate(Object ...args) throws CoreException;
+    void validate(Object ...args) throws ApiException;
 
 }

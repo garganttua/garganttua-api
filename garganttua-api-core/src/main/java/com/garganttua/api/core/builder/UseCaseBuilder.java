@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.api.core.builder.binder.UseCaseBinderBuilder;
 import com.garganttua.api.core.context.application.UseCase;
+import com.garganttua.api.spec.context.Access;
 import com.garganttua.api.spec.context.IUseCase;
 import com.garganttua.api.spec.context.Scope;
 import com.garganttua.api.spec.context.TechnicalOperation;
@@ -12,7 +13,7 @@ import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -68,7 +69,7 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
 
 /*     @Override
     public IUseCaseBinderBuilder<Object, IMethodBinder<Object>, IUseCaseBuilder<?, ?>, IUseCaseBuilder<Up, IUseCaseBuilder<?, ?>>> bind(
-            ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws CoreException {
+            ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
         if (this.binder == null) {
             this.binder = new UseCaseBinderBuilder<Object, IMethodBinder<Object>, IUseCaseBuilder<?, ?>, IUseCaseBuilder<Up, IUseCaseBuilder<?, ?>>>(this, supplier);
         }
@@ -76,7 +77,7 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
     }  */
 /*
     @Override
-    public IUseCaseBinderBuilder<Up, IUseCaseBuilder<?,?>> bind(Object supplier) throws DslException {
+    public IUseCaseBinderBuilder<Up, IUseCaseBuilder<?,?>> bind(Object supplier) throws ApiException {
         if (this.binder == null) {
             this.binder = new UseCaseBinderBuilder<Up, IUseCaseBuilder<?,?>>(this,
                     new FixedObjectSupplier<>(supplier));
@@ -110,7 +111,7 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
 
     @Override
     public IUseCaseBinderBuilder<I, O, E> bind(ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
-            throws DslException {
+            throws ApiException {
         if (this.binder == null) {
             this.binder = new UseCaseBinderBuilder<>(this, supplier);
         }
@@ -118,7 +119,7 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
     }
 
     @Override
-    public IUseCaseBinderBuilder<I, O, E> bind(Object object) throws DslException {
+    public IUseCaseBinderBuilder<I, O, E> bind(Object object) throws ApiException {
         if (this.binder == null) {
             this.binder = new UseCaseBinderBuilder<>(this,
                     new FixedSupplierBuilder<>(Objects.requireNonNull(object, "Object cannot be null")));
@@ -140,8 +141,24 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
         return this.securityBuilder;
     }
 
+    Scope getScope() {
+        return this.scope;
+    }
+
+    TechnicalOperation getOperation() {
+        return this.operation;
+    }
+
+    Access getAccess() {
+        return this.securityBuilder != null ? this.securityBuilder.getAccess() : Access.authenticated;
+    }
+
+    boolean hasAuthority() {
+        return this.securityBuilder != null && this.securityBuilder.hasAuthority();
+    }
+
     @Override
-    protected synchronized IUseCase<I, O> doBuild() throws DslException {
+    protected synchronized IUseCase<I, O> doBuild() throws ApiException {
         return new UseCase<>(
                 this.useCaseName,
                 this.binder,

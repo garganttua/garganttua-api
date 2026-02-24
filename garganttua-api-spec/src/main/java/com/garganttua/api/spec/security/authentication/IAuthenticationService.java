@@ -1,10 +1,10 @@
 package com.garganttua.api.spec.security.authentication;
 
-import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.IOperationResponse;
 
 @FunctionalInterface
 public interface IAuthenticationService {
 
-	IServiceResponse authenticate(IAuthenticationRequest request);
+	IOperationResponse authenticate(IAuthenticationRequest request);
 
 }

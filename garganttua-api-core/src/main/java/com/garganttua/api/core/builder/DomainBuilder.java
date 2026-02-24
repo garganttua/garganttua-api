@@ -15,14 +15,12 @@ import com.garganttua.api.core.context.application.DomainContext;
 import com.garganttua.api.core.context.application.DtoContext;
 import com.garganttua.api.core.context.application.EntityContext;
 import com.garganttua.api.core.definition.DomainDefinition;
-import com.garganttua.api.core.definition.DtoDefinition;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.definition.UseCaseDefinition;
 import com.garganttua.api.core.definition.WorkflowDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
-import com.garganttua.api.spec.security.IAccessRule;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.Pluralizer;
-import com.garganttua.api.spec.context.Access;
 import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IDomainContext;
@@ -38,25 +36,25 @@ import com.garganttua.api.spec.context.dsl.IDtoBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.spec.definition.IDtoDefinition;
+import com.garganttua.api.spec.definition.IUseCaseDefinition;
+import com.garganttua.api.spec.definition.IWorkflowDefinition;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.core.CoreException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
-import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
-import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 
 public class DomainBuilder<E>
@@ -71,13 +69,6 @@ public class DomainBuilder<E>
     private final List<IDomainStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
     private final List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces = new CopyOnWriteArrayList<>();
     private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> events = new CopyOnWriteArrayList<>();
-
-    private volatile boolean creation = true;
-    private volatile boolean readAll = true;
-    private volatile boolean readOne = true;
-    private volatile boolean update = true;
-    private volatile boolean deleteAll = true;
-    private volatile boolean deleteOne = true;
 
     private volatile boolean publik = false;
     private volatile boolean tenant = false;
@@ -97,86 +88,52 @@ public class DomainBuilder<E>
     private volatile IInjectionContextBuilder injectionContextBuilder;
     private volatile IExpressionContextBuilder expressionContextBuilder;
 
-    void setDependencyBuilders(IInjectionContextBuilder injectionContextBuilder,
+    public void setDependencyBuilders(IInjectionContextBuilder injectionContextBuilder,
             IExpressionContextBuilder expressionContextBuilder) {
         this.injectionContextBuilder = injectionContextBuilder;
         this.expressionContextBuilder = expressionContextBuilder;
     }
 
     public DomainBuilder(IApiContextBuilder builder, String domainName)
-            throws DslException {
+            throws ApiException {
         super(builder);
         this.domainName = Objects.requireNonNull(domainName, "Domain name cannot be null");
+        initDefaultCrudWorkflows();
     }
 
-    public DomainBuilder(IApiContextBuilder builder, Class<?> entityClass) throws DslException {
+    public DomainBuilder(IApiContextBuilder builder, Class<?> entityClass) throws ApiException {
         super(builder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity Class cannot be null");
         try {
             this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass);
         } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
+            throw new ApiException(e.getMessage(), e);
         }
         this.domainName = Pluralizer.toPlural(this.entityClass.getSimpleName().toLowerCase());
         this.securityBuilder = new DomainSecurityBuilder<>(this, this.interfaces, this.objectQuery, this.entityClass);
         this.entityBuilder = this.entity(this.entityClass);
+        initDefaultCrudWorkflows();
     }
 
     @Override
     public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
-            throws DslException {
+            throws ApiException {
         DomainStartupBinderBuilder binder = new DomainStartupBinderBuilder(this, supplier);
         this.startupBinderBuilders.add(binder);
         return binder;
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws DslException {
+    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws ApiException {
         this.interfaces.add(bean);
         return this;
     }
 
     @Override
-    public IDomainBuilder<E> creation(boolean b) {
-        this.creation = b;
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder<E> readAll(boolean b) {
-        this.readAll = b;
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder<E> readOne(boolean b) {
-        this.readOne = b;
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder<E> update(boolean b) {
-        this.update = b;
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder<E> deleteAll(boolean b) {
-        this.deleteAll = b;
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder<E> deleteOne(boolean b) {
-        this.deleteOne = b;
-        return this;
-    }
-
-    @Override
-    public IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws DslException {
+    public IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
         Class<?> suppliedClass = bean.getSuppliedClass();
         if (!IEventPublisher.class.isAssignableFrom(suppliedClass)) {
-            throw new DslException(
+            throw new ApiException(
                     "Bean " + suppliedClass.getName() + " does not implement IEventPublisher");
         }
         this.events.add(bean);
@@ -184,23 +141,23 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> events(IEventPublisher eventPublisher) throws DslException {
+    public IDomainBuilder<E> events(IEventPublisher eventPublisher) throws ApiException {
         this.events.add(new FixedSupplierBuilder<>(
                 Objects.requireNonNull(eventPublisher, "EventPublisher cannot be null")));
         return this;
     }
 
     @Override
-    public IDomainBuilder<E> tenant(boolean b) throws DslException {
+    public IDomainBuilder<E> tenant(boolean b) throws ApiException {
         this.tenant = b;
         return this;
     }
 
     @Override
-    public IDomainBuilder<E> owner(String fieldName) throws DslException {
+    public IDomainBuilder<E> owner(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.owner = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -209,10 +166,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owner(Field field) throws DslException {
+    public IDomainBuilder<E> owner(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.owner = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -221,10 +178,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owner(ObjectAddress fieldAddress) throws DslException {
+    public IDomainBuilder<E> owner(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.owner = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -233,10 +190,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owned(String fieldName) throws DslException {
+    public IDomainBuilder<E> owned(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.owned = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -245,10 +202,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owned(Field field) throws DslException {
+    public IDomainBuilder<E> owned(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.owned = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -257,10 +214,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owned(ObjectAddress fieldAddress) throws DslException {
+    public IDomainBuilder<E> owned(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.owned = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -275,10 +232,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> shared(Field field) throws DslException {
+    public IDomainBuilder<E> shared(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.shared = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -287,10 +244,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> shared(String fieldName) throws DslException {
+    public IDomainBuilder<E> shared(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.shared = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -299,10 +256,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> shared(ObjectAddress fieldAddress) throws DslException {
+    public IDomainBuilder<E> shared(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.shared = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -311,10 +268,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> hiddenable(String fieldName) throws DslException {
+    public IDomainBuilder<E> hiddenable(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.hiddenable = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
@@ -323,10 +280,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> hiddenable(Field field) throws DslException {
+    public IDomainBuilder<E> hiddenable(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.hiddenable = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -335,10 +292,10 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> hiddenable(ObjectAddress fieldAddress) throws DslException {
+    public IDomainBuilder<E> hiddenable(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
         if (this.entityBuilder == null) {
-            throw new DslException("Entity class must be defined first");
+            throw new ApiException("Entity class must be defined first");
         }
 
         this.hiddenable = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
@@ -346,11 +303,11 @@ public class DomainBuilder<E>
         return this;
     }
 
-    public IEntityBuilder<E> entity(Class<?> entityClass) throws DslException {
+    public IEntityBuilder<E> entity(Class<?> entityClass) throws ApiException {
         Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
         if (this.entityBuilder != null && Objects.equals(entityClass, this.entityClass)) {
-            throw new DslException(
+            throw new ApiException(
                     "Entity Class is already set with class " + entityClass.getSimpleName());
         }
 
@@ -360,7 +317,7 @@ public class DomainBuilder<E>
         try {
             this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass);
         } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
+            throw new ApiException(e.getMessage(), e);
         }
 
         this.securityBuilder = new DomainSecurityBuilder<>(this, this.interfaces, this.objectQuery, this.entityClass);
@@ -369,24 +326,19 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainSecurityBuilder<E> security() throws DslException {
+    public IDomainSecurityBuilder<E> security() throws ApiException {
         if (this.securityBuilder == null)
-            throw new DslException("Security builder is null, please set entity class first");
+            throw new ApiException("Security builder is null, please set entity class first");
         return this.securityBuilder;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public <D> IDtoBuilder<E, D> dto(Class<D> dtoClass) throws DslException {
+    public <D> IDtoBuilder<E, D> dto(Class<D> dtoClass) throws ApiException {
         if( this.entityClass == null )
-            throw new DslException("Entity class must be set before declaring a dto");
+            throw new ApiException("Entity class must be set before declaring a dto");
 
         IDtoBuilder<E, D> dtoBuilder = (IDtoBuilder<E, D>) this.dtos.computeIfAbsent(dtoClass, clazz -> {
-            try {
-                return new DtoBuilder<>(clazz, this);
-            } catch (DslException e) {
-                throw new RuntimeException(e);
-            }
+            return new DtoBuilder<>(clazz, this);
         });
 
         try {
@@ -399,7 +351,6 @@ public class DomainBuilder<E>
         return dtoBuilder;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, Class<I> inputType, Class<O> outputType) {
         Objects.requireNonNull(useCaseName, "Use case name cannot be null");
@@ -428,30 +379,28 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public Class<E> getEntityClass() throws DslException {
+    public Class<E> getEntityClass() throws ApiException {
         if (this.entityClass != null) {
-            @SuppressWarnings("unchecked")
             Class<E> result = (Class<E>) this.entityClass;
             return result;
         }
 
-        throw new DslException("Entity class is not set !");
+        throw new ApiException("Entity class is not set !");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    protected synchronized IDomainContext<E> doBuild() throws CoreException {
+    protected synchronized IDomainContext<E> doBuild() throws ApiException {
 
         this.throwExceptionIfNoDto();
 
         // Build DTO contexts and extract definitions
         List<IDtoContext<?>> dtoContexts = new ArrayList<>();
-        List<DtoDefinition<?>> dtoDefinitions = new ArrayList<>();
+        List<IDtoDefinition<E>> dtoDefinitions = new ArrayList<>();
         for (IDtoBuilder<?, ?> builder : this.dtos.values()) {
             IDtoContext<?> dtoContext = builder.build();
             dtoContexts.add(dtoContext);
             if (dtoContext instanceof DtoContext<?> dtc) {
-                dtoDefinitions.add(dtc.getDtoDefinition());
+                dtoDefinitions.add((IDtoDefinition<E>) dtc.getDtoDefinition());
             }
         }
 
@@ -465,26 +414,31 @@ public class DomainBuilder<E>
         // Build startup binders
         List<IMethodBinder<Void>> startupBinders = new ArrayList<>();
         for (IDomainStartupBinderBuilder<?> builder : this.startupBinderBuilders) {
-            @SuppressWarnings("unchecked")
             IMethodBinder<Void> binder = builder.build();
             startupBinders.add(binder);
         }
 
         // Build use case definitions (deprecated, kept for backwards compatibility)
-        Map<String, UseCaseDefinition> useCaseDefinitions = new HashMap<>();
+        Map<String, IUseCaseDefinition> useCaseDefinitions = new HashMap<>();
         for (Map.Entry<String, IUseCaseBuilder<?, ?, E>> entry : this.useCases.entrySet()) {
             entry.getValue().build();
-            useCaseDefinitions.put(entry.getKey(), new UseCaseDefinition());
+            UseCaseBuilder<?, ?, E> ucb = (UseCaseBuilder<?, ?, E>) entry.getValue();
+            useCaseDefinitions.put(entry.getKey(), new UseCaseDefinition(
+                    ucb.getScope(),
+                    ucb.getOperation(),
+                    ucb.getAccess(),
+                    ucb.hasAuthority()));
         }
 
-        // Build workflows: auto-generate CRUD workflows for activated operations
-        autoGenerateCrudWorkflows();
-
         // Build all workflows (propagate dependency builders to internal WorkflowBuilder)
-        Map<String, WorkflowDefinition> workflowDefinitions = new HashMap<>();
+        // Skip workflows that have been disabled via security().disable(true)
+        Map<String, IWorkflowDefinition> workflowDefinitions = new HashMap<>();
         Map<String, IWorkflow> builtWorkflows = new HashMap<>();
         for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
             DomainWorkflowBuilder<E> wb = entry.getValue();
+            if (wb.isSecurityDisabled()) {
+                continue;
+            }
             wb.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
             IWorkflow builtWorkflow = wb.build();
             builtWorkflows.put(entry.getKey(), builtWorkflow);
@@ -502,10 +456,10 @@ public class DomainBuilder<E>
         // Cast entities for create/upsert lists
         List<E> createEntitiesCast = this.createEntities.stream()
                 .map(e -> (E) e)
-                .collect(Collectors.toList());
+                .toList();
         List<E> upsertEntitiesCast = this.upsertEntities.stream()
                 .map(e -> (E) e)
-                .collect(Collectors.toList());
+                .toList();
 
         // Build security definition (null-safe)
         var securityDefinition = this.securityBuilder != null
@@ -520,7 +474,6 @@ public class DomainBuilder<E>
         // Build interface suppliers
         List<ISupplier<IInterface>> builtInterfaces = new ArrayList<>();
         for (ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> interfaceBuilder : this.interfaces) {
-            @SuppressWarnings("unchecked")
             ISupplier<IInterface> supplier = (ISupplier<IInterface>) interfaceBuilder.build();
             builtInterfaces.add(supplier);
         }
@@ -528,24 +481,16 @@ public class DomainBuilder<E>
         // Build event suppliers
         List<ISupplier<IEventPublisher>> builtEvents = new ArrayList<>();
         for (ISupplierBuilder<?, ? extends ISupplier<?>> eventBuilder : this.events) {
-            @SuppressWarnings("unchecked")
             ISupplier<IEventPublisher> supplier = (ISupplier<IEventPublisher>) eventBuilder.build();
             builtEvents.add(supplier);
         }
 
-        return new DomainContext<E>(
+        DomainContext<E> domainContext = new DomainContext<E>(
                 new DomainDefinition<E>(
                         this.domainName,
                         entityDefinition,
-                        securityDefinition,
                         dtoDefinitions,
                         startupBinders,
-                        this.creation,
-                        this.readAll,
-                        this.readOne,
-                        this.update,
-                        this.deleteAll,
-                        this.deleteOne,
                         this.publik,
                         this.tenant,
                         createEntitiesCast,
@@ -555,44 +500,35 @@ public class DomainBuilder<E>
                         this.shared,
                         this.hiddenable,
                         useCaseDefinitions,
-                        workflowDefinitions),
+                        workflowDefinitions,
+                        securityDefinition),
                 entityContext,
                 securityContext,
                 dtoContexts,
                 builtInterfaces,
-                builtEvents,
-                builtWorkflows);
+                builtEvents);
+        domainContext.setWorkflows(builtWorkflows);
+        return domainContext;
     }
 
     private static final Map<String, String> CRUD_SCRIPT_PATHS = Map.of(
-            BusinessOperation.create.getLabel(), "scripts/business/crud/CREATE_ONE.gs",
-            BusinessOperation.readAll.getLabel(), "scripts/business/crud/READ_ALL.gs",
-            BusinessOperation.readOne.getLabel(), "scripts/business/crud/READ_ONE.gs",
-            BusinessOperation.update.getLabel(), "scripts/business/crud/UPDATE_ONE.gs",
-            BusinessOperation.deleteOne.getLabel(), "scripts/business/crud/DELETE_ONE.gs",
-            BusinessOperation.deleteAll.getLabel(), "scripts/business/crud/DELETE_ALL.gs"
+            BusinessOperation.create.getLabel(), "scripts/crud/CREATE_ONE.gs",
+            BusinessOperation.readAll.getLabel(), "scripts/crud/READ_ALL.gs",
+            BusinessOperation.readOne.getLabel(), "scripts/crud/READ_ONE.gs",
+            BusinessOperation.update.getLabel(), "scripts/crud/UPDATE_ONE.gs",
+            BusinessOperation.deleteOne.getLabel(), "scripts/crud/DELETE_ONE.gs",
+            BusinessOperation.deleteAll.getLabel(), "scripts/crud/DELETE_ALL.gs"
     );
 
-    private void autoGenerateCrudWorkflows() {
-        if (this.creation && !this.workflows.containsKey(BusinessOperation.create.getLabel())) {
-            createDefaultCrudWorkflow(BusinessOperation.create.getLabel(), TechnicalOperation.create, Scope.oneEntity);
-        }
-        if (this.readAll && !this.workflows.containsKey(BusinessOperation.readAll.getLabel())) {
-            createDefaultCrudWorkflow(BusinessOperation.readAll.getLabel(), TechnicalOperation.read, Scope.allEntities);
-        }
-        if (this.readOne && !this.workflows.containsKey(BusinessOperation.readOne.getLabel())) {
-            createDefaultCrudWorkflow(BusinessOperation.readOne.getLabel(), TechnicalOperation.read, Scope.oneEntity);
-        }
-        if (this.update && !this.workflows.containsKey(BusinessOperation.update.getLabel())) {
-            createDefaultCrudWorkflow(BusinessOperation.update.getLabel(), TechnicalOperation.update, Scope.oneEntity);
-        }
-        if (this.deleteOne && !this.workflows.containsKey(BusinessOperation.deleteOne.getLabel())) {
-            createDefaultCrudWorkflow(BusinessOperation.deleteOne.getLabel(), TechnicalOperation.delete, Scope.oneEntity);
-        }
-        if (this.deleteAll && !this.workflows.containsKey(BusinessOperation.deleteAll.getLabel())) {
-            createDefaultCrudWorkflow(BusinessOperation.deleteAll.getLabel(), TechnicalOperation.delete, Scope.allEntities);
-        }
+    private void initDefaultCrudWorkflows() {
+        createDefaultCrudWorkflow(BusinessOperation.create.getLabel(), TechnicalOperation.create, Scope.oneEntity);
+        createDefaultCrudWorkflow(BusinessOperation.readAll.getLabel(), TechnicalOperation.read, Scope.allEntities);
+        createDefaultCrudWorkflow(BusinessOperation.readOne.getLabel(), TechnicalOperation.read, Scope.oneEntity);
+        createDefaultCrudWorkflow(BusinessOperation.update.getLabel(), TechnicalOperation.update, Scope.oneEntity);
+        createDefaultCrudWorkflow(BusinessOperation.deleteOne.getLabel(), TechnicalOperation.delete, Scope.oneEntity);
+        createDefaultCrudWorkflow(BusinessOperation.deleteAll.getLabel(), TechnicalOperation.delete, Scope.allEntities);
     }
+
 
     private void createDefaultCrudWorkflow(String name, TechnicalOperation op, Scope scope) {
         DomainWorkflowBuilder<E> wb = new DomainWorkflowBuilder<>(name, this);
@@ -608,9 +544,9 @@ public class DomainBuilder<E>
         this.workflows.put(name, wb);
     }
 
-    private void throwExceptionIfNoDto() throws DslException {
+    private void throwExceptionIfNoDto() throws ApiException {
         if (this.dtos.size() == 0) {
-            throw new DslException("No dto declared for domain " + this.domainName);
+            throw new ApiException("No dto declared for domain " + this.domainName);
         }
     }
 
@@ -620,9 +556,9 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public synchronized IEntityBuilder<E> entity() throws DslException {
+    public synchronized IEntityBuilder<E> entity() throws ApiException {
         if( this.entityClass == null )
-            throw new DslException("Entity class is not set");
+            throw new ApiException("Entity class is not set");
 
         if( this.entityBuilder == null)
             this.entityBuilder = new EntityBuilder<>(entityClass, this);
@@ -631,14 +567,14 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(Class<? extends IInterface> interfasse) throws DslException {
+    public IDomainBuilder<E> interfasse(Class<? extends IInterface> interfasse) throws ApiException {
         Objects.requireNonNull(interfasse, "Interface class cannot be null");
         // TODO: Implement interface instantiation or supplier creation
         throw new UnsupportedOperationException("Unimplemented method 'interfasse(Class)'");
     }
 
     @Override
-    public IEntityBuilder<E> name(String name) throws DslException {
+    public IEntityBuilder<E> name(String name) throws ApiException {
         Objects.requireNonNull(name, "Name cannot be null");
         this.domainName = name;
         return this.entity();

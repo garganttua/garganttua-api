@@ -4,7 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
@@ -26,7 +26,7 @@ public class ApiContextStartupBinderBuilder
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // No auto-detection for startup binders - all configuration is explicit
     }
 

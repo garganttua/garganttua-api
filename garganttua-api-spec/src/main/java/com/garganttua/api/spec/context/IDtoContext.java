@@ -8,29 +8,29 @@ import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IDtoContext<D> {
 
     IDtoDefinition<D> getDtoDefinition();
 
-    IDao getDao() throws CoreException;
+    IDao getDao() throws ApiException;
 
-    String getUuid(Object object) throws CoreException;
+    String getUuid(Object object) throws ApiException;
 
-	default List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws CoreException {
+	default List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
         return getDao().find(pageable, filter, sort);
     }
 
-	default Object save(Object object) throws CoreException {
+	default Object save(Object object) throws ApiException {
         return getDao().save(object);
     }
 
-	default void delete(Object object) throws CoreException {
+	default void delete(Object object) throws ApiException {
         getDao().delete(object);
     }
 	
-	default long count(IFilter filter) throws CoreException {
+	default long count(IFilter filter) throws ApiException {
         return getDao().count(filter);
     }
 

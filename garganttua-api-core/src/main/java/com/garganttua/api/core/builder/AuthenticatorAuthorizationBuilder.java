@@ -9,7 +9,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationB
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 
 public class AuthenticatorAuthorizationBuilder<E> extends
         AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationBuilder<E>, IAuthenticatorBuilder<E>, IAuthenticatorAuthorizationContext>
@@ -47,7 +47,7 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     }
 
     @Override
-    protected synchronized IAuthenticatorAuthorizationContext doBuild() throws DslException {
+    protected synchronized IAuthenticatorAuthorizationContext doBuild() throws ApiException {
         /* return new AuthenticatorAuthorizationContext(this.duration,
                 this.unit,
                 this.refreshDuration,
@@ -57,7 +57,7 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
     }

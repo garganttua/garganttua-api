@@ -9,7 +9,7 @@ import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
 import com.garganttua.api.spec.context.dsl.security.IWorkflowSecurityBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.workflow.IWorkflow;
@@ -99,7 +99,7 @@ public class DomainWorkflowBuilder<E>
 	}
 
 	@Override
-	protected synchronized IWorkflow doBuild() throws DslException {
+	protected synchronized IWorkflow doBuild() throws ApiException {
 		if (this.injectionContextBuilder != null) {
 			this.internalBuilder.provide(this.injectionContextBuilder);
 		}
@@ -110,7 +110,7 @@ public class DomainWorkflowBuilder<E>
 	}
 
 	@Override
-	protected void doAutoDetection() throws DslException {
+	protected void doAutoDetection() throws ApiException {
 	}
 
 	String getWorkflowName() {

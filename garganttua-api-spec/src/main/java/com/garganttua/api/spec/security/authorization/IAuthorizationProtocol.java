@@ -1,12 +1,12 @@
 package com.garganttua.api.spec.security.authorization;
 
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IAuthorizationProtocol {
 
-	byte[] getAuthorization(Object request) throws CoreException;
+	byte[] getAuthorization(Object request) throws ApiException;
 
-	void setAuthorization(byte[] authorization, Object response) throws CoreException;
+	void setAuthorization(byte[] authorization, Object response) throws ApiException;
 
 	String getProtocol();
 

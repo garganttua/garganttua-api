@@ -2,7 +2,7 @@ package com.garganttua.api.core.builder.binder;
 
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethodBinderBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
@@ -16,7 +16,7 @@ public class AuthorizationProtocolMethodBinderBuilder extends AbstractMethodBind
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // No auto-detection for authorization protocol method binders - all configuration is explicit
     }
 

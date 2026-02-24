@@ -4,7 +4,7 @@ import com.garganttua.api.core.builder.ApiContextBuilder;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 
 import java.util.Optional;
 
@@ -48,13 +48,8 @@ public class Main {
                     .tenantId("tenantId")
                     .db(new InMemoryDao())
                 .up()
-                // Configure CRUD operations
-                .creation(true)
-                .readAll(true)
-                .readOne(true)
-                .update(true)
-                .deleteOne(true)
-                .deleteAll(false)
+                // Disable deleteAll workflow
+                .workflow("deleteAll").security().disable(true).up().up()
             .up();
 
             System.out.println("[INFO] Registered domain: users (User.class)");
@@ -80,7 +75,7 @@ public class Main {
             // Display framework capabilities
             displayFrameworkCapabilities();
 
-        } catch (DslException e) {
+        } catch (ApiException e) {
             System.err.println("[ERROR] DSL configuration error: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {

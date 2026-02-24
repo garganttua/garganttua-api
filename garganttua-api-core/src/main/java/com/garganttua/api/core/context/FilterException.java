@@ -1,8 +1,8 @@
 package com.garganttua.api.core.context;
 
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
-public class FilterException extends CoreException {
+public class FilterException extends ApiException {
 
 	private static final int FILTER_ERROR_CODE = 300;
 

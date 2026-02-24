@@ -11,7 +11,7 @@ import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorization
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -32,10 +32,10 @@ public class DomainSecurityAuthorizationBuilder<E>
 
     @Override
     public IDomainSecurityAuthorizationBuilder<E> interfasse(Class<? extends IInterface> interfaceClass)
-            throws DslException {
+            throws ApiException {
         Objects.requireNonNull(interfaceClass, "Interface class cannot be null");
         if (this.interfaces.stream().noneMatch(i -> i.getSuppliedClass().equals(interfaceClass))) {
-            throw new DslException("Interface " + interfaceClass.getName() + " is not part of the domain");
+            throw new ApiException("Interface " + interfaceClass.getName() + " is not part of the domain");
         }
         return this;
     }

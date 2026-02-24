@@ -7,21 +7,21 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.api.core.context.OperationResponse;
 import com.garganttua.api.core.context.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
-import com.garganttua.api.core.context.ServiceResponse;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.IEntityContext;
-import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
-import com.garganttua.api.spec.service.IServiceRequest;
-import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.reflection.ReflectionException;
@@ -31,6 +31,7 @@ import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
 import com.garganttua.core.workflow.WorkflowInput;
 import com.garganttua.core.workflow.WorkflowResult;
+import com.github.f4b6a3.uuid.UuidCreator;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -49,14 +50,19 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     private final IRepository repository;
 
     // Workflows map (replaces ScriptCache + crudScripts)
-    private final Map<String, IWorkflow> workflows;
+    private Map<String, IWorkflow> workflows = Collections.emptyMap();
+
+    public void setWorkflows(Map<String, IWorkflow> workflows) {
+        this.workflows = Collections.unmodifiableMap(new HashMap<>(
+                Objects.requireNonNull(workflows, "Workflows cannot be null")));
+    }
 
     public DomainContext(DomainDefinition<E> domainDefinition, IEntityContext<E> entityContext,
             IDomainSecurityContext domainSecurityContext,
             List<IDtoContext<?>> dtoContexts,
             List<ISupplier<IInterface>> interfaces,
-            List<ISupplier<IEventPublisher>> events,
-            Map<String, IWorkflow> workflows) {
+            List<ISupplier<IEventPublisher>> events
+            ) {
         this.domainSecurityContext = Objects.requireNonNull(domainSecurityContext,
                 "Domain security context cannot be null");
         this.entityContext = Objects.requireNonNull(entityContext, "Entity context cannot be null");
@@ -67,8 +73,7 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
                 Objects.requireNonNull(events, "Events cannot be null")));
         this.dtoContexts = Collections.unmodifiableList(new java.util.ArrayList<>(
                 Objects.requireNonNull(dtoContexts, "Dto contexts cannot be null")));
-        this.workflows = Collections.unmodifiableMap(new HashMap<>(
-                Objects.requireNonNull(workflows, "Workflows cannot be null")));
+        
 
         Repository repo = new Repository(this.dtoContexts, entityContext.getEntityClass());
         repo.setDomainContext(this);
@@ -122,10 +127,10 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         for (ISupplier<IInterface> supplier : this.interfaces) {
             try {
                 IInterface intf = supplier.supply()
-                        .orElseThrow(() -> new RuntimeException("Interface supplier returned empty Optional"));
+                        .orElseThrow(() -> new ApiException("Interface supplier returned empty Optional"));
                 action.apply(intf);
             } catch (Exception e) {
-                throw new RuntimeException("Interface action failed for domain " + this.domainDefinition.domainName(),
+                throw new ApiException("Interface action failed for domain " + this.domainDefinition.domainName(),
                         e);
             }
         }
@@ -141,10 +146,10 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         for (ISupplier<IInterface> supplier : this.interfaces) {
             try {
                 IInterface intf = supplier.supply()
-                        .orElseThrow(() -> new RuntimeException("Interface supplier returned empty Optional"));
+                        .orElseThrow(() -> new ApiException("Interface supplier returned empty Optional"));
                 action.apply(intf, arg);
             } catch (Exception e) {
-                throw new RuntimeException("Interface action failed for domain " + this.domainDefinition.domainName(),
+                throw new ApiException("Interface action failed for domain " + this.domainDefinition.domainName(),
                         e);
             }
         }
@@ -166,7 +171,7 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
                 } catch (ReflectionException e) {
                     log.error("Failed to execute startup binder {} for domain {}: {}",
                             binder.getExecutableReference(), this.domainDefinition.domainName(), e.getMessage(), e);
-                    throw new RuntimeException(
+                    throw new ApiException(
                             "Startup binder execution failed for domain " + this.domainDefinition.domainName(), e);
                 }
             }
@@ -210,16 +215,15 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     }
 
     @Override
-    public IServiceResponse invoke(IServiceRequest request) {
+    public IOperationResponse invoke(IOperationRequest request) {
         return invoke(request, WorkflowExecutionOptions.none());
     }
 
     @Override
-    public IServiceResponse invoke(IServiceRequest request, WorkflowExecutionOptions options) {
+    public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) {
         ensureStarted();
 
-        Operation operation = request.operation();
-        BusinessOperation businessOp = operation.getBusinessOperation();
+        BusinessOperation businessOp = request.operation().getBusinessOperation();
 
         // Map business operation to workflow name
         String workflowName = resolveWorkflowName(businessOp);
@@ -228,33 +232,30 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         if (workflow == null) {
             log.warn("No workflow found for operation {} (workflow name: {}) in domain {}",
                     businessOp, workflowName, this.domainDefinition.domainName());
-            return ServiceResponse.notAvailable("No workflow available for operation: " + businessOp);
+            return OperationResponse.notAvailable("No workflow available for operation: " + businessOp);
         }
 
         try {
-            Map<String, Object> parameters = new HashMap<>();
-            parameters.put("operation", operation);
-            parameters.put("domainContext", this);
-            parameters.put("repository", this.repository);
-            if (request.args() != null) {
-                parameters.put("args", request.args());
-            }
+            request.arg(IOperationRequest.EXECUTION_UUID, UuidCreator.getTimeOrderedEpoch());
+            request.arg(IOperationRequest.DOMAIN_CONTEXT, this);
+            request.arg(IOperationRequest.REPOSITORY, this.repository);
 
-            WorkflowInput input = WorkflowInput.of(request, parameters);
+            Map<String, Object> workflowParams = Map.of("repository", this.repository);
+            WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = workflow.execute(input, options);
 
             if (result.isSuccess()) {
-                return ServiceResponse.ok(result.output());
+                return OperationResponse.ok(result.output());
             } else {
                 String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
                 log.error("Workflow {} failed for domain {}: {}", workflowName,
                         this.domainDefinition.domainName(), errorMsg);
-                return ServiceResponse.error(errorMsg);
+                return OperationResponse.error(errorMsg);
             }
         } catch (Exception e) {
             log.error("Error executing workflow {} for domain {}: {}", workflowName,
                     this.domainDefinition.domainName(), e.getMessage(), e);
-            return ServiceResponse.error("Workflow execution error: " + e.getMessage());
+            return OperationResponse.error("Workflow execution error: " + e.getMessage());
         }
     }
 

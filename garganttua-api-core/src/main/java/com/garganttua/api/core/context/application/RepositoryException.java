@@ -1,8 +1,8 @@
 package com.garganttua.api.core.context.application;
 
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
-public class RepositoryException extends CoreException {
+public class RepositoryException extends ApiException {
 
     private static final int REPOSITORY_ERROR_CODE = 200;
 

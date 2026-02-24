@@ -11,6 +11,7 @@ import org.geojson.GeoJsonObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.filter.IFilter;
 
 import lombok.Getter;
@@ -239,11 +240,7 @@ public class Filter implements IFilter {
 
 		if (literal.literals != null) {
 			literal.literals.forEach(l -> {
-				try {
-					validate(l);
-				} catch (FilterException e) {
-					throw new RuntimeException(e);
-				}
+				validate(l);
 			});
 		}
 	}
@@ -389,7 +386,7 @@ public class Filter implements IFilter {
 
 			return cloned;
 		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException("Clone not supported", e);
+			throw new ApiException("Clone not supported", e);
 		}
 	}
 

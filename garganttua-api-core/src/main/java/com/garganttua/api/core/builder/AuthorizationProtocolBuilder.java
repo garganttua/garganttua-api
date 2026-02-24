@@ -13,7 +13,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethod
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -33,54 +33,54 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(String methodName) throws DslException {
+    public IAuthorizationProtocolBuilder getAuthorization(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
         // TODO: Implement when method binder API supports string method names
         throw new UnsupportedOperationException("Unimplemented method 'getAuthorization'");
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(Method method) throws DslException {
+    public IAuthorizationProtocolBuilder getAuthorization(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         // TODO: Implement when method binder API is complete
         throw new UnsupportedOperationException("Unimplemented method 'getAuthorization'");
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(ObjectAddress methodAddress) throws DslException {
+    public IAuthorizationProtocolBuilder getAuthorization(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
         // TODO: Implement when method binder API supports ObjectAddress
         throw new UnsupportedOperationException("Unimplemented method 'getAuthorization'");
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(String methodName) throws DslException {
+    public IAuthorizationProtocolBuilder setAuthorization(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
         // TODO: Implement when method binder API supports string method names
         throw new UnsupportedOperationException("Unimplemented method 'setAuthorization'");
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(Method method) throws DslException {
+    public IAuthorizationProtocolBuilder setAuthorization(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         // TODO: Implement when method binder API is complete
         throw new UnsupportedOperationException("Unimplemented method 'setAuthorization'");
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(ObjectAddress methodAddress) throws DslException {
+    public IAuthorizationProtocolBuilder setAuthorization(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
         // TODO: Implement when method binder API supports ObjectAddress
         throw new UnsupportedOperationException("Unimplemented method 'setAuthorization'");
     }
 
     @Override
-    protected synchronized IAuthorizationProtocolContext doBuild() throws DslException {
+    protected synchronized IAuthorizationProtocolContext doBuild() throws ApiException {
         return new AuthorizationProtocolContext(this.setAuthorization, this.getAuthorization);
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
 
     }
 

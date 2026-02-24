@@ -8,7 +8,7 @@ import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 /**
  * In-memory DAO implementation for demonstration purposes.
@@ -25,25 +25,25 @@ public class InMemoryDao implements IDao {
 
     @Override
     public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
-            throws CoreException {
+            throws ApiException {
         // Simple implementation - returns all stored objects
         // In a real implementation, filtering, sorting, and pagination would be applied
         return new ArrayList<>(storage);
     }
 
     @Override
-    public Object save(Object object) throws CoreException {
+    public Object save(Object object) throws ApiException {
         storage.add(object);
         return object;
     }
 
     @Override
-    public void delete(Object object) throws CoreException {
+    public void delete(Object object) throws ApiException {
         storage.remove(object);
     }
 
     @Override
-    public long count(IFilter filter) throws CoreException {
+    public long count(IFilter filter) throws ApiException {
         return storage.size();
     }
 }

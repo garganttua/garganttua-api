@@ -1,4 +1,6 @@
-package com.garganttua.api.core.builder;
+package com.garganttua.api.core.unit.builder;
+
+import com.garganttua.api.core.builder.ApiContextBuilder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,8 +20,7 @@ import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.CoreException;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 
 @DisplayName("DtoBuilder Tests")
 class DtoBuilderTest {
@@ -62,23 +63,23 @@ class DtoBuilderTest {
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
-                throws CoreException {
+                throws ApiException {
             return new ArrayList<>(storage);
         }
 
         @Override
-        public Object save(Object object) throws CoreException {
+        public Object save(Object object) throws ApiException {
             storage.add(object);
             return object;
         }
 
         @Override
-        public void delete(Object object) throws CoreException {
+        public void delete(Object object) throws ApiException {
             storage.remove(object);
         }
 
         @Override
-        public long count(IFilter filter) throws CoreException {
+        public long count(IFilter filter) throws ApiException {
             return storage.size();
         }
     }
@@ -87,7 +88,7 @@ class DtoBuilderTest {
     private IDomainBuilder<TestEntity> domainBuilder;
 
     @BeforeEach
-    void setUp() throws DslException {
+    void setUp() throws ApiException {
         domainBuilder = ApiContextBuilder.builder().domain(TestEntity.class);
         dtoBuilder = domainBuilder.dto(TestDto.class);
     }
@@ -98,7 +99,7 @@ class DtoBuilderTest {
 
         @Test
         @DisplayName("id() accepts valid field name")
-        void idAcceptsValidFieldName() throws DslException {
+        void idAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> dtoBuilder.id("id"));
         }
 
@@ -110,13 +111,13 @@ class DtoBuilderTest {
 
         @Test
         @DisplayName("uuid() accepts valid field name")
-        void uuidAcceptsValidFieldName() throws DslException {
+        void uuidAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> dtoBuilder.uuid("uuid"));
         }
 
         @Test
         @DisplayName("tenantId() accepts valid field name")
-        void tenantIdAcceptsValidFieldName() throws DslException {
+        void tenantIdAcceptsValidFieldName() throws ApiException {
             assertDoesNotThrow(() -> dtoBuilder.tenantId("tenantId"));
         }
     }
@@ -144,7 +145,7 @@ class DtoBuilderTest {
 
         @Test
         @DisplayName("up() returns parent domain builder")
-        void upReturnsParentDomainBuilder() throws DslException {
+        void upReturnsParentDomainBuilder() throws ApiException {
             IDomainBuilder<TestEntity> parent = dtoBuilder
                     .id("id")
                     .uuid("uuid")
@@ -162,28 +163,28 @@ class DtoBuilderTest {
 
         @Test
         @DisplayName("build() fails without id configured")
-        void buildFailsWithoutId() throws DslException {
+        void buildFailsWithoutId() throws ApiException {
             dtoBuilder.uuid("uuid").tenantId("tenantId").db(new TestDao());
-            assertThrows(DslException.class, () -> dtoBuilder.build());
+            assertThrows(ApiException.class, () -> dtoBuilder.build());
         }
 
         @Test
         @DisplayName("build() fails without uuid configured")
-        void buildFailsWithoutUuid() throws DslException {
+        void buildFailsWithoutUuid() throws ApiException {
             dtoBuilder.id("id").tenantId("tenantId").db(new TestDao());
-            assertThrows(DslException.class, () -> dtoBuilder.build());
+            assertThrows(ApiException.class, () -> dtoBuilder.build());
         }
 
         @Test
         @DisplayName("build() fails without tenantId configured")
-        void buildFailsWithoutTenantId() throws DslException {
+        void buildFailsWithoutTenantId() throws ApiException {
             dtoBuilder.id("id").uuid("uuid").db(new TestDao());
-            assertThrows(DslException.class, () -> dtoBuilder.build());
+            assertThrows(ApiException.class, () -> dtoBuilder.build());
         }
 
         @Test
         @DisplayName("build() succeeds with all required fields and DAO")
-        void buildSucceedsWithAllRequiredFieldsAndDao() throws DslException {
+        void buildSucceedsWithAllRequiredFieldsAndDao() throws ApiException {
             dtoBuilder.id("id").uuid("uuid").tenantId("tenantId").db(new TestDao());
             IDtoContext<TestDto> context = dtoBuilder.build();
 

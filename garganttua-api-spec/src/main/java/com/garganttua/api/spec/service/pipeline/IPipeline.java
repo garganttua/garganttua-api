@@ -2,7 +2,7 @@ package com.garganttua.api.spec.service.pipeline;
 
 import java.util.List;
 
-import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.IOperationResponse;
 
 /**
  * Represents a service execution pipeline composed of ordered phases.
@@ -35,7 +35,7 @@ public interface IPipeline {
      * @param context the pipeline context
      * @return the service response
      */
-    IServiceResponse execute(IPipelineContext context);
+    IOperationResponse execute(IPipelineContext context);
 
     /**
      * Adds a phase to the pipeline.

@@ -2,17 +2,17 @@ package com.garganttua.api.spec.security.key;
 
 import java.security.Key;
 
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IKey {
 	
-	byte[] sign(byte[] data) throws CoreException;
+	byte[] sign(byte[] data) throws ApiException;
 
-	boolean verifySignature(byte[] signature, byte[] originalData) throws CoreException;
+	boolean verifySignature(byte[] signature, byte[] originalData) throws ApiException;
 	
-	byte[] encrypt(byte[] clear) throws CoreException;
+	byte[] encrypt(byte[] clear) throws ApiException;
 	
-	byte[] decrypt(byte[] encoded) throws CoreException;
+	byte[] decrypt(byte[] encoded) throws ApiException;
 	
 	/**
 	 * Base64 encoded key
@@ -20,7 +20,7 @@ public interface IKey {
 	 */
 	byte[] getRawKey();
 
-	Key getKey() throws CoreException;
+	Key getKey() throws ApiException;
 
 	KeyType getType();
 

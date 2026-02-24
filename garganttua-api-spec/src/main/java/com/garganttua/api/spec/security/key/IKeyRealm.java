@@ -2,7 +2,7 @@ package com.garganttua.api.spec.security.key;
 
 import java.security.Key;
 
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 
 public interface IKeyRealm {
 
@@ -17,30 +17,30 @@ public interface IKeyRealm {
 	/**
 	 * Actually returns a public key, or a secret key
 	 * @return
-	 * @throws CoreException
+	 * @throws ApiException
 	 */
-	IKey getKeyForDecryption() throws CoreException;
+	IKey getKeyForDecryption() throws ApiException;
 
 	/**
 	 * Actually returns a private key, or a secret key
 	 * @return
-	 * @throws CoreException
+	 * @throws ApiException
 	 */
-	IKey getKeyForEncryption() throws CoreException;
+	IKey getKeyForEncryption() throws ApiException;
 	
 	/**
 	 * Returns a private key for signing
 	 * @return
-	 * @throws CoreException
+	 * @throws ApiException
 	 */
-	IKey getKeyForSigning() throws CoreException;
+	IKey getKeyForSigning() throws ApiException;
 	
 	/**
 	 * Returns a public key for signature verification
 	 * @return
-	 * @throws CoreException
+	 * @throws ApiException
 	 */
-	IKey getKeyForSignatureVerification() throws CoreException;
+	IKey getKeyForSignatureVerification() throws ApiException;
 
 	String getUuid();
 
@@ -50,13 +50,13 @@ public interface IKeyRealm {
 
     boolean isAbleToSign();
 
-	byte[] sign(byte[] data) throws CoreException;
+	byte[] sign(byte[] data) throws ApiException;
 
-	boolean verifySignature(byte[] signature, byte[] originalData) throws CoreException;
+	boolean verifySignature(byte[] signature, byte[] originalData) throws ApiException;
 	
-	byte[] encrypt(byte[] clear) throws CoreException;
+	byte[] encrypt(byte[] clear) throws ApiException;
 	
-	byte[] decrypt(byte[] encoded) throws CoreException;
+	byte[] decrypt(byte[] encoded) throws ApiException;
 	
 	/**
 	 * Base64 encoded key
@@ -64,7 +64,7 @@ public interface IKeyRealm {
 	 */
 	byte[] getRawKey();
 
-	Key getKey() throws CoreException;
+	Key getKey() throws ApiException;
 
 	KeyType getType();
 

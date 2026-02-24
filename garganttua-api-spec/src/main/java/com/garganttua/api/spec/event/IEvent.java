@@ -5,8 +5,8 @@ import java.util.Map;
 
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.context.Operation;
-import com.garganttua.api.spec.service.IServiceResponse;
-import com.garganttua.api.spec.service.ServiceResponseCode;
+import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.OperationResponseCode;
 
 public interface IEvent {
 
@@ -46,10 +46,10 @@ public interface IEvent {
     String getExceptionMessage();
     void setExceptionMessage(String exceptionMessage);
 
-    ServiceResponseCode getCode();
-    void setCode(ServiceResponseCode code);
+    OperationResponseCode getCode();
+    void setCode(OperationResponseCode code);
     
-    IServiceResponse toServiceResponse();
+    IOperationResponse toServiceResponse();
     
 	/* IDomain getDomain();
 	void setDomain(IDomain domain);

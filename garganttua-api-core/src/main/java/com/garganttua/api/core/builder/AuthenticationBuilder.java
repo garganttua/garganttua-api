@@ -8,7 +8,7 @@ import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext>  implements IAuthenticationBuilder {
@@ -25,74 +25,74 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(String methodName) throws DslException {
+    public IAuthenticationBuilder authenticate(String methodName) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(Method method) throws DslException {
+    public IAuthenticationBuilder authenticate(Method method) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws DslException {
+    public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
     }
 
     @Override
     public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(Class<? extends Annotation> annotation,
-            Class<?> fieldType) throws DslException {
+            Class<?> fieldType) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'entityMustHaveFieldOfTypeAnnotatedWith'");
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws DslException {
+    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'applySecurityOnEntity'");
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws DslException {
+    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'applySecurityOnEntity'");
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws DslException {
+    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'applySecurityOnEntity'");
     }
 
     @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(String methodName) throws DslException {
+    public IUseCaseBuilder<?, ?, ?> useCase(String methodName) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'useCase'");
     }
 
     @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(Method method) throws DslException {
+    public IUseCaseBuilder<?, ?, ?> useCase(Method method) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'useCase'");
     }
 
     @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(ObjectAddress methodAddress) throws DslException {
+    public IUseCaseBuilder<?, ?, ?> useCase(ObjectAddress methodAddress) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'useCase'");
     }
 
     @Override
-    protected synchronized IAuthenticationContext doBuild() throws DslException {
+    protected synchronized IAuthenticationContext doBuild() throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
     }
 
     @Override
-    protected void doAutoDetection() throws DslException {
+    protected void doAutoDetection() throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
     }
@@ -127,7 +127,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(String methodName) throws DslException {
+    public IAuthenticationBuilder authenticate(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         if (this.findPrincipal)
@@ -146,7 +146,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(Method method) throws DslException {
+    public IAuthenticationBuilder authenticate(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         if (this.findPrincipal)
@@ -165,7 +165,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws DslException {
+    public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         if (this.findPrincipal)
@@ -184,7 +184,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws DslException {
+    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this,
@@ -196,7 +196,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws DslException {
+    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
 
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this,
@@ -208,7 +208,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws DslException {
+    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
 
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this,
@@ -220,7 +220,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IUseCaseBuilder<IAuthenticationBuilder> useCase(String methodName) throws DslException {
+    public IUseCaseBuilder<IAuthenticationBuilder> useCase(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
 
         IUseCaseBuilder<IAuthenticationBuilder,IAuthenticationBuilder> useCaseBuilder = this.useCases.get(methodName);
@@ -236,7 +236,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IUseCaseBuilder<IAuthenticationBuilder> useCase(Method method) throws DslException {
+    public IUseCaseBuilder<IAuthenticationBuilder> useCase(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         String methodName = method.getName();
 
@@ -253,7 +253,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IUseCaseBuilder<IAuthenticationBuilder> useCase(ObjectAddress methodAddress) throws DslException {
+    public IUseCaseBuilder<IAuthenticationBuilder> useCase(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
         String methodName = methodAddress.getElement(methodAddress.length() - 1);
 
@@ -271,7 +271,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
 
     @Override
     public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(Class<? extends Annotation> annotation,
-            Class<?> fieldType) throws DslException {
+            Class<?> fieldType) throws ApiException {
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(fieldType, "Field type cannot be null");
         this.fieldAnnotations.add(new Pair<Class<? extends Annotation>, Class<?>>(annotation, fieldType));

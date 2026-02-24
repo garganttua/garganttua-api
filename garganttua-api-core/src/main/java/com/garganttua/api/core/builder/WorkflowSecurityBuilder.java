@@ -5,7 +5,7 @@ import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
 import com.garganttua.api.spec.context.dsl.security.IWorkflowSecurityBuilder;
 import com.garganttua.api.spec.security.IWorkflowSecurity;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 
 public class WorkflowSecurityBuilder<E>
 		extends AbstractAutomaticLinkedBuilder<IWorkflowSecurityBuilder<E>, IDomainWorkflowBuilder<E>, IWorkflowSecurity>
@@ -38,12 +38,12 @@ public class WorkflowSecurityBuilder<E>
 	}
 
 	@Override
-	protected synchronized IWorkflowSecurity doBuild() throws DslException {
+	protected synchronized IWorkflowSecurity doBuild() throws ApiException {
 		return new WorkflowSecurityImpl(this.disabled, this.authority, this.access);
 	}
 
 	@Override
-	protected void doAutoDetection() throws DslException {
+	protected void doAutoDetection() throws ApiException {
 	}
 
 	boolean isDisabled() {

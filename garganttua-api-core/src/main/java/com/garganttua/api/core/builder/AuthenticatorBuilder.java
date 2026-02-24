@@ -16,7 +16,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationB
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -45,7 +45,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder login(String fieldName) throws CoreException {
+    public IAuthenticatorBuilder login(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.login = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
@@ -54,7 +54,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder login(Field field) throws CoreException {
+    public IAuthenticatorBuilder login(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.login = FieldResolver.fieldByField(field, this.entityClass, String.class);
@@ -63,7 +63,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder login(ObjectAddress fieldAddress) throws CoreException {
+    public IAuthenticatorBuilder login(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.login = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
@@ -72,7 +72,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(String fieldName) throws CoreException {
+    public IAuthenticatorBuilder authorities(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, List.class);
@@ -81,7 +81,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(Field field) throws CoreException {
+    public IAuthenticatorBuilder authorities(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByField(field, this.entityClass, List.class);
@@ -90,7 +90,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(ObjectAddress fieldAddress) throws CoreException {
+    public IAuthenticatorBuilder authorities(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.authorities = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, List.class);
@@ -105,7 +105,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(String fieldName) throws CoreException {
+    public IAuthenticatorBuilder credentialsNonExpired(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.credentialsNonExpired = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass,
@@ -115,7 +115,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(Field field) throws CoreException {
+    public IAuthenticatorBuilder credentialsNonExpired(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.credentialsNonExpired = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -124,7 +124,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(ObjectAddress fieldAddress) throws CoreException {
+    public IAuthenticatorBuilder credentialsNonExpired(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.credentialsNonExpired = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass,
@@ -134,7 +134,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(String fieldName) throws CoreException {
+    public IAuthenticatorBuilder enabled(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.enabled = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
@@ -143,7 +143,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(Field field) throws CoreException {
+    public IAuthenticatorBuilder enabled(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.enabled = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -152,7 +152,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(ObjectAddress fieldAddress) throws CoreException {
+    public IAuthenticatorBuilder enabled(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.enabled = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
@@ -161,7 +161,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(String fieldName) throws CoreException {
+    public IAuthenticatorBuilder accountNonExpired(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.accountNonExpired = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass,
@@ -171,7 +171,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(Field field) throws CoreException {
+    public IAuthenticatorBuilder accountNonExpired(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.accountNonExpired = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -180,7 +180,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(ObjectAddress fieldAddress) throws CoreException {
+    public IAuthenticatorBuilder accountNonExpired(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.accountNonExpired = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass,
@@ -190,7 +190,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(Field field) throws CoreException {
+    public IAuthenticatorBuilder accountNonLocked(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.accountNonLocked = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
@@ -199,7 +199,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(String fieldName) throws CoreException {
+    public IAuthenticatorBuilder accountNonLocked(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.accountNonLocked = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass,
@@ -209,7 +209,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(ObjectAddress fieldAddress) throws CoreException {
+    public IAuthenticatorBuilder accountNonLocked(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
         this.accountNonLocked = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass,
@@ -225,7 +225,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    public IAuthenticatorBuilder authentication(IAuthenticationBuilder authentication) throws CoreException {
+    public IAuthenticatorBuilder authentication(IAuthenticationBuilder authentication) throws ApiException {
         Objects.requireNonNull(authentication, "Authentication cannot be null");
         this.selectedAuthentications.add(authentication);
         return this;
@@ -243,7 +243,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    protected synchronized IAuthenticatorContext doBuild() throws CoreException {
+    protected synchronized IAuthenticatorContext doBuild() throws ApiException {
         return new AuthenticatorContext(
                 this.alwaysEnabled,
                 this.login,
@@ -256,7 +256,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
                 this.selectedAuthentications.stream().map(builder -> {
                     try {
                         return builder.build();
-                    } catch (CoreException e) {
+                    } catch (ApiException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
@@ -266,7 +266,7 @@ public class AuthenticatorBuilder<E> extends AbstractAutomaticLinkedBuilder<IAut
     }
 
     @Override
-    protected void doAutoDetection() throws CoreException {
+    protected void doAutoDetection() throws ApiException {
 
     }
 

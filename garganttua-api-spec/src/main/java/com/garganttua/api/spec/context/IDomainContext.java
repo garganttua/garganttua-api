@@ -13,9 +13,8 @@ import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.api.spec.security.IAccessRule;
-import com.garganttua.api.spec.service.IServiceRequest;
-import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.workflow.IWorkflow;
@@ -37,14 +36,9 @@ public interface IDomainContext<E> extends ILifecycle {
 		return getDomainName();
 	}
 
-	@SuppressWarnings("unchecked")
 	default Map<Class<?>, IDtoDefinition<?>> getDtos(){
 		return this.getDomainDefinition().dtoDefinitions().stream()
 				.collect(Collectors.toMap(IDtoDefinition::dtoClass, dto -> (IDtoDefinition<?>) dto));
-	}
-
-	default List<IAccessRule> accessRules(){
-		return this.getDomainDefinition().accessRules();
 	}
 
 	// Entity class access
@@ -108,158 +102,11 @@ public interface IDomainContext<E> extends ILifecycle {
 	// Repository access (implemented by concrete class)
 	IRepository getRepository();
 
-	IServiceResponse invoke(IServiceRequest request);
+	IOperationResponse invoke(IOperationRequest request);
 
-	IServiceResponse invoke(IServiceRequest request, WorkflowExecutionOptions options);
+	IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options);
 
 	Optional<IWorkflow> getWorkflow(String name);
 
 	Map<String, IWorkflow> getWorkflows();
-
-	/* Class<E> getEntityClass();
-
-	IRepository getRepository();
-
-	ObjectAddress getAfterGetMethodAddress();
-
-	ObjectAddress getBeforeCreateMethodAddress();
-
-	ObjectAddress getAfterCreateMethodAddress();
-
-	ObjectAddress getBeforeUpdateMethodAddress();
-
-	ObjectAddress getAfterUpdateMethodAddress();
-
-	ObjectAddress getBeforeDeleteMethodAddress();
-
-	ObjectAddress getAfterDeleteMethodAddress();
-
-	boolean isTenantEntity();
-
-	boolean isOwnedEntity();
-
-	boolean isPublicEntity();
-
-	ObjectAddress getUuidFieldAddress();
-
-	ObjectAddress getTenantIdFieldAddress();
-
-	ObjectAddress getOwnerIdFieldAddress();
-
-	List<ObjectAddress> getMandatoryFields();
-
-	List<Pair<ObjectAddress, UnicityScope>> getUnicityFields();
-
-	Map<ObjectAddress, String> getAuthorizedUpdateFieldsAndAuthorizations(); */
-
-	//String[] getInterfaces();
-
-	/* String getEvent();
-
-	boolean isAllowCreation();
-
-	boolean isAllowReadAll();
-
-	boolean isAllowReadOne();
-
-	boolean isAllowUpdateOne();
-
-	boolean isAllowDeleteOne();
-
-	boolean isAllowDeleteAll(); */
-
-	//boolean isTenantIdMandatoryForOperation(Operation operation);
-
-	//boolean isOwnerIdMandatoryForOperation(Operation operation);
-
-	//EntityDocumentationInfos getDocumentation();
-
-	//void addServicesInfos(List<IServiceInfos> servicesInfos);
-	
-	/* String getEntityName();
-	
-	void addServiceInfos(IServiceInfos servicesInfos);
-
-	Collection<IAccessRule> getAccessRules();
-
-	Collection<String> getUpdateAuthorizations();
-
-	Class<?> getEntityClass();
-
-	boolean isOwnerEntity();
-
-	boolean isTenantEntity();
-
-	boolean isOwnedEntity();
-
-	boolean isSharedEntity();
-
-	boolean isHiddenableEntity();
-
-	boolean isPublicEntity();
-	
-	boolean isGeolocalizedEntity();
-	
-	boolean isAuthenticatorEntity();
-
-	ObjectAddress getSuperOnwerIdFieldAddress();
-
-	ObjectAddress getSuperTenantFieldAddress();
-
-	ObjectAddress getBeforeDeleteMethodAddress();
-
-	ObjectAddress getAfterDeleteMethodAddress();
-
-	ObjectAddress getBeforeCreateMethodAddress();
-
-	ObjectAddress getAfterCreateMethodAddress();
-
-	ObjectAddress getBeforeUpdateMethodAddress();
-
-	ObjectAddress getAfterUpdateMethodAddress();
-
-	ObjectAddress getOwnerIdFieldAddress();
-	
-	ObjectAddress getAfterGetMethodAddress();
-
-	ObjectAddress getShareFieldAddress();
-
-	ObjectAddress getTenantIdFieldAddress();
-
-	ObjectAddress getHiddenFieldAddress();
-	
-	ObjectAddress getUuidFieldAddress();
-	
-	ObjectAddress getIdFieldAddress();
-
-	ObjectAddress getLocationFieldAddress();
-
-	Map<ObjectAddress, String> getAuthorizedUpdateFieldsAndAuthorizations();
-
-	List<Pair<ObjectAddress, UnicityScope>> getUnicityFields();
-
-	List<ObjectAddress> getMandatoryFields(); */
-
-	//IAccessRule createAccessRule(IServiceInfos serviceInfos) throws CoreException;
-
-/* 	Collection<Class<?>> getAuthorizationProtocols();
-
-	Collection<Class<?>> getAuthorizations(); */
-
-	//Access getAccess(IServiceInfos info);
-
-	//String getAuthority(IServiceInfos info);
-
-	//Map<Operation, IServiceInfos> getServiceInfos();
-
-/* 	AuthenticatorScope getAuthenticatorScope();
-
-	IRepository getRepository(); */
-
-	/**
-	 * Gets the domain services for this domain.
-	 * The services provide CRUD operations and use case invocation through a pipeline.
-	 * @return the domain services
-	 */
-	//IDomainServices<E> getServices();
 }

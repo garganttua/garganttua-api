@@ -21,5 +21,4 @@ public interface IWorkflowDefinition {
 	boolean authority();
 
 	boolean custom();
-
 }

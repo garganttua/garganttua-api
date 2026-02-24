@@ -11,9 +11,8 @@ import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IDtoBuilder;
 import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
@@ -36,20 +35,20 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     private List<ISupplierBuilder<?, ? extends ISupplier<?>>> daos = new ArrayList<>();
     private IObjectQuery objectQuery;
 
-    public DtoBuilder(Class<?> dtoClass, IDomainBuilder<E> domainBuilder) throws DslException {
+    public DtoBuilder(Class<?> dtoClass, IDomainBuilder<E> domainBuilder) throws ApiException {
         super(domainBuilder);
         this.dtoClass = Objects.requireNonNull(dtoClass, "Dto class cannot be null");
         try {
             this.objectQuery = ObjectQueryFactory.objectQuery(this.dtoClass);
         } catch (ReflectionException e) {
-            throw new DslException(e.getMessage(), e);
+            throw new ApiException(e.getMessage(), e);
         }
     }
 
     @Override
-    public IDtoBuilder<E, D> db(ISupplierBuilder<? extends IDao, ISupplier<? extends IDao>> daoSupplier) throws DslException {
+    public IDtoBuilder<E, D> db(ISupplierBuilder<? extends IDao, ISupplier<? extends IDao>> daoSupplier) throws ApiException {
         if (!IDao.class.isAssignableFrom(daoSupplier.getSuppliedClass())) {
-            throw new DslException(
+            throw new ApiException(
                     "Bean " + daoSupplier.getSuppliedClass().getName() + " does not implement IDao");
         }
         this.daos.add(daoSupplier);
@@ -65,7 +64,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> id(String fieldName) throws DslException {
+    public IDtoBuilder<E, D> id(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.id = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
@@ -74,7 +73,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> id(Field field) throws DslException {
+    public IDtoBuilder<E, D> id(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.id = FieldResolver.fieldByField(field, this.dtoClass, String.class);
@@ -83,7 +82,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> id(ObjectAddress fieldAddress) throws DslException {
+    public IDtoBuilder<E, D> id(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.id = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
@@ -92,7 +91,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> uuid(String fieldName) throws DslException {
+    public IDtoBuilder<E, D> uuid(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.uuid = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
@@ -101,7 +100,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> uuid(Field field) throws DslException {
+    public IDtoBuilder<E, D> uuid(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.uuid = FieldResolver.fieldByField(field, this.dtoClass, String.class);
@@ -110,7 +109,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> uuid(ObjectAddress fieldAddress) throws DslException {
+    public IDtoBuilder<E, D> uuid(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.uuid = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
@@ -119,7 +118,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> tenantId(String fieldName) throws DslException {
+    public IDtoBuilder<E, D> tenantId(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.tenantId = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
@@ -128,7 +127,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> tenantId(Field field) throws DslException {
+    public IDtoBuilder<E, D> tenantId(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.tenantId = FieldResolver.fieldByField(field, this.dtoClass, String.class);
@@ -137,7 +136,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> tenantId(ObjectAddress fieldAddress) throws DslException {
+    public IDtoBuilder<E, D> tenantId(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.tenantId = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
@@ -146,7 +145,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    protected synchronized IDtoContext<D> doBuild() throws CoreException {
+    protected synchronized IDtoContext<D> doBuild() throws ApiException {
         this.throwExceptionIfNoUuid();
         this.throwExceptionIfNoTenantId();
         this.throwExceptionIfNoId();
@@ -159,19 +158,19 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
         return new DtoContext(new DtoDefinition<>(this.dtoClass, this.uuid, this.id, this.tenantId), this.daos.get(0));
     }
 
-    private void throwExceptionIfNoUuid() throws DslException {
+    private void throwExceptionIfNoUuid() throws ApiException {
         if( this.uuid == null )
-            throw new DslException("No uuid defined for dto "+this.dtoClass.getSimpleName());
+            throw new ApiException("No uuid defined for dto "+this.dtoClass.getSimpleName());
     }
 
-    private void throwExceptionIfNoTenantId() throws DslException {
+    private void throwExceptionIfNoTenantId() throws ApiException {
         if( this.tenantId == null )
-            throw new DslException("No tenant id defined for dto "+this.dtoClass.getSimpleName());
+            throw new ApiException("No tenant id defined for dto "+this.dtoClass.getSimpleName());
     }
 
-    private void throwExceptionIfNoId() throws DslException {
+    private void throwExceptionIfNoId() throws ApiException {
         if( this.id == null )
-            throw new DslException("No id defined for dto "+this.dtoClass.getSimpleName());
+            throw new ApiException("No id defined for dto "+this.dtoClass.getSimpleName());
     }
 
     @Override

@@ -5,7 +5,7 @@ import java.util.Objects;
 import com.garganttua.api.core.definition.DtoDefinition;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.ObjectAccessor;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -24,12 +24,12 @@ public class DtoContext<D> implements IDtoContext<D> {
     }
 
     @Override
-    public IDao getDao() throws CoreException {
+    public IDao getDao() throws ApiException {
         return this.dao.build().supply().get();
     }
 
     @Override
-    public String getUuid(Object object) throws CoreException {
+    public String getUuid(Object object) throws ApiException {
         return ObjectAccessor.getValue(object, dtoDefinition, DtoDefinition::uuid);
     }
 }

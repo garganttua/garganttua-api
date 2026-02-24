@@ -4,7 +4,7 @@ import com.garganttua.api.spec.context.IUseCase;
 import com.garganttua.api.spec.context.Scope;
 import com.garganttua.api.spec.context.TechnicalOperation;
 import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -19,9 +19,9 @@ public interface IUseCaseBuilder<I, O, E> extends IAutomaticLinkedBuilder<IUseCa
 
     IUseCaseBuilder<I, O, E> operation(TechnicalOperation operation);
     
-    IUseCaseBinderBuilder<I, O, E> bind(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws DslException;
+    IUseCaseBinderBuilder<I, O, E> bind(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException;
 
-    IUseCaseBinderBuilder<I, O, E> bind(Object object) throws DslException;
+    IUseCaseBinderBuilder<I, O, E> bind(Object object) throws ApiException;
 
     IUseCaseBinderBuilder<I, O, E> bind();
 

@@ -6,108 +6,108 @@ import java.lang.reflect.Method;
 
 import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
-import com.garganttua.core.dsl.DslException;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IEntityBuilder<E> extends IAutomaticLinkedBuilder<IEntityBuilder<E>, IDomainBuilder<E>, IEntityContext<E>> {
 
-    IEntityBuilder<E> id(String string) throws DslException;
+    IEntityBuilder<E> id(String string) throws ApiException;
 
-    IEntityBuilder<E> id(Field field) throws DslException;
+    IEntityBuilder<E> id(Field field) throws ApiException;
 
-    IEntityBuilder<E> id(ObjectAddress fieldAddress) throws DslException;
+    IEntityBuilder<E> id(ObjectAddress fieldAddress) throws ApiException;
 
-    IEntityBuilder<E> uuid(String string) throws DslException;
+    IEntityBuilder<E> uuid(String string) throws ApiException;
 
-    IEntityBuilder<E> uuid(Field field) throws DslException;
+    IEntityBuilder<E> uuid(Field field) throws ApiException;
 
-    IEntityBuilder<E> uuid(ObjectAddress fieldAddress) throws DslException;
+    IEntityBuilder<E> uuid(ObjectAddress fieldAddress) throws ApiException;
 
-    IEntityBuilder<E> tenantId(String string) throws DslException;
+    IEntityBuilder<E> tenantId(String string) throws ApiException;
 
-    IEntityBuilder<E> tenantId(Field field) throws DslException;
+    IEntityBuilder<E> tenantId(Field field) throws ApiException;
 
-    IEntityBuilder<E> tenantId(ObjectAddress fieldAddress) throws DslException;
+    IEntityBuilder<E> tenantId(ObjectAddress fieldAddress) throws ApiException;
 
-    IEntityBuilder<E> mandatory(Field field) throws DslException;
+    IEntityBuilder<E> mandatory(Field field) throws ApiException;
 
-    IEntityBuilder<E> mandatory(String string) throws DslException;
+    IEntityBuilder<E> mandatory(String string) throws ApiException;
 
-    IEntityBuilder<E> mandatory(ObjectAddress fieldAddress) throws DslException;
+    IEntityBuilder<E> mandatory(ObjectAddress fieldAddress) throws ApiException;
 
-    IEntityBuilder<E> unicity(Field field) throws DslException;
+    IEntityBuilder<E> unicity(Field field) throws ApiException;
 
-    IEntityBuilder<E> unicity(String string) throws DslException;
+    IEntityBuilder<E> unicity(String string) throws ApiException;
 
-    IEntityBuilder<E> unicity(ObjectAddress fieldAddress) throws DslException;
+    IEntityBuilder<E> unicity(ObjectAddress fieldAddress) throws ApiException;
 
-    IEntityBuilder<E> unicity(String string, UnicityScope system) throws DslException;
+    IEntityBuilder<E> unicity(String string, UnicityScope system) throws ApiException;
 
-    IEntityBuilder<E> unicity(Field field, UnicityScope system) throws DslException;
+    IEntityBuilder<E> unicity(Field field, UnicityScope system) throws ApiException;
 
-    IEntityBuilder<E> unicity(ObjectAddress fieldAddress, UnicityScope system) throws DslException;
+    IEntityBuilder<E> unicity(ObjectAddress fieldAddress, UnicityScope system) throws ApiException;
 
-    IEntityBuilder<E> update(String string) throws DslException;
+    IEntityBuilder<E> update(String string) throws ApiException;
 
-    IEntityBuilder<E> update(Field field) throws DslException;
+    IEntityBuilder<E> update(Field field) throws ApiException;
 
-    IEntityBuilder<E> update(ObjectAddress fieldAddress) throws DslException;
+    IEntityBuilder<E> update(ObjectAddress fieldAddress) throws ApiException;
 
-    IEntityBuilder<E> update(String string, String authority) throws DslException;
+    IEntityBuilder<E> update(String string, String authority) throws ApiException;
 
-    IEntityBuilder<E> update(Field field, String authority) throws DslException;
+    IEntityBuilder<E> update(Field field, String authority) throws ApiException;
 
-    IEntityBuilder<E> update(ObjectAddress fieldAddress, String authority) throws DslException;
+    IEntityBuilder<E> update(ObjectAddress fieldAddress, String authority) throws ApiException;
 
-    IEntityBuilder<E> annotation(String elementName, Class<? extends Annotation> annotation) throws DslException;
+    IEntityBuilder<E> annotation(String elementName, Class<? extends Annotation> annotation) throws ApiException;
 
-    IEntityBuilder<E> annotation(Field field, Class<? extends Annotation> annotation) throws DslException;
+    IEntityBuilder<E> annotation(Field field, Class<? extends Annotation> annotation) throws ApiException;
 
-    IEntityBuilder<E> annotation(ObjectAddress elementAddress, Class<? extends Annotation> annotation) throws DslException;
+    IEntityBuilder<E> annotation(ObjectAddress elementAddress, Class<? extends Annotation> annotation) throws ApiException;
 
-    IEntityBuilder<E> annotation(Method method, Class<? extends Annotation> annotation) throws DslException;
+    IEntityBuilder<E> annotation(Method method, Class<? extends Annotation> annotation) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterGet(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> afterGet(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterGet(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> afterGet(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterGet(ObjectAddress methodAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> afterGet(ObjectAddress methodAddress) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeCreate(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeCreate(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeCreate(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeCreate(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeCreate(ObjectAddress methodAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeCreate(ObjectAddress methodAddress) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeUpdate(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeUpdate(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeUpdate(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeUpdate(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeUpdate(ObjectAddress fieldmethodAddressAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeUpdate(ObjectAddress fieldmethodAddressAddress) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeDelete(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeDelete(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeDelete(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeDelete(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> beforeDelete(ObjectAddress methodAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> beforeDelete(ObjectAddress methodAddress) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterCreate(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> afterCreate(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterCreate(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> afterCreate(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterCreate(ObjectAddress methodAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> afterCreate(ObjectAddress methodAddress) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterUpdate(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> afterUpdate(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterUpdate(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> afterUpdate(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterUpdate(ObjectAddress methodAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> afterUpdate(ObjectAddress methodAddress) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterDelete(String methodName) throws DslException;
+    IEntityMethodBinderBuilder<E> afterDelete(String methodName) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterDelete(Method method) throws DslException;
+    IEntityMethodBinderBuilder<E> afterDelete(Method method) throws ApiException;
 
-    IEntityMethodBinderBuilder<E> afterDelete(ObjectAddress methodAddress) throws DslException;
+    IEntityMethodBinderBuilder<E> afterDelete(ObjectAddress methodAddress) throws ApiException;
 
 }
