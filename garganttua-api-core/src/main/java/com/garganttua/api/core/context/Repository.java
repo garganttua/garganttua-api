@@ -19,13 +19,15 @@ import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.filter.IFilter;
+import com.garganttua.api.spec.filter.IFilterMapper;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.MapperException;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.reflection.query.ObjectQueryFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,14 +35,15 @@ import lombok.extern.slf4j.Slf4j;
 public class Repository implements IRepository {
 
     private final List<IDtoContext<?>> dtoContexts;
-    private final Class<?> entityClass;
+    private final IClass<?> entityClass;
+    private static final IReflection REFLECTION = DefaultMapper.reflection();
     private final IMapper mapper = DefaultMapper.mapper();
     private final IFilterMapper filterMapper = new FilterMapper();
 
     private IDomainContext<?> domainContext;
     private final Object domainContextLock = new Object();
 
-    public Repository(List<IDtoContext<?>> dtoContexts, Class<?> entityClass) {
+    public Repository(List<IDtoContext<?>> dtoContexts, IClass<?> entityClass) {
         this.dtoContexts = Collections.unmodifiableList(new ArrayList<>(
                 Objects.requireNonNull(dtoContexts, "Dto contexts cannot be null")));
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
@@ -59,6 +62,7 @@ public class Repository implements IRepository {
     }
 
     // --- Read operations ---
+    
     @Override
     public List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
             throws ApiException {
@@ -146,10 +150,10 @@ public class Repository implements IRepository {
     private List<Map<String, Object>> queryWithFilterMapping(IDomainContext<?> dc, Optional<IPageable> pageable,
             Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
         IDomainDefinition<?> definition = dc.getDomainDefinition();
-        List<Pair<Class<?>, IFilter>> mappedFilters = filterMapper.map(definition, filter.orElse(null));
+        List<Pair<IClass<?>, IFilter>> mappedFilters = filterMapper.map(definition, filter.orElse(null));
 
         List<Map<String, Object>> dtoMaps = new ArrayList<>();
-        for (Pair<Class<?>, IFilter> mapped : mappedFilters) {
+        for (Pair<IClass<?>, IFilter> mapped : mappedFilters) {
             IDtoContext<?> dtoContext = findDtoContextByClass(mapped.getValue0());
             if (dtoContext != null) {
                 dtoMaps.add(queryDtoContext(dtoContext, pageable, Optional.ofNullable(mapped.getValue1()), sort));
@@ -178,17 +182,12 @@ public class Repository implements IRepository {
     }
 
     private Map<String, Object> queryDtoContext(IDtoContext<?> dtoContext, Optional<IPageable> pageable,
-            Optional<IFilter> filter, Optional<ISort> sort) {
+            Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
         Map<String, Object> map = new HashMap<>();
-        try {
-            List<Object> dtos = dtoContext.find(pageable, filter, sort);
-            for (Object dto : dtos) {
-                String uuid = dtoContext.getUuid(dto);
-                map.put(uuid, dto);
-            }
-        } catch (ApiException e) {
-            log.error("Error querying DTO context for {}",
-                    dtoContext.getDtoDefinition().dtoClass().getSimpleName(), e);
+        List<Object> dtos = dtoContext.find(pageable, filter, sort);
+        for (Object dto : dtos) {
+            String uuid = dtoContext.getUuid(dto);
+            map.put(uuid, dto);
         }
         return map;
     }
@@ -234,7 +233,7 @@ public class Repository implements IRepository {
         }
         ObjectAddress uuidAddress = dc.getEntityDefinition().uuid();
         try {
-            Object value = ObjectQueryFactory.objectQuery(entity).getValue(uuidAddress);
+            Object value = REFLECTION.getFieldValue(entity, uuidAddress.toString());
             return value != null ? value.toString() : null;
         } catch (Exception e) {
             throw new RepositoryException("Failed to extract UUID from entity: " + e.getMessage());
@@ -243,7 +242,7 @@ public class Repository implements IRepository {
 
     // --- Internal: lookup ---
 
-    private IDtoContext<?> findDtoContextByClass(Class<?> dtoClass) {
+    private IDtoContext<?> findDtoContextByClass(IClass<?> dtoClass) {
         for (IDtoContext<?> ctx : dtoContexts) {
             if (ctx.getDtoDefinition().dtoClass().equals(dtoClass)) {
                 return ctx;
