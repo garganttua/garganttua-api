@@ -12,6 +12,7 @@ import com.garganttua.api.core.context.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.BusinessOperation;
+import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.IEntityContext;
@@ -19,11 +20,14 @@ import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.repository.IRepository;
+import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;
@@ -52,6 +56,26 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     // Workflows map (replaces ScriptCache + crudScripts)
     private Map<String, IWorkflow> workflows = Collections.emptyMap();
 
+    // Bean definition for runtime DI injection on entities
+    @Getter
+    private BeanDefinition<?> entityBeanDefinition;
+    @Getter
+    private boolean doInjection;
+
+    private IApiContext apiContext;
+
+    public void setApiContext(IApiContext apiContext) {
+        this.apiContext = apiContext;
+    }
+
+    public void setEntityBeanDefinition(BeanDefinition<?> entityBeanDefinition) {
+        this.entityBeanDefinition = entityBeanDefinition;
+    }
+
+    public void setDoInjection(boolean doInjection) {
+        this.doInjection = doInjection;
+    }
+
     public void setWorkflows(Map<String, IWorkflow> workflows) {
         this.workflows = Collections.unmodifiableMap(new HashMap<>(
                 Objects.requireNonNull(workflows, "Workflows cannot be null")));
@@ -78,6 +102,11 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         Repository repo = new Repository(this.dtoContexts, entityContext.getEntityClass());
         repo.setDomainContext(this);
         this.repository = repo;
+    }
+
+    @Override
+    public IReflection reflection() {
+        return DefaultMapper.reflection();
     }
 
     @Override
@@ -237,10 +266,12 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
 
         try {
             request.arg(IOperationRequest.EXECUTION_UUID, UuidCreator.getTimeOrderedEpoch());
+            request.arg(IOperationRequest.API_CONTEXT, this.apiContext);
             request.arg(IOperationRequest.DOMAIN_CONTEXT, this);
             request.arg(IOperationRequest.REPOSITORY, this.repository);
 
-            Map<String, Object> workflowParams = Map.of("repository", this.repository);
+            Map<String, Object> workflowParams = new HashMap<>();
+            workflowParams.put("repository", this.repository);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = workflow.execute(input, options);
 

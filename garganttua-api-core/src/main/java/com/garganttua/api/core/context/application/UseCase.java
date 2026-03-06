@@ -7,6 +7,7 @@ import java.util.Set;
 import com.garganttua.api.spec.context.IUseCase;
 import com.garganttua.api.spec.context.Scope;
 import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.dsl.IMethodBinderBuilder;
@@ -20,11 +21,11 @@ public class UseCase<I,O> implements IUseCase<I,O> {
     private final String path;
     private final Scope scope;
     private final TechnicalOperation operation;
-    private final Class<Object> useCaseInput;
-    private final Class<Object> useCaseOutput;
+    private final IClass<Object> useCaseInput;
+    private final IClass<Object> useCaseOutput;
 
     public UseCase(String useCaseName, IMethodBinderBuilder<?, ?, ?, ?> methodBinder, String suffix, String path, Scope scope,
-            TechnicalOperation operation, Class<Object> useCaseInput, Class<Object> useCaseOutput) {
+            TechnicalOperation operation, IClass<Object> useCaseInput, IClass<Object> useCaseOutput) {
         this.useCaseName = useCaseName;
         this.methodBinder = methodBinder;
         this.suffix = suffix;
@@ -48,7 +49,7 @@ public class UseCase<I,O> implements IUseCase<I,O> {
     }
 
     @Override
-    public Set<Class<?>> dependencies() {
+    public Set<IClass<?>> dependencies() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'dependencies'");
     }
@@ -67,6 +68,12 @@ public class UseCase<I,O> implements IUseCase<I,O> {
     public Type getSuppliedType() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getSuppliedType'");
+    }
+
+    @Override
+    public IClass<IMethodReturn<O>> getSuppliedClass() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getSuppliedClass'");
     }
 
 }

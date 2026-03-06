@@ -1,7 +1,6 @@
 package com.garganttua.api.core.unit.builder;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.builder.ApiContextBuilder;
 import com.garganttua.api.core.context.application.ApiContext;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
@@ -22,14 +22,18 @@ import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
-import com.garganttua.core.mapper.annotations.FieldMappingRule;
-import com.garganttua.core.expression.context.IExpressionContext;
+import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
-import com.garganttua.core.expression.dsl.IExpressionMethodBinderBuilder;
-import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
+import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.runtime.RuntimeContextFactory;
 
 @DisplayName("ApiContextBuilder Tests")
 class ApiContextBuilderTest {
@@ -75,10 +79,10 @@ class ApiContextBuilderTest {
     // Simple in-memory DAO for testing
     public static class TestDao implements IDao {
         private final List<Object> storage = new ArrayList<>();
-        private Class<?> dtoClass;
+        private IClass<?> dtoClass;
 
         @Override
-        public void setDtoClass(Class<?> dtoClass) { this.dtoClass = dtoClass; }
+        public void setDtoClass(IClass<?> dtoClass) { this.dtoClass = dtoClass; }
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
@@ -165,7 +169,7 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("domain() returns IDomainBuilder")
         void domainReturnsDomainBuilder() throws ApiException {
-            IDomainBuilder<TestEntity> domainBuilder = builder.domain(TestEntity.class);
+            IDomainBuilder<TestEntity> domainBuilder = builder.domain(RuntimeClass.of(TestEntity.class));
             assertNotNull(domainBuilder);
         }
 
@@ -178,8 +182,8 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("domain() returns same builder for same class")
         void domainReturnsSameBuilderForSameClass() throws ApiException {
-            IDomainBuilder<TestEntity> first = builder.domain(TestEntity.class);
-            IDomainBuilder<TestEntity> second = builder.domain(TestEntity.class);
+            IDomainBuilder<TestEntity> first = builder.domain(RuntimeClass.of(TestEntity.class));
+            IDomainBuilder<TestEntity> second = builder.domain(RuntimeClass.of(TestEntity.class));
             assertSame(first, second);
         }
     }
@@ -204,52 +208,31 @@ class ApiContextBuilderTest {
     }
 
     @Nested
-    @DisplayName("Injection Builder")
-    class InjectionBuilderTests {
-
-        // TODO: Re-enable when injection() method is added to IApiContextBuilder
-        // @Test
-        // @DisplayName("injection() returns null when not provided")
-        // void injectionReturnsNullWhenNotProvided() {
-        //     assertNull(builder.injection());
-        // }
-
-        // @Test
-        // @DisplayName("injection() returns non-null when provided")
-        // @SuppressWarnings("unchecked")
-        // void injectionReturnsNonNullWhenProvided() throws ApiException {
-        //     IInjectionContextBuilder mockBuilder = mock(IInjectionContextBuilder.class);
-        //     ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(mockBuilder);
-        //     assertNotNull(builder.injection());
-        // }
-    }
-
-    @Nested
     @DisplayName("Full Context Build")
     class FullContextBuild {
 
-        private IInjectionContextBuilder mockInjectionContextBuilder;
-        private IInjectionContext mockInjectionContext;
-        private IExpressionContextBuilder mockExpressionContextBuilder;
-        private IExpressionContext mockExpressionContext;
-
         @BeforeEach
         @SuppressWarnings("unchecked")
-        void setUpInjection() throws ApiException {
-            mockInjectionContextBuilder = mock(IInjectionContextBuilder.class);
-            mockInjectionContext = mock(IInjectionContext.class);
-            when(mockInjectionContextBuilder.build()).thenReturn(mockInjectionContext);
+        void setUpDependencies() throws ApiException {
+            com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+                    .withProvider(new RuntimeReflectionProvider())
+                    .withScanner(new ReflectionsAnnotationScanner());
+            reflectionBuilder.build();
+            IClass.setReflection(reflectionBuilder.build());
 
-            mockExpressionContextBuilder = mock(IExpressionContextBuilder.class);
-            mockExpressionContext = mock(IExpressionContext.class);
-            when(mockExpressionContextBuilder.build()).thenReturn(mockExpressionContext);
-            IExpressionMethodBinderBuilder mockBinderBuilder = mock(IExpressionMethodBinderBuilder.class);
-            when(mockExpressionContextBuilder.expression(any(), any())).thenReturn(mockBinderBuilder);
-            when(mockBinderBuilder.encapsulatedMethod(any(String.class), any(Class.class), any(Class[].class))).thenReturn(mockBinderBuilder);
-            when(mockBinderBuilder.withName(any())).thenReturn(mockBinderBuilder);
+            IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
+                    .childContextFactory(new RuntimeContextFactory());
+            IExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
 
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(mockInjectionContextBuilder);
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(mockExpressionContextBuilder);
+            ((IDependentBuilder<IInjectionContextBuilder, ?>) injectionContextBuilder).provide(reflectionBuilder);
+
+            injectionContextBuilder.build();
+            // Do NOT pre-build expressionContextBuilder — ApiContextBuilder.provide() adds
+            // required packages before triggering the build via handle()
+
+            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(reflectionBuilder);
+            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);
+            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
         }
 
         @Test
@@ -257,13 +240,13 @@ class ApiContextBuilderTest {
         void buildCreatesValidContext() throws ApiException {
             builder.superTenantId("SUPER")
                    .superTenantAutoCreate(true)
-                   .domain(TestEntity.class)
+                   .domain(RuntimeClass.of(TestEntity.class))
                        .entity()
                            .id("id")
                            .uuid("uuid")
                            .tenantId("tenantId")
                        .up()
-                       .dto(TestDto.class)
+                       .dto(RuntimeClass.of(TestDto.class))
                            .id("id")
                            .uuid("uuid")
                            .tenantId("tenantId")
@@ -280,13 +263,13 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("build() includes domain context")
         void buildIncludesDomainContext() throws ApiException {
-            builder.domain(TestEntity.class)
+            builder.domain(RuntimeClass.of(TestEntity.class))
                    .entity()
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")
                    .up()
-                   .dto(TestDto.class)
+                   .dto(RuntimeClass.of(TestDto.class))
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")
@@ -298,19 +281,19 @@ class ApiContextBuilderTest {
 
             Optional<IDomainContext<?>> domainCtx = context.getDomainContext("testentities");
             assertTrue(domainCtx.isPresent());
-            assertEquals(TestEntity.class, domainCtx.get().getEntityClass());
+            assertEquals(RuntimeClass.of(TestEntity.class), domainCtx.get().getEntityClass());
         }
 
         @Test
         @DisplayName("build() returns domain name based on entity class")
         void buildReturnsDomainNameBasedOnEntityClass() throws ApiException {
-            builder.domain(TestEntity.class)
+            builder.domain(RuntimeClass.of(TestEntity.class))
                    .entity()
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")
                    .up()
-                   .dto(TestDto.class)
+                   .dto(RuntimeClass.of(TestDto.class))
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")

@@ -2,12 +2,14 @@ package com.garganttua.api.spec.security.authentication;
 
 import java.util.List;
 
+import com.garganttua.core.reflection.IClass;
+
 public interface IAuthenticationInfosRegistry {
 
 	List<AuthenticationInfos> getAuthenticationInfos();
-	
-	List<Class<?>> getAuthentications();
 
-	AuthenticationInfos getAuthenticationInfos(Class<?> authenticationType);
+	List<IClass<?>> getAuthentications();
+
+	AuthenticationInfos getAuthenticationInfos(IClass<?> authenticationType);
 
 }

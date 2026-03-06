@@ -2,17 +2,19 @@ package com.garganttua.api.spec.service;
 
 import java.util.Objects;
 
+import com.garganttua.core.reflection.IClass;
+
 public final class ArgKey<T> {
 
 	private final String name;
-	private final Class<T> type;
+	private final IClass<T> type;
 
-	private ArgKey(String name, Class<T> type) {
+	private ArgKey(String name, IClass<T> type) {
 		this.name = Objects.requireNonNull(name, "ArgKey name cannot be null");
 		this.type = Objects.requireNonNull(type, "ArgKey type cannot be null");
 	}
 
-	public static <T> ArgKey<T> of(String name, Class<T> type) {
+	public static <T> ArgKey<T> of(String name, IClass<T> type) {
 		return new ArgKey<>(name, type);
 	}
 
@@ -20,7 +22,7 @@ public final class ArgKey<T> {
 		return name;
 	}
 
-	public Class<T> type() {
+	public IClass<T> type() {
 		return type;
 	}
 

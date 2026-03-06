@@ -5,6 +5,7 @@ import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Context shared between pipeline phases during execution.
@@ -55,7 +56,7 @@ public interface IPipelineContext {
      * @param <T> the type parameter
      * @return the value, or null if not present
      */
-    <T> T get(String key, Class<T> type);
+    <T> T get(String key, IClass<T> type);
 
     /**
      * Sets a value in the context.

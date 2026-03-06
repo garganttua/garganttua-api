@@ -5,16 +5,17 @@ import java.lang.reflect.Method;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 
 public interface IServiceInfos {
-	
+
 	String getDomainName();
 
 	String getMethodName();
-	
-	Class<?> getInterface();
 
-	Class<?>[] getParameters();
+	IClass<?> getInterface();
+
+	IClass<?>[] getParameters();
 	
 	@JsonIgnore
 	Method getMethod();

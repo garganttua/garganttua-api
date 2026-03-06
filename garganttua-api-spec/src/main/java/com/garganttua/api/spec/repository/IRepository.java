@@ -9,7 +9,7 @@ import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.ApiException;
 
 /**
- * 
+ *
  * @author JérémyCOLOMBET
  *
  */

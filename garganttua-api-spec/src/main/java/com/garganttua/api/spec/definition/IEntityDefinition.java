@@ -6,11 +6,12 @@ import java.util.List;
 import org.javatuples.Pair;
 
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IEntityDefinition<E> {
 
-    Class<E> entityClass();
+    IClass<E> entityClass();
 
     ObjectAddress id();
 
@@ -24,8 +25,8 @@ public interface IEntityDefinition<E> {
 
     List<Pair<ObjectAddress, String>> updates();
 
-    List<Pair<ObjectAddress, Class<? extends Annotation>>> annotatedFields();
+    List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedFields();
 
-    List<Pair<ObjectAddress, Class<? extends Annotation>>> annotatedMethods();
+    List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedMethods();
 
 }

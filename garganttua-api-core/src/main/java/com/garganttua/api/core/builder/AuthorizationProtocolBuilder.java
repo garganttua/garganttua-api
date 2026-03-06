@@ -3,26 +3,22 @@ package com.garganttua.api.core.builder;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
-import javax.annotation.Nonnull;
-
-import com.garganttua.api.core.builder.binder.AuthorizationProtocolMethodBinderBuilder;
 import com.garganttua.api.core.context.application.AuthorizationProtocolContext;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IAuthorizationProtocolContext;
+import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethodBinderBuilder;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
-import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
-import com.garganttua.core.reflection.ObjectAddress;
 
 public class AuthorizationProtocolBuilder
         extends AbstractAutomaticLinkedBuilder<IAuthorizationProtocolBuilder, IApiContextSecurityBuilder, IAuthorizationProtocolContext>
         implements IAuthorizationProtocolBuilder {
 
-    private @Nonnull ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
+    private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
     private IAuthorizationProtocolMethodBinderBuilder getAuthorization;
     private IAuthorizationProtocolMethodBinderBuilder setAuthorization;
 

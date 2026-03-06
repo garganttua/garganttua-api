@@ -5,14 +5,15 @@ import java.util.concurrent.TimeUnit;
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public record AuthenticatorInfos(
-	Class<?> authenticatorType,
-	Class<?>[] authenticationTypes,
+	IClass<?> authenticatorType,
+	IClass<?>[] authenticationTypes,
 	String[] authenticationInterfaces,
-	Class<?> authorizationType,
-	Class<?> authorizationKeyType,
+	IClass<?> authorizationType,
+	IClass<?> authorizationKeyType,
 	AuthenticatorKeyUsage authorizationKeyUsage,
 	boolean autoCreateAuthorizationKey,
 	KeyAlgorithm authorizationKeyAlgorithm,

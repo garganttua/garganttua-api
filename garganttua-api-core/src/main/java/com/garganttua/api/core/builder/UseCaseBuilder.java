@@ -14,6 +14,7 @@ import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -28,8 +29,8 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
     private String path;
     private Scope scope;
     private TechnicalOperation operation;
-    private Class<I> useCaseInput;
-    private Class<O> useCaseOutput;
+    private IClass<I> useCaseInput;
+    private IClass<O> useCaseOutput;
 
     public UseCaseBuilder(String useCaseName, IDomainBuilder<E> up) {
         super(up);
@@ -122,7 +123,7 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
     public IUseCaseBinderBuilder<I, O, E> bind(Object object) throws ApiException {
         if (this.binder == null) {
             this.binder = new UseCaseBinderBuilder<>(this,
-                    new FixedSupplierBuilder<>(Objects.requireNonNull(object, "Object cannot be null")));
+                    FixedSupplierBuilder.of(Objects.requireNonNull(object, "Object cannot be null")));
         }
         return this.binder;
     }
@@ -166,8 +167,8 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
                 this.path,
                 this.scope,
                 this.operation,
-                (Class<Object>) this.useCaseInput,
-                (Class<Object>) this.useCaseOutput);
+                (IClass<Object>) this.useCaseInput,
+                (IClass<Object>) this.useCaseOutput);
     }
 
 }

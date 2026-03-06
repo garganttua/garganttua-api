@@ -12,7 +12,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.garganttua.api.core.builder.binder.ApiContextStartupBinderBuilder;
 import com.garganttua.api.core.context.application.ApiContext;
-import com.garganttua.api.core.expression.ApiExpressions;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IApiContext;
@@ -22,15 +21,16 @@ import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
-import com.garganttua.core.expression.functions.Expressions;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IInjectionContext;
@@ -40,7 +40,6 @@ import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
-import com.garganttua.core.supply.dsl.NullSupplierBuilder;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -60,7 +59,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 	private volatile boolean superTenantAutoCreate = false;
 
-	private final Map<Class<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
+	private final Map<IClass<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
 	private volatile ContextSecurityBuilder securityBuilder;
 	private final List<ApiContextStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
 
@@ -72,7 +71,8 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		return new ApiContextBuilder(
 				Set.of(
 						DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
-						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD)));
+						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD),
+						DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public <E> IDomainBuilder<E> domain(Class<E> entityClass) throws ApiException {
+	public <E> IDomainBuilder<E> domain(IClass<E> entityClass) throws ApiException {
 		Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
 		return (IDomainBuilder<E>) this.domainBuilders.computeIfAbsent(entityClass, clazz -> {
@@ -119,19 +119,16 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		return this.securityBuilder;
 	}
 
-	@Override
 	public String[] getPackages() {
 		return this.packages.toArray(new String[0]);
 	}
 
-	@Override
 	public IApiContextBuilder withPackage(String packageName) {
 		log.atDebug().log("Adding package: {}", packageName);
 		this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
 		return this;
 	}
 
-	@Override
 	public IApiContextBuilder withPackages(String[] packageNames) {
 		log.atDebug().log("Adding {} packages", packageNames.length);
 		Objects.requireNonNull(packageNames, "Package names cannot be null");
@@ -183,7 +180,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
 		BeanReference<IApiContext> beanRef = new BeanReference<>(
-				IApiContext.class,
+				RuntimeClass.of(IApiContext.class),
 				Optional.of(BeanStrategy.singleton),
 				Optional.of("ApiContext"),
 				Set.of());
@@ -195,8 +192,9 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 			String domainName = entry.getKey();
 			IDomainContext<?> domainContext = entry.getValue();
 
+			@SuppressWarnings("unchecked")
 			BeanReference<IDomainContext<?>> domainBeanRef = new BeanReference<>(
-					(Class<IDomainContext<?>>) (Class<?>) IDomainContext.class,
+					(IClass<IDomainContext<?>>) (IClass<?>) RuntimeClass.of(IDomainContext.class),
 					Optional.of(BeanStrategy.singleton),
 					Optional.of("domain." + domainName),
 					Set.of());
@@ -210,7 +208,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
 		BeanReference<IMapper> beanRef = new BeanReference<>(
-				IMapper.class,
+				RuntimeClass.of(IMapper.class),
 				Optional.of(BeanStrategy.singleton),
 				Optional.of("mapper"),
 				Set.of());
@@ -282,14 +280,12 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 			log.atDebug().log("IInjectionContextBuilder captured via provide()");
 		} else if (dependency instanceof IExpressionContextBuilder builder) {
 			this.expressionContextBuilder = builder;
-			this.expressionContextBuilder
-					.expression(NullSupplierBuilder.of(Expressions.class), String.class)
-					.encapsulatedMethod("string", String.class, Object.class)
-					.withName("string");
-			this.expressionContextBuilder
-					.expression(NullSupplierBuilder.of(ApiExpressions.class), IFilter.class)
-					.encapsulatedMethod("buildFilter", IFilter.class, Object.class)
-					.withName("buildFilter");
+			if (!this.expressionContextBuilder.isAutoDetected()) {
+				this.expressionContextBuilder.autoDetect(true);
+			}
+			this.expressionContextBuilder.withPackage("com.garganttua.core.expression.functions");
+			this.expressionContextBuilder.withPackage("com.garganttua.core.script.functions");
+			this.expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
 			log.atDebug().log("IExpressionContextBuilder captured via provide()");
 		}
 		return super.provide(dependency);

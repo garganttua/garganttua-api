@@ -34,7 +34,16 @@
       "Bash(git -C \"/home/jeremy/Garganttua Projects/garganttua-api\" show HEAD:\"garganttua-api-core/src/main/resources/scripts/crud/READ_ONE.gs\")",
       "Bash(git -C \"/home/jeremy/Garganttua Projects/garganttua-api\" show HEAD:\"garganttua-api-core/src/main/resources/scripts/crud/UPDATE_ONE.gs\")",
       "Bash(git -C \"/home/jeremy/Garganttua Projects/garganttua-api\" show HEAD:\"garganttua-api-core/src/main/resources/scripts/crud/DELETE_ONE.gs\")",
-      "Bash(git -C \"/home/jeremy/Garganttua Projects/garganttua-api\" show HEAD:\"garganttua-api-core/src/main/resources/scripts/crud/DELETE_ALL.gs\")"
+      "Bash(git -C \"/home/jeremy/Garganttua Projects/garganttua-api\" show HEAD:\"garganttua-api-core/src/main/resources/scripts/crud/DELETE_ALL.gs\")",
+      "Bash(mkdir:*)",
+      "Bash(echo === Checking $jar ===:*)",
+      "Bash(read jar:*)",
+      "Bash(do if:*)",
+      "Bash(rm:*)",
+      "Bash(mv garganttua-dao:*)",
+      "Bash(mv garganttua-dao-mongodb:*)",
+      "Bash(mvn clean:*)",
+      "Bash(mvn test:*)"
     ]
   }
 }

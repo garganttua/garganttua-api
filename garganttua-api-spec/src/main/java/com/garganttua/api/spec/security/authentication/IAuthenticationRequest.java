@@ -1,6 +1,7 @@
 package com.garganttua.api.spec.security.authentication;
 
 import com.garganttua.api.spec.definition.IDomainDefinition;
+import com.garganttua.core.reflection.IClass;
 
 public interface IAuthenticationRequest {
 
@@ -12,7 +13,7 @@ public interface IAuthenticationRequest {
 
 	Object getCredentials();
 
-	Class<?> getAuthenticationType();
+	IClass<?> getAuthenticationType();
 
 	Object getAuthentication();
 

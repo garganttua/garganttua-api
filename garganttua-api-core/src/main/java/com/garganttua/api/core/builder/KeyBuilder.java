@@ -5,12 +5,12 @@ import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
 import com.garganttua.api.spec.security.IKeyContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IClass;
 
 public class KeyBuilder<E> extends AbstractAutomaticLinkedBuilder<IKeyBuilder<E>, IDomainSecurityBuilder<E>, IKeyContext>
         implements IKeyBuilder<E> {
 
-    public KeyBuilder(DomainSecurityBuilder<E> domainSecurityBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
+    public KeyBuilder(DomainSecurityBuilder<E> domainSecurityBuilder, IClass<?> entityClass) {
         super(domainSecurityBuilder);
     }
 

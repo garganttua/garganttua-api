@@ -3,26 +3,22 @@ package com.garganttua.api.core.builder;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
-import javax.annotation.Nonnull;
-
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationMethodBinderBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public class SignableAuthorizationBuilder<E> extends AbstractAutomaticLinkedBuilder<ISignableAuthorizationBuilder<E>, IAuthorizationBuilder<E>, Object> implements ISignableAuthorizationBuilder<E> {
 
-    private @Nonnull IObjectQuery objectQuery;
-    private @Nonnull Class<?> entityClass;
+    private IClass<?> entityClass;
     private ISignableAuthorizationMethodBinderBuilder<E> sign;
 
-    public SignableAuthorizationBuilder(IAuthorizationBuilder<E> authorizationBuilder, IObjectQuery objectQuery,
-            Class<?> entityClass) {
+    public SignableAuthorizationBuilder(IAuthorizationBuilder<E> authorizationBuilder,
+            IClass<?> entityClass) {
                 super(authorizationBuilder);
-        this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 

@@ -2,6 +2,8 @@ package com.garganttua.api.core.builder.binder;
 
 import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationMethodBinderBuilder;
+import java.util.Set;
+
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
@@ -12,12 +14,24 @@ public class SignableAuthorizationMethodBinderBuilder<E> extends AbstractMethodB
 
     public SignableAuthorizationMethodBinderBuilder(ISignableAuthorizationBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
             {
-        super(up, supplier);
+        super(up, supplier, Set.of());
     }
 
     @Override
     protected void doAutoDetection() throws ApiException {
         // No auto-detection for signable authorization method binders - all configuration is explicit
+    }
+
+    @Override
+    protected void doPreBuildWithDependency_(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) {
     }
 
 }

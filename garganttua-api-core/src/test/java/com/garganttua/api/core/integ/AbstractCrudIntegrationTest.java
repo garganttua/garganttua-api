@@ -1,0 +1,303 @@
+package com.garganttua.api.core.integ;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+
+import com.garganttua.api.core.builder.ApiContextBuilder;
+import com.garganttua.api.core.context.OperationRequest;
+import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.Operation;
+import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.dao.IDao;
+import com.garganttua.api.spec.filter.IFilter;
+import com.garganttua.api.spec.pageable.IPageable;
+import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.sort.ISort;
+import com.garganttua.core.dsl.dependency.IDependentBuilder;
+import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
+import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
+import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
+import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
+import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
+import com.garganttua.core.runtime.RuntimeContextFactory;
+
+abstract class AbstractCrudIntegrationTest {
+
+    // ───── Tenant entity: User ─────
+
+    public static class User {
+        private String id;
+        private String uuid;
+        private String tenantId;
+        private String name;
+        private String email;
+
+        public User() {}
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUuid() { return uuid; }
+        public void setUuid(String uuid) { this.uuid = uuid; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+    }
+
+    public static class UserDto {
+        @FieldMappingRule(sourceFieldAddress = "id")
+        private String id;
+        @FieldMappingRule(sourceFieldAddress = "uuid")
+        private String uuid;
+        @FieldMappingRule(sourceFieldAddress = "tenantId")
+        private String tenantId;
+        @FieldMappingRule(sourceFieldAddress = "name")
+        private String name;
+        @FieldMappingRule(sourceFieldAddress = "email")
+        private String email;
+
+        public UserDto() {}
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUuid() { return uuid; }
+        public void setUuid(String uuid) { this.uuid = uuid; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+    }
+
+    // ───── Non-tenant entity: Product ─────
+
+    public static class Product {
+        private String id;
+        private String uuid;
+        private String tenantId;
+        private String label;
+        private double price;
+
+        public Product() {}
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUuid() { return uuid; }
+        public void setUuid(String uuid) { this.uuid = uuid; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getLabel() { return label; }
+        public void setLabel(String label) { this.label = label; }
+        public double getPrice() { return price; }
+        public void setPrice(double price) { this.price = price; }
+    }
+
+    public static class ProductDto {
+        @FieldMappingRule(sourceFieldAddress = "id")
+        private String id;
+        @FieldMappingRule(sourceFieldAddress = "uuid")
+        private String uuid;
+        @FieldMappingRule(sourceFieldAddress = "tenantId")
+        private String tenantId;
+        @FieldMappingRule(sourceFieldAddress = "label")
+        private String label;
+        @FieldMappingRule(sourceFieldAddress = "price")
+        private double price;
+
+        public ProductDto() {}
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUuid() { return uuid; }
+        public void setUuid(String uuid) { this.uuid = uuid; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getLabel() { return label; }
+        public void setLabel(String label) { this.label = label; }
+        public double getPrice() { return price; }
+        public void setPrice(double price) { this.price = price; }
+    }
+
+    // ───── Stub DAO ─────
+
+    public static class StubDao implements IDao {
+        private final List<Object> storage = new ArrayList<>();
+        private IClass<?> dtoClass;
+
+        @Override
+        public void setDtoClass(IClass<?> dtoClass) {
+            this.dtoClass = dtoClass;
+        }
+
+        @Override
+        public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
+                throws ApiException {
+            return new ArrayList<>(storage);
+        }
+
+        @Override
+        public Object save(Object object) throws ApiException {
+            storage.add(object);
+            return object;
+        }
+
+        @Override
+        public void delete(Object object) throws ApiException {
+            storage.remove(object);
+        }
+
+        @Override
+        public long count(IFilter filter) throws ApiException {
+            return storage.size();
+        }
+
+        public List<Object> getStorage() {
+            return storage;
+        }
+
+        public IClass<?> getDtoClass() {
+            return dtoClass;
+        }
+    }
+
+    // ───── Failing DAO ─────
+
+    public static class FailingDao implements IDao {
+        private IClass<?> dtoClass;
+
+        @Override
+        public void setDtoClass(IClass<?> dtoClass) {
+            this.dtoClass = dtoClass;
+        }
+
+        @Override
+        public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
+                throws ApiException {
+            throw new ApiException("Database connection lost");
+        }
+
+        @Override
+        public Object save(Object object) throws ApiException {
+            throw new ApiException("Database connection lost");
+        }
+
+        @Override
+        public void delete(Object object) throws ApiException {
+            throw new ApiException("Database connection lost");
+        }
+
+        @Override
+        public long count(IFilter filter) throws ApiException {
+            throw new ApiException("Database connection lost");
+        }
+    }
+
+    // ───── Capturing DAO ─────
+
+    public static class CapturingDao implements IDao {
+        private final List<Object> storage = new ArrayList<>();
+        private IClass<?> dtoClass;
+        private Optional<IPageable> lastPageable;
+        private Optional<IFilter> lastFilter;
+        private Optional<ISort> lastSort;
+        private Object lastSaved;
+        private Object lastDeleted;
+
+        @Override
+        public void setDtoClass(IClass<?> dtoClass) { this.dtoClass = dtoClass; }
+
+        @Override
+        public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
+                throws ApiException {
+            this.lastPageable = pageable;
+            this.lastFilter = filter;
+            this.lastSort = sort;
+            return new ArrayList<>(storage);
+        }
+
+        @Override
+        public Object save(Object object) throws ApiException {
+            this.lastSaved = object;
+            storage.add(object);
+            return object;
+        }
+
+        @Override
+        public void delete(Object object) throws ApiException {
+            this.lastDeleted = object;
+            storage.remove(object);
+        }
+
+        @Override
+        public long count(IFilter filter) throws ApiException {
+            return storage.size();
+        }
+
+        public List<Object> getStorage() { return storage; }
+        public Optional<IPageable> getLastPageable() { return lastPageable; }
+        public Optional<IFilter> getLastFilter() { return lastFilter; }
+        public Optional<ISort> getLastSort() { return lastSort; }
+        public Object getLastSaved() { return lastSaved; }
+        public Object getLastDeleted() { return lastDeleted; }
+    }
+
+    // ───── Helper methods ─────
+
+    static IApiContextBuilder newBuilder() throws ApiException {
+        com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner());
+        reflectionBuilder.build();
+        IClass.setReflection(reflectionBuilder.build());
+
+        IApiContextBuilder builder = ApiContextBuilder.builder();
+
+        IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
+                .childContextFactory(new RuntimeContextFactory());
+        IExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
+
+        // InjectionContextBuilder requires IReflectionBuilder; provide before building
+        ((IDependentBuilder<IInjectionContextBuilder, ?>) injectionContextBuilder).provide(reflectionBuilder);
+
+        // Build injection context (required dependency)
+        injectionContextBuilder.build();
+        // Do NOT pre-build expressionContextBuilder — ApiContextBuilder.provide() adds
+        // required packages before triggering the build via handle()
+
+        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(reflectionBuilder);
+        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);
+        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
+
+        builder.superTenantId("SUPER_TENANT")
+               .superTenantAutoCreate(true);
+
+        return builder;
+    }
+
+    static IApiContext buildAndStart(IApiContextBuilder builder) throws ApiException {
+        IApiContext context = builder.build();
+        context.onInit();
+        context.onStart();
+        return context;
+    }
+
+    static OperationRequest superTenantRequest(Operation operation) {
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, operation);
+        request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");
+        request.arg(IOperationRequest.REQUESTED_TENANT_ID, "SUPER_TENANT");
+        request.arg(IOperationRequest.SUPER_TENANT, true);
+        request.arg(IOperationRequest.SUPER_OWNER, true);
+        return request;
+    }
+}

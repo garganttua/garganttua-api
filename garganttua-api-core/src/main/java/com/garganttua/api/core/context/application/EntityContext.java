@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.spec.context.IEntityContext;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.Getter;
 
@@ -23,7 +24,7 @@ public class EntityContext<E> implements IEntityContext<E> {
     }
 
     @Override
-    public Class<E> getEntityClass() {
+    public IClass<E> getEntityClass() {
         return this.entityDefinition.entityClass();
     }
 

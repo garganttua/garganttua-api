@@ -4,78 +4,79 @@ import java.util.Objects;
 
 import com.garganttua.api.spec.Pluralizer;
 import com.garganttua.api.spec.Singularizer;
+import com.garganttua.core.reflection.IClass;
 
-public record Operation(String domainName, TechnicalOperation operation, Class<?> entity, Scope scope,
+public record Operation(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope,
 		OperationType type, boolean authority, Access access) {
 
-	public static Operation readOneWithStandardSecurity(String domainName, Class<?> entity) {
+	public static Operation readOneWithStandardSecurity(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation createOneWithStandardSecurity(String domainName, Class<?> entity) {
+	public static Operation createOneWithStandardSecurity(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation useCaseWithStandardSecurity(String domainName, TechnicalOperation operation, Class<?> entity,
+	public static Operation useCaseWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
 			Scope scope) {
 		return new Operation(domainName, operation, entity, scope, OperationType.usesCase, true, Access.tenant);
 	}
 
-	public static Operation deleteAllWithStandardSecurity(String domainName, Class<?> entity) {
+	public static Operation deleteAllWithStandardSecurity(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation deleteOneWithStandardSecurity(String domainName, Class<?> entity) {
+	public static Operation deleteOneWithStandardSecurity(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation updateOneWithStandardSecurity(String domainName, Class<?> entity) {
+	public static Operation updateOneWithStandardSecurity(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation readAllWithStandardSecurity(String domainName, Class<?> entity) {
+	public static Operation readAllWithStandardSecurity(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
 	}
 
-	public static Operation authenticate(String domainName, Class<?> entity) {
+	public static Operation authenticate(String domainName, IClass<?> entity) {
 		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity,
 				OperationType.authentication, false, Access.anonymous);
 	}
 
-	public static Operation workflowWithStandardSecurity(String domainName, TechnicalOperation operation, Class<?> entity,
+	public static Operation workflowWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
 			Scope scope) {
 		return new Operation(domainName, operation, entity, scope, OperationType.workflow, true, Access.authenticated);
 	}
 
-	public static Operation readOne(String domainName, Class<?> entity, boolean authority, Access access) {
+	public static Operation readOne(String domainName, IClass<?> entity, boolean authority, Access access) {
 		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, authority, access);
 	}
 
-	public static Operation createOne(String domainName, Class<?> entity, boolean authority, Access access) {
+	public static Operation createOne(String domainName, IClass<?> entity, boolean authority, Access access) {
 		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, authority, access);
 	}
 
-	public static Operation readAll(String domainName, Class<?> entity, boolean authority, Access access) {
+	public static Operation readAll(String domainName, IClass<?> entity, boolean authority, Access access) {
 		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, authority, access);
 	}
 
-	public static Operation updateOne(String domainName, Class<?> entity, boolean authority, Access access) {
+	public static Operation updateOne(String domainName, IClass<?> entity, boolean authority, Access access) {
 		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, authority, access);
 	}
 
-	public static Operation deleteOne(String domainName, Class<?> entity, boolean authority, Access access) {
+	public static Operation deleteOne(String domainName, IClass<?> entity, boolean authority, Access access) {
 		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, authority, access);
 	}
 
-	public static Operation deleteAll(String domainName, Class<?> entity, boolean authority, Access access) {
+	public static Operation deleteAll(String domainName, IClass<?> entity, boolean authority, Access access) {
 		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, authority, access);
 	}
 
-	public static Operation useCase(String domainName, TechnicalOperation operation, Class<?> entity, Scope scope, boolean authority, Access access) {
+	public static Operation useCase(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, Access access) {
 		return new Operation(domainName, operation, entity, scope, OperationType.usesCase, authority, access);
 	}
 
-	public static Operation workflow(String domainName, TechnicalOperation operation, Class<?> entity, Scope scope, boolean authority, Access access) {
+	public static Operation workflow(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, Access access) {
 		return new Operation(domainName, operation, entity, scope, OperationType.workflow, authority, access);
 	}
 

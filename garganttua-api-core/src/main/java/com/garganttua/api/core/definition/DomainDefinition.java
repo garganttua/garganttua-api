@@ -16,6 +16,7 @@ import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.definition.IUseCaseDefinition;
 import com.garganttua.api.spec.definition.IWorkflowDefinition;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 
@@ -39,7 +40,7 @@ public record DomainDefinition<E>(
     @Override
     public List<Operation> operations() {
         List<Operation> ops = new ArrayList<>();
-        Class<?> entityClass = entityDefinition.entityClass();
+        IClass<?> entityClass = entityDefinition.entityClass();
 
         collectCrudOperations(ops, entityClass);
         collectWorkflowOperations(ops, entityClass);
@@ -48,7 +49,7 @@ public record DomainDefinition<E>(
         return ops;
     }
 
-    private void collectCrudOperations(List<Operation> ops, Class<?> entityClass) {
+    private void collectCrudOperations(List<Operation> ops, IClass<?> entityClass) {
         if (workflows == null) return;
         addCrudIfPresent(ops, BusinessOperation.create, Operation::createOne, entityClass);
         addCrudIfPresent(ops, BusinessOperation.readAll, Operation::readAll, entityClass);
@@ -60,10 +61,10 @@ public record DomainDefinition<E>(
 
     @FunctionalInterface
     private interface CrudFactory {
-        Operation create(String domainName, Class<?> entityClass, boolean authority, Access access);
+        Operation create(String domainName, IClass<?> entityClass, boolean authority, Access access);
     }
 
-    private void addCrudIfPresent(List<Operation> ops, BusinessOperation bo, CrudFactory f, Class<?> entityClass) {
+    private void addCrudIfPresent(List<Operation> ops, BusinessOperation bo, CrudFactory f, IClass<?> entityClass) {
         IWorkflowDefinition wfDef = workflows.get(bo.getLabel());
         if (wfDef != null) {
             Access access = wfDef.access() != null ? wfDef.access() : Access.authenticated;
@@ -72,7 +73,7 @@ public record DomainDefinition<E>(
         }
     }
 
-    private void collectWorkflowOperations(List<Operation> ops, Class<?> entityClass) {
+    private void collectWorkflowOperations(List<Operation> ops, IClass<?> entityClass) {
         if (workflows == null) return;
         for (IWorkflowDefinition wfDef : workflows.values()) {
             if (!wfDef.custom()) continue;
@@ -84,7 +85,7 @@ public record DomainDefinition<E>(
         }
     }
 
-    private void collectUseCaseOperations(List<Operation> ops, Class<?> entityClass) {
+    private void collectUseCaseOperations(List<Operation> ops, IClass<?> entityClass) {
         if (useCases == null) return;
         for (IUseCaseDefinition ucDef : useCases.values()) {
             ops.add(Operation.useCase(domainName,

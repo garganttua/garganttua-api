@@ -23,10 +23,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-native</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-mapper</artifactId>
 		</dependency>
 		<dependency>
@@ -45,29 +41,23 @@
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-workflow</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-commons</artifactId>
+		</dependency>
 
 		<!-- Third-party -->
-		<dependency>
-			<groupId>javax.inject</groupId>
-			<artifactId>javax.inject</artifactId>
-		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections</artifactId>
-		</dependency>
-
-		<!-- Native image config - commented out until module is enabled
-		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-native-image-config</artifactId>
-		</dependency>
-		-->
 
 		<!-- Test dependencies -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-reflections</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

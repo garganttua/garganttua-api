@@ -3,6 +3,8 @@ package com.garganttua.api.core.builder.binder;
 import com.garganttua.api.spec.context.IUseCase;
 import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
+import java.util.Set;
+
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
@@ -14,13 +16,25 @@ public class UseCaseBinderBuilder<I, O, E>
         implements IUseCaseBinderBuilder<I, O, E> {
 
     public UseCaseBinderBuilder(IUseCaseBuilder<I, O, E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
-        super(up, supplier);
+        super(up, supplier, Set.of());
         // TODO Auto-generated constructor stub
     }
 
     @Override
     protected void doAutoDetection() throws ApiException {
         // No auto-detection for use case binders - all configuration is explicit
+    }
+
+    @Override
+    protected void doPreBuildWithDependency_(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) {
     }
 
 }

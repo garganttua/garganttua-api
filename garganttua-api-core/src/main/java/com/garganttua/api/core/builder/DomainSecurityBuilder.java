@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.annotation.Nonnull;
-
 import com.garganttua.api.core.context.application.DomainSecurityContext;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
 import com.garganttua.api.spec.context.Access;
@@ -23,7 +21,7 @@ import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -31,21 +29,19 @@ public class DomainSecurityBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext>
         implements IDomainSecurityBuilder<E> {
 
-    private @Nonnull List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces;
+    private List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces;
     private IDomainSecurityAuthorizationBuilder domainSecurityAuthorizationBuilder;
     private boolean disabled = false;
     private IAuthorizationBuilder authorization;
-    private IObjectQuery objectQuery;
-    private Class<?> entityClass;
+    private IClass<?> entityClass;
     private Map<ISupplierBuilder<?, ? extends ISupplier<?>>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
     private IAuthenticatorBuilder authenticator;
     private IKeyBuilder key;
 
     public DomainSecurityBuilder(IDomainBuilder<E> domainBuilder,
             List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces,
-            IObjectQuery objectQuery, Class<?> entityClass) {
+            IClass<?> entityClass) {
         super(domainBuilder);
-        this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
         this.interfaces = Objects.requireNonNull(interfaces, "Interfaces cannot be null");
     }
@@ -73,12 +69,12 @@ public class DomainSecurityBuilder<E>
     @Override
     public IAuthorizationBuilder authorization() {
         if (this.authorization == null)
-            this.authorization = new AuthorizationBuilder(this, this.objectQuery, this.entityClass);
+            this.authorization = new AuthorizationBuilder(this, this.entityClass);
         return this.authorization;
     }
 
     @Override
-    public IDomainSecurityBuilder<E> authorizationProtocol(Class<?> interfaceClass,
+    public IDomainSecurityBuilder<E> authorizationProtocol(IClass<?> interfaceClass,
             IAuthorizationProtocolBuilder protocole) throws ApiException {
 
         Optional<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
@@ -93,14 +89,14 @@ public class DomainSecurityBuilder<E>
     @Override
     public IKeyBuilder key() {
         if (this.key == null)
-            this.key = new KeyBuilder(this, this.objectQuery, this.entityClass);
+            this.key = new KeyBuilder(this, this.entityClass);
         return this.key;
     }
 
     @Override
     public IAuthenticatorBuilder authenticator() {
         if (this.authenticator == null)
-            this.authenticator = new AuthenticatorBuilder(this, this.objectQuery, this.entityClass);
+            this.authenticator = new AuthenticatorBuilder(this, this.entityClass);
         return this.authenticator;
     }
 

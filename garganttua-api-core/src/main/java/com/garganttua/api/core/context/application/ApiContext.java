@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
+import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.repository.IRepository;
@@ -20,8 +20,9 @@ import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
-import com.garganttua.core.nativve.IReflectionConfigurationEntryBuilder;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,6 +68,11 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
     }
 
     @Override
+    public IReflection reflection() {
+        return DefaultMapper.reflection();
+    }
+
+    @Override
     protected ILifecycle doInit() {
         // Initialize the injection context first
         this.injectionContext.onInit();
@@ -75,6 +81,10 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
             IDomainContext<?> domainContext = entry.getValue();
+            // Set parent API context reference
+            if (domainContext instanceof DomainContext<?> dc) {
+                dc.setApiContext(this);
+            }
             // Initialize the domain context
             try {
                 domainContext.onInit();
@@ -91,7 +101,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
                 String repositoryName = domainName + "-repository";
                 try {
                     BeanReference<IRepository> beanRef = new BeanReference<>(
-                            IRepository.class,
+                            RuntimeClass.of(IRepository.class),
                             Optional.empty(),
                             Optional.of(repositoryName),
                             new HashSet<>());
@@ -170,12 +180,6 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
             }
         }
         return this;
-    }
-
-    @Override
-    public Set<IReflectionConfigurationEntryBuilder> nativeConfiguration() {
-        // TODO: Implement native configuration collection from domain contexts
-        return Collections.emptySet();
     }
 
 }

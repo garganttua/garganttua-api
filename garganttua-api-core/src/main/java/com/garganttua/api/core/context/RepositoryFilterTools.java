@@ -35,7 +35,10 @@ public class RepositoryFilterTools {
      * @param baseFilter Optional base filter to include
      * @return The composed filter, or null if no filtering needed
      */
-    public static IFilter buildFilter(ICaller caller, IDomainDefinition<?> domainDefinition, IFilter baseFilter) {
+    public static IFilter buildFilter(ICaller caller, IFilter baseFilter, IDomainDefinition<?> domainDefinition) {
+        if (caller == null) {
+            return baseFilter;
+        }
         if (log.isDebugEnabled()) {
             log.debug("Building filter for domain {} with caller tenantId={}, ownerId={}",
                     domainDefinition.domainName(), caller.requestedTenantId(), caller.ownerId());

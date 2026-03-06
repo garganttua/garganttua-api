@@ -8,6 +8,7 @@ import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IEntityBuilder<E> extends IAutomaticLinkedBuilder<IEntityBuilder<E>, IDomainBuilder<E>, IEntityContext<E>> {
@@ -60,13 +61,13 @@ public interface IEntityBuilder<E> extends IAutomaticLinkedBuilder<IEntityBuilde
 
     IEntityBuilder<E> update(ObjectAddress fieldAddress, String authority) throws ApiException;
 
-    IEntityBuilder<E> annotation(String elementName, Class<? extends Annotation> annotation) throws ApiException;
+    IEntityBuilder<E> annotation(String elementName, IClass<? extends Annotation> annotation) throws ApiException;
 
-    IEntityBuilder<E> annotation(Field field, Class<? extends Annotation> annotation) throws ApiException;
+    IEntityBuilder<E> annotation(Field field, IClass<? extends Annotation> annotation) throws ApiException;
 
-    IEntityBuilder<E> annotation(ObjectAddress elementAddress, Class<? extends Annotation> annotation) throws ApiException;
+    IEntityBuilder<E> annotation(ObjectAddress elementAddress, IClass<? extends Annotation> annotation) throws ApiException;
 
-    IEntityBuilder<E> annotation(Method method, Class<? extends Annotation> annotation) throws ApiException;
+    IEntityBuilder<E> annotation(Method method, IClass<? extends Annotation> annotation) throws ApiException;
 
     IEntityMethodBinderBuilder<E> afterGet(String methodName) throws ApiException;
 

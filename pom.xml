@@ -137,12 +137,22 @@
 			</dependency>
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-commons</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
 				<artifactId>garganttua-reflection</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
 				<artifactId>garganttua-workflow</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-reflections</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
 
@@ -191,6 +201,11 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
 				<version>${jackson.version}</version>
 			</dependency>
 
@@ -305,6 +320,8 @@
 	<modules>
 		<module>garganttua-api-spec</module>
 		<module>garganttua-api-core</module>
+		<module>garganttua-api-dao</module>
+		<module>garganttua-api-interface</module>
 		<!-- <module>garganttua-api-spring</module>
 		<module>garganttua-api-security</module>
 		<module>garganttua-api-native-image</module> -->

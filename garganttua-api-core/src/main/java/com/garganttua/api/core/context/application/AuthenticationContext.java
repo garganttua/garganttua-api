@@ -11,6 +11,7 @@ import com.garganttua.api.spec.context.IAuthenticationContext;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -21,7 +22,7 @@ public class AuthenticationContext implements IAuthenticationContext {
     public AuthenticationContext( Boolean findPrincipal,
             ISupplierBuilder<?, ? extends ISupplier<?>> supplier,
             IAuthenticationMethodBinderBuilder authenticateMethodBinder,
-            List<Pair<Class<? extends Annotation>, Class<?>>> entityFieldAnnotations,
+            List<Pair<IClass<? extends Annotation>, IClass<?>>> entityFieldAnnotations,
             IAuthenticationMethodBinderBuilder applySecurityOnEntityMethodBinder,
             Collection<IUseCaseBuilder<?, ?, ?>> useCasesMethodBinders ) {
         this.authenticationDefinition = new AuthenticationDefinition();

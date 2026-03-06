@@ -13,11 +13,15 @@ import com.garganttua.api.spec.context.dsl.IDtoBuilder;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -28,18 +32,20 @@ import lombok.extern.slf4j.Slf4j;
 public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder<E, D>, IDomainBuilder<E>, IDtoContext<D>>
         implements IDtoBuilder<E, D> {
 
-    private Class<?> dtoClass;
+    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+
+    private IClass<?> dtoClass;
     private ObjectAddress id;
     private ObjectAddress uuid;
     private ObjectAddress tenantId;
     private List<ISupplierBuilder<?, ? extends ISupplier<?>>> daos = new ArrayList<>();
     private IObjectQuery objectQuery;
 
-    public DtoBuilder(Class<?> dtoClass, IDomainBuilder<E> domainBuilder) throws ApiException {
+    public DtoBuilder(IClass<?> dtoClass, IDomainBuilder<E> domainBuilder) throws ApiException {
         super(domainBuilder);
         this.dtoClass = Objects.requireNonNull(dtoClass, "Dto class cannot be null");
         try {
-            this.objectQuery = ObjectQueryFactory.objectQuery(this.dtoClass);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.dtoClass, PROVIDER);
         } catch (ReflectionException e) {
             throw new ApiException(e.getMessage(), e);
         }
@@ -47,7 +53,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
 
     @Override
     public IDtoBuilder<E, D> db(ISupplierBuilder<? extends IDao, ISupplier<? extends IDao>> daoSupplier) throws ApiException {
-        if (!IDao.class.isAssignableFrom(daoSupplier.getSuppliedClass())) {
+        if (!RuntimeClass.of(IDao.class).isAssignableFrom(daoSupplier.getSuppliedClass())) {
             throw new ApiException(
                     "Bean " + daoSupplier.getSuppliedClass().getName() + " does not implement IDao");
         }
@@ -57,9 +63,10 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
 
     @Override
     public IDtoBuilder<E, D> db(IDao dao) {
-        this.daos
-                .add(new FixedSupplierBuilder<>(
-                        Objects.requireNonNull(dao, "Dao cannot be null")));
+        IDao validDao = Objects.requireNonNull(dao, "Dao cannot be null");
+        @SuppressWarnings("unchecked")
+        IClass<IDao> daoClass = (IClass<IDao>) IClass.getClass(validDao.getClass());
+        this.daos.add(new FixedSupplierBuilder<>(validDao, daoClass));
         return this;
     }
 
@@ -67,7 +74,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> id(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.id = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
+        this.id = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -76,7 +83,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> id(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.id = FieldResolver.fieldByField(field, this.dtoClass, String.class);
+        this.id = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -85,7 +92,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> id(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.id = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
+        this.id = FieldResolver.fieldByAddress(this.dtoClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -94,7 +101,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> uuid(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.uuid = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
+        this.uuid = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -103,7 +110,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> uuid(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.uuid = FieldResolver.fieldByField(field, this.dtoClass, String.class);
+        this.uuid = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -112,7 +119,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> uuid(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.uuid = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
+        this.uuid = FieldResolver.fieldByAddress(this.dtoClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -121,7 +128,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> tenantId(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.tenantId = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.dtoClass, String.class);
+        this.tenantId = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -130,7 +137,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> tenantId(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.tenantId = FieldResolver.fieldByField(field, this.dtoClass, String.class);
+        this.tenantId = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -139,7 +146,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     public IDtoBuilder<E, D> tenantId(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.tenantId = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.dtoClass, String.class);
+        this.tenantId = FieldResolver.fieldByAddress(this.dtoClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
 
         return this;
     }

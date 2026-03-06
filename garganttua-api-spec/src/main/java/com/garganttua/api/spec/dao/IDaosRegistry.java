@@ -4,10 +4,12 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
+import com.garganttua.core.reflection.IClass;
+
 public interface IDaosRegistry {
 
-	List<Pair<Class<?>, IDao>> getDao(String domain);
+	List<Pair<IClass<?>, IDao>> getDao(String domain);
 
-	List<Pair<Class<?>, IDao>> getDaos();
+	List<Pair<IClass<?>, IDao>> getDaos();
 
 }

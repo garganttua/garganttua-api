@@ -12,6 +12,8 @@ import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.context.OperationType;
 import com.garganttua.api.spec.context.Scope;
 import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 
 class OperationTest {
 
@@ -23,18 +25,18 @@ class OperationTest {
 
         @Test
         void testReadOne() {
-            Operation op = Operation.readOne("test", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.readOne("test", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
 
             assertEquals("test", op.domainName());
             assertEquals(TechnicalOperation.read, op.operation());
-            assertEquals(DummyEntity.class, op.entity());
+            assertEquals(RuntimeClass.of(DummyEntity.class), op.entity());
             assertEquals(Scope.oneEntity, op.scope());
             assertEquals(OperationType.standard, op.type());
         }
 
         @Test
         void testCreateOne() {
-            Operation op = Operation.createOne("domain", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.createOne("domain", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
 
             assertEquals(TechnicalOperation.create, op.operation());
             assertEquals(Scope.oneEntity, op.scope());
@@ -42,7 +44,7 @@ class OperationTest {
 
         @Test
         void testDeleteAll() {
-            Operation op = Operation.deleteAll("x", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.deleteAll("x", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
 
             assertEquals(TechnicalOperation.delete, op.operation());
             assertEquals(Scope.allEntities, op.scope());
@@ -50,14 +52,14 @@ class OperationTest {
 
         @Test
         void testUseCase() {
-            Operation op = Operation.useCase("domain", TechnicalOperation.read, DummyEntity.class, Scope.oneEntity, false, Access.authenticated);
+            Operation op = Operation.useCase("domain", TechnicalOperation.read, RuntimeClass.of(DummyEntity.class), Scope.oneEntity, false, Access.authenticated);
 
             assertEquals(OperationType.usesCase, op.type());
         }
 
         @Test
         void testAuthenticate() {
-            Operation op = Operation.authenticate("sec", DummyEntity.class);
+            Operation op = Operation.authenticate("sec", RuntimeClass.of(DummyEntity.class));
 
             assertEquals(OperationType.authentication, op.type());
             assertEquals(TechnicalOperation.create, op.operation());
@@ -70,7 +72,7 @@ class OperationTest {
 
         @Test
         void testPathOneEntity() {
-            Operation op = Operation.readOne("d", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.readOne("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals("/dummyentities/${uuid}", op.getPath().path());
             assertEquals("dummyentities", op.getPath().domain());
             assertEquals("${uuid}", op.getPath().suffix());
@@ -78,7 +80,7 @@ class OperationTest {
 
         @Test
         void testPathAllEntities() {
-            Operation op = Operation.readAll("d", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.readAll("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals("/dummyentities", op.getPath().path());
             assertEquals("dummyentities", op.getPath().domain());
             assertNull(op.getPath().suffix());
@@ -86,7 +88,7 @@ class OperationTest {
 
         @Test
         void testPathAuthenticate() {
-            Operation op = Operation.authenticate("d", DummyEntity.class);
+            Operation op = Operation.authenticate("d", RuntimeClass.of(DummyEntity.class));
             assertEquals("/dummyentities/authenticate", op.getPath().path());
             assertEquals("dummyentities", op.getPath().domain());
             assertEquals("authenticate", op.getPath().suffix());
@@ -99,19 +101,19 @@ class OperationTest {
 
         @Test
         void testOperationNameReadOne() {
-            Operation op = Operation.readOne("d", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.readOne("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals("read-one-dummyentity", op.getOperationName());
         }
 
         @Test
         void testOperationNameReadAll() {
-            Operation op = Operation.readAll("d", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.readAll("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals("read-all-dummyentities", op.getOperationName());
         }
 
         @Test
         void testOperationNameAuthenticate() {
-            Operation op = Operation.authenticate("d", DummyEntity.class);
+            Operation op = Operation.authenticate("d", RuntimeClass.of(DummyEntity.class));
             assertEquals("authenticate-one-dummyentity", op.getOperationName());
         }
     }
@@ -122,37 +124,37 @@ class OperationTest {
 
         @Test
         void testAuthentication() {
-            Operation op = Operation.authenticate("x", DummyEntity.class);
+            Operation op = Operation.authenticate("x", RuntimeClass.of(DummyEntity.class));
             assertEquals(BusinessOperation.authenticate, op.getBusinessOperation());
         }
 
         @Test
         void testUseCase() {
-            Operation op = Operation.useCase("x", TechnicalOperation.read, DummyEntity.class, Scope.oneEntity, false, Access.authenticated);
+            Operation op = Operation.useCase("x", TechnicalOperation.read, RuntimeClass.of(DummyEntity.class), Scope.oneEntity, false, Access.authenticated);
             assertEquals(BusinessOperation.useCase, op.getBusinessOperation());
         }
 
         @Test
         void testCreate() {
-            Operation op = Operation.createOne("x", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.createOne("x", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals(BusinessOperation.create, op.getBusinessOperation());
         }
 
         @Test
         void testDeleteOne() {
-            Operation op = Operation.deleteOne("x", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.deleteOne("x", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals(BusinessOperation.deleteOne, op.getBusinessOperation());
         }
 
         @Test
         void testDeleteAll() {
-            Operation op = Operation.deleteAll("x", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.deleteAll("x", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals(BusinessOperation.deleteAll, op.getBusinessOperation());
         }
 
         @Test
         void testReadAll() {
-            Operation op = Operation.readAll("x", DummyEntity.class, false, Access.authenticated);
+            Operation op = Operation.readAll("x", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
             assertEquals(BusinessOperation.readAll, op.getBusinessOperation());
         }
     }
@@ -163,8 +165,8 @@ class OperationTest {
 
         @Test
         void testEqualsAndHashCode() {
-            Operation op1 = Operation.readOne("d", DummyEntity.class, false, Access.authenticated);
-            Operation op2 = Operation.readOne("d", DummyEntity.class, false, Access.authenticated);
+            Operation op1 = Operation.readOne("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
+            Operation op2 = Operation.readOne("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
 
             assertEquals(op1, op2);
             assertEquals(op1.hashCode(), op2.hashCode());
@@ -172,8 +174,8 @@ class OperationTest {
 
         @Test
         void testNotEqualsDifferentOperation() {
-            Operation op1 = Operation.readOne("d", DummyEntity.class, false, Access.authenticated);
-            Operation op2 = Operation.createOne("d", DummyEntity.class, false, Access.authenticated);
+            Operation op1 = Operation.readOne("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
+            Operation op2 = Operation.createOne("d", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
 
             assertNotEquals(op1, op2);
         }
@@ -181,7 +183,7 @@ class OperationTest {
 
     @Test
     void testToString() {
-        Operation op = Operation.readOne("domain", DummyEntity.class, false, Access.authenticated);
+        Operation op = Operation.readOne("domain", RuntimeClass.of(DummyEntity.class), false, Access.authenticated);
 
         assertEquals(
                 "domain-read-one-dummyentity",

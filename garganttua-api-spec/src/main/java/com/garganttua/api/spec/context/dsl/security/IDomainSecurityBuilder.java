@@ -6,6 +6,7 @@ import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.IClass;
 
 public interface IDomainSecurityBuilder<E>
 		extends IAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext> {
@@ -14,7 +15,7 @@ public interface IDomainSecurityBuilder<E>
 
 	IDomainSecurityBuilder<E> disable(boolean b);
 
-	IDomainSecurityBuilder<E> authorizationProtocol(Class<?> class1, IAuthorizationProtocolBuilder protocole) throws ApiException;
+	IDomainSecurityBuilder<E> authorizationProtocol(IClass<?> class1, IAuthorizationProtocolBuilder protocole) throws ApiException;
 
 	IKeyBuilder<E> key();
 

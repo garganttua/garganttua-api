@@ -1,6 +1,7 @@
 package com.garganttua.api.core.builder.binder;
 
 import java.util.Objects;
+import java.util.Set;
 
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
@@ -17,17 +18,28 @@ public class ApiContextStartupBinderBuilder
 
     public ApiContextStartupBinderBuilder(IApiContextBuilder up,
             ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
-        super(up, supplier);
+        super(up, supplier, Set.of());
     }
 
     public ApiContextStartupBinderBuilder(IApiContextBuilder up,
             Object object) {
-        super(up, new FixedSupplierBuilder<>(Objects.requireNonNull(object, "Object cannot be null")));
+        super(up, FixedSupplierBuilder.of(Objects.requireNonNull(object, "Object cannot be null")), Set.of());
     }
 
     @Override
     protected void doAutoDetection() throws ApiException {
-        // No auto-detection for startup binders - all configuration is explicit
+    }
+
+    @Override
+    protected void doPreBuildWithDependency_(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) {
     }
 
 }

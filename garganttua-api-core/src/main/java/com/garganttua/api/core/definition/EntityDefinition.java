@@ -7,19 +7,20 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 
 public record EntityDefinition<E>(
-    Class<E> entityClass,
+    IClass<E> entityClass,
     ObjectAddress id,
     ObjectAddress uuid,
     ObjectAddress tenantId,
     List<ObjectAddress> mandatories,
     List<Pair<ObjectAddress, UnicityScope>> unicities,
     List<Pair<ObjectAddress, String>> updates,
-    List<Pair<ObjectAddress, Class<? extends Annotation>>> annotatedFields,
-    List<Pair<ObjectAddress, Class<? extends Annotation>>> annotatedMethods,
+    List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedFields,
+    List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedMethods,
     List<IMethodBinder<Void>> afterGetMethodBuilders,
     List<IMethodBinder<Void>>  beforeCreateMethodBuilders,
     List<IMethodBinder<Void>>  afterCreateMethodBuilders,

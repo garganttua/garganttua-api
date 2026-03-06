@@ -14,6 +14,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilde
 import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -23,8 +24,8 @@ public class ContextSecurityBuilder
         implements IApiContextSecurityBuilder {
 
     private Set<String> packages;
-    private Map<Class<?>, IAuthorizationProtocolBuilder> protocols = new HashMap<Class<?>, IAuthorizationProtocolBuilder>();
-    private Map<Class<?>, IAuthenticationBuilder> authentications = new HashMap<Class<?>, IAuthenticationBuilder>();
+    private Map<IClass<?>, IAuthorizationProtocolBuilder> protocols = new HashMap<>();
+    private Map<IClass<?>, IAuthenticationBuilder> authentications = new HashMap<>();
     private boolean disabled = false;
 
     public ContextSecurityBuilder(Set<String> packages, IApiContextBuilder up) {
@@ -64,25 +65,23 @@ public class ContextSecurityBuilder
     }
 
     @Override
-    public Optional<IAuthenticationBuilder> isAuthenticationAvailable(Class<?> authenticationClass) {
-        return Optional.ofNullable(this.authentications.get(authenticationClass));
+    public Optional<IAuthenticationBuilder> isAuthenticationAvailable(IClass<?> authenticationClass) {
+        IAuthenticationBuilder builder = this.authentications.get(authenticationClass);
+        return Optional.ofNullable(builder);
     }
 
     @Override
-    public IAuthenticationBuilder authentication(Class<?> authenticationClass) throws ApiException {
-        IAuthenticationBuilder authenticationBuilder = this.authentications.get(authenticationClass);
-        if (authenticationBuilder != null) {
-            return authenticationBuilder;
-        }
-        throw new ApiException("No authentication found for class " + authenticationClass.getName());
+    public IAuthenticationBuilder authentication(IClass<?> authenticationClass) throws ApiException {
+        return isAuthenticationAvailable(authenticationClass)
+                .orElseThrow(() -> new ApiException("No authentication found for class " + authenticationClass.getName()));
     }
 
     @Override
-    public IAuthorizationProtocolBuilder authorizationProtocol(Class<?> authorizationProtocolClass)
+    public IAuthorizationProtocolBuilder authorizationProtocol(IClass<?> authorizationProtocolClass)
             throws ApiException {
-        IAuthorizationProtocolBuilder protocol = this.protocols.get(authorizationProtocolClass);
-        if (protocol != null) {
-            return protocol;
+        IAuthorizationProtocolBuilder builder = this.protocols.get(authorizationProtocolClass);
+        if (builder != null) {
+            return builder;
         }
         throw new ApiException("No protocol found for class " + authorizationProtocolClass.getName());
     }

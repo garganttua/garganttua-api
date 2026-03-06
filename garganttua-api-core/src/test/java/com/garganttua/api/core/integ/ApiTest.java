@@ -2,9 +2,6 @@ package com.garganttua.api.core.integ;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -12,175 +9,19 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.builder.ApiContextBuilder;
-import com.garganttua.api.core.context.OperationRequest;
 import com.garganttua.api.core.context.application.ApiContext;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.dsl.dependency.IDependentBuilder;
-import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
-import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
-import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
-import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
-import com.garganttua.core.runtime.RuntimeContextFactory;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
-import com.garganttua.core.mapper.annotations.FieldMappingRule;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 @DisplayName("API Integration Tests")
-class ApiTest {
-
-    // ───── Tenant entity: User ─────
-
-    public static class User {
-        private String id;
-        private String uuid;
-        private String tenantId;
-        private String name;
-        private String email;
-
-        public User() {}
-
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
-        public String getUuid() { return uuid; }
-        public void setUuid(String uuid) { this.uuid = uuid; }
-        public String getTenantId() { return tenantId; }
-        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-    }
-
-    public static class UserDto {
-        @FieldMappingRule(sourceFieldAddress = "id")
-        private String id;
-        @FieldMappingRule(sourceFieldAddress = "uuid")
-        private String uuid;
-        @FieldMappingRule(sourceFieldAddress = "tenantId")
-        private String tenantId;
-        @FieldMappingRule(sourceFieldAddress = "name")
-        private String name;
-        @FieldMappingRule(sourceFieldAddress = "email")
-        private String email;
-
-        public UserDto() {}
-
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
-        public String getUuid() { return uuid; }
-        public void setUuid(String uuid) { this.uuid = uuid; }
-        public String getTenantId() { return tenantId; }
-        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public String getEmail() { return email; }
-        public void setEmail(String email) { this.email = email; }
-    }
-
-    // ───── Non-tenant entity: Product ─────
-
-    public static class Product {
-        private String id;
-        private String uuid;
-        private String tenantId;
-        private String label;
-        private double price;
-
-        public Product() {}
-
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
-        public String getUuid() { return uuid; }
-        public void setUuid(String uuid) { this.uuid = uuid; }
-        public String getTenantId() { return tenantId; }
-        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getLabel() { return label; }
-        public void setLabel(String label) { this.label = label; }
-        public double getPrice() { return price; }
-        public void setPrice(double price) { this.price = price; }
-    }
-
-    public static class ProductDto {
-        @FieldMappingRule(sourceFieldAddress = "id")
-        private String id;
-        @FieldMappingRule(sourceFieldAddress = "uuid")
-        private String uuid;
-        @FieldMappingRule(sourceFieldAddress = "tenantId")
-        private String tenantId;
-        @FieldMappingRule(sourceFieldAddress = "label")
-        private String label;
-        @FieldMappingRule(sourceFieldAddress = "price")
-        private double price;
-
-        public ProductDto() {}
-
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
-        public String getUuid() { return uuid; }
-        public void setUuid(String uuid) { this.uuid = uuid; }
-        public String getTenantId() { return tenantId; }
-        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getLabel() { return label; }
-        public void setLabel(String label) { this.label = label; }
-        public double getPrice() { return price; }
-        public void setPrice(double price) { this.price = price; }
-    }
-
-    // ───── Stub DAO ─────
-
-    public static class StubDao implements IDao {
-        private final List<Object> storage = new ArrayList<>();
-        private Class<?> dtoClass;
-
-        @Override
-        public void setDtoClass(Class<?> dtoClass) {
-            this.dtoClass = dtoClass;
-        }
-
-        @Override
-        public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
-                throws ApiException {
-            return new ArrayList<>(storage);
-        }
-
-        @Override
-        public Object save(Object object) throws ApiException {
-            storage.add(object);
-            return object;
-        }
-
-        @Override
-        public void delete(Object object) throws ApiException {
-            storage.remove(object);
-        }
-
-        @Override
-        public long count(IFilter filter) throws ApiException {
-            return storage.size();
-        }
-
-        public List<Object> getStorage() {
-            return storage;
-        }
-
-        public Class<?> getDtoClass() {
-            return dtoClass;
-        }
-    }
+class ApiTest extends AbstractCrudIntegrationTest {
 
     // ───── Test IInterface ─────
 
@@ -251,55 +92,33 @@ class ApiTest {
 
     @BeforeEach
     void setUp() throws ApiException {
-        builder = ApiContextBuilder.builder();
+        builder = newBuilder();
 
-        // Real injection and expression contexts
-        IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
-                .childContextFactory(new RuntimeContextFactory());
-        IExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
-
-        // Provide dependencies
-        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);
-        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
-
-        // Create DAOs and interface
         userDao = new StubDao();
         productDao = new StubDao();
         userInterface = new TestInterface();
 
-        // Configure builder with two domains
-        builder.superTenantId("SUPER_TENANT")
-               .superTenantAutoCreate(true);
-
-        // Domain 1: User (tenant entity)
-        builder.domain(User.class)
+        // Domain 1: User (tenant entity with interface)
+        builder.domain(RuntimeClass.of(User.class))
                 .tenant(true)
-                .interfasse(new FixedSupplierBuilder<>(userInterface))
+                .interfasse(FixedSupplierBuilder.of(userInterface))
                 .entity()
-                    .id("id")
-                    .uuid("uuid")
-                    .tenantId("tenantId")
+                    .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(UserDto.class)
-                    .id("id")
-                    .uuid("uuid")
-                    .tenantId("tenantId")
+                .dto(RuntimeClass.of(UserDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
                 .workflow("deleteAll").security().disable(true).up().up()
             .up();
 
         // Domain 2: Product (non-tenant entity)
-        builder.domain(Product.class)
+        builder.domain(RuntimeClass.of(Product.class))
                 .entity()
-                    .id("id")
-                    .uuid("uuid")
-                    .tenantId("tenantId")
+                    .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(ProductDto.class)
-                    .id("id")
-                    .uuid("uuid")
-                    .tenantId("tenantId")
+                .dto(RuntimeClass.of(ProductDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
                     .db(productDao)
                 .up()
             .up();
@@ -325,7 +144,7 @@ class ApiTest {
 
             Optional<IDomainContext<?>> userCtx = context.getDomainContext("users");
             assertTrue(userCtx.isPresent());
-            assertEquals(User.class, userCtx.get().getEntityClass());
+            assertEquals(RuntimeClass.of(User.class), userCtx.get().getEntityClass());
         }
 
         @Test
@@ -335,7 +154,7 @@ class ApiTest {
 
             Optional<IDomainContext<?>> productCtx = context.getDomainContext("products");
             assertTrue(productCtx.isPresent());
-            assertEquals(Product.class, productCtx.get().getEntityClass());
+            assertEquals(RuntimeClass.of(Product.class), productCtx.get().getEntityClass());
         }
 
         @Test
@@ -433,62 +252,6 @@ class ApiTest {
             // After full lifecycle, all domains should still be accessible
             assertTrue(context.getDomainContext("users").isPresent());
             assertTrue(context.getDomainContext("products").isPresent());
-        }
-    }
-
-    @Nested
-    @DisplayName("Workflow invocation")
-    class WorkflowInvocation {
-
-        @Test
-        @DisplayName("invoke readAll workflow returns a successful response")
-        void invokeReadAllWorkflow() throws ApiException {
-            IApiContext context = builder.build();
-            context.onInit();
-            context.onStart();
-
-            IDomainContext<?> userCtx = context.getDomainContext("users").orElseThrow();
-
-            // Pre-populate the DAO with some UserDto objects
-            UserDto alice = new UserDto();
-            alice.setId("1");
-            alice.setUuid("uuid-alice");
-            alice.setTenantId("SUPER_TENANT");
-            alice.setName("Alice");
-            alice.setEmail("alice@example.com");
-
-            UserDto bob = new UserDto();
-            bob.setId("2");
-            bob.setUuid("uuid-bob");
-            bob.setTenantId("SUPER_TENANT");
-            bob.setName("Bob");
-            bob.setEmail("bob@example.com");
-
-            UserDto charlie = new UserDto();
-            charlie.setId("3");
-            charlie.setUuid("uuid-charlie");
-            charlie.setTenantId("SUPER_TENANT");
-            charlie.setName("Charlie");
-            charlie.setEmail("charlie@example.com");
-
-            userDao.getStorage().add(alice);
-            userDao.getStorage().add(bob);
-            userDao.getStorage().add(charlie);
-
-            Operation readAllOp = Operation.readAllWithStandardSecurity("users", User.class);
-            OperationRequest request = new OperationRequest(new HashMap<>());
-            request.arg(IOperationRequest.OPERATION, readAllOp);
-
-            IOperationResponse response = userCtx.invoke(request);
-
-            assertNotNull(response);
-            assertEquals(OperationResponseCode.OK, response.getResponseCode());
-
-            // Verify the response contains the entities
-            assertNotNull(response.getResponse());
-            assertTrue(response.getResponse() instanceof List);
-            List<Object> entities = (List<Object>) response.getResponse();
-            assertEquals(3, entities.size());
         }
     }
 }

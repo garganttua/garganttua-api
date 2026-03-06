@@ -1,10 +1,11 @@
 package com.garganttua.api.spec.definition;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IDtoDefinition<D> {
 
-    Class<D> dtoClass();
+    IClass<D> dtoClass();
 
     ObjectAddress uuid();
 

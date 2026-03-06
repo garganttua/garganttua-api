@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"java.dependency.packagePresentation": "hierarchical",
+		"java.compile.nullAnalysis.mode": "automatic",
+		"java.debug.settings.onBuildFailureProceed": true,
+		"commentTranslate.hover.enabled": true,
+		"java.debug.settings.showHex": true
+	}
+}

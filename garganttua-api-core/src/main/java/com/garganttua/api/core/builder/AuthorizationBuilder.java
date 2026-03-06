@@ -15,16 +15,20 @@ import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IRefreshableAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class AuthorizationBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IAuthorizationBuilder<E>, IDomainSecurityBuilder<E>, IAuthorizationContext>
         implements IAuthorizationBuilder<E> {
 
-    private IObjectQuery objectQuery;
-    private Class<?> entityClass;
+    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+
+    private IClass<?> entityClass;
     private ObjectAddress type;
     private ObjectAddress revoked;
     private ObjectAddress creation;
@@ -38,9 +42,8 @@ public class AuthorizationBuilder<E>
     private IRefreshableAuthorizationBuilder<E> refreshable;
     private boolean storable = false;
 
-    public AuthorizationBuilder(IDomainSecurityBuilder<E> domainBuilder, IObjectQuery objectQuery, Class<?> entityClass) {
+    public AuthorizationBuilder(IDomainSecurityBuilder<E> domainBuilder, IClass<?> entityClass) {
         super(domainBuilder);
-        this.objectQuery = Objects.requireNonNull(objectQuery, "Object query cannot be null");
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
@@ -48,7 +51,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> type(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
-        this.type = FieldResolver.fieldByField(field, this.entityClass, String.class);
+        this.type = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -57,7 +60,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> type(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.type = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, String.class);
+        this.type = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -66,7 +69,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> type(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
-        this.type = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, String.class);
+        this.type = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
 
         return this;
     }
@@ -75,7 +78,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> authorities(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.authorities = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, List.class);
+        this.authorities = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(List.class)).address();
 
         return this;
     }
@@ -84,7 +87,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> authorities(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
-        this.authorities = FieldResolver.fieldByField(field, this.entityClass, List.class);
+        this.authorities = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(List.class)).address();
 
         return this;
     }
@@ -93,7 +96,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> authorities(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
-        this.authorities = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, List.class);
+        this.authorities = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(List.class)).address();
 
         return this;
     }
@@ -102,7 +105,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> expirable(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
-        this.expiration = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Instant.class);
+        this.expiration = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(Instant.class)).address();
 
         return this;
     }
@@ -111,7 +114,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> expirable(Field field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
-        this.expiration = FieldResolver.fieldByField(field, this.entityClass, Instant.class);
+        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(Instant.class)).address();
 
         return this;
     }
@@ -120,7 +123,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> expirable(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.expiration = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Instant.class);
+        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(Instant.class)).address();
 
         return this;
     }
@@ -130,7 +133,7 @@ public class AuthorizationBuilder<E>
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         this.storable = true;
 
-        this.revoked = FieldResolver.fieldByFieldName(fieldName, this.objectQuery, this.entityClass, Boolean.class);
+        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(Boolean.class)).address();
 
         return this;
     }
@@ -140,7 +143,7 @@ public class AuthorizationBuilder<E>
         Objects.requireNonNull(field, "Field name cannot be null");
         this.storable = true;
 
-        this.revoked = FieldResolver.fieldByField(field, this.entityClass, Boolean.class);
+        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(Boolean.class)).address();
 
         return this;
     }
@@ -150,7 +153,7 @@ public class AuthorizationBuilder<E>
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
         this.storable = true;
 
-        this.revoked = FieldResolver.fieldByAddress(fieldAddress, this.objectQuery, this.entityClass, Boolean.class);
+        this.revoked = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(Boolean.class)).address();
 
         return this;
     }
@@ -200,124 +203,10 @@ public class AuthorizationBuilder<E>
         throw new UnsupportedOperationException("Unimplemented method 'decode'");
     }
 
-   /*  @Override
-    public IAuthorizationBuilder validate(
-            String methodName) throws ApiException {
-        Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        if (this.signable != null)
-            this.validate = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                    .method(methodName, Boolean.class, this.key.getEntityClass())
-                    .withParam(0, key(this.key.getEntityClass()));
-        else
-            this.validate = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                    .method(methodName, Boolean.class);
-
-        return this;
-    }
-
-    @Override
-    public IAuthorizationBuilder validate(
-            Method method) throws ApiException {
-        Objects.requireNonNull(method, "Method cannot be null");
-
-        if (this.signable != null)
-            this.validate = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                    .method(method, Boolean.class, this.key.getEntityClass())
-                    .withParam(0, key(this.key.getEntityClass()));
-        else
-            this.validate = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                    .method(method, Boolean.class);
-
-        return this;
-    }
-
-    @Override
-    public AuthorizationBuilder validate(
-            ObjectAddress methodAddress) throws ApiException {
-        Objects.requireNonNull(methodAddress, "Method address cannot be null");
-
-        if (this.signable != null)
-            this.validate = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                    .method(methodAddress, Boolean.class, this.key.getEntityClass())
-                    .withParam(0, key(this.key.getEntityClass()));
-        else
-            this.validate = new AuthorizationMethodBinderBuilder(this, authorization(this.entityClass))
-                    .method(methodAddress, Boolean.class);
-
-        return this;
-    } */
-
-    /* @Override
-    public IAuthorizationBuilder validateAgainst(
-            String methodName) throws ApiException {
-        Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        this.storable = true;
-
-        if (this.signable != null)
-            this.validateAgainst = new AuthorizationMethodBinderBuilder(this,
-                    authorization(this.entityClass))
-                    .method(methodName, Boolean.class, this.entityClass, this.key.getEntityClass())
-                    .withParam(0, authorization(this.entityClass))
-                    .withParam(1, key(this.key.getEntityClass()));
-        else
-            this.validateAgainst = new AuthorizationMethodBinderBuilder(this,
-                    authorization(this.entityClass))
-                    .method(methodName, Boolean.class, this.entityClass)
-                    .withParam(0, authorization(this.entityClass));
-
-        return this;
-    }
-
-    @Override
-    public IAuthorizationBuilder validateAgainst(
-            Method method) throws ApiException {
-        Objects.requireNonNull(method, "Method cannot be null");
-
-        this.storable = true;
-
-        if (this.signable != null)
-            this.validateAgainst = new AuthorizationMethodBinderBuilder(this,
-                    authorization(this.entityClass))
-                    .method(method, Boolean.class, this.entityClass, this.key.getEntityClass())
-                    .withParam(0, authorization(this.entityClass))
-                    .withParam(1, key(this.key.getEntityClass()));
-        else
-            this.validateAgainst = new AuthorizationMethodBinderBuilder(this,
-                    authorization(this.entityClass))
-                    .method(method, Boolean.class, this.entityClass)
-                    .withParam(0, authorization(this.entityClass));
-
-        return this;
-    }
-
-    @Override
-    public IAuthorizationBuilder validateAgainst(
-            ObjectAddress methodAddress) throws ApiException {
-        Objects.requireNonNull(methodAddress, "Method address cannot be null");
-
-        this.storable = true;
-
-        if (this.signable != null)
-            this.validateAgainst = new AuthorizationMethodBinderBuilder(this,
-                    authorization(this.entityClass))
-                    .method(methodAddress, Boolean.class, this.entityClass, this.key.getEntityClass())
-                    .withParam(0, authorization(this.entityClass))
-                    .withParam(1, key(this.key.getEntityClass()));
-        else
-            this.validateAgainst = new AuthorizationMethodBinderBuilder(this,
-                    authorization(this.entityClass))
-                    .method(methodAddress, Boolean.class, this.entityClass)
-                    .withParam(0, authorization(this.entityClass));
-
-        return this;
-    } */
-
     @Override
     public ISignableAuthorizationBuilder<E> signable() {
         if (this.signable == null) {
-            this.signable = new SignableAuthorizationBuilder<>(this, this.objectQuery, this.entityClass);
+            this.signable = new SignableAuthorizationBuilder<>(this, this.entityClass);
         }
         return this.signable;
     }
@@ -325,7 +214,7 @@ public class AuthorizationBuilder<E>
     @Override
     public IRefreshableAuthorizationBuilder<E> refreshable() {
         if (this.refreshable == null) {
-            this.refreshable = new RefreshableAuthorizationBuilder<>(this, this.objectQuery, this.entityClass);
+            this.refreshable = new RefreshableAuthorizationBuilder<>(this, this.entityClass);
         }
         return this.refreshable;
     }

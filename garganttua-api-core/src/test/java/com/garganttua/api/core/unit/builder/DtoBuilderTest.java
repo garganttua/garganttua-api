@@ -21,6 +21,8 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 
 @DisplayName("DtoBuilder Tests")
 class DtoBuilderTest {
@@ -56,10 +58,10 @@ class DtoBuilderTest {
     // Simple test DAO
     public static class TestDao implements IDao {
         private final List<Object> storage = new ArrayList<>();
-        private Class<?> dtoClass;
+        private IClass<?> dtoClass;
 
         @Override
-        public void setDtoClass(Class<?> dtoClass) { this.dtoClass = dtoClass; }
+        public void setDtoClass(IClass<?> dtoClass) { this.dtoClass = dtoClass; }
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
@@ -89,8 +91,8 @@ class DtoBuilderTest {
 
     @BeforeEach
     void setUp() throws ApiException {
-        domainBuilder = ApiContextBuilder.builder().domain(TestEntity.class);
-        dtoBuilder = domainBuilder.dto(TestDto.class);
+        domainBuilder = ApiContextBuilder.builder().domain(RuntimeClass.of(TestEntity.class));
+        dtoBuilder = domainBuilder.dto(RuntimeClass.of(TestDto.class));
     }
 
     @Nested

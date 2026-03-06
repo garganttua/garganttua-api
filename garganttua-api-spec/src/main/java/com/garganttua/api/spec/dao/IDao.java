@@ -10,10 +10,11 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 
 public interface IDao {
-	
-	void setDtoClass(Class<?> dtoClass);
+
+	void setDtoClass(IClass<?> dtoClass);
 	
 	List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws ApiException;
 

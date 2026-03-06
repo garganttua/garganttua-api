@@ -3,8 +3,6 @@ package com.garganttua.api.core.builder;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
-
 import com.garganttua.api.core.context.application.AuthenticatorAuthorizationKeyContext;
 import com.garganttua.api.spec.context.IAuthenticatorAuthorizationKeyContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
@@ -25,7 +23,7 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     private AuthenticatorKeyUsage usage;
     private KeyAlgorithm algorithm;
     private SignatureAlgorithm signAlgorithm;
-    private @Nonnull IDomainBuilder key;
+    private IDomainBuilder key;
 
     public AuthenticatorAuthorizationKeyBuilder(IAuthenticatorAuthorizationBuilder<E> authenticatorAuthorizationBuilder,
             IDomainBuilder<E> key) {

@@ -1,7 +1,9 @@
 package com.garganttua.api.spec.security.authentication;
 
+import com.garganttua.core.reflection.IClass;
+
 public interface IAuthenticationServicesRegistry {
 
-	IAuthenticationService getService(Class<?> authentication);
+	IAuthenticationService getService(IClass<?> authentication);
 
 }

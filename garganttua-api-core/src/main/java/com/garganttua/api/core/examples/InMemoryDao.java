@@ -9,6 +9,7 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * In-memory DAO implementation for demonstration purposes.
@@ -16,10 +17,10 @@ import com.garganttua.api.spec.ApiException;
 public class InMemoryDao implements IDao {
 
     private final List<Object> storage = new ArrayList<>();
-    private Class<?> dtoClass;
+    private IClass<?> dtoClass;
 
     @Override
-    public void setDtoClass(Class<?> dtoClass) {
+    public void setDtoClass(IClass<?> dtoClass) {
         this.dtoClass = dtoClass;
     }
 

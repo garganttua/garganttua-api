@@ -1,5 +1,7 @@
 package com.garganttua.api.core.builder.binder;
 
+import java.util.Set;
+
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityMethodBinderBuilder;
 import com.garganttua.api.spec.ApiException;
@@ -12,16 +14,27 @@ public class EntityMethodBinderBuilder<E> extends AbstractMethodBinderBuilder<Vo
         implements IEntityMethodBinderBuilder<E> {
 
     public EntityMethodBinderBuilder(IEntityBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
-        super(up, supplier);
+        super(up, supplier, Set.of());
     }
 
     public EntityMethodBinderBuilder(IEntityBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, boolean collection) {
-        super(up, supplier, collection);
+        super(up, supplier, collection, Set.of());
     }
 
     @Override
     protected void doAutoDetection() throws ApiException {
-        // No auto-detection for entity method binders - all configuration is explicit
+    }
+
+    @Override
+    protected void doPreBuildWithDependency_(Object dependency) {
+    }
+
+    @Override
+    protected void doPostBuildWithDependency(Object dependency) {
+    }
+
+    @Override
+    protected void doAutoDetectionWithDependency(Object dependency) {
     }
 
 }

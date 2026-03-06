@@ -1,16 +1,16 @@
-package com.garganttua.api.core.context;
+package com.garganttua.api.spec.filter;
 
 import java.util.List;
 
 import org.javatuples.Pair;
 
 import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 
 @FunctionalInterface
 public interface IFilterMapper {
 
-	List<Pair<Class<?>, IFilter>> map(IDomainDefinition<?> domainDefinition, IFilter filter) throws ApiException;
+	List<Pair<IClass<?>, IFilter>> map(IDomainDefinition<?> domainDefinition, IFilter filter) throws ApiException;
 
 }

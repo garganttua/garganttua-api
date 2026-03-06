@@ -8,14 +8,19 @@ import java.util.stream.Collectors;
 
 import org.javatuples.Pair;
 
+import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
+import com.garganttua.api.spec.filter.IFilter;
+import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
@@ -36,13 +41,13 @@ public interface IDomainContext<E> extends ILifecycle {
 		return getDomainName();
 	}
 
-	default Map<Class<?>, IDtoDefinition<?>> getDtos(){
+	default Map<IClass<?>, IDtoDefinition<?>> getDtos(){
 		return this.getDomainDefinition().dtoDefinitions().stream()
 				.collect(Collectors.toMap(IDtoDefinition::dtoClass, dto -> (IDtoDefinition<?>) dto));
 	}
 
 	// Entity class access
-	default Class<E> getEntityClass() {
+	default IClass<E> getEntityClass() {
 		return getEntityDefinition().entityClass();
 	}
 
@@ -102,6 +107,8 @@ public interface IDomainContext<E> extends ILifecycle {
 	// Repository access (implemented by concrete class)
 	IRepository getRepository();
 
+	// --- Workflow invocation ---
+
 	IOperationResponse invoke(IOperationRequest request);
 
 	IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options);
@@ -109,4 +116,72 @@ public interface IDomainContext<E> extends ILifecycle {
 	Optional<IWorkflow> getWorkflow(String name);
 
 	Map<String, IWorkflow> getWorkflows();
+
+	// --- CRUD convenience methods ---
+
+	default IOperationResponse createOne(Object body, ICaller caller) {
+		IOperationRequest request = buildRequest(
+				Operation.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+		request.arg(IOperationRequest.BODY, body);
+		return invoke(request);
+	}
+
+	default IOperationResponse readOne(String uuid, ICaller caller) {
+		IOperationRequest request = buildRequest(
+				Operation.readOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+		request.arg(IOperationRequest.ENTITY_UUID, uuid);
+		return invoke(request);
+	}
+
+	default IOperationResponse readAll(ICaller caller) {
+		return readAll(null, null, null, caller);
+	}
+
+	default IOperationResponse readAll(IFilter filter, IPageable page, ISort sort, ICaller caller) {
+		IOperationRequest request = buildRequest(
+				Operation.readAllWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+		if (filter != null) request.arg(IOperationRequest.FILTER, filter);
+		if (page != null) request.arg(IOperationRequest.PAGE, page);
+		if (sort != null) request.arg(IOperationRequest.SORT, sort);
+		return invoke(request);
+	}
+
+	default IOperationResponse updateOne(String uuid, Object body, ICaller caller) {
+		IOperationRequest request = buildRequest(
+				Operation.updateOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+		request.arg(IOperationRequest.ENTITY_UUID, uuid);
+		request.arg(IOperationRequest.BODY, body);
+		return invoke(request);
+	}
+
+	default IOperationResponse deleteOne(String uuid, ICaller caller) {
+		IOperationRequest request = buildRequest(
+				Operation.deleteOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+		request.arg(IOperationRequest.ENTITY_UUID, uuid);
+		return invoke(request);
+	}
+
+	default IOperationResponse deleteAll(ICaller caller) {
+		IOperationRequest request = buildRequest(
+				Operation.deleteAllWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+		return invoke(request);
+	}
+
+	// --- Internal helpers ---
+
+	@SuppressWarnings("rawtypes")
+	private IOperationRequest buildRequest(Operation operation, ICaller caller) {
+		IOperationRequest request = IOperationRequest.create();
+		request.arg(IOperationRequest.OPERATION, operation);
+		if (caller != null) {
+			request.arg(IOperationRequest.TENANT_ID, caller.tenantId());
+			request.arg(IOperationRequest.REQUESTED_TENANT_ID, caller.requestedTenantId());
+			request.arg(IOperationRequest.CALLER_ID, caller.callerId());
+			request.arg(IOperationRequest.OWNER_ID, caller.ownerId());
+			request.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
+			request.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
+			request.arg(IOperationRequest.AUTHORITIES, (List) caller.authorities());
+		}
+		return request;
+	}
 }

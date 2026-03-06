@@ -6,7 +6,14 @@ import com.garganttua.api.core.definition.DtoDefinition;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.ObjectAccessor;
+import java.util.List;
+
+import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.query.ObjectQueryFactory;
+import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -28,8 +35,16 @@ public class DtoContext<D> implements IDtoContext<D> {
         return this.dao.build().supply().get();
     }
 
+    private static final IReflection REFLECTION = DefaultMapper.reflection();
+
     @Override
     public String getUuid(Object object) throws ApiException {
-        return ObjectAccessor.getValue(object, dtoDefinition, DtoDefinition::uuid);
+        try {
+            ObjectAddress uuidAddress = dtoDefinition.uuid();
+            Object value = REFLECTION.getFieldValue(object, uuidAddress.toString());
+            return value != null ? value.toString() : null;
+        } catch (Exception e) {
+            throw new ApiException("Failed to get uuid from DTO", e);
+        }
     }
 }

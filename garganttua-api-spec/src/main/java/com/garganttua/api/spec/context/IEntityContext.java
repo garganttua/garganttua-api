@@ -1,6 +1,7 @@
 package com.garganttua.api.spec.context;
 
 import com.garganttua.api.spec.definition.IEntityDefinition;
+import com.garganttua.core.reflection.IClass;
 
 public interface IEntityContext<E> {
 
@@ -8,6 +9,6 @@ public interface IEntityContext<E> {
 
     String getEntityName();
 
-    Class<E> getEntityClass();
+    IClass<E> getEntityClass();
 
 }

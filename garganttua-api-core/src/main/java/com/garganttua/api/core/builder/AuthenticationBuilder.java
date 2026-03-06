@@ -9,6 +9,7 @@ import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext>  implements IAuthenticationBuilder {
@@ -43,8 +44,8 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(Class<? extends Annotation> annotation,
-            Class<?> fieldType) throws ApiException {
+    public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
+            IClass<?> fieldType) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'entityMustHaveFieldOfTypeAnnotatedWith'");
     }
@@ -270,8 +271,8 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(Class<? extends Annotation> annotation,
-            Class<?> fieldType) throws ApiException {
+    public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
+            IClass<?> fieldType) throws ApiException {
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(fieldType, "Field type cannot be null");
         this.fieldAnnotations.add(new Pair<Class<? extends Annotation>, Class<?>>(annotation, fieldType));

@@ -9,6 +9,7 @@ import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.interfasse.IInterface;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -19,7 +20,7 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws ApiException;
 
-    IDomainBuilder<E> interfasse(Class<? extends IInterface> interfasse) throws ApiException;
+    IDomainBuilder<E> interfasse(IClass<? extends IInterface> interfasse) throws ApiException;
 
     IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
@@ -55,19 +56,21 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IEntityBuilder<E> name(String name) throws ApiException;
 
-    Class<E> getEntityClass() throws ApiException;
+    IClass<E> getEntityClass() throws ApiException;
 
     IDomainSecurityBuilder<E> security() throws ApiException;
 
-    <D> IDtoBuilder<E, D> dto(Class<D> dtoClass) throws ApiException;
+    <D> IDtoBuilder<E, D> dto(IClass<D> dtoClass) throws ApiException;
 
-    <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, Class<I> inputType, Class<O> outputType);
+    <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, IClass<I> inputType, IClass<O> outputType);
 
     IDomainWorkflowBuilder<E> workflow(String workflowName);
 
     IDomainBuilder<E> create(Object entity);
 
     IDomainBuilder<E> upsert(Object entity);
+
+    IDomainBuilder<E> doInjection(boolean enabled);
 
     IEntityBuilder<E> entity() throws ApiException;
 
