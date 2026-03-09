@@ -1,13 +1,16 @@
 package com.garganttua.api.spec.updater;
 
-import java.util.Map;
+import java.util.List;
 
-import com.garganttua.api.spec.caller.ICaller;
+import org.javatuples.Pair;
+
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IEntityUpdater {
 
-	Object update(ICaller caller, Object storedEntity, Object updatedEntity, Map<ObjectAddress, String> updateAuthorizations) throws ApiException;
+	Object update(ICaller caller, Object storedEntity, Object updatedEntity,
+			List<Pair<ObjectAddress, String>> updateAuthorizations) throws ApiException;
 
 }

@@ -25,10 +25,13 @@ import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.context.beans.BeanFactory;
+import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.github.f4b6a3.uuid.UuidCreator;
+import org.javatuples.Pair;
 
 public class ApiExpressions {
 
@@ -274,6 +277,151 @@ public class ApiExpressions {
 			return Optional.of(accessFilter);
 		}
 		return Optional.empty();
+	}
+
+	@Expression(name = "ensureUuid", description = "Generates a UUID for the entity if the uuid field is null")
+	public static Object ensureUuid(Object entity, Object context) {
+		try {
+			IDomainContext<?> dc = context instanceof Optional<?> opt
+					? (IDomainContext<?>) opt.get()
+					: (IDomainContext<?>) context;
+			ObjectAddress uuidAddress = dc.getEntityDefinition().uuid();
+			String fieldName = uuidAddress.toString();
+			Object currentUuid = REFLECTION.getFieldValue(entity, fieldName);
+			if (currentUuid == null) {
+				REFLECTION.setFieldValue(entity, fieldName, UuidCreator.getTimeOrderedEpoch().toString());
+			}
+			return entity;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Failed to ensure UUID on entity", e);
+		}
+	}
+
+	@Expression(name = "ensureTenantId", description = "Sets the tenantId on the entity from the caller if not already set")
+	public static Object ensureTenantId(Object entity, Object caller, Object context) {
+		try {
+			ICaller c = (ICaller) unwrapOptional(caller);
+			IDomainContext<?> dc = context instanceof Optional<?> opt
+					? (IDomainContext<?>) opt.get()
+					: (IDomainContext<?>) context;
+			ObjectAddress tenantIdAddress = dc.getEntityDefinition().tenantId();
+			if (tenantIdAddress == null) return entity;
+			String fieldName = tenantIdAddress.toString();
+			Object currentTenantId = REFLECTION.getFieldValue(entity, fieldName);
+			if (currentTenantId == null) {
+				REFLECTION.setFieldValue(entity, fieldName, c.requestedTenantId());
+			}
+			return entity;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Failed to ensure tenantId on entity", e);
+		}
+	}
+
+	@Expression(name = "validateMandatories", description = "Validates that all @EntityMandatory fields are non-null")
+	public static void validateMandatories(Object entity, Object context) {
+		try {
+			IDomainContext<?> dc = context instanceof Optional<?> opt
+					? (IDomainContext<?>) opt.get()
+					: (IDomainContext<?>) context;
+			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
+			List<ObjectAddress> mandatories = entityDef.mandatories();
+			if (mandatories == null || mandatories.isEmpty()) return;
+
+			for (ObjectAddress address : mandatories) {
+				Object value = REFLECTION.getFieldValue(entity, address.toString());
+				if (value == null) {
+					throw new ApiException("Mandatory field '" + address + "' is null");
+				}
+			}
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Failed to validate mandatory fields", e);
+		}
+	}
+
+	@Expression(name = "validateUnicity", description = "Checks unicity constraints against existing entities in repository")
+	public static void validateUnicity(Object entity, Object repository, Object context) throws ApiException {
+		try {
+			IDomainContext<?> dc = context instanceof Optional<?> opt
+					? (IDomainContext<?>) opt.get()
+					: (IDomainContext<?>) context;
+			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
+			List<Pair<ObjectAddress, UnicityScope>> unicities = entityDef.unicities();
+			if (unicities == null || unicities.isEmpty()) return;
+
+			IRepository repo = (IRepository) repository;
+			ObjectAddress tenantIdAddress = entityDef.tenantId();
+
+			for (Pair<ObjectAddress, UnicityScope> unicity : unicities) {
+				ObjectAddress fieldAddress = unicity.getValue0();
+				UnicityScope scope = unicity.getValue1();
+				Object fieldValue = REFLECTION.getFieldValue(entity, fieldAddress.toString());
+				if (fieldValue == null) continue;
+
+				// Build filter: field = value
+				Filter fieldFilter = Filter.eq(fieldAddress.toString(), fieldValue);
+
+				// For tenant scope, also filter by tenantId
+				IFilter queryFilter;
+				if (scope == UnicityScope.tenant && tenantIdAddress != null) {
+					Object tenantId = REFLECTION.getFieldValue(entity, tenantIdAddress.toString());
+					if (tenantId != null) {
+						Filter tenantFilter = Filter.eq(tenantIdAddress.toString(), tenantId);
+						queryFilter = Filter.and(fieldFilter, tenantFilter);
+					} else {
+						queryFilter = fieldFilter;
+					}
+				} else {
+					queryFilter = fieldFilter;
+				}
+
+				List<Object> existing = repo.getEntities(Optional.empty(), Optional.of(queryFilter), Optional.empty());
+				if (!existing.isEmpty()) {
+					throw new ApiException("Unicity constraint violated for field '" + fieldAddress + "'");
+				}
+			}
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Failed to validate unicity constraints", e);
+		}
+	}
+
+	@Expression(name = "runBeforeCreate", description = "Executes @EntityBeforeCreate lifecycle hooks on entity")
+	public static Object runBeforeCreate(Object entity, Object request) {
+		return runLifecycleHooks(entity, request, "beforeCreate",
+				ed -> ((EntityDefinition<?>) ed).beforeCreateMethodBuilders());
+	}
+
+	@Expression(name = "runAfterCreate", description = "Executes @EntityAfterCreate lifecycle hooks on entity")
+	public static Object runAfterCreate(Object entity, Object request) {
+		return runLifecycleHooks(entity, request, "afterCreate",
+				ed -> ((EntityDefinition<?>) ed).afterCreateMethodBuilders());
+	}
+
+	private static Object runLifecycleHooks(Object entity, Object request, String hookName,
+			java.util.function.Function<IEntityDefinition<?>, List<IMethodBinder<Void>>> bindersExtractor) {
+		try {
+			IOperationRequest opRequest = (IOperationRequest) request;
+			IDomainContext<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
+			IEntityDefinition<?> entityDef = dc.getEntityDefinition();
+			List<IMethodBinder<Void>> binders = bindersExtractor.apply(entityDef);
+
+			if (binders == null || binders.isEmpty()) return entity;
+
+			for (IMethodBinder<Void> binder : binders) {
+				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
+				REFLECTION.invokeDeep(entity, methodRef, RuntimeClass.of(Void.class));
+			}
+			return entity;
+		} catch (Exception e) {
+			throw new ApiException("Failed to execute " + hookName + " lifecycle hooks", e);
+		}
 	}
 
 	private static Object unwrapOptional(Object value) {

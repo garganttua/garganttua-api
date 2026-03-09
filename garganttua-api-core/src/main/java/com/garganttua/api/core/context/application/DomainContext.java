@@ -308,6 +308,7 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
             case 401 -> OperationResponse.unauthorized(message);
             case 403 -> OperationResponse.forbidden(message);
             case 404 -> OperationResponse.notFound(message);
+            case 409 -> OperationResponse.badRequest(message);
             default -> OperationResponse.error(message);
         };
     }
