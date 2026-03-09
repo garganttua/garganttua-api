@@ -96,6 +96,10 @@ public interface IDomainContext<E> extends ILifecycle {
 		return getDomainDefinition().owned() != null;
 	}
 
+	default boolean isGeolocalized() {
+		return getDomainDefinition().geolocalized() != null;
+	}
+
 	// Hook method addresses (to be implemented by concrete class)
 	default ObjectAddress getAfterGetMethodAddress() { return null; }
 	default ObjectAddress getBeforeCreateMethodAddress() { return null; }

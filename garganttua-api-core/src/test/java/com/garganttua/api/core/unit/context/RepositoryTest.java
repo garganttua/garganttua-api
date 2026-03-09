@@ -29,7 +29,6 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
-import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
 
@@ -96,12 +95,9 @@ class RepositoryTest {
 
     public static class InMemoryDao implements IDao {
         private final List<Object> storage = new ArrayList<>();
-        private IClass<?> dtoClass;
 
         @Override
-        public void setDtoClass(IClass<?> dtoClass) {
-            this.dtoClass = dtoClass;
-        }
+        public void registerDomain(IDomainDefinition domainDefinition) {}
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)

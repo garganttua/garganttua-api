@@ -6,15 +6,15 @@ package com.garganttua.api.spec.dao;
 import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.IClass;
 
 public interface IDao {
 
-	void setDtoClass(IClass<?> dtoClass);
+	void registerDomain(IDomainDefinition<?> domainDefinition);
 	
 	List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) throws ApiException;
 

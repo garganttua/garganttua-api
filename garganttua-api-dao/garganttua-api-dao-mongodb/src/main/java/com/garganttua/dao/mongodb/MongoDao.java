@@ -12,6 +12,7 @@ import org.bson.conversions.Bson;
 
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.dao.IDao;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
@@ -39,9 +40,12 @@ public class MongoDao implements IDao {
 		this.collectionName = collectionName;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public void setDtoClass(IClass<?> dtoClass) {
-		this.dtoClass = dtoClass;
+	public void registerDomain(IDomainDefinition domainDefinition) {
+		if (domainDefinition != null && domainDefinition.dtoDefinitions() != null && !domainDefinition.dtoDefinitions().isEmpty()) {
+			this.dtoClass = ((com.garganttua.api.spec.definition.IDtoDefinition<?>) domainDefinition.dtoDefinitions().get(0)).dtoClass();
+		}
 	}
 
 	@Override

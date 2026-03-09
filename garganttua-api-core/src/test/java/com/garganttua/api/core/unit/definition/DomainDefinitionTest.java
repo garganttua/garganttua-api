@@ -60,7 +60,7 @@ class DomainDefinitionTest {
                 List.of(),
                 false, false,
                 List.of(), List.of(),
-                null, null, null, null,
+                null, null, null, null, null,
                 useCases,
                 workflows,
                 securityDef);

@@ -9,7 +9,7 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.IClass;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 
 /**
  * In-memory DAO implementation for demonstration purposes.
@@ -17,12 +17,9 @@ import com.garganttua.core.reflection.IClass;
 public class InMemoryDao implements IDao {
 
     private final List<Object> storage = new ArrayList<>();
-    private IClass<?> dtoClass;
 
     @Override
-    public void setDtoClass(IClass<?> dtoClass) {
-        this.dtoClass = dtoClass;
-    }
+    public void registerDomain(IDomainDefinition domainDefinition) {}
 
     @Override
     public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)

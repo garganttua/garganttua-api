@@ -33,6 +33,7 @@ public record DomainDefinition<E>(
         ObjectAddress owned,
         ObjectAddress shared,
         ObjectAddress hiddenable,
+        ObjectAddress geolocalized,
         Map<String, IUseCaseDefinition> useCases,
         Map<String, IWorkflowDefinition> workflows,
         IDomainSecurityDefinition domainSecurityDefinition) implements IDomainDefinition<E> {

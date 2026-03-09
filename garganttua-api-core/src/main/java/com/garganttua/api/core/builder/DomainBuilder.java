@@ -94,6 +94,7 @@ public class DomainBuilder<E>
     private volatile ObjectAddress owned;
     private volatile ObjectAddress shared;
     private volatile ObjectAddress hiddenable;
+    private volatile ObjectAddress geolocalized;
     private volatile IDomainSecurityBuilder<E> securityBuilder;
     private final Map<IClass<?>, IDtoBuilder> dtos = new ConcurrentHashMap<>();
     private final Map<String, IUseCaseBuilder<?, ?, E>> useCases = new ConcurrentHashMap<>();
@@ -323,6 +324,42 @@ public class DomainBuilder<E>
         return this;
     }
 
+    @Override
+    public IDomainBuilder<E> geolocalized(String fieldName) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(Object.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> geolocalized(Field field) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(Object.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> geolocalized(ObjectAddress fieldAddress) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+
+        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(Object.class)).address();
+
+        return this;
+    }
+
     public IEntityBuilder<E> entity(IClass<?> entityClass) throws ApiException {
         Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
@@ -534,6 +571,7 @@ public class DomainBuilder<E>
                         this.owned,
                         this.shared,
                         this.hiddenable,
+                        this.geolocalized,
                         useCaseDefinitions,
                         workflowDefinitions,
                         securityDefinition),

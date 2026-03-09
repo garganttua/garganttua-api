@@ -19,6 +19,7 @@ import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.dao.IDao;
+import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
@@ -79,10 +80,9 @@ class ApiContextBuilderTest {
     // Simple in-memory DAO for testing
     public static class TestDao implements IDao {
         private final List<Object> storage = new ArrayList<>();
-        private IClass<?> dtoClass;
 
         @Override
-        public void setDtoClass(IClass<?> dtoClass) { this.dtoClass = dtoClass; }
+        public void registerDomain(IDomainDefinition domainDefinition) {}
 
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)

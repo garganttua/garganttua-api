@@ -48,6 +48,12 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainBuilder<E> shared(ObjectAddress fieldAddress) throws ApiException;
 
+    IDomainBuilder<E> geolocalized(String string) throws ApiException;
+
+    IDomainBuilder<E> geolocalized(Field field) throws ApiException;
+
+    IDomainBuilder<E> geolocalized(ObjectAddress fieldAddress) throws ApiException;
+
     IDomainBuilder<E> hiddenable(String string) throws ApiException;
 
     IDomainBuilder<E> hiddenable(Field field) throws ApiException;

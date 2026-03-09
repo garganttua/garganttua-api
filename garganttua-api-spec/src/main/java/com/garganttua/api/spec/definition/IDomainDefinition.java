@@ -32,5 +32,7 @@ public interface IDomainDefinition<E> {
 
     ObjectAddress hiddenable();
 
+    ObjectAddress geolocalized();
+
     List<IMethodBinder<Void>> startupBinders();
 }
