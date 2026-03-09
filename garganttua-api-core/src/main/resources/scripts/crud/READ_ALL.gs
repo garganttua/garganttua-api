@@ -3,7 +3,9 @@
 #@workflow
 #  Reads all entities from the repository with optional filtering, pagination and sorting.
 #
-#  @in operationRequest: IOperationRequest
+#  @in operationRequest: [0] IOperationRequest
+#  @in repository: [1] IRepository
+#  @in domainContext: [2] IDomainContext
 #  @out entities -> output: List
 #  @return 0: SUCCESS
 #@end
@@ -14,9 +16,7 @@ pageable <- :arg(@0, "pageable")
 caller <- :arg(@0, "caller")
 filter <- :arg(@0, "filter")
 outputMode <- :arg(@0, "mode")
-
 domainName <- :arg(@0, "domainName")
-domainContext <- :arg(@0, "domainContext")
 
 :get(cast(java.util.Optional.Class, @caller))
 ! -> 400

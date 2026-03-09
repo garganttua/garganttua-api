@@ -11,6 +11,7 @@ import com.garganttua.api.core.context.OperationResponse;
 import com.garganttua.api.core.context.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.context.BusinessOperation;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
@@ -269,25 +270,46 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
             request.arg(IOperationRequest.API_CONTEXT, this.apiContext);
             request.arg(IOperationRequest.DOMAIN_CONTEXT, this);
             request.arg(IOperationRequest.REPOSITORY, this.repository);
+            ICaller caller = request.caller();
+            if (caller == null || caller.tenantId() == null) {
+                return OperationResponse.badRequest("No caller provided");
+            }
+            request.arg("caller", caller);
 
             Map<String, Object> workflowParams = new HashMap<>();
             workflowParams.put("repository", this.repository);
+            workflowParams.put("domainContext", this);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = workflow.execute(input, options);
 
             if (result.isSuccess()) {
                 return OperationResponse.ok(result.output());
-            } else {
+            } else if (result.hasAborted()) {
                 String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
                 log.error("Workflow {} failed for domain {}: {}", workflowName,
                         this.domainDefinition.domainName(), errorMsg);
                 return OperationResponse.error(errorMsg);
+            } else {
+                String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
+                log.warn("Workflow {} returned code {} for domain {}: {}", workflowName,
+                        result.code(), this.domainDefinition.domainName(), errorMsg);
+                return mapWorkflowCode(result.code(), errorMsg);
             }
         } catch (Exception e) {
             log.error("Error executing workflow {} for domain {}: {}", workflowName,
                     this.domainDefinition.domainName(), e.getMessage(), e);
             return OperationResponse.error("Workflow execution error: " + e.getMessage());
         }
+    }
+
+    private OperationResponse mapWorkflowCode(Integer code, String message) {
+        return switch (code) {
+            case 400 -> OperationResponse.badRequest(message);
+            case 401 -> OperationResponse.unauthorized(message);
+            case 403 -> OperationResponse.forbidden(message);
+            case 404 -> OperationResponse.notFound(message);
+            default -> OperationResponse.error(message);
+        };
     }
 
     private String resolveWorkflowName(BusinessOperation businessOp) {

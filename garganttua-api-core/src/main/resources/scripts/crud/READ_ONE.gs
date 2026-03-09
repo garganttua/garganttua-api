@@ -3,17 +3,18 @@
 #@workflow
 #  Reads a single entity from the repository by its identifier.
 #
-#  @in  operationRequest: IOperationRequest
-#  @out result -> output: IOperationRequest
+#  @in operationRequest: [0] IOperationRequest
+#  @in repository: [1] IRepository
+#  @in domainContext: [2] IDomainContext
+#  @out result -> output: Object
 #  @return 0: SUCCESS
 #@end
 
 // Extract arguments from the operation request
 caller <- :arg(@0, "caller")
-caller <- :arg(@0, "identifier")
+identifier <- :arg(@0, "identifier")
 
 domainName <- :arg(@0, "domainName")
-domainContext <- :arg(@0, "domainContext")
 
 :get(cast(java.util.Optional.Class, @caller))
 ! -> 400

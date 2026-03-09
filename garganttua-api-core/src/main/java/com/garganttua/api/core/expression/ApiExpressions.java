@@ -52,8 +52,10 @@ public class ApiExpressions {
 	@Expression(name = "buildFilter", description = "Builds access filter from caller permissions and domain definition")
 	public static Optional<IFilter> buildFilter(Object caller, Object filter, Object context) {
 		Optional<ICaller> castedCaller = (Optional<ICaller>) caller;
-		Optional<IDomainContext<?>> dc = (Optional<IDomainContext<?>>) context;
-		IDomainDefinition<?> domainDef = dc.get().getDomainDefinition();
+		IDomainContext<?> dc = context instanceof Optional<?> opt
+				? (IDomainContext<?>) opt.get()
+				: (IDomainContext<?>) context;
+		IDomainDefinition<?> domainDef = dc.getDomainDefinition();
 		Optional<IFilter> baseFilter = (Optional<IFilter>) filter;
 		return Optional.ofNullable(
 				RepositoryFilterTools.buildFilter(castedCaller.orElse(null), baseFilter.orElse(null), domainDef));

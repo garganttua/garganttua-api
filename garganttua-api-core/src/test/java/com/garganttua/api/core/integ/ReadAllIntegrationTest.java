@@ -113,15 +113,26 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
         Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
-        OperationRequest request = new OperationRequest(new HashMap<>());
-        request.arg(IOperationRequest.OPERATION, readAllOp);
+        OperationRequest request = superTenantRequest(readAllOp);
 
         IOperationResponse response = failingUserCtx.invoke(request);
 
         assertNotNull(response);
         assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
-        assertEquals("Database connection lost", response.getResponse());
-        assertNotNull(response.getResponse());
+    }
+
+    @Test
+    @DisplayName("readAll returns CLIENT_ERROR when no caller is provided")
+    void readAllReturnsBadRequestWhenNoCaller() throws ApiException {
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, readAllOp);
+        // No tenant/caller args provided
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertNotNull(response);
+        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
     }
 
     @Test

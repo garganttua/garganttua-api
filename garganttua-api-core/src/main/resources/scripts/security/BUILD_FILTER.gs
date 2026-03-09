@@ -3,7 +3,9 @@
 #@workflow
 #  Builds the access filter from caller permissions and domain definition.
 #
-#  @in operationRequest: IOperationRequest
+#  @in operationRequest: [0] IOperationRequest
+#  @in repository: IRepository
+#  @in domainContext: IDomainContext
 #  @out filter -> filter: IFilter
 #  @return 0: SUCCESS
 #@end
