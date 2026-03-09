@@ -2,16 +2,20 @@ package com.garganttua.api.core.integ;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.HashMap;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.context.OperationRequest;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.Operation;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
@@ -21,11 +25,11 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
-    private StubDao userDao;
+    private CapturingDao userDao;
 
     @BeforeEach
     void setUp() throws ApiException {
-        userDao = new StubDao();
+        userDao = new CapturingDao();
 
         IApiContextBuilder builder = newBuilder();
         builder.domain(RuntimeClass.of(User.class))
@@ -44,8 +48,11 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("invoke deleteAll workflow returns a successful response")
-    void invokeDeleteAllWorkflow() throws ApiException {
+    @DisplayName("deleteAll deletes all entities and returns them")
+    void deleteAllDeletesAllEntities() throws ApiException {
+        seedUsers("Alice", "Bob", "Charlie");
+        assertEquals(3, userDao.getStorage().size());
+
         Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
         OperationRequest request = superTenantRequest(deleteAllOp);
 
@@ -53,5 +60,105 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
 
         assertNotNull(response);
         assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertNotNull(response.getResponse());
+        assertTrue(response.getResponse() instanceof List);
+
+        List<?> deleted = (List<?>) response.getResponse();
+        assertEquals(3, deleted.size());
+
+        assertEquals(0, userDao.getStorage().size(), "All entities should have been deleted from DAO");
+    }
+
+    @Test
+    @DisplayName("deleteAll returns empty list when no entities exist")
+    void deleteAllReturnsEmptyWhenNoEntities() throws ApiException {
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        OperationRequest request = superTenantRequest(deleteAllOp);
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertNotNull(response);
+        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertTrue(response.getResponse() instanceof List);
+
+        List<?> deleted = (List<?>) response.getResponse();
+        assertTrue(deleted.isEmpty());
+    }
+
+    @Test
+    @DisplayName("deleteAll returns CLIENT_ERROR when no caller is provided")
+    void deleteAllReturnsBadRequestWhenNoCaller() throws ApiException {
+        seedUsers("Alice");
+
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, deleteAllOp);
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertNotNull(response);
+        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
+        assertEquals("No caller provided", response.getResponse());
+
+        assertEquals(1, userDao.getStorage().size(), "Entity should not have been deleted");
+    }
+
+    @Test
+    @DisplayName("deleteAll returns SERVER_ERROR when repository throws an exception")
+    void deleteAllReturnsServerErrorOnRepositoryException() throws ApiException {
+        IApiContextBuilder failingBuilder = newBuilder();
+
+        failingBuilder.domain(RuntimeClass.of(User.class))
+                .tenant(true)
+                .entity()
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                .up()
+                .dto(RuntimeClass.of(UserDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(new FailingDao())
+                .up()
+            .up();
+
+        IApiContext failingContext = buildAndStart(failingBuilder);
+        IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
+
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        OperationRequest request = superTenantRequest(deleteAllOp);
+
+        IOperationResponse response = failingUserCtx.invoke(request);
+
+        assertNotNull(response);
+        assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
+    }
+
+    @Test
+    @DisplayName("deleteAll with single entity deletes it and returns it")
+    void deleteAllSingleEntity() throws ApiException {
+        seedUsers("Alice");
+        assertEquals(1, userDao.getStorage().size());
+
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        OperationRequest request = superTenantRequest(deleteAllOp);
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        List<?> deleted = (List<?>) response.getResponse();
+        assertEquals(1, deleted.size());
+        assertEquals(0, userDao.getStorage().size());
+    }
+
+    private void seedUsers(String... names) {
+        int i = 1;
+        for (String name : names) {
+            UserDto dto = new UserDto();
+            dto.setId(String.valueOf(i));
+            dto.setUuid("uuid-" + name.toLowerCase());
+            dto.setTenantId("SUPER_TENANT");
+            dto.setName(name);
+            dto.setEmail(name.toLowerCase() + "@example.com");
+            userDao.getStorage().add(dto);
+            i++;
+        }
     }
 }

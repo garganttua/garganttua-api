@@ -153,7 +153,23 @@ abstract class AbstractCrudIntegrationTest {
 
         @Override
         public void delete(Object object) throws ApiException {
-            storage.remove(object);
+            String deleteUuid = extractUuid(object);
+            if (deleteUuid != null) {
+                storage.removeIf(stored -> deleteUuid.equals(extractUuid(stored)));
+            } else {
+                storage.remove(object);
+            }
+        }
+
+        private String extractUuid(Object obj) {
+            try {
+                java.lang.reflect.Field field = obj.getClass().getDeclaredField("uuid");
+                field.setAccessible(true);
+                Object value = field.get(obj);
+                return value != null ? value.toString() : null;
+            } catch (Exception e) {
+                return null;
+            }
         }
 
         @Override
@@ -222,7 +238,44 @@ abstract class AbstractCrudIntegrationTest {
             this.lastPageable = pageable;
             this.lastFilter = filter;
             this.lastSort = sort;
+            if (filter.isPresent()) {
+                return filterStorage(filter.get());
+            }
             return new ArrayList<>(storage);
+        }
+
+        private List<Object> filterStorage(com.garganttua.api.spec.filter.IFilter f) {
+            if ("$and".equals(f.getName()) && f.getFilters() != null) {
+                List<Object> result = new ArrayList<>(storage);
+                for (com.garganttua.api.spec.filter.IFilter sub : f.getFilters()) {
+                    result = filterList(result, sub);
+                }
+                return result;
+            }
+            return filterList(new ArrayList<>(storage), f);
+        }
+
+        private List<Object> filterList(List<Object> list, com.garganttua.api.spec.filter.IFilter f) {
+            if ("$field".equals(f.getName()) && f.getFilters() != null) {
+                String fieldName = String.valueOf(f.getValue());
+                com.garganttua.api.spec.filter.IFilter operator = f.getFilters().get(0);
+                if ("$eq".equals(operator.getName())) {
+                    Object expected = operator.getValue();
+                    List<Object> result = new ArrayList<>();
+                    for (Object obj : list) {
+                        try {
+                            java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
+                            field.setAccessible(true);
+                            Object actual = field.get(obj);
+                            if (expected != null && expected.equals(actual)) {
+                                result.add(obj);
+                            }
+                        } catch (Exception e) { /* skip */ }
+                    }
+                    return result;
+                }
+            }
+            return list;
         }
 
         @Override
@@ -235,7 +288,23 @@ abstract class AbstractCrudIntegrationTest {
         @Override
         public void delete(Object object) throws ApiException {
             this.lastDeleted = object;
-            storage.remove(object);
+            String deleteUuid = extractUuid(object);
+            if (deleteUuid != null) {
+                storage.removeIf(stored -> deleteUuid.equals(extractUuid(stored)));
+            } else {
+                storage.remove(object);
+            }
+        }
+
+        private String extractUuid(Object obj) {
+            try {
+                java.lang.reflect.Field field = obj.getClass().getDeclaredField("uuid");
+                field.setAccessible(true);
+                Object value = field.get(obj);
+                return value != null ? value.toString() : null;
+            } catch (Exception e) {
+                return null;
+            }
         }
 
         @Override

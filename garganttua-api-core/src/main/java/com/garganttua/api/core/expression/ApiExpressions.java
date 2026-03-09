@@ -9,6 +9,7 @@ import com.garganttua.api.core.context.Filter;
 import com.garganttua.api.core.context.RepositoryFilterTools;
 import com.garganttua.api.spec.service.Page;
 import com.garganttua.api.core.context.application.DomainContext;
+import com.garganttua.api.core.context.application.EntityUpdater;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
@@ -103,6 +104,15 @@ public class ApiExpressions {
 	public static void deleteEntity(Object repository, Object entity) throws ApiException {
 		IRepository repo = (IRepository) repository;
 		repo.delete(entity);
+	}
+
+	@Expression(name = "deleteEntities", description = "Deletes a list of entities from the repository")
+	public static void deleteEntities(Object repository, Object entities) throws ApiException {
+		IRepository repo = (IRepository) repository;
+		List<Object> entityList = (List<Object>) entities;
+		for (Object entity : entityList) {
+			repo.delete(entity);
+		}
 	}
 
 	@Expression(name = "doesExist", description = "Checks whether an entity exists in the repository")
@@ -402,6 +412,66 @@ public class ApiExpressions {
 	public static Object runAfterCreate(Object entity, Object request) {
 		return runLifecycleHooks(entity, request, "afterCreate",
 				ed -> ((EntityDefinition<?>) ed).afterCreateMethodBuilders());
+	}
+
+	@Expression(name = "updateEntity", description = "Applies authorized field updates from updatedEntity onto storedEntity")
+	public static Object updateEntity(Object caller, Object storedEntity, Object updatedEntity, Object context) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		IDomainContext<?> dc = context instanceof Optional<?> opt
+				? (IDomainContext<?>) opt.get()
+				: (IDomainContext<?>) context;
+		EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
+		return new EntityUpdater().update(c, storedEntity, updatedEntity, entityDef.updates());
+	}
+
+	@Expression(name = "runBeforeUpdate", description = "Executes @EntityBeforeUpdate lifecycle hooks on entity")
+	public static Object runBeforeUpdate(Object entity, Object request) {
+		return runLifecycleHooks(entity, request, "beforeUpdate",
+				ed -> ((EntityDefinition<?>) ed).beforeUpdateMethodBuilders());
+	}
+
+	@Expression(name = "runAfterUpdate", description = "Executes @EntityAfterUpdate lifecycle hooks on entity")
+	public static Object runAfterUpdate(Object entity, Object request) {
+		return runLifecycleHooks(entity, request, "afterUpdate",
+				ed -> ((EntityDefinition<?>) ed).afterUpdateMethodBuilders());
+	}
+
+	@Expression(name = "runBeforeDelete", description = "Executes @EntityBeforeDelete lifecycle hooks on entities")
+	public static List<Object> runBeforeDelete(Object entities, Object request) {
+		return runListLifecycleHooks(entities, request, "beforeDelete",
+				ed -> ((EntityDefinition<?>) ed).beforeDeleteMethodBuilders());
+	}
+
+	@Expression(name = "runAfterDelete", description = "Executes @EntityAfterDelete lifecycle hooks on entities")
+	public static List<Object> runAfterDelete(Object entities, Object request) {
+		return runListLifecycleHooks(entities, request, "afterDelete",
+				ed -> ((EntityDefinition<?>) ed).afterDeleteMethodBuilders());
+	}
+
+	private static List<Object> runListLifecycleHooks(Object entities, Object request, String hookName,
+			java.util.function.Function<IEntityDefinition<?>, List<IMethodBinder<Void>>> bindersExtractor) {
+		if (entities == null) return List.of();
+		List<Object> entityList = (List<Object>) entities;
+		if (entityList.isEmpty()) return entityList;
+
+		try {
+			IOperationRequest opRequest = (IOperationRequest) request;
+			IDomainContext<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
+			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
+			List<IMethodBinder<Void>> binders = bindersExtractor.apply(entityDef);
+
+			if (binders == null || binders.isEmpty()) return entityList;
+
+			for (IMethodBinder<Void> binder : binders) {
+				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
+				for (Object entity : entityList) {
+					REFLECTION.invokeDeep(entity, methodRef, RuntimeClass.of(Void.class));
+				}
+			}
+		} catch (Exception e) {
+			throw new ApiException("Failed to execute " + hookName + " lifecycle hooks", e);
+		}
+		return entityList;
 	}
 
 	private static Object runLifecycleHooks(Object entity, Object request, String hookName,
