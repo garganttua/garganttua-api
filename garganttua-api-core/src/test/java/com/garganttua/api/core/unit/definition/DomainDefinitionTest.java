@@ -13,12 +13,12 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
-import com.garganttua.api.spec.context.Access;
-import com.garganttua.api.spec.context.BusinessOperation;
-import com.garganttua.api.spec.context.Operation;
-import com.garganttua.api.spec.context.OperationType;
-import com.garganttua.api.spec.context.Scope;
-import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.BusinessOperation;
+import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationType;
+import com.garganttua.api.spec.operation.Scope;
+import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.definition.IUseCaseDefinition;
 import com.garganttua.api.spec.definition.IWorkflowDefinition;

@@ -1,7 +1,7 @@
 package com.garganttua.api.spec.context.dsl;
 
-import com.garganttua.api.spec.context.Scope;
-import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.operation.Scope;
+import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.context.dsl.security.IWorkflowSecurityBuilder;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.workflow.IWorkflow;

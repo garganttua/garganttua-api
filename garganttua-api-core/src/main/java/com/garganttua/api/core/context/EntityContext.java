@@ -1,0 +1,31 @@
+package com.garganttua.api.core.context;
+
+import java.util.Objects;
+
+import com.garganttua.api.core.definition.EntityDefinition;
+import com.garganttua.api.spec.context.IEntityContext;
+import com.garganttua.core.reflection.IClass;
+
+import lombok.Getter;
+
+public class EntityContext<E> implements IEntityContext<E> {
+
+    @Getter
+    private EntityDefinition<E> entityDefinition;
+
+    public EntityContext(
+            EntityDefinition<E> entityDefinition) {
+        this.entityDefinition = Objects.requireNonNull(entityDefinition, "Entity definition cannot be null");
+    }
+
+    @Override
+    public String getEntityName() {
+        return this.entityDefinition.entityClass().getSimpleName().toLowerCase();
+    }
+
+    @Override
+    public IClass<E> getEntityClass() {
+        return this.entityDefinition.entityClass();
+    }
+
+}

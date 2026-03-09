@@ -5,8 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.spec.context.Scope;
-import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.operation.Scope;
+import com.garganttua.api.spec.operation.TechnicalOperation;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

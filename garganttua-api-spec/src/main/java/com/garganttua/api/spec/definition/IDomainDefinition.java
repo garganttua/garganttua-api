@@ -2,7 +2,7 @@ package com.garganttua.api.spec.definition;
 
 import java.util.List;
 
-import com.garganttua.api.spec.context.Operation;
+import com.garganttua.api.spec.operation.Operation;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 

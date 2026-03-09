@@ -14,9 +14,9 @@ import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
 import com.garganttua.api.spec.factory.IFactory;
-import com.garganttua.api.spec.interfasse.ICustomizableInterface;
-import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
+import com.garganttua.api.spec.endpoint.ICustomizableEndpoint;
+import com.garganttua.api.spec.endpoint.IEndpoint;
+import com.garganttua.api.spec.endpoint.IEndpointsRegistry;
 import com.garganttua.api.spec.service.CustomService;
 import com.garganttua.api.spec.service.IServiceInfos;
 import com.garganttua.api.spec.service.IServicesInfosRegistry;
@@ -27,11 +27,11 @@ import lombok.extern.slf4j.Slf4j;
 public class ServicesInfosFactory {
 
 	private Set<IDomain> domains;
-	private IInterfacesRegistry interfacesRegistry;
+	private IEndpointsRegistry interfacesRegistry;
 	private Map<String, List<IServiceInfos>> servicesInfos = new HashMap<String, List<IServiceInfos>>();
 	private IFactoriesRegistry factoriesRegistry;
 
-	public ServicesInfosFactory(Set<IDomain> domains, IInterfacesRegistry interfacesRegistry,
+	public ServicesInfosFactory(Set<IDomain> domains, IEndpointsRegistry interfacesRegistry,
 			IFactoriesRegistry factoriesRegistry) {
 		this.domains = domains;
 		this.interfacesRegistry = interfacesRegistry;
@@ -46,7 +46,7 @@ public class ServicesInfosFactory {
 	}
 
 	private void createInfos(IDomain domain) {
-		List<IInterface> interfasses = this.interfacesRegistry.getInterfaces(domain.getDomain());
+		List<IEndpoint> interfasses = this.interfacesRegistry.getInterfaces(domain.getDomain());
 
 		List<IServiceInfos> customInfos = new ArrayList<IServiceInfos>();
 		this.getCustomServiceFromClass(domain, domain.getEntityClass(), customInfos, () -> {
@@ -66,7 +66,7 @@ public class ServicesInfosFactory {
 		});
 
 		interfasses.stream().filter(interfasse -> {
-			return ICustomizableInterface.class.isAssignableFrom(interfasse.getClass());
+			return ICustomizableEndpoint.class.isAssignableFrom(interfasse.getClass());
 		}).forEach(interfasse -> {
 			List<IServiceInfos> infos;
 			try {
@@ -75,7 +75,7 @@ public class ServicesInfosFactory {
 				throw new RuntimeException(e);
 			}
 			this.getCustomServicesFromObject(domain, interfasse, infos);
-			customInfos.forEach( i -> {((ICustomizableInterface) interfasse).addCustomService(i);});
+			customInfos.forEach( i -> {((ICustomizableEndpoint) interfasse).addCustomService(i);});
 			
 			infos.forEach(info -> {
 				log.info("	Method added [domain {}, service {}]", domain.getDomain(), info);

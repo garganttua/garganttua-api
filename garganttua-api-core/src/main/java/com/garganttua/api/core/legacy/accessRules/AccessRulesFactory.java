@@ -2,7 +2,7 @@ package com.garganttua.api.core.legacy.accessRules;
 
 import java.util.Set;
 
-import com.garganttua.api.spec.context.IAccessRulesRegistry;
+import com.garganttua.api.spec.security.context.IAccessRulesRegistry;
 import com.garganttua.api.spec.domain.IDomain;
 
 public class AccessRulesFactory {

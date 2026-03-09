@@ -6,9 +6,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.api.core.context.application.AuthorizationContext;
+import com.garganttua.api.core.context.security.AuthorizationContext;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IAuthorizationContext;
+import com.garganttua.api.spec.security.context.IAuthorizationContext;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationMethodBinderBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;

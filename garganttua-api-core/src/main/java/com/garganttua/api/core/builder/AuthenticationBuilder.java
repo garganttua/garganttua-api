@@ -3,7 +3,7 @@ package com.garganttua.api.core.builder;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import com.garganttua.api.spec.context.IAuthenticationContext;
+import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;

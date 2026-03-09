@@ -2,7 +2,7 @@ package com.garganttua.api.spec.context.dsl.security;
 
 import java.lang.reflect.Field;
 
-import com.garganttua.api.spec.context.IAuthenticatorContext;
+import com.garganttua.api.spec.security.context.IAuthenticatorContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.spec.ApiException;

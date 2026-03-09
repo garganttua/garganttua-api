@@ -1,8 +1,8 @@
 package com.garganttua.api.spec.definition;
 
-import com.garganttua.api.spec.context.Access;
-import com.garganttua.api.spec.context.Scope;
-import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.Scope;
+import com.garganttua.api.spec.operation.TechnicalOperation;
 
 public interface IUseCaseDefinition {
 

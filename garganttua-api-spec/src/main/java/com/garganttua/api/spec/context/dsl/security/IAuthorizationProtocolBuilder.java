@@ -2,7 +2,7 @@ package com.garganttua.api.spec.context.dsl.security;
 
 import java.lang.reflect.Method;
 
-import com.garganttua.api.spec.context.IAuthorizationProtocolContext;
+import com.garganttua.api.spec.security.context.IAuthorizationProtocolContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;

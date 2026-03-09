@@ -8,7 +8,7 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.api.spec.updater.IEntityUpdater;
+import com.garganttua.api.spec.entity.IEntityUpdater;
 import com.garganttua.api.spec.ApiException;
 
 public interface IFactory {

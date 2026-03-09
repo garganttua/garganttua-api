@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import com.garganttua.api.core.context.application.AuthenticatorContext;
-import com.garganttua.api.spec.context.IAuthenticatorContext;
+import com.garganttua.api.core.context.security.AuthenticatorContext;
+import com.garganttua.api.spec.security.context.IAuthenticatorContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;

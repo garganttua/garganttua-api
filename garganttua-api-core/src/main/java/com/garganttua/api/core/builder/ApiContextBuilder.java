@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.garganttua.api.core.builder.binder.ApiContextStartupBinderBuilder;
-import com.garganttua.api.core.context.application.ApiContext;
+import com.garganttua.api.core.context.ApiContext;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IApiContext;

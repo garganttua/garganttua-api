@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.garganttua.api.spec.context.Access;
-import com.garganttua.api.spec.context.BusinessOperation;
-import com.garganttua.api.spec.context.Operation;
-import com.garganttua.api.spec.context.Scope;
-import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.BusinessOperation;
+import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.Scope;
+import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IDomainSecurityDefinition;
 import com.garganttua.api.spec.definition.IDtoDefinition;

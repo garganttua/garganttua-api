@@ -2,7 +2,7 @@ package com.garganttua.api.spec.service.pipeline;
 
 import java.util.Set;
 
-import com.garganttua.api.spec.context.BusinessOperation;
+import com.garganttua.api.spec.operation.BusinessOperation;
 
 /**
  * Represents a script that executes within a pipeline phase.

@@ -6,7 +6,7 @@ import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.event.IEventPublisher;
-import com.garganttua.api.spec.interfasse.IInterface;
+import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -18,9 +18,9 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainStartupBinderBuilder<E> startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> method) throws ApiException;
 
-    IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws ApiException;
+    IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>> bean) throws ApiException;
 
-    IDomainBuilder<E> interfasse(IClass<? extends IInterface> interfasse) throws ApiException;
+    IDomainBuilder<E> interfasse(IClass<? extends IEndpoint> interfasse) throws ApiException;
 
     IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 

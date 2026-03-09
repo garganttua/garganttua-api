@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.operation.Access;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

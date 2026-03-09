@@ -3,10 +3,10 @@ package com.garganttua.api.spec.security.authentication;
 import java.lang.reflect.Method;
 
 import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.interfasse.ICustomizableInterface;
+import com.garganttua.api.spec.endpoint.ICustomizableEndpoint;
 import com.garganttua.api.spec.ApiException;
 
-public interface IAuthenticationInterface extends ICustomizableInterface {
+public interface IAuthenticationInterface extends ICustomizableEndpoint {
 
 	void setAuthenticationService(IAuthenticationService authenticationService);
 

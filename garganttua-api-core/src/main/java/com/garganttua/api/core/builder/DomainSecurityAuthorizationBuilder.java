@@ -7,7 +7,7 @@ import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.interfasse.IInterface;
+import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
@@ -30,7 +30,7 @@ public class DomainSecurityAuthorizationBuilder<E>
     }
 
     @Override
-    public IDomainSecurityAuthorizationBuilder<E> interfasse(IClass<? extends IInterface> interfaceClass)
+    public IDomainSecurityAuthorizationBuilder<E> interfasse(IClass<? extends IEndpoint> interfaceClass)
             throws ApiException {
         Objects.requireNonNull(interfaceClass, "Interface class cannot be null");
         if (this.interfaces.stream().noneMatch(i -> i.getSuppliedClass().equals(interfaceClass))) {

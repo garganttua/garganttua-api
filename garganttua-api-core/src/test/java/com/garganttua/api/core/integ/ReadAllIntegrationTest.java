@@ -11,11 +11,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.context.OperationRequest;
+import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.Operation;
+import com.garganttua.api.spec.operation.Operation;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.service.IOperationRequest;

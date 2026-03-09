@@ -1,7 +1,7 @@
 package com.garganttua.api.spec.service.pipeline;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.BusinessOperation;
+import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;

@@ -6,25 +6,25 @@ import java.util.Map;
 
 import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
+import com.garganttua.api.spec.endpoint.IEndpoint;
+import com.garganttua.api.spec.endpoint.IEndpointsRegistry;
 
-public class InterfacesRegistry implements IInterfacesRegistry {
+public class InterfacesRegistry implements IEndpointsRegistry {
 
-	private Map<String, List<IInterface>> interfaces;
+	private Map<String, List<IEndpoint>> interfaces;
 
-	public InterfacesRegistry(Map<String, List<IInterface>> interfaces) {
+	public InterfacesRegistry(Map<String, List<IEndpoint>> interfaces) {
 		this.interfaces = interfaces;
 	}
 
 	@Override
-	public List<IInterface> getInterfaces(String domainName) {
+	public List<IEndpoint> getInterfaces(String domainName) {
 		return this.interfaces.get(domainName);
 	}
 
 	@Override
-	public List<IInterface> getInterfaces() {
-		List<IInterface> list = new ArrayList<IInterface>();
+	public List<IEndpoint> getInterfaces() {
+		List<IEndpoint> list = new ArrayList<IEndpoint>();
 		this.interfaces.values().parallelStream().forEach(interfaces -> {
 			list.addAll(interfaces);
 		});	

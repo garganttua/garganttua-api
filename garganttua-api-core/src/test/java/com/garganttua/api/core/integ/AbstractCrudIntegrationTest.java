@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.api.core.builder.ApiContextBuilder;
-import com.garganttua.api.core.context.OperationRequest;
+import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.Operation;
+import com.garganttua.api.spec.operation.Operation;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.filter.IFilter;

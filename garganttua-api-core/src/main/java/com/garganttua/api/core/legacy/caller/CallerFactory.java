@@ -8,7 +8,7 @@ import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.caller.ICallerFactory;
-import com.garganttua.api.spec.context.IAccessRulesRegistry;
+import com.garganttua.api.spec.security.context.IAccessRulesRegistry;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.factory.EntityIdentifier;
 import com.garganttua.api.spec.factory.IFactory;

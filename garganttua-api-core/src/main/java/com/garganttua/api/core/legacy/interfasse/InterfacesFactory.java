@@ -10,8 +10,8 @@ import org.javatuples.Pair;
 
 import com.garganttua.api.core.legacy.engine.EngineException;
 import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
+import com.garganttua.api.spec.endpoint.IEndpoint;
+import com.garganttua.api.spec.endpoint.IEndpointsRegistry;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.beans.GGBeanRefValidator;
 import com.garganttua.core.reflection.beans.IGGBeanLoader;
@@ -23,7 +23,7 @@ public class InterfacesFactory {
 
 	private Collection<IDomain> domains;
 	private IGGBeanLoader beanLoader;
-	private Map<String, List<IInterface>> interfaces = new HashMap<String, List<IInterface>>();
+	private Map<String, List<IEndpoint>> interfaces = new HashMap<String, List<IEndpoint>>();
 
 	public InterfacesFactory(Collection<IDomain> domains, IGGBeanLoader beanLoader) throws EngineException {
 		this.domains = domains;
@@ -39,14 +39,14 @@ public class InterfacesFactory {
 		log.info("*** Collecting Interfaces ...");
 		
 		for( IDomain domain: this.domains ) {
-			List<IInterface> listOfInterfaces = new ArrayList<IInterface>();
+			List<IEndpoint> listOfInterfaces = new ArrayList<IEndpoint>();
 			this.interfaces.put(domain.getDomain(), listOfInterfaces ) ;
 
 			for( String interfasse: domain.getInterfaces()) {
 			
 				Pair<String, String> ref = GGBeanRefValidator.validate(interfasse);
 				
-				IInterface interfasseObject = (IInterface) this.beanLoader.getBeanNamed(ref.getValue0(), ref.getValue1());
+				IEndpoint interfasseObject = (IEndpoint) this.beanLoader.getBeanNamed(ref.getValue0(), ref.getValue1());
 				interfasseObject.setDomain(domain);
 				listOfInterfaces.add(interfasseObject);
 
@@ -55,7 +55,7 @@ public class InterfacesFactory {
 		}
 	}
 
-	public IInterfacesRegistry getRegistry() {
+	public IEndpointsRegistry getRegistry() {
 		return new InterfacesRegistry(this.interfaces);
 	}
 }

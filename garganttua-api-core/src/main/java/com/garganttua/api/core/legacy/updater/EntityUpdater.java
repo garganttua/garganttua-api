@@ -6,7 +6,7 @@ import com.garganttua.api.core.legacy.engine.EngineException;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.updater.IEntityUpdater;
+import com.garganttua.api.spec.entity.IEntityUpdater;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;

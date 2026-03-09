@@ -22,7 +22,7 @@ import com.garganttua.api.spec.EntityOperation;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.caller.ICallerFactoriesRegistry;
 import com.garganttua.api.spec.caller.ICallerFactory;
-import com.garganttua.api.spec.context.IAccessRulesRegistry;
+import com.garganttua.api.spec.security.context.IAccessRulesRegistry;
 import com.garganttua.api.spec.context.IEngine;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.dao.IDaosRegistry;
@@ -30,8 +30,8 @@ import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.domain.IDomainsRegistry;
 import com.garganttua.api.spec.factory.IFactoriesRegistry;
 import com.garganttua.api.spec.factory.IFactory;
-import com.garganttua.api.spec.interfasse.IInterface;
-import com.garganttua.api.spec.interfasse.IInterfacesRegistry;
+import com.garganttua.api.spec.endpoint.IEndpoint;
+import com.garganttua.api.spec.endpoint.IEndpointsRegistry;
 import com.garganttua.api.spec.repository.IRepositoriesRegistry;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.IAccessRule;
@@ -56,7 +56,7 @@ public class Engine implements IEngine {
 	private IGGPropertyLoader propLoader;
 	private IFactoriesRegistry factoriesRegistry;
 	private IServicesRegistry servicesRegistry;
-	private IInterfacesRegistry interfacesRegistry;
+	private IEndpointsRegistry interfacesRegistry;
 	private ICallerFactoriesRegistry callerFactoriesRegistry;
 	private IAccessRulesRegistry accessRulesRegistry;
 	private IServicesInfosRegistry servicesInfosRegistry;
@@ -89,7 +89,7 @@ public class Engine implements IEngine {
 		
 		log.info("Starting interfaces");
 		
-		for( IInterface interfasse: this.interfacesRegistry.getInterfaces() ) {
+		for( IEndpoint interfasse: this.interfacesRegistry.getInterfaces() ) {
 			log.info("*** Starting interface "+interfasse.getName());
 			interfasse.start();
 		};
@@ -106,7 +106,7 @@ public class Engine implements IEngine {
 		IRepository repository = (IRepository) this.repositoriesRegistry.getRepository(domainName);
 		IFactory factory = (IFactory) this.factoriesRegistry.getFactory(domainName);
 		IService service = this.servicesRegistry.getService(domainName);
-		List<IInterface> interfaces = this.interfacesRegistry.getInterfaces(domainName);
+		List<IEndpoint> interfaces = this.interfacesRegistry.getInterfaces(domainName);
 		
 		repository.setDaos(daos);
 		factory.setRepository(repository);

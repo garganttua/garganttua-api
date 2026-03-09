@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.context.dsl.security;
 
-import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
 import com.garganttua.api.spec.security.IWorkflowSecurity;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;

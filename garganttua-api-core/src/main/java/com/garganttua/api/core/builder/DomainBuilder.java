@@ -11,9 +11,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.core.builder.binder.DomainStartupBinderBuilder;
-import com.garganttua.api.core.context.application.DomainContext;
-import com.garganttua.api.core.context.application.DtoContext;
-import com.garganttua.api.core.context.application.EntityContext;
+import com.garganttua.api.core.context.DomainContext;
+import com.garganttua.api.core.context.DtoContext;
+import com.garganttua.api.core.context.EntityContext;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.definition.UseCaseDefinition;
@@ -21,13 +21,13 @@ import com.garganttua.api.core.definition.WorkflowDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.Pluralizer;
-import com.garganttua.api.spec.context.BusinessOperation;
+import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.IEntityContext;
-import com.garganttua.api.spec.context.Scope;
-import com.garganttua.api.spec.context.TechnicalOperation;
+import com.garganttua.api.spec.operation.Scope;
+import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainStartupBinderBuilder;
@@ -40,7 +40,7 @@ import com.garganttua.api.spec.definition.IDtoDefinition;
 import com.garganttua.api.spec.definition.IUseCaseDefinition;
 import com.garganttua.api.spec.definition.IWorkflowDefinition;
 import com.garganttua.api.spec.event.IEventPublisher;
-import com.garganttua.api.spec.interfasse.IInterface;
+import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import java.util.Set;
@@ -80,7 +80,7 @@ public class DomainBuilder<E>
     private IMapper mapper = DefaultMapper.mapper();
 
     private final List<IDomainStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
-    private final List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces = new CopyOnWriteArrayList<>();
+    private final List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces = new CopyOnWriteArrayList<>();
     private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> events = new CopyOnWriteArrayList<>();
 
     private volatile boolean publik = false;
@@ -138,7 +138,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws ApiException {
+    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>> bean) throws ApiException {
         this.interfaces.add(bean);
         return this;
     }
@@ -507,9 +507,9 @@ public class DomainBuilder<E>
                 : new DomainSecurityBuilder<>(this, this.interfaces, this.entityClass).build();
 
         // Build interface suppliers
-        List<ISupplier<IInterface>> builtInterfaces = new ArrayList<>();
-        for (ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> interfaceBuilder : this.interfaces) {
-            ISupplier<IInterface> supplier = (ISupplier<IInterface>) interfaceBuilder.build();
+        List<ISupplier<IEndpoint>> builtInterfaces = new ArrayList<>();
+        for (ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>> interfaceBuilder : this.interfaces) {
+            ISupplier<IEndpoint> supplier = (ISupplier<IEndpoint>) interfaceBuilder.build();
             builtInterfaces.add(supplier);
         }
 
@@ -604,7 +604,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(IClass<? extends IInterface> interfasse) throws ApiException {
+    public IDomainBuilder<E> interfasse(IClass<? extends IEndpoint> interfasse) throws ApiException {
         Objects.requireNonNull(interfasse, "Interface class cannot be null");
         // TODO: Implement interface instantiation or supplier creation
         throw new UnsupportedOperationException("Unimplemented method 'interfasse(IClass)'");

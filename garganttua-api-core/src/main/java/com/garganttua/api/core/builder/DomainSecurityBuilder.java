@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.garganttua.api.core.context.application.DomainSecurityContext;
+import com.garganttua.api.core.context.security.DomainSecurityContext;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
-import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
@@ -17,7 +17,7 @@ import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilde
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
-import com.garganttua.api.spec.interfasse.IInterface;
+import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
@@ -29,7 +29,7 @@ public class DomainSecurityBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext>
         implements IDomainSecurityBuilder<E> {
 
-    private List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces;
+    private List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces;
     private IDomainSecurityAuthorizationBuilder domainSecurityAuthorizationBuilder;
     private boolean disabled = false;
     private IAuthorizationBuilder authorization;
@@ -39,7 +39,7 @@ public class DomainSecurityBuilder<E>
     private IKeyBuilder key;
 
     public DomainSecurityBuilder(IDomainBuilder<E> domainBuilder,
-            List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces,
+            List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces,
             IClass<?> entityClass) {
         super(domainBuilder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
@@ -77,7 +77,7 @@ public class DomainSecurityBuilder<E>
     public IDomainSecurityBuilder<E> authorizationProtocol(IClass<?> interfaceClass,
             IAuthorizationProtocolBuilder protocole) throws ApiException {
 
-        Optional<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
+        Optional<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
                 .filter(inter -> interfaceClass.isAssignableFrom(inter.getSuppliedClass())).findFirst();
         interfaceObjectSupplierBuilder.orElseThrow(() -> new ApiException(
                 "Interface object supplier builder not found for class " + interfaceClass.getSimpleName()));

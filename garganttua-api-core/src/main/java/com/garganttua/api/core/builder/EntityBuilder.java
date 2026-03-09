@@ -10,7 +10,7 @@ import java.util.Objects;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.builder.binder.EntityMethodBinderBuilder;
-import com.garganttua.api.core.context.application.EntityContext;
+import com.garganttua.api.core.context.EntityContext;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;

@@ -3,9 +3,9 @@ package com.garganttua.api.core.builder;
 import java.lang.reflect.Method;
 import java.util.Objects;
 
-import com.garganttua.api.core.context.application.AuthorizationProtocolContext;
+import com.garganttua.api.core.context.security.AuthorizationProtocolContext;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IAuthorizationProtocolContext;
+import com.garganttua.api.spec.security.context.IAuthorizationProtocolContext;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethodBinderBuilder;

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.context.application.EntityUpdater;
+import com.garganttua.api.core.context.EntityUpdater;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.core.reflection.ObjectAddress;

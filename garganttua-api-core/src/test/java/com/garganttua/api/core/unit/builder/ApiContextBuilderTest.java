@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.builder.ApiContextBuilder;
-import com.garganttua.api.core.context.application.ApiContext;
+import com.garganttua.api.core.context.ApiContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;

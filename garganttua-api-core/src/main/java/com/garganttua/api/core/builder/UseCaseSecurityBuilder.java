@@ -1,6 +1,6 @@
 package com.garganttua.api.core.builder;
 
-import com.garganttua.api.spec.context.Access;
+import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
 import com.garganttua.api.spec.security.IUseCaseSecurity;

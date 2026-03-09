@@ -9,12 +9,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.context.application.ApiContext;
+import com.garganttua.api.core.context.ApiContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.api.spec.interfasse.IInterface;
+import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
@@ -23,9 +23,9 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 @DisplayName("API Integration Tests")
 class ApiTest extends AbstractCrudIntegrationTest {
 
-    // ───── Test IInterface ─────
+    // ───── Test IEndpoint ─────
 
-    public static class TestInterface implements IInterface {
+    public static class TestInterface implements IEndpoint {
         private boolean handleCalled = false;
         private boolean initCalled = false;
         private boolean startCalled = false;

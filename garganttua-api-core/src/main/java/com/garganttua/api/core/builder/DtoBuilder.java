@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.api.core.context.application.DtoContext;
+import com.garganttua.api.core.context.DtoContext;
 import com.garganttua.api.core.definition.DtoDefinition;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;

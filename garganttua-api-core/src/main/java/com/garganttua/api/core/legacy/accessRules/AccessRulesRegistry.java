@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.garganttua.api.spec.EntityOperation;
-import com.garganttua.api.spec.context.IAccessRulesRegistry;
+import com.garganttua.api.spec.security.context.IAccessRulesRegistry;
 import com.garganttua.api.spec.domain.IDomain;
 import com.garganttua.api.spec.security.IAccessRule;
 

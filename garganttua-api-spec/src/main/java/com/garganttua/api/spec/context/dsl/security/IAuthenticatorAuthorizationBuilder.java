@@ -2,7 +2,7 @@ package com.garganttua.api.spec.context.dsl.security;
 
 import java.util.concurrent.TimeUnit;
 
-import com.garganttua.api.spec.context.IAuthenticatorAuthorizationContext;
+import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 

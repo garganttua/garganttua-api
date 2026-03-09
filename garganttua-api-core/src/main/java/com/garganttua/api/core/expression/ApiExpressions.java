@@ -5,11 +5,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.api.core.context.Filter;
-import com.garganttua.api.core.context.RepositoryFilterTools;
+import com.garganttua.api.core.filter.Filter;
+import com.garganttua.api.core.repository.RepositoryFilterTools;
 import com.garganttua.api.spec.service.Page;
-import com.garganttua.api.core.context.application.DomainContext;
-import com.garganttua.api.core.context.application.EntityUpdater;
+import com.garganttua.api.core.context.DomainContext;
+import com.garganttua.api.core.context.EntityUpdater;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;

@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.Map;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.Operation;
+import com.garganttua.api.spec.operation.Operation;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
 

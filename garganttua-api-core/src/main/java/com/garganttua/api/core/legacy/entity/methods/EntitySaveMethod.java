@@ -25,7 +25,7 @@ import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.api.spec.factory.EntityIdentifier;
 import com.garganttua.api.spec.factory.IFactory;
 import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.api.spec.updater.IEntityUpdater;
+import com.garganttua.api.spec.entity.IEntityUpdater;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;

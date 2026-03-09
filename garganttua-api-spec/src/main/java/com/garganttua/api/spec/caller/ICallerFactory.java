@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.caller;
 
-import com.garganttua.api.spec.context.Operation;
+import com.garganttua.api.spec.operation.Operation;
 import com.garganttua.api.spec.ApiException;
 
 public interface ICallerFactory {

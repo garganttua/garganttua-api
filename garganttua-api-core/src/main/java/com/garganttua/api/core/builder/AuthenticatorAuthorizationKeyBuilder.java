@@ -3,8 +3,8 @@ package com.garganttua.api.core.builder;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import com.garganttua.api.core.context.application.AuthenticatorAuthorizationKeyContext;
-import com.garganttua.api.spec.context.IAuthenticatorAuthorizationKeyContext;
+import com.garganttua.api.core.context.security.AuthenticatorAuthorizationKeyContext;
+import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationKeyContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;

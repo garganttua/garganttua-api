@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.service.pipeline;
 
-import com.garganttua.api.spec.context.BusinessOperation;
+import com.garganttua.api.spec.operation.BusinessOperation;
 
 /**
  * Builder interface for constructing pipelines with a fluent API.
