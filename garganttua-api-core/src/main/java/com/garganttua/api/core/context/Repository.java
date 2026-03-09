@@ -71,20 +71,6 @@ public class Repository implements IRepository {
         return mergeAndMapToEntities(dtoMaps);
     }
 
-    @Override
-    public Optional<Object> getOneByUuid(String uuid) throws ApiException {
-        Objects.requireNonNull(uuid, "UUID cannot be null");
-        log.debug("Fetching entity by uuid={}", uuid);
-        return findOneByField(ctx -> ctx.getDtoDefinition().uuid(), uuid);
-    }
-
-    @Override
-    public Optional<Object> getOneById(String id) throws ApiException {
-        Objects.requireNonNull(id, "ID cannot be null");
-        log.debug("Fetching entity by id={}", id);
-        return findOneByField(ctx -> ctx.getDtoDefinition().id(), id);
-    }
-
     // --- Write operations ---
 
     @Override
@@ -121,7 +107,7 @@ public class Repository implements IRepository {
     @Override
     public boolean doesExist(String uuid) throws ApiException {
         Objects.requireNonNull(uuid, "UUID cannot be null");
-        return getOneByUuid(uuid).isPresent();
+        return findOneByField(ctx -> ctx.getDtoDefinition().uuid(), uuid).isPresent();
     }
 
     // --- Count ---

@@ -10,5 +10,8 @@
 #  @return 0: SUCCESS
 #@end
 
-// Phase 1 : Return the OperationRequest as output
-output <- @input -> 0
+caller <- :arg(@0, "caller")
+domainName <- :arg(@0, "domainName")
+
+requirePresent(@caller)
+! -> 400

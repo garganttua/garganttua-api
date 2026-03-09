@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -19,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.context.Repository;
 import com.garganttua.api.core.definition.DtoDefinition;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.dao.IDao;
@@ -28,11 +28,9 @@ import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.runtime.RuntimeClass;
 
 @DisplayName("Repository Tests")
@@ -42,7 +40,7 @@ class RepositoryTest {
 
     public static class TestEntity {
         private String id;
-        private String uuid;
+        private String uuid; 
         private String tenantId;
         private String name;
 
@@ -423,78 +421,6 @@ class RepositoryTest {
             assertEquals("uuid-1", result.getUuid());
             assertEquals("t1", result.getTenantId());
             assertEquals("Alice", result.getName());
-        }
-    }
-
-    @Nested
-    @DisplayName("GetOneByUuid")
-    class GetOneByUuidTests {
-
-        @Test
-        @DisplayName("returns entity matching uuid")
-        void returnsMatchingEntity() throws ApiException {
-            repository.save(createTestEntity("1", "uuid-1", "t1", "Alice"));
-            repository.save(createTestEntity("2", "uuid-2", "t1", "Bob"));
-
-            Optional<Object> result = repository.getOneByUuid("uuid-1");
-
-            assertTrue(result.isPresent());
-            TestEntity entity = (TestEntity) result.get();
-            assertEquals("uuid-1", entity.getUuid());
-            assertEquals("Alice", entity.getName());
-        }
-
-        @Test
-        @DisplayName("returns empty when uuid not found")
-        void returnsEmptyWhenNotFound() throws ApiException {
-            repository.save(createTestEntity("1", "uuid-1", "t1", "Alice"));
-
-            Optional<Object> result = repository.getOneByUuid("uuid-nonexistent");
-
-            assertTrue(result.isEmpty());
-        }
-
-        @Test
-        @DisplayName("rejects null uuid")
-        void rejectsNull() {
-            assertThrows(NullPointerException.class,
-                    () -> repository.getOneByUuid(null));
-        }
-    }
-
-    @Nested
-    @DisplayName("GetOneById")
-    class GetOneByIdTests {
-
-        @Test
-        @DisplayName("returns entity matching id")
-        void returnsMatchingEntity() throws ApiException {
-            repository.save(createTestEntity("1", "uuid-1", "t1", "Alice"));
-            repository.save(createTestEntity("2", "uuid-2", "t1", "Bob"));
-
-            Optional<Object> result = repository.getOneById("1");
-
-            assertTrue(result.isPresent());
-            TestEntity entity = (TestEntity) result.get();
-            assertEquals("1", entity.getId());
-            assertEquals("Alice", entity.getName());
-        }
-
-        @Test
-        @DisplayName("returns empty when id not found")
-        void returnsEmptyWhenNotFound() throws ApiException {
-            repository.save(createTestEntity("1", "uuid-1", "t1", "Alice"));
-
-            Optional<Object> result = repository.getOneById("999");
-
-            assertTrue(result.isEmpty());
-        }
-
-        @Test
-        @DisplayName("rejects null id")
-        void rejectsNull() {
-            assertThrows(NullPointerException.class,
-                    () -> repository.getOneById(null));
         }
     }
 
@@ -937,62 +863,6 @@ class RepositoryTest {
                         Optional.empty(), Optional.empty(), Optional.empty());
 
                 assertTrue(entities.isEmpty());
-            }
-        }
-
-        @Nested
-        @DisplayName("GetOneByUuid")
-        class MultiGetOneByUuidTests {
-
-            @Test
-            @DisplayName("returns merged entity by uuid")
-            void returnsMergedEntityByUuid() throws ApiException {
-                multiRepo.save(createMultiEntity("1", "uuid-1", "t1", "Alice", "alice@test.com"));
-                multiRepo.save(createMultiEntity("2", "uuid-2", "t1", "Bob", "bob@test.com"));
-
-                Optional<Object> result = multiRepo.getOneByUuid("uuid-1");
-
-                assertTrue(result.isPresent());
-                MultiEntity entity = (MultiEntity) result.get();
-                assertEquals("Alice", entity.getName());
-                assertEquals("alice@test.com", entity.getEmail());
-            }
-
-            @Test
-            @DisplayName("returns empty when uuid not found")
-            void returnsEmptyWhenNotFound() throws ApiException {
-                multiRepo.save(createMultiEntity("1", "uuid-1", "t1", "Alice", "alice@test.com"));
-
-                Optional<Object> result = multiRepo.getOneByUuid("uuid-nonexistent");
-                assertTrue(result.isEmpty());
-            }
-        }
-
-        @Nested
-        @DisplayName("GetOneById")
-        class MultiGetOneByIdTests {
-
-            @Test
-            @DisplayName("returns merged entity by id")
-            void returnsMergedEntityById() throws ApiException {
-                multiRepo.save(createMultiEntity("1", "uuid-1", "t1", "Alice", "alice@test.com"));
-                multiRepo.save(createMultiEntity("2", "uuid-2", "t1", "Bob", "bob@test.com"));
-
-                Optional<Object> result = multiRepo.getOneById("2");
-
-                assertTrue(result.isPresent());
-                MultiEntity entity = (MultiEntity) result.get();
-                assertEquals("Bob", entity.getName());
-                assertEquals("bob@test.com", entity.getEmail());
-            }
-
-            @Test
-            @DisplayName("returns empty when id not found")
-            void returnsEmptyWhenNotFound() throws ApiException {
-                multiRepo.save(createMultiEntity("1", "uuid-1", "t1", "Alice", "alice@test.com"));
-
-                Optional<Object> result = multiRepo.getOneById("999");
-                assertTrue(result.isEmpty());
             }
         }
 

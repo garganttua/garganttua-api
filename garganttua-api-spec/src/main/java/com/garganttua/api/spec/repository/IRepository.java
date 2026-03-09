@@ -22,13 +22,9 @@ public interface IRepository {
 
 	void save(Object entity) throws ApiException;
 
-	Optional<Object> getOneById(String id) throws ApiException;
-
 	void delete(Object entity) throws ApiException;
 
 	boolean doesExist(String uuid) throws ApiException;
-
-	Optional<Object> getOneByUuid(String uuid) throws ApiException;
 
 	long getCount(IFilter filter) throws ApiException;
 

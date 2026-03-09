@@ -18,19 +18,37 @@ filter <- :arg(@0, "filter")
 outputMode <- :arg(@0, "mode")
 domainName <- :arg(@0, "domainName")
 
-:get(cast(java.util.Optional.Class, @caller))
+requirePresent(@caller)
 ! -> 400
 
 // Build filter from caller
-filter <- buildFilter(@caller, @filter, @domainContext)
+filter <- buildFilter(@caller, @filter, @2)
+! -> 500
 
 // Read all entities from the repository
-entities <- getEntities(@repository, @pageable, @filter, @sort)
+entities <- getEntities(@1, @pageable, @filter, @sort)
+! -> 500
 
-if(equals(outputMode, "full"), (
+entities <- if(equals(@outputMode, "full"), (
     entities <- doInjection(@0, @entities)
-    entities <- runAfterGet(@injectedEntities, @0)
-))
+    entities <- runAfterGet(@entities, @0)
+), @entities)
+! -> 500
 
-// Execute @EntityGotFromRepository lifecycle hooks
+entities <- if(equals(@outputMode, "uuid"), (
+    entities <- reduceToUuids(@entities, @2)
+), @entities)
+! -> 500
+
+entities <- if(equals(@outputMode, "id"), (
+    entities <- reduceToIds(@entities, @2)
+), @entities)
+! -> 500
+
+entities <- if(notNull(@pageable), (
+    totalCount <- getCount(@1, @filter)
+    entities <- encapsulateInPage(@entities, @totalCount)
+), @entities)
+! -> 500
+
 output <- @entities -> 0

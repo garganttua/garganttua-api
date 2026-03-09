@@ -277,8 +277,8 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
             request.arg("caller", caller);
 
             Map<String, Object> workflowParams = new HashMap<>();
-            workflowParams.put("repository", this.repository);
-            workflowParams.put("domainContext", this);
+            workflowParams.put("$1", this.repository);
+            workflowParams.put("$2", this);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = workflow.execute(input, options);
 

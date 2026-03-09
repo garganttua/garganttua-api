@@ -12,21 +12,29 @@
 
 // Extract arguments from the operation request
 caller <- :arg(@0, "caller")
-identifier <- :arg(@0, "identifier")
+lookupType <- :arg(@0, "type")
+lookupId <- :arg(@0, "identifier")
 
-domainName <- :arg(@0, "domainName")
-
-:get(cast(java.util.Optional.Class, @caller))
+requirePresent(@caller)
 ! -> 400
 
-// Build security filter from caller permissions
-// filter <- buildFilter(@caller, @filter, @domainContext)
+filter <- buildGetOneFilter(@caller, @lookupType, @lookupId, @2)
+! -> 500
 
-// Read all entities from the repository
-// foundEntities <- getEntities(@repository, @pageable, @filter, @sort)
+// Read entities matching the filter
+entities <- getEntities(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"))
+! -> 500
 
-// Inject @Inject and @Property fields (skipped when doInjection is false)
-// injectedEntities <- doInjection(@0, @foundEntities)
+// Extract single entity from results
+entity <- first(@entities)
+! -> 404
 
-// Execute @EntityGotFromRepository lifecycle hooks
-// output <- runAfterGet(@injectedEntities, @0) -> 200
+// Inject dependencies and run lifecycle hooks (reuse list-based expressions)
+entities <- asList(@entity)
+entities <- doInjection(@0, @entities)
+! -> 500
+entities <- runAfterGet(@entities, @0)
+! -> 500
+entity <- first(@entities)
+
+output <- @entity -> 0
