@@ -16,46 +16,46 @@ import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 public interface IOperationRequest {
 
 	// --- Typed argument keys ---
 
-	ArgKey<String> PATH = ArgKey.of("path", RuntimeClass.of(String.class));
-	ArgKey<TechnicalOperation> TECHNICAL_OPERATION = ArgKey.of("technicalOperation", RuntimeClass.of(TechnicalOperation.class));
-	ArgKey<Operation> OPERATION = ArgKey.of("operation", RuntimeClass.of(Operation.class));
+	ArgKey<String> PATH = ArgKey.of("path", IClass.getClass(String.class));
+	ArgKey<TechnicalOperation> TECHNICAL_OPERATION = ArgKey.of("technicalOperation", IClass.getClass(TechnicalOperation.class));
+	ArgKey<Operation> OPERATION = ArgKey.of("operation", IClass.getClass(Operation.class));
 
-	ArgKey<Object> RAW_REQUEST = ArgKey.of("rawRequest", RuntimeClass.of(Object.class));
-	ArgKey<Byte[]> RAW_BODY = ArgKey.of("rawBody", RuntimeClass.of(Byte[].class));
-	ArgKey<Object> BODY = ArgKey.of("body", RuntimeClass.of(Object.class));
-	ArgKey<String> ENTITY_UUID = ArgKey.of("entityUuid", RuntimeClass.of(String.class));
-	ArgKey<IFilter> FILTER = ArgKey.of("filter", RuntimeClass.of(IFilter.class));
-	ArgKey<IPageable> PAGE = ArgKey.of("page", RuntimeClass.of(IPageable.class));
-	ArgKey<ISort> SORT = ArgKey.of("sort", RuntimeClass.of(ISort.class));
+	ArgKey<Object> RAW_REQUEST = ArgKey.of("rawRequest", IClass.getClass(Object.class));
+	ArgKey<Byte[]> RAW_BODY = ArgKey.of("rawBody", IClass.getClass(Byte[].class));
+	ArgKey<Object> BODY = ArgKey.of("body", IClass.getClass(Object.class));
+	ArgKey<String> ENTITY_UUID = ArgKey.of("entityUuid", IClass.getClass(String.class));
+	ArgKey<IFilter> FILTER = ArgKey.of("filter", IClass.getClass(IFilter.class));
+	ArgKey<IPageable> PAGE = ArgKey.of("page", IClass.getClass(IPageable.class));
+	ArgKey<ISort> SORT = ArgKey.of("sort", IClass.getClass(ISort.class));
 
-	ArgKey<String> CALLER_ID = ArgKey.of("callerId", RuntimeClass.of(String.class));
-	ArgKey<String> TENANT_ID = ArgKey.of("tenantId", RuntimeClass.of(String.class));
-	ArgKey<String> REQUESTED_TENANT_ID = ArgKey.of("requestedTenantId", RuntimeClass.of(String.class));
-	ArgKey<String> OWNER_ID = ArgKey.of("ownerId", RuntimeClass.of(String.class));
-	ArgKey<String> REQUESTED_OWNER_ID = ArgKey.of("requestedOwnerId", RuntimeClass.of(String.class));
+	ArgKey<String> CALLER_ID = ArgKey.of("callerId", IClass.getClass(String.class));
+	ArgKey<String> TENANT_ID = ArgKey.of("tenantId", IClass.getClass(String.class));
+	ArgKey<String> REQUESTED_TENANT_ID = ArgKey.of("requestedTenantId", IClass.getClass(String.class));
+	ArgKey<String> OWNER_ID = ArgKey.of("ownerId", IClass.getClass(String.class));
+	ArgKey<String> REQUESTED_OWNER_ID = ArgKey.of("requestedOwnerId", IClass.getClass(String.class));
 
-	ArgKey<Boolean> SUPER_TENANT = ArgKey.of("superTenant", RuntimeClass.of(Boolean.class));
-	ArgKey<Boolean> SUPER_OWNER = ArgKey.of("superOwner", RuntimeClass.of(Boolean.class));
+	ArgKey<Boolean> SUPER_TENANT = ArgKey.of("superTenant", IClass.getClass(Boolean.class));
+	ArgKey<Boolean> SUPER_OWNER = ArgKey.of("superOwner", IClass.getClass(Boolean.class));
 
 	@SuppressWarnings("rawtypes")
-	ArgKey<List> AUTHORITIES = ArgKey.of("authorities", RuntimeClass.of(List.class));
+	ArgKey<List> AUTHORITIES = ArgKey.of("authorities", IClass.getClass(List.class));
 
-	ArgKey<UUID> EXECUTION_UUID = ArgKey.of("executionUuid", RuntimeClass.of(UUID.class));
-	ArgKey<UUID> CORRELATION_UUID = ArgKey.of("correlationUuid", RuntimeClass.of(UUID.class));
+	ArgKey<UUID> EXECUTION_UUID = ArgKey.of("executionUuid", IClass.getClass(UUID.class));
+	ArgKey<UUID> CORRELATION_UUID = ArgKey.of("correlationUuid", IClass.getClass(UUID.class));
 
-	ArgKey<IAuthorization> AUTHORIZATION = ArgKey.of("authorization", RuntimeClass.of(IAuthorization.class));
-	ArgKey<Byte[]> RAW_AUTHORIZATION = ArgKey.of("rawAuthorization", RuntimeClass.of(Byte[].class));
+	ArgKey<IAuthorization> AUTHORIZATION = ArgKey.of("authorization", IClass.getClass(IAuthorization.class));
+	ArgKey<Byte[]> RAW_AUTHORIZATION = ArgKey.of("rawAuthorization", IClass.getClass(Byte[].class));
 
-	ArgKey<IApiContext> API_CONTEXT = ArgKey.of("apiContext", RuntimeClass.of(IApiContext.class));
+	ArgKey<IApiContext> API_CONTEXT = ArgKey.of("apiContext", IClass.getClass(IApiContext.class));
 	@SuppressWarnings("rawtypes")
-	ArgKey<IDomainContext> DOMAIN_CONTEXT = ArgKey.of("domainContext", RuntimeClass.of(IDomainContext.class));
-	ArgKey<IRepository> REPOSITORY = ArgKey.of("repository", RuntimeClass.of(IRepository.class));
+	ArgKey<IDomainContext> DOMAIN_CONTEXT = ArgKey.of("domainContext", IClass.getClass(IDomainContext.class));
+	ArgKey<IRepository> REPOSITORY = ArgKey.of("repository", IClass.getClass(IRepository.class));
 
 	// --- Factory ---
 

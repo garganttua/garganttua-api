@@ -18,7 +18,7 @@ import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("DeleteAll Integration Tests")
 class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
@@ -32,12 +32,12 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         userDao = new CapturingDao();
 
         IApiContextBuilder builder = newBuilder();
-        builder.domain(RuntimeClass.of(User.class))
+        builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
@@ -53,7 +53,7 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers("Alice", "Bob", "Charlie");
         assertEquals(3, userDao.getStorage().size());
 
-        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteAllOp);
 
         IOperationResponse response = userCtx.invoke(request);
@@ -72,7 +72,7 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     @Test
     @DisplayName("deleteAll returns empty list when no entities exist")
     void deleteAllReturnsEmptyWhenNoEntities() throws ApiException {
-        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteAllOp);
 
         IOperationResponse response = userCtx.invoke(request);
@@ -90,7 +90,7 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteAllReturnsBadRequestWhenNoCaller() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, deleteAllOp);
 
@@ -108,12 +108,12 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteAllReturnsServerErrorOnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
-        failingBuilder.domain(RuntimeClass.of(User.class))
+        failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(new FailingDao())
                 .up()
@@ -122,7 +122,7 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         IApiContext failingContext = buildAndStart(failingBuilder);
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
-        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteAllOp);
 
         IOperationResponse response = failingUserCtx.invoke(request);
@@ -137,7 +137,7 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers("Alice");
         assertEquals(1, userDao.getStorage().size());
 
-        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteAllOp = Operation.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteAllOp);
 
         IOperationResponse response = userCtx.invoke(request);

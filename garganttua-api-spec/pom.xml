@@ -28,6 +28,13 @@
 			<artifactId>garganttua-workflow</artifactId>
 		</dependency>
 
+		<!-- Test dependencies -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-runtime-reflection</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Third-party -->
 		<dependency>
 			<groupId>org.javatuples</groupId>

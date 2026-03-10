@@ -155,6 +155,11 @@
 				<artifactId>garganttua-reflections</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-runtime-reflection</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
 
 			<!-- Third-party dependencies -->
 			<dependency>

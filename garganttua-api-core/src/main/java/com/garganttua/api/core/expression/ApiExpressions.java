@@ -30,7 +30,7 @@ import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 import com.github.f4b6a3.uuid.UuidCreator;
 import org.javatuples.Pair;
 
@@ -184,7 +184,7 @@ public class ApiExpressions {
 			for (IMethodBinder<Void> binder : afterGetBinders) {
 				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
 				for (Object entity : entityList) {
-					REFLECTION.invokeDeep(entity, methodRef, RuntimeClass.of(Void.class));
+					REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
 				}
 			}
 		} catch (Exception e) {
@@ -465,7 +465,7 @@ public class ApiExpressions {
 			for (IMethodBinder<Void> binder : binders) {
 				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
 				for (Object entity : entityList) {
-					REFLECTION.invokeDeep(entity, methodRef, RuntimeClass.of(Void.class));
+					REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
 				}
 			}
 		} catch (Exception e) {
@@ -486,7 +486,7 @@ public class ApiExpressions {
 
 			for (IMethodBinder<Void> binder : binders) {
 				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
-				REFLECTION.invokeDeep(entity, methodRef, RuntimeClass.of(Void.class));
+				REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
 			}
 			return entity;
 		} catch (Exception e) {

@@ -17,7 +17,7 @@ import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("DeleteOne Integration Tests")
 class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
@@ -31,12 +31,12 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         userDao = new CapturingDao();
 
         IApiContextBuilder builder = newBuilder();
-        builder.domain(RuntimeClass.of(User.class))
+        builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
@@ -52,7 +52,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers("Alice", "Bob");
         assertEquals(2, userDao.getStorage().size());
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
@@ -74,7 +74,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneById() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "id");
         request.arg("identifier", "1");
@@ -91,7 +91,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneDefaultsToUuid() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("identifier", "uuid-alice");
 
@@ -105,7 +105,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     @Test
     @DisplayName("deleteOne returns NOT_FOUND when entity does not exist")
     void deleteOneReturnsNotFound() throws ApiException {
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
@@ -121,7 +121,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneReturnsBadRequestWhenNoCaller() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, deleteOneOp);
 
@@ -139,12 +139,12 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneReturnsServerErrorOnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
-        failingBuilder.domain(RuntimeClass.of(User.class))
+        failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(new FailingDao())
                 .up()
@@ -153,7 +153,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         IApiContext failingContext = buildAndStart(failingBuilder);
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");

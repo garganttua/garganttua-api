@@ -22,7 +22,7 @@ import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -101,7 +101,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
                 String repositoryName = domainName + "-repository";
                 try {
                     BeanReference<IRepository> beanRef = new BeanReference<>(
-                            RuntimeClass.of(IRepository.class),
+                            IClass.getClass(IRepository.class),
                             Optional.empty(),
                             Optional.of(repositoryName),
                             new HashSet<>());

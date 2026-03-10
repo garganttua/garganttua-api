@@ -17,7 +17,7 @@ import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("UpdateOne Integration Tests")
 class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
@@ -31,7 +31,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         userDao = new CapturingDao();
 
         IApiContextBuilder builder = newBuilder();
-        builder.domain(RuntimeClass.of(User.class))
+        builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -39,7 +39,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
                     .update("name")
                     .update("email")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
@@ -58,7 +58,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         updatedUser.setName("Alice Updated");
         updatedUser.setEmail("alice.updated@example.com");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");
@@ -84,7 +84,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Alice By Id");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "id");
@@ -105,7 +105,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Alice Default");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("identifier", "uuid-alice");
@@ -123,7 +123,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Ghost");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");
@@ -143,7 +143,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Alice Updated");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, updateOp);
         request.arg("entity", updatedUser);
@@ -162,7 +162,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
     void updateOneReturnsBadRequestWhenNoEntity() throws ApiException {
         seedUser("1", "uuid-alice", "Alice", "alice@example.com");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
@@ -178,13 +178,13 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
     void updateOneReturnsServerErrorOnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
-        failingBuilder.domain(RuntimeClass.of(User.class))
+        failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .update("name")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(new FailingDao())
                 .up()
@@ -196,7 +196,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Fail");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");
@@ -217,7 +217,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         updatedUser.setName("Alice Persisted");
         updatedUser.setEmail("persisted@example.com");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");

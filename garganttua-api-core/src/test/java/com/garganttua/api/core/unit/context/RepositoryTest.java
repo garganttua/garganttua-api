@@ -30,7 +30,7 @@ import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("Repository Tests")
 class RepositoryTest {
@@ -198,7 +198,7 @@ class RepositoryTest {
         idAddress = new ObjectAddress("id");
         tenantIdAddress = new ObjectAddress("tenantId");
 
-        dtoDefinition = new DtoDefinition<>(RuntimeClass.of(TestDto.class), uuidAddress, idAddress, tenantIdAddress);
+        dtoDefinition = new DtoDefinition<>(IClass.getClass(TestDto.class), uuidAddress, idAddress, tenantIdAddress);
 
         inMemoryDao = new InMemoryDao();
 
@@ -227,7 +227,7 @@ class RepositoryTest {
             return null;
         });
 
-        repository = new Repository(List.of(dtoContext), RuntimeClass.of(TestEntity.class));
+        repository = new Repository(List.of(dtoContext), IClass.getClass(TestEntity.class));
     }
 
     @SuppressWarnings("unchecked")
@@ -268,7 +268,7 @@ class RepositoryTest {
         @DisplayName("rejects null dtoContexts")
         void rejectsNullDtoContexts() {
             assertThrows(NullPointerException.class,
-                    () -> new Repository(null, RuntimeClass.of(TestEntity.class)));
+                    () -> new Repository(null, IClass.getClass(TestEntity.class)));
         }
 
         @Test
@@ -281,13 +281,13 @@ class RepositoryTest {
         @Test
         @DisplayName("accepts empty dtoContexts list")
         void acceptsEmptyDtoContexts() {
-            assertDoesNotThrow(() -> new Repository(List.of(), RuntimeClass.of(TestEntity.class)));
+            assertDoesNotThrow(() -> new Repository(List.of(), IClass.getClass(TestEntity.class)));
         }
 
         @Test
         @DisplayName("creates repository with valid arguments")
         void createsWithValidArgs() {
-            assertDoesNotThrow(() -> new Repository(List.of(dtoContext), RuntimeClass.of(TestEntity.class)));
+            assertDoesNotThrow(() -> new Repository(List.of(dtoContext), IClass.getClass(TestEntity.class)));
         }
     }
 
@@ -495,7 +495,7 @@ class RepositoryTest {
         @Test
         @DisplayName("returns 0 when no DtoContexts")
         void returnsZeroWhenNoDtoContexts() throws ApiException {
-            Repository emptyRepo = new Repository(List.of(), RuntimeClass.of(TestEntity.class));
+            Repository emptyRepo = new Repository(List.of(), IClass.getClass(TestEntity.class));
             assertEquals(0, emptyRepo.getCount(null));
         }
 
@@ -676,8 +676,8 @@ class RepositoryTest {
             ObjectAddress idAddr = new ObjectAddress("id");
             ObjectAddress tenantIdAddr = new ObjectAddress("tenantId");
 
-            IDtoDefinition<DtoA> defA = new DtoDefinition<>(RuntimeClass.of(DtoA.class), uuidAddr, idAddr, tenantIdAddr);
-            IDtoDefinition<DtoB> defB = new DtoDefinition<>(RuntimeClass.of(DtoB.class), uuidAddr, idAddr, tenantIdAddr);
+            IDtoDefinition<DtoA> defA = new DtoDefinition<>(IClass.getClass(DtoA.class), uuidAddr, idAddr, tenantIdAddr);
+            IDtoDefinition<DtoB> defB = new DtoDefinition<>(IClass.getClass(DtoB.class), uuidAddr, idAddr, tenantIdAddr);
 
             daoA = new InMemoryDao();
             daoB = new InMemoryDao();
@@ -718,7 +718,7 @@ class RepositoryTest {
                 throw new RuntimeException(e);
             }
 
-            multiRepo = new Repository(List.of(dtoContextA, dtoContextB), RuntimeClass.of(MultiEntity.class));
+            multiRepo = new Repository(List.of(dtoContextA, dtoContextB), IClass.getClass(MultiEntity.class));
         }
 
         private MultiEntity createMultiEntity(String id, String uuid, String tenantId, String name, String email) {

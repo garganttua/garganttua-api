@@ -31,7 +31,6 @@ import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.RuntimeContextFactory;
@@ -169,7 +168,7 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("domain() returns IDomainBuilder")
         void domainReturnsDomainBuilder() throws ApiException {
-            IDomainBuilder<TestEntity> domainBuilder = builder.domain(RuntimeClass.of(TestEntity.class));
+            IDomainBuilder<TestEntity> domainBuilder = builder.domain(IClass.getClass(TestEntity.class));
             assertNotNull(domainBuilder);
         }
 
@@ -182,8 +181,8 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("domain() returns same builder for same class")
         void domainReturnsSameBuilderForSameClass() throws ApiException {
-            IDomainBuilder<TestEntity> first = builder.domain(RuntimeClass.of(TestEntity.class));
-            IDomainBuilder<TestEntity> second = builder.domain(RuntimeClass.of(TestEntity.class));
+            IDomainBuilder<TestEntity> first = builder.domain(IClass.getClass(TestEntity.class));
+            IDomainBuilder<TestEntity> second = builder.domain(IClass.getClass(TestEntity.class));
             assertSame(first, second);
         }
     }
@@ -240,13 +239,13 @@ class ApiContextBuilderTest {
         void buildCreatesValidContext() throws ApiException {
             builder.superTenantId("SUPER")
                    .superTenantAutoCreate(true)
-                   .domain(RuntimeClass.of(TestEntity.class))
+                   .domain(IClass.getClass(TestEntity.class))
                        .entity()
                            .id("id")
                            .uuid("uuid")
                            .tenantId("tenantId")
                        .up()
-                       .dto(RuntimeClass.of(TestDto.class))
+                       .dto(IClass.getClass(TestDto.class))
                            .id("id")
                            .uuid("uuid")
                            .tenantId("tenantId")
@@ -263,13 +262,13 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("build() includes domain context")
         void buildIncludesDomainContext() throws ApiException {
-            builder.domain(RuntimeClass.of(TestEntity.class))
+            builder.domain(IClass.getClass(TestEntity.class))
                    .entity()
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")
                    .up()
-                   .dto(RuntimeClass.of(TestDto.class))
+                   .dto(IClass.getClass(TestDto.class))
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")
@@ -281,19 +280,19 @@ class ApiContextBuilderTest {
 
             Optional<IDomainContext<?>> domainCtx = context.getDomainContext("testentities");
             assertTrue(domainCtx.isPresent());
-            assertEquals(RuntimeClass.of(TestEntity.class), domainCtx.get().getEntityClass());
+            assertEquals(IClass.getClass(TestEntity.class), domainCtx.get().getEntityClass());
         }
 
         @Test
         @DisplayName("build() returns domain name based on entity class")
         void buildReturnsDomainNameBasedOnEntityClass() throws ApiException {
-            builder.domain(RuntimeClass.of(TestEntity.class))
+            builder.domain(IClass.getClass(TestEntity.class))
                    .entity()
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")
                    .up()
-                   .dto(RuntimeClass.of(TestDto.class))
+                   .dto(IClass.getClass(TestDto.class))
                        .id("id")
                        .uuid("uuid")
                        .tenantId("tenantId")

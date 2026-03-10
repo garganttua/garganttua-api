@@ -23,7 +23,6 @@ import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
@@ -180,7 +179,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
 		BeanReference<IApiContext> beanRef = new BeanReference<>(
-				RuntimeClass.of(IApiContext.class),
+				IClass.getClass(IApiContext.class),
 				Optional.of(BeanStrategy.singleton),
 				Optional.of("ApiContext"),
 				Set.of());
@@ -194,12 +193,24 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 			@SuppressWarnings("unchecked")
 			BeanReference<IDomainContext<?>> domainBeanRef = new BeanReference<>(
-					(IClass<IDomainContext<?>>) (IClass<?>) RuntimeClass.of(IDomainContext.class),
+					(IClass<IDomainContext<?>>) (IClass<?>) IClass.getClass(IDomainContext.class),
 					Optional.of(BeanStrategy.singleton),
 					Optional.of("domain." + domainName),
 					Set.of());
 			context.addBean(providerName, domainBeanRef, domainContext);
 			log.atDebug().log("IDomainContext successfully registered as bean with 'domain.{}' name", domainName);
+
+			// Register the tenant domain context with a well-known bean name
+			if (domainContext.isTenantEntity()) {
+				@SuppressWarnings("unchecked")
+				BeanReference<IDomainContext<?>> tenantBeanRef = new BeanReference<>(
+						(IClass<IDomainContext<?>>) (IClass<?>) IClass.getClass(IDomainContext.class),
+						Optional.of(BeanStrategy.singleton),
+						Optional.of("tenantDomainContext"),
+						Set.of());
+				context.addBean(providerName, tenantBeanRef, domainContext);
+				log.atInfo().log("Tenant domain context registered as bean 'tenantDomainContext' (domain: {})", domainName);
+			}
 		}
 	}
 
@@ -208,7 +219,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
 		BeanReference<IMapper> beanRef = new BeanReference<>(
-				RuntimeClass.of(IMapper.class),
+				IClass.getClass(IMapper.class),
 				Optional.of(BeanStrategy.singleton),
 				Optional.of("mapper"),
 				Set.of());

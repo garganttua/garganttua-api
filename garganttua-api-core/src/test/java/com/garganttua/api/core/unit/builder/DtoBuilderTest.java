@@ -22,7 +22,7 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("DtoBuilder Tests")
 class DtoBuilderTest {
@@ -90,8 +90,8 @@ class DtoBuilderTest {
 
     @BeforeEach
     void setUp() throws ApiException {
-        domainBuilder = ApiContextBuilder.builder().domain(RuntimeClass.of(TestEntity.class));
-        dtoBuilder = domainBuilder.dto(RuntimeClass.of(TestDto.class));
+        domainBuilder = ApiContextBuilder.builder().domain(IClass.getClass(TestEntity.class));
+        dtoBuilder = domainBuilder.dto(IClass.getClass(TestDto.class));
     }
 
     @Nested

@@ -24,7 +24,7 @@ import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.sort.Sort;
 import com.garganttua.api.spec.sort.SortDirection;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("ReadAll Integration Tests")
 class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
@@ -38,12 +38,12 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         userDao = new StubDao();
 
         IApiContextBuilder builder = newBuilder();
-        builder.domain(RuntimeClass.of(User.class))
+        builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
@@ -81,7 +81,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         userDao.getStorage().add(bob);
         userDao.getStorage().add(charlie);
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
 
         IOperationResponse response = userCtx.invoke(request);
@@ -100,12 +100,12 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     void readAllReturnsServerErrorOnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
-        failingBuilder.domain(RuntimeClass.of(User.class))
+        failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(new FailingDao())
                 .up()
@@ -114,7 +114,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         IApiContext failingContext = buildAndStart(failingBuilder);
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
 
         IOperationResponse response = failingUserCtx.invoke(request);
@@ -126,7 +126,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     @Test
     @DisplayName("readAll returns CLIENT_ERROR when no caller is provided")
     void readAllReturnsBadRequestWhenNoCaller() throws ApiException {
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, readAllOp);
         // No tenant/caller args provided
@@ -143,7 +143,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     void readAllModeUuidReturnsUuids() throws ApiException {
         seedUsers();
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
         request.arg("mode", "uuid");
 
@@ -164,7 +164,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     void readAllModeIdReturnsIds() throws ApiException {
         seedUsers();
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
         request.arg("mode", "id");
 
@@ -185,7 +185,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     void readAllModeFullReturnsEntities() throws ApiException {
         seedUsers();
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
         request.arg("mode", "full");
 
@@ -237,7 +237,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
             @Override public int getPageSize() { return 10; }
         };
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
         request.arg("pageable", pageable);
 
@@ -257,7 +257,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     void readAllWithoutPageableReturnsPlainList() throws ApiException {
         seedUsers();
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
 
         IOperationResponse response = userCtx.invoke(request);
@@ -277,7 +277,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
             @Override public int getPageSize() { return 5; }
         };
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
         request.arg("pageable", pageable);
         request.arg("mode", "uuid");
@@ -302,12 +302,12 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         CapturingDao capturingDao = new CapturingDao();
 
         IApiContextBuilder capBuilder = newBuilder();
-        capBuilder.domain(RuntimeClass.of(User.class))
+        capBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(capturingDao)
                 .up()
@@ -330,7 +330,7 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
             @Override public int getPageSize() { return 10; }
         };
 
-        Operation readAllOp = Operation.readAllWithStandardSecurity("users", RuntimeClass.of(User.class));
+        Operation readAllOp = Operation.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readAllOp);
         request.arg("sort", sort);
         request.arg("pageable", pageable);

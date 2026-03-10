@@ -22,7 +22,7 @@ import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.definition.IUseCaseDefinition;
 import com.garganttua.api.spec.definition.IWorkflowDefinition;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("DomainDefinition Tests")
 class DomainDefinitionTest {
@@ -40,7 +40,7 @@ class DomainDefinitionTest {
     @SuppressWarnings("unchecked")
     void setUp() {
         mockEntityDefinition = mock(IEntityDefinition.class);
-        when(mockEntityDefinition.entityClass()).thenReturn(RuntimeClass.of(TestEntity.class));
+        when(mockEntityDefinition.entityClass()).thenReturn(IClass.getClass(TestEntity.class));
     }
 
     private DomainDefinition<TestEntity> createDefinition(
@@ -147,7 +147,7 @@ class DomainDefinitionTest {
             List<Operation> ops = def.operations();
 
             assertEquals("testentities", ops.get(0).domainName());
-            assertEquals(RuntimeClass.of(TestEntity.class), ops.get(0).entity());
+            assertEquals(IClass.getClass(TestEntity.class), ops.get(0).entity());
         }
     }
 

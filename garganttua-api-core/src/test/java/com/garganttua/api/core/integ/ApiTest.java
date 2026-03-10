@@ -17,7 +17,7 @@ import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
 @DisplayName("API Integration Tests")
@@ -99,13 +99,13 @@ class ApiTest extends AbstractCrudIntegrationTest {
         userInterface = new TestInterface();
 
         // Domain 1: User (tenant entity with interface)
-        builder.domain(RuntimeClass.of(User.class))
+        builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .interfasse(FixedSupplierBuilder.of(userInterface))
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(UserDto.class))
+                .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
@@ -113,11 +113,11 @@ class ApiTest extends AbstractCrudIntegrationTest {
             .up();
 
         // Domain 2: Product (non-tenant entity)
-        builder.domain(RuntimeClass.of(Product.class))
+        builder.domain(IClass.getClass(Product.class))
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(ProductDto.class))
+                .dto(IClass.getClass(ProductDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(productDao)
                 .up()
@@ -144,7 +144,7 @@ class ApiTest extends AbstractCrudIntegrationTest {
 
             Optional<IDomainContext<?>> userCtx = context.getDomainContext("users");
             assertTrue(userCtx.isPresent());
-            assertEquals(RuntimeClass.of(User.class), userCtx.get().getEntityClass());
+            assertEquals(IClass.getClass(User.class), userCtx.get().getEntityClass());
         }
 
         @Test
@@ -154,7 +154,7 @@ class ApiTest extends AbstractCrudIntegrationTest {
 
             Optional<IDomainContext<?>> productCtx = context.getDomainContext("products");
             assertTrue(productCtx.isPresent());
-            assertEquals(RuntimeClass.of(Product.class), productCtx.get().getEntityClass());
+            assertEquals(IClass.getClass(Product.class), productCtx.get().getEntityClass());
         }
 
         @Test

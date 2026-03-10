@@ -32,7 +32,6 @@ import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.mapper.annotations.FieldMappingRule;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.RuntimeContextFactory;
@@ -110,7 +109,7 @@ class DomainBuilderTest {
     @BeforeEach
     void setUp() throws ApiException {
         contextBuilder = ApiContextBuilder.builder();
-        domainBuilder = contextBuilder.domain(RuntimeClass.of(TestEntity.class));
+        domainBuilder = contextBuilder.domain(IClass.getClass(TestEntity.class));
     }
 
     @Nested
@@ -140,15 +139,15 @@ class DomainBuilderTest {
         @Test
         @DisplayName("dto() returns DTO builder")
         void dtoReturnsDtoBuilder() throws ApiException {
-            var dtoBuilder = domainBuilder.dto(RuntimeClass.of(TestDto.class));
+            var dtoBuilder = domainBuilder.dto(IClass.getClass(TestDto.class));
             assertNotNull(dtoBuilder);
         }
 
         @Test
         @DisplayName("dto() returns same builder for same class")
         void dtoReturnsSameBuilderForSameClass() throws ApiException {
-            var first = domainBuilder.dto(RuntimeClass.of(TestDto.class));
-            var second = domainBuilder.dto(RuntimeClass.of(TestDto.class));
+            var first = domainBuilder.dto(IClass.getClass(TestDto.class));
+            var second = domainBuilder.dto(IClass.getClass(TestDto.class));
             assertSame(first, second);
         }
     }
@@ -205,7 +204,7 @@ class DomainBuilderTest {
         @Test
         @DisplayName("getEntityClass() returns configured class")
         void getEntityClassReturnsConfiguredClass() throws ApiException {
-            assertEquals(RuntimeClass.of(TestEntity.class), domainBuilder.getEntityClass());
+            assertEquals(IClass.getClass(TestEntity.class), domainBuilder.getEntityClass());
         }
     }
 
@@ -259,7 +258,7 @@ class DomainBuilderTest {
                     .uuid("uuid")
                     .tenantId("tenantId")
                 .up()
-                .dto(RuntimeClass.of(TestDto.class))
+                .dto(IClass.getClass(TestDto.class))
                     .id("id")
                     .uuid("uuid")
                     .tenantId("tenantId")
@@ -273,7 +272,7 @@ class DomainBuilderTest {
 
             assertNotNull(context);
             assertEquals("testentities", context.getDomain());
-            assertEquals(RuntimeClass.of(TestEntity.class), context.getEntityClass());
+            assertEquals(IClass.getClass(TestEntity.class), context.getEntityClass());
         }
     }
 }

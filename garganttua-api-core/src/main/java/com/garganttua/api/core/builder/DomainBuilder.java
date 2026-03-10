@@ -61,7 +61,6 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
@@ -147,7 +146,7 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> events(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
         IClass<?> suppliedClass = bean.getSuppliedClass();
-        if (!RuntimeClass.of(IEventPublisher.class).isAssignableFrom(suppliedClass)) {
+        if (!IClass.getClass(IEventPublisher.class).isAssignableFrom(suppliedClass)) {
             throw new ApiException(
                     "Bean " + suppliedClass.getName() + " does not implement IEventPublisher");
         }
@@ -175,7 +174,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.owner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
+        this.owner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -187,7 +186,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.owner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
+        this.owner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -199,7 +198,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.owner = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
+        this.owner = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -211,7 +210,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.owned = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
+        this.owned = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -223,7 +222,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.owned = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
+        this.owned = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -235,7 +234,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.owned = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
+        this.owned = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -259,7 +258,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.shared = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(String.class)).address();
+        this.shared = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -271,7 +270,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.shared = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(String.class)).address();
+        this.shared = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -283,7 +282,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.shared = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(String.class)).address();
+        this.shared = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -295,7 +294,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(Boolean.class)).address();
+        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -307,7 +306,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(Boolean.class)).address();
+        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -319,7 +318,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.hiddenable = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(Boolean.class)).address();
+        this.hiddenable = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -331,7 +330,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, RuntimeClass.of(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Object.class)).address();
 
         return this;
     }
@@ -343,7 +342,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), RuntimeClass.of(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Object.class)).address();
 
         return this;
     }
@@ -355,7 +354,7 @@ public class DomainBuilder<E>
             throw new ApiException("Entity class must be defined first");
         }
 
-        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, RuntimeClass.of(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Object.class)).address();
 
         return this;
     }

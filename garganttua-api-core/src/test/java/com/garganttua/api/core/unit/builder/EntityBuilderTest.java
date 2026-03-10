@@ -13,7 +13,7 @@ import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.core.reflection.runtime.RuntimeClass;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("EntityBuilder Tests")
 class EntityBuilderTest {
@@ -43,7 +43,7 @@ class EntityBuilderTest {
 
     @BeforeEach
     void setUp() throws ApiException {
-        domainBuilder = ApiContextBuilder.builder().domain(RuntimeClass.of(TestEntity.class));
+        domainBuilder = ApiContextBuilder.builder().domain(IClass.getClass(TestEntity.class));
         entityBuilder = domainBuilder.entity();
     }
 
@@ -203,7 +203,7 @@ class EntityBuilderTest {
             IEntityContext<TestEntity> context = entityBuilder.build();
 
             assertNotNull(context);
-            assertEquals(RuntimeClass.of(TestEntity.class), context.getEntityClass());
+            assertEquals(IClass.getClass(TestEntity.class), context.getEntityClass());
         }
     }
 }
