@@ -366,6 +366,12 @@ public class ApiExpressions {
 
 			IRepository repo = (IRepository) repository;
 			ObjectAddress tenantIdAddress = entityDef.tenantId();
+			ObjectAddress uuidAddress = entityDef.uuid();
+
+			// Read current entity uuid to exclude self from results (needed for UPDATE)
+			Object currentUuid = uuidAddress != null
+					? REFLECTION.getFieldValue(entity, uuidAddress.toString())
+					: null;
 
 			for (Pair<ObjectAddress, UnicityScope> unicity : unicities) {
 				ObjectAddress fieldAddress = unicity.getValue0();
@@ -388,6 +394,12 @@ public class ApiExpressions {
 					}
 				} else {
 					queryFilter = fieldFilter;
+				}
+
+				// Exclude self by uuid (avoids false positive on UPDATE)
+				if (currentUuid != null && uuidAddress != null) {
+					Filter excludeSelf = Filter.ne(uuidAddress.toString(), currentUuid);
+					queryFilter = Filter.and((Filter) queryFilter, excludeSelf);
 				}
 
 				List<Object> existing = repo.getEntities(Optional.empty(), Optional.of(queryFilter), Optional.empty());

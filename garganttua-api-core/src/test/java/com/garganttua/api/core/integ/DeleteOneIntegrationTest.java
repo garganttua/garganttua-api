@@ -12,7 +12,7 @@ import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -52,7 +52,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers("Alice", "Bob");
         assertEquals(2, userDao.getStorage().size());
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
@@ -74,7 +74,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneById() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "id");
         request.arg("identifier", "1");
@@ -91,7 +91,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneDefaultsToUuid() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("identifier", "uuid-alice");
 
@@ -105,7 +105,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     @Test
     @DisplayName("deleteOne returns NOT_FOUND when entity does not exist")
     void deleteOneReturnsNotFound() throws ApiException {
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
@@ -121,7 +121,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
     void deleteOneReturnsBadRequestWhenNoCaller() throws ApiException {
         seedUsers("Alice");
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, deleteOneOp);
 
@@ -153,7 +153,7 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         IApiContext failingContext = buildAndStart(failingBuilder);
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
-        Operation deleteOneOp = Operation.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");

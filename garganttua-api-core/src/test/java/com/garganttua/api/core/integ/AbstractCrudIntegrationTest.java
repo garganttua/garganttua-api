@@ -9,7 +9,7 @@ import com.garganttua.api.core.builder.ApiContextBuilder;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.definition.IDomainDefinition;
@@ -359,7 +359,7 @@ abstract class AbstractCrudIntegrationTest {
         return context;
     }
 
-    static OperationRequest superTenantRequest(Operation operation) {
+    static OperationRequest superTenantRequest(OperationDefinition operation) {
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, operation);
         request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");

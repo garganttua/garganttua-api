@@ -17,7 +17,9 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.service.IRequestBuilder;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -100,6 +102,29 @@ public interface IDomainContext<E> extends ILifecycle {
 		return getDomainDefinition().geolocalized() != null;
 	}
 
+	/**
+	 * Returns true if tenantId is mandatory for the given operation.
+	 * TenantId is mandatory when:
+	 * - the entity is not public AND the operation access level is tenant or owner
+	 */
+	default boolean isTenantIdMandatoryForOperation(OperationDefinition operation) {
+		if (operation == null) return false;
+		if (isPublicEntity()) return false;
+		Access access = operation.access();
+		return access == Access.tenant || access == Access.owner;
+	}
+
+	/**
+	 * Returns true if ownerId is mandatory for the given operation.
+	 * OwnerId is mandatory when:
+	 * - the entity is owned AND the operation access level is owner
+	 */
+	default boolean isOwnerIdMandatoryForOperation(OperationDefinition operation) {
+		if (operation == null) return false;
+		if (!isOwnedEntity()) return false;
+		return operation.access() == Access.owner;
+	}
+
 	// Hook method addresses (to be implemented by concrete class)
 	default ObjectAddress getAfterGetMethodAddress() { return null; }
 	default ObjectAddress getBeforeCreateMethodAddress() { return null; }
@@ -122,18 +147,22 @@ public interface IDomainContext<E> extends ILifecycle {
 
 	Map<String, IWorkflow> getWorkflows();
 
+	// --- Request builder ---
+
+	IRequestBuilder request();
+
 	// --- CRUD convenience methods ---
 
 	default IOperationResponse createOne(Object body, ICaller caller) {
 		IOperationRequest request = buildRequest(
-				Operation.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+				OperationDefinition.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
 		request.arg(IOperationRequest.BODY, body);
 		return invoke(request);
 	}
 
 	default IOperationResponse readOne(String uuid, ICaller caller) {
 		IOperationRequest request = buildRequest(
-				Operation.readOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+				OperationDefinition.readOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
 		request.arg(IOperationRequest.ENTITY_UUID, uuid);
 		return invoke(request);
 	}
@@ -144,7 +173,7 @@ public interface IDomainContext<E> extends ILifecycle {
 
 	default IOperationResponse readAll(IFilter filter, IPageable page, ISort sort, ICaller caller) {
 		IOperationRequest request = buildRequest(
-				Operation.readAllWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+				OperationDefinition.readAllWithStandardSecurity(getDomainName(), getEntityClass()), caller);
 		if (filter != null) request.arg(IOperationRequest.FILTER, filter);
 		if (page != null) request.arg(IOperationRequest.PAGE, page);
 		if (sort != null) request.arg(IOperationRequest.SORT, sort);
@@ -153,7 +182,7 @@ public interface IDomainContext<E> extends ILifecycle {
 
 	default IOperationResponse updateOne(String uuid, Object body, ICaller caller) {
 		IOperationRequest request = buildRequest(
-				Operation.updateOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+				OperationDefinition.updateOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
 		request.arg(IOperationRequest.ENTITY_UUID, uuid);
 		request.arg(IOperationRequest.BODY, body);
 		return invoke(request);
@@ -161,21 +190,21 @@ public interface IDomainContext<E> extends ILifecycle {
 
 	default IOperationResponse deleteOne(String uuid, ICaller caller) {
 		IOperationRequest request = buildRequest(
-				Operation.deleteOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+				OperationDefinition.deleteOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
 		request.arg(IOperationRequest.ENTITY_UUID, uuid);
 		return invoke(request);
 	}
 
 	default IOperationResponse deleteAll(ICaller caller) {
 		IOperationRequest request = buildRequest(
-				Operation.deleteAllWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+				OperationDefinition.deleteAllWithStandardSecurity(getDomainName(), getEntityClass()), caller);
 		return invoke(request);
 	}
 
 	// --- Internal helpers ---
 
 	@SuppressWarnings("rawtypes")
-	private IOperationRequest buildRequest(Operation operation, ICaller caller) {
+	private IOperationRequest buildRequest(OperationDefinition operation, ICaller caller) {
 		IOperationRequest request = IOperationRequest.create();
 		request.arg(IOperationRequest.OPERATION, operation);
 		if (caller != null) {

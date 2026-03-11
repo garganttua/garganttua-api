@@ -15,7 +15,7 @@ import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
 import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.operation.OperationType;
 import com.garganttua.api.spec.operation.Scope;
 import com.garganttua.api.spec.operation.TechnicalOperation;
@@ -37,7 +37,6 @@ class DomainDefinitionTest {
     private IEntityDefinition<TestEntity> mockEntityDefinition;
 
     @BeforeEach
-    @SuppressWarnings("unchecked")
     void setUp() {
         mockEntityDefinition = mock(IEntityDefinition.class);
         when(mockEntityDefinition.entityClass()).thenReturn(IClass.getClass(TestEntity.class));
@@ -106,7 +105,7 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), workflows);
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertEquals(2, ops.size());
             assertTrue(ops.stream().anyMatch(o -> o.getBusinessOperation() == BusinessOperation.create));
@@ -119,7 +118,7 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), allCrudWorkflows());
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertEquals(6, ops.size());
         }
@@ -130,7 +129,7 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of());
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertTrue(ops.isEmpty());
         }
@@ -144,7 +143,7 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), workflows);
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertEquals("testentities", ops.get(0).domainName());
             assertEquals(IClass.getClass(TestEntity.class), ops.get(0).entity());
@@ -166,15 +165,15 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), workflows);
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
-            Operation createOp = ops.stream()
+            OperationDefinition createOp = ops.stream()
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.create)
                     .findFirst().orElseThrow();
-            Operation readAllOp = ops.stream()
+            OperationDefinition readAllOp = ops.stream()
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.readAll)
                     .findFirst().orElseThrow();
-            Operation readOneOp = ops.stream()
+            OperationDefinition readOneOp = ops.stream()
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.readOne)
                     .findFirst().orElseThrow();
 
@@ -194,15 +193,15 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), workflows);
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
-            Operation createOp = ops.stream()
+            OperationDefinition createOp = ops.stream()
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.create)
                     .findFirst().orElseThrow();
-            Operation readAllOp = ops.stream()
+            OperationDefinition readAllOp = ops.stream()
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.readAll)
                     .findFirst().orElseThrow();
-            Operation readOneOp = ops.stream()
+            OperationDefinition readOneOp = ops.stream()
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.readOne)
                     .findFirst().orElseThrow();
 
@@ -229,11 +228,11 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of(), Map.of("myWorkflow", wfDef));
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertEquals(1, ops.size());
             assertEquals(OperationType.workflow, ops.get(0).type());
-            assertEquals(TechnicalOperation.update, ops.get(0).operation());
+            assertEquals(TechnicalOperation.update, ops.get(0).technicalOperation());
             assertEquals(Scope.oneEntity, ops.get(0).scope());
         }
 
@@ -243,7 +242,7 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of("create", defaultCrudWorkflow()));
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertEquals(1, ops.size());
             assertEquals(OperationType.standard, ops.get(0).type());
@@ -263,9 +262,9 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of(), Map.of("wf", wfDef));
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
-            assertEquals(TechnicalOperation.read, ops.get(0).operation());
+            assertEquals(TechnicalOperation.read, ops.get(0).technicalOperation());
             assertEquals(Scope.allEntities, ops.get(0).scope());
         }
     }
@@ -286,11 +285,11 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of("myUseCase", ucDef), Map.of());
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             assertEquals(1, ops.size());
             assertEquals(OperationType.usesCase, ops.get(0).type());
-            assertEquals(TechnicalOperation.create, ops.get(0).operation());
+            assertEquals(TechnicalOperation.create, ops.get(0).technicalOperation());
             assertTrue(ops.get(0).authority());
             assertEquals(Access.owner, ops.get(0).access());
         }
@@ -307,9 +306,9 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of("uc", ucDef), Map.of());
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
-            assertEquals(TechnicalOperation.read, ops.get(0).operation());
+            assertEquals(TechnicalOperation.read, ops.get(0).technicalOperation());
             assertEquals(Scope.allEntities, ops.get(0).scope());
         }
     }
@@ -343,7 +342,7 @@ class DomainDefinitionTest {
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of("uc1", ucDef), workflows);
 
-            List<Operation> ops = def.operations();
+            List<OperationDefinition> ops = def.operations();
 
             // 2 CRUD + 1 custom workflow + 1 use case
             assertEquals(4, ops.size());

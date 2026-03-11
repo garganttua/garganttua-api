@@ -12,7 +12,7 @@ import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -51,7 +51,7 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
     void readOneReturnsEntity() throws ApiException {
         seedOneUser();
 
-        Operation readOneOp = Operation.readOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
@@ -72,7 +72,7 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
     void readOneReturnsNotFoundWhenEmpty() throws ApiException {
         // No entities seeded
 
-        Operation readOneOp = Operation.readOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
@@ -88,7 +88,7 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
     void readOneReturnsBadRequestWhenNoCaller() throws ApiException {
         seedOneUser();
 
-        Operation readOneOp = Operation.readOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, readOneOp);
 
@@ -118,7 +118,7 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
         IApiContext failingContext = buildAndStart(failingBuilder);
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
-        Operation readOneOp = Operation.readOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
@@ -134,7 +134,7 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
     void readOneByIdType() throws ApiException {
         seedOneUser();
 
-        Operation readOneOp = Operation.readOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readOneOp);
         request.arg("type", "id");
         request.arg("identifier", "1");
@@ -152,7 +152,7 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
     void readOneDefaultsToUuidType() throws ApiException {
         seedOneUser();
 
-        Operation readOneOp = Operation.readOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(readOneOp);
         request.arg("identifier", "uuid-alice");
         // No type arg — should default to uuid

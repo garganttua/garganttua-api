@@ -7,7 +7,7 @@ import java.util.Objects;
 
 import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.operation.Scope;
 import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.definition.IDomainDefinition;
@@ -39,8 +39,8 @@ public record DomainDefinition<E>(
         IDomainSecurityDefinition domainSecurityDefinition) implements IDomainDefinition<E> {
 
     @Override
-    public List<Operation> operations() {
-        List<Operation> ops = new ArrayList<>();
+    public List<OperationDefinition> operations() {
+        List<OperationDefinition> ops = new ArrayList<>();
         IClass<?> entityClass = entityDefinition.entityClass();
 
         collectCrudOperations(ops, entityClass);
@@ -50,22 +50,22 @@ public record DomainDefinition<E>(
         return ops;
     }
 
-    private void collectCrudOperations(List<Operation> ops, IClass<?> entityClass) {
+    private void collectCrudOperations(List<OperationDefinition> ops, IClass<?> entityClass) {
         if (workflows == null) return;
-        addCrudIfPresent(ops, BusinessOperation.create, Operation::createOne, entityClass);
-        addCrudIfPresent(ops, BusinessOperation.readAll, Operation::readAll, entityClass);
-        addCrudIfPresent(ops, BusinessOperation.readOne, Operation::readOne, entityClass);
-        addCrudIfPresent(ops, BusinessOperation.update, Operation::updateOne, entityClass);
-        addCrudIfPresent(ops, BusinessOperation.deleteOne, Operation::deleteOne, entityClass);
-        addCrudIfPresent(ops, BusinessOperation.deleteAll, Operation::deleteAll, entityClass);
+        addCrudIfPresent(ops, BusinessOperation.create, OperationDefinition::createOne, entityClass);
+        addCrudIfPresent(ops, BusinessOperation.readAll, OperationDefinition::readAll, entityClass);
+        addCrudIfPresent(ops, BusinessOperation.readOne, OperationDefinition::readOne, entityClass);
+        addCrudIfPresent(ops, BusinessOperation.update, OperationDefinition::updateOne, entityClass);
+        addCrudIfPresent(ops, BusinessOperation.deleteOne, OperationDefinition::deleteOne, entityClass);
+        addCrudIfPresent(ops, BusinessOperation.deleteAll, OperationDefinition::deleteAll, entityClass);
     }
 
     @FunctionalInterface
     private interface CrudFactory {
-        Operation create(String domainName, IClass<?> entityClass, boolean authority, Access access);
+        OperationDefinition create(String domainName, IClass<?> entityClass, boolean authority, Access access);
     }
 
-    private void addCrudIfPresent(List<Operation> ops, BusinessOperation bo, CrudFactory f, IClass<?> entityClass) {
+    private void addCrudIfPresent(List<OperationDefinition> ops, BusinessOperation bo, CrudFactory f, IClass<?> entityClass) {
         IWorkflowDefinition wfDef = workflows.get(bo.getLabel());
         if (wfDef != null) {
             Access access = wfDef.access() != null ? wfDef.access() : Access.authenticated;
@@ -74,11 +74,11 @@ public record DomainDefinition<E>(
         }
     }
 
-    private void collectWorkflowOperations(List<Operation> ops, IClass<?> entityClass) {
+    private void collectWorkflowOperations(List<OperationDefinition> ops, IClass<?> entityClass) {
         if (workflows == null) return;
         for (IWorkflowDefinition wfDef : workflows.values()) {
             if (!wfDef.custom()) continue;
-            ops.add(Operation.workflow(domainName,
+            ops.add(OperationDefinition.workflow(domainName,
                     Objects.requireNonNullElse(wfDef.operation(), TechnicalOperation.read),
                     entityClass,
                     Objects.requireNonNullElse(wfDef.scope(), Scope.allEntities),
@@ -86,10 +86,10 @@ public record DomainDefinition<E>(
         }
     }
 
-    private void collectUseCaseOperations(List<Operation> ops, IClass<?> entityClass) {
+    private void collectUseCaseOperations(List<OperationDefinition> ops, IClass<?> entityClass) {
         if (useCases == null) return;
         for (IUseCaseDefinition ucDef : useCases.values()) {
-            ops.add(Operation.useCase(domainName,
+            ops.add(OperationDefinition.useCase(domainName,
                     Objects.requireNonNullElse(ucDef.operation(), TechnicalOperation.read),
                     entityClass,
                     Objects.requireNonNullElse(ucDef.scope(), Scope.allEntities),

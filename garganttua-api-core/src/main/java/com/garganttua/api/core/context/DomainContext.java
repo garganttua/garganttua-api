@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.api.core.service.OperationResponse;
+import com.garganttua.api.core.service.RequestBuilder;
 import com.garganttua.api.core.repository.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.spec.ApiException;
@@ -25,6 +26,7 @@ import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.IRequestBuilder;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -242,6 +244,11 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     @Override
     public IDomainDefinition<E> getDomainDefinition() {
         return this.domainDefinition;
+    }
+
+    @Override
+    public IRequestBuilder request() {
+        return new RequestBuilder(this);
     }
 
     @Override

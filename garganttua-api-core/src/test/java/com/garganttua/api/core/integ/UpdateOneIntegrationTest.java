@@ -12,7 +12,7 @@ import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -58,7 +58,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         updatedUser.setName("Alice Updated");
         updatedUser.setEmail("alice.updated@example.com");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");
@@ -84,7 +84,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Alice By Id");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "id");
@@ -105,7 +105,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Alice Default");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("identifier", "uuid-alice");
@@ -123,7 +123,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Ghost");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");
@@ -143,7 +143,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Alice Updated");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, updateOp);
         request.arg("entity", updatedUser);
@@ -162,7 +162,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
     void updateOneReturnsBadRequestWhenNoEntity() throws ApiException {
         seedUser("1", "uuid-alice", "Alice", "alice@example.com");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
@@ -196,7 +196,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User updatedUser = new User();
         updatedUser.setName("Fail");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");
@@ -217,7 +217,7 @@ class UpdateOneIntegrationTest extends AbstractCrudIntegrationTest {
         updatedUser.setName("Alice Persisted");
         updatedUser.setEmail("persisted@example.com");
 
-        Operation updateOp = Operation.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition updateOp = OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(updateOp);
         request.arg("entity", updatedUser);
         request.arg("type", "uuid");

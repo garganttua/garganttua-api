@@ -1,170 +1,90 @@
 package com.garganttua.api.spec.operation;
 
-import java.util.Objects;
-
 import com.garganttua.api.spec.Pluralizer;
 import com.garganttua.api.spec.Singularizer;
 import com.garganttua.core.reflection.IClass;
 
-public record Operation(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope,
-		OperationType type, boolean authority, Access access) {
+public record Operation(
+		TechnicalOperation technicalOperation,
+		Scope scope,
+		BusinessOperation businessOperation,
+		String operationName,
+		OperationType operationType,
+		OperationPath path) {
 
-	public static Operation readOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
+	static Operation from(OperationDefinition def) {
+		return new Operation(
+				def.technicalOperation(),
+				def.scope(),
+				computeBusinessOperation(def.technicalOperation(), def.scope(), def.type()),
+				computeOperationName(def.technicalOperation(), def.scope(), def.type(), def.entity()),
+				def.type(),
+				computePath(def.entity(), def.type(), def.scope()));
 	}
 
-	public static Operation createOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
+	static BusinessOperation computeBusinessOperation(TechnicalOperation techOp, Scope scope, OperationType type) {
+		if (type == OperationType.authentication)
+			return BusinessOperation.authenticate;
+		if (type == OperationType.usesCase)
+			return BusinessOperation.useCase;
+		if (type == OperationType.workflow)
+			return BusinessOperation.workflow;
+
+		return switch (techOp) {
+			case create -> BusinessOperation.create;
+			case delete -> (scope == Scope.oneEntity) ? BusinessOperation.deleteOne : BusinessOperation.deleteAll;
+			case read -> (scope == Scope.oneEntity) ? BusinessOperation.readOne : BusinessOperation.readAll;
+			case update -> BusinessOperation.update;
+		};
 	}
 
-	public static Operation useCaseWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
-			Scope scope) {
-		return new Operation(domainName, operation, entity, scope, OperationType.usesCase, true, Access.tenant);
+	static String computeOperationName(TechnicalOperation techOp, Scope scope, OperationType type, IClass<?> entity) {
+		String entityName = entity.getSimpleName().toLowerCase();
+		if (type == OperationType.authentication) {
+			if (scope == Scope.allEntities || scope == Scope.listOfEntities) {
+				return "authenticate-all-" + Pluralizer.toPlural(entityName);
+			}
+			return "authenticate-one-" + Singularizer.toSingular(entityName);
+		}
+		if (scope == Scope.allEntities || scope == Scope.listOfEntities) {
+			return techOp + "-" + scope + "-" + Pluralizer.toPlural(entityName);
+		}
+		if (scope == Scope.oneEntity) {
+			return techOp + "-" + scope + "-" + Singularizer.toSingular(entityName);
+		}
+		return techOp + "-one-" + Singularizer.toSingular(entityName);
 	}
 
-	public static Operation deleteAllWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
-	}
-
-	public static Operation deleteOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
-	}
-
-	public static Operation updateOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
-	}
-
-	public static Operation readAllWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
-	}
-
-	public static Operation authenticate(String domainName, IClass<?> entity) {
-		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity,
-				OperationType.authentication, false, Access.anonymous);
-	}
-
-	public static Operation workflowWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
-			Scope scope) {
-		return new Operation(domainName, operation, entity, scope, OperationType.workflow, true, Access.authenticated);
-	}
-
-	public static Operation readOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new Operation(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, authority, access);
-	}
-
-	public static Operation createOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new Operation(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, authority, access);
-	}
-
-	public static Operation readAll(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new Operation(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, authority, access);
-	}
-
-	public static Operation updateOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new Operation(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, authority, access);
-	}
-
-	public static Operation deleteOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, authority, access);
-	}
-
-	public static Operation deleteAll(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new Operation(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, authority, access);
-	}
-
-	public static Operation useCase(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, Access access) {
-		return new Operation(domainName, operation, entity, scope, OperationType.usesCase, authority, access);
-	}
-
-	public static Operation workflow(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, Access access) {
-		return new Operation(domainName, operation, entity, scope, OperationType.workflow, authority, access);
-	}
-
-	public OperationPath getPath() {
+	static OperationPath computePath(IClass<?> entity, OperationType type, Scope scope) {
 		String base = "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase());
-		if (this.type == OperationType.authentication)
+		if (type == OperationType.authentication)
 			return new OperationPath(base + "/authenticate");
-		if (this.scope == Scope.oneEntity)
+		if (scope == Scope.oneEntity)
 			return new OperationPath(base + "/${uuid}");
 		return new OperationPath(base);
 	}
 
-	public String getOperationName() {
-		if (this.type == OperationType.authentication) {
-			if (scope == Scope.allEntities || scope == Scope.listOfEntities) {
-				return "authenticate-all-" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase());
+	boolean pathMatches(OperationPath other) {
+		if (this.path == null || other == null) return false;
+		String thisPattern = this.path.path();
+		String otherPath = other.path();
+		if (thisPattern == null || otherPath == null) return false;
+		String[] patternParts = thisPattern.split("/", -1);
+		String[] pathParts = otherPath.split("/", -1);
+		if (patternParts.length != pathParts.length) return false;
+		for (int i = 0; i < patternParts.length; i++) {
+			if (patternParts[i].startsWith("${") && patternParts[i].endsWith("}")) {
+				continue;
 			}
-			if (scope == Scope.oneEntity) {
-				return "authenticate-one-" + Singularizer.toSingular(entity.getSimpleName().toLowerCase());
+			if (!patternParts[i].equals(pathParts[i])) {
+				return false;
 			}
 		}
-		if (scope == Scope.allEntities || scope == Scope.listOfEntities) {
-			return operation.toString() + "-" + scope.toString() + "-" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase());
-		}
-		if (scope == Scope.oneEntity) {
-			return operation.toString() + "-" + scope.toString() + "-" + Singularizer.toSingular(entity.getSimpleName().toLowerCase());
-		}
-		return operation + "-one-" + Singularizer.toSingular(entity.getSimpleName().toLowerCase());
-	}
-
-	public BusinessOperation getBusinessOperation() {
-		if (this.type == OperationType.authentication)
-			return BusinessOperation.authenticate;
-		if (this.type == OperationType.usesCase)
-			return BusinessOperation.useCase;
-		if (this.type == OperationType.workflow)
-			return BusinessOperation.workflow;
-
-		switch (operation) {
-			case create:
-				return BusinessOperation.create;
-			case delete:
-				if (scope == Scope.oneEntity)
-					return BusinessOperation.deleteOne;
-				else
-					return BusinessOperation.deleteAll;
-			case read:
-			default:
-				if (scope == Scope.oneEntity)
-					return BusinessOperation.readOne;
-				else
-					return BusinessOperation.readAll;
-
-			case update:
-				return BusinessOperation.update;
-		}
-	}
-
-	public String key(){
-		return this.toString();
+		return true;
 	}
 
 	@Override
 	public String toString() {
-		return this.domainName + "-" + operation + "-" + scope + "-"
-				+ ((scope == Scope.allEntities || scope == Scope.listOfEntities)
-						? Pluralizer.toPlural(this.entity.getSimpleName().toLowerCase())
-						: Singularizer.toSingular(this.entity.getSimpleName().toLowerCase()));
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		Operation other = (Operation) obj;
-		return Objects.equals(domainName, other.domainName) &&
-				Objects.equals(entity, other.entity) &&
-				operation == other.operation &&
-				scope == other.scope &&
-				type == other.type;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(domainName, entity, operation, scope, type);
+		return operationName;
 	}
 }

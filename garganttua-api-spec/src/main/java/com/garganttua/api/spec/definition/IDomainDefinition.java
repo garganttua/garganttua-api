@@ -2,7 +2,7 @@ package com.garganttua.api.spec.definition;
 
 import java.util.List;
 
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 
@@ -14,7 +14,7 @@ public interface IDomainDefinition<E> {
 
     List<IDtoDefinition<E>> dtoDefinitions();
 
-    List<Operation> operations();
+    List<OperationDefinition> operations();
 
     Boolean publik();
 

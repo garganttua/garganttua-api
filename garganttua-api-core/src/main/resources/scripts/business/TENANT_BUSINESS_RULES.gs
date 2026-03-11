@@ -1,0 +1,32 @@
+#!/usr/bin/env gs
+
+#@workflow
+#  Validates tenant business rules before processing an operation.
+#  - Checks that tenantId is provided when the operation requires it
+#  - Checks that the tenant exists when tenantId is provided
+#
+#  @in operationRequest: [0] IOperationRequest
+#  @in repository: [1] IRepository
+#  @in domainContext: [2] IDomainContext
+#  @out void
+#  @return 0: SUCCESS
+#@end
+
+// Extract arguments from the operation request
+caller <- :arg(@0, "caller")
+operation <- :arg(@0, "operation")
+
+requirePresent(@caller)
+! -> 400
+
+requirePresent(@operation)
+! -> 400
+
+// Check if tenantId is mandatory for this operation
+tenantMandatory <- isTenantIdMandatory(@operation, @2)
+
+// If mandatory, validate tenantId is present
+if(equals(true, @tenantMandatory), requireTenantId(@caller))
+! -> 400
+
+-> 200

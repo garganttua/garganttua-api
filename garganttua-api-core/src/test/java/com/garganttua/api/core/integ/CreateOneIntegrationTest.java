@@ -12,7 +12,7 @@ import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -54,7 +54,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setName("Alice");
         user.setEmail("alice@example.com");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         request.arg("entity", user);
 
@@ -81,7 +81,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User user = new User();
         user.setName("Bob");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         request.arg("entity", user);
 
@@ -100,7 +100,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setUuid("my-custom-uuid");
         user.setName("Charlie");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         request.arg("entity", user);
 
@@ -117,7 +117,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User user = new User();
         user.setName("Diana");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         request.arg("entity", user);
 
@@ -135,7 +135,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         // name is mandatory but not set
         user.setEmail("nobody@example.com");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         request.arg("entity", user);
 
@@ -151,7 +151,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User user = new User();
         user.setName("Eve");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, createOp);
         request.arg("entity", user);
@@ -166,7 +166,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
     @Test
     @DisplayName("createOne returns CLIENT_ERROR when no entity is provided")
     void createOneReturnsBadRequestWhenNoEntity() throws ApiException {
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         // No entity arg
 
@@ -198,7 +198,7 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         User user = new User();
         user.setName("Frank");
 
-        Operation createOp = Operation.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantRequest(createOp);
         request.arg("entity", user);
 

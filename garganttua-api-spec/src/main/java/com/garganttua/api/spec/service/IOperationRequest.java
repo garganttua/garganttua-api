@@ -8,7 +8,7 @@ import java.util.UUID;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.operation.OperationPath;
 import com.garganttua.api.spec.operation.TechnicalOperation;
 import com.garganttua.api.spec.filter.IFilter;
@@ -24,7 +24,7 @@ public interface IOperationRequest {
 
 	ArgKey<String> PATH = ArgKey.of("path", IClass.getClass(String.class));
 	ArgKey<TechnicalOperation> TECHNICAL_OPERATION = ArgKey.of("technicalOperation", IClass.getClass(TechnicalOperation.class));
-	ArgKey<Operation> OPERATION = ArgKey.of("operation", IClass.getClass(Operation.class));
+	ArgKey<OperationDefinition> OPERATION = ArgKey.of("operation", IClass.getClass(OperationDefinition.class));
 
 	ArgKey<Object> RAW_REQUEST = ArgKey.of("rawRequest", IClass.getClass(Object.class));
 	ArgKey<Byte[]> RAW_BODY = ArgKey.of("rawBody", IClass.getClass(Byte[].class));
@@ -98,7 +98,7 @@ public interface IOperationRequest {
 			}
 
 			@Override
-			public Operation operation() {
+			public OperationDefinition operation() {
 				return arg(OPERATION).orElse(null);
 			}
 
@@ -125,7 +125,7 @@ public interface IOperationRequest {
 
 	ICaller caller();
 
-	Operation operation();
+	OperationDefinition operation();
 
 	Map<String, Object> args();
 

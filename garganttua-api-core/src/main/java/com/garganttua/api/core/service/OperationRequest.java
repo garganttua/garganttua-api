@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.operation.OperationPath;
 import com.garganttua.api.spec.service.ArgKey;
 import com.garganttua.api.spec.service.IOperationRequest;
@@ -57,7 +57,7 @@ public class OperationRequest implements IOperationRequest {
 	}
 
 	@Override
-	public Operation operation() {
+	public OperationDefinition operation() {
 		return arg(OPERATION).orElse(null);
 	}
 

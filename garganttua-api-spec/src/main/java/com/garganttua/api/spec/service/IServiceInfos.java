@@ -3,7 +3,7 @@ package com.garganttua.api.spec.service;
 import java.lang.reflect.Method;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.garganttua.api.spec.operation.Operation;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
 
@@ -24,7 +24,7 @@ public interface IServiceInfos {
 
 	String getDescription();
 
-	Operation getOperation();
+	OperationDefinition getOperation();
 	
 	Object invoke(Object[] parameters) throws ApiException;
 
