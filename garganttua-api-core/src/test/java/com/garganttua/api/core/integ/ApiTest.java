@@ -19,6 +19,7 @@ import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 
 @DisplayName("API Integration Tests")
 class ApiTest extends AbstractCrudIntegrationTest {

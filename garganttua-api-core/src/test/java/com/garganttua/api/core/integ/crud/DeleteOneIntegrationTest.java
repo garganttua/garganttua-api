@@ -1,9 +1,8 @@
-package com.garganttua.api.core.integ;
+package com.garganttua.api.core.integ.crud;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.HashMap;
-import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +19,8 @@ import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
 
-@DisplayName("DeleteAll Integration Tests")
-class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
+@DisplayName("DeleteOne Integration Tests")
+class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -48,51 +47,83 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("deleteAll deletes all entities and returns them")
-    void deleteAllDeletesAllEntities() throws ApiException {
-        seedUsers("Alice", "Bob", "Charlie");
-        assertEquals(3, userDao.getStorage().size());
+    @DisplayName("deleteOne deletes entity by uuid and returns it")
+    void deleteOneByUuid() throws ApiException {
+        seedUsers("Alice", "Bob");
+        assertEquals(2, userDao.getStorage().size());
 
-        OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
-
-        IOperationResponse response = userCtx.invoke(request);
-
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof List);
-
-        List<?> deleted = (List<?>) response.getResponse();
-        assertEquals(3, deleted.size());
-
-        assertEquals(0, userDao.getStorage().size(), "All entities should have been deleted from DAO");
-    }
-
-    @Test
-    @DisplayName("deleteAll returns empty list when no entities exist")
-    void deleteAllReturnsEmptyWhenNoEntities() throws ApiException {
-        OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = superTenantRequest(deleteOneOp);
+        request.arg("type", "uuid");
+        request.arg("identifier", "uuid-alice");
 
         IOperationResponse response = userCtx.invoke(request);
 
         assertNotNull(response);
         assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof List);
+        assertTrue(response.getResponse() instanceof User);
 
-        List<?> deleted = (List<?>) response.getResponse();
-        assertTrue(deleted.isEmpty());
+        User deleted = (User) response.getResponse();
+        assertEquals("Alice", deleted.getName());
+
+        assertEquals(1, userDao.getStorage().size(), "Only one entity should remain");
     }
 
     @Test
-    @DisplayName("deleteAll returns CLIENT_ERROR when no caller is provided")
-    void deleteAllReturnsBadRequestWhenNoCaller() throws ApiException {
+    @DisplayName("deleteOne deletes entity by id")
+    void deleteOneById() throws ApiException {
         seedUsers("Alice");
 
-        OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = superTenantRequest(deleteOneOp);
+        request.arg("type", "id");
+        request.arg("identifier", "1");
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertTrue(response.getResponse() instanceof User);
+        assertEquals(0, userDao.getStorage().size());
+    }
+
+    @Test
+    @DisplayName("deleteOne defaults to uuid type when not specified")
+    void deleteOneDefaultsToUuid() throws ApiException {
+        seedUsers("Alice");
+
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = superTenantRequest(deleteOneOp);
+        request.arg("identifier", "uuid-alice");
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertTrue(response.getResponse() instanceof User);
+        assertEquals(0, userDao.getStorage().size());
+    }
+
+    @Test
+    @DisplayName("deleteOne returns NOT_FOUND when entity does not exist")
+    void deleteOneReturnsNotFound() throws ApiException {
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = superTenantRequest(deleteOneOp);
+        request.arg("type", "uuid");
+        request.arg("identifier", "uuid-nonexistent");
+
+        IOperationResponse response = userCtx.invoke(request);
+
+        assertNotNull(response);
+        assertEquals(OperationResponseCode.NOT_FOUND, response.getResponseCode());
+    }
+
+    @Test
+    @DisplayName("deleteOne returns CLIENT_ERROR when no caller is provided")
+    void deleteOneReturnsBadRequestWhenNoCaller() throws ApiException {
+        seedUsers("Alice");
+
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
-        request.arg(IOperationRequest.OPERATION, deleteAllOp);
+        request.arg(IOperationRequest.OPERATION, deleteOneOp);
 
         IOperationResponse response = userCtx.invoke(request);
 
@@ -104,8 +135,8 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("deleteAll returns SERVER_ERROR when repository throws an exception")
-    void deleteAllReturnsServerErrorOnRepositoryException() throws ApiException {
+    @DisplayName("deleteOne returns SERVER_ERROR when repository throws an exception")
+    void deleteOneReturnsServerErrorOnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
@@ -122,30 +153,15 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         IApiContext failingContext = buildAndStart(failingBuilder);
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
-        OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
+        OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = superTenantRequest(deleteOneOp);
+        request.arg("type", "uuid");
+        request.arg("identifier", "uuid-alice");
 
         IOperationResponse response = failingUserCtx.invoke(request);
 
         assertNotNull(response);
         assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
-    }
-
-    @Test
-    @DisplayName("deleteAll with single entity deletes it and returns it")
-    void deleteAllSingleEntity() throws ApiException {
-        seedUsers("Alice");
-        assertEquals(1, userDao.getStorage().size());
-
-        OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
-
-        IOperationResponse response = userCtx.invoke(request);
-
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        List<?> deleted = (List<?>) response.getResponse();
-        assertEquals(1, deleted.size());
-        assertEquals(0, userDao.getStorage().size());
     }
 
     private void seedUsers(String... names) {

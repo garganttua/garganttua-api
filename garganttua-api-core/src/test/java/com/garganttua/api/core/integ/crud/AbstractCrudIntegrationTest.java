@@ -1,4 +1,4 @@
-package com.garganttua.api.core.integ;
+package com.garganttua.api.core.integ.crud;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.RuntimeContextFactory;
 
-abstract class AbstractCrudIntegrationTest {
+public abstract class AbstractCrudIntegrationTest {
 
     // ───── Tenant entity: User ─────
 
@@ -321,7 +321,7 @@ abstract class AbstractCrudIntegrationTest {
 
     // ───── Helper methods ─────
 
-    static IApiContextBuilder newBuilder() throws ApiException {
+    protected static IApiContextBuilder newBuilder() throws ApiException {
         com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider())
                 .withScanner(new ReflectionsAnnotationScanner());
@@ -359,7 +359,7 @@ abstract class AbstractCrudIntegrationTest {
         return context;
     }
 
-    static OperationRequest superTenantRequest(OperationDefinition operation) {
+    protected static OperationRequest superTenantRequest(OperationDefinition operation) {
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, operation);
         request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");

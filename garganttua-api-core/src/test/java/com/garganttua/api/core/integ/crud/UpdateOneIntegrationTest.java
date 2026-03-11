@@ -1,4 +1,4 @@
-package com.garganttua.api.core.integ;
+package com.garganttua.api.core.integ.crud;
 
 import static org.junit.jupiter.api.Assertions.*;
 
