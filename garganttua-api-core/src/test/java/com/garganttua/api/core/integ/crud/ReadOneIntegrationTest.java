@@ -15,12 +15,11 @@ import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.WorkflowResult;
 
-@DisplayName("ReadOne Integration Tests")
-class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
+@DisplayName("ReadOne Script Tests")
+class ReadOneIntegrationTest extends AbstractCrudScriptTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -52,56 +51,52 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedOneUser();
 
         OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readOneOp);
+        OperationRequest request = superTenantScriptRequest(readOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess(), "code=" + result.code() + " msg=" + result.exceptionMessage() + " output=" + result.output());
+        assertNotNull(result.output());
+        assertTrue(result.output() instanceof User);
 
-        User user = (User) response.getResponse();
+        User user = (User) result.output();
         assertEquals("Alice", user.getName());
     }
 
     @Test
-    @DisplayName("readOne returns NOT_FOUND when no entities exist")
-    void readOneReturnsNotFoundWhenEmpty() throws ApiException {
-        // No entities seeded
-
+    @DisplayName("readOne returns 404 when no entities exist")
+    void readOneReturns404WhenEmpty() throws ApiException {
         OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readOneOp);
+        OperationRequest request = superTenantScriptRequest(readOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.NOT_FOUND, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(404, result.code());
     }
 
     @Test
-    @DisplayName("readOne returns CLIENT_ERROR when no caller is provided")
-    void readOneReturnsBadRequestWhenNoCaller() throws ApiException {
+    @DisplayName("readOne returns 400 when no caller is provided")
+    void readOneReturns400WhenNoCaller() throws ApiException {
         seedOneUser();
 
         OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, readOneOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
-        assertEquals("No caller provided", response.getResponse());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
     }
 
     @Test
-    @DisplayName("readOne returns SERVER_ERROR when repository throws an exception")
-    void readOneReturnsServerErrorOnRepositoryException() throws ApiException {
+    @DisplayName("readOne returns 500 when repository throws an exception")
+    void readOneReturns500OnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
@@ -119,14 +114,14 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
         OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readOneOp);
+        OperationRequest request = superTenantScriptRequest(readOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        IOperationResponse response = failingUserCtx.invoke(request);
+        WorkflowResult result = executeScript(failingUserCtx, "readOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(500, result.code());
     }
 
     @Test
@@ -135,16 +130,15 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedOneUser();
 
         OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readOneOp);
+        OperationRequest request = superTenantScriptRequest(readOneOp);
         request.arg("type", "id");
         request.arg("identifier", "1");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess());
+        assertNotNull(result.output());
+        assertTrue(result.output() instanceof User);
     }
 
     @Test
@@ -153,16 +147,14 @@ class ReadOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedOneUser();
 
         OperationDefinition readOneOp = OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readOneOp);
+        OperationRequest request = superTenantScriptRequest(readOneOp);
         request.arg("identifier", "uuid-alice");
-        // No type arg — should default to uuid
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess());
+        assertNotNull(result.output());
+        assertTrue(result.output() instanceof User);
     }
 
     private void seedOneUser() {

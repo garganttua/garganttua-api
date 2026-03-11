@@ -16,12 +16,11 @@ import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.WorkflowResult;
 
-@DisplayName("DeleteAll Integration Tests")
-class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
+@DisplayName("DeleteAll Script Tests")
+class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -54,16 +53,15 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         assertEquals(3, userDao.getStorage().size());
 
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
+        OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof List);
+        assertTrue(result.isSuccess());
+        assertNotNull(result.output());
+        assertTrue(result.output() instanceof List);
 
-        List<?> deleted = (List<?>) response.getResponse();
+        List<?> deleted = (List<?>) result.output();
         assertEquals(3, deleted.size());
 
         assertEquals(0, userDao.getStorage().size(), "All entities should have been deleted from DAO");
@@ -73,39 +71,37 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
     @DisplayName("deleteAll returns empty list when no entities exist")
     void deleteAllReturnsEmptyWhenNoEntities() throws ApiException {
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
+        OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof List);
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof List);
 
-        List<?> deleted = (List<?>) response.getResponse();
+        List<?> deleted = (List<?>) result.output();
         assertTrue(deleted.isEmpty());
     }
 
     @Test
-    @DisplayName("deleteAll returns CLIENT_ERROR when no caller is provided")
-    void deleteAllReturnsBadRequestWhenNoCaller() throws ApiException {
+    @DisplayName("deleteAll returns 400 when no caller is provided")
+    void deleteAllReturns400WhenNoCaller() throws ApiException {
         seedUsers("Alice");
 
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, deleteAllOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
-        assertEquals("No caller provided", response.getResponse());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
 
         assertEquals(1, userDao.getStorage().size(), "Entity should not have been deleted");
     }
 
     @Test
-    @DisplayName("deleteAll returns SERVER_ERROR when repository throws an exception")
-    void deleteAllReturnsServerErrorOnRepositoryException() throws ApiException {
+    @DisplayName("deleteAll returns 500 when repository throws an exception")
+    void deleteAllReturns500OnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
@@ -123,12 +119,12 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
+        OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        IOperationResponse response = failingUserCtx.invoke(request);
+        WorkflowResult result = executeScript(failingUserCtx, "deleteAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(500, result.code());
     }
 
     @Test
@@ -138,12 +134,12 @@ class DeleteAllIntegrationTest extends AbstractCrudIntegrationTest {
         assertEquals(1, userDao.getStorage().size());
 
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteAllOp);
+        OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        List<?> deleted = (List<?>) response.getResponse();
+        assertTrue(result.isSuccess());
+        List<?> deleted = (List<?>) result.output();
         assertEquals(1, deleted.size());
         assertEquals(0, userDao.getStorage().size());
     }

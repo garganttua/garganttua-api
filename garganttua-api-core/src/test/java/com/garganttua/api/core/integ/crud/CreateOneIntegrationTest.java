@@ -15,12 +15,11 @@ import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.WorkflowResult;
 
-@DisplayName("CreateOne Integration Tests")
-class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
+@DisplayName("CreateOne Script Tests")
+class CreateOneIntegrationTest extends AbstractCrudScriptTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -55,23 +54,20 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setEmail("alice@example.com");
 
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
+        OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertNotNull(response);
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess());
+        assertNotNull(result.output());
+        assertTrue(result.output() instanceof User);
 
-        User result = (User) response.getResponse();
-        assertEquals("Alice", result.getName());
-        assertNotNull(result.getUuid(), "UUID should have been generated");
-        assertEquals("SUPER_TENANT", result.getTenantId(), "TenantId should be set from caller");
+        User output = (User) result.output();
+        assertEquals("Alice", output.getName());
+        assertNotNull(output.getUuid(), "UUID should have been generated");
+        assertEquals("SUPER_TENANT", output.getTenantId(), "TenantId should be set from caller");
 
-        // Verify entity was saved to DAO
         assertNotNull(userDao.getLastSaved());
     }
 
@@ -82,15 +78,15 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setName("Bob");
 
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
+        OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        User result = (User) response.getResponse();
-        assertNotNull(result.getUuid());
-        assertFalse(result.getUuid().isEmpty());
+        assertTrue(result.isSuccess());
+        User output = (User) result.output();
+        assertNotNull(output.getUuid());
+        assertFalse(output.getUuid().isEmpty());
     }
 
     @Test
@@ -101,14 +97,14 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setName("Charlie");
 
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
+        OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        User result = (User) response.getResponse();
-        assertEquals("my-custom-uuid", result.getUuid());
+        assertTrue(result.isSuccess());
+        User output = (User) result.output();
+        assertEquals("my-custom-uuid", output.getUuid());
     }
 
     @Test
@@ -118,36 +114,35 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setName("Diana");
 
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
+        OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        User result = (User) response.getResponse();
-        assertEquals("SUPER_TENANT", result.getTenantId());
+        assertTrue(result.isSuccess());
+        User output = (User) result.output();
+        assertEquals("SUPER_TENANT", output.getTenantId());
     }
 
     @Test
-    @DisplayName("createOne returns CLIENT_ERROR when mandatory field is null")
-    void createOneReturnsBadRequestWhenMandatoryNull() throws ApiException {
+    @DisplayName("createOne returns 400 when mandatory field is null")
+    void createOneReturns400WhenMandatoryNull() throws ApiException {
         User user = new User();
-        // name is mandatory but not set
         user.setEmail("nobody@example.com");
 
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
+        OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
     }
 
     @Test
-    @DisplayName("createOne returns CLIENT_ERROR when no caller is provided")
-    void createOneReturnsBadRequestWhenNoCaller() throws ApiException {
+    @DisplayName("createOne returns 400 when no caller is provided")
+    void createOneReturns400WhenNoCaller() throws ApiException {
         User user = new User();
         user.setName("Eve");
 
@@ -156,29 +151,27 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         request.arg(IOperationRequest.OPERATION, createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
-        assertEquals("No caller provided", response.getResponse());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
     }
 
     @Test
-    @DisplayName("createOne returns CLIENT_ERROR when no entity is provided")
-    void createOneReturnsBadRequestWhenNoEntity() throws ApiException {
+    @DisplayName("createOne returns 400 when no entity is provided")
+    void createOneReturns400WhenNoEntity() throws ApiException {
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
-        // No entity arg
+        OperationRequest request = superTenantScriptRequest(createOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "create", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
     }
 
     @Test
-    @DisplayName("createOne returns SERVER_ERROR when repository throws an exception")
-    void createOneReturnsServerErrorOnRepositoryException() throws ApiException {
+    @DisplayName("createOne returns 500 when repository throws an exception")
+    void createOneReturns500OnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
@@ -199,12 +192,12 @@ class CreateOneIntegrationTest extends AbstractCrudIntegrationTest {
         user.setName("Frank");
 
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(createOp);
+        OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        IOperationResponse response = failingUserCtx.invoke(request);
+        WorkflowResult result = executeScript(failingUserCtx, "create", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(500, result.code());
     }
 }

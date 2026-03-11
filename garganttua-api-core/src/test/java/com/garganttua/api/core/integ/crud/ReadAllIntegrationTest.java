@@ -19,15 +19,14 @@ import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.api.spec.sort.Sort;
 import com.garganttua.api.spec.sort.SortDirection;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.WorkflowResult;
 
-@DisplayName("ReadAll Integration Tests")
-class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
+@DisplayName("ReadAll Script Tests")
+class ReadAllIntegrationTest extends AbstractCrudScriptTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -54,50 +53,25 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("invoke readAll workflow returns a successful response")
-    void invokeReadAllWorkflow() throws ApiException {
-        UserDto alice = new UserDto();
-        alice.setId("1");
-        alice.setUuid("uuid-alice");
-        alice.setTenantId("SUPER_TENANT");
-        alice.setName("Alice");
-        alice.setEmail("alice@example.com");
-
-        UserDto bob = new UserDto();
-        bob.setId("2");
-        bob.setUuid("uuid-bob");
-        bob.setTenantId("SUPER_TENANT");
-        bob.setName("Bob");
-        bob.setEmail("bob@example.com");
-
-        UserDto charlie = new UserDto();
-        charlie.setId("3");
-        charlie.setUuid("uuid-charlie");
-        charlie.setTenantId("SUPER_TENANT");
-        charlie.setName("Charlie");
-        charlie.setEmail("charlie@example.com");
-
-        userDao.getStorage().add(alice);
-        userDao.getStorage().add(bob);
-        userDao.getStorage().add(charlie);
+    @DisplayName("readAll returns all entities")
+    void readAllReturnsEntities() throws ApiException {
+        seedUsers();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof List);
-        List<Object> entities = (List<Object>) response.getResponse();
+        assertTrue(result.isSuccess());
+        assertNotNull(result.output());
+        assertTrue(result.output() instanceof List);
+        List<Object> entities = (List<Object>) result.output();
         assertEquals(3, entities.size());
     }
 
     @Test
-    @DisplayName("readAll returns SERVER_ERROR when repository throws an exception")
-    void readAllReturnsServerErrorOnRepositoryException() throws ApiException {
+    @DisplayName("readAll returns 500 when repository throws an exception")
+    void readAllReturns500OnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
@@ -115,27 +89,25 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
 
-        IOperationResponse response = failingUserCtx.invoke(request);
+        WorkflowResult result = executeScript(failingUserCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(500, result.code());
     }
 
     @Test
-    @DisplayName("readAll returns CLIENT_ERROR when no caller is provided")
-    void readAllReturnsBadRequestWhenNoCaller() throws ApiException {
+    @DisplayName("readAll returns 400 when no caller is provided")
+    void readAllReturns400WhenNoCaller() throws ApiException {
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, readAllOp);
-        // No tenant/caller args provided
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
-        assertEquals("No caller provided", response.getResponse());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
     }
 
     @Test
@@ -144,19 +116,17 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("mode", "uuid");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-
-        List<Object> result = (List<Object>) response.getResponse();
-        assertEquals(3, result.size(), "Expected 3 items but got: " + result);
-        assertTrue(result.contains("uuid-alice"), "Missing uuid-alice in: " + result);
-        assertTrue(result.contains("uuid-bob"), "Missing uuid-bob in: " + result);
-        assertTrue(result.contains("uuid-charlie"), "Missing uuid-charlie in: " + result);
+        assertTrue(result.isSuccess());
+        List<Object> output = (List<Object>) result.output();
+        assertEquals(3, output.size());
+        assertTrue(output.contains("uuid-alice"));
+        assertTrue(output.contains("uuid-bob"));
+        assertTrue(output.contains("uuid-charlie"));
     }
 
     @Test
@@ -165,19 +135,17 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("mode", "id");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-
-        List<Object> result = (List<Object>) response.getResponse();
-        assertEquals(3, result.size());
-        assertTrue(result.contains("1"));
-        assertTrue(result.contains("2"));
-        assertTrue(result.contains("3"));
+        assertTrue(result.isSuccess());
+        List<Object> output = (List<Object>) result.output();
+        assertEquals(3, output.size());
+        assertTrue(output.contains("1"));
+        assertTrue(output.contains("2"));
+        assertTrue(output.contains("3"));
     }
 
     @Test
@@ -186,45 +154,15 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("mode", "full");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-
-        List<Object> result = (List<Object>) response.getResponse();
-        assertEquals(3, result.size());
-        // Full mode returns mapped entity objects
-        assertTrue(result.get(0) instanceof User);
-    }
-
-    private void seedUsers() {
-        UserDto alice = new UserDto();
-        alice.setId("1");
-        alice.setUuid("uuid-alice");
-        alice.setTenantId("SUPER_TENANT");
-        alice.setName("Alice");
-        alice.setEmail("alice@example.com");
-
-        UserDto bob = new UserDto();
-        bob.setId("2");
-        bob.setUuid("uuid-bob");
-        bob.setTenantId("SUPER_TENANT");
-        bob.setName("Bob");
-        bob.setEmail("bob@example.com");
-
-        UserDto charlie = new UserDto();
-        charlie.setId("3");
-        charlie.setUuid("uuid-charlie");
-        charlie.setTenantId("SUPER_TENANT");
-        charlie.setName("Charlie");
-        charlie.setEmail("charlie@example.com");
-
-        userDao.getStorage().add(alice);
-        userDao.getStorage().add(bob);
-        userDao.getStorage().add(charlie);
+        assertTrue(result.isSuccess());
+        List<Object> output = (List<Object>) result.output();
+        assertEquals(3, output.size());
+        assertTrue(output.get(0) instanceof User);
     }
 
     @Test
@@ -238,16 +176,15 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         };
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("pageable", pageable);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof Page, "Expected a Page but got: " + response.getResponse().getClass());
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof Page);
 
-        Page page = (Page) response.getResponse();
+        Page page = (Page) result.output();
         assertEquals(3L, page.totalCount());
         assertEquals(3, page.entities().size());
     }
@@ -258,13 +195,12 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof List, "Expected a List but got: " + response.getResponse().getClass());
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof List);
     }
 
     @Test
@@ -278,17 +214,16 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         };
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("pageable", pageable);
         request.arg("mode", "uuid");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof Page);
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof Page);
 
-        Page page = (Page) response.getResponse();
+        Page page = (Page) result.output();
         assertEquals(3L, page.totalCount());
         assertEquals(3, page.entities().size());
         assertTrue(page.entities().contains("uuid-alice"));
@@ -331,14 +266,13 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         };
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(readAllOp);
+        OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("sort", sort);
         request.arg("pageable", pageable);
 
-        IOperationResponse response = capUserCtx.invoke(request);
+        WorkflowResult result = executeScript(capUserCtx, "readAll", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertTrue(result.isSuccess());
 
         assertNotNull(capturingDao.getLastSort());
         assertTrue(capturingDao.getLastSort().isPresent());
@@ -351,5 +285,32 @@ class ReadAllIntegrationTest extends AbstractCrudIntegrationTest {
         IPageable receivedPageable = capturingDao.getLastPageable().get();
         assertEquals(0, receivedPageable.getPageIndex());
         assertEquals(10, receivedPageable.getPageSize());
+    }
+
+    private void seedUsers() {
+        UserDto alice = new UserDto();
+        alice.setId("1");
+        alice.setUuid("uuid-alice");
+        alice.setTenantId("SUPER_TENANT");
+        alice.setName("Alice");
+        alice.setEmail("alice@example.com");
+
+        UserDto bob = new UserDto();
+        bob.setId("2");
+        bob.setUuid("uuid-bob");
+        bob.setTenantId("SUPER_TENANT");
+        bob.setName("Bob");
+        bob.setEmail("bob@example.com");
+
+        UserDto charlie = new UserDto();
+        charlie.setId("3");
+        charlie.setUuid("uuid-charlie");
+        charlie.setTenantId("SUPER_TENANT");
+        charlie.setName("Charlie");
+        charlie.setEmail("charlie@example.com");
+
+        userDao.getStorage().add(alice);
+        userDao.getStorage().add(bob);
+        userDao.getStorage().add(charlie);
     }
 }

@@ -15,12 +15,11 @@ import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.WorkflowResult;
 
-@DisplayName("DeleteOne Integration Tests")
-class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
+@DisplayName("DeleteOne Script Tests")
+class DeleteOneIntegrationTest extends AbstractCrudScriptTest {
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -53,17 +52,16 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         assertEquals(2, userDao.getStorage().size());
 
         OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteOneOp);
+        OperationRequest request = superTenantScriptRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof User);
 
-        User deleted = (User) response.getResponse();
+        User deleted = (User) result.output();
         assertEquals("Alice", deleted.getName());
 
         assertEquals(1, userDao.getStorage().size(), "Only one entity should remain");
@@ -75,14 +73,14 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers("Alice");
 
         OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteOneOp);
+        OperationRequest request = superTenantScriptRequest(deleteOneOp);
         request.arg("type", "id");
         request.arg("identifier", "1");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteOne", request);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof User);
         assertEquals(0, userDao.getStorage().size());
     }
 
@@ -92,51 +90,50 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         seedUsers("Alice");
 
         OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteOneOp);
+        OperationRequest request = superTenantScriptRequest(deleteOneOp);
         request.arg("identifier", "uuid-alice");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteOne", request);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertTrue(response.getResponse() instanceof User);
+        assertTrue(result.isSuccess());
+        assertTrue(result.output() instanceof User);
         assertEquals(0, userDao.getStorage().size());
     }
 
     @Test
-    @DisplayName("deleteOne returns NOT_FOUND when entity does not exist")
-    void deleteOneReturnsNotFound() throws ApiException {
+    @DisplayName("deleteOne returns 404 when entity does not exist")
+    void deleteOneReturns404() throws ApiException {
         OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteOneOp);
+        OperationRequest request = superTenantScriptRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.NOT_FOUND, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(404, result.code());
     }
 
     @Test
-    @DisplayName("deleteOne returns CLIENT_ERROR when no caller is provided")
-    void deleteOneReturnsBadRequestWhenNoCaller() throws ApiException {
+    @DisplayName("deleteOne returns 400 when no caller is provided")
+    void deleteOneReturns400WhenNoCaller() throws ApiException {
         seedUsers("Alice");
 
         OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, deleteOneOp);
 
-        IOperationResponse response = userCtx.invoke(request);
+        WorkflowResult result = executeScript(userCtx, "deleteOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
-        assertEquals("No caller provided", response.getResponse());
+        assertFalse(result.isSuccess());
+        assertEquals(400, result.code());
 
         assertEquals(1, userDao.getStorage().size(), "Entity should not have been deleted");
     }
 
     @Test
-    @DisplayName("deleteOne returns SERVER_ERROR when repository throws an exception")
-    void deleteOneReturnsServerErrorOnRepositoryException() throws ApiException {
+    @DisplayName("deleteOne returns 500 when repository throws an exception")
+    void deleteOneReturns500OnRepositoryException() throws ApiException {
         IApiContextBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
@@ -154,14 +151,14 @@ class DeleteOneIntegrationTest extends AbstractCrudIntegrationTest {
         IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
 
         OperationDefinition deleteOneOp = OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantRequest(deleteOneOp);
+        OperationRequest request = superTenantScriptRequest(deleteOneOp);
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        IOperationResponse response = failingUserCtx.invoke(request);
+        WorkflowResult result = executeScript(failingUserCtx, "deleteOne", request);
 
-        assertNotNull(response);
-        assertEquals(OperationResponseCode.SERVER_ERROR, response.getResponseCode());
+        assertFalse(result.isSuccess());
+        assertEquals(500, result.code());
     }
 
     private void seedUsers(String... names) {
