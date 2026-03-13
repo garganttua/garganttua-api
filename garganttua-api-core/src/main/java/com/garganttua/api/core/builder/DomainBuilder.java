@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 import com.garganttua.api.core.builder.binder.DomainStartupBinderBuilder;
 import com.garganttua.api.core.context.DomainContext;
@@ -66,6 +65,8 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.workflow.IWorkflow;
+import com.garganttua.core.workflow.dsl.IWorkflowBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 
 public class DomainBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContextBuilder, IDomainContext<E>>
@@ -163,6 +164,9 @@ public class DomainBuilder<E>
 
     @Override
     public IDomainBuilder<E> tenant(boolean b) throws ApiException {
+        if (b && this.up() instanceof ApiContextBuilder acb && !acb.isMultiTenant()) {
+            throw new ApiException("Cannot mark domain as tenant when multi-tenancy is disabled");
+        }
         this.tenant = b;
         return this;
     }
@@ -501,19 +505,27 @@ public class DomainBuilder<E>
                     ucb.hasAuthority()));
         }
 
-        // Build all workflows (propagate dependency builders to internal WorkflowBuilder)
-        // Skip workflows that have been disabled via security().disable(true)
+        // Build workflow definitions (metadata) and a single routing script that
+        // dispatches to the correct CRUD sub-script based on the business operation.
+        // Each CRUD script is included from the classpath and executed conditionally.
         Map<String, IWorkflowDefinition> workflowDefinitions = new HashMap<>();
-        Map<String, IWorkflow> builtWorkflows = new HashMap<>();
+        IWorkflowBuilder mergedBuilder = WorkflowBuilder.create().name(this.domainName);
+        if (this.injectionContextBuilder != null) {
+            mergedBuilder.provide(this.injectionContextBuilder);
+        }
+        if (this.expressionContextBuilder != null) {
+            mergedBuilder.provide(this.expressionContextBuilder);
+        }
+
+        // Collect CRUD operations and their classpath script paths
+        Map<String, String> crudScripts = new HashMap<>();
         for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
             DomainWorkflowBuilder<E> wb = entry.getValue();
             if (wb.isSecurityDisabled()) {
                 continue;
             }
-            wb.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
-            IWorkflow builtWorkflow = wb.build();
-            builtWorkflows.put(entry.getKey(), builtWorkflow);
-            workflowDefinitions.put(entry.getKey(), new WorkflowDefinition(
+            String label = entry.getKey();
+            workflowDefinitions.put(label, new WorkflowDefinition(
                     wb.getWorkflowName(),
                     wb.getPathSuffix(),
                     wb.getCompletePath(),
@@ -522,7 +534,21 @@ public class DomainBuilder<E>
                     wb.getAccess(),
                     wb.hasAuthority(),
                     wb.isCustom()));
+            String scriptPath = CRUD_SCRIPT_PATHS.get(label);
+            if (scriptPath != null) {
+                crudScripts.put(label, scriptPath);
+            }
         }
+
+        // Generate inline routing script
+        String routingScript = generateRoutingScript(crudScripts);
+        var executionStage = mergedBuilder.stage("execution");
+        executionStage.script(routingScript)
+                .name("route")
+                .inline()
+                .up();
+        executionStage.up();
+        IWorkflow builtWorkflow = mergedBuilder.build();
 
         // Cast entities for create/upsert lists
         List<E> createEntitiesCast = this.createEntities.stream()
@@ -579,7 +605,7 @@ public class DomainBuilder<E>
                 dtoContexts,
                 builtInterfaces,
                 builtEvents);
-        domainContext.setWorkflows(builtWorkflows);
+        domainContext.setWorkflow(builtWorkflow);
         domainContext.setEntityBeanDefinition(entityBeanDefinition);
         domainContext.setDoInjection(this.doInjection);
         return domainContext;
@@ -595,27 +621,59 @@ public class DomainBuilder<E>
     );
 
     private void initDefaultCrudWorkflows() {
-        createDefaultCrudWorkflow(BusinessOperation.create.getLabel(), TechnicalOperation.create, Scope.oneEntity);
-        createDefaultCrudWorkflow(BusinessOperation.readAll.getLabel(), TechnicalOperation.read, Scope.allEntities);
-        createDefaultCrudWorkflow(BusinessOperation.readOne.getLabel(), TechnicalOperation.read, Scope.oneEntity);
-        createDefaultCrudWorkflow(BusinessOperation.update.getLabel(), TechnicalOperation.update, Scope.oneEntity);
-        createDefaultCrudWorkflow(BusinessOperation.deleteOne.getLabel(), TechnicalOperation.delete, Scope.oneEntity);
-        createDefaultCrudWorkflow(BusinessOperation.deleteAll.getLabel(), TechnicalOperation.delete, Scope.allEntities);
+        registerCrudMetadata(BusinessOperation.create.getLabel(), TechnicalOperation.create, Scope.oneEntity);
+        registerCrudMetadata(BusinessOperation.readAll.getLabel(), TechnicalOperation.read, Scope.allEntities);
+        registerCrudMetadata(BusinessOperation.readOne.getLabel(), TechnicalOperation.read, Scope.oneEntity);
+        registerCrudMetadata(BusinessOperation.update.getLabel(), TechnicalOperation.update, Scope.oneEntity);
+        registerCrudMetadata(BusinessOperation.deleteOne.getLabel(), TechnicalOperation.delete, Scope.oneEntity);
+        registerCrudMetadata(BusinessOperation.deleteAll.getLabel(), TechnicalOperation.delete, Scope.allEntities);
+    }
+
+    private void registerCrudMetadata(String name, TechnicalOperation op, Scope scope) {
+        DomainWorkflowBuilder<E> wb = new DomainWorkflowBuilder<>(name, this);
+        wb.setCustom(false);
+        this.workflows.put(name, wb);
     }
 
 
-    private void createDefaultCrudWorkflow(String name, TechnicalOperation op, Scope scope) {
-        DomainWorkflowBuilder<E> wb = new DomainWorkflowBuilder<>(name, this);
-        wb.setCustom(false);
-        String scriptPath = CRUD_SCRIPT_PATHS.get(name);
-        wb.getInternalBuilder()
-                .stage("execute")
-                    .script(getClass().getResourceAsStream("/" + scriptPath))
-                        .name("crud-" + name)
-                        .inline()
-                        .up()
-                    .up();
-        this.workflows.put(name, wb);
+    /**
+     * Generates an inline routing script that dispatches to the correct CRUD sub-script
+     * based on the business operation. Each CRUD script is included from the classpath
+     * and executed via execute_script(). The sub-script's exit code and output are propagated.
+     */
+    private String generateRoutingScript(Map<String, String> crudScripts) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("op <- businessOperation(@0)\n\n");
+
+        // Include all CRUD scripts from classpath and capture returned script names
+        for (Map.Entry<String, String> entry : crudScripts.entrySet()) {
+            sb.append("_n_").append(entry.getKey())
+              .append(" <- include(\"classpath:").append(entry.getValue()).append("\")\n");
+        }
+        sb.append("\n");
+
+        // Resolve script name from operation label
+        sb.append("noop()\n");
+        for (String label : crudScripts.keySet()) {
+            sb.append("    | equals(@op, \"").append(label)
+              .append("\") => _sn <- format(\"%s\", @_n_").append(label).append(")\n");
+        }
+        sb.append("\n");
+
+        // Dispatch to the matching CRUD script via execute_script()
+        sb.append("_code <- execute_script(@_sn, @0, @1, @2)\n\n");
+
+        // Only capture output on success (sub-script has no output on error)
+        sb.append("noop()\n");
+        sb.append("    | equals(format(\"%s\", @_code), \"0\") => output <- script_output(@_sn)\n\n");
+
+        // Map exit codes so they propagate to WorkflowResult.code()
+        sb.append("noop()\n");
+        for (int code : new int[]{0, 400, 404, 409, 500, 405}) {
+            sb.append("    | equals(format(\"%s\", @_code), \"").append(code).append("\") -> ").append(code).append("\n");
+        }
+
+        return sb.toString();
     }
 
     private void throwExceptionIfNoDto() throws ApiException {

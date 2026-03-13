@@ -21,6 +21,8 @@ public interface IApiContextBuilder extends IDependentBuilder<IApiContextBuilder
 
 	IApiContextBuilder superTenantAutoCreate(boolean b) throws ApiException;
 
+	IApiContextBuilder multiTenant(boolean enabled) throws ApiException;
+
 	IApiContextSecurityBuilder security();
 
 }

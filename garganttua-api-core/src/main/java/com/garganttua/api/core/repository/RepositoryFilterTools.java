@@ -38,15 +38,19 @@ public class RepositoryFilterTools {
      * @return The composed filter, or null if no filtering needed
      */
     public static IFilter buildFilter(ICaller caller, IFilter baseFilter, IDomainDefinition<?> domainDefinition) {
+        return buildFilter(caller, baseFilter, domainDefinition, true);
+    }
+
+    public static IFilter buildFilter(ICaller caller, IFilter baseFilter, IDomainDefinition<?> domainDefinition, boolean multiTenant) {
         if (caller == null) {
             return baseFilter;
         }
         if (log.isDebugEnabled()) {
-            log.debug("Building filter for domain {} with caller tenantId={}, ownerId={}",
-                    domainDefinition.domainName(), caller.requestedTenantId(), caller.ownerId());
+            log.debug("Building filter for domain {} with caller tenantId={}, ownerId={}, multiTenant={}",
+                    domainDefinition.domainName(), caller.requestedTenantId(), caller.ownerId(), multiTenant);
         }
 
-        FilterContext filterContext = new FilterContext(caller, domainDefinition);
+        FilterContext filterContext = new FilterContext(caller, domainDefinition, multiTenant);
 
         // Super tenant without specific tenant ID bypasses tenant filtering
         if (filterContext.isSuperTenantWithoutTenant()) {
@@ -216,10 +220,12 @@ public class RepositoryFilterTools {
         final boolean isHiddenableEntity;
         final boolean isOwnedEntity;
         final boolean isPublicEntity;
+        final boolean multiTenant;
         final IDomainDefinition<?> domainDefinition;
 
-        FilterContext(ICaller caller, IDomainDefinition<?> domainDefinition) {
+        FilterContext(ICaller caller, IDomainDefinition<?> domainDefinition, boolean multiTenant) {
             this.domainDefinition = domainDefinition;
+            this.multiTenant = multiTenant;
             this.requestedTenantId = caller.requestedTenantId();
             this.ownerId = caller.ownerId();
             this.isSuperOwner = caller.superOwner();
@@ -231,10 +237,12 @@ public class RepositoryFilterTools {
         }
 
         boolean isSuperTenantWithoutTenant() {
+            if (!multiTenant) return false;
             return isSuperTenant && (requestedTenantId == null || requestedTenantId.isEmpty());
         }
 
         Filter buildTenantFilter() {
+            if (!multiTenant) return null;
             ObjectAddress tenantIdField = domainDefinition.entityDefinition() != null
                     ? domainDefinition.entityDefinition().tenantId()
                     : null;
@@ -245,6 +253,7 @@ public class RepositoryFilterTools {
         }
 
         Filter buildShareFilter() {
+            if (!multiTenant) return null;
             ObjectAddress shareField = domainDefinition.shared();
             if (!isSharedEntity || requestedTenantId == null || shareField == null) {
                 return null;

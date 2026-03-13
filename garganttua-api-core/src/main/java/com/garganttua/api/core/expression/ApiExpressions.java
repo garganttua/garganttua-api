@@ -18,6 +18,7 @@ import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IEntityDefinition;
+import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
@@ -25,6 +26,8 @@ import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.script.IScript;
+import com.garganttua.core.script.context.ScriptExecutionContext;
 import com.garganttua.core.injection.context.beans.BeanFactory;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.IReflection;
@@ -37,6 +40,27 @@ import org.javatuples.Pair;
 public class ApiExpressions {
 
 	private static final IReflection REFLECTION = DefaultMapper.reflection();
+
+	@Expression(name = "businessOperation", description = "Extracts the business operation label from an IOperationRequest")
+	public static String businessOperation(Object request) {
+		IOperationRequest opRequest = (IOperationRequest) request;
+		OperationDefinition opDef = opRequest.operation();
+		if (opDef == null) return null;
+		return opDef.getBusinessOperation().getLabel();
+	}
+
+	@Expression(name = "script_output", description = "Gets the output of an executed included script by name")
+	public static Object scriptOutput(Object scriptName) {
+		var ctx = ScriptExecutionContext.get();
+		if (ctx == null) {
+			throw new ApiException("script_output: no script execution context available");
+		}
+		IScript script = ctx.getIncludedScript(scriptName.toString());
+		if (script == null) {
+			throw new ApiException("script_output: script not found: " + scriptName);
+		}
+		return script.getOutput().orElse(null);
+	}
 
 	@Expression(name = "notNull", description = "Returns true if the value is not null and not an empty Optional")
 	public static boolean notNull(Object value) {
@@ -81,7 +105,7 @@ public class ApiExpressions {
 		IDomainDefinition<?> domainDef = dc.getDomainDefinition();
 		Optional<IFilter> baseFilter = (Optional<IFilter>) filter;
 		return Optional.ofNullable(
-				RepositoryFilterTools.buildFilter(castedCaller.orElse(null), baseFilter.orElse(null), domainDef));
+				RepositoryFilterTools.buildFilter(castedCaller.orElse(null), baseFilter.orElse(null), domainDef, dc.isMultiTenant()));
 	}
 
 	@Expression(name = "getEntities", description = "Retrieves entities from repository with pagination, filtering and sorting")
@@ -265,7 +289,7 @@ public class ApiExpressions {
 		IDomainDefinition<?> domainDef = dc.getDomainDefinition();
 
 		// Build access control filter
-		IFilter accessFilter = RepositoryFilterTools.buildFilter(castedCaller.orElse(null), null, domainDef);
+		IFilter accessFilter = RepositoryFilterTools.buildFilter(castedCaller.orElse(null), null, domainDef, dc.isMultiTenant());
 
 		// Build identifier filter
 		IEntityDefinition<?> entityDef = dc.getEntityDefinition();

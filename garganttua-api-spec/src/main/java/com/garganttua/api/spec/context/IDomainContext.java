@@ -102,6 +102,10 @@ public interface IDomainContext<E> extends ILifecycle {
 		return getDomainDefinition().geolocalized() != null;
 	}
 
+	default boolean isMultiTenant() {
+		return true;
+	}
+
 	/**
 	 * Returns true if tenantId is mandatory for the given operation.
 	 * TenantId is mandatory when:
@@ -143,9 +147,7 @@ public interface IDomainContext<E> extends ILifecycle {
 
 	IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options);
 
-	Optional<IWorkflow> getWorkflow(String name);
-
-	Map<String, IWorkflow> getWorkflows();
+	IWorkflow getWorkflow();
 
 	// --- Request builder ---
 

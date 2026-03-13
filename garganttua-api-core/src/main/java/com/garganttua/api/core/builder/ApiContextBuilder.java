@@ -58,6 +58,8 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 	private volatile boolean superTenantAutoCreate = false;
 
+	private volatile boolean multiTenant = true;
+
 	private final Map<IClass<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
 	private volatile ContextSecurityBuilder securityBuilder;
 	private final List<ApiContextStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
@@ -76,6 +78,9 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 	@Override
 	public IApiContextBuilder superTenantId(String superTenantId) {
+		if (!this.multiTenant) {
+			throw new ApiException("Cannot set superTenantId when multi-tenancy is disabled");
+		}
 		this.superTenantId = Objects.requireNonNull(superTenantId, "Super tenant ID cannot be null");
 		return this;
 	}
@@ -106,7 +111,22 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 	@Override
 	public IApiContextBuilder superTenantAutoCreate(boolean b) throws ApiException {
+		if (!this.multiTenant) {
+			throw new ApiException("Cannot set superTenantAutoCreate when multi-tenancy is disabled");
+		}
 		this.superTenantAutoCreate = b;
+		return this;
+	}
+
+	@Override
+	public IApiContextBuilder multiTenant(boolean enabled) throws ApiException {
+		if (!enabled && this.superTenantId != null) {
+			throw new ApiException("Cannot disable multi-tenancy when superTenantId is already set");
+		}
+		if (!enabled && this.superTenantAutoCreate) {
+			throw new ApiException("Cannot disable multi-tenancy when superTenantAutoCreate is already enabled");
+		}
+		this.multiTenant = enabled;
 		return this;
 	}
 
@@ -264,7 +284,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 			// Create and return API context
 			IApiContext apiContext = new ApiContext(this.injectionContext, domainContexts,
-					this.superTenantId, this.superTenantAutoCreate, startupBinders);
+					this.superTenantId, this.superTenantAutoCreate, this.multiTenant, startupBinders);
 
 			log.atDebug().log("Built ApiContext with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");
@@ -308,6 +328,10 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 	IExpressionContextBuilder getExpressionContextBuilder() {
 		return this.expressionContextBuilder;
+	}
+
+	boolean isMultiTenant() {
+		return this.multiTenant;
 	}
 
 }

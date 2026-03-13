@@ -16,6 +16,10 @@ public interface IApiContext extends ILifecycle {
 
     Optional<IDomainContext<?>> getDomainContext(String domainName);
 
+    String getSuperTenantId();
+
+    boolean isMultiTenant();
+
     // --- Workflow invocation ---
 
     default IOperationResponse invoke(String domainName, IOperationRequest request) {

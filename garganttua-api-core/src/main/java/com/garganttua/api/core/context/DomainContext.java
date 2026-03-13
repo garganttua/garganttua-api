@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import com.garganttua.api.core.service.OperationResponse;
 import com.garganttua.api.core.service.RequestBuilder;
@@ -13,7 +12,6 @@ import com.garganttua.api.core.repository.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.IDtoContext;
@@ -22,11 +20,15 @@ import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.api.spec.repository.IRepository;
+import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.api.spec.security.IDomainSecurityContext;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.IRequestBuilder;
+import com.garganttua.api.core.caller.Caller;
+import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -56,8 +58,8 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     @Getter
     private final IRepository repository;
 
-    // Workflows map (replaces ScriptCache + crudScripts)
-    private Map<String, IWorkflow> workflows = Collections.emptyMap();
+    // Single workflow handling the full pipeline (business → security → execution)
+    private IWorkflow workflow;
 
     // Bean definition for runtime DI injection on entities
     @Getter
@@ -71,6 +73,11 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         this.apiContext = apiContext;
     }
 
+    @Override
+    public boolean isMultiTenant() {
+        return this.apiContext != null && this.apiContext.isMultiTenant();
+    }
+
     public void setEntityBeanDefinition(BeanDefinition<?> entityBeanDefinition) {
         this.entityBeanDefinition = entityBeanDefinition;
     }
@@ -79,9 +86,8 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         this.doInjection = doInjection;
     }
 
-    public void setWorkflows(Map<String, IWorkflow> workflows) {
-        this.workflows = Collections.unmodifiableMap(new HashMap<>(
-                Objects.requireNonNull(workflows, "Workflows cannot be null")));
+    public void setWorkflow(IWorkflow workflow) {
+        this.workflow = Objects.requireNonNull(workflow, "Workflow cannot be null");
     }
 
     public DomainContext(DomainDefinition<E> domainDefinition, IEntityContext<E> entityContext,
@@ -116,8 +122,9 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     protected ILifecycle doInit() {
         log.info("Initializing domain context: {}", this.domainDefinition.domainName());
 
-        // 1. Log loaded workflows
-        log.debug("Loaded {} workflows for domain {}", this.workflows.size(), this.domainDefinition.domainName());
+        // 1. Log workflow
+        log.debug("Workflow configured for domain {}: {}", this.domainDefinition.domainName(),
+                this.workflow != null ? this.workflow.getName() : "none");
 
         // 3. Build interfaces, pass domain context (with access rules), and init them
         initializeInterfaces();
@@ -191,32 +198,145 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     protected ILifecycle doStart() {
         log.info("Starting domain context: {}", this.domainDefinition.domainName());
 
-        // Execute startup binders
-        List<IMethodBinder<Void>> startupBinders = this.domainDefinition.startupBinders();
-        if (startupBinders != null && !startupBinders.isEmpty()) {
-            log.debug("Executing {} startup binders for domain {}", startupBinders.size(),
-                    this.domainDefinition.domainName());
-            for (IMethodBinder<Void> binder : startupBinders) {
-                try {
-                    log.trace("Executing startup binder: {}", binder.getExecutableReference());
-                    binder.execute();
-                } catch (ReflectionException e) {
-                    log.error("Failed to execute startup binder {} for domain {}: {}",
-                            binder.getExecutableReference(), this.domainDefinition.domainName(), e.getMessage(), e);
-                    throw new ApiException(
-                            "Startup binder execution failed for domain " + this.domainDefinition.domainName(), e);
-                }
-            }
-            log.debug("Successfully executed all startup binders for domain {}", this.domainDefinition.domainName());
-        }
+        // 1. Execute startup binders
+        executeStartupBinders();
 
-        // Start all interfaces
+        // 2. Create startup entities (ignore duplicates with warning)
+        createStartupEntities();
+
+        // 3. Upsert startup entities (fail-fast)
+        upsertStartupEntities();
+
+        // 4. Start all interfaces
         doForAllInterfaces(IEndpoint::onStart);
 
         log.debug("Started {} interfaces for domain {}", this.interfaces.size(),
                 this.domainDefinition.domainName());
 
         return this;
+    }
+
+    private void executeStartupBinders() {
+        List<IMethodBinder<Void>> startupBinders = this.domainDefinition.startupBinders();
+        if (startupBinders == null || startupBinders.isEmpty()) {
+            return;
+        }
+        log.debug("Executing {} startup binders for domain {}", startupBinders.size(),
+                this.domainDefinition.domainName());
+        for (IMethodBinder<Void> binder : startupBinders) {
+            try {
+                log.trace("Executing startup binder: {}", binder.getExecutableReference());
+                binder.execute();
+            } catch (ReflectionException e) {
+                log.error("Failed to execute startup binder {} for domain {}: {}",
+                        binder.getExecutableReference(), this.domainDefinition.domainName(), e.getMessage(), e);
+                throw new ApiException(
+                        "Startup binder execution failed for domain " + this.domainDefinition.domainName(), e);
+            }
+        }
+        log.debug("Successfully executed all startup binders for domain {}", this.domainDefinition.domainName());
+    }
+
+    private ICaller createStartupCaller() {
+        String superTenantId = this.apiContext.getSuperTenantId();
+        return new Caller(superTenantId, superTenantId, null, null, true, true, null);
+    }
+
+    private IOperationRequest buildStartupRequest(OperationDefinition operation, ICaller caller) {
+        OperationRequest request = new OperationRequest(new java.util.HashMap<>());
+        request.arg(IOperationRequest.OPERATION, operation);
+        request.arg(IOperationRequest.TENANT_ID, caller.tenantId());
+        request.arg(IOperationRequest.REQUESTED_TENANT_ID, caller.requestedTenantId());
+        request.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
+        request.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
+        return request;
+    }
+
+    private void createStartupEntities() {
+        List<E> createEntities = this.domainDefinition.createEntities();
+        if (createEntities == null || createEntities.isEmpty()) {
+            return;
+        }
+        ICaller caller = createStartupCaller();
+        log.info("Creating {} startup entities for domain {}", createEntities.size(),
+                this.domainDefinition.domainName());
+        for (E entity : createEntities) {
+            IOperationRequest request = buildStartupRequest(
+                    OperationDefinition.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+            request.arg("entity", entity);
+            IOperationResponse response = invoke(request);
+            OperationResponseCode code = response.getResponseCode();
+            if (code == OperationResponseCode.CREATED || code == OperationResponseCode.OK) {
+                log.info("Startup entity created successfully for domain {}", this.domainDefinition.domainName());
+            } else {
+                log.warn("Startup entity creation returned {} for domain {} (entity may already exist): {}",
+                        code, this.domainDefinition.domainName(), response.getResponse());
+            }
+        }
+    }
+
+    private void upsertStartupEntities() {
+        List<E> upsertEntities = this.domainDefinition.upsertEntities();
+        if (upsertEntities == null || upsertEntities.isEmpty()) {
+            return;
+        }
+        ICaller caller = createStartupCaller();
+        IReflection reflection = reflection();
+        String uuidFieldPath = this.domainDefinition.entityDefinition().uuid().toString();
+        log.info("Upserting {} startup entities for domain {}", upsertEntities.size(),
+                this.domainDefinition.domainName());
+        for (E entity : upsertEntities) {
+            try {
+                Object uuidValue = reflection.getFieldValue(entity, uuidFieldPath);
+                String uuid = uuidValue != null ? uuidValue.toString() : null;
+                if (uuid == null) {
+                    throw new ApiException("Upsert startup entity has no UUID for domain "
+                            + this.domainDefinition.domainName());
+                }
+                // Try to read existing entity
+                IOperationRequest readRequest = buildStartupRequest(
+                        OperationDefinition.readOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+                readRequest.arg("type", "uuid");
+                readRequest.arg("identifier", uuid);
+                IOperationResponse readResponse = invoke(readRequest);
+                if (readResponse.getResponseCode() == OperationResponseCode.OK) {
+                    // Entity exists, update it
+                    IOperationRequest updateRequest = buildStartupRequest(
+                            OperationDefinition.updateOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+                    updateRequest.arg("type", "uuid");
+                    updateRequest.arg("identifier", uuid);
+                    updateRequest.arg("entity", entity);
+                    IOperationResponse updateResponse = invoke(updateRequest);
+                    OperationResponseCode updateCode = updateResponse.getResponseCode();
+                    if (updateCode != OperationResponseCode.OK && updateCode != OperationResponseCode.UPDATED) {
+                        throw new ApiException("Failed to update startup entity (uuid=" + uuid
+                                + ") for domain " + this.domainDefinition.domainName()
+                                + ": " + updateResponse.getResponse());
+                    }
+                    log.info("Startup entity updated (uuid={}) for domain {}", uuid,
+                            this.domainDefinition.domainName());
+                } else {
+                    // Entity does not exist, create it
+                    IOperationRequest createRequest = buildStartupRequest(
+                            OperationDefinition.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
+                    createRequest.arg("entity", entity);
+                    IOperationResponse createResponse = invoke(createRequest);
+                    OperationResponseCode createCode = createResponse.getResponseCode();
+                    if (createCode != OperationResponseCode.CREATED && createCode != OperationResponseCode.OK) {
+                        throw new ApiException("Failed to create startup entity (uuid=" + uuid
+                                + ") for domain " + this.domainDefinition.domainName()
+                                + ": " + createResponse.getResponse());
+                    }
+                    log.info("Startup entity created via upsert (uuid={}) for domain {}", uuid,
+                            this.domainDefinition.domainName());
+                }
+            } catch (ApiException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new ApiException("Failed to upsert startup entity for domain "
+                        + this.domainDefinition.domainName(), e);
+            }
+        }
     }
 
     @Override
@@ -260,16 +380,9 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) {
         ensureStarted();
 
-        BusinessOperation businessOp = request.operation().getBusinessOperation();
-
-        // Map business operation to workflow name
-        String workflowName = resolveWorkflowName(businessOp);
-
-        IWorkflow workflow = this.workflows.get(workflowName);
-        if (workflow == null) {
-            log.warn("No workflow found for operation {} (workflow name: {}) in domain {}",
-                    businessOp, workflowName, this.domainDefinition.domainName());
-            return OperationResponse.notAvailable("No workflow available for operation: " + businessOp);
+        if (this.workflow == null) {
+            log.warn("No workflow configured for domain {}", this.domainDefinition.domainName());
+            return OperationResponse.notAvailable("No workflow configured for domain: " + this.domainDefinition.domainName());
         }
 
         try {
@@ -287,23 +400,22 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
             workflowParams.put("$1", this.repository);
             workflowParams.put("$2", this);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
-            WorkflowResult result = workflow.execute(input, options);
+            WorkflowResult result = this.workflow.execute(input, options);
 
             if (result.isSuccess()) {
                 return OperationResponse.ok(result.output());
             } else if (result.hasAborted()) {
                 String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
-                log.error("Workflow {} failed for domain {}: {}", workflowName,
-                        this.domainDefinition.domainName(), errorMsg);
+                log.error("Workflow failed for domain {}: {}", this.domainDefinition.domainName(), errorMsg);
                 return OperationResponse.error(errorMsg);
             } else {
                 String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
-                log.warn("Workflow {} returned code {} for domain {}: {}", workflowName,
+                log.warn("Workflow returned code {} for domain {}: {}",
                         result.code(), this.domainDefinition.domainName(), errorMsg);
                 return mapWorkflowCode(result.code(), errorMsg);
             }
         } catch (Exception e) {
-            log.error("Error executing workflow {} for domain {}: {}", workflowName,
+            log.error("Error executing workflow for domain {}: {}",
                     this.domainDefinition.domainName(), e.getMessage(), e);
             return OperationResponse.error("Workflow execution error: " + e.getMessage());
         }
@@ -320,27 +432,9 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         };
     }
 
-    private String resolveWorkflowName(BusinessOperation businessOp) {
-        return switch (businessOp) {
-            case create -> BusinessOperation.create.getLabel();
-            case readAll -> BusinessOperation.readAll.getLabel();
-            case readOne -> BusinessOperation.readOne.getLabel();
-            case update -> BusinessOperation.update.getLabel();
-            case deleteOne -> BusinessOperation.deleteOne.getLabel();
-            case deleteAll -> BusinessOperation.deleteAll.getLabel();
-            case workflow -> businessOp.getLabel();
-            default -> businessOp.getLabel();
-        };
-    }
-
     @Override
-    public Optional<IWorkflow> getWorkflow(String name) {
-        return Optional.ofNullable(this.workflows.get(name));
-    }
-
-    @Override
-    public Map<String, IWorkflow> getWorkflows() {
-        return Collections.unmodifiableMap(this.workflows);
+    public IWorkflow getWorkflow() {
+        return this.workflow;
     }
 
 }
