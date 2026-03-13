@@ -1,7 +1,7 @@
 package com.garganttua.api.core.security.authentication.loginpassword;
 
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
-public record LoginPasswordAuthenticatorInfos(GGObjectAddress loginFieldAddress, GGObjectAddress passwordFieldAddress) {
+public record LoginPasswordAuthenticatorInfos(ObjectAddress loginFieldAddress, ObjectAddress passwordFieldAddress) {
 
 }

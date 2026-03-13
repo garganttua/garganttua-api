@@ -533,6 +533,30 @@ public class DomainBuilder<E>
                     wb.getAccess(),
                     wb.hasAuthority(),
                     wb.isCustom()));
+        }
+
+        // Add security stage before CRUD stages (runs for all operations)
+        boolean securityEnabled = this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
+        if (securityEnabled) {
+            String securityScript =
+                    "_ref <- include(\"classpath:scripts/security/VERIFY_ACCESS.gs\")\n"
+                  + "_code <- run_script(@_ref, @0, @1, @2)\n";
+            mergedBuilder.stage("security")
+                    .script(securityScript)
+                        .name("verify-access")
+                        .inline()
+                        .up()
+                    .up();
+        }
+
+        // Add CRUD stages
+        for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
+            String label = entry.getKey();
+            DomainWorkflowBuilder<E> wb = entry.getValue();
+            if (wb.isSecurityDisabled()) {
+                continue;
+            }
 
             String scriptPath = CRUD_SCRIPT_PATHS.get(label);
             if (scriptPath != null) {
@@ -559,6 +583,8 @@ public class DomainBuilder<E>
                 "0\n"
               + "    | equals(@_code, 0) -> 0\n"
               + "    | equals(@_code, 400) -> 400\n"
+              + "    | equals(@_code, 401) -> 401\n"
+              + "    | equals(@_code, 403) -> 403\n"
               + "    | equals(@_code, 404) -> 404\n"
               + "    | equals(@_code, 409) -> 409\n"
               + "    | equals(@_code, 500) -> 500\n"
@@ -669,6 +695,8 @@ public class DomainBuilder<E>
              + "    | equals(@_code, 0) => output <- script_output(@_ref)\n"
              + "    | equals(@_code, 0) -> 0\n"
              + "    | equals(@_code, 400) -> 400\n"
+             + "    | equals(@_code, 401) -> 401\n"
+             + "    | equals(@_code, 403) -> 403\n"
              + "    | equals(@_code, 404) -> 404\n"
              + "    | equals(@_code, 409) -> 409\n"
              + "    | equals(@_code, 500) -> 500\n"

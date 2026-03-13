@@ -2,6 +2,7 @@ package com.garganttua.api.core.security.authorization.jwt;
 
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.spec.CoreExceptionCode;
+
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
 

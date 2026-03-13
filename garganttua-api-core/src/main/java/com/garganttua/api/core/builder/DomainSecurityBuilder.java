@@ -106,4 +106,12 @@ public class DomainSecurityBuilder<E>
         throw new UnsupportedOperationException("Unimplemented method 'useCase'");
     }
 
+    boolean isDisabled() {
+        return this.disabled;
+    }
+
+    boolean hasSecurityConfiguration() {
+        return !this.disabled && (this.authenticator != null || this.authorization != null);
+    }
+
 }

@@ -6,12 +6,12 @@ import com.garganttua.api.spec.security.key.EncryptionMode;
 import com.garganttua.api.spec.security.key.EncryptionPaddingMode;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
 public record ChallengeAuthenticatorInfos(
-		GGObjectAddress challengeFieldAddress, 
-		GGObjectAddress keyRealmFieldAddress,
-		GGObjectAddress challengeExpirationFieldAddress,
+		ObjectAddress challengeFieldAddress, 
+		ObjectAddress keyRealmFieldAddress,
+		ObjectAddress challengeExpirationFieldAddress,
 		Class<?> key,
 		boolean autoCreateKey,
 		KeyAlgorithm keyAlgorithm,

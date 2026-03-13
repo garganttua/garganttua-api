@@ -1,7 +1,7 @@
 package com.garganttua.api.core.security.authentication.authorization;
 
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
-public record RefreshAuthorizationAuthenticatorInfos(GGObjectAddress refreshTokenFieldAddress) {
+public record RefreshAuthorizationAuthenticatorInfos(ObjectAddress refreshTokenFieldAddress) {
 
 }

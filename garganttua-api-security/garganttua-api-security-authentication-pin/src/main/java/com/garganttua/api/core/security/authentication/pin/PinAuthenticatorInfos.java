@@ -1,7 +1,7 @@
 package com.garganttua.api.core.security.authentication.pin;
 
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.core.reflection.ObjectAddress;
 
-public record PinAuthenticatorInfos(GGObjectAddress loginFieldAddress, GGObjectAddress pinFieldAddress, GGObjectAddress pinErrorCounterFieldAddress, int pinSize, int maxPinErrorNumber) {
+public record PinAuthenticatorInfos(ObjectAddress loginFieldAddress, ObjectAddress pinFieldAddress, ObjectAddress pinErrorCounterFieldAddress, int pinSize, int maxPinErrorNumber) {
 
 }

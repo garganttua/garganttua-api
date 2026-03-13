@@ -2,7 +2,7 @@ package com.garganttua.api.core.security.authentication.pin;
 
 import com.garganttua.api.core.context.InfosHelper;
 import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 
 public class PinEntityAuthenticatorHelper {
 

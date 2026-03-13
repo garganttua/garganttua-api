@@ -2,272 +2,74 @@ package com.garganttua.api.core.builder;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
+import org.javatuples.Pair;
+
+import com.garganttua.api.core.builder.binder.AuthenticationMethodBinderBuilder;
+import com.garganttua.api.core.context.security.AuthenticationContext;
+import com.garganttua.api.core.definition.AuthenticationDefinition;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext>  implements IAuthenticationBuilder {
+public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext> implements IAuthenticationBuilder {
+
+    private Boolean findPrincipal;
+    private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
+    private IAuthenticationMethodBinderBuilder<?> authenticate;
+    private List<Pair<IClass<? extends Annotation>, IClass<?>>> fieldAnnotations = new ArrayList<>();
+    private IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity;
+    private Map<String, IUseCaseBuilder<?, ?, ?>> useCases = new HashMap<>();
 
     protected AuthenticationBuilder(IApiContextSecurityBuilder link) {
         super(link);
-        //TODO Auto-generated constructor stub
     }
 
-    @Override
-    public IAuthenticationBuilder findPrincipal(boolean b) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findPrincipal'");
-    }
-
-    @Override
-    public IAuthenticationBuilder authenticate(String methodName) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
-    }
-
-    @Override
-    public IAuthenticationBuilder authenticate(Method method) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
-    }
-
-    @Override
-    public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'authenticate'");
-    }
-
-    @Override
-    public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
-            IClass<?> fieldType) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'entityMustHaveFieldOfTypeAnnotatedWith'");
-    }
-
-    @Override
-    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'applySecurityOnEntity'");
-    }
-
-    @Override
-    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'applySecurityOnEntity'");
-    }
-
-    @Override
-    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'applySecurityOnEntity'");
-    }
-
-    @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(String methodName) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'useCase'");
-    }
-
-    @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(Method method) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'useCase'");
-    }
-
-    @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(ObjectAddress methodAddress) throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'useCase'");
-    }
-
-    @Override
-    protected synchronized IAuthenticationContext doBuild() throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
-    }
-
-    @Override
-    protected void doAutoDetection() throws ApiException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'doAutoDetection'");
-    }
-
-   /*  private Boolean findPrincipal;
-    private @Nonnull ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
-    private IAuthenticationMethodBinderBuilder<Boolean> authenticate;
-    private List<Pair<Class<? extends Annotation>, Class<?>>> fieldAnnotations = new ArrayList<>();
-    private IAuthenticationMethodBinderBuilder<Void> applySecurityOnEntity;
-    private Map<String, IUseCaseBuilder<?, IAuthenticationBuilder>> useCases = new HashMap<>();
-
-    public AuthenticationBuilder(IContextSecurityBuilder contextSecurityBuilder, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
-        super(contextSecurityBuilder);
+    public AuthenticationBuilder(IApiContextSecurityBuilder link, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
+        super(link);
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
     }
 
     @Override
-    protected IAuthenticationContext doBuild() {
-        return new AuthenticationContext(
-                this.findPrincipal,
-                this.supplier,
-                this.authenticate,
-                this.fieldAnnotations,
-                this.applySecurityOnEntity,
-                this.useCases.values());
-    }
-
-    @Override
     public IAuthenticationBuilder findPrincipal(boolean b) {
-        this.findPrincipal = Objects.requireNonNull(b, "Find principal cannot be null");
+        this.findPrincipal = b;
         return this;
     }
 
     @Override
     public IAuthenticationBuilder authenticate(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        if (this.findPrincipal)
-            this.authenticate = new AuthenticationMethodBinderBuilder<>(this,
-                    this.supplier)
-                    .method(methodName, Boolean.class, Byte[].class, Object.class)
-                    .withParam(0, credentials())
-                    .withParam(1, principal());
-        else
-            this.authenticate = new AuthenticationMethodBinderBuilder<>(this,
-                    this.supplier)
-                    .method(methodName, Boolean.class, Byte[].class)
-                    .withParam(0, credentials());
-
+        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
     }
 
     @Override
     public IAuthenticationBuilder authenticate(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
-
-        if (this.findPrincipal)
-            this.authenticate = new AuthenticationMethodBinderBuilder<>(this,
-                    this.supplier)
-                    .method(method, Boolean.class, Byte[].class, Object.class)
-                    .withParam(0, credentials())
-                    .withParam(1, principal());
-        else
-            this.authenticate = new AuthenticationMethodBinderBuilder<>(this,
-                    this.supplier)
-                    .method(method, Boolean.class, Byte[].class)
-                    .withParam(0, credentials());
-
+        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
     }
 
     @Override
     public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
-
-        if (this.findPrincipal)
-            this.authenticate = new AuthenticationMethodBinderBuilder<>(this,
-                    this.supplier)
-                    .method(methodAddress, Boolean.class, Byte[].class, Object.class)
-                    .withParam(0, credentials())
-                    .withParam(1, principal());
-        else
-            this.authenticate = new AuthenticationMethodBinderBuilder<>(this,
-                    this.supplier)
-                    .method(methodAddress, Boolean.class, Byte[].class)
-                    .withParam(0, credentials());
-
+        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
-    }
-
-    @Override
-    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws ApiException {
-        Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this,
-                this.supplier)
-                .method(methodName, null, Object.class)
-                .withParam(0, entity());
-
-        return this;
-    }
-
-    @Override
-    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws ApiException {
-        Objects.requireNonNull(method, "Method cannot be null");
-
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this,
-                this.supplier)
-                .method(method, null, Object.class)
-                .withParam(0, entity());
-
-        return this;
-    }
-
-    @Override
-    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
-        Objects.requireNonNull(methodAddress, "Method address cannot be null");
-
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this,
-                this.supplier)
-                .method(methodAddress, null, Object.class)
-                .withParam(0, entity());
-
-        return this;
-    }
-
-    @Override
-    public IUseCaseBuilder<IAuthenticationBuilder> useCase(String methodName) throws ApiException {
-        Objects.requireNonNull(methodName, "Method name cannot be null");
-
-        IUseCaseBuilder<IAuthenticationBuilder,IAuthenticationBuilder> useCaseBuilder = this.useCases.get(methodName);
-
-        if (useCaseBuilder == null) {
-            useCaseBuilder = new UseCaseBuilder<IAuthenticationBuilder,IAuthenticationBuilder>(methodName, this);
-            this.useCases.put(methodName, useCaseBuilder);
-        }
-
-        useCaseBuilder.bind(this.supplier).method(methodName);
-
-        return useCaseBuilder;
-    }
-
-    @Override
-    public IUseCaseBuilder<IAuthenticationBuilder> useCase(Method method) throws ApiException {
-        Objects.requireNonNull(method, "Method cannot be null");
-        String methodName = method.getName();
-
-        IUseCaseBuilder<IAuthenticationBuilder> useCaseBuilder = this.useCases.get(methodName);
-
-        if (useCaseBuilder == null) {
-            useCaseBuilder = new UseCaseBuilder<IAuthenticationBuilder>(methodName, this);
-            this.useCases.put(methodName, useCaseBuilder);
-        }
-
-        useCaseBuilder.bind(this.supplier).method(method);
-
-        return useCaseBuilder;
-    }
-
-    @Override
-    public IUseCaseBuilder<IAuthenticationBuilder> useCase(ObjectAddress methodAddress) throws ApiException {
-        Objects.requireNonNull(methodAddress, "Method address cannot be null");
-        String methodName = methodAddress.getElement(methodAddress.length() - 1);
-
-        IUseCaseBuilder<IAuthenticationBuilder> useCaseBuilder = this.useCases.get(methodName);
-
-        if (useCaseBuilder == null) {
-            useCaseBuilder = new UseCaseBuilder<IAuthenticationBuilder>(methodName, this);
-            this.useCases.put(methodName, useCaseBuilder);
-        }
-
-        useCaseBuilder.bind(this.supplier).method(methodAddress);
-
-        return useCaseBuilder;
     }
 
     @Override
@@ -275,8 +77,68 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
             IClass<?> fieldType) throws ApiException {
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(fieldType, "Field type cannot be null");
-        this.fieldAnnotations.add(new Pair<Class<? extends Annotation>, Class<?>>(annotation, fieldType));
+        this.fieldAnnotations.add(new Pair<>(annotation, fieldType));
         return this;
-    } */
+    }
+
+    @Override
+    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws ApiException {
+        Objects.requireNonNull(methodName, "Method name cannot be null");
+        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
+        return this;
+    }
+
+    @Override
+    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws ApiException {
+        Objects.requireNonNull(method, "Method cannot be null");
+        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
+        return this;
+    }
+
+    @Override
+    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
+        Objects.requireNonNull(methodAddress, "Method address cannot be null");
+        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
+        return this;
+    }
+
+    @Override
+    public IUseCaseBuilder<?, ?, ?> useCase(String methodName) throws ApiException {
+        Objects.requireNonNull(methodName, "Method name cannot be null");
+        return this.useCases.computeIfAbsent(methodName,
+                name -> new UseCaseBuilder<>(name, (IDomainBuilder<?>) null));
+    }
+
+    @Override
+    public IUseCaseBuilder<?, ?, ?> useCase(Method method) throws ApiException {
+        Objects.requireNonNull(method, "Method cannot be null");
+        return this.useCases.computeIfAbsent(method.getName(),
+                name -> new UseCaseBuilder<>(name, (IDomainBuilder<?>) null));
+    }
+
+    @Override
+    public IUseCaseBuilder<?, ?, ?> useCase(ObjectAddress methodAddress) throws ApiException {
+        Objects.requireNonNull(methodAddress, "Method address cannot be null");
+        String name = methodAddress.getElement(methodAddress.length() - 1);
+        return this.useCases.computeIfAbsent(name,
+                n -> new UseCaseBuilder<>(n, (IDomainBuilder<?>) null));
+    }
+
+    @Override
+    protected synchronized IAuthenticationContext doBuild() throws ApiException {
+        AuthenticationDefinition definition = new AuthenticationDefinition(
+                this.findPrincipal,
+                this.supplier,
+                this.authenticate,
+                this.fieldAnnotations,
+                this.applySecurityOnEntity,
+                this.useCases.values());
+        return new AuthenticationContext(definition);
+    }
+
+    @Override
+    protected void doAutoDetection() throws ApiException {
+        // Auto-detection will be implemented when Spring integration is ported
+    }
 
 }

@@ -326,9 +326,9 @@
 		<module>garganttua-api-spec</module>
 		<module>garganttua-api-core</module>
 		<module>garganttua-api-dao</module>
+		<module>garganttua-api-security</module>
 		<module>garganttua-api-interface</module>
 		<!-- <module>garganttua-api-spring</module>
-		<module>garganttua-api-security</module>
 		<module>garganttua-api-native-image</module> -->
 	</modules>
 </project>

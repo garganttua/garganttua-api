@@ -1,7 +1,23 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
+import java.lang.annotation.Annotation;
+import java.util.Collection;
+import java.util.List;
 
-public record AuthenticationDefinition() implements IAuthenticationDefinition {
+import org.javatuples.Pair;
+
+import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
+import com.garganttua.api.spec.definition.IAuthenticationDefinition;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
+
+public record AuthenticationDefinition(Boolean findPrincipal,
+            ISupplierBuilder<?, ? extends ISupplier<?>> supplier,
+            IAuthenticationMethodBinderBuilder authenticateMethodBinder,
+            List<Pair<IClass<? extends Annotation>, IClass<?>>> entityFieldAnnotations,
+            IAuthenticationMethodBinderBuilder applySecurityOnEntityMethodBinder,
+            Collection<IUseCaseBuilder<?, ?, ?>> useCasesMethodBinders) implements IAuthenticationDefinition {
 
 }

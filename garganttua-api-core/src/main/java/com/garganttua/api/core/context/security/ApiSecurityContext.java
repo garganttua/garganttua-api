@@ -1,12 +1,18 @@
 package com.garganttua.api.core.context.security;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.garganttua.api.core.security.authentication.AuthenticationRequestBuilder;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
+import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -16,11 +22,16 @@ import com.garganttua.core.lifecycle.LifecycleStatus;
 public class ApiSecurityContext implements IApiSecurityContext {
 
     private final boolean disabled;
-    
+    private final Map<String, List<IAuthenticationContext>> authenticationContextsByDomain = new HashMap<>();
+
     private volatile LifecycleStatus status = LifecycleStatus.NEW;
 
     public ApiSecurityContext(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    public void registerAuthenticationContexts(String domainName, List<IAuthenticationContext> contexts) {
+        this.authenticationContextsByDomain.put(domainName, contexts);
     }
 
     @Override
@@ -71,6 +82,13 @@ public class ApiSecurityContext implements IApiSecurityContext {
             Map<String, String> params) throws ApiException {
         if (disabled) return;
         // Stub implementation
+    }
+
+    @Override
+    public IAuthenticationRequestBuilder request(String domainName) {
+        List<IAuthenticationContext> contexts = this.authenticationContextsByDomain
+                .getOrDefault(domainName, Collections.emptyList());
+        return new AuthenticationRequestBuilder(this, contexts);
     }
 
     @Override

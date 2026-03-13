@@ -18,8 +18,11 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.core.security.key.Key;
 import com.garganttua.api.core.security.key.KeyRealm;
-import com.garganttua.api.spec.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.core.CoreException;
+import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.security.key.EncryptionMode;
+import com.garganttua.api.spec.security.key.EncryptionPaddingMode;
 import com.garganttua.api.spec.security.key.KeyAlgorithm;
 import com.garganttua.api.spec.security.key.KeyType;
 import com.garganttua.api.spec.security.key.SignatureAlgorithm;
@@ -98,8 +101,62 @@ public class TestJWTAuthorization {
 
 		@Override
 		public boolean isAbleToSign() {
-			// TODO Auto-generated method stub
-			throw new UnsupportedOperationException("Unimplemented method 'isAbleToSign'");
+			return true;
+		}
+
+		@Override
+		public byte[] sign(byte[] data) throws ApiException {
+			return this.prk.sign(data);
+		}
+
+		@Override
+		public boolean verifySignature(byte[] signature, byte[] originalData) throws ApiException {
+			return this.puk.verifySignature(signature, originalData);
+		}
+
+		@Override
+		public byte[] encrypt(byte[] clear) throws ApiException {
+			return this.prk.encrypt(clear);
+		}
+
+		@Override
+		public byte[] decrypt(byte[] encoded) throws ApiException {
+			return this.puk.decrypt(encoded);
+		}
+
+		@Override
+		public byte[] getRawKey() {
+			return this.prk.getRawKey();
+		}
+
+		@Override
+		public java.security.Key getKey() throws ApiException {
+			return this.prk.getKey();
+		}
+
+		@Override
+		public KeyType getType() {
+			return KeyType.PRIVATE;
+		}
+
+		@Override
+		public KeyAlgorithm getAlgorithm() {
+			return KeyAlgorithm.RSA_4096;
+		}
+
+		@Override
+		public byte[] getInitializationVector() {
+			return null;
+		}
+
+		@Override
+		public EncryptionMode getEncryptionMode() {
+			return null;
+		}
+
+		@Override
+		public EncryptionPaddingMode getEncryptionPaddingMode() {
+			return null;
 		}
 	};
 	

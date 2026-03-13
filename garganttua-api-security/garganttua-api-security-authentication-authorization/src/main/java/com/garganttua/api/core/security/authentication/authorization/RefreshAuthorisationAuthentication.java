@@ -1,7 +1,6 @@
 package com.garganttua.api.core.security.authentication.authorization;
 
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,23 +8,21 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import com.garganttua.api.core.caller.Caller;
-import com.garganttua.api.core.entity.tools.EntityHelper;
-import com.garganttua.api.core.filter.Literal;
+import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.security.authentication.AbstractAuthentication;
 import com.garganttua.api.core.security.authorization.EntityAuthorizationHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
-import com.garganttua.api.spec.service.ReadOutputMode;
-import com.garganttua.api.spec.service.ServiceResponseCode;
-import com.garganttua.api.spec.service.IServiceResponse;
-import com.garganttua.reflection.GGObjectAddress;
+import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.OperationResponseCode;
+import com.garganttua.core.reflection.ObjectAddress;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,24 +34,24 @@ public class RefreshAuthorisationAuthentication extends AbstractAuthentication {
         super(null);
     }
 
-    public RefreshAuthorisationAuthentication(IDomain domain) {
-        super(domain);
+    public RefreshAuthorisationAuthentication(IDomainContext<?> domainContext) {
+        super(domainContext);
     }
 
     @Inject
-    private IEngine engine;
+    private IApiContext apiContext;
     private Object authorizationToBeRevoked;
 
     @Override
     protected Object doFindPrincipal(ICaller caller) {
 
-        
+
         byte[] refreshToken = ((String) this.credential).getBytes();
-        
+
         // 1 récuperer le token access à partir du refresh token
         Optional<Object> authorization;
         try {
-            
+
             authorization = this.findAuthorization(caller, refreshToken);
             // 2 récupérer le user à partir du ownerId du access token
             if (authorization.isPresent()) {
@@ -75,47 +72,53 @@ public class RefreshAuthorisationAuthentication extends AbstractAuthentication {
 
     private Optional<Object> findPrincipalFromAuthorization(ICaller caller, Object authorization) throws CoreException {
         String owner = EntityAuthorizationHelper.getOwnerId(authorization);
-        String ownerDomainName = EntityHelper.getDomainNameFromOwnerId(owner);
-        String ownerUuid = EntityHelper.getUuidFromOwnerId(owner);
-        return this.engine.getRepository(ownerDomainName).getOneByUuid(caller, ownerUuid);
+        String ownerDomainName = owner.split(":")[0];
+        String ownerUuid = owner.split(":")[1];
+        IDomainContext<?> ownerDomainCtx = this.apiContext.getDomainContext(ownerDomainName).orElse(null);
+        if (ownerDomainCtx == null) return Optional.empty();
+        IOperationResponse response = ownerDomainCtx.readOne(ownerUuid, caller);
+        if (response.getResponseCode() == OperationResponseCode.OK) {
+            return Optional.ofNullable(response.getResponse());
+        }
+        return Optional.empty();
     }
 
     private Optional<Object> findAuthorization(ICaller caller, byte[] refreshToken) throws SecurityException {
 
-        GGObjectAddress refreshTokenFieldName = RefreshAuthorizationAuthenticatorChecker
-                .checkEntityAuthenticatorClass(this.domain.getEntityClass()).refreshTokenFieldAddress();
+        ObjectAddress refreshTokenFieldName = RefreshAuthorizationAuthenticatorChecker
+                .checkEntityAuthenticatorClass((Class<?>) this.domainContext.getEntityClass().getType()).refreshTokenFieldAddress();
 
-        Literal filter = Literal.eq(refreshTokenFieldName.toString(), Base64.getDecoder().decode(refreshToken));
-        IServiceResponse response = this.authenticatorService.getEntities(caller, ReadOutputMode.full, null,
-                filter, null, new HashMap<String, String>());
+        Filter filter = Filter.eq(refreshTokenFieldName.toString(), Base64.getDecoder().decode(refreshToken));
+        IOperationResponse response = this.authenticatorDomainContext.readAll(filter, null, null, caller);
 
-        if( response.getResponseCode() == ServiceResponseCode.OK ){
+        if( response.getResponseCode() == OperationResponseCode.OK ){
             if( ((List) response.getResponse()).size() == 1 )
                 return Optional.ofNullable(((List) response.getResponse()).get(0));
-        }     
+        }
         return Optional.ofNullable(null);
     }
 
     @Override
     protected void doAuthentication() throws CoreException {
         if (this.authorizationToBeRevoked == null)
-            throw new SecurityException(CoreExceptionCode.FAILED_AUTHENTICATION, "Principal not found");
+            throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Principal not found");
 
         if (!EntityAuthorizationHelper.isRenewable(this.authorizationToBeRevoked.getClass())) {
-            throw new SecurityException(CoreExceptionCode.FAILED_AUTHENTICATION, "Authorization not renewable");
+            throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Authorization not renewable");
         }
 
         if (EntityAuthorizationHelper
                 .isRefreshTokenExpired(this.authorizationToBeRevoked)) {
-            throw new SecurityException(CoreExceptionCode.FAILED_AUTHENTICATION, "Refresh authorization expired");
+            throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Refresh authorization expired");
         }
 
         if (EntityAuthorizationHelper.isRevoked(this.authorizationToBeRevoked)) {
-            throw new SecurityException(CoreExceptionCode.FAILED_AUTHENTICATION, "Authorization revoked");
+            throw new SecurityException(CoreExceptionCode.GENERIC_SECURITY_ERROR, "Authorization revoked");
         }
 
         EntityAuthorizationHelper.revoke(this.authorizationToBeRevoked);
-        EntityHelper.save(this.authorizationToBeRevoked, Caller.createSuperCaller(), new HashMap<>());
+        String uuid = EntityAuthorizationHelper.getUuid(this.authorizationToBeRevoked);
+        this.authenticatorDomainContext.updateOne(uuid, this.authorizationToBeRevoked, Caller.createSuperCaller());
         this.authenticated = true;
     }
 

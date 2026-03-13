@@ -10,6 +10,7 @@ import com.garganttua.api.core.repository.RepositoryFilterTools;
 import com.garganttua.api.spec.service.Page;
 import com.garganttua.api.core.context.DomainContext;
 import com.garganttua.api.core.context.EntityUpdater;
+import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
@@ -23,6 +24,8 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
@@ -587,6 +590,79 @@ public class ApiExpressions {
 		} catch (Exception e) {
 			throw new ApiException("Failed to execute " + hookName + " lifecycle hooks", e);
 		}
+	}
+
+	// --- Security expressions ---
+
+	@Expression(name = "operationAccess", description = "Returns the Access level string from an OperationDefinition")
+	public static String operationAccess(Object operation) {
+		if (operation == null) return "anonymous";
+		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
+		if (opDef == null) return "anonymous";
+		return opDef.access() != null ? opDef.access().name() : "anonymous";
+	}
+
+	@Expression(name = "operationAuthority", description = "Returns whether the operation requires an authority check")
+	public static boolean operationAuthority(Object operation) {
+		if (operation == null) return false;
+		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
+		if (opDef == null) return false;
+		return opDef.authority();
+	}
+
+	@Expression(name = "isSecurityDisabled", description = "Returns true if the domain has security disabled")
+	public static boolean isSecurityDisabled(Object context) {
+		IDomainContext<?> dc = context instanceof Optional<?> opt
+				? (IDomainContext<?>) opt.get()
+				: (IDomainContext<?>) context;
+		if (dc instanceof DomainContext<?> domCtx) {
+			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
+			return domDef.domainSecurityDefinition() == null || domDef.domainSecurityDefinition().disabled();
+		}
+		return true;
+	}
+
+	@Expression(name = "requireAuthentication", description = "Checks that the caller has been authenticated (authorization present in request)")
+	public static boolean requireAuthentication(Object request) {
+		IOperationRequest opRequest = (IOperationRequest) request;
+		Optional<IAuthorization> authorization = (Optional<IAuthorization>) opRequest.arg(IOperationRequest.AUTHORIZATION);
+		if (authorization.isEmpty()) {
+			throw new ApiException("Authentication required but no authorization token provided");
+		}
+		return true;
+	}
+
+	@Expression(name = "requireTenantId", description = "Checks that the caller has a tenantId set")
+	public static boolean requireTenantId(Object caller) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		if (c == null || c.requestedTenantId() == null) {
+			throw new ApiException("Tenant ID is required for this operation");
+		}
+		return true;
+	}
+
+	@Expression(name = "requireOwnerId", description = "Checks that the caller has an ownerId set")
+	public static boolean requireOwnerId(Object caller) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		if (c == null || c.ownerId() == null) {
+			throw new ApiException("Owner ID is required for this operation");
+		}
+		return true;
+	}
+
+	@Expression(name = "isTenantIdMandatory", description = "Returns true if the operation requires a tenantId based on access level")
+	public static boolean isTenantIdMandatory(Object operation, Object context) {
+		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
+		if (opDef == null) return false;
+		Access access = opDef.access();
+		return access == Access.tenant || access == Access.owner;
+	}
+
+	@Expression(name = "isOwnerIdMandatory", description = "Returns true if the operation requires an ownerId based on access level")
+	public static boolean isOwnerIdMandatory(Object operation, Object context) {
+		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
+		if (opDef == null) return false;
+		return opDef.access() == Access.owner;
 	}
 
 	private static Object unwrapOptional(Object value) {

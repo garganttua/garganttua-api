@@ -5,16 +5,15 @@ import java.util.Optional;
 
 import javax.inject.Inject;
 
-import com.garganttua.api.core.entity.tools.EntityHelper;
 import com.garganttua.api.core.security.authentication.AbstractAuthentication;
 import com.garganttua.api.core.security.authentication.AuthenticationService;
 import com.garganttua.api.core.security.authorization.EntityAuthorizationHelper;
 import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecker;
 import com.garganttua.api.core.security.key.KeyHelper;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
@@ -27,8 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Authentication(findPrincipal = false)
 public class AuthorizationAuthentication extends AbstractAuthentication {
 
-	public AuthorizationAuthentication(IDomain domain) {
-		super(domain);
+	public AuthorizationAuthentication(IDomainContext<?> domainContext) {
+		super(domainContext);
 	}
 
 	public AuthorizationAuthentication() {
@@ -36,24 +35,24 @@ public class AuthorizationAuthentication extends AbstractAuthentication {
 	}
 
 	@Inject
-	private IEngine engine;
+	private IApiContext apiContext;
 
 	@Override
 	protected void doAuthentication() {
 		try {
 			this.ownerId = EntityAuthorizationHelper.getOwnerId(this.credential);
 
-			String ownerDomainName = EntityHelper.getDomainNameFromOwnerId(this.ownerId);
-			Optional<IDomain> ownerDomain = this.engine.getDomain(ownerDomainName);
+			String ownerDomainName = this.ownerId.split(":")[0];
+			Optional<IDomainContext<?>> ownerDomain = this.apiContext.getDomainContext(ownerDomainName);
 
-			ownerDomain.ifPresent((domain) -> {
+			ownerDomain.ifPresent((domainCtx) -> {
 				try {
 					if (EntityAuthorizationHelper.isSignable(this.credential.getClass())) {
 						AuthenticatorInfos ownerAuthenticatorInfos = EntityAuthenticatorChecker
-								.checkEntityAuthenticatorClass(domain.getEntityClass());
+								.checkEntityAuthenticatorClass((Class<?>) domainCtx.getEntityClass().getType());
 						IKeyRealm key = KeyHelper.getKey(
 								AuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-								ownerAuthenticatorInfos.authorizationKeyType(),
+								(Class<?>) ownerAuthenticatorInfos.authorizationKeyType().getType(),
 								ownerAuthenticatorInfos.authorizationKeyUsage(),
 								ownerAuthenticatorInfos.autoCreateAuthorizationKey(),
 								ownerAuthenticatorInfos.authorizationKeyAlgorithm(),
@@ -61,7 +60,7 @@ public class AuthorizationAuthentication extends AbstractAuthentication {
 								ownerAuthenticatorInfos.authorizationKeyLifeTimeUnit(),
 								this.ownerId,
 								tenantId,
-								this.engine,
+								this.apiContext,
 								null,
 								null,
 								ownerAuthenticatorInfos.authorizationSignatureAlgorithm());

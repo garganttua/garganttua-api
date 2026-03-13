@@ -1,26 +1,26 @@
 package com.garganttua.api.core.security.authentication.authorization;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.security.authentication.AbstractAuthentication;
 import com.garganttua.api.core.security.authentication.AuthenticationService;
 import com.garganttua.api.core.security.authorization.EntityAuthorizationHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.core.security.key.KeyHelper;
-import com.garganttua.api.spec.CoreException;
+import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.domain.IDomain;
-import com.garganttua.api.spec.engine.IEngine;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
 import com.garganttua.api.spec.security.key.IKeyRealm;
-import com.garganttua.api.spec.service.ServiceResponseCode;
-import com.garganttua.api.spec.service.IServiceResponse;
+import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.OperationResponseCode;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,16 +28,16 @@ import lombok.extern.slf4j.Slf4j;
 @Authentication(findPrincipal = true)
 public class StorableAuthorizationAuthentication extends AbstractAuthentication {
 
-	public StorableAuthorizationAuthentication(IDomain domain) {
-		super(domain);
+	public StorableAuthorizationAuthentication(IDomainContext<?> domainContext) {
+		super(domainContext);
 	}
 
 	public StorableAuthorizationAuthentication() {
 		super(null);
 	}
 
-	@Inject 
-	private IEngine engine;
+	@Inject
+	private IApiContext apiContext;
 
 	@Override
 	protected void doAuthentication() throws CoreException {
@@ -47,7 +47,7 @@ public class StorableAuthorizationAuthentication extends AbstractAuthentication 
 			if (EntityAuthorizationHelper.isSignable(this.credential.getClass())) {
 				IKeyRealm key = KeyHelper.getKey(
 						AuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME,
-						authenticatorInfos.authorizationKeyType(),
+						(Class<?>) authenticatorInfos.authorizationKeyType().getType(),
 						authenticatorInfos.authorizationKeyUsage(),
 						authenticatorInfos.autoCreateAuthorizationKey(),
 						authenticatorInfos.authorizationKeyAlgorithm(),
@@ -55,7 +55,7 @@ public class StorableAuthorizationAuthentication extends AbstractAuthentication 
 						authenticatorInfos.authorizationKeyLifeTimeUnit(),
 						this.ownerId,
 						tenantId,
-						this.engine,
+						this.apiContext,
 						null,
 						null,
 						authenticatorInfos.authorizationSignatureAlgorithm());
@@ -78,11 +78,10 @@ public class StorableAuthorizationAuthentication extends AbstractAuthentication 
 		try {
 			ownerId = EntityAuthorizationHelper.getOwnerId(this.credential);
 			String uuid = EntityAuthorizationHelper.getUuid(this.credential);
-			caller.setOwnerId(ownerId);
-			IServiceResponse response = this.authenticatorService.getEntity(caller, uuid,
-					new HashMap<String, String>());
+			caller = Caller.createTenantCallerWithOwnerId(caller.tenantId(), ownerId);
+			IOperationResponse response = this.authenticatorDomainContext.readOne(uuid, caller);
 
-			if (response.getResponseCode() == ServiceResponseCode.OK) {
+			if (response.getResponseCode() == OperationResponseCode.OK) {
 				log.atDebug().log("Found principal identified with uuid " + uuid);
 				return response.getResponse();
 			} else {

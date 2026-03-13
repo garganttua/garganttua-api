@@ -1,36 +1,36 @@
 package com.garganttua.api.core.context.security;
 
-import java.lang.annotation.Annotation;
-import java.util.Collection;
 import java.util.List;
-
-import org.javatuples.Pair;
+import java.util.Objects;
 
 import com.garganttua.api.core.definition.AuthenticationDefinition;
-import com.garganttua.api.spec.security.context.IAuthenticationContext;
-import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
+import com.garganttua.api.core.security.authentication.AuthenticationRequestBuilder;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.api.spec.security.IApiSecurityContext;
+import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
+import com.garganttua.api.spec.security.context.IAuthenticationContext;
 
 public class AuthenticationContext implements IAuthenticationContext {
 
     private AuthenticationDefinition authenticationDefinition;
+    private IApiSecurityContext apiSecurityContext;
 
-    public AuthenticationContext( Boolean findPrincipal,
-            ISupplierBuilder<?, ? extends ISupplier<?>> supplier,
-            IAuthenticationMethodBinderBuilder authenticateMethodBinder,
-            List<Pair<IClass<? extends Annotation>, IClass<?>>> entityFieldAnnotations,
-            IAuthenticationMethodBinderBuilder applySecurityOnEntityMethodBinder,
-            Collection<IUseCaseBuilder<?, ?, ?>> useCasesMethodBinders ) {
-        this.authenticationDefinition = new AuthenticationDefinition();
+    public AuthenticationContext(AuthenticationDefinition definition) {
+        this.authenticationDefinition = Objects.requireNonNull(definition, "Authentication definition is mandatory to create an authentication context");
+    }
+
+    public void setApiSecurityContext(IApiSecurityContext apiSecurityContext) {
+        this.apiSecurityContext = apiSecurityContext;
     }
 
     @Override
     public IAuthenticationDefinition getAuthenticationDefinition() {
         return this.authenticationDefinition;
+    }
+
+    @Override
+    public IAuthenticationRequestBuilder request() {
+        return new AuthenticationRequestBuilder(this.apiSecurityContext, List.of(this));
     }
 
 }

@@ -5,12 +5,23 @@
 	<parent>
 		<groupId>com.garganttua</groupId>
 		<artifactId>garganttua-api-security</artifactId>
-		<version>3.0.0</version>
+		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-security-authorization-jwt</artifactId>
-	
+
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>**/NativeImageConfigBuilder.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+			<!-- Native image config builder disabled pending package migration -->
+			<!--
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
@@ -32,6 +43,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 </project>
