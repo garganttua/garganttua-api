@@ -20,9 +20,11 @@ import com.garganttua.core.workflow.WorkflowResult;
  */
 public abstract class AbstractCrudScriptTest extends AbstractCrudIntegrationTest {
 
-	protected WorkflowResult executeScript(IDomainContext<?> ctx, String workflowName, IOperationRequest request) {
-		IWorkflow workflow = ctx.getWorkflow(workflowName)
-				.orElseThrow(() -> new AssertionError("Workflow not found: " + workflowName));
+	protected WorkflowResult executeScript(IDomainContext<?> ctx, IOperationRequest request) {
+		IWorkflow workflow = ctx.getWorkflow();
+		if (workflow == null) {
+			throw new AssertionError("No workflow configured for domain: " + ctx.getDomainName());
+		}
 
 		// Set caller arg only when caller info is present (normally done by DomainContext.invoke())
 		ICaller caller = request.caller();

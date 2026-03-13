@@ -60,7 +60,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(readAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertNotNull(result.output());
@@ -91,7 +91,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(readAllOp);
 
-        WorkflowResult result = executeScript(failingUserCtx, "readAll", request);
+        WorkflowResult result = executeScript(failingUserCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(500, result.code());
@@ -104,7 +104,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, readAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -119,7 +119,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("mode", "uuid");
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         List<Object> output = (List<Object>) result.output();
@@ -138,7 +138,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("mode", "id");
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         List<Object> output = (List<Object>) result.output();
@@ -157,7 +157,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("mode", "full");
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         List<Object> output = (List<Object>) result.output();
@@ -179,7 +179,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(readAllOp);
         request.arg("pageable", pageable);
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertTrue(result.output() instanceof Page);
@@ -197,7 +197,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(readAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertTrue(result.output() instanceof List);
@@ -218,7 +218,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         request.arg("pageable", pageable);
         request.arg("mode", "uuid");
 
-        WorkflowResult result = executeScript(userCtx, "readAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertTrue(result.output() instanceof Page);
@@ -270,7 +270,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         request.arg("sort", sort);
         request.arg("pageable", pageable);
 
-        WorkflowResult result = executeScript(capUserCtx, "readAll", request);
+        WorkflowResult result = executeScript(capUserCtx, request);
 
         assertTrue(result.isSuccess());
 

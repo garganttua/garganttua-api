@@ -57,7 +57,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertNotNull(result.output());
@@ -81,7 +81,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         User output = (User) result.output();
@@ -100,7 +100,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         User output = (User) result.output();
@@ -117,7 +117,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         User output = (User) result.output();
@@ -134,7 +134,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -151,7 +151,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg(IOperationRequest.OPERATION, createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -163,7 +163,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(createOp);
 
-        WorkflowResult result = executeScript(userCtx, "create", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -195,7 +195,7 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(createOp);
         request.arg("entity", user);
 
-        WorkflowResult result = executeScript(failingUserCtx, "create", request);
+        WorkflowResult result = executeScript(failingUserCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(500, result.code());

@@ -25,9 +25,14 @@ import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.expression.context.ExpressionVariableContext;
+import com.garganttua.core.expression.context.IExpressionVariableResolver;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.runtime.IRuntimeContext;
+import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.core.script.IScript;
 import com.garganttua.core.script.context.ScriptExecutionContext;
+import com.garganttua.core.script.context.ScriptContext;
 import com.garganttua.core.injection.context.beans.BeanFactory;
 import com.garganttua.api.spec.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.IReflection;
@@ -60,6 +65,60 @@ public class ApiExpressions {
 			throw new ApiException("script_output: script not found: " + scriptName);
 		}
 		return script.getOutput().orElse(null);
+	}
+
+	/**
+	 * Wraps execute_script to save and restore the ExpressionVariableContext
+	 * which gets cleared by the sub-script's ScriptRuntimeStep finally block.
+	 * Without this, any @variable reference after execute_script would fail
+	 * with "No variable resolver available".
+	 */
+	private static int runScriptImpl(Object name, Object... args) {
+		if (name == null) {
+			throw new ApiException("run_script: script name cannot be null");
+		}
+		ScriptContext ctx = ScriptExecutionContext.get();
+		if (ctx == null) {
+			throw new ApiException("run_script: no script execution context available");
+		}
+		String scriptName = name.toString();
+		IScript script = ctx.getIncludedScript(scriptName);
+		if (script == null) {
+			throw new ApiException("run_script: script not found: " + scriptName
+					+ ". Did you call include() first?");
+		}
+		IExpressionVariableResolver savedResolver = ExpressionVariableContext.get();
+		IRuntimeContext<?, ?> savedRuntimeCtx = RuntimeExpressionContext.get();
+		try {
+			return script.execute(args != null ? args : new Object[0]);
+		} finally {
+			if (savedResolver != null) {
+				ExpressionVariableContext.set(savedResolver);
+			}
+			if (savedRuntimeCtx != null) {
+				RuntimeExpressionContext.set(savedRuntimeCtx);
+			}
+		}
+	}
+
+	@Expression(name = "run_script", description = "Executes an included script preserving variable context (no args)")
+	public static int runScript(Object name) {
+		return runScriptImpl(name);
+	}
+
+	@Expression(name = "run_script", description = "Executes an included script preserving variable context (1 arg)")
+	public static int runScript(Object name, Object arg0) {
+		return runScriptImpl(name, arg0);
+	}
+
+	@Expression(name = "run_script", description = "Executes an included script preserving variable context (2 args)")
+	public static int runScript(Object name, Object arg0, Object arg1) {
+		return runScriptImpl(name, arg0, arg1);
+	}
+
+	@Expression(name = "run_script", description = "Executes an included script preserving variable context (3 args)")
+	public static int runScript(Object name, Object arg0, Object arg1, Object arg2) {
+		return runScriptImpl(name, arg0, arg1, arg2);
 	}
 
 	@Expression(name = "notNull", description = "Returns true if the value is not null and not an empty Optional")

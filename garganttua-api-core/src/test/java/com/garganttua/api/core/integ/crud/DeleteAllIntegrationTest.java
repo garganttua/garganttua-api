@@ -55,7 +55,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertNotNull(result.output());
@@ -73,7 +73,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertTrue(result.output() instanceof List);
@@ -91,7 +91,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, deleteAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -121,7 +121,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        WorkflowResult result = executeScript(failingUserCtx, "deleteAll", request);
+        WorkflowResult result = executeScript(failingUserCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(500, result.code());
@@ -136,7 +136,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(deleteAllOp);
 
-        WorkflowResult result = executeScript(userCtx, "deleteAll", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         List<?> deleted = (List<?>) result.output();

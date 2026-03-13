@@ -196,8 +196,8 @@ class ApiTest extends AbstractCrudIntegrationTest {
             IDomainContext<?> userCtx = context.getDomainContext("users").orElseThrow();
             IDomainContext<?> productCtx = context.getDomainContext("products").orElseThrow();
 
-            assertFalse(userCtx.getWorkflows().isEmpty());
-            assertFalse(productCtx.getWorkflows().isEmpty());
+            assertNotNull(userCtx.getWorkflow());
+            assertNotNull(productCtx.getWorkflow());
         }
     }
 

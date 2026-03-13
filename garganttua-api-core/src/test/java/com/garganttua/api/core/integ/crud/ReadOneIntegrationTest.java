@@ -55,7 +55,7 @@ class ReadOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "readOne", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess(), "code=" + result.code() + " msg=" + result.exceptionMessage() + " output=" + result.output());
         assertNotNull(result.output());
@@ -73,7 +73,7 @@ class ReadOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
 
-        WorkflowResult result = executeScript(userCtx, "readOne", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(404, result.code());
@@ -88,7 +88,7 @@ class ReadOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, readOneOp);
 
-        WorkflowResult result = executeScript(userCtx, "readOne", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -118,7 +118,7 @@ class ReadOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(failingUserCtx, "readOne", request);
+        WorkflowResult result = executeScript(failingUserCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(500, result.code());
@@ -134,7 +134,7 @@ class ReadOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "id");
         request.arg("identifier", "1");
 
-        WorkflowResult result = executeScript(userCtx, "readOne", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertNotNull(result.output());
@@ -150,7 +150,7 @@ class ReadOneIntegrationTest extends AbstractCrudScriptTest {
         OperationRequest request = superTenantScriptRequest(readOneOp);
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "readOne", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertNotNull(result.output());

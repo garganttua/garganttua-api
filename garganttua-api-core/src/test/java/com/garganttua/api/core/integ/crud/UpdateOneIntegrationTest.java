@@ -63,7 +63,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertTrue(result.output() instanceof User);
@@ -88,7 +88,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "id");
         request.arg("identifier", "1");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         User output = (User) result.output();
@@ -108,7 +108,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("entity", updatedUser);
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         User output = (User) result.output();
@@ -127,7 +127,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-nonexistent");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(404, result.code());
@@ -148,7 +148,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -164,7 +164,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(400, result.code());
@@ -199,7 +199,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(failingUserCtx, "update", request);
+        WorkflowResult result = executeScript(failingUserCtx, request);
 
         assertFalse(result.isSuccess());
         assertEquals(500, result.code());
@@ -220,7 +220,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         request.arg("type", "uuid");
         request.arg("identifier", "uuid-alice");
 
-        WorkflowResult result = executeScript(userCtx, "update", request);
+        WorkflowResult result = executeScript(userCtx, request);
 
         assertTrue(result.isSuccess());
         assertNotNull(userDao.getLastSaved(), "Updated entity should have been saved to DAO");

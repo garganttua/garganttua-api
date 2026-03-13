@@ -4,6 +4,7 @@ import com.garganttua.api.core.builder.ApiContextBuilder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,9 +15,18 @@ import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 @DisplayName("EntityBuilder Tests")
 class EntityBuilderTest {
+
+    @BeforeAll
+    static void initReflection() {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build());
+    }
 
     // Test entity class
     public static class TestEntity {

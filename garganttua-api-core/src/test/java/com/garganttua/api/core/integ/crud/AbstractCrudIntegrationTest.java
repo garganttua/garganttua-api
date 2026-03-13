@@ -347,7 +347,7 @@ public abstract class AbstractCrudIntegrationTest {
         ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
 
         builder.superTenantId("SUPER_TENANT")
-               .superTenantAutoCreate(true);
+               .superTenantAutoCreate(false);
 
         return builder;
     }

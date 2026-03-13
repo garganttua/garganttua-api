@@ -505,9 +505,10 @@ public class DomainBuilder<E>
                     ucb.hasAuthority()));
         }
 
-        // Build workflow definitions (metadata) and a single routing script that
-        // dispatches to the correct CRUD sub-script based on the business operation.
-        // Each CRUD script is included from the classpath and executed conditionally.
+        // Build workflow definitions (metadata) and workflow stages.
+        // Each CRUD operation gets its own stage with a when() condition
+        // that matches the business operation label. The CRUD script content
+        // is loaded from classpath and inlined into the stage.
         Map<String, IWorkflowDefinition> workflowDefinitions = new HashMap<>();
         IWorkflowBuilder mergedBuilder = WorkflowBuilder.create().name(this.domainName);
         if (this.injectionContextBuilder != null) {
@@ -517,8 +518,6 @@ public class DomainBuilder<E>
             mergedBuilder.provide(this.expressionContextBuilder);
         }
 
-        // Collect CRUD operations and their classpath script paths
-        Map<String, String> crudScripts = new HashMap<>();
         for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
             DomainWorkflowBuilder<E> wb = entry.getValue();
             if (wb.isSecurityDisabled()) {
@@ -534,20 +533,43 @@ public class DomainBuilder<E>
                     wb.getAccess(),
                     wb.hasAuthority(),
                     wb.isCustom()));
+
             String scriptPath = CRUD_SCRIPT_PATHS.get(label);
             if (scriptPath != null) {
-                crudScripts.put(label, scriptPath);
+                // Each CRUD operation gets its own conditional stage.
+                // Inside the stage, the CRUD script is included and executed via run_script.
+                // The _code variable and output are set for use by the exit-code stage.
+                String dispatchScript =
+                        "_ref <- include(\"classpath:" + scriptPath + "\")\n"
+                      + "_code <- run_script(@_ref, @0, @1, @2)\n"
+                      + "output <- if(equals(@_code, 0), script_output(@_ref), 0)\n";
+                mergedBuilder.stage(label)
+                        .when("equals(businessOperation(@0), \"" + label + "\")")
+                        .script(dispatchScript)
+                            .name(label)
+                            .inline()
+                            .up()
+                        .up();
             }
         }
 
-        // Generate inline routing script
-        String routingScript = generateRoutingScript(crudScripts);
-        var executionStage = mergedBuilder.stage("execution");
-        executionStage.script(routingScript)
-                .name("route")
-                .inline()
+        // Final unconditional stage: propagate the exit code from _code using pipe clauses.
+        // This stage runs at the top-level executeGroup where pipe clauses are supported.
+        String exitCodeScript =
+                "0\n"
+              + "    | equals(@_code, 0) -> 0\n"
+              + "    | equals(@_code, 400) -> 400\n"
+              + "    | equals(@_code, 404) -> 404\n"
+              + "    | equals(@_code, 409) -> 409\n"
+              + "    | equals(@_code, 500) -> 500\n"
+              + "    | equals(@_code, 405) -> 405\n";
+        mergedBuilder.stage("exit-code")
+                .script(exitCodeScript)
+                    .name("propagate-exit-code")
+                    .inline()
+                    .up()
                 .up();
-        executionStage.up();
+
         IWorkflow builtWorkflow = mergedBuilder.build();
 
         // Cast entities for create/upsert lists
@@ -637,43 +659,20 @@ public class DomainBuilder<E>
 
 
     /**
-     * Generates an inline routing script that dispatches to the correct CRUD sub-script
-     * based on the business operation. Each CRUD script is included from the classpath
-     * and executed via execute_script(). The sub-script's exit code and output are propagated.
+     * Generates a small inline dispatch script that includes a CRUD script from the
+     * classpath and executes it via run_script(). Pipe clauses handle output capture
+     * and exit code propagation.
      */
-    private String generateRoutingScript(Map<String, String> crudScripts) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("op <- businessOperation(@0)\n\n");
-
-        // Include all CRUD scripts from classpath and capture returned script names
-        for (Map.Entry<String, String> entry : crudScripts.entrySet()) {
-            sb.append("_n_").append(entry.getKey())
-              .append(" <- include(\"classpath:").append(entry.getValue()).append("\")\n");
-        }
-        sb.append("\n");
-
-        // Resolve script name from operation label
-        sb.append("noop()\n");
-        for (String label : crudScripts.keySet()) {
-            sb.append("    | equals(@op, \"").append(label)
-              .append("\") => _sn <- format(\"%s\", @_n_").append(label).append(")\n");
-        }
-        sb.append("\n");
-
-        // Dispatch to the matching CRUD script via execute_script()
-        sb.append("_code <- execute_script(@_sn, @0, @1, @2)\n\n");
-
-        // Only capture output on success (sub-script has no output on error)
-        sb.append("noop()\n");
-        sb.append("    | equals(format(\"%s\", @_code), \"0\") => output <- script_output(@_sn)\n\n");
-
-        // Map exit codes so they propagate to WorkflowResult.code()
-        sb.append("noop()\n");
-        for (int code : new int[]{0, 400, 404, 409, 500, 405}) {
-            sb.append("    | equals(format(\"%s\", @_code), \"").append(code).append("\") -> ").append(code).append("\n");
-        }
-
-        return sb.toString();
+    private static String generateDispatchScript(String scriptPath) {
+        return "_ref <- include(\"classpath:" + scriptPath + "\")\n"
+             + "_code <- run_script(@_ref, @0, @1, @2)\n"
+             + "    | equals(@_code, 0) => output <- script_output(@_ref)\n"
+             + "    | equals(@_code, 0) -> 0\n"
+             + "    | equals(@_code, 400) -> 400\n"
+             + "    | equals(@_code, 404) -> 404\n"
+             + "    | equals(@_code, 409) -> 409\n"
+             + "    | equals(@_code, 500) -> 500\n"
+             + "    | equals(@_code, 405) -> 405\n";
     }
 
     private void throwExceptionIfNoDto() throws ApiException {

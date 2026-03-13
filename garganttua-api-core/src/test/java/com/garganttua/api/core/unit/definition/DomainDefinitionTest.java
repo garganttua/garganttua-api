@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,9 +24,18 @@ import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.definition.IUseCaseDefinition;
 import com.garganttua.api.spec.definition.IWorkflowDefinition;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.dsl.ReflectionBuilder;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 @DisplayName("DomainDefinition Tests")
 class DomainDefinitionTest {
+
+    @BeforeAll
+    static void initReflection() {
+        IClass.setReflection(ReflectionBuilder.builder()
+                .withProvider(new RuntimeReflectionProvider())
+                .build());
+    }
 
     public static class TestEntity {
         private String id;
