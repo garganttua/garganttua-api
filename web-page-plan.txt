@@ -1,0 +1,779 @@
+================================================================================
+GARGANTTUA API - PLAN DE PAGE WEB PRODUIT
+================================================================================
+
+URL cible : garganttua.com/api (ou garganttua.com/products/api)
+Format : one-page scrollable avec navigation sticky
+Ton : technique mais accessible, professionnel, oriente decision-makers techniques
+Palette : dark theme (fond #0D1117 ou #1A1B26), accents vert/cyan (#00E5A0, #00D4FF)
+Typographie : titres en font grotesk/geometric (ex: Inter, Plus Jakarta Sans),
+              code en JetBrains Mono
+
+
+================================================================================
+SECTION 1 - HERO
+================================================================================
+
+[LAYOUT]
+Full-width, hauteur 100vh.
+Fond sombre avec un motif subtil de flux de donnees (lignes horizontales
+qui traversent des noeuds representant les etapes du pipeline).
+Leger gradient radial du centre vers les bords.
+
+[VISUEL]
+Animation subtile en arriere-plan : un pipeline horizontal anime ou les
+8 etapes (protocol, data_format, caller, operation, business, security,
+multiplex, execution) apparaissent progressivement comme des noeuds lumineux
+traverses par un flux de donnees. Les noeuds pulsent au passage du flux.
+
+Alternative statique : illustration vectorielle du pipeline en mode
+"circuit board" avec des couleurs differentes par phase (bleu pour
+transport, vert pour business, rouge pour securite, orange pour execution).
+
+[TEXTE]
+
+    Garganttua API
+
+    Le framework Java pour construire des APIs
+    multi-tenant et securisees sans compromis.
+
+    Pipeline scriptable. Securite pluggable.
+    Multi-tenancy native. API fluide. Framework-agnostic.
+
+[BOUTONS]
+- Bouton principal (vert/cyan) : "Voir sur GitHub" -> https://github.com/garganttua/garganttua-api
+- Bouton secondaire (outline) : "Decouvrir le framework" -> scroll vers Section 2
+
+[BADGE]
+En haut a droite du titre :
+    v3.0.0-ALPHA01  |  MIT License  |  Java 21  |  GraalVM-ready
+
+
+================================================================================
+SECTION 2 - PROPOSITION DE VALEUR (3 piliers)
+================================================================================
+
+[LAYOUT]
+3 colonnes egales sur desktop, empilees sur mobile. Fond legerement plus clair
+que le hero (#111827). Chaque colonne a une icone au-dessus.
+
+[VISUEL]
+3 icones minimalistes en style "line icon" avec accent colore :
+- Colonne 1 : icone "immeuble avec etages" ou "couches empilees" (multi-tenancy)
+- Colonne 2 : icone "bouclier avec cle" ou "cadenas ouvert" (securite pluggable)
+- Colonne 3 : icone "tuyaux connectes" ou "pipeline" (pipeline scriptable)
+
+[TEXTE]
+
+--- Colonne 1 ---
+
+    Multi-tenancy native
+
+    L'isolation tenant est integree au coeur du framework,
+    pas ajoutee apres coup. Entites publiques, privees,
+    partagees, proprietaires, masquables : la matrice
+    d'acces couvre tous les cas d'un SaaS multi-tenant.
+
+    Super-tenant pour l'administration globale.
+    Super-owner pour le bypass de propriete.
+    Filtrage automatique a chaque requete.
+    Desactivable en une ligne : multiTenant(false).
+
+--- Colonne 2 ---
+
+    Securite pluggable
+
+    Composez votre chaine d'authentification : login/password,
+    PIN, challenge-response, token. Combinez avec une
+    autorisation JWT configurable (RSA, HMAC). Changez
+    de strategie sans toucher au code metier.
+
+    Pas de lock-in sur Spring Security. Chaque operation
+    definit ses propres exigences de securite.
+
+--- Colonne 3 ---
+
+    Pipeline scriptable
+
+    Chaque requete traverse un pipeline en 8 etapes,
+    du transport brut jusqu'a l'execution. Chaque etape
+    est un script modifiable independamment.
+    Hooks de lifecycle, binders, et workflows
+    pour personnaliser sans tout reecrire.
+
+    Mettez a jour la logique metier sans recompiler.
+
+
+================================================================================
+SECTION 3 - ARCHITECTURE DU PIPELINE (schema interactif)
+================================================================================
+
+[LAYOUT]
+Section full-width avec un titre centre, puis un schema interactif du pipeline
+occupant toute la largeur sous le titre. Fond #0D1117.
+
+[VISUEL]
+Pipeline horizontal interactif (librairie : D3.js ou Cytoscape.js).
+Les 8 etapes sont des noeuds relies par des fleches :
+
+    protocol -> data_format -> caller -> operation -> business -> security -> multiplex -> execution
+
+Les noeuds sont colores par responsabilite :
+- Bleu clair   : Transport (protocol, data_format)
+- Vert         : Contexte (caller, operation)
+- Jaune        : Metier (business)
+- Rouge        : Securite (security)
+- Orange       : Routage (multiplex)
+- Cyan         : Execution (execution)
+
+Le noeud "execution" se divise en 4 branches :
+    execution -> CRUD (create, readAll, readOne, update, deleteOne, deleteAll)
+    execution -> Use Cases
+    execution -> Workflows
+    execution -> Authentication
+
+Interactions :
+- Hover sur un noeud : le noeud s'agrandit, un tooltip affiche sa description
+  et les scripts associes.
+- Click sur un noeud : ouvre un panneau lateral avec la liste des fonctions
+  disponibles dans cette etape.
+- Mode A / Mode B : deux boutons au-dessus permettent de visualiser
+  le pipeline complet (Mode A : requete brute) ou le pipeline reduit
+  (Mode B : requete pre-traitee, saute les 3 premieres etapes).
+
+[TEXTE]
+
+    Un pipeline en 8 etapes
+
+    Chaque requete traverse un pipeline deterministe. Les etapes 1 a 3
+    gerent le transport et le contexte. Les etapes 4 a 6 appliquent
+    les regles metier et la securite. Les etapes 7 et 8 routent vers
+    le bon handler et executent la logique.
+
+    Chaque etape est un script. Modifiable. Testable. Independant.
+
+[LEGENDE sous le schema]
+
+    protocol            Extraction des donnees brutes (headers, body, params)
+    data_format         Deserialisation vers DTO / objets domaine
+    caller              Construction du contexte appelant (tenantId, ownerId, autorites)
+    operation           Detection de l'operation CRUD / use case / workflow
+    business            Validation tenant / owner / contraintes metier
+    security            Authentification et autorisation
+    multiplex           Routage vers le bon handler d'execution
+    execution           Scripts CRUD, use cases, workflows, ou authentification
+
+
+================================================================================
+SECTION 4 - MULTI-TENANCY EN DETAIL (differenciateur cle)
+================================================================================
+
+[LAYOUT]
+Section split : texte a gauche (55%), visuel a droite (45%).
+Fond #111827.
+
+[VISUEL - cote droit]
+Tableau / matrice interactive montrant les combinaisons de visibilite :
+
+    +------------------+--------+---------+-------+-----------+
+    | Configuration    | Public | Tenant  | Owned | Hiddenable|
+    +------------------+--------+---------+-------+-----------+
+    | Blog public      |   X    |         |       |     X     |
+    | Donnees tenant   |        |    X    |       |           |
+    | Documents perso  |        |    X    |   X   |           |
+    | Posts partages   |        |    X    |       |     X     |
+    +------------------+--------+---------+-------+-----------+
+
+Sous le tableau, schema du filtre genere automatiquement pour chaque
+combinaison. Au hover sur une ligne, le filtre correspondant s'affiche.
+
+[TEXTE - cote gauche]
+
+    Isolation des donnees, integree au framework
+
+    Chaque entite declare sa strategie de visibilite via des
+    annotations. Le framework genere automatiquement les filtres
+    d'acces appliques a chaque requete.
+
+    5 annotations combinees librement :
+
+    @EntityPublic       Visible par tous, sans filtre tenant
+    @EntityTenant       Appartient a un tenant (filtre tenantId)
+    @EntityOwned        Appartient a un utilisateur (filtre ownerId)
+    @EntityShared       Partageable entre tenants (champ shareWith)
+    @EntityHiddenable   Masquable (champ hidden, visible au proprietaire)
+
+    Deux roles privilegies :
+
+    - Super-tenant : accede a toutes les donnees, tous les tenants
+    - Super-owner : accede a toutes les entites, tous les proprietaires
+
+    Le filtre est applique avant l'execution. Pas de risque d'oubli.
+    Pas de fuite de donnees entre tenants.
+
+    Pas besoin de multi-tenancy ?
+
+    Desactivez-le en une ligne :
+
+        ApiContextBuilder.builder()
+            .multiTenant(false)    // desactive tout le tenant
+            ...
+
+    Le framework passe en mode mono-tenant : plus de filtres tenant,
+    plus de super-tenant, plus de shared. Les filtres owner et
+    visibilite restent actifs. Mode strict : toute tentative
+    d'appeler superTenantId() ou tenant(true) leve une exception.
+
+
+================================================================================
+SECTION 5 - DSL BUILDER (experience developpeur)
+================================================================================
+
+[LAYOUT]
+Fond #0D1117. Bloc central avec un snippet de code principal (70% de la largeur)
+et des annotations explicatives en marge.
+
+[VISUEL]
+Terminal-style code block (fond #161B22, bordure arrondie, barre de titre
+avec 3 points rouge/jaune/vert). Coloration syntaxique Java.
+Des lignes de rappel (thin lines) partent du code vers des annotations
+explicatives dans la marge droite.
+
+[TEXTE]
+
+    Tout se configure via un DSL fluide
+
+    Un seul point d'entree. Type-safe. Navigable avec up().
+    Pas de fichiers XML, pas d'annotations dispersees,
+    pas de magie de classpath scanning.
+
+[CODE]
+
+    IApiContext context = ApiContextBuilder.builder()
+        .superTenantId("SUPER_TENANT")               // <- Identifiant du tenant admin
+        .domain(User.class)                           // <- Domaine auto-nomme "users"
+            .entity()
+                .id("id")                             // <- Cle primaire
+                .uuid("uuid")                         // <- Identifiant metier (auto-genere)
+                .tenantId("tenantId")                 // <- Champ d'isolation tenant
+                .ownerId("ownerId")                   // <- Champ de propriete
+            .up()
+            .dto(UserDto.class)                       // <- DTO avec mapping automatique
+                .id("id")
+                .uuid("uuid")
+                .db(new MongoDao())                   // <- Connecteur de persistance
+            .up()
+            .security()                               // <- Securite du domaine
+                .authentication()
+                    .loginPassword()                  // <- Methode d'authentification
+                .up()
+                .authorization()
+                    .jwt()                            // <- Autorisation JWT
+                    .signable()
+                    .refreshable()
+                .up()
+            .up()
+            .creation(true)                           // <- Active le CRUD create
+            .readAll(true)                            // <- Active le CRUD readAll
+            .readOne(true)                            // <- Active le CRUD readOne
+            .workflow("deleteAll")
+                .security().disable(true).up()        // <- Desactive la securite
+            .up()
+        .up()
+        .build();                                     // <- Build immutable
+
+    context.onInit();
+    context.onStart();
+
+[CODE - DEUXIEME BLOC]
+
+    Requetes fluides : du builder a l'execution
+
+    Construisez et executez vos requetes en une seule chaine fluide.
+    Les raccourcis CRUD evitent la construction manuelle des
+    OperationDefinition. Disponible sur IDomainContext et IApiContext.
+
+    // Depuis un domaine
+    products.request()
+        .createOne(myProduct)                   // <- Operation + body en un appel
+        .caller(caller)                         // <- Contexte appelant
+        .execute();                             // <- Build + execute
+
+    // Lecture avec filtres
+    products.request()
+        .readAll()                              // <- Operation readAll
+        .filter(myFilter)                       // <- Filtre optionnel
+        .page(pageable)                         // <- Pagination
+        .sort(sort)                             // <- Tri
+        .caller(caller)
+        .execute();
+
+    // Raccourci depuis le contexte API
+    context.request("products")                 // <- Acces direct par nom de domaine
+        .deleteOne("uuid-123")
+        .caller(caller)
+        .execute();
+
+    // Build en deux temps (inspection avant execution)
+    IRequest request = products.request()
+        .updateOne("uuid-123", body)
+        .caller(caller)
+        .build();                               // <- IRequest inspectable
+
+    IOperationResponse response = request.execute();
+
+
+================================================================================
+SECTION 6 - SECURITE COMPOSABLE (showcase)
+================================================================================
+
+[LAYOUT]
+Grille 2x2 sur desktop, empilee sur mobile. Fond #111827.
+Chaque carte represente une strategie d'authentification.
+
+[VISUEL]
+Chaque carte a :
+- Icone en haut (cadenas, PIN, defi, jeton)
+- Titre de la strategie
+- Description
+- Snippet de code (configuration DSL)
+
+[TEXTE + CODE]
+
+--- Carte 1 : Login / Password ---
+
+    [icone: cadenas]
+
+    Login / Password
+
+    Authentification classique par identifiant et mot de passe.
+    Encodage configurable (Bcrypt, SHA, PBKDF2). Champ "enabled"
+    pour desactiver un compte sans le supprimer.
+
+    .authentication()
+        .loginPassword()
+        .authenticator(User.class)
+    .up()
+
+--- Carte 2 : PIN ---
+
+    [icone: grille de chiffres]
+
+    Code PIN
+
+    Authentification par code numerique avec compteur d'erreurs.
+    Blocage automatique apres N tentatives echouees.
+    Ideal pour les applications mobiles ou les terminaux.
+
+    .authentication()
+        .pin()
+        .authenticator(User.class)
+    .up()
+
+--- Carte 3 : Challenge-Response ---
+
+    [icone: fleches bidirectionnelles]
+
+    Challenge-Response
+
+    Le serveur genere un defi avec une duree de validite.
+    Le client repond avec la solution. Adapte aux scenarios
+    MFA ou aux integrations avec des systemes externes.
+
+    .authentication()
+        .challenge()
+        .authenticator(User.class)
+    .up()
+
+--- Carte 4 : JWT Authorization ---
+
+    [icone: jeton / badge]
+
+    JWT Authorization
+
+    Signature et validation de tokens JWT. Algorithmes RSA
+    ou HMAC. Refresh tokens pour le renouvellement sans
+    re-authentification. Claims customisables.
+
+    .authorization()
+        .jwt()
+        .signable()
+        .refreshable()
+    .up()
+
+
+================================================================================
+SECTION 7 - MODULES (architecture modulaire)
+================================================================================
+
+[LAYOUT]
+Fond #0D1117. Schema en blocs empiles montrant la structure modulaire.
+Chaque bloc est cliquable pour afficher plus de details.
+
+[VISUEL]
+Architecture en couches, de bas en haut :
+
+    +-------------------------------------------------------+
+    |              garganttua-api-native-image               |  <- GraalVM
+    +-------------------------------------------------------+
+    |   garganttua-api-spring  (REST, Swagger, MongoDB)     |  <- Integration
+    +-------------------------------------------------------+
+    |   garganttua-api-security (login, PIN, JWT, etc.)     |  <- Securite
+    +-------------------------------------------------------+
+    |              garganttua-api-core                       |  <- Moteur
+    |   (builders, contexts, pipeline, scripts, repository) |
+    +-------------------------------------------------------+
+    |              garganttua-api-spec                       |  <- Contrats
+    |   (interfaces, annotations, enums, definitions)       |
+    +-------------------------------------------------------+
+    |              garganttua-core                           |  <- Fondation
+    |   (reflection, injection, script, workflow, mapper)    |
+    +-------------------------------------------------------+
+
+Hover sur un bloc : bordure en couleur d'accent, description etendue.
+Click : ouvre un panneau avec la liste des classes/interfaces principales.
+
+[TEXTE]
+
+    Architecture en couches strictes
+
+    Chaque couche depend uniquement des couches inferieures.
+    Le module spec est un pur contrat : zero logique, zero dependance
+    externe. Le core implemente le moteur. Les modules Spring et
+    securite sont optionnels et interchangeables.
+
+[DESCRIPTION PAR MODULE]
+
+    garganttua-api-spec      Contrats purs : 40+ annotations, 60+ interfaces,
+                             definitions immutables. Aucune logique metier.
+
+    garganttua-api-core      Moteur du framework : builders DSL, contexts runtime,
+                             pipeline scriptable, repository, expressions.
+
+    garganttua-api-security  Authentification pluggable (login/password, PIN,
+                             challenge) et autorisation JWT. 7 sous-modules.
+
+    garganttua-api-spring    Integration Spring Boot 3.3 : REST controllers
+                             auto-generes, Swagger/OpenAPI, MongoDB DAO,
+                             Spring Security adapter.
+
+    garganttua-api-native    Configuration GraalVM Native Image pour un
+                             demarrage en millisecondes.
+
+
+================================================================================
+SECTION 8 - COMMENT CA MARCHE (workflow en 4 etapes)
+================================================================================
+
+[LAYOUT]
+Fond #111827. 4 etapes en ligne horizontale sur desktop,
+reliees par des fleches/lignes. Empilees verticalement sur mobile.
+
+[VISUEL]
+Timeline horizontale avec 4 noeuds circulaires numerotes (1-4).
+Chaque noeud a une icone au centre et un bloc de texte en dessous.
+Les lignes entre les noeuds sont animees (pointilles qui avancent)
+quand la section entre dans le viewport (scroll-triggered).
+
+[TEXTE]
+
+    Du builder au runtime en 4 etapes
+
+--- Etape 1 ---
+    [icone: fichier avec code]
+
+    1. Configurez
+
+    Declarez vos domaines, entites, DTOs et regles
+    de securite via le DSL fluide. Un seul point
+    d'entree, type-safe, avec autocompletion IDE.
+
+--- Etape 2 ---
+    [icone: engrenages]
+
+    2. Buildez
+
+    Le framework construit les definitions immutables,
+    genere les scripts de pipeline, wire les binders
+    de lifecycle et les methodes de securite.
+
+--- Etape 3 ---
+    [icone: fusee]
+
+    3. Demarrez
+
+    Le contexte API initialise les domaines, demarre
+    les interfaces (REST, etc.), cree les entites
+    de startup, et ouvre les endpoints.
+
+--- Etape 4 ---
+    [icone: flux de donnees]
+
+    4. Servez
+
+    Chaque requete traverse le pipeline en 8 etapes.
+    Filtrage tenant automatique. Securite appliquee.
+    CRUD, use cases, ou workflows executes.
+
+
+================================================================================
+SECTION 9 - CHIFFRES CLES
+================================================================================
+
+[LAYOUT]
+Bandeau horizontal, fond avec un leger gradient. 5 metriques en ligne,
+centrees, avec animation de compteur (count-up) au scroll.
+
+[VISUEL]
+Chaque metrique est un grand nombre anime (ex: part de 0 a 394 en 1.5s)
+avec un label en dessous en texte plus petit et plus clair.
+
+[TEXTE]
+
+    8                   40+                 394              175              0
+    etapes              annotations         fichiers         tests            dependance
+    de pipeline         declaratives        source Java      d'integration    a Spring
+
+
+================================================================================
+SECTION 10 - QUICK START
+================================================================================
+
+[LAYOUT]
+Fond #0D1117. Bloc central avec des onglets (tabs) pour differents cas
+d'usage. Chaque onglet montre un snippet de code avec coloration syntaxique.
+Bouton "Copier" en haut a droite de chaque bloc de code.
+
+[VISUEL]
+Terminal-style code block (fond #161B22, bordure arrondie, barre de titre
+avec 3 points rouge/jaune/vert). Coloration syntaxique Java.
+
+[TEXTE]
+
+    Demarrage rapide
+
+--- Onglet 1 : "Maven" ---
+
+    <dependency>
+        <groupId>com.garganttua</groupId>
+        <artifactId>garganttua-api-core</artifactId>
+        <version>3.0.0-ALPHA01</version>
+    </dependency>
+
+--- Onglet 2 : "API CRUD en 20 lignes" ---
+
+    // 1. Definir le domaine
+    IApiContext context = ApiContextBuilder.builder()
+        .superTenantId("SUPER_TENANT")
+        .domain(Product.class)
+            .entity().id("id").uuid("uuid").tenantId("tenantId").up()
+            .dto(ProductDto.class).id("id").uuid("uuid")
+                .db(new MongoDao("products")).up()
+            .creation(true).readAll(true).readOne(true)
+            .update(true).deleteOne(true)
+        .up()
+        .build();
+
+    // 2. Demarrer
+    context.onInit();
+    context.onStart();
+
+    // 3. Utiliser
+    context.request("products")
+        .createOne(myProduct)
+        .caller(caller)
+        .execute();
+
+--- Onglet 3 : "Multi-tenant avec securite" ---
+
+    ApiContextBuilder.builder()
+        .superTenantId("ADMIN")
+        .domain(Document.class)
+            .entity()
+                .id("id").uuid("uuid")
+                .tenantId("tenantId").ownerId("ownerId")
+            .up()
+            .dto(DocumentDto.class)
+                .id("id").db(new MongoDao("documents")).up()
+            .security()
+                .authentication().loginPassword()
+                    .authenticator(User.class).up()
+                .authorization().jwt()
+                    .signable().refreshable().up()
+            .up()
+            .creation(true).readAll(true).readOne(true)
+            .update(true).deleteOne(true)
+        .up()
+        .build();
+
+--- Onglet 4 : "Spring Boot" ---
+
+    // application.properties
+    com.garganttua.api.spring.scanPackages=com.myapp.domain
+    com.garganttua.api.spring.superTenantId=0
+    com.garganttua.api.interface.spring.rest.requestedTenantIdHeaderName=X-Tenant-Id
+
+    // Les endpoints REST sont auto-generes :
+    // POST   /products        -> create
+    // GET    /products        -> readAll
+    // GET    /products/{uuid} -> readOne
+    // PUT    /products/{uuid} -> update
+    // DELETE /products/{uuid} -> deleteOne
+    // DELETE /products        -> deleteAll
+
+    // Swagger/OpenAPI genere automatiquement.
+
+
+================================================================================
+SECTION 11 - CAS D'USAGE
+================================================================================
+
+[LAYOUT]
+3 cartes horizontales full-width empilees. Chaque carte a une icone a gauche,
+du texte au centre, et une illustration/schema a droite.
+Fond alterne entre #0D1117 et #111827 pour chaque carte.
+
+[VISUEL]
+Illustrations schematiques minimalistes pour chaque cas d'usage :
+- SaaS : immeuble avec plusieurs etages (tenants) isoles
+- Microservices : hexagones avec cadenas (services securises)
+- Backend mobile : telephone + serveur avec fleches
+
+[TEXTE]
+
+--- Carte 1 ---
+    [icone: immeuble multi-etages]
+
+    Plateformes SaaS multi-tenant
+
+    Isolez les donnees de chaque client sans ecrire une seule
+    ligne de code de filtrage. Entites publiques, privees,
+    partagees entre tenants, ou appartenant a un utilisateur
+    specifique. Le framework applique les filtres a chaque requete.
+
+    Ideal pour : CRM, ERP, marketplaces, outils collaboratifs.
+
+--- Carte 2 ---
+    [icone: bouclier + hexagones]
+
+    APIs securisees
+
+    Combinez login/password, PIN, challenge-response et JWT
+    sans coupler votre code metier a un framework de securite.
+    Chaque endpoint definit ses propres exigences. Changez
+    de strategie d'authentification sans refactoring.
+
+    Ideal pour : fintech, healthtech, applications reglementees.
+
+--- Carte 3 ---
+    [icone: telephone + serveur]
+
+    Backends mobiles et web
+
+    Generez automatiquement les endpoints REST et la
+    documentation Swagger via le module Spring Boot.
+    CRUD complet avec gestion du tenant et du owner
+    via headers HTTP. Pagination, tri, et filtrage inclus.
+
+    Ideal pour : apps mobiles, SPAs, applications React/Next.js.
+
+
+================================================================================
+SECTION 12 - COMPARAISON (vs alternatives)
+================================================================================
+
+[LAYOUT]
+Fond #111827. Tableau comparatif horizontal, scrollable sur mobile.
+Colonnes : Garganttua API, Spring Data REST, JHipster.
+
+[VISUEL]
+Tableau avec des checkmarks (vert), des X (rouge), et des tildes (jaune
+pour support partiel). La colonne Garganttua API est mise en evidence
+avec un fond legerement plus clair et une bordure accent.
+
+[TEXTE]
+
+    Pourquoi Garganttua API ?
+
+    +-------------------------------+------------------+------------------+------------------+
+    | Fonctionnalite                | Garganttua API   | Spring Data REST | JHipster         |
+    +-------------------------------+------------------+------------------+------------------+
+    | Multi-tenancy native          |       oui        |       non        |       partiel    |
+    | Matrice de visibilite entites |       oui        |       non        |       non        |
+    | Securite pluggable            |       oui        |       partiel    |       partiel    |
+    | Pipeline scriptable           |       oui        |       non        |       non        |
+    | Framework-agnostic            |       oui        |       non        |       non        |
+    | DSL type-safe                 |       oui        |       non        |       partiel    |
+    | GraalVM native-ready          |       oui        |       partiel    |       partiel    |
+    | Zero generation de code       |       oui        |       oui        |       non        |
+    | Hooks de lifecycle            |       oui        |       partiel    |       partiel    |
+    | Geolocalization               |       oui        |       non        |       non        |
+    +-------------------------------+------------------+------------------+------------------+
+
+
+================================================================================
+SECTION 13 - STACK TECHNIQUE
+================================================================================
+
+[LAYOUT]
+Fond #0D1117. Grille de logos/badges avec labels.
+2 rangees : "Socle" et "Compatible".
+
+[VISUEL]
+Badges rectangulaires arrondis avec le logo de chaque technologie a gauche
+et le nom + version a droite. Style shields.io mais customise.
+Chaque badge est legerement sureleve et a un hover effect.
+
+[TEXTE]
+
+    Stack technique
+
+--- Rangee "Socle" ---
+    [logo Java]    Java 21
+    [logo Maven]   Maven 3.8+
+    [logo Jackson] Jackson 2.17
+    [logo Lombok]  Lombok 1.18
+    [logo SLF4J]   SLF4J 2.0
+    [logo JUnit]   JUnit 5
+    [logo GG]      Garganttua Core 2.0 (injection, reflection, script, workflow)
+
+--- Rangee "Compatible" ---
+    [logo GraalVM]  GraalVM Native Image
+    [logo Spring]   Spring Boot 3.3 (integration optionnelle)
+    [logo MongoDB]  MongoDB (via module DAO)
+    [logo Swagger]  Swagger / OpenAPI (auto-genere)
+
+
+================================================================================
+SECTION 14 - OPEN SOURCE & COMMUNAUTE
+================================================================================
+
+[LAYOUT]
+Section centree, fond #111827. Texte centre avec des liens/boutons en dessous.
+
+[VISUEL]
+Logo GitHub agrandi en watermark tres leger en arriere-plan.
+Au centre, un bloc de texte avec des icones inline pour chaque action.
+
+[TEXTE]
+
+    Open-source sous licence MIT
+
+    Garganttua API est entierement open-source. Le code, la
+    documentation, et les tests sont publics et ouverts aux
+    contributions.
+
+    [icone etoile]  Star le projet sur GitHub
+                    github.com/garganttua/garganttua-api
+
+    [icone fork]    Contribuer
+                    Les pull requests sont bienvenues.
+                    Consultez les issues "good first issue" pour commencer.
+
+    [icone bug]     Reporter un bug
+                    Ouvrez une issue sur le tracker GitHub.
+
+    [icone email]   Contact
+                    jeremy.colombet@garganttua.com
+
+

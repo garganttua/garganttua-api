@@ -22,7 +22,7 @@ public class RequestBuilder implements IRequestBuilder {
 
 	public RequestBuilder(IDomainContext<?> domainContext) {
 		this.domainContext = domainContext;
-		this.operationRequest = IOperationRequest.create();
+		this.operationRequest = new OperationRequest(null);
 	}
 
 	@Override
@@ -139,6 +139,56 @@ public class RequestBuilder implements IRequestBuilder {
 	@Override
 	public <T> IRequestBuilder param(ArgKey<T> key, T value) {
 		this.operationRequest.arg(key, value);
+		return this;
+	}
+
+	@Override
+	public IRequestBuilder createOne(Object body) {
+		operation(OperationDefinition.createOneWithStandardSecurity(
+				domainContext.getDomainName(), domainContext.getEntityClass()));
+		param("entity", body);
+		return this;
+	}
+
+	@Override
+	public IRequestBuilder readOne(String uuid) {
+		operation(OperationDefinition.readOneWithStandardSecurity(
+				domainContext.getDomainName(), domainContext.getEntityClass()));
+		param("type", "uuid");
+		param("identifier", uuid);
+		return this;
+	}
+
+	@Override
+	public IRequestBuilder readAll() {
+		operation(OperationDefinition.readAllWithStandardSecurity(
+				domainContext.getDomainName(), domainContext.getEntityClass()));
+		return this;
+	}
+
+	@Override
+	public IRequestBuilder updateOne(String uuid, Object body) {
+		operation(OperationDefinition.updateOneWithStandardSecurity(
+				domainContext.getDomainName(), domainContext.getEntityClass()));
+		param("type", "uuid");
+		param("identifier", uuid);
+		param("entity", body);
+		return this;
+	}
+
+	@Override
+	public IRequestBuilder deleteOne(String uuid) {
+		operation(OperationDefinition.deleteOneWithStandardSecurity(
+				domainContext.getDomainName(), domainContext.getEntityClass()));
+		param("type", "uuid");
+		param("identifier", uuid);
+		return this;
+	}
+
+	@Override
+	public IRequestBuilder deleteAll() {
+		operation(OperationDefinition.deleteAllWithStandardSecurity(
+				domainContext.getDomainName(), domainContext.getEntityClass()));
 		return this;
 	}
 

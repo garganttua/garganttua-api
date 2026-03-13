@@ -8,6 +8,7 @@ import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.IRequestBuilder;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
@@ -19,6 +20,12 @@ public interface IApiContext extends ILifecycle {
     String getSuperTenantId();
 
     boolean isMultiTenant();
+
+    // --- Request builder ---
+
+    default IRequestBuilder request(String domainName) {
+        return getDomainContextOrThrow(domainName).request();
+    }
 
     // --- Workflow invocation ---
 

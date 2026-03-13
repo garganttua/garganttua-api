@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.sort.ISort;
 
@@ -59,8 +60,26 @@ public interface IRequestBuilder {
 
 	<T> IRequestBuilder param(ArgKey<T> key, T value);
 
+	// --- CRUD shortcuts ---
+
+	IRequestBuilder createOne(Object body);
+
+	IRequestBuilder readOne(String uuid);
+
+	IRequestBuilder readAll();
+
+	IRequestBuilder updateOne(String uuid, Object body);
+
+	IRequestBuilder deleteOne(String uuid);
+
+	IRequestBuilder deleteAll();
+
 	// --- Build & execute ---
 
 	IRequest build();
+
+	default IOperationResponse execute() {
+		return build().execute();
+	}
 
 }

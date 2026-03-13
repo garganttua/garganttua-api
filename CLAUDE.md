@@ -51,7 +51,9 @@ ApiContextBuilder.builder()
 
 **Definition/Context separation** — Definitions (immutable config: `EntityDefinition`, `DomainDefinition`) are built once; Contexts (runtime: `EntityContext`, `DomainContext`) aggregate definitions and provide services like `invoke(IServiceRequest)`.
 
-**Multi-tenancy** — First-class tenant isolation via `tenantId`/`ownerId` fields and headers. Super-tenant bypasses tenant filtering; magic-owner bypasses ownership. `RepositoryFilterTools` implements the access filter matrix documented in README.md (public/hiddenable/shared/owned entity flag combinations).
+**Multi-tenancy** — First-class tenant isolation via `tenantId`/`ownerId` fields and headers. Super-tenant bypasses tenant filtering; magic-owner bypasses ownership. `RepositoryFilterTools` implements the access filter matrix documented in README.md (public/hiddenable/shared/owned entity flag combinations). Can be disabled globally via `ApiContextBuilder.builder().multiTenant(false)` — strict mode: `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` when multi-tenancy is disabled.
+
+**Fluent Request Builder** — `IDomainContext.request()` and `IApiContext.request(domainName)` return an `IRequestBuilder` with CRUD shortcuts (`createOne(body)`, `readOne(uuid)`, `readAll()`, `updateOne(uuid, body)`, `deleteOne(uuid)`, `deleteAll()`). Chain with `.caller()`, `.filter()`, `.page()`, `.sort()` etc. Terminal: `.execute()` (build+invoke) or `.build()` then `.execute()` for two-step usage.
 
 ### Annotation Categories (garganttua-api-spec)
 

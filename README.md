@@ -44,6 +44,25 @@ The access filter determines which entities are visible based on entity configur
 | Entity is **owned** AND caller is **not super owner** | `ownerId = callerOwnerId` |
 | Entity is **not owned** OR caller is **super owner** | No owner filter |
 
+### Multi-Tenancy Toggle
+
+Multi-tenancy can be disabled globally via the builder DSL:
+
+```java
+ApiContextBuilder.builder()
+    .multiTenant(false)   // disables all tenant-related behavior
+    .domain(Product.class)
+        ...
+    .up()
+    .build();
+```
+
+When `multiTenant(false)`:
+- `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` (strict mode)
+- Tenant and share filters are skipped in `RepositoryFilterTools`
+- Owner and visibility filters remain active
+- `@EntityUnicity(scope=TENANT)` behaves as `GLOBAL`
+
 ### Super Tenant Bypass
 
 | Condition | Behavior |
@@ -78,3 +97,72 @@ A caller will see:
 
 #### Example 3: Super Tenant Access
 A super tenant caller without a specific tenant request bypasses all tenant filtering and sees all entities (subject to owner filtering if applicable)
+
+## Fluent Request Builder
+
+The framework provides a fluent API for building and executing requests, available on both `IDomainContext` and `IApiContext`.
+
+### CRUD Shortcuts
+
+```java
+IDomainContext<?> products = context.getDomainContext("products").orElseThrow();
+
+// Create
+products.request()
+    .createOne(myProduct)
+    .caller(caller)
+    .execute();
+
+// Read
+products.request()
+    .readOne("uuid-123")
+    .caller(caller)
+    .execute();
+
+products.request()
+    .readAll()
+    .filter(myFilter).page(pageable).sort(sort)
+    .caller(caller)
+    .execute();
+
+// Update
+products.request()
+    .updateOne("uuid-123", updatedProduct)
+    .caller(caller)
+    .execute();
+
+// Delete
+products.request()
+    .deleteOne("uuid-123")
+    .caller(caller)
+    .execute();
+
+products.request()
+    .deleteAll()
+    .caller(caller)
+    .execute();
+```
+
+### Shortcut from IApiContext
+
+```java
+context.request("products")
+    .createOne(myProduct)
+    .caller(caller)
+    .execute();
+```
+
+### Two-Step Build
+
+```java
+IRequest request = products.request()
+    .createOne(myProduct)
+    .caller(caller)
+    .build();
+
+// Inspect before executing
+IOperationRequest opRequest = request.operationRequest();
+
+// Execute later
+IOperationResponse response = request.execute();
+```
