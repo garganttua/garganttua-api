@@ -7,7 +7,6 @@ import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
-import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
 
@@ -32,8 +31,6 @@ public interface IApiSecurityContext extends ILifecycle {
 			Map<String, String> params) throws ApiException;
 
 	IAuthenticationRequestBuilder request(String domainName);
-
-	IOperationResponse authenticate(IAuthenticationRequest request);
 
 	IAuthenticationRequest createAuthenticationRequestFromAuthorization(ICaller caller, Object authorization) throws ApiException;
 

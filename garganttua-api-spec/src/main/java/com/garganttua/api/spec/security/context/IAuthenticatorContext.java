@@ -1,9 +1,9 @@
 package com.garganttua.api.spec.security.context;
 
-import com.garganttua.api.spec.definition.IDomainAuthenticatorDefinition;
+import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 
 public interface IAuthenticatorContext {
 
-    IDomainAuthenticatorDefinition getAuthenticatorDefinition();
+    IAuthenticatorDefinition getAuthenticatorDefinition();
 
 }

@@ -21,13 +21,6 @@ import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBui
 @DisplayName("AuthenticationRequestBuilder Tests")
 class AuthenticationRequestBuilderTest {
 
-    private ApiSecurityContext apiSecurityContext;
-
-    @BeforeEach
-    void setUp() {
-        apiSecurityContext = new ApiSecurityContext(false);
-    }
-
     @Nested
     @DisplayName("Fluent builder API")
     class FluentApi {
@@ -36,7 +29,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("id() returns same builder for chaining")
         void idReturnsSameBuilder() {
             IAuthenticationRequestBuilder builder = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList());
+                    Collections.emptyList());
             assertSame(builder, builder.id("user@test.com"));
         }
 
@@ -44,7 +37,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("credentials() returns same builder for chaining")
         void credentialsReturnsSameBuilder() {
             IAuthenticationRequestBuilder builder = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList());
+                    Collections.emptyList());
             assertSame(builder, builder.credentials("pass".getBytes(StandardCharsets.UTF_8)));
         }
 
@@ -52,7 +45,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("tenantId() returns same builder for chaining")
         void tenantIdReturnsSameBuilder() {
             IAuthenticationRequestBuilder builder = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList());
+                    Collections.emptyList());
             assertSame(builder, builder.tenantId("TENANT_1"));
         }
 
@@ -60,7 +53,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("full chaining works")
         void fullChaining() {
             IAuthenticationRequestBuilder builder = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList());
+                    Collections.emptyList());
             IAuthenticationRequestBuilder result = builder
                     .id("john@example.com")
                     .credentials("secret".getBytes(StandardCharsets.UTF_8))
@@ -77,7 +70,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("creates request with correct id")
         void requestHasCorrectId() {
             IAuthenticationRequest request = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList())
+                    Collections.emptyList())
                     .id("john@example.com")
                     .credentials("pass".getBytes(StandardCharsets.UTF_8))
                     .build();
@@ -90,7 +83,7 @@ class AuthenticationRequestBuilderTest {
         void requestHasCorrectCredentials() {
             byte[] creds = "password123".getBytes(StandardCharsets.UTF_8);
             IAuthenticationRequest request = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList())
+                    Collections.emptyList())
                     .id("user")
                     .credentials(creds)
                     .build();
@@ -102,7 +95,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("creates request with correct tenantId")
         void requestHasCorrectTenantId() {
             IAuthenticationRequest request = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList())
+                    Collections.emptyList())
                     .id("user")
                     .credentials("pass".getBytes(StandardCharsets.UTF_8))
                     .tenantId("TENANT_42")
@@ -115,7 +108,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("tenantId is null when not set")
         void tenantIdNullByDefault() {
             IAuthenticationRequest request = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList())
+                    Collections.emptyList())
                     .id("user")
                     .credentials("pass".getBytes(StandardCharsets.UTF_8))
                     .build();
@@ -127,7 +120,7 @@ class AuthenticationRequestBuilderTest {
         @DisplayName("request setTenantId mutates tenantId")
         void setTenantIdMutates() {
             IAuthenticationRequest request = new AuthenticationRequestBuilder(
-                    apiSecurityContext, Collections.emptyList())
+                    Collections.emptyList())
                     .id("user")
                     .credentials("pass".getBytes(StandardCharsets.UTF_8))
                     .build();
@@ -141,10 +134,17 @@ class AuthenticationRequestBuilderTest {
     @DisplayName("ApiSecurityContext.request()")
     class ApiSecurityContextRequest {
 
+        private ApiSecurityContext apiSecurityContext;
+
+        @BeforeEach
+        void setUp() {
+            apiSecurityContext = new ApiSecurityContext(false);
+        }
+
         @Test
         @DisplayName("returns builder for registered domain")
         void returnsBuilderForRegisteredDomain() {
-            AuthenticationContext authCtx = new AuthenticationContext(new AuthenticationDefinition(null, null, null, null, null, null));
+            AuthenticationContext authCtx = new AuthenticationContext(new AuthenticationDefinition(null, null, null, null, null, null, null));
             apiSecurityContext.registerAuthenticationContexts("users", List.of(authCtx));
 
             IAuthenticationRequestBuilder builder = apiSecurityContext.request("users");
@@ -161,7 +161,7 @@ class AuthenticationRequestBuilderTest {
         @Test
         @DisplayName("built request can be constructed from domain lookup")
         void builtRequestFromDomainLookup() {
-            AuthenticationContext authCtx = new AuthenticationContext(new AuthenticationDefinition(null, null, null, null, null, null));
+            AuthenticationContext authCtx = new AuthenticationContext(new AuthenticationDefinition(null, null, null, null, null, null, null));
             apiSecurityContext.registerAuthenticationContexts("users", List.of(authCtx));
 
             IAuthenticationRequest request = apiSecurityContext.request("users")
@@ -182,8 +182,7 @@ class AuthenticationRequestBuilderTest {
         @Test
         @DisplayName("returns builder scoped to single context")
         void returnsScopedBuilder() {
-            AuthenticationContext authCtx = new AuthenticationContext(new AuthenticationDefinition(null, null, null, null, null, null));
-            authCtx.setApiSecurityContext(apiSecurityContext);
+            AuthenticationContext authCtx = new AuthenticationContext(new AuthenticationDefinition(null, null, null, null, null, null, null));
 
             IAuthenticationRequestBuilder builder = authCtx.request();
             assertNotNull(builder);

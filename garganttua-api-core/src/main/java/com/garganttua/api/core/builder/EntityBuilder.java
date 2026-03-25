@@ -370,7 +370,6 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
             throws ApiException {
         // Create a supplier builder that will supply the entity instance at runtime
         // The entity instance will be set when the binder is executed
-        @SuppressWarnings("unchecked")
         ISupplierBuilder<Object, ISupplier<Object>> supplierBuilder = FixedSupplierBuilder.ofNullable(null, (IClass<Object>) (IClass<?>) this.entityClass);
 
         EntityMethodBinderBuilder<E> builder = new EntityMethodBinderBuilder<>(this, supplierBuilder, collection);
@@ -523,7 +522,6 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         return binders;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected synchronized IEntityContext<E> doBuild() throws ApiException {
         this.throwExceptionIfNoUuid();

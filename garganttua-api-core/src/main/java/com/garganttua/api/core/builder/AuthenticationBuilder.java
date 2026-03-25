@@ -29,7 +29,6 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext> implements IAuthenticationBuilder {
 
-    private Boolean findPrincipal;
     private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
     private IAuthenticationMethodBinderBuilder<?> authenticate;
     private List<Pair<IClass<? extends Annotation>, IClass<?>>> fieldAnnotations = new ArrayList<>();
@@ -46,29 +45,24 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder findPrincipal(boolean b) {
-        this.findPrincipal = b;
-        return this;
-    }
-
-    @Override
     public IAuthenticationBuilder authenticate(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
-        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
+        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName);
         return this;
     }
 
     @Override
     public IAuthenticationBuilder authenticate(Method method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
-        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
+        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, method.getName());
         return this;
     }
 
     @Override
     public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
-        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
+        String methodName = methodAddress.getElement(methodAddress.length() - 1);
+        this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName);
         return this;
     }
 
@@ -126,12 +120,25 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
 
     @Override
     protected synchronized IAuthenticationContext doBuild() throws ApiException {
+        String authenticateMethodName = null;
+        if (this.authenticate instanceof AuthenticationMethodBinderBuilder<?> builder) {
+            authenticateMethodName = builder.getAuthenticateMethodName();
+        }
+
+        String applySecurityMethodName = null;
+        if (this.applySecurityOnEntity instanceof AuthenticationMethodBinderBuilder<?> builder) {
+            applySecurityMethodName = builder.getAuthenticateMethodName();
+        }
+
+        //TODO : check if entity has annotation required by the authentication 
+
         AuthenticationDefinition definition = new AuthenticationDefinition(
-                this.findPrincipal,
                 this.supplier,
-                this.authenticate,
+                authenticateMethodName,
+                null,
                 this.fieldAnnotations,
-                this.applySecurityOnEntity,
+                applySecurityMethodName,
+                null,
                 this.useCases.values());
         return new AuthenticationContext(definition);
     }

@@ -2,23 +2,19 @@ package com.garganttua.api.core.security.authentication;
 
 import java.util.List;
 
-import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 
 public class AuthenticationRequestBuilder implements IAuthenticationRequestBuilder {
 
-	private final IApiSecurityContext apiSecurityContext;
 	private final List<IAuthenticationContext> authenticationContexts;
 
 	private String id;
 	private byte[] credentials;
 	private String tenantId;
 
-	public AuthenticationRequestBuilder(IApiSecurityContext apiSecurityContext,
-			List<IAuthenticationContext> authenticationContexts) {
-		this.apiSecurityContext = apiSecurityContext;
+	public AuthenticationRequestBuilder(List<IAuthenticationContext> authenticationContexts) {
 		this.authenticationContexts = authenticationContexts;
 	}
 
@@ -42,7 +38,7 @@ public class AuthenticationRequestBuilder implements IAuthenticationRequestBuild
 
 	@Override
 	public IAuthenticationRequest build() {
-		return new AuthenticationRequest(apiSecurityContext, authenticationContexts, id, credentials, tenantId);
+		return new AuthenticationRequest(authenticationContexts, id, credentials, tenantId);
 	}
 
 }

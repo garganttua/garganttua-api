@@ -13,7 +13,6 @@ import com.garganttua.api.spec.security.authentication.IAuthenticationInterfaces
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
-import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
@@ -88,13 +87,7 @@ public class ApiSecurityContext implements IApiSecurityContext {
     public IAuthenticationRequestBuilder request(String domainName) {
         List<IAuthenticationContext> contexts = this.authenticationContextsByDomain
                 .getOrDefault(domainName, Collections.emptyList());
-        return new AuthenticationRequestBuilder(this, contexts);
-    }
-
-    @Override
-    public IOperationResponse authenticate(IAuthenticationRequest request) {
-        // Stub implementation
-        return null;
+        return new AuthenticationRequestBuilder(contexts);
     }
 
     @Override

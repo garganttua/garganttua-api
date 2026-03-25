@@ -12,8 +12,19 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class AuthenticationMethodBinderBuilder<ExecutionReturn> extends AbstractMethodBinderBuilder<ExecutionReturn, IAuthenticationMethodBinderBuilder<ExecutionReturn>, IAuthenticationBuilder, IMethodBinder<ExecutionReturn>> implements IAuthenticationMethodBinderBuilder<ExecutionReturn>{
 
+    private String authenticateMethodName;
+
     public AuthenticationMethodBinderBuilder(IAuthenticationBuilder up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(up, supplier, Set.of());
+    }
+
+    public AuthenticationMethodBinderBuilder(IAuthenticationBuilder up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName) {
+        super(up, supplier, Set.of());
+        this.authenticateMethodName = methodName;
+    }
+
+    public String getAuthenticateMethodName() {
+        return this.authenticateMethodName;
     }
 
     @Override

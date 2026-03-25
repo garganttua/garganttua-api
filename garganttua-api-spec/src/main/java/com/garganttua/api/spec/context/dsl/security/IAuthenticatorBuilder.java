@@ -49,10 +49,10 @@ public interface IAuthenticatorBuilder<E> extends IAutomaticLinkedBuilder<IAuthe
 
     IAuthenticatorBuilder<E> accountNonLocked(ObjectAddress fieldAddress) throws ApiException;
 
-    IAuthenticatorBuilder<E> scope(AuthenticatorScope system);
+    IAuthenticatorBuilder<E> scope(AuthenticatorScope scope);
 
     IAuthenticatorBuilder<E> authentication(IAuthenticationBuilder authentication) throws ApiException;
 
-    IAuthenticatorAuthorizationBuilder<E> authorization(IDomainBuilder<E> authorization);
+    IAuthenticatorAuthorizationBuilder<E> authorization(IDomainBuilder<E> authorizationDomain);
 
 }

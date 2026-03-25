@@ -13,8 +13,6 @@ import com.garganttua.core.reflection.ObjectAddress;
 public interface IAuthenticationBuilder
                 extends IAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext> {
 
-        IAuthenticationBuilder findPrincipal(boolean b);
-
         IAuthenticationBuilder authenticate(
                         String methodName) throws ApiException;
 
