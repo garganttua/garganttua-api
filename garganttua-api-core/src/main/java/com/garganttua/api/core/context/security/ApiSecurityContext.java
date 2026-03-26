@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.IApiSecurityContext;
-import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.ApiException;
@@ -40,12 +39,6 @@ public class ApiSecurityContext implements IApiSecurityContext {
     public void verifyOwner(ICaller caller, Object authentication) throws ApiException {
         if (disabled) return;
         // Stub implementation
-    }
-
-    @Override
-    public IAuthenticationInterfacesRegistry getAuthenticationInterfacesRegistry() {
-        // Stub implementation
-        return null;
     }
 
     @Override

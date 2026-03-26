@@ -25,8 +25,7 @@ import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
-import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
+import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
@@ -667,8 +666,8 @@ public class ApiExpressions {
 		return opDef.access() == Access.owner;
 	}
 
-	@Expression(name = "authenticatorContext", description = "Returns the AuthenticatorInfos from the domain's security definition")
-	public static AuthenticatorInfos authenticatorContext(Object context) {
+	@Expression(name = "authenticatorContext", description = "Returns the IAuthenticatorDefinition from the domain's security definition")
+	public static IAuthenticatorDefinition authenticatorContext(Object context) {
 		IDomainContext<?> dc = context instanceof Optional<?> opt
 				? (IDomainContext<?>) opt.get()
 				: (IDomainContext<?>) context;
@@ -676,35 +675,35 @@ public class ApiExpressions {
 			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
 			var secDef = domDef.domainSecurityDefinition();
 			if (secDef != null) {
-				return secDef.authenticatorInfos();
+				return secDef.authenticatorDefinition();
 			}
 		}
 		return null;
 	}
 
-	@Expression(name = "authenticatorScope", description = "Returns the authenticator scope string from AuthenticatorInfos")
+	@Expression(name = "authenticatorScope", description = "Returns the authenticator scope string from IAuthenticatorDefinition")
 	public static String authenticatorScope(Object authContext) {
-		if (authContext instanceof AuthenticatorInfos infos) {
-			return infos.scope() != null ? infos.scope().name() : null;
+		if (authContext instanceof IAuthenticatorDefinition def) {
+			return def.scope() != null ? def.scope().name() : null;
 		}
 		return null;
 	}
 
-	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the provided IAuthentication instance, retrieving the runtime context from the current thread")
-	public static Object tryAuthenticate(Object authentication) {
-		if (authentication == null) {
-			throw new ApiException("No authentication context available");
+	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the IAuthenticatorDefinition, retrieving the runtime context from the current thread")
+	public static Object tryAuthenticate(Object authenticatorDefinition) {
+		if (authenticatorDefinition == null) {
+			throw new ApiException("No authenticator definition available");
 		}
 		IRuntimeContext<?, ?> runtimeContext = RuntimeExpressionContext.get();
 		if (runtimeContext == null) {
 			throw new ApiException("No runtime context available for authentication");
 		}
 		try {
-			IAuthentication auth = (IAuthentication) authentication;
-			if (!auth.authenticated()) {
-				throw new ApiException("Authentication failed");
-			}
-			return auth.authorization();
+			IAuthenticatorDefinition def = (IAuthenticatorDefinition) authenticatorDefinition;
+			// TODO: iterate over def.authenticationDefinitions(), instantiate each authentication method,
+			// find the principal in the repository, call authenticate(principal, credentials, def),
+			// and return the first successful IAuthentication result
+			return null;
 		} catch (ApiException e) {
 			throw e;
 		} catch (Exception e) {
