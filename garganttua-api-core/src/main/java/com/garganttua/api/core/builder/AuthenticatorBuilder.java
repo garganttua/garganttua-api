@@ -277,6 +277,7 @@ public class AuthenticatorBuilder<E> extends
                 this.accountNonLocked,
                 this.accountNonExpired,
                 this.scope,
+                null,
                 authenticationDefinitions);
 
         return new AuthenticatorContext(authenticatorDefinition);

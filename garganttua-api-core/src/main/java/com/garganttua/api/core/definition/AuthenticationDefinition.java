@@ -15,10 +15,8 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public record AuthenticationDefinition(
             ISupplierBuilder<?, ? extends ISupplier<?>> supplier,
-            String authenticateMethodName,
             IMethodBinder<?> authenticateMethodBinder,
             List<Pair<IClass<? extends Annotation>, IClass<?>>> entityFieldAnnotations,
-            String applySecurityOnEntityMethodName,
             IMethodBinder<?> applySecurityOnEntityMethodBinder,
             Collection<IUseCaseBuilder<?, ?, ?>> useCasesMethodBinders) implements IAuthenticationDefinition {
 

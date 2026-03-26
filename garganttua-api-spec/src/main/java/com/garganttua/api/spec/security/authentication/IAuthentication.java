@@ -6,8 +6,6 @@ public interface IAuthentication {
 
 	boolean authenticated();
 
-	boolean alwaysEnabled();
-
 	Object principal();
 
 	Object credentials();

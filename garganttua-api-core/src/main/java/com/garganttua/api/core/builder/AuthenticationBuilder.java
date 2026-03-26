@@ -3,7 +3,6 @@ package com.garganttua.api.core.builder;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,16 +13,17 @@ import org.javatuples.Pair;
 import com.garganttua.api.core.builder.binder.AuthenticationMethodBinderBuilder;
 import com.garganttua.api.core.context.security.AuthenticationContext;
 import com.garganttua.api.core.definition.AuthenticationDefinition;
-import com.garganttua.api.spec.security.context.IAuthenticationContext;
+import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
+import com.garganttua.api.spec.security.authentication.IAuthentication;
+import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -120,24 +120,18 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
 
     @Override
     protected synchronized IAuthenticationContext doBuild() throws ApiException {
-        String authenticateMethodName = null;
-        if (this.authenticate instanceof AuthenticationMethodBinderBuilder<?> builder) {
-            authenticateMethodName = builder.getAuthenticateMethodName();
-        }
 
-        String applySecurityMethodName = null;
-        if (this.applySecurityOnEntity instanceof AuthenticationMethodBinderBuilder<?> builder) {
-            applySecurityMethodName = builder.getAuthenticateMethodName();
+        // Validate that the authenticate method exists and returns IAuthentication
+        if (this.authenticate != null && this.authenticate.method() != null) {
+            if (!this.authenticate.method().getReturnType().isAssignableFrom(IClass.getClass(IAuthentication.class))) {
+                throw new ApiException("Authenticate method must return IAuthentication");
+            }
         }
-
-        //TODO : check if entity has annotation required by the authentication 
 
         AuthenticationDefinition definition = new AuthenticationDefinition(
                 this.supplier,
-                authenticateMethodName,
                 null,
                 this.fieldAnnotations,
-                applySecurityMethodName,
                 null,
                 this.useCases.values());
         return new AuthenticationContext(definition);

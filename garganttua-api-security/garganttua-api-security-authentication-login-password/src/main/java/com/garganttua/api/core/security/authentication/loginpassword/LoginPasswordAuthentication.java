@@ -11,14 +11,16 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Authentication
-public class LoginPasswordAuthentication  {
+public class LoginPasswordAuthentication {
 
 	@Inject
 	private IPasswordEncoder encoder;
 
-	protected boolean authenticate(Object principal, byte[] credential, IAuthenticatorDefinition definition) throws CoreException {
+	protected com.garganttua.api.spec.security.authentication.IAuthentication authenticate(Object principal, byte[] credential, IAuthenticatorDefinition definition) throws CoreException {
 		String encodedPassword = "";
-		return this.encoder.matches(new String(credential), encodedPassword);
+		boolean matches = this.encoder.matches(new String(credential), encodedPassword);
+		return new com.garganttua.api.spec.security.authentication.Authentication(
+				matches, principal, null, null, null, true, true, true, true);
 	}
 
 /* 	@AuthenticatorSecurityPreProcessing

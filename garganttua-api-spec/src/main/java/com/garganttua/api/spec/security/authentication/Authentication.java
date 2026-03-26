@@ -1,12 +1,9 @@
-package com.garganttua.api.core.security.authentication;
+package com.garganttua.api.spec.security.authentication;
 
 import java.util.List;
 
-import com.garganttua.api.spec.security.authentication.IAuthentication;
-
-public record AbstractAuthentication(
+public record Authentication(
 	boolean authenticated,
-	boolean alwaysEnabled,
 	Object principal,
 	Object credentials,
 	Object authorization,

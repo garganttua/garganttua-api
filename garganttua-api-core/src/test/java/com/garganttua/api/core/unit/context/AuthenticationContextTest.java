@@ -21,7 +21,7 @@ class AuthenticationContextTest {
 
     @BeforeEach
     void setUp() {
-        definition = new AuthenticationDefinition(null, null, null, null, null, null, null);
+        definition = new AuthenticationDefinition(null, null, null, null, null);
         context = new AuthenticationContext(definition);
     }
 

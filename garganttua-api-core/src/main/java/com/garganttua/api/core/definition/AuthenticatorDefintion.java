@@ -1,6 +1,8 @@
 package com.garganttua.api.core.definition;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
@@ -16,6 +18,7 @@ public record AuthenticatorDefintion(
         ObjectAddress accountNonLocked,
         ObjectAddress accountNonExpired,
         AuthenticatorScope scope,
+        Map<Annotation, ObjectAddress> requiredAuthenticationFields,
         List<IAuthenticationDefinition> authenticationDefinitions) implements IAuthenticatorDefinition {
 
 }
