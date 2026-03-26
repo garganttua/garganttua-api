@@ -321,7 +321,7 @@ public abstract class AbstractCrudIntegrationTest {
 
     // ───── Helper methods ─────
 
-    protected static IApiContextBuilder newBuilder() throws ApiException {
+    protected static IApiContextBuilder newBaseBuilder() throws ApiException {
         com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider())
                 .withScanner(new ReflectionsAnnotationScanner());
@@ -346,13 +346,17 @@ public abstract class AbstractCrudIntegrationTest {
         ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);
         ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
 
-        builder.superTenantId("SUPER_TENANT")
-               .superTenantAutoCreate(false);
-
         return builder;
     }
 
-    static IApiContext buildAndStart(IApiContextBuilder builder) throws ApiException {
+    protected static IApiContextBuilder newBuilder() throws ApiException {
+        IApiContextBuilder builder = newBaseBuilder();
+        builder.superTenantId("SUPER_TENANT")
+               .superTenantAutoCreate(false);
+        return builder;
+    }
+
+    protected static IApiContext buildAndStart(IApiContextBuilder builder) throws ApiException {
         IApiContext context = builder.build();
         context.onInit();
         context.onStart();

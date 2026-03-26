@@ -20,6 +20,8 @@ import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.reflection.IClass;
@@ -232,6 +234,24 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 				log.atInfo().log("Tenant domain context registered as bean 'tenantDomainContext' (domain: {})", domainName);
 			}
 		}
+
+		// Register authentication contexts as named beans
+		if (this.securityBuilder != null) {
+			for (Map.Entry<IClass<?>, IAuthenticationBuilder> entry : this.securityBuilder.getAuthenticationBuilders().entrySet()) {
+				IClass<?> authClass = entry.getKey();
+				IAuthenticationContext authContext = entry.getValue().build();
+				String beanName = "authentication." + authClass.getSimpleName();
+
+				@SuppressWarnings("unchecked")
+				BeanReference<IAuthenticationContext> authBeanRef = new BeanReference<>(
+						(IClass<IAuthenticationContext>) (IClass<?>) IClass.getClass(IAuthenticationContext.class),
+						Optional.of(BeanStrategy.singleton),
+						Optional.of(beanName),
+						Set.of());
+				context.addBean(providerName, authBeanRef, authContext);
+				log.atDebug().log("IAuthenticationContext registered as bean '{}'", beanName);
+			}
+		}
 	}
 
 	private void registerMapperBean() {
@@ -267,6 +287,17 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 				IDomainContext<?> domainContext = domainBuilder.build();
 				domainContexts.put(domainContext.getDomain(), domainContext);
 				log.atDebug().log("Built domain context: {}", domainContext.getDomain());
+			}
+
+			// Validate tenant domain presence when multi-tenancy is enabled
+			if (this.multiTenant) {
+				boolean hasTenantDomain = domainContexts.values().stream()
+						.anyMatch(IDomainContext::isTenantEntity);
+				if (!hasTenantDomain) {
+					throw new ApiException(
+							"Multi-tenancy is enabled but no domain is marked as tenant. "
+							+ "Use .tenant(true) on a domain or disable multi-tenancy with .multiTenant(false)");
+				}
 			}
 
 			// Build security context if configured

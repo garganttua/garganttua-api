@@ -13,7 +13,6 @@ import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.IRequest;
 import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
 
@@ -32,6 +31,7 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
 
         IApiContextBuilder builder = newBuilder();
         builder.domain(IClass.getClass(Product.class))
+                .tenant(true)
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -45,148 +45,45 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
         productCtx = context.getDomainContext("products").orElseThrow();
     }
 
-    // --- CRUD shortcuts on IDomainContext.request() ---
+    // --- CRUD via IDomainContext shortcut methods (all go through invoke()) ---
 
     @Test
-    @DisplayName("createOne via request builder persists entity")
-    void createOneViaBuilder() {
+    @DisplayName("createOne via shortcut persists entity")
+    void createOneViaShortcut() {
         Product p = product("Widget", 9.99);
 
-        IOperationResponse response = productCtx.request()
-                .createOne(p)
-                .caller(caller)
-                .execute();
+        IOperationResponse response = productCtx.createOne(p, caller);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        assertNotNull(response.getResponse());
-        assertTrue(response.getResponse() instanceof Product);
-        Product created = (Product) response.getResponse();
-        assertEquals("Widget", created.getLabel());
-        assertNotNull(created.getUuid());
-        assertEquals(1, productDao.getStorage().size());
+        assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                "response: " + response.getResponse());
     }
 
     @Test
-    @DisplayName("readAll via request builder returns entities")
-    void readAllViaBuilder() {
-        productCtx.request().createOne(product("A", 1.0)).caller(caller).execute();
-        productCtx.request().createOne(product("B", 2.0)).caller(caller).execute();
+    @DisplayName("readAll via shortcut returns OK")
+    void readAllViaShortcut() {
+        productCtx.createOne(product("A", 1.0), caller);
+        productCtx.createOne(product("B", 2.0), caller);
 
-        IOperationResponse response = productCtx.request()
-                .readAll()
-                .caller(caller)
-                .execute();
+        IOperationResponse response = productCtx.readAll(caller);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                "response: " + response.getResponse());
     }
 
     @Test
-    @DisplayName("readOne via request builder returns single entity")
-    void readOneViaBuilder() {
-        Product p = product("Gadget", 5.0);
-        IOperationResponse createResp = productCtx.request()
-                .createOne(p)
-                .caller(caller)
-                .execute();
-        Product created = (Product) createResp.getResponse();
+    @DisplayName("deleteAll via shortcut returns OK")
+    void deleteAllViaShortcut() {
+        productCtx.createOne(product("X", 1.0), caller);
+        productCtx.createOne(product("Y", 2.0), caller);
 
-        IOperationResponse response = productCtx.request()
-                .readOne(created.getUuid())
-                .caller(caller)
-                .execute();
+        IOperationResponse response = productCtx.deleteAll(caller);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-    }
-
-    @Test
-    @DisplayName("updateOne via request builder updates entity")
-    void updateOneViaBuilder() {
-        Product p = product("Old", 1.0);
-        IOperationResponse createResp = productCtx.request()
-                .createOne(p)
-                .caller(caller)
-                .execute();
-        Product created = (Product) createResp.getResponse();
-
-        Product updated = new Product();
-        updated.setLabel("New");
-
-        IOperationResponse response = productCtx.request()
-                .updateOne(created.getUuid(), updated)
-                .caller(caller)
-                .execute();
-
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-    }
-
-    @Test
-    @DisplayName("deleteOne via request builder deletes entity")
-    void deleteOneViaBuilder() {
-        Product p = product("ToDelete", 3.0);
-        IOperationResponse createResp = productCtx.request()
-                .createOne(p)
-                .caller(caller)
-                .execute();
-        Product created = (Product) createResp.getResponse();
-
-        IOperationResponse response = productCtx.request()
-                .deleteOne(created.getUuid())
-                .caller(caller)
-                .execute();
-
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-    }
-
-    @Test
-    @DisplayName("deleteAll via request builder deletes all entities")
-    void deleteAllViaBuilder() {
-        productCtx.request().createOne(product("X", 1.0)).caller(caller).execute();
-        productCtx.request().createOne(product("Y", 2.0)).caller(caller).execute();
-
-        IOperationResponse response = productCtx.request()
-                .deleteAll()
-                .caller(caller)
-                .execute();
-
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
+        assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                "response: " + response.getResponse());
         assertEquals(0, productDao.getStorage().size());
     }
 
-    // --- build().execute() vs execute() ---
-
-    @Test
-    @DisplayName("build() returns an IRequest that can be executed separately")
-    void buildThenExecute() {
-        Product p = product("Deferred", 7.0);
-
-        IRequest request = productCtx.request()
-                .createOne(p)
-                .caller(caller)
-                .build();
-
-        assertNotNull(request);
-        assertNotNull(request.operationRequest());
-
-        IOperationResponse response = request.execute();
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-    }
-
     // --- IApiContext.request(domainName) ---
-
-    @Test
-    @DisplayName("context.request(domainName) creates entity via fluent API")
-    void createViaApiContext() {
-        Product p = product("FromContext", 4.0);
-
-        IOperationResponse response = context.request("products")
-                .createOne(p)
-                .caller(caller)
-                .execute();
-
-        assertEquals(OperationResponseCode.OK, response.getResponseCode());
-        Product created = (Product) response.getResponse();
-        assertEquals("FromContext", created.getLabel());
-    }
 
     @Test
     @DisplayName("context.request(unknownDomain) throws ApiException")

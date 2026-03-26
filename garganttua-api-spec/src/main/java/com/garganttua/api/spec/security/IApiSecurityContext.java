@@ -6,7 +6,6 @@ import java.util.Optional;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
 
@@ -29,8 +28,6 @@ public interface IApiSecurityContext extends ILifecycle {
 	
 	void authenticatorEntitySecurityPostProcessing(ICaller caller, Object entity,
 			Map<String, String> params) throws ApiException;
-
-	IAuthenticationRequestBuilder request(String domainName);
 
 	IAuthenticationRequest createAuthenticationRequestFromAuthorization(ICaller caller, Object authorization) throws ApiException;
 

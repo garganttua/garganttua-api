@@ -1,17 +1,14 @@
 package com.garganttua.api.core.context.security;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.garganttua.api.core.security.authentication.AuthenticationRequestBuilder;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.api.spec.security.authentication.IAuthenticationInterfacesRegistry;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -81,13 +78,6 @@ public class ApiSecurityContext implements IApiSecurityContext {
             Map<String, String> params) throws ApiException {
         if (disabled) return;
         // Stub implementation
-    }
-
-    @Override
-    public IAuthenticationRequestBuilder request(String domainName) {
-        List<IAuthenticationContext> contexts = this.authenticationContextsByDomain
-                .getOrDefault(domainName, Collections.emptyList());
-        return new AuthenticationRequestBuilder(contexts);
     }
 
     @Override

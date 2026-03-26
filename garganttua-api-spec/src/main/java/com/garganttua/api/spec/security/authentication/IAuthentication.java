@@ -2,26 +2,26 @@ package com.garganttua.api.spec.security.authentication;
 
 import java.util.List;
 
-import com.garganttua.core.CoreException;
-
 public interface IAuthentication {
 
-	void authenticate() throws CoreException;
+	boolean authenticated();
 
-	void findPrincipal() throws CoreException;
+	boolean alwaysEnabled();
 
-	boolean isAuthenticated();
+	Object principal();
 
-	Object getPrincipal();
+	Object credentials();
 
-	Object getCredential();
+	Object authorization();
 
-	Object getAuthorization();
+	List<String> authorities();
 
-	List<String> getAuthorities();
+	boolean credentialsNonExpired();
 
-	String getTenantId();
+	boolean enabled();
 
-	String getOwnerId();
+	boolean accountNonLocked();
+
+	boolean accountNonExpired();
 
 }

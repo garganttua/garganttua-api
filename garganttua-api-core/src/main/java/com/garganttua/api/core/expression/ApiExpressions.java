@@ -25,6 +25,8 @@ import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.security.authentication.IAuthentication;
+import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
@@ -663,6 +665,51 @@ public class ApiExpressions {
 		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
 		if (opDef == null) return false;
 		return opDef.access() == Access.owner;
+	}
+
+	@Expression(name = "authenticatorContext", description = "Returns the AuthenticatorInfos from the domain's security definition")
+	public static AuthenticatorInfos authenticatorContext(Object context) {
+		IDomainContext<?> dc = context instanceof Optional<?> opt
+				? (IDomainContext<?>) opt.get()
+				: (IDomainContext<?>) context;
+		if (dc instanceof DomainContext<?> domCtx) {
+			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
+			var secDef = domDef.domainSecurityDefinition();
+			if (secDef != null) {
+				return secDef.authenticatorInfos();
+			}
+		}
+		return null;
+	}
+
+	@Expression(name = "authenticatorScope", description = "Returns the authenticator scope string from AuthenticatorInfos")
+	public static String authenticatorScope(Object authContext) {
+		if (authContext instanceof AuthenticatorInfos infos) {
+			return infos.scope() != null ? infos.scope().name() : null;
+		}
+		return null;
+	}
+
+	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the provided IAuthentication instance, retrieving the runtime context from the current thread")
+	public static Object tryAuthenticate(Object authentication) {
+		if (authentication == null) {
+			throw new ApiException("No authentication context available");
+		}
+		IRuntimeContext<?, ?> runtimeContext = RuntimeExpressionContext.get();
+		if (runtimeContext == null) {
+			throw new ApiException("No runtime context available for authentication");
+		}
+		try {
+			IAuthentication auth = (IAuthentication) authentication;
+			if (!auth.authenticated()) {
+				throw new ApiException("Authentication failed");
+			}
+			return auth.authorization();
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Authentication failed: " + e.getMessage(), e);
+		}
 	}
 
 	private static Object unwrapOptional(Object value) {

@@ -578,9 +578,10 @@ public class DomainBuilder<E>
         }
 
         // Final unconditional stage: propagate the exit code from _code using pipe clauses.
-        // This stage runs at the top-level executeGroup where pipe clauses are supported.
+        // _code defaults to 405 (Method Not Allowed) if no business stage matched.
         String exitCodeScript =
-                "0\n"
+                "_code <- if(notNull(@_code), @_code, 405)\n"
+              + "0\n"
               + "    | equals(@_code, 0) -> 0\n"
               + "    | equals(@_code, 400) -> 400\n"
               + "    | equals(@_code, 401) -> 401\n"
@@ -660,12 +661,13 @@ public class DomainBuilder<E>
     }
 
     private static final Map<String, String> CRUD_SCRIPT_PATHS = Map.of(
-            BusinessOperation.create.getLabel(), "scripts/crud/CREATE_ONE.gs",
-            BusinessOperation.readAll.getLabel(), "scripts/crud/READ_ALL.gs",
-            BusinessOperation.readOne.getLabel(), "scripts/crud/READ_ONE.gs",
-            BusinessOperation.update.getLabel(), "scripts/crud/UPDATE_ONE.gs",
-            BusinessOperation.deleteOne.getLabel(), "scripts/crud/DELETE_ONE.gs",
-            BusinessOperation.deleteAll.getLabel(), "scripts/crud/DELETE_ALL.gs"
+            BusinessOperation.create.getLabel(), "scripts/business/CREATE_ONE.gs",
+            BusinessOperation.readAll.getLabel(), "scripts/business/READ_ALL.gs",
+            BusinessOperation.readOne.getLabel(), "scripts/business/READ_ONE.gs",
+            BusinessOperation.update.getLabel(), "scripts/business/UPDATE_ONE.gs",
+            BusinessOperation.deleteOne.getLabel(), "scripts/business/DELETE_ONE.gs",
+            BusinessOperation.deleteAll.getLabel(), "scripts/business/DELETE_ALL.gs",
+            BusinessOperation.authenticate.getLabel(), "scripts/business/AUTHENTICATE.gs"
     );
 
     private void initDefaultCrudWorkflows() {

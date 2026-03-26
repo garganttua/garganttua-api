@@ -52,7 +52,7 @@ public class DomainSecurityBuilder<E>
     }
 
     public DomainSecurityDefinition buildSecurityDefinition() {
-        return new DomainSecurityDefinition(this.disabled);
+        return new DomainSecurityDefinition(this.disabled, null);
     }
 
     @Override

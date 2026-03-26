@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-
 import com.garganttua.api.core.context.security.ApiSecurityContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
@@ -130,6 +129,14 @@ public class ContextSecurityBuilder
     @Override
     public String[] getPackages() {
         return this.packages.toArray(new String[0]);
+    }
+
+    /**
+     * Returns a map of authentication class → built IAuthenticationContext.
+     * Must be called after build().
+     */
+    Map<IClass<?>, IAuthenticationBuilder> getAuthenticationBuilders() {
+        return this.authentications;
     }
 
 }

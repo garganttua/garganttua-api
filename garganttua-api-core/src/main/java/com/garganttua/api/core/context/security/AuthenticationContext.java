@@ -1,13 +1,10 @@
 package com.garganttua.api.core.context.security;
 
-import java.util.List;
 import java.util.Objects;
 
 import com.garganttua.api.core.definition.AuthenticationDefinition;
-import com.garganttua.api.core.security.authentication.AuthenticationRequestBuilder;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequestBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 
 
@@ -31,11 +28,6 @@ public class AuthenticationContext implements IAuthenticationContext {
     @Override
     public IAuthenticationDefinition getAuthenticationDefinition() {
         return this.authenticationDefinition;
-    }
-
-    @Override
-    public IAuthenticationRequestBuilder request() {
-        return new AuthenticationRequestBuilder(List.of(this));
     }
 
 }

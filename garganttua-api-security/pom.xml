@@ -32,10 +32,10 @@
 	</dependencies>
 
 	<modules>
-		<module>garganttua-api-security-authentication-authorization</module>
-		<module>garganttua-api-security-authentication-challenge</module>
+<!-- 		<module>garganttua-api-security-authentication-authorization</module>
+		<module>garganttua-api-security-authentication-challenge</module> -->
 		<module>garganttua-api-security-authentication-login-password</module>
-		<module>garganttua-api-security-authorization-jwt</module>
-		<module>garganttua-api-security-authentication-pin</module>
+<!-- 		<module>garganttua-api-security-authorization-jwt</module>
+		<module>garganttua-api-security-authentication-pin</module> -->
 	</modules>
 </project>

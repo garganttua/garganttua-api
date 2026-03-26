@@ -58,7 +58,7 @@ Security disabled:  ... --> [5. business checks] --------------------------> [7.
 |  1. protocol                  |  optional (Mode A only)
 |                               |  rawRequest -> tenantId, requestedTenantId, path,
 |                               |    technicalOperation, ownerId, params,
-|                               |    raw_body, raw_authorization
+|                               |    raw_body, raw_authorization, build caller
 +-------------------------------+
    |
    v
@@ -69,7 +69,7 @@ Security disabled:  ... --> [5. business checks] --------------------------> [7.
    |
    v
 +-------------------------------+
-|  3. operation_detection       |  always
+|  3. operation                 |  always
 |                               |  resolve Operation from path + method
 +-------------------------------+
    |
@@ -82,13 +82,13 @@ Security disabled:  ... --> [5. business checks] --------------------------> [7.
    |
    v
 +-------------------------------+
-|  5. business checks           |  always
+|  5. business rules            |  always
 |                               |  tenant/owner business rules
 +-------------------------------+
    |
    v
 +-------------------------------+---------------------------------------------------------------+
-|  6. security checks           |  optional (configurable via ApiBuilder)                       v
+|  6. security                  |  optional (configurable via ApiBuilder)                       v
 |                               |  retrieve tenant, retrieve authenticator entity,             +--------------------------------------------+
 |                               |  tenant verification, owner verification,                    | 6a. Workflow invocation with authorization | optional (if authorization verification required)
 |                               |  authenticator verification,                                 |     as request body                        |
@@ -105,7 +105,7 @@ Security disabled:  ... --> [5. business checks] --------------------------> [7.
 +------+ +------+ +------+ +------+ +-------+ +-------+
 | 8a.  | | 8b.  | | 8c.  | | 8d.  | | 8e.   | | 8f.   |
 | crud | | use  | | work | | auth | | auth  | | auth  |
-|      | | case | | flow | |      | | use   | | work  |
+|      | | case | | flow | |      | | use   | | work  |   => this is business 
 |      | |      | |      | |      | | case  | | flow  |
 +------+ +------+ +------+ +------+ +-------+ +-------+
    |        |        |        |        |         |
@@ -317,7 +317,7 @@ with tenant/owner/authority checks.
 
 **Location:** Engine
 
-**Scripts:** `scripts/crud/`
+**Scripts:** `scripts/operation/`
 - `CREATE_ONE.gs` — generate uuid, set tenantId, validate mandatories, check unicity, persist
 - `READ_ALL.gs` — build access filter, query with pagination/sort, inject beans, run afterGet hooks
 - `READ_ONE.gs` — build identifier + access filter, query, inject, run afterGet hooks
@@ -421,7 +421,7 @@ Each domain gets its own pipeline instance with:
 | 5. business checks     | core           | no       | `scripts/business/`            |
 | 6. security checks     | core           | yes (configurable) | `scripts/security/`   |
 | 7. multiplex           | core           | no       | `scripts/multiplex/`           |
-| 8a. crud               | core           | no       | `scripts/crud/`                    |
+| 8a. operation          | core           | no       | `scripts/operation/`               |
 | 8b. use_case           | core           | no       | `scripts/use_case/`                |
 | 8c. workflow           | core           | no       | `scripts/workflow/`                |
 | 8d. authentication     | core           | no       | `scripts/authentication/`          |

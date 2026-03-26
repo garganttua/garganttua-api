@@ -240,6 +240,7 @@ class ApiContextBuilderTest {
             builder.superTenantId("SUPER")
                    .superTenantAutoCreate(true)
                    .domain(IClass.getClass(TestEntity.class))
+                       .tenant(true)
                        .entity()
                            .id("id")
                            .uuid("uuid")
@@ -262,19 +263,20 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("build() includes domain context")
         void buildIncludesDomainContext() throws ApiException {
-            builder.domain(IClass.getClass(TestEntity.class))
-                   .entity()
-                       .id("id")
-                       .uuid("uuid")
-                       .tenantId("tenantId")
-                   .up()
-                   .dto(IClass.getClass(TestDto.class))
-                       .id("id")
-                       .uuid("uuid")
-                       .tenantId("tenantId")
-                       .db(new TestDao())
-                   .up()
-               .up();
+            builder.multiTenant(false)
+                   .domain(IClass.getClass(TestEntity.class))
+                       .entity()
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                       .up()
+                       .dto(IClass.getClass(TestDto.class))
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                           .db(new TestDao())
+                       .up()
+                   .up();
 
             IApiContext context = builder.build();
 
@@ -286,25 +288,93 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("build() returns domain name based on entity class")
         void buildReturnsDomainNameBasedOnEntityClass() throws ApiException {
-            builder.domain(IClass.getClass(TestEntity.class))
-                   .entity()
-                       .id("id")
-                       .uuid("uuid")
-                       .tenantId("tenantId")
-                   .up()
-                   .dto(IClass.getClass(TestDto.class))
-                       .id("id")
-                       .uuid("uuid")
-                       .tenantId("tenantId")
-                       .db(new TestDao())
-                   .up()
-               .up();
+            builder.multiTenant(false)
+                   .domain(IClass.getClass(TestEntity.class))
+                       .entity()
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                       .up()
+                       .dto(IClass.getClass(TestDto.class))
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                           .db(new TestDao())
+                       .up()
+                   .up();
 
             IApiContext context = builder.build();
             Optional<IDomainContext<?>> domainCtx = context.getDomainContext("testentities");
 
             assertTrue(domainCtx.isPresent());
             assertEquals("testentities", domainCtx.get().getDomain());
+        }
+
+        @Test
+        @DisplayName("build() throws when multi-tenancy enabled but no tenant domain")
+        void buildThrowsWhenMultiTenantWithoutTenantDomain() throws ApiException {
+            builder.superTenantId("SUPER")
+                   .domain(IClass.getClass(TestEntity.class))
+                       .entity()
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                       .up()
+                       .dto(IClass.getClass(TestDto.class))
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                           .db(new TestDao())
+                       .up()
+                   .up();
+
+            ApiException ex = assertThrows(ApiException.class, () -> builder.build());
+            assertTrue(ex.getMessage().contains("no domain is marked as tenant"));
+        }
+
+        @Test
+        @DisplayName("build() succeeds when multi-tenancy disabled and no tenant domain")
+        void buildSucceedsWhenMultiTenantDisabledWithoutTenantDomain() throws ApiException {
+            builder.multiTenant(false)
+                   .domain(IClass.getClass(TestEntity.class))
+                       .entity()
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                       .up()
+                       .dto(IClass.getClass(TestDto.class))
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                           .db(new TestDao())
+                       .up()
+                   .up();
+
+            IApiContext context = builder.build();
+            assertNotNull(context);
+        }
+
+        @Test
+        @DisplayName("build() succeeds when multi-tenancy enabled and tenant domain exists")
+        void buildSucceedsWhenMultiTenantWithTenantDomain() throws ApiException {
+            builder.superTenantId("SUPER")
+                   .domain(IClass.getClass(TestEntity.class))
+                       .tenant(true)
+                       .entity()
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                       .up()
+                       .dto(IClass.getClass(TestDto.class))
+                           .id("id")
+                           .uuid("uuid")
+                           .tenantId("tenantId")
+                           .db(new TestDao())
+                       .up()
+                   .up();
+
+            IApiContext context = builder.build();
+            assertNotNull(context);
         }
     }
 }
