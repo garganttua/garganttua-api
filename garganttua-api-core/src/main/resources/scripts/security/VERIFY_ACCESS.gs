@@ -15,10 +15,6 @@
 #  @return 0: SUCCESS
 #@end
 
-// Check if security is disabled for this domain
-disabled <- isSecurityDisabled(@2)
-if(equals(true, @disabled), -> 0)
-
 // Extract operation and caller from request
 operation <- :arg(@0, "operation")
 caller <- :arg(@0, "caller")
@@ -26,11 +22,14 @@ caller <- :arg(@0, "caller")
 // Get the access level for this operation
 access <- operationAccess(@operation)
 
-// If anonymous access, skip all security checks
-if(equals(@access, "anonymous"), -> 0)
-
 // For authenticated/tenant/owner access, require authentication
-requireAuthentication(@0)
+if(equals(@access, "authenticated"), requireAuthentication(@0))
+! -> 401
+
+if(equals(@access, "tenant"), requireAuthentication(@0))
+! -> 401
+
+if(equals(@access, "owner"), requireAuthentication(@0))
 ! -> 401
 
 // For tenant access, require tenantId
@@ -44,4 +43,4 @@ if(equals(@access, "owner"), requireTenantId(@caller))
 if(equals(@access, "owner"), requireOwnerId(@caller))
 ! -> 403
 
--> 200
+output <- 0 -> 0

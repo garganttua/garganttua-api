@@ -1,10 +1,9 @@
 package com.garganttua.api.spec.context.dsl.security;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
-import com.garganttua.api.spec.security.context.IAuthorizationContext;
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.security.context.IAuthorizationContext;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
 
@@ -35,7 +34,7 @@ public interface IAuthorizationBuilder<E>
 
     IAuthorizationBuilder<E> revokable(ObjectAddress fieldAddress) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> encode(Method method) throws ApiException;
+   /*  IAuthorizationMethodBinderBuilder<E> encode(Method method) throws ApiException;
 
     IAuthorizationMethodBinderBuilder<E> encode(String methodName) throws ApiException;
 
@@ -45,7 +44,7 @@ public interface IAuthorizationBuilder<E>
 
     IAuthorizationMethodBinderBuilder<E> decode(String methodName) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> decode(ObjectAddress methodAddress) throws ApiException;
+    IAuthorizationMethodBinderBuilder<E> decode(ObjectAddress methodAddress) throws ApiException; */
 
     IAuthorizationBuilder<E> storable(boolean b);
 

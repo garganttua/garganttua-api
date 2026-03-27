@@ -80,4 +80,16 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IEntityBuilder<E> entity() throws ApiException;
 
+    IDomainBuilder<E> creation(boolean enabled);
+
+    IDomainBuilder<E> readAll(boolean enabled);
+
+    IDomainBuilder<E> readOne(boolean enabled);
+
+    IDomainBuilder<E> update(boolean enabled);
+
+    IDomainBuilder<E> deleteOne(boolean enabled);
+
+    IDomainBuilder<E> deleteAll(boolean enabled);
+
 }

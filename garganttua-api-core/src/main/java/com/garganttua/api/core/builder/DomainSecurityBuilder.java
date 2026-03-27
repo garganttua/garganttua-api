@@ -8,7 +8,9 @@ import java.util.Optional;
 
 import com.garganttua.api.core.context.security.DomainSecurityContext;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
+import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.security.context.IAuthenticatorContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
@@ -52,7 +54,16 @@ public class DomainSecurityBuilder<E>
     }
 
     public DomainSecurityDefinition buildSecurityDefinition() {
-        return new DomainSecurityDefinition(this.disabled, null);
+        IAuthenticatorDefinition authenticatorDefinition = null;
+        if (this.authenticator != null) {
+            IAuthenticatorContext authenticatorContext = (IAuthenticatorContext) this.authenticator.build();
+            authenticatorDefinition = authenticatorContext.getAuthenticatorDefinition();
+        }
+        return new DomainSecurityDefinition(this.disabled, authenticatorDefinition);
+    }
+
+    boolean hasAuthenticator() {
+        return this.authenticator != null;
     }
 
     @Override
@@ -73,7 +84,6 @@ public class DomainSecurityBuilder<E>
         return this.authorization;
     }
 
-    @Override
     public IDomainSecurityBuilder<E> authorizationProtocol(IClass<?> interfaceClass,
             IAuthorizationProtocolBuilder protocole) throws ApiException {
 

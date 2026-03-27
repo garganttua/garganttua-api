@@ -1,5 +1,6 @@
 package com.garganttua.api.core.expression;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -25,8 +26,13 @@ import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
+import com.garganttua.api.spec.security.authentication.IAuthentication;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
+import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.binders.IContextualMethodBinder;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
@@ -689,25 +695,73 @@ public class ApiExpressions {
 		return null;
 	}
 
-	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the IAuthenticatorDefinition, retrieving the runtime context from the current thread")
+	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the IAuthenticatorDefinition, iterating over authentication methods until one succeeds")
 	public static Object tryAuthenticate(Object authenticatorDefinition) {
 		if (authenticatorDefinition == null) {
 			throw new ApiException("No authenticator definition available");
 		}
-		IRuntimeContext<?, ?> runtimeContext = RuntimeExpressionContext.get();
-		if (runtimeContext == null) {
-			throw new ApiException("No runtime context available for authentication");
-		}
 		try {
 			IAuthenticatorDefinition def = (IAuthenticatorDefinition) authenticatorDefinition;
-			// TODO: iterate over def.authenticationDefinitions(), instantiate each authentication method,
-			// find the principal in the repository, call authenticate(principal, credentials, def),
-			// and return the first successful IAuthentication result
-			return null;
+			List<IAuthenticationDefinition> authDefs = def.authenticationDefinitions();
+			if (authDefs == null || authDefs.isEmpty()) {
+				throw new ApiException("No authentication methods configured");
+			}
+
+			return authDefs.stream()
+					.map(authDef -> attemptAuthentication(authDef, def))
+					.filter(Objects::nonNull)
+					.findFirst()
+					.orElseThrow(() -> new ApiException("All authentication methods failed"));
 		} catch (ApiException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new ApiException("Authentication failed: " + e.getMessage(), e);
+		}
+	}
+
+	private static IAuthentication attemptAuthentication(IAuthenticationDefinition authDef, IAuthenticatorDefinition authenticatorDef) {
+		try {
+			IMethodBinder<?> binder = authDef.authenticateMethodBinder();
+			if (binder == null) {
+				return null;
+			}
+
+			Optional<? extends IMethodReturn<?>> result;
+			if (binder instanceof IContextualMethodBinder<?, ?> contextualBinder) {
+				// Contextual binder — must depend on IRuntimeContext
+				IClass<?> ownerContextType = contextualBinder.getOwnerContextType();
+				if (ownerContextType != null && !ownerContextType.isAssignableFrom(IClass.getClass(IRuntimeContext.class))) {
+					throw new ApiException("Authentication method binder requires " + ownerContextType.getSimpleName()
+							+ " but only IRuntimeContext is available");
+				}
+
+				Arrays.stream(contextualBinder.getParametersContextTypes()).forEach(paramCtx -> {
+					if (paramCtx != null && !paramCtx.isAssignableFrom(IClass.getClass(IRuntimeContext.class))) {
+						throw new ApiException("Authentication method binder has parameter context " + paramCtx.getSimpleName()
+								+ " which is not supported (only IRuntimeContext is available)");
+					}
+				});
+
+				IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
+
+				IContextualMethodBinder<?, Object> rawBinder = (IContextualMethodBinder<?, Object>) contextualBinder;
+				result = rawBinder.execute(runtimeCtx);
+			} else {
+				result = binder.execute();
+			}
+
+			if (result.isEmpty()) {
+				return null;
+			}
+
+			Object returned = result.get().single();
+			if (returned instanceof IAuthentication auth && auth.authenticated()) {
+				return auth;
+			}
+			return null;
+		} catch (Exception e) {
+			// This authentication method failed, try the next one
+			return null;
 		}
 	}
 

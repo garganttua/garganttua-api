@@ -39,7 +39,7 @@ public class ContextSecurityBuilder
 
         IAuthenticationBuilder builder;
         if (!this.authentications.containsKey(supplier.getSuppliedClass())) {
-            builder = new AuthenticationBuilder(this);
+            builder = new AuthenticationBuilder(this, supplier);
             this.authentications.put(supplier.getSuppliedClass(), builder);
         } else {
             builder = this.authentications.get(supplier.getSuppliedClass());

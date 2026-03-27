@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,14 +18,51 @@ import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
 import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.api.spec.security.authentication.Authentication;
+import com.garganttua.api.spec.security.authentication.IAuthentication;
+import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.workflow.WorkflowResult;
 
 @DisplayName("Authenticate Script Integration Tests")
 class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
+
+    // --- Stub authentication method ---
+
+    /**
+     * Simulates an authentication method (like LoginPasswordAuthentication).
+     * Compares credentials against a hardcoded password.
+     */
+    public static class StubAuthentication {
+
+        public IAuthentication authenticate(Object principal, byte[] credentials, IAuthenticatorDefinition definition) {
+            String password = new String(credentials, StandardCharsets.UTF_8);
+            boolean success = "valid-password".equals(password);
+            return new Authentication(
+                    success,
+                    success ? principal : null,
+                    credentials,
+                    success ? "auth-token-for-" + principal : null,
+                    success ? List.of("ROLE_USER") : null,
+                    true, true, true, true);
+        }
+    }
+
+    /**
+     * Always-failing authentication method.
+     */
+    public static class FailingAuthentication {
+
+        public IAuthentication authenticate(Object principal, byte[] credentials, IAuthenticatorDefinition definition) {
+            return new Authentication(false, null, credentials, null, null,
+                    true, true, true, true);
+        }
+    }
 
     private IApiContext context;
     private IDomainContext<?> userCtx;
@@ -34,7 +72,17 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
     void setUp() throws ApiException {
         userDao = new CapturingDao();
 
+        StubAuthentication stubAuth = new StubAuthentication();
+
         IApiContextBuilder builder = newBuilder();
+
+        // Register the authentication method at API level
+        var authBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(stubAuth, IClass.getClass(StubAuthentication.class)));
+        authBuilder.authenticate("authenticate");
+        authBuilder.up();
+
+        // Register domain with authenticator referencing the authentication method
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
@@ -44,7 +92,12 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
-                .workflow(BusinessOperation.authenticate.getLabel())
+                .security()
+                    .authenticator()
+                        .login("id")
+                        .scope(AuthenticatorScope.tenant)
+                        .authentication(authBuilder)
+                    .up()
                 .up()
             .up();
 
@@ -58,13 +111,43 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Nested
+    @DisplayName("Automatic workflow registration")
+    class AutomaticWorkflowRegistration {
+
+        @Test
+        @DisplayName("authenticate workflow is automatically registered when authenticator is configured")
+        void authenticateWorkflowAutoRegistered() {
+            assertNotNull(userCtx.getWorkflow(), "workflow should exist");
+
+            AuthenticationRequest authReq = new AuthenticationRequest(
+                    "john@example.com",
+                    "valid-password".getBytes(StandardCharsets.UTF_8),
+                    "SUPER_TENANT");
+
+            OperationRequest request = authenticateRequest();
+            request.arg("entity", authReq);
+
+            WorkflowResult result = executeScript(userCtx, request);
+            assertNotEquals(-1, result.code(), "authenticate stage should be registered");
+        }
+
+        @Test
+        @DisplayName("authenticate OperationDefinition has correct business operation")
+        void operationDefinitionHasCorrectBusinessOp() {
+            OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
+            assertEquals(BusinessOperation.authenticate, authOp.getBusinessOperation());
+        }
+    }
+
+    @Nested
     @DisplayName("Request validation")
     class RequestValidation {
 
         @Test
         @DisplayName("returns 400 when no caller is provided")
         void returns400WhenNoCaller() throws ApiException {
-            AuthenticationRequest authReq = new AuthenticationRequest("john", "secret".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
+            AuthenticationRequest authReq = new AuthenticationRequest(
+                    "john", "secret".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
 
             OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
             OperationRequest request = new OperationRequest(new HashMap<>());
@@ -87,31 +170,18 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
             assertFalse(result.isSuccess());
             assertEquals(400, result.code());
         }
-
-        @Test
-        @DisplayName("entity is passed as AuthenticationRequest")
-        void entityIsAuthenticationRequest() {
-            AuthenticationRequest authReq = new AuthenticationRequest(
-                    "john@example.com",
-                    "password123".getBytes(StandardCharsets.UTF_8),
-                    "TENANT_1");
-
-            assertEquals("john@example.com", authReq.login());
-            assertArrayEquals("password123".getBytes(StandardCharsets.UTF_8), authReq.credentials());
-            assertEquals("TENANT_1", authReq.tenantId());
-        }
     }
 
     @Nested
-    @DisplayName("Business operation routing")
-    class BusinessOperationRouting {
+    @DisplayName("Authenticator scope")
+    class AuthenticatorScopeTests {
 
         @Test
-        @DisplayName("authenticate operation is routed to AUTHENTICATE script")
-        void authenticateOperationIsRouted() throws ApiException {
+        @DisplayName("tenant-scoped authenticator passes when caller has tenantId")
+        void tenantScopePassesWithTenantId() throws ApiException {
             AuthenticationRequest authReq = new AuthenticationRequest(
                     "john@example.com",
-                    "secret".getBytes(StandardCharsets.UTF_8),
+                    "valid-password".getBytes(StandardCharsets.UTF_8),
                     "SUPER_TENANT");
 
             OperationRequest request = authenticateRequest();
@@ -119,15 +189,9 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
             WorkflowResult result = executeScript(userCtx, request);
 
-            // The workflow dispatches to the authenticate stage
+            // Script proceeds past the scope check (caller has tenantId)
             assertNotNull(result);
-        }
-
-        @Test
-        @DisplayName("authenticate OperationDefinition has correct business operation")
-        void operationDefinitionHasCorrectBusinessOp() {
-            OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
-            assertEquals(BusinessOperation.authenticate, authOp.getBusinessOperation());
+            assertNotEquals(400, result.code(), "should not fail on tenant scope check");
         }
     }
 

@@ -158,51 +158,6 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
-    public IAuthorizationMethodBinderBuilder<E> encode(
-            Method method) throws ApiException {
-        Objects.requireNonNull(method, "Method cannot be null");
-        // TODO: Implement when ISupplierBuilder for authorization context is available
-        throw new UnsupportedOperationException("Unimplemented method 'encode'");
-    }
-
-    @Override
-    public IAuthorizationMethodBinderBuilder<E> encode(
-            String methodName) throws ApiException {
-        Objects.requireNonNull(methodName, "Method name cannot be null");
-        // TODO: Implement when ISupplierBuilder for authorization context is available
-        throw new UnsupportedOperationException("Unimplemented method 'encode'");
-    }
-
-    @Override
-    public IAuthorizationMethodBinderBuilder<E> encode(
-            ObjectAddress methodAddress) throws ApiException {
-        Objects.requireNonNull(methodAddress, "Method address cannot be null");
-        // TODO: Implement when ISupplierBuilder for authorization context is available
-        throw new UnsupportedOperationException("Unimplemented method 'encode'");
-    }
-
-    @Override
-    public IAuthorizationMethodBinderBuilder<E> decode(Method method) throws ApiException {
-        Objects.requireNonNull(method, "Method cannot be null");
-        // TODO: Implement when ISupplierBuilder for authorization context is available
-        throw new UnsupportedOperationException("Unimplemented method 'decode'");
-    }
-
-    @Override
-    public IAuthorizationMethodBinderBuilder<E> decode(String methodName) throws ApiException {
-        Objects.requireNonNull(methodName, "Method name cannot be null");
-        // TODO: Implement when ISupplierBuilder for authorization context is available
-        throw new UnsupportedOperationException("Unimplemented method 'decode'");
-    }
-
-    @Override
-    public IAuthorizationMethodBinderBuilder<E> decode(ObjectAddress methodAddress) throws ApiException {
-        Objects.requireNonNull(methodAddress, "Method address cannot be null");
-        // TODO: Implement when ISupplierBuilder for authorization context is available
-        throw new UnsupportedOperationException("Unimplemented method 'decode'");
-    }
-
-    @Override
     public ISignableAuthorizationBuilder<E> signable() {
         if (this.signable == null) {
             this.signable = new SignableAuthorizationBuilder<>(this, this.entityClass);

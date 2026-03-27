@@ -439,6 +439,48 @@ public class DomainBuilder<E>
     }
 
     @Override
+    public IDomainBuilder<E> creation(boolean enabled) {
+        toggleCrudWorkflow(BusinessOperation.create.getLabel(), enabled);
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> readAll(boolean enabled) {
+        toggleCrudWorkflow(BusinessOperation.readAll.getLabel(), enabled);
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> readOne(boolean enabled) {
+        toggleCrudWorkflow(BusinessOperation.readOne.getLabel(), enabled);
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> update(boolean enabled) {
+        toggleCrudWorkflow(BusinessOperation.update.getLabel(), enabled);
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> deleteOne(boolean enabled) {
+        toggleCrudWorkflow(BusinessOperation.deleteOne.getLabel(), enabled);
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> deleteAll(boolean enabled) {
+        toggleCrudWorkflow(BusinessOperation.deleteAll.getLabel(), enabled);
+        return this;
+    }
+
+    private void toggleCrudWorkflow(String label, boolean enabled) {
+        if (!enabled) {
+            this.workflows.remove(label);
+        }
+    }
+
+    @Override
     public IClass<E> getEntityClass() throws ApiException {
         if (this.entityClass != null) {
             IClass<E> result = (IClass<E>) this.entityClass;
@@ -535,6 +577,14 @@ public class DomainBuilder<E>
                     wb.isCustom()));
         }
 
+        // Auto-register authenticate workflow when domain has an authenticator
+        if (this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && !this.workflows.containsKey(BusinessOperation.authenticate.getLabel())) {
+            registerCrudMetadata(BusinessOperation.authenticate.getLabel(),
+                    TechnicalOperation.create, Scope.oneEntity);
+        }
+
         // Add security stage before CRUD stages (runs for all operations)
         boolean securityEnabled = this.securityBuilder != null
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
@@ -550,7 +600,15 @@ public class DomainBuilder<E>
                     .up();
         }
 
-        // Add CRUD stages
+        // Initialize _code to 405 (Method Not Allowed) — overwritten by matching business stage
+        mergedBuilder.stage("init-code")
+                .script("_code <- 405\n")
+                    .name("init-default-code")
+                    .inline()
+                    .up()
+                .up();
+
+        // Add business operation stages
         for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
             String label = entry.getKey();
             DomainWorkflowBuilder<E> wb = entry.getValue();
@@ -578,10 +636,8 @@ public class DomainBuilder<E>
         }
 
         // Final unconditional stage: propagate the exit code from _code using pipe clauses.
-        // _code defaults to 405 (Method Not Allowed) if no business stage matched.
         String exitCodeScript =
-                "_code <- if(notNull(@_code), @_code, 405)\n"
-              + "0\n"
+                "0\n"
               + "    | equals(@_code, 0) -> 0\n"
               + "    | equals(@_code, 400) -> 400\n"
               + "    | equals(@_code, 401) -> 401\n"
