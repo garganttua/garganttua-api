@@ -5,8 +5,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method to be called before an entity is created.
+ * The method is invoked on the entity instance before persistence.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface EntitySaveMethod {
+public @interface EntityBeforeCreate {
 
 }

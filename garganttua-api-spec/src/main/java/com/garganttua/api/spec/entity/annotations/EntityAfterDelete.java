@@ -5,8 +5,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method to be called after an entity is deleted.
+ * The method is invoked on the entity instance after removal.
+ */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface EntityDeleteMethodProvider {
+@Target(ElementType.METHOD)
+public @interface EntityAfterDelete {
 
 }

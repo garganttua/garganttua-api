@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.core.security.authentication.CredentialsSupplier;
@@ -28,6 +29,7 @@ class CredentialsSupplierTest {
     static void initReflection() {
         IClass.setReflection(ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner())
                 .build());
     }
 

@@ -12,6 +12,8 @@ public interface IWorkflowSecurityBuilder<E>
 
 	IWorkflowSecurityBuilder<E> authority(boolean authority);
 
+	IWorkflowSecurityBuilder<E> authority(String customAuthority);
+
 	IWorkflowSecurityBuilder<E> disable(boolean disabled);
 
 }

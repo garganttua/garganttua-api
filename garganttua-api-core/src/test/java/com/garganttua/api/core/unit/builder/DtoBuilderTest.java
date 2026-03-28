@@ -26,6 +26,7 @@ import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
+import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 @DisplayName("DtoBuilder Tests")
 class DtoBuilderTest {
@@ -34,6 +35,7 @@ class DtoBuilderTest {
     static void initReflection() {
         IClass.setReflection(ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider())
+                .withScanner(new ReflectionsAnnotationScanner())
                 .build());
     }
 

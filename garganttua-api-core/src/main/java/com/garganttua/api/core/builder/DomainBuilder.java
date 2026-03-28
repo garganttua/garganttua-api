@@ -589,9 +589,10 @@ public class DomainBuilder<E>
         boolean securityEnabled = this.securityBuilder != null
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
         if (securityEnabled) {
+            // Run VERIFY_ACCESS — stores result in _security_code
             String securityScript =
                     "_ref <- include(\"classpath:scripts/security/VERIFY_ACCESS.gs\")\n"
-                  + "_code <- run_script(@_ref, @0, @1, @2)\n";
+                  + "_security_code <- run_script(@_ref, @0, @1, @2)\n";
             mergedBuilder.stage("security")
                     .script(securityScript)
                         .name("verify-access")
@@ -600,9 +601,12 @@ public class DomainBuilder<E>
                     .up();
         }
 
-        // Initialize _code to 405 (Method Not Allowed) — overwritten by matching business stage
+        // Initialize _code: use _security_code if security failed, otherwise 405 (Method Not Allowed)
+        String initCodeScript = securityEnabled
+                ? "_code <- if(equals(@_security_code, 0), 405, @_security_code)\n"
+                : "_code <- 405\n";
         mergedBuilder.stage("init-code")
-                .script("_code <- 405\n")
+                .script(initCodeScript)
                     .name("init-default-code")
                     .inline()
                     .up()
@@ -618,11 +622,11 @@ public class DomainBuilder<E>
 
             String scriptPath = CRUD_SCRIPT_PATHS.get(label);
             if (scriptPath != null) {
-                // Each CRUD operation gets its own conditional stage.
-                // Inside the stage, the CRUD script is included and executed via run_script.
-                // The _code variable and output are set for use by the exit-code stage.
+                // Guard: skip if _code was changed by security (not 405 anymore)
                 String dispatchScript =
-                        "_ref <- include(\"classpath:" + scriptPath + "\")\n"
+                        "requirePresent(if(equals(@_code, 405), true))\n"
+                      + "! -> 0\n"
+                      + "_ref <- include(\"classpath:" + scriptPath + "\")\n"
                       + "_code <- run_script(@_ref, @0, @1, @2)\n"
                       + "output <- if(equals(@_code, 0), script_output(@_ref), 0)\n";
                 mergedBuilder.stage(label)

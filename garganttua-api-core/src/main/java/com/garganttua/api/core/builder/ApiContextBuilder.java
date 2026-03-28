@@ -13,6 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.garganttua.api.core.builder.binder.ApiContextStartupBinderBuilder;
 import com.garganttua.api.core.context.ApiContext;
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.ContextBuildingStage;
 import com.garganttua.api.spec.context.IApiContext;
 import com.garganttua.api.spec.context.IDomainContext;
@@ -22,23 +23,22 @@ import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
-import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
 import com.garganttua.core.dsl.dependency.DependencyPhase;
 import com.garganttua.core.dsl.dependency.DependencySpec;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
-import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.BeanStrategy;
 import com.garganttua.core.injection.IInjectionContext;
 import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.mapper.IMapper;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
@@ -50,8 +50,11 @@ import lombok.extern.slf4j.Slf4j;
 public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiContextBuilder, IApiContext>
 		implements IApiContextBuilder {
 
-	private ApiContextBuilder(Set<DependencySpec> dependencies) {
-		super(dependencies);
+	private ApiContextBuilder() {
+		super(Set.of(
+						DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
+						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD),
+						DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
 	}
 
 	private final Set<String> packages = ConcurrentHashMap.newKeySet();
@@ -71,11 +74,8 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	private volatile IInjectionContext injectionContext;
 
 	public static IApiContextBuilder builder() {
-		return new ApiContextBuilder(
-				Set.of(
-						DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
-						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD),
-						DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
+		return new ApiContextBuilder();
+				
 	}
 
 	@Override

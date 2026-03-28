@@ -1,5 +1,7 @@
 package com.garganttua.api.core.builder;
 
+import java.util.Objects;
+
 import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
 import com.garganttua.api.spec.context.dsl.security.IWorkflowSecurityBuilder;
@@ -13,6 +15,7 @@ public class WorkflowSecurityBuilder<E>
 
 	private boolean disabled = false;
 	private boolean authority = false;
+	private String customAuthority;
 	private Access access = Access.authenticated;
 
 	public WorkflowSecurityBuilder(IDomainWorkflowBuilder<E> up) {
@@ -28,6 +31,14 @@ public class WorkflowSecurityBuilder<E>
 	@Override
 	public IWorkflowSecurityBuilder<E> authority(boolean authority) {
 		this.authority = authority;
+		this.customAuthority = null;
+		return this;
+	}
+
+	@Override
+	public IWorkflowSecurityBuilder<E> authority(String customAuthority) {
+		this.authority = true;
+		this.customAuthority = Objects.requireNonNull(customAuthority, "Custom authority cannot be null");
 		return this;
 	}
 
@@ -52,6 +63,10 @@ public class WorkflowSecurityBuilder<E>
 
 	boolean hasAuthority() {
 		return this.authority;
+	}
+
+	String getCustomAuthority() {
+		return this.customAuthority;
 	}
 
 	Access getAccess() {

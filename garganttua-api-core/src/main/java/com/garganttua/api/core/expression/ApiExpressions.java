@@ -35,6 +35,7 @@ import com.garganttua.core.reflection.binders.IContextualMethodBinder;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
+import jakarta.annotation.Nullable;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
 import com.garganttua.core.expression.context.IExpressionVariableResolver;
 import com.garganttua.core.injection.BeanDefinition;
@@ -65,7 +66,7 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "script_output", description = "Gets the output of an executed included script by name")
-	public static Object scriptOutput(Object scriptName) {
+	public static Object scriptOutput(@Nullable Object scriptName) {
 		var ctx = ScriptExecutionContext.get();
 		if (ctx == null) {
 			throw new ApiException("script_output: no script execution context available");
@@ -112,34 +113,34 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "run_script", description = "Executes an included script preserving variable context (no args)")
-	public static int runScript(Object name) {
+	public static int runScript(@Nullable Object name) {
 		return runScriptImpl(name);
 	}
 
 	@Expression(name = "run_script", description = "Executes an included script preserving variable context (1 arg)")
-	public static int runScript(Object name, Object arg0) {
+	public static int runScript(@Nullable Object name, @Nullable Object arg0) {
 		return runScriptImpl(name, arg0);
 	}
 
 	@Expression(name = "run_script", description = "Executes an included script preserving variable context (2 args)")
-	public static int runScript(Object name, Object arg0, Object arg1) {
+	public static int runScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1) {
 		return runScriptImpl(name, arg0, arg1);
 	}
 
 	@Expression(name = "run_script", description = "Executes an included script preserving variable context (3 args)")
-	public static int runScript(Object name, Object arg0, Object arg1, Object arg2) {
+	public static int runScript(@Nullable Object name, @Nullable Object arg0, @Nullable Object arg1, @Nullable Object arg2) {
 		return runScriptImpl(name, arg0, arg1, arg2);
 	}
 
 	@Expression(name = "notNull", description = "Returns true if the value is not null and not an empty Optional")
-	public static boolean notNull(Object value) {
+	public static boolean notNull(@Nullable Object value) {
 		if (value == null) return false;
 		if (value instanceof Optional<?> opt) return opt.isPresent();
 		return true;
 	}
 
 	@Expression(name = "requirePresent", description = "Throws ApiException if value is null or an empty Optional, otherwise returns the unwrapped value")
-	public static Object requirePresent(Object value) throws ApiException {
+	public static Object requirePresent(@Nullable Object value) throws ApiException {
 		if (value == null) throw new ApiException("Required value is null");
 		if (value instanceof Optional<?> opt) {
 			return opt.orElseThrow(() -> new ApiException("Required value is empty"));
@@ -148,17 +149,17 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "equals", description = "Returns true when both arguments are equal")
-	public static boolean equalsExpr(Object a, Object b) {
+	public static boolean equalsExpr(@Nullable Object a, @Nullable Object b) {
 		return Objects.equals(unwrapOptional(a), unwrapOptional(b));
 	}
 
 	@Expression(name = "equals", description = "Returns true when both arguments are equal (boolean variant)")
-	public static boolean equalsExprBool(Object a, boolean b) {
+	public static boolean equalsExprBool(@Nullable Object a, boolean b) {
 		return Objects.equals(unwrapOptional(a), b);
 	}
 
 	@Expression(name = "optionalGet", description = "Unwraps an Optional, throwing NoSuchElementException if empty")
-	public static Object optionalGet(Object value) {
+	public static Object optionalGet(@Nullable Object value) {
 		if (value instanceof Optional<?> opt) {
 			return opt.get();
 		}
@@ -602,7 +603,7 @@ public class ApiExpressions {
 	// --- Security expressions ---
 
 	@Expression(name = "operationAccess", description = "Returns the Access level string from an OperationDefinition")
-	public static String operationAccess(Object operation) {
+	public static String operationAccess(@Nullable Object operation) {
 		if (operation == null) return "anonymous";
 		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
 		if (opDef == null) return "anonymous";
@@ -630,7 +631,7 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "requireAuthentication", description = "Checks that the caller has been authenticated (authorization present in request)")
-	public static boolean requireAuthentication(Object request) {
+	public static boolean requireAuthentication(@Nullable Object request) {
 		IOperationRequest opRequest = (IOperationRequest) request;
 		Optional<IAuthorization> authorization = (Optional<IAuthorization>) opRequest.arg(IOperationRequest.AUTHORIZATION);
 		if (authorization.isEmpty()) {
@@ -640,7 +641,7 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "requireTenantId", description = "Checks that the caller has a tenantId set")
-	public static boolean requireTenantId(Object caller) {
+	public static boolean requireTenantId(@Nullable Object caller) {
 		ICaller c = (ICaller) unwrapOptional(caller);
 		if (c == null || c.requestedTenantId() == null) {
 			throw new ApiException("Tenant ID is required for this operation");
@@ -649,12 +650,24 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "requireOwnerId", description = "Checks that the caller has an ownerId set")
-	public static boolean requireOwnerId(Object caller) {
+	public static boolean requireOwnerId(@Nullable Object caller) {
 		ICaller c = (ICaller) unwrapOptional(caller);
 		if (c == null || c.ownerId() == null) {
 			throw new ApiException("Owner ID is required for this operation");
 		}
 		return true;
+	}
+
+	@Expression(name = "callerHasTenantId", description = "Returns true if the caller has a non-null requestedTenantId (safe, never throws)")
+	public static boolean callerHasTenantId(@Nullable Object caller) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		return c != null && c.requestedTenantId() != null;
+	}
+
+	@Expression(name = "callerHasOwnerId", description = "Returns true if the caller has a non-null ownerId (safe, never throws)")
+	public static boolean callerHasOwnerId(@Nullable Object caller) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		return c != null && c.ownerId() != null;
 	}
 
 	@Expression(name = "isTenantIdMandatory", description = "Returns true if the operation requires a tenantId based on access level")

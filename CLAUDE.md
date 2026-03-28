@@ -22,11 +22,13 @@ Version bumping scripts (preserve suffixes like -ALPHA01): `./new-major.sh`, `./
 
 - **garganttua-api-spec** — Pure contract layer: interfaces, annotations (`@Entity*`, `@Authentication*`, `@Authorization*`), enums, and definition interfaces. Zero business logic. Everything else depends on this.
 - **garganttua-api-core** — Core engine implementation. Legacy code under `old/` and `legacy/` directories is **excluded from compilation** via maven-compiler-plugin.
+- **garganttua-api-dao** — DAO abstractions and implementations.
+- **garganttua-api-security** — Auth implementations (login-password, PIN, challenge, JWT).
+- **garganttua-api-interface** — Interface layer abstractions.
 
 ### Inactive Modules (commented out in root POM)
 
 - **garganttua-api-spring/** — Spring Boot 3.3.3 integration (REST, security, MongoDB DAO, Swagger)
-- **garganttua-api-security/** — Auth implementations (login-password, PIN, challenge, JWT)
 - **garganttua-api-native-image/** — GraalVM native image support
 
 ### Key Patterns
@@ -47,7 +49,7 @@ ApiContextBuilder.builder()
 
 **Custom DI framework** — Uses `garganttua-core` injection (`IInjectionContext`, `IInjectionContextBuilder`), **not** Spring DI internally. The Spring module adapts between the two. `ApiContextBuilder` registers built contexts as named beans.
 
-**Pipeline pattern** — Service execution flows through `IPipeline` → `IPhase` → `IPhaseScript`. Script definitions live in `garganttua-api-core/src/main/resources/scripts/` (business/, security/, crud/, response/). See `FUNCTIONS.md` in that directory for all available script functions.
+**Pipeline pattern** — Service execution flows through `IPipeline` → `IPhase` → `IPhaseScript`. Script definitions live in `garganttua-api-core/src/main/resources/scripts/` (business/, security/, crud/, response/). See `PIPELINE.md` in that directory for the 8-stage request pipeline architecture.
 
 **Definition/Context separation** — Definitions (immutable config: `EntityDefinition`, `DomainDefinition`) are built once; Contexts (runtime: `EntityContext`, `DomainContext`) aggregate definitions and provide services like `invoke(IServiceRequest)`.
 
@@ -79,5 +81,5 @@ JUnit 5 + Mockito 5.14. Tests use `@Nested` classes with `@DisplayName` for grou
 - Uses Lombok throughout — ensure annotation processing is enabled.
 - Domain names are auto-generated as plural lowercase of entity class name (e.g., `User` → `users`).
 - Each domain requires at least one DTO (builder throws `DslException` otherwise).
-- Reference configuration in `application.properties` at project root: `com.garganttua.api.engine.*` (scanning, tenancy), `com.garganttua.api.security.*` (auth, JWT, key management).
-- Working examples in `garganttua-api-core/src/main/java/com/garganttua/api/core/examples/`.
+- Reference configuration in `garganttua-api-spring/garganttua-api-spring-core/src/main/resources/application.properties`: `com.garganttua.api.engine.*` (scanning, tenancy), `com.garganttua.api.security.*` (auth, JWT, key management).
+- Authentication suppliers documentation in `docs/suppliers-documentation.md`.

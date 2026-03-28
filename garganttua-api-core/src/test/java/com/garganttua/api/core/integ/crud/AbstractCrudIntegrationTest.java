@@ -325,7 +325,6 @@ public abstract class AbstractCrudIntegrationTest {
         com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider())
                 .withScanner(new ReflectionsAnnotationScanner());
-        reflectionBuilder.build();
         IClass.setReflection(reflectionBuilder.build());
 
         IApiContextBuilder builder = ApiContextBuilder.builder();
@@ -339,8 +338,16 @@ public abstract class AbstractCrudIntegrationTest {
 
         // Build injection context (required dependency)
         injectionContextBuilder.build();
-        // Do NOT pre-build expressionContextBuilder — ApiContextBuilder.provide() adds
-        // required packages before triggering the build via handle()
+
+        // Pre-build expressionContextBuilder with the same packages that
+        // ApiContextBuilder.provide() would add. This avoids the tryResolve() race
+        // where the ExpressionContextBuilder builds during dependency resolution
+        // before the scanner is fully warmed up.
+        expressionContextBuilder.autoDetect(true);
+        expressionContextBuilder.withPackage("com.garganttua.core.expression.functions");
+        expressionContextBuilder.withPackage("com.garganttua.core.script.functions");
+        expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
+        expressionContextBuilder.build();
 
         ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(reflectionBuilder);
         ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);

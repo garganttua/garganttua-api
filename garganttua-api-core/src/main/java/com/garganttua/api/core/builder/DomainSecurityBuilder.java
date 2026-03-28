@@ -10,6 +10,7 @@ import com.garganttua.api.core.context.security.DomainSecurityContext;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.security.context.IAuthenticatorContext;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
@@ -34,6 +35,7 @@ public class DomainSecurityBuilder<E>
     private List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces;
     private IDomainSecurityAuthorizationBuilder domainSecurityAuthorizationBuilder;
     private boolean disabled = false;
+    private boolean hasCrudSecurityConfig = false;
     private IAuthorizationBuilder authorization;
     private IClass<?> entityClass;
     private Map<ISupplierBuilder<?, ? extends ISupplier<?>>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
@@ -121,7 +123,121 @@ public class DomainSecurityBuilder<E>
     }
 
     boolean hasSecurityConfiguration() {
-        return !this.disabled && (this.authenticator != null || this.authorization != null);
+        return !this.disabled && (this.authenticator != null || this.authorization != null || this.hasCrudSecurityConfig);
+    }
+
+    // --- CRUD access ---
+
+    private IDomainSecurityBuilder<E> setCrudAccess(String label, Access access) {
+        up().workflow(label).security().access(access);
+        this.hasCrudSecurityConfig = true;
+        return this;
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> creationAccess(Access access) {
+        return setCrudAccess(BusinessOperation.create.getLabel(), access);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> readAllAccess(Access access) {
+        return setCrudAccess(BusinessOperation.readAll.getLabel(), access);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> readOneAccess(Access access) {
+        return setCrudAccess(BusinessOperation.readOne.getLabel(), access);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> updateAccess(Access access) {
+        return setCrudAccess(BusinessOperation.update.getLabel(), access);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> deleteOneAccess(Access access) {
+        return setCrudAccess(BusinessOperation.deleteOne.getLabel(), access);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> deleteAllAccess(Access access) {
+        return setCrudAccess(BusinessOperation.deleteAll.getLabel(), access);
+    }
+
+    // --- CRUD authority (boolean) ---
+
+    private IDomainSecurityBuilder<E> setCrudAuthority(String label, boolean authority) {
+        up().workflow(label).security().authority(authority);
+        this.hasCrudSecurityConfig = true;
+        return this;
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> creationAuthority(boolean authority) {
+        return setCrudAuthority(BusinessOperation.create.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> readAllAuthority(boolean authority) {
+        return setCrudAuthority(BusinessOperation.readAll.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> readOneAuthority(boolean authority) {
+        return setCrudAuthority(BusinessOperation.readOne.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> updateAuthority(boolean authority) {
+        return setCrudAuthority(BusinessOperation.update.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> deleteOneAuthority(boolean authority) {
+        return setCrudAuthority(BusinessOperation.deleteOne.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> deleteAllAuthority(boolean authority) {
+        return setCrudAuthority(BusinessOperation.deleteAll.getLabel(), authority);
+    }
+
+    // --- CRUD authority (custom String) ---
+
+    private IDomainSecurityBuilder<E> setCrudAuthority(String label, String customAuthority) {
+        up().workflow(label).security().authority(customAuthority);
+        this.hasCrudSecurityConfig = true;
+        return this;
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> creationAuthority(String authority) {
+        return setCrudAuthority(BusinessOperation.create.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> readAllAuthority(String authority) {
+        return setCrudAuthority(BusinessOperation.readAll.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> readOneAuthority(String authority) {
+        return setCrudAuthority(BusinessOperation.readOne.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> updateAuthority(String authority) {
+        return setCrudAuthority(BusinessOperation.update.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> deleteOneAuthority(String authority) {
+        return setCrudAuthority(BusinessOperation.deleteOne.getLabel(), authority);
+    }
+
+    @Override
+    public IDomainSecurityBuilder<E> deleteAllAuthority(String authority) {
+        return setCrudAuthority(BusinessOperation.deleteAll.getLabel(), authority);
     }
 
 }

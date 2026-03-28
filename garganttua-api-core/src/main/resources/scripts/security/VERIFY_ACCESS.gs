@@ -2,7 +2,6 @@
 
 #@workflow
 #  Verifies security access before processing an operation.
-#  - Checks if security is disabled for this domain (skip if so)
 #  - Checks the operation's access level (anonymous, authenticated, tenant, owner)
 #  - Validates authentication if required
 #  - Validates tenant access if required
@@ -21,26 +20,26 @@ caller <- :arg(@0, "caller")
 
 // Get the access level for this operation
 access <- operationAccess(@operation)
+_isAnonymous <- equals(@access, "anonymous")
+_isTenant <- equals(@access, "tenant")
+_isOwner <- equals(@access, "owner")
 
-// For authenticated/tenant/owner access, require authentication
-if(equals(@access, "authenticated"), requireAuthentication(@0))
+// For non-anonymous access, require authorization token.
+// All functions used in if() arguments are safe (never throw) to handle eager evaluation.
+_hasAuth <- if(@_isAnonymous, true, notNull(:arg(@0, "authorization")))
+requirePresent(if(@_hasAuth, true))
 ! -> 401
 
-if(equals(@access, "tenant"), requireAuthentication(@0))
-! -> 401
-
-if(equals(@access, "owner"), requireAuthentication(@0))
-! -> 401
-
-// For tenant access, require tenantId
-if(equals(@access, "tenant"), requireTenantId(@caller))
+// For tenant/owner access, require tenantId on caller.
+// callerHasTenantId/callerHasOwnerId are safe (return false instead of throwing).
+_needsTenantId <- if(@_isTenant, true, @_isOwner)
+_hasTenantId <- if(@_needsTenantId, callerHasTenantId(@caller), true)
+requirePresent(if(@_hasTenantId, true))
 ! -> 403
 
-// For owner access, require both tenantId and ownerId
-if(equals(@access, "owner"), requireTenantId(@caller))
-! -> 403
-
-if(equals(@access, "owner"), requireOwnerId(@caller))
+// For owner access, require ownerId on caller
+_hasOwnerId <- if(@_isOwner, callerHasOwnerId(@caller), true)
+requirePresent(if(@_hasOwnerId, true))
 ! -> 403
 
 output <- 0 -> 0

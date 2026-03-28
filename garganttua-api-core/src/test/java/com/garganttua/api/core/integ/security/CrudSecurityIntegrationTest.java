@@ -1,0 +1,209 @@
+package com.garganttua.api.core.integ.security;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
+import com.garganttua.api.core.service.OperationRequest;
+import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.BusinessOperation;
+import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.WorkflowResult;
+
+@DisplayName("CRUD Security Configuration Tests")
+class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
+
+    private IDomainContext<?> buildSecuredDomain(SecurityConfigurator configurator) throws ApiException {
+        CapturingDao dao = new CapturingDao();
+        IApiContextBuilder builder = newBuilder();
+        var domainBuilder = builder.domain(IClass.getClass(User.class))
+                .tenant(true)
+                .entity()
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                .up()
+                .dto(IClass.getClass(UserDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(dao)
+                .up();
+
+        var secBuilder = domainBuilder.security();
+        configurator.configure(secBuilder);
+        secBuilder.up().up();
+
+        IApiContext context = buildAndStart(builder);
+        return context.getDomainContext("users").orElseThrow();
+    }
+
+    @FunctionalInterface
+    interface SecurityConfigurator {
+        void configure(com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder<?> builder);
+    }
+
+    // --- Helpers ---
+
+    private OperationDefinition findOperation(IDomainContext<?> ctx, BusinessOperation bo) {
+        return ctx.getDomainDefinition().operations().stream()
+                .filter(op -> op.getBusinessOperation() == bo)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private WorkflowResult executeWithoutAuth(IDomainContext<?> ctx, OperationDefinition op) {
+        // Request with no authorization token — should fail for non-anonymous access
+        OperationRequest request = superTenantScriptRequest(op);
+        User user = new User();
+        user.setName("test");
+        request.arg("entity", user);
+        return executeScript(ctx, request);
+    }
+
+    private WorkflowResult executeWithAuth(IDomainContext<?> ctx, OperationDefinition op) {
+        // Request with authorization token set
+        OperationRequest request = superTenantScriptRequest(op);
+        request.arg("authorization", new Object()); // non-null authorization
+        User user = new User();
+        user.setName("test");
+        request.arg("entity", user);
+        return executeScript(ctx, request);
+    }
+
+    // --- Tests ---
+
+    @Nested
+    @DisplayName("Access level propagation")
+    class AccessLevelPropagation {
+
+        @Test
+        @DisplayName("creationAccess(anonymous) sets anonymous access on create operation")
+        void creationAccessAnonymous() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.anonymous));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            assertNotNull(op);
+            assertEquals(Access.anonymous, op.access());
+        }
+
+        @Test
+        @DisplayName("readAllAccess(tenant) sets tenant access on readAll operation")
+        void readAllAccessTenant() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.readAll);
+            assertNotNull(op);
+            assertEquals(Access.tenant, op.access());
+        }
+
+        @Test
+        @DisplayName("updateAccess(owner) sets owner access on update operation")
+        void updateAccessOwner() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.updateAccess(Access.owner));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.update);
+            assertNotNull(op);
+            assertEquals(Access.owner, op.access());
+        }
+
+        @Test
+        @DisplayName("default access is authenticated")
+        void defaultAccessIsAuthenticated() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> {});
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            assertNotNull(op);
+            assertEquals(Access.authenticated, op.access());
+        }
+
+        @Test
+        @DisplayName("each operation can have different access levels")
+        void differentAccessLevels() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b
+                    .creationAccess(Access.tenant)
+                    .readAllAccess(Access.anonymous)
+                    .deleteAllAccess(Access.owner));
+
+            assertEquals(Access.tenant, findOperation(ctx, BusinessOperation.create).access());
+            assertEquals(Access.anonymous, findOperation(ctx, BusinessOperation.readAll).access());
+            assertEquals(Access.owner, findOperation(ctx, BusinessOperation.deleteAll).access());
+            // Unchanged ones keep default
+            assertEquals(Access.authenticated, findOperation(ctx, BusinessOperation.readOne).access());
+        }
+    }
+
+    @Nested
+    @DisplayName("Authority propagation")
+    class AuthorityPropagation {
+
+        @Test
+        @DisplayName("creationAuthority(true) sets authority on create operation")
+        void creationAuthorityTrue() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAuthority(true));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            assertTrue(op.authority());
+        }
+
+        @Test
+        @DisplayName("default authority is false")
+        void defaultAuthorityFalse() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> {});
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            assertFalse(op.authority());
+        }
+
+        @Test
+        @DisplayName("deleteOneAuthority(String) sets authority on deleteOne operation")
+        void customAuthorityString() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.deleteOneAuthority("users:delete"));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.deleteOne);
+            assertTrue(op.authority());
+        }
+    }
+
+    @Nested
+    @DisplayName("VERIFY_ACCESS script enforcement")
+    class VerifyAccessEnforcement {
+
+        @Test
+        @DisplayName("anonymous access allows unauthenticated request")
+        void anonymousAccessAllowsUnauthenticated() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.anonymous));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            WorkflowResult result = executeWithoutAuth(ctx, op);
+            assertTrue(result.isSuccess(), "anonymous access should allow request without auth");
+        }
+
+        @Test
+        @DisplayName("authenticated access rejects request without authorization token")
+        void authenticatedAccessRejectsWithoutAuth() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.authenticated));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            WorkflowResult result = executeWithoutAuth(ctx, op);
+            assertFalse(result.isSuccess(),
+                    "result: success=" + result.isSuccess() + " code=" + result.code()
+                    + " vars=" + result.variables());
+            assertEquals(401, result.code(), "authenticated access without token should return 401");
+        }
+
+        @Test
+        @DisplayName("authenticated access accepts request with authorization token")
+        void authenticatedAccessAcceptsWithAuth() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.authenticated));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.create);
+            WorkflowResult result = executeWithAuth(ctx, op);
+            assertTrue(result.isSuccess(), "authenticated access with token should succeed");
+        }
+
+        @Test
+        @DisplayName("tenant access rejects request without authorization token")
+        void tenantAccessRejectsWithoutAuth() throws ApiException {
+            IDomainContext<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
+            OperationDefinition op = findOperation(ctx, BusinessOperation.readAll);
+            WorkflowResult result = executeWithoutAuth(ctx, op);
+            assertFalse(result.isSuccess());
+            assertEquals(401, result.code());
+        }
+    }
+}
