@@ -11,7 +11,7 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IAuthenticationBuilder
-                extends IAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext> {
+                extends IAutomaticLinkedBuilder<IAuthenticationBuilder, IApiSecurityBuilder, IAuthenticationContext> {
 
         IAuthenticationBuilder authenticate(
                         String methodName) throws ApiException;

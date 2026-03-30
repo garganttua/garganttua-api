@@ -13,8 +13,8 @@ import com.garganttua.api.core.security.key.KeyHelper;
 import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Authentication(findPrincipal = true)
 public class StorableAuthorizationAuthentication extends AbstractAuthentication {
 
-	public StorableAuthorizationAuthentication(IDomainContext<?> domainContext) {
+	public StorableAuthorizationAuthentication(IDomain<?> domainContext) {
 		super(domainContext);
 	}
 
@@ -37,7 +37,7 @@ public class StorableAuthorizationAuthentication extends AbstractAuthentication 
 	}
 
 	@Inject
-	private IApiContext apiContext;
+	private IApi apiContext;
 
 	@Override
 	protected void doAuthentication() throws CoreException {
@@ -79,7 +79,7 @@ public class StorableAuthorizationAuthentication extends AbstractAuthentication 
 			ownerId = EntityAuthorizationHelper.getOwnerId(this.credential);
 			String uuid = EntityAuthorizationHelper.getUuid(this.credential);
 			caller = Caller.createTenantCallerWithOwnerId(caller.tenantId(), ownerId);
-			IOperationResponse response = this.authenticatorDomainContext.readOne(uuid, caller);
+			IOperationResponse response = this.authenticatorDomain.readOne(uuid, caller);
 
 			if (response.getResponseCode() == OperationResponseCode.OK) {
 				log.atDebug().log("Found principal identified with uuid " + uuid);

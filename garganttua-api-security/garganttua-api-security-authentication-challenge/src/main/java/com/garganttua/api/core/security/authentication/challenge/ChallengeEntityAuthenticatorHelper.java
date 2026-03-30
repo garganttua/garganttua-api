@@ -12,7 +12,7 @@ import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.security.key.IKeyRealm;
 
 public class ChallengeEntityAuthenticatorHelper {
@@ -26,7 +26,7 @@ public class ChallengeEntityAuthenticatorHelper {
 		return new Challenge(rawChallenge, type, challengeExpiration);
 	}
 
-	public static Challenge getOrCreateChallengeAndSave(ICaller caller, Object entity, IDomainContext<?> domainContext) throws CoreException {
+	public static Challenge getOrCreateChallengeAndSave(ICaller caller, Object entity, IDomain<?> domainContext) throws CoreException {
 		ChallengeAuthenticatorInfos infos = ChallengeEntityAuthenticatorChecker.checkEntityAuthenticatorClass(entity.getClass());
 		ChallengeType type = infos.challengeType();
 		int lifeTime = infos.challengeLifeTime();

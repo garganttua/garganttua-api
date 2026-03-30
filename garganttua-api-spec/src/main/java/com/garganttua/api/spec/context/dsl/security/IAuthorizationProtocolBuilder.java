@@ -8,7 +8,7 @@ import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public interface IAuthorizationProtocolBuilder
-        extends IAutomaticLinkedBuilder<IAuthorizationProtocolBuilder, IApiContextSecurityBuilder, IAuthorizationProtocolContext> {
+        extends IAutomaticLinkedBuilder<IAuthorizationProtocolBuilder, IApiSecurityBuilder, IAuthorizationProtocolContext> {
 
     IAuthorizationProtocolBuilder getAuthorization(String methodName) throws ApiException;
 

@@ -43,7 +43,25 @@
       "Bash(mv garganttua-dao:*)",
       "Bash(mv garganttua-dao-mongodb:*)",
       "Bash(mvn clean:*)",
-      "Bash(mvn test:*)"
+      "Bash(mvn test:*)",
+      "Bash(find /home/jeremy/1 - GARGANTTUA/1 - PROJECTS/1 - INTERNAL/garganttua-api -type f \\\\\\(-name *VERIFY* -o -name *verify* -o -name *access* \\\\\\))",
+      "Bash(2)",
+      "Bash(while read:*)",
+      "Bash(then echo:*)",
+      "Bash(fi)",
+      "Bash(for i:*)",
+      "Bash(do echo:*)",
+      "Bash(for f:*)",
+      "Read(//home/jeremy/1 - GARGANTTUA/1 - PROJECTS/1 - INTERNAL/garganttua-api/garganttua-api-spec/src/main/java/com/garganttua/api/spec/entity/annotations/**)",
+      "Bash(do mvn:*)",
+      "Bash(then sed:*)",
+      "Bash(sort -rn __NEW_LINE_b12a675c0abc9d40__ echo \"\" echo \"IDomainContext references:\" grep -r \"IDomainContext\\\\>\" --include=\"*.java\")",
+      "Bash(sort -rn __NEW_LINE_b12a675c0abc9d40__ echo \"\" echo \"IApiContextBuilder references:\" grep -r \"IApiContextBuilder\\\\>\" --include=\"*.java\")",
+      "Bash(wc -l __NEW_LINE_c78e7dfb99bf5cda__ echo \"\" echo \"IDomainContext in tests:\" grep -r \"IDomainContext\\\\>\" --include=\"*.java\" */src/test)",
+      "Bash(wc -l __NEW_LINE_c78e7dfb99bf5cda__ echo \"\" echo \"IApiContextBuilder in tests:\" grep -r \"IApiContextBuilder\\\\>\" --include=\"*.java\" */src/test)",
+      "Bash(wc -l __NEW_LINE_c78e7dfb99bf5cda__ echo \"\" echo \"All Context* references in tests:\" grep -r \"Context\" --include=\"*.java\" */src/test)",
+      "Bash(wc -l })",
+      "Bash(do basename:*)"
     ]
   }
 }

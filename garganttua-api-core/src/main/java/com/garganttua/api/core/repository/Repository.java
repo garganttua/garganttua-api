@@ -17,7 +17,7 @@ import org.javatuples.Pair;
 import com.garganttua.api.core.repository.RepositoryException;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IDtoDefinition;
@@ -43,7 +43,7 @@ public class Repository implements IRepository {
     private final IMapper mapper = DefaultMapper.mapper();
     private final IFilterMapper filterMapper = new FilterMapper();
 
-    private IDomainContext<?> domainContext;
+    private IDomain<?> domainContext;
     private final Object domainContextLock = new Object();
 
     public Repository(List<IDtoContext<?>> dtoContexts, IClass<?> entityClass) {
@@ -52,13 +52,13 @@ public class Repository implements IRepository {
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
-    public void setDomainContext(IDomainContext<?> domainContext) {
+    public void setDomain(IDomain<?> domainContext) {
         synchronized (domainContextLock) {
             this.domainContext = Objects.requireNonNull(domainContext, "Domain context cannot be null");
         }
     }
 
-    private IDomainContext<?> getDomainContext() {
+    private IDomain<?> getDomain() {
         synchronized (domainContextLock) {
             return this.domainContext;
         }
@@ -127,7 +127,7 @@ public class Repository implements IRepository {
 
     private List<Map<String, Object>> queryAllDtos(Optional<IPageable> pageable, Optional<IFilter> filter,
             Optional<ISort> sort) throws ApiException {
-        IDomainContext<?> dc = getDomainContext();
+        IDomain<?> dc = getDomain();
         if (dc != null) {
             return queryWithFilterMapping(dc, pageable, filter, sort);
         }
@@ -136,7 +136,7 @@ public class Repository implements IRepository {
                 .toList();
     }
 
-    private List<Map<String, Object>> queryWithFilterMapping(IDomainContext<?> dc, Optional<IPageable> pageable,
+    private List<Map<String, Object>> queryWithFilterMapping(IDomain<?> dc, Optional<IPageable> pageable,
             Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
         IDomainDefinition<?> definition = dc.getDomainDefinition();
         List<Pair<IClass<?>, IFilter>> mappedFilters = filterMapper.map(definition, filter.orElse(null));
@@ -216,7 +216,7 @@ public class Repository implements IRepository {
     }
 
     private String extractUuidFromEntity(Object entity) throws ApiException {
-        IDomainContext<?> dc = getDomainContext();
+        IDomain<?> dc = getDomain();
         if (dc == null) {
             throw new RepositoryException("Domain context not set, cannot extract UUID from entity");
         }

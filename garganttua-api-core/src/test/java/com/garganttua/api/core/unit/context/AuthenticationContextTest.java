@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.context.security.AuthenticationContext;
 import com.garganttua.api.core.definition.AuthenticationDefinition;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 
 @DisplayName("AuthenticationContext Tests")
@@ -66,20 +66,20 @@ class AuthenticationContextTest {
 
     @Nested
     @DisplayName("domainContext")
-    class DomainContextTests {
+    class DomainTests {
 
         @Test
         @DisplayName("domainContext is null by default")
         void domainContextNullByDefault() {
-            assertNull(context.getDomainContext());
+            assertNull(context.getDomain());
         }
 
         @Test
-        @DisplayName("setDomainContext stores reference")
-        void setDomainContextStoresReference() {
-            IDomainContext<?> domainCtx = mock(IDomainContext.class);
-            context.setDomainContext(domainCtx);
-            assertSame(domainCtx, context.getDomainContext());
+        @DisplayName("setDomain stores reference")
+        void setDomainStoresReference() {
+            IDomain<?> domainCtx = mock(IDomain.class);
+            context.setDomain(domainCtx);
+            assertSame(domainCtx, context.getDomain());
         }
     }
 }

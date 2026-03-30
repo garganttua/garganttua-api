@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
@@ -19,8 +19,8 @@ import com.garganttua.core.reflection.IClass;
 @DisplayName("RequestBuilder Integration Tests")
 class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
 
-    private IApiContext context;
-    private IDomainContext<?> productCtx;
+    private IApi context;
+    private IDomain<?> productCtx;
     private CapturingDao productDao;
     private ICaller caller;
 
@@ -29,7 +29,7 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
         productDao = new CapturingDao();
         caller = new Caller("T1", "T1", "caller1", null, true, true, null);
 
-        IApiContextBuilder builder = newBuilder();
+        IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(Product.class))
                 .tenant(true)
                 .entity()
@@ -42,10 +42,10 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
             .up();
 
         context = buildAndStart(builder);
-        productCtx = context.getDomainContext("products").orElseThrow();
+        productCtx = context.getDomain("products").orElseThrow();
     }
 
-    // --- CRUD via IDomainContext shortcut methods (all go through invoke()) ---
+    // --- CRUD via IDomain shortcut methods (all go through invoke()) ---
 
     @Test
     @DisplayName("createOne via shortcut persists entity")
@@ -83,7 +83,7 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
         assertEquals(0, productDao.getStorage().size());
     }
 
-    // --- IApiContext.request(domainName) ---
+    // --- IApi.request(domainName) ---
 
     @Test
     @DisplayName("context.request(unknownDomain) throws ApiException")

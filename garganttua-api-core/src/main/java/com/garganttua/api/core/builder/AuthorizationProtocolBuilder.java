@@ -6,7 +6,7 @@ import java.util.Objects;
 import com.garganttua.api.core.context.security.AuthorizationProtocolContext;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.security.context.IAuthorizationProtocolContext;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolMethodBinderBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
@@ -15,14 +15,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class AuthorizationProtocolBuilder
-        extends AbstractAutomaticLinkedBuilder<IAuthorizationProtocolBuilder, IApiContextSecurityBuilder, IAuthorizationProtocolContext>
+        extends AbstractAutomaticLinkedBuilder<IAuthorizationProtocolBuilder, IApiSecurityBuilder, IAuthorizationProtocolContext>
         implements IAuthorizationProtocolBuilder {
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
     private IAuthorizationProtocolMethodBinderBuilder getAuthorization;
     private IAuthorizationProtocolMethodBinderBuilder setAuthorization;
 
-    public AuthorizationProtocolBuilder(IApiContextSecurityBuilder contextSecurityBuilder,
+    public AuthorizationProtocolBuilder(IApiSecurityBuilder contextSecurityBuilder,
             ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(contextSecurityBuilder);
         this.supplier = Objects.requireNonNull(supplier, "Supplier class cannot be null");

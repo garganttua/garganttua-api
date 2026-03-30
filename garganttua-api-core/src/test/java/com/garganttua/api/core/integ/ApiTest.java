@@ -9,11 +9,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.context.ApiContext;
+import com.garganttua.api.core.context.Api;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.endpoint.IEndpoint;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
@@ -32,10 +32,10 @@ class ApiTest extends AbstractCrudIntegrationTest {
         private boolean startCalled = false;
         private boolean stopCalled = false;
         private LifecycleStatus currentStatus = LifecycleStatus.NEW;
-        private IDomainContext<?> domainContext;
+        private IDomain<?> domainContext;
 
         @Override
-        public void handle(IDomainContext<?> context) {
+        public void handle(IDomain<?> context) {
             this.handleCalled = true;
             this.domainContext = context;
         }
@@ -81,12 +81,12 @@ class ApiTest extends AbstractCrudIntegrationTest {
         public boolean isInitCalled() { return initCalled; }
         public boolean isStartCalled() { return startCalled; }
         public boolean isStopCalled() { return stopCalled; }
-        public IDomainContext<?> getDomainContext() { return domainContext; }
+        public IDomain<?> getDomain() { return domainContext; }
     }
 
     // ───── Fixtures ─────
 
-    private IApiContextBuilder builder;
+    private IApiBuilder builder;
     private StubDao userDao;
     private StubDao productDao;
     private TestInterface userInterface;
@@ -132,18 +132,18 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("builds a valid API context with two domains")
         void buildsValidContext() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
             assertNotNull(context);
-            assertTrue(context instanceof ApiContext);
+            assertTrue(context instanceof Api);
         }
 
         @Test
         @DisplayName("context contains the user domain")
         void contextContainsUserDomain() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            Optional<IDomainContext<?>> userCtx = context.getDomainContext("users");
+            Optional<IDomain<?>> userCtx = context.getDomain("users");
             assertTrue(userCtx.isPresent());
             assertEquals(IClass.getClass(User.class), userCtx.get().getEntityClass());
         }
@@ -151,9 +151,9 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("context contains the product domain")
         void contextContainsProductDomain() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            Optional<IDomainContext<?>> productCtx = context.getDomainContext("products");
+            Optional<IDomain<?>> productCtx = context.getDomain("products");
             assertTrue(productCtx.isPresent());
             assertEquals(IClass.getClass(Product.class), productCtx.get().getEntityClass());
         }
@@ -161,28 +161,28 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("user domain is a tenant entity")
         void userDomainIsTenant() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            IDomainContext<?> userCtx = context.getDomainContext("users").orElseThrow();
+            IDomain<?> userCtx = context.getDomain("users").orElseThrow();
             assertTrue(userCtx.isTenantEntity());
         }
 
         @Test
         @DisplayName("product domain is not a tenant entity")
         void productDomainIsNotTenant() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            IDomainContext<?> productCtx = context.getDomainContext("products").orElseThrow();
+            IDomain<?> productCtx = context.getDomain("products").orElseThrow();
             assertFalse(productCtx.isTenantEntity());
         }
 
         @Test
         @DisplayName("each domain has a repository")
         void domainsHaveRepositories() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            IDomainContext<?> userCtx = context.getDomainContext("users").orElseThrow();
-            IDomainContext<?> productCtx = context.getDomainContext("products").orElseThrow();
+            IDomain<?> userCtx = context.getDomain("users").orElseThrow();
+            IDomain<?> productCtx = context.getDomain("products").orElseThrow();
 
             assertNotNull(userCtx.getRepository());
             assertNotNull(productCtx.getRepository());
@@ -191,10 +191,10 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("each domain has workflows")
         void domainsHaveWorkflows() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            IDomainContext<?> userCtx = context.getDomainContext("users").orElseThrow();
-            IDomainContext<?> productCtx = context.getDomainContext("products").orElseThrow();
+            IDomain<?> userCtx = context.getDomain("users").orElseThrow();
+            IDomain<?> productCtx = context.getDomain("products").orElseThrow();
 
             assertNotNull(userCtx.getWorkflow());
             assertNotNull(productCtx.getWorkflow());
@@ -208,7 +208,7 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("init and start the API context")
         void initAndStart() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
             assertDoesNotThrow(() -> context.onInit());
             assertDoesNotThrow(() -> context.onStart());
@@ -217,7 +217,7 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("interface receives handle and lifecycle callbacks")
         void interfaceReceivesCallbacks() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
             context.onInit();
             context.onStart();
@@ -225,14 +225,14 @@ class ApiTest extends AbstractCrudIntegrationTest {
             assertTrue(userInterface.isHandleCalled(), "handle() should be called on init");
             assertTrue(userInterface.isInitCalled(), "onInit() should be called");
             assertTrue(userInterface.isStartCalled(), "onStart() should be called");
-            assertNotNull(userInterface.getDomainContext(), "domain context should be passed to handle()");
-            assertEquals("users", userInterface.getDomainContext().getDomain());
+            assertNotNull(userInterface.getDomain(), "domain context should be passed to handle()");
+            assertEquals("users", userInterface.getDomain().getDomain());
         }
 
         @Test
         @DisplayName("stop the API context")
         void stop() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
             context.onInit();
             context.onStart();
@@ -244,15 +244,15 @@ class ApiTest extends AbstractCrudIntegrationTest {
         @Test
         @DisplayName("full lifecycle: init -> start -> stop")
         void fullLifecycle() throws ApiException {
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
             context.onInit();
             context.onStart();
             context.onStop();
 
             // After full lifecycle, all domains should still be accessible
-            assertTrue(context.getDomainContext("users").isPresent());
-            assertTrue(context.getDomainContext("products").isPresent());
+            assertTrue(context.getDomain("users").isPresent());
+            assertTrue(context.getDomain("products").isPresent());
         }
     }
 }

@@ -6,8 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.operation.OperationPath;
 import com.garganttua.api.spec.operation.TechnicalOperation;
@@ -52,9 +52,9 @@ public interface IOperationRequest {
 	ArgKey<IAuthorization> AUTHORIZATION = ArgKey.of("authorization", IClass.getClass(IAuthorization.class));
 	ArgKey<Byte[]> RAW_AUTHORIZATION = ArgKey.of("rawAuthorization", IClass.getClass(Byte[].class));
 
-	ArgKey<IApiContext> API_CONTEXT = ArgKey.of("apiContext", IClass.getClass(IApiContext.class));
+	ArgKey<IApi> API_CONTEXT = ArgKey.of("apiContext", IClass.getClass(IApi.class));
 	@SuppressWarnings("rawtypes")
-	ArgKey<IDomainContext> DOMAIN_CONTEXT = ArgKey.of("domainContext", IClass.getClass(IDomainContext.class));
+	ArgKey<IDomain> DOMAIN_CONTEXT = ArgKey.of("domainContext", IClass.getClass(IDomain.class));
 	ArgKey<IRepository> REPOSITORY = ArgKey.of("repository", IClass.getClass(IRepository.class));
 
 	// --- Factory ---

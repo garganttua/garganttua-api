@@ -1,6 +1,6 @@
 package com.garganttua.api.core.unit.builder;
 
-import com.garganttua.api.core.builder.ApiContextBuilder;
+import com.garganttua.api.core.builder.ApiBuilder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -55,7 +55,7 @@ class EntityBuilderTest {
 
     @BeforeEach
     void setUp() throws ApiException {
-        domainBuilder = ApiContextBuilder.builder().domain(IClass.getClass(TestEntity.class));
+        domainBuilder = ApiBuilder.builder().domain(IClass.getClass(TestEntity.class));
         entityBuilder = domainBuilder.entity();
     }
 

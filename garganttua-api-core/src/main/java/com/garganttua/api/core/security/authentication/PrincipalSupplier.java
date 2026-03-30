@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.OperationResponseCode;
@@ -55,11 +55,11 @@ public class PrincipalSupplier implements IContextualSupplier<Object, IRuntimeCo
         }
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
-        Optional<?> domainContextOpt = context.getVariable("domainContext", IClass.getClass(IDomainContext.class));
+        Optional<?> domainContextOpt = context.getVariable("domainContext", IClass.getClass(IDomain.class));
         if (domainContextOpt.isEmpty()) {
             throw new SupplyException("Variable 'domainContext' not found in runtime context");
         }
-        IDomainContext domainContext = (IDomainContext) domainContextOpt.get();
+        IDomain domainContext = (IDomain) domainContextOpt.get();
         String domainName = domainContext.getDomainName();
 
         ObjectAddress idFieldAddress = domainContext.getEntityDefinition().id();

@@ -9,7 +9,7 @@ mvn clean install                        # Full build with tests
 mvn -B package                           # Package without interactive prompts
 mvn test                                 # Run all tests
 mvn test -pl garganttua-api-core         # Run tests for a single module
-mvn test -pl garganttua-api-core -Dtest=ApiContextBuilderTest  # Run a single test class
+mvn test -pl garganttua-api-core -Dtest=ApiBuilderTest  # Run a single test class
 ```
 
 Version bumping scripts (preserve suffixes like -ALPHA01): `./new-major.sh`, `./new-minor.sh`, `./new-patch.sh`
@@ -35,7 +35,7 @@ Version bumping scripts (preserve suffixes like -ALPHA01): `./new-major.sh`, `./
 
 **DSL Builder pattern** — Hierarchical fluent API for context construction. Builder interfaces live in `garganttua-api-spec/context/dsl/`, implementations in `garganttua-api-core/builder/`. Navigation uses `up()` to return to parent builder. Example:
 ```java
-ApiContextBuilder.builder()
+ApiBuilder.builder()
     .superTenantId("SUPER_TENANT")
     .domain(User.class)
         .entity().id("id").uuid("uuid").tenantId("tenantId").up()
@@ -47,15 +47,15 @@ ApiContextBuilder.builder()
 
 **Method Binder pattern** — Dynamic method binding via `garganttua-core` reflection. Binder builders in `core/builder/binder/` wire up lifecycle hooks (afterGet, beforeCreate, etc.) and security methods (authenticate, sign, validate) at build time.
 
-**Custom DI framework** — Uses `garganttua-core` injection (`IInjectionContext`, `IInjectionContextBuilder`), **not** Spring DI internally. The Spring module adapts between the two. `ApiContextBuilder` registers built contexts as named beans.
+**Custom DI framework** — Uses `garganttua-core` injection (`IInjectionContext`, `IInjectionContextBuilder`), **not** Spring DI internally. The Spring module adapts between the two. `ApiBuilder` registers built contexts as named beans.
 
 **Pipeline pattern** — Service execution flows through `IPipeline` → `IPhase` → `IPhaseScript`. Script definitions live in `garganttua-api-core/src/main/resources/scripts/` (business/, security/, crud/, response/). See `PIPELINE.md` in that directory for the 8-stage request pipeline architecture.
 
-**Definition/Context separation** — Definitions (immutable config: `EntityDefinition`, `DomainDefinition`) are built once; Contexts (runtime: `EntityContext`, `DomainContext`) aggregate definitions and provide services like `invoke(IServiceRequest)`.
+**Definition/Context separation** — Definitions (immutable config: `EntityDefinition`, `DomainDefinition`) are built once; Contexts (runtime: `EntityContext`, `Domain`) aggregate definitions and provide services like `invoke(IServiceRequest)`.
 
-**Multi-tenancy** — First-class tenant isolation via `tenantId`/`ownerId` fields and headers. Super-tenant bypasses tenant filtering; magic-owner bypasses ownership. `RepositoryFilterTools` implements the access filter matrix documented in README.md (public/hiddenable/shared/owned entity flag combinations). Can be disabled globally via `ApiContextBuilder.builder().multiTenant(false)` — strict mode: `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` when multi-tenancy is disabled.
+**Multi-tenancy** — First-class tenant isolation via `tenantId`/`ownerId` fields and headers. Super-tenant bypasses tenant filtering; magic-owner bypasses ownership. `RepositoryFilterTools` implements the access filter matrix documented in README.md (public/hiddenable/shared/owned entity flag combinations). Can be disabled globally via `ApiBuilder.builder().multiTenant(false)` — strict mode: `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` when multi-tenancy is disabled.
 
-**Fluent Request Builder** — `IDomainContext.request()` and `IApiContext.request(domainName)` return an `IRequestBuilder` with CRUD shortcuts (`createOne(body)`, `readOne(uuid)`, `readAll()`, `updateOne(uuid, body)`, `deleteOne(uuid)`, `deleteAll()`). Chain with `.caller()`, `.filter()`, `.page()`, `.sort()` etc. Terminal: `.execute()` (build+invoke) or `.build()` then `.execute()` for two-step usage.
+**Fluent Request Builder** — `IDomain.request()` and `IApi.request(domainName)` return an `IRequestBuilder` with CRUD shortcuts (`createOne(body)`, `readOne(uuid)`, `readAll()`, `updateOne(uuid, body)`, `deleteOne(uuid)`, `deleteAll()`). Chain with `.caller()`, `.filter()`, `.page()`, `.sort()` etc. Terminal: `.execute()` (build+invoke) or `.build()` then `.execute()` for two-step usage.
 
 ### Annotation Categories (garganttua-api-spec)
 

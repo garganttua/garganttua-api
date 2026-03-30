@@ -10,17 +10,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.garganttua.api.core.builder.binder.ApiContextStartupBinderBuilder;
-import com.garganttua.api.core.context.ApiContext;
+import com.garganttua.api.core.builder.binder.ApiStartupBinderBuilder;
+import com.garganttua.api.core.context.Api;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.ContextBuildingStage;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
+import com.garganttua.api.spec.context.BuildingStage;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
+import com.garganttua.api.spec.context.dsl.IApiStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
@@ -47,10 +47,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Bootstrap
 @Scan(scan = "com.garganttua.api.core")
-public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiContextBuilder, IApiContext>
-		implements IApiContextBuilder {
+public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, IApi>
+		implements IApiBuilder {
 
-	private ApiContextBuilder() {
+	private ApiBuilder() {
 		super(Set.of(
 						DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
 						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD),
@@ -66,20 +66,20 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	private volatile boolean multiTenant = true;
 
 	private final Map<IClass<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
-	private volatile ContextSecurityBuilder securityBuilder;
-	private final List<ApiContextStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
+	private volatile SecurityBuilder securityBuilder;
+	private final List<ApiStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
 	private volatile IInjectionContext injectionContext;
 
-	public static IApiContextBuilder builder() {
-		return new ApiContextBuilder();
+	public static IApiBuilder builder() {
+		return new ApiBuilder();
 				
 	}
 
 	@Override
-	public IApiContextBuilder superTenantId(String superTenantId) {
+	public IApiBuilder superTenantId(String superTenantId) {
 		if (!this.multiTenant) {
 			throw new ApiException("Cannot set superTenantId when multi-tenancy is disabled");
 		}
@@ -88,16 +88,16 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage,
+	public IApiStartupBinderBuilder startup(BuildingStage stage,
 			ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
-		ApiContextStartupBinderBuilder binder = new ApiContextStartupBinderBuilder(this, supplier);
+		ApiStartupBinderBuilder binder = new ApiStartupBinderBuilder(this, supplier);
 		this.startupBinderBuilders.add(binder);
 		return binder;
 	}
 
 	@Override
-	public IApiContextStartupBinderBuilder startup(ContextBuildingStage stage, Object object) throws ApiException {
-		ApiContextStartupBinderBuilder binder = new ApiContextStartupBinderBuilder(this, object);
+	public IApiStartupBinderBuilder startup(BuildingStage stage, Object object) throws ApiException {
+		ApiStartupBinderBuilder binder = new ApiStartupBinderBuilder(this, object);
 		this.startupBinderBuilders.add(binder);
 		return binder;
 	}
@@ -112,7 +112,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public IApiContextBuilder superTenantAutoCreate(boolean b) throws ApiException {
+	public IApiBuilder superTenantAutoCreate(boolean b) throws ApiException {
 		if (!this.multiTenant) {
 			throw new ApiException("Cannot set superTenantAutoCreate when multi-tenancy is disabled");
 		}
@@ -121,7 +121,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public IApiContextBuilder multiTenant(boolean enabled) throws ApiException {
+	public IApiBuilder multiTenant(boolean enabled) throws ApiException {
 		if (!enabled && this.superTenantId != null) {
 			throw new ApiException("Cannot disable multi-tenancy when superTenantId is already set");
 		}
@@ -133,9 +133,9 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public synchronized IApiContextSecurityBuilder security() {
+	public synchronized IApiSecurityBuilder security() {
 		if (this.securityBuilder == null) {
-			this.securityBuilder = new ContextSecurityBuilder(this.packages, this);
+			this.securityBuilder = new SecurityBuilder(this.packages, this);
 		}
 		return this.securityBuilder;
 	}
@@ -144,13 +144,13 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		return this.packages.toArray(new String[0]);
 	}
 
-	public IApiContextBuilder withPackage(String packageName) {
+	public IApiBuilder withPackage(String packageName) {
 		log.atDebug().log("Adding package: {}", packageName);
 		this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
 		return this;
 	}
 
-	public IApiContextBuilder withPackages(String[] packageNames) {
+	public IApiBuilder withPackages(String[] packageNames) {
 		log.atDebug().log("Adding {} packages", packageNames.length);
 		Objects.requireNonNull(packageNames, "Package names cannot be null");
 		for (String pkg : packageNames) {
@@ -196,42 +196,42 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 		log.atTrace().log("Exiting doPostBuildWithDependency() method");
 	}
 
-	private void registerBuiltObjectInContext(IInjectionContext context, IApiContext apiContext) {
-		log.atDebug().log("Registering IApiContext as bean in InjectionContext");
+	private void registerBuiltObjectInContext(IInjectionContext context, IApi apiContext) {
+		log.atDebug().log("Registering IApi as bean in InjectionContext");
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
-		BeanReference<IApiContext> beanRef = new BeanReference<>(
-				IClass.getClass(IApiContext.class),
+		BeanReference<IApi> beanRef = new BeanReference<>(
+				IClass.getClass(IApi.class),
 				Optional.of(BeanStrategy.singleton),
-				Optional.of("ApiContext"),
+				Optional.of("Api"),
 				Set.of());
 		context.addBean(providerName, beanRef, apiContext);
-		log.atDebug().log("IApiContext successfully registered as bean with 'ApiContext' name");
+		log.atDebug().log("IApi successfully registered as bean with 'Api' name");
 
 		// Register each domain context
-		for (Map.Entry<String, IDomainContext<?>> entry : ((ApiContext) apiContext).getDomainContexts().entrySet()) {
+		for (Map.Entry<String, IDomain<?>> entry : ((Api) apiContext).getDomains().entrySet()) {
 			String domainName = entry.getKey();
-			IDomainContext<?> domainContext = entry.getValue();
+			IDomain<?> domainContext = entry.getValue();
 
 			@SuppressWarnings("unchecked")
-			BeanReference<IDomainContext<?>> domainBeanRef = new BeanReference<>(
-					(IClass<IDomainContext<?>>) (IClass<?>) IClass.getClass(IDomainContext.class),
+			BeanReference<IDomain<?>> domainBeanRef = new BeanReference<>(
+					(IClass<IDomain<?>>) (IClass<?>) IClass.getClass(IDomain.class),
 					Optional.of(BeanStrategy.singleton),
 					Optional.of("domain." + domainName),
 					Set.of());
 			context.addBean(providerName, domainBeanRef, domainContext);
-			log.atDebug().log("IDomainContext successfully registered as bean with 'domain.{}' name", domainName);
+			log.atDebug().log("IDomain successfully registered as bean with 'domain.{}' name", domainName);
 
 			// Register the tenant domain context with a well-known bean name
 			if (domainContext.isTenantEntity()) {
 				@SuppressWarnings("unchecked")
-				BeanReference<IDomainContext<?>> tenantBeanRef = new BeanReference<>(
-						(IClass<IDomainContext<?>>) (IClass<?>) IClass.getClass(IDomainContext.class),
+				BeanReference<IDomain<?>> tenantBeanRef = new BeanReference<>(
+						(IClass<IDomain<?>>) (IClass<?>) IClass.getClass(IDomain.class),
 						Optional.of(BeanStrategy.singleton),
-						Optional.of("tenantDomainContext"),
+						Optional.of("tenantDomain"),
 						Set.of());
 				context.addBean(providerName, tenantBeanRef, domainContext);
-				log.atInfo().log("Tenant domain context registered as bean 'tenantDomainContext' (domain: {})", domainName);
+				log.atInfo().log("Tenant domain context registered as bean 'tenantDomain' (domain: {})", domainName);
 			}
 		}
 
@@ -268,7 +268,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	protected synchronized IApiContext doBuild() throws ApiException {
+	protected synchronized IApi doBuild() throws ApiException {
 		log.atTrace().log("Entering doBuild() method");
 
 		try {
@@ -281,10 +281,10 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 			registerMapperBean();
 
 			// Build all domain contexts
-			Map<String, IDomainContext<?>> domainContexts = new HashMap<>();
+			Map<String, IDomain<?>> domainContexts = new HashMap<>();
 			for (DomainBuilder<?> domainBuilder : this.domainBuilders.values()) {
 				domainBuilder.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
-				IDomainContext<?> domainContext = domainBuilder.build();
+				IDomain<?> domainContext = domainBuilder.build();
 				domainContexts.put(domainContext.getDomain(), domainContext);
 				log.atDebug().log("Built domain context: {}", domainContext.getDomain());
 			}
@@ -292,7 +292,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 			// Validate tenant domain presence when multi-tenancy is enabled
 			if (this.multiTenant) {
 				boolean hasTenantDomain = domainContexts.values().stream()
-						.anyMatch(IDomainContext::isTenantEntity);
+						.anyMatch(IDomain::isTenantEntity);
 				if (!hasTenantDomain) {
 					throw new ApiException(
 							"Multi-tenancy is enabled but no domain is marked as tenant. "
@@ -308,16 +308,16 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 
 			// Build startup binders
 			List<IMethodBinder<Void>> startupBinders = new ArrayList<>();
-			for (ApiContextStartupBinderBuilder binder : this.startupBinderBuilders) {
+			for (ApiStartupBinderBuilder binder : this.startupBinderBuilders) {
 				startupBinders.add(binder.build());
 			}
 			log.atDebug().log("Built {} startup binders", startupBinders.size());
 
 			// Create and return API context
-			IApiContext apiContext = new ApiContext(this.injectionContext, domainContexts,
+			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant, startupBinders);
 
-			log.atDebug().log("Built ApiContext with {} domains", domainContexts.size());
+			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");
 
 			return apiContext;
@@ -336,7 +336,7 @@ public class ApiContextBuilder extends AbstractAutomaticDependentBuilder<IApiCon
 	}
 
 	@Override
-	public IApiContextBuilder provide(IObservableBuilder<?, ?> dependency) throws ApiException {
+	public IApiBuilder provide(IObservableBuilder<?, ?> dependency) throws ApiException {
 		if (dependency instanceof IInjectionContextBuilder builder) {
 			this.injectionContextBuilder = builder;
 			log.atDebug().log("IInjectionContextBuilder captured via provide()");

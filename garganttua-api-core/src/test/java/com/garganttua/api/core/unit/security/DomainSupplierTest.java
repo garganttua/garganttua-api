@@ -16,14 +16,14 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.core.security.authentication.DomainContextSupplier;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.core.security.authentication.DomainSupplier;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.SupplyException;
 
-@DisplayName("DomainContextSupplier Tests")
-class DomainContextSupplierTest {
+@DisplayName("DomainSupplier Tests")
+class DomainSupplierTest {
 
     @BeforeAll
     static void initReflection() {
@@ -33,16 +33,16 @@ class DomainContextSupplierTest {
                 .build());
     }
 
-    private DomainContextSupplier supplier;
+    private DomainSupplier supplier;
     @SuppressWarnings("rawtypes")
     private IRuntimeContext runtimeContext;
-    private IDomainContext<?> domainContext;
+    private IDomain<?> domainContext;
 
     @BeforeEach
     void setUp() {
-        supplier = new DomainContextSupplier();
+        supplier = new DomainSupplier();
         runtimeContext = mock(IRuntimeContext.class);
-        domainContext = mock(IDomainContext.class);
+        domainContext = mock(IDomain.class);
     }
 
     @Nested
@@ -50,9 +50,9 @@ class DomainContextSupplierTest {
     class TypeMetadata {
 
         @Test
-        @DisplayName("getSuppliedType returns IDomainContext type")
-        void suppliedTypeIsDomainContext() {
-            assertEquals(IDomainContext.class, supplier.getSuppliedType());
+        @DisplayName("getSuppliedType returns IDomain type")
+        void suppliedTypeIsDomain() {
+            assertEquals(IDomain.class, supplier.getSuppliedType());
         }
 
         @Test
@@ -75,7 +75,7 @@ class DomainContextSupplierTest {
         @SuppressWarnings("unchecked")
         @Test
         @DisplayName("throws when domainContext variable is missing")
-        void throwsOnMissingDomainContext() {
+        void throwsOnMissingDomain() {
             when(runtimeContext.getVariable(eq("domainContext"), any(IClass.class))).thenReturn(Optional.empty());
             assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
         }
@@ -94,9 +94,9 @@ class DomainContextSupplierTest {
 
         @Test
         @DisplayName("returns domainContext from runtime context")
-        void returnsDomainContext() throws SupplyException {
+        void returnsDomain() throws SupplyException {
             @SuppressWarnings("rawtypes")
-            Optional<IDomainContext> result = supplier.supply(runtimeContext);
+            Optional<IDomain> result = supplier.supply(runtimeContext);
 
             assertTrue(result.isPresent());
             assertSame(domainContext, result.get());

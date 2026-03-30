@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.operation.OperationDefinition;
@@ -21,9 +21,9 @@ import com.garganttua.core.workflow.WorkflowResult;
 @DisplayName("CRUD Security Configuration Tests")
 class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
 
-    private IDomainContext<?> buildSecuredDomain(SecurityConfigurator configurator) throws ApiException {
+    private IDomain<?> buildSecuredDomain(SecurityConfigurator configurator) throws ApiException {
         CapturingDao dao = new CapturingDao();
-        IApiContextBuilder builder = newBuilder();
+        IApiBuilder builder = newBuilder();
         var domainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
@@ -38,8 +38,8 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         configurator.configure(secBuilder);
         secBuilder.up().up();
 
-        IApiContext context = buildAndStart(builder);
-        return context.getDomainContext("users").orElseThrow();
+        IApi context = buildAndStart(builder);
+        return context.getDomain("users").orElseThrow();
     }
 
     @FunctionalInterface
@@ -49,14 +49,14 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
 
     // --- Helpers ---
 
-    private OperationDefinition findOperation(IDomainContext<?> ctx, BusinessOperation bo) {
+    private OperationDefinition findOperation(IDomain<?> ctx, BusinessOperation bo) {
         return ctx.getDomainDefinition().operations().stream()
                 .filter(op -> op.getBusinessOperation() == bo)
                 .findFirst()
                 .orElse(null);
     }
 
-    private WorkflowResult executeWithoutAuth(IDomainContext<?> ctx, OperationDefinition op) {
+    private WorkflowResult executeWithoutAuth(IDomain<?> ctx, OperationDefinition op) {
         // Request with no authorization token — should fail for non-anonymous access
         OperationRequest request = superTenantScriptRequest(op);
         User user = new User();
@@ -65,7 +65,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         return executeScript(ctx, request);
     }
 
-    private WorkflowResult executeWithAuth(IDomainContext<?> ctx, OperationDefinition op) {
+    private WorkflowResult executeWithAuth(IDomain<?> ctx, OperationDefinition op) {
         // Request with authorization token set
         OperationRequest request = superTenantScriptRequest(op);
         request.arg("authorization", new Object()); // non-null authorization
@@ -84,7 +84,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("creationAccess(anonymous) sets anonymous access on create operation")
         void creationAccessAnonymous() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.anonymous));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.anonymous));
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             assertNotNull(op);
             assertEquals(Access.anonymous, op.access());
@@ -93,7 +93,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("readAllAccess(tenant) sets tenant access on readAll operation")
         void readAllAccessTenant() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
             OperationDefinition op = findOperation(ctx, BusinessOperation.readAll);
             assertNotNull(op);
             assertEquals(Access.tenant, op.access());
@@ -102,7 +102,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("updateAccess(owner) sets owner access on update operation")
         void updateAccessOwner() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.updateAccess(Access.owner));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.updateAccess(Access.owner));
             OperationDefinition op = findOperation(ctx, BusinessOperation.update);
             assertNotNull(op);
             assertEquals(Access.owner, op.access());
@@ -111,7 +111,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("default access is authenticated")
         void defaultAccessIsAuthenticated() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> {});
+            IDomain<?> ctx = buildSecuredDomain(b -> {});
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             assertNotNull(op);
             assertEquals(Access.authenticated, op.access());
@@ -120,7 +120,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("each operation can have different access levels")
         void differentAccessLevels() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b
+            IDomain<?> ctx = buildSecuredDomain(b -> b
                     .creationAccess(Access.tenant)
                     .readAllAccess(Access.anonymous)
                     .deleteAllAccess(Access.owner));
@@ -140,7 +140,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("creationAuthority(true) sets authority on create operation")
         void creationAuthorityTrue() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAuthority(true));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.creationAuthority(true));
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             assertTrue(op.authority());
         }
@@ -148,7 +148,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("default authority is false")
         void defaultAuthorityFalse() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> {});
+            IDomain<?> ctx = buildSecuredDomain(b -> {});
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             assertFalse(op.authority());
         }
@@ -156,7 +156,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("deleteOneAuthority(String) sets authority on deleteOne operation")
         void customAuthorityString() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.deleteOneAuthority("users:delete"));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.deleteOneAuthority("users:delete"));
             OperationDefinition op = findOperation(ctx, BusinessOperation.deleteOne);
             assertTrue(op.authority());
         }
@@ -169,7 +169,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("anonymous access allows unauthenticated request")
         void anonymousAccessAllowsUnauthenticated() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.anonymous));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.anonymous));
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             WorkflowResult result = executeWithoutAuth(ctx, op);
             assertTrue(result.isSuccess(), "anonymous access should allow request without auth");
@@ -178,7 +178,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("authenticated access rejects request without authorization token")
         void authenticatedAccessRejectsWithoutAuth() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.authenticated));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.authenticated));
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             WorkflowResult result = executeWithoutAuth(ctx, op);
             assertFalse(result.isSuccess(),
@@ -190,7 +190,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("authenticated access accepts request with authorization token")
         void authenticatedAccessAcceptsWithAuth() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.authenticated));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.creationAccess(Access.authenticated));
             OperationDefinition op = findOperation(ctx, BusinessOperation.create);
             WorkflowResult result = executeWithAuth(ctx, op);
             assertTrue(result.isSuccess(), "authenticated access with token should succeed");
@@ -199,7 +199,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("tenant access rejects request without authorization token")
         void tenantAccessRejectsWithoutAuth() throws ApiException {
-            IDomainContext<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
             OperationDefinition op = findOperation(ctx, BusinessOperation.readAll);
             WorkflowResult result = executeWithoutAuth(ctx, op);
             assertFalse(result.isSuccess());

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.builder.AuthenticationBuilder;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.core.dsl.DslException;
@@ -28,7 +28,7 @@ import com.garganttua.core.supply.dsl.ISupplierBuilder;
 @DisplayName("AuthenticationBuilder Tests")
 class AuthenticationBuilderTest {
 
-    private IApiContextSecurityBuilder parentLink;
+    private IApiSecurityBuilder parentLink;
     @SuppressWarnings("rawtypes")
     private ISupplierBuilder supplierBuilder;
     private AuthenticationBuilder builder;
@@ -49,7 +49,7 @@ class AuthenticationBuilderTest {
                 .withScanner(new ReflectionsAnnotationScanner())
                 .build();
 
-        parentLink = mock(IApiContextSecurityBuilder.class);
+        parentLink = mock(IApiSecurityBuilder.class);
         supplierBuilder = mock(ISupplierBuilder.class);
         builder = new AuthenticationBuilder(parentLink, supplierBuilder);
     }

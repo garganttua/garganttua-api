@@ -15,8 +15,8 @@ import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
@@ -34,12 +34,12 @@ public class RefreshAuthorisationAuthentication extends AbstractAuthentication {
         super(null);
     }
 
-    public RefreshAuthorisationAuthentication(IDomainContext<?> domainContext) {
+    public RefreshAuthorisationAuthentication(IDomain<?> domainContext) {
         super(domainContext);
     }
 
     @Inject
-    private IApiContext apiContext;
+    private IApi apiContext;
     private Object authorizationToBeRevoked;
 
     @Override
@@ -74,7 +74,7 @@ public class RefreshAuthorisationAuthentication extends AbstractAuthentication {
         String owner = EntityAuthorizationHelper.getOwnerId(authorization);
         String ownerDomainName = owner.split(":")[0];
         String ownerUuid = owner.split(":")[1];
-        IDomainContext<?> ownerDomainCtx = this.apiContext.getDomainContext(ownerDomainName).orElse(null);
+        IDomain<?> ownerDomainCtx = this.apiContext.getDomain(ownerDomainName).orElse(null);
         if (ownerDomainCtx == null) return Optional.empty();
         IOperationResponse response = ownerDomainCtx.readOne(ownerUuid, caller);
         if (response.getResponseCode() == OperationResponseCode.OK) {
@@ -89,7 +89,7 @@ public class RefreshAuthorisationAuthentication extends AbstractAuthentication {
                 .checkEntityAuthenticatorClass((Class<?>) this.domainContext.getEntityClass().getType()).refreshTokenFieldAddress();
 
         Filter filter = Filter.eq(refreshTokenFieldName.toString(), Base64.getDecoder().decode(refreshToken));
-        IOperationResponse response = this.authenticatorDomainContext.readAll(filter, null, null, caller);
+        IOperationResponse response = this.authenticatorDomain.readAll(filter, null, null, caller);
 
         if( response.getResponseCode() == OperationResponseCode.OK ){
             if( ((List) response.getResponse()).size() == 1 )
@@ -118,7 +118,7 @@ public class RefreshAuthorisationAuthentication extends AbstractAuthentication {
 
         EntityAuthorizationHelper.revoke(this.authorizationToBeRevoked);
         String uuid = EntityAuthorizationHelper.getUuid(this.authorizationToBeRevoked);
-        this.authenticatorDomainContext.updateOne(uuid, this.authorizationToBeRevoked, Caller.createSuperCaller());
+        this.authenticatorDomain.updateOne(uuid, this.authorizationToBeRevoked, Caller.createSuperCaller());
         this.authenticated = true;
     }
 

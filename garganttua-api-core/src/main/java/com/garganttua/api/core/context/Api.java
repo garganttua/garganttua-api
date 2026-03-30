@@ -8,13 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.service.IOperationRequest;
@@ -36,16 +37,16 @@ import com.garganttua.core.reflection.ObjectAddress;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ApiContext extends AbstractLifecycle implements IApiContext {
+public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor {
 
     private final IInjectionContext injectionContext;
-    private final Map<String, IDomainContext<?>> domainContexts;
+    private final Map<String, IDomain<?>> domainContexts;
     private final String superTenantId;
     private final boolean superTenantAutoCreate;
     private final boolean multiTenant;
     private final List<IMethodBinder<Void>> startupBinders;
 
-    public ApiContext(IInjectionContext injectionContext, Map<String, IDomainContext<?>> domainContexts,
+    public Api(IInjectionContext injectionContext, Map<String, IDomain<?>> domainContexts,
             String superTenantId, boolean superTenantAutoCreate, boolean multiTenant, List<IMethodBinder<Void>> startupBinders) {
         this.injectionContext = Objects.requireNonNull(injectionContext, "Injection context cannot be null");
         this.domainContexts = Collections.unmodifiableMap(new HashMap<>(
@@ -58,7 +59,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
     }
 
     @Override
-    public Optional<IDomainContext<?>> getDomainContext(String domainName) {
+    public Optional<IDomain<?>> getDomain(String domainName) {
         return Optional.ofNullable(this.domainContexts.get(domainName));
     }
 
@@ -79,7 +80,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         return this.multiTenant;
     }
 
-    public Map<String, IDomainContext<?>> getDomainContexts() {
+    public Map<String, IDomain<?>> getDomains() {
         return this.domainContexts;
     }
 
@@ -94,12 +95,12 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         this.injectionContext.onInit();
 
         // Create and register repositories for each domain
-        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+        for (Map.Entry<String, IDomain<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
-            IDomainContext<?> domainContext = entry.getValue();
+            IDomain<?> domainContext = entry.getValue();
             // Set parent API context reference
-            if (domainContext instanceof DomainContext<?> dc) {
-                dc.setApiContext(this);
+            if (domainContext instanceof Domain<?> dc) {
+                dc.setApi(this);
             }
             // Initialize the domain context
             try {
@@ -141,18 +142,18 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         executeStartupBinders();
 
         // 3. Start tenant domain first (other domains may depend on it) — only in multi-tenant mode
-        IDomainContext<?> tenantDomainContext = this.multiTenant ? startTenantDomainFirst() : null;
+        IDomain<?> tenantDomain = this.multiTenant ? startTenantDomainFirst() : null;
 
         // 4. Auto-create master tenant if configured — only in multi-tenant mode
-        if (tenantDomainContext != null && this.superTenantAutoCreate) {
-            autoCreateMasterTenant(tenantDomainContext);
+        if (tenantDomain != null && this.superTenantAutoCreate) {
+            autoCreateMasterTenant(tenantDomain);
         }
 
         // 5. Start all remaining (non-tenant) domain contexts
-        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+        for (Map.Entry<String, IDomain<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
-            IDomainContext<?> domainContext = entry.getValue();
-            if (domainContext == tenantDomainContext) {
+            IDomain<?> domainContext = entry.getValue();
+            if (domainContext == tenantDomain) {
                 continue; // Already started
             }
             domainContext.onStart();
@@ -178,9 +179,9 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         }
     }
 
-    private IDomainContext<?> startTenantDomainFirst() {
-        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
-            IDomainContext<?> domainContext = entry.getValue();
+    private IDomain<?> startTenantDomainFirst() {
+        for (Map.Entry<String, IDomain<?>> entry : this.domainContexts.entrySet()) {
+            IDomain<?> domainContext = entry.getValue();
             if (domainContext.isTenantEntity()) {
                 String domainName = entry.getKey();
                 domainContext.onStart();
@@ -191,7 +192,7 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         return null;
     }
 
-    private IOperationRequest buildStartupRequest(IDomainContext<?> domainContext,
+    private IOperationRequest buildStartupRequest(IDomain<?> domainContext,
             OperationDefinition operation, ICaller caller) {
         OperationRequest request = new OperationRequest(new HashMap<>());
         request.arg(IOperationRequest.OPERATION, operation);
@@ -202,18 +203,18 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
         return request;
     }
 
-    private void autoCreateMasterTenant(IDomainContext<?> tenantDomainContext) {
+    private void autoCreateMasterTenant(IDomain<?> tenantDomain) {
         log.info("Auto-creating master tenant with id '{}'", this.superTenantId);
         ICaller caller = new Caller(this.superTenantId, this.superTenantId, null, null, true, true, null);
 
         // Check if master tenant already exists
-        IOperationRequest readRequest = buildStartupRequest(tenantDomainContext,
+        IOperationRequest readRequest = buildStartupRequest(tenantDomain,
                 OperationDefinition.readOneWithStandardSecurity(
-                        tenantDomainContext.getDomainName(), tenantDomainContext.getEntityClass()),
+                        tenantDomain.getDomainName(), tenantDomain.getEntityClass()),
                 caller);
         readRequest.arg("type", "uuid");
         readRequest.arg("identifier", this.superTenantId);
-        IOperationResponse readResponse = tenantDomainContext.invoke(readRequest);
+        IOperationResponse readResponse = tenantDomain.invoke(readRequest);
         if (readResponse.getResponseCode() == OperationResponseCode.OK) {
             log.info("Master tenant '{}' already exists, skipping auto-creation", this.superTenantId);
             return;
@@ -221,26 +222,26 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
 
         // Create a minimal tenant entity via reflection
         try {
-            IClass<?> entityClass = tenantDomainContext.getEntityClass();
+            IClass<?> entityClass = tenantDomain.getEntityClass();
             Object tenantEntity = entityClass.getConstructor().newInstance();
 
             IReflection reflection = reflection();
             // Set UUID to superTenantId
-            ObjectAddress uuidAddress = tenantDomainContext.getEntityDefinition().uuid();
+            ObjectAddress uuidAddress = tenantDomain.getEntityDefinition().uuid();
             reflection.setFieldValue(tenantEntity, uuidAddress, this.superTenantId);
 
             // Set tenantId to superTenantId
-            ObjectAddress tenantIdAddress = tenantDomainContext.getTenantIdFieldAddress();
+            ObjectAddress tenantIdAddress = tenantDomain.getTenantIdFieldAddress();
             if (tenantIdAddress != null) {
                 reflection.setFieldValue(tenantEntity, tenantIdAddress, this.superTenantId);
             }
 
-            IOperationRequest createRequest = buildStartupRequest(tenantDomainContext,
+            IOperationRequest createRequest = buildStartupRequest(tenantDomain,
                     OperationDefinition.createOneWithStandardSecurity(
-                            tenantDomainContext.getDomainName(), tenantDomainContext.getEntityClass()),
+                            tenantDomain.getDomainName(), tenantDomain.getEntityClass()),
                     caller);
             createRequest.arg("entity", tenantEntity);
-            IOperationResponse createResponse = tenantDomainContext.invoke(createRequest);
+            IOperationResponse createResponse = tenantDomain.invoke(createRequest);
             OperationResponseCode code = createResponse.getResponseCode();
             if (code == OperationResponseCode.CREATED || code == OperationResponseCode.OK) {
                 log.info("Master tenant '{}' auto-created successfully", this.superTenantId);
@@ -259,9 +260,9 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
     @Override
     protected ILifecycle doStop() {
         // Stop all domain contexts first
-        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+        for (Map.Entry<String, IDomain<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
-            IDomainContext<?> domainContext = entry.getValue();
+            IDomain<?> domainContext = entry.getValue();
             try {
                 domainContext.onStop();
                 log.info("Stopped domain '{}'", domainName);
@@ -277,11 +278,114 @@ public class ApiContext extends AbstractLifecycle implements IApiContext {
     }
 
     @Override
+    public String getSummaryCategory() {
+        return "Garganttua API";
+    }
+
+    @Override
+    public Map<String, String> getSummaryItems() {
+        Map<String, String> items = new java.util.LinkedHashMap<>();
+
+        // Global configuration
+        String tenancy = multiTenant ? "enabled" : "disabled";
+        if (multiTenant && superTenantId != null) {
+            tenancy += " (superTenant=" + superTenantId + (superTenantAutoCreate ? ", autoCreate" : "") + ")";
+        }
+        items.put("Multi-tenancy", tenancy);
+        items.put("Domains", String.valueOf(domainContexts.size()));
+
+        // Collect global DAO types and interface counts
+        java.util.Set<String> daoTypes = new java.util.LinkedHashSet<>();
+        int totalInterfaces = 0;
+        int totalEvents = 0;
+        int securedDomains = 0;
+
+        // Per-domain details
+        for (Map.Entry<String, IDomain<?>> entry : domainContexts.entrySet()) {
+            String name = entry.getKey();
+            IDomain<?> ctx = entry.getValue();
+            var def = ctx.getDomainDefinition();
+
+            // Domain summary line: entity + DTOs + flags
+            StringBuilder domainInfo = new StringBuilder();
+            domainInfo.append(def.entityDefinition().entityClass().getSimpleName());
+
+            // DTOs
+            if (!def.dtoDefinitions().isEmpty()) {
+                domainInfo.append(" -> ");
+                domainInfo.append(def.dtoDefinitions().stream()
+                        .map(dto -> dto.dtoClass().getSimpleName())
+                        .collect(Collectors.joining(", ")));
+            }
+
+            // Flags
+            List<String> flags = new ArrayList<>();
+            if (Boolean.TRUE.equals(def.tenant())) flags.add("tenant");
+            if (Boolean.TRUE.equals(def.publik())) flags.add("public");
+            if (def.owned() != null) flags.add("owned");
+            if (def.shared() != null) flags.add("shared");
+            if (def.hiddenable() != null) flags.add("hiddenable");
+            if (def.geolocalized() != null) flags.add("geolocalized");
+            if (!flags.isEmpty()) {
+                domainInfo.append(" [").append(String.join(", ", flags)).append("]");
+            }
+            items.put("Domain '" + name + "'", domainInfo.toString());
+
+            // DAO
+            if (ctx.getRepository() != null) {
+                daoTypes.add(ctx.getRepository().getClass().getSimpleName());
+            }
+
+            // Operations
+            var operations = def.operations();
+            if (!operations.isEmpty()) {
+                items.put("  operations", operations.stream()
+                        .map(op -> op.getBusinessOperation().getLabel())
+                        .collect(Collectors.joining(", ")));
+            }
+
+            // Security
+            var secDef = (def instanceof com.garganttua.api.core.definition.DomainDefinition<?> dd)
+                    ? dd.domainSecurityDefinition() : null;
+            if (secDef != null && !secDef.disabled()) {
+                securedDomains++;
+                StringBuilder secInfo = new StringBuilder("enabled");
+                if (secDef.authenticatorDefinition() != null) {
+                    secInfo.append(" (authenticator: ").append(secDef.authenticatorDefinition().scope()).append(")");
+                }
+                items.put("  security", secInfo.toString());
+            }
+
+            // Interfaces / Events
+            if (ctx instanceof Domain<?> dc) {
+                if (dc.getInterfaces() != null) totalInterfaces += dc.getInterfaces().size();
+                if (dc.getEvents() != null) totalEvents += dc.getEvents().size();
+            }
+        }
+
+        // Global summaries
+        if (!daoTypes.isEmpty()) {
+            items.put("DAOs", String.join(", ", daoTypes));
+        }
+        if (totalInterfaces > 0) {
+            items.put("Interfaces", String.valueOf(totalInterfaces));
+        }
+        if (totalEvents > 0) {
+            items.put("Event publishers", String.valueOf(totalEvents));
+        }
+        if (securedDomains > 0) {
+            items.put("Secured domains", securedDomains + "/" + domainContexts.size());
+        }
+
+        return items;
+    }
+
+    @Override
     protected ILifecycle doFlush() {
         // Flush all domain contexts
-        for (Map.Entry<String, IDomainContext<?>> entry : this.domainContexts.entrySet()) {
+        for (Map.Entry<String, IDomain<?>> entry : this.domainContexts.entrySet()) {
             String domainName = entry.getKey();
-            IDomainContext<?> domainContext = entry.getValue();
+            IDomain<?> domainContext = entry.getValue();
             try {
                 domainContext.onFlush();
                 log.info("Flushed domain '{}'", domainName);

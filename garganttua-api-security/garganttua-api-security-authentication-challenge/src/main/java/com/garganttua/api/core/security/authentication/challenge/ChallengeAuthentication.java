@@ -17,8 +17,8 @@ import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChallengeAuthentication extends AbstractAuthentication {
 
-	public ChallengeAuthentication(IDomainContext<?> domainContext) {
+	public ChallengeAuthentication(IDomain<?> domainContext) {
 		super(domainContext);
 	}
 
@@ -46,7 +46,7 @@ public class ChallengeAuthentication extends AbstractAuthentication {
 	public static final String CHALLENGE_KEY_REALM_NAME_PREFIX = "-challenge-key";
 
 	@Inject
-	private IApiContext apiContext;
+	private IApi apiContext;
 
 	@Override
 	protected void doAuthentication() throws CoreException {
@@ -75,7 +75,7 @@ public class ChallengeAuthentication extends AbstractAuthentication {
 		if( challenge.getExpiration() != null && Instant.now().isAfter(challenge.getExpiration().toInstant()) ) {
 			log.atInfo().log("Challenge expired for entity "+this.principal.getClass().getSimpleName()+" identified by "+uuid);
 			EntityAuthenticatorHelper.setCredentialsNonExpired(this.principal, false);
-			this.authenticatorDomainContext.updateOne(uuid, this.principal, Caller.createTenantCaller(this.tenantId));
+			this.authenticatorDomain.updateOne(uuid, this.principal, Caller.createTenantCaller(this.tenantId));
 			throw new SecurityException(CoreExceptionCode.TOKEN_EXPIRED, "Challenge expired for entity "+this.principal.getClass().getSimpleName()+" identified by "+uuid);
 		}
 
@@ -90,7 +90,7 @@ public class ChallengeAuthentication extends AbstractAuthentication {
 			}
 			this.authenticated = true;
 		}
-		this.authenticatorDomainContext.updateOne(uuid, this.principal, Caller.createTenantCaller(this.tenantId));
+		this.authenticatorDomain.updateOne(uuid, this.principal, Caller.createTenantCaller(this.tenantId));
 	}
 
 	@AuthenticatorSecurityPreProcessing
@@ -145,7 +145,7 @@ public class ChallengeAuthentication extends AbstractAuthentication {
 	@Override
 	protected Object doFindPrincipal(ICaller caller) {
 		try {
-			IOperationResponse response = this.authenticatorDomainContext.readOne((String) this.principal, caller);
+			IOperationResponse response = this.authenticatorDomain.readOne((String) this.principal, caller);
 			if( response.getResponseCode() == OperationResponseCode.OK ) {
 				return response.getResponse();
 			} else {
@@ -169,17 +169,17 @@ public class ChallengeAuthentication extends AbstractAuthentication {
 	// --- Helper methods ---
 
 	private String getUuid(Object entity) throws CoreException {
-		ObjectAddress uuidAddress = this.authenticatorDomainContext.getUuidFieldAddress();
+		ObjectAddress uuidAddress = this.authenticatorDomain.getUuidFieldAddress();
 		return (String) DefaultMapper.reflection().getFieldValue(entity, uuidAddress);
 	}
 
 	private void setUuid(Object entity, String uuid) throws CoreException {
-		ObjectAddress uuidAddress = this.authenticatorDomainContext.getUuidFieldAddress();
+		ObjectAddress uuidAddress = this.authenticatorDomain.getUuidFieldAddress();
 		DefaultMapper.reflection().setFieldValue(entity, uuidAddress, uuid);
 	}
 
 	private String getOwnerId(Object entity) throws CoreException {
-		ObjectAddress ownerIdAddress = this.authenticatorDomainContext.getOwnerIdFieldAddress();
+		ObjectAddress ownerIdAddress = this.authenticatorDomain.getOwnerIdFieldAddress();
 		if (ownerIdAddress == null) return null;
 		return (String) DefaultMapper.reflection().getFieldValue(entity, ownerIdAddress);
 	}

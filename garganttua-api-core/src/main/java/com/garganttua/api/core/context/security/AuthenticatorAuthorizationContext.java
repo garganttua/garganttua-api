@@ -6,14 +6,14 @@ import com.garganttua.api.core.definition.DomainAuthenticatorAuthorizationDefini
 import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationContext;
 import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationKeyContext;
 import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 
 public class AuthenticatorAuthorizationContext implements IAuthenticatorAuthorizationContext {
 
     private DomainAuthenticatorAuthorizationDefinition authenticatorAuthorizationDefinition;
 
     public AuthenticatorAuthorizationContext(Integer duration, TimeUnit unit, Integer refreshDuration,
-            TimeUnit refreshUnit, IDomainContext<?> iDomainContext,
+            TimeUnit refreshUnit, IDomain<?> iDomain,
             IAuthenticatorAuthorizationKeyContext iAuthenticatorAuthorizationKeyContext) {
         this.authenticatorAuthorizationDefinition = new DomainAuthenticatorAuthorizationDefinition();
     }

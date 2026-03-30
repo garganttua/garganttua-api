@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.garganttua.api.core.builder.binder.DomainStartupBinderBuilder;
-import com.garganttua.api.core.context.DomainContext;
+import com.garganttua.api.core.context.Domain;
 import com.garganttua.api.core.context.DtoContext;
 import com.garganttua.api.core.context.EntityContext;
 import com.garganttua.api.core.definition.DomainDefinition;
@@ -21,13 +21,13 @@ import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.Pluralizer;
 import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.context.ContextBuildingStage;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.BuildingStage;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.operation.Scope;
 import com.garganttua.api.spec.operation.TechnicalOperation;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
@@ -69,7 +69,7 @@ import com.garganttua.core.workflow.dsl.IWorkflowBuilder;
 import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 
 public class DomainBuilder<E>
-        extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContextBuilder, IDomainContext<E>>
+        extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiBuilder, IDomain<E>>
         implements IDomainBuilder<E> {
 
     private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
@@ -109,14 +109,14 @@ public class DomainBuilder<E>
         this.expressionContextBuilder = expressionContextBuilder;
     }
 
-    public DomainBuilder(IApiContextBuilder builder, String domainName)
+    public DomainBuilder(IApiBuilder builder, String domainName)
             throws ApiException {
         super(builder);
         this.domainName = Objects.requireNonNull(domainName, "Domain name cannot be null");
         initDefaultCrudWorkflows();
     }
 
-    public DomainBuilder(IApiContextBuilder builder, IClass<?> entityClass) throws ApiException {
+    public DomainBuilder(IApiBuilder builder, IClass<?> entityClass) throws ApiException {
         super(builder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity Class cannot be null");
         try {
@@ -131,7 +131,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainStartupBinderBuilder startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
+    public IDomainStartupBinderBuilder startup(BuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
             throws ApiException {
         DomainStartupBinderBuilder binder = new DomainStartupBinderBuilder(this, supplier);
         this.startupBinderBuilders.add(binder);
@@ -164,7 +164,7 @@ public class DomainBuilder<E>
 
     @Override
     public IDomainBuilder<E> tenant(boolean b) throws ApiException {
-        if (b && this.up() instanceof ApiContextBuilder acb && !acb.isMultiTenant()) {
+        if (b && this.up() instanceof ApiBuilder acb && !acb.isMultiTenant()) {
             throw new ApiException("Cannot mark domain as tenant when multi-tenancy is disabled");
         }
         this.tenant = b;
@@ -491,7 +491,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    protected synchronized IDomainContext<E> doBuild() throws ApiException {
+    protected synchronized IDomain<E> doBuild() throws ApiException {
 
         this.throwExceptionIfNoDto();
 
@@ -691,7 +691,7 @@ public class DomainBuilder<E>
             builtEvents.add(supplier);
         }
 
-        DomainContext<E> domainContext = new DomainContext<E>(
+        Domain<E> domainContext = new Domain<E>(
                 new DomainDefinition<E>(
                         this.domainName,
                         entityDefinition,

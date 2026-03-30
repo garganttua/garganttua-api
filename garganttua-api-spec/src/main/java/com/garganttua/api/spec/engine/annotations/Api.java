@@ -9,9 +9,9 @@ import java.lang.annotation.Target;
  * API-level configuration annotation. Place on any class within a scanned package
  * to configure the Garganttua API engine via auto-detection.
  *
- * <p>Mirrors the configuration available through {@code ApiContextBuilder}:
+ * <p>Mirrors the configuration available through {@code ApiBuilder}:
  * <pre>
- * ApiContextBuilder.builder()
+ * ApiBuilder.builder()
  *     .multiTenant(true)
  *     .superTenantId("SUPER_TENANT")
  *     .superTenantAutoCreate(true)

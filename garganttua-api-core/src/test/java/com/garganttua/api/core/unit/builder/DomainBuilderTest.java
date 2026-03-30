@@ -11,12 +11,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.builder.ApiContextBuilder;
+import com.garganttua.api.core.builder.ApiBuilder;
 import com.garganttua.api.core.builder.DomainBuilder;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IEntityBuilder;
 import com.garganttua.api.spec.dao.IDao;
@@ -104,11 +104,11 @@ class DomainBuilderTest {
     }
 
     private IDomainBuilder<TestEntity> domainBuilder;
-    private IApiContextBuilder contextBuilder;
+    private IApiBuilder contextBuilder;
 
     @BeforeEach
     void setUp() throws ApiException {
-        contextBuilder = ApiContextBuilder.builder();
+        contextBuilder = ApiBuilder.builder();
         domainBuilder = contextBuilder.domain(IClass.getClass(TestEntity.class));
     }
 
@@ -197,7 +197,7 @@ class DomainBuilderTest {
         @Test
         @DisplayName("up() returns parent context builder")
         void upReturnsParentContextBuilder() {
-            IApiContextBuilder parent = domainBuilder.up();
+            IApiBuilder parent = domainBuilder.up();
             assertSame(contextBuilder, parent);
         }
 
@@ -231,12 +231,12 @@ class DomainBuilderTest {
             ((IDependentBuilder<IInjectionContextBuilder, ?>) injectionContextBuilder).provide(reflectionBuilder);
 
             injectionContextBuilder.build();
-            // Do NOT pre-build expressionContextBuilder — ApiContextBuilder.provide() adds
+            // Do NOT pre-build expressionContextBuilder — ApiBuilder.provide() adds
             // required packages before triggering the build via handle()
 
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) contextBuilder).provide(reflectionBuilder);
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) contextBuilder).provide(injectionContextBuilder);
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) contextBuilder).provide(expressionContextBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(reflectionBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(injectionContextBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(expressionContextBuilder);
         }
 
         @Test
@@ -268,7 +268,7 @@ class DomainBuilderTest {
             ((DomainBuilder<TestEntity>) domainBuilder).setDependencyBuilders(
                     injectionContextBuilder, expressionContextBuilder);
 
-            IDomainContext<TestEntity> context = domainBuilder.build();
+            IDomain<TestEntity> context = domainBuilder.build();
 
             assertNotNull(context);
             assertEquals("testentities", context.getDomain());

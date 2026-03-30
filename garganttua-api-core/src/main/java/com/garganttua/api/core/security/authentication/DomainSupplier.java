@@ -3,7 +3,7 @@ package com.garganttua.api.core.security.authentication;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
@@ -13,9 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
-public class DomainContextSupplier implements IContextualSupplier<IDomainContext, IRuntimeContext> {
+public class DomainSupplier implements IContextualSupplier<IDomain, IRuntimeContext> {
 
-    private static final IClass<IDomainContext> SUPPLIED_CLASS = IClass.getClass(IDomainContext.class);
+    private static final IClass<IDomain> SUPPLIED_CLASS = IClass.getClass(IDomain.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
 
     @Override
@@ -24,7 +24,7 @@ public class DomainContextSupplier implements IContextualSupplier<IDomainContext
     }
 
     @Override
-    public IClass<IDomainContext> getSuppliedClass() {
+    public IClass<IDomain> getSuppliedClass() {
         return SUPPLIED_CLASS;
     }
 
@@ -34,8 +34,8 @@ public class DomainContextSupplier implements IContextualSupplier<IDomainContext
     }
 
     @Override
-    public Optional<IDomainContext> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering DomainContextSupplier.supply");
+    public Optional<IDomain> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
+        log.atTrace().log("Entering DomainSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -46,8 +46,8 @@ public class DomainContextSupplier implements IContextualSupplier<IDomainContext
             throw new SupplyException("Variable 'domainContext' not found in runtime context");
         }
 
-        IDomainContext domainContext = (IDomainContext) domainContextOpt.get();
-        log.atDebug().log("DomainContextSupplier resolved domain={}", domainContext.getDomainName());
+        IDomain domainContext = (IDomain) domainContextOpt.get();
+        log.atDebug().log("DomainSupplier resolved domain={}", domainContext.getDomainName());
         return Optional.of(domainContext);
     }
 

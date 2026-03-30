@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.api.core.builder.ApiContextBuilder;
+import com.garganttua.api.core.builder.ApiBuilder;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.filter.IFilter;
@@ -321,13 +321,13 @@ public abstract class AbstractCrudIntegrationTest {
 
     // ───── Helper methods ─────
 
-    protected static IApiContextBuilder newBaseBuilder() throws ApiException {
+    protected static IApiBuilder newBaseBuilder() throws ApiException {
         com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
                 .withProvider(new RuntimeReflectionProvider())
                 .withScanner(new ReflectionsAnnotationScanner());
         IClass.setReflection(reflectionBuilder.build());
 
-        IApiContextBuilder builder = ApiContextBuilder.builder();
+        IApiBuilder builder = ApiBuilder.builder();
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
                 .childContextFactory(new RuntimeContextFactory());
@@ -340,7 +340,7 @@ public abstract class AbstractCrudIntegrationTest {
         injectionContextBuilder.build();
 
         // Pre-build expressionContextBuilder with the same packages that
-        // ApiContextBuilder.provide() would add. This avoids the tryResolve() race
+        // ApiBuilder.provide() would add. This avoids the tryResolve() race
         // where the ExpressionContextBuilder builds during dependency resolution
         // before the scanner is fully warmed up.
         expressionContextBuilder.autoDetect(true);
@@ -349,22 +349,22 @@ public abstract class AbstractCrudIntegrationTest {
         expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
         expressionContextBuilder.build();
 
-        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(reflectionBuilder);
-        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);
-        ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
+        ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(reflectionBuilder);
+        ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(injectionContextBuilder);
+        ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(expressionContextBuilder);
 
         return builder;
     }
 
-    protected static IApiContextBuilder newBuilder() throws ApiException {
-        IApiContextBuilder builder = newBaseBuilder();
+    protected static IApiBuilder newBuilder() throws ApiException {
+        IApiBuilder builder = newBaseBuilder();
         builder.superTenantId("SUPER_TENANT")
                .superTenantAutoCreate(false);
         return builder;
     }
 
-    protected static IApiContext buildAndStart(IApiContextBuilder builder) throws ApiException {
-        IApiContext context = builder.build();
+    protected static IApi buildAndStart(IApiBuilder builder) throws ApiException {
+        IApi context = builder.build();
         context.onInit();
         context.onStart();
         return context;

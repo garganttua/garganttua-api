@@ -15,9 +15,9 @@ import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 import com.garganttua.api.spec.operation.BusinessOperation;
 import com.garganttua.api.spec.operation.OperationDefinition;
@@ -64,8 +64,8 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         }
     }
 
-    private IApiContext context;
-    private IDomainContext<?> userCtx;
+    private IApi context;
+    private IDomain<?> userCtx;
     private CapturingDao userDao;
 
     @BeforeEach
@@ -74,7 +74,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
         StubAuthentication stubAuth = new StubAuthentication();
 
-        IApiContextBuilder builder = newBuilder();
+        IApiBuilder builder = newBuilder();
 
         // Register the authentication method at API level
         var authBuilder = builder.security()
@@ -102,7 +102,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
             .up();
 
         context = buildAndStart(builder);
-        userCtx = context.getDomainContext("users").orElseThrow();
+        userCtx = context.getDomain("users").orElseThrow();
     }
 
     private OperationRequest authenticateRequest() {

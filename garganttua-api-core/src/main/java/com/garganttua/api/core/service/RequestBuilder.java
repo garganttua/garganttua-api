@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.pageable.IPageable;
@@ -17,10 +17,10 @@ import com.garganttua.api.spec.sort.ISort;
 
 public class RequestBuilder implements IRequestBuilder {
 
-	private final IDomainContext<?> domainContext;
+	private final IDomain<?> domainContext;
 	private final IOperationRequest operationRequest;
 
-	public RequestBuilder(IDomainContext<?> domainContext) {
+	public RequestBuilder(IDomain<?> domainContext) {
 		this.domainContext = domainContext;
 		this.operationRequest = new OperationRequest(null);
 	}
@@ -194,7 +194,7 @@ public class RequestBuilder implements IRequestBuilder {
 
 	@Override
 	public IRequest build() {
-		IDomainContext<?> ctx = this.domainContext;
+		IDomain<?> ctx = this.domainContext;
 		IOperationRequest req = this.operationRequest;
 		return new IRequest() {
 			@Override

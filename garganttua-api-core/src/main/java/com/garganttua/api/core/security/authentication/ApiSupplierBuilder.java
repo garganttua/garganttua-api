@@ -2,7 +2,7 @@ package com.garganttua.api.core.security.authentication;
 
 import java.lang.reflect.Type;
 
-import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IApi;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
@@ -13,9 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
-public class ApiContextSupplierBuilder implements ISupplierBuilder<IApiContext, IContextualSupplier<IApiContext, IRuntimeContext>> {
+public class ApiSupplierBuilder implements ISupplierBuilder<IApi, IContextualSupplier<IApi, IRuntimeContext>> {
 
-    private static final IClass<IApiContext> SUPPLIED_CLASS = IClass.getClass(IApiContext.class);
+    private static final IClass<IApi> SUPPLIED_CLASS = IClass.getClass(IApi.class);
 
     @Override
     public Type getSuppliedType() {
@@ -23,7 +23,7 @@ public class ApiContextSupplierBuilder implements ISupplierBuilder<IApiContext, 
     }
 
     @Override
-    public IClass<IApiContext> getSuppliedClass() {
+    public IClass<IApi> getSuppliedClass() {
         return SUPPLIED_CLASS;
     }
 
@@ -33,9 +33,9 @@ public class ApiContextSupplierBuilder implements ISupplierBuilder<IApiContext, 
     }
 
     @Override
-    public IContextualSupplier<IApiContext, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building ApiContextSupplier");
-        return new ApiContextSupplier();
+    public IContextualSupplier<IApi, IRuntimeContext> build() throws DslException {
+        log.atDebug().log("Building ApiSupplier");
+        return new ApiSupplier();
     }
 
 }

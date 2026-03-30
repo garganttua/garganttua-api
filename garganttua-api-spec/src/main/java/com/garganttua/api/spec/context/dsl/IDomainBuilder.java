@@ -2,8 +2,8 @@ package com.garganttua.api.spec.context.dsl;
 
 import java.lang.reflect.Field;
 
-import com.garganttua.api.spec.context.ContextBuildingStage;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.BuildingStage;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.event.IEventPublisher;
 import com.garganttua.api.spec.endpoint.IEndpoint;
@@ -14,9 +14,9 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilder<E>, IApiContextBuilder, IDomainContext<E>> {
+public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilder<E>, IApiBuilder, IDomain<E>> {
 
-    IDomainStartupBinderBuilder<E> startup(ContextBuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> method) throws ApiException;
+    IDomainStartupBinderBuilder<E> startup(BuildingStage stage, ISupplierBuilder<?, ? extends ISupplier<?>> method) throws ApiException;
 
     IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>> bean) throws ApiException;
 

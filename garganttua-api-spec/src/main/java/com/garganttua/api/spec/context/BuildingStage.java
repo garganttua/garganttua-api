@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.context;
 
-public enum ContextBuildingStage {
+public enum BuildingStage {
     
     initial,
     

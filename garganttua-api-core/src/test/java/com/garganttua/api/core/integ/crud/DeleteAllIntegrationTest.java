@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.workflow.WorkflowResult;
@@ -22,15 +22,15 @@ import com.garganttua.core.workflow.WorkflowResult;
 @DisplayName("DeleteAll Script Tests")
 class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
 
-    private IApiContext context;
-    private IDomainContext<?> userCtx;
+    private IApi context;
+    private IDomain<?> userCtx;
     private CapturingDao userDao;
 
     @BeforeEach
     void setUp() throws ApiException {
         userDao = new CapturingDao();
 
-        IApiContextBuilder builder = newBuilder();
+        IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
@@ -43,7 +43,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
             .up();
 
         context = buildAndStart(builder);
-        userCtx = context.getDomainContext("users").orElseThrow();
+        userCtx = context.getDomain("users").orElseThrow();
     }
 
     @Test
@@ -102,7 +102,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
     @Test
     @DisplayName("deleteAll returns 500 when repository throws an exception")
     void deleteAllReturns500OnRepositoryException() throws ApiException {
-        IApiContextBuilder failingBuilder = newBuilder();
+        IApiBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
@@ -115,8 +115,8 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
                 .up()
             .up();
 
-        IApiContext failingContext = buildAndStart(failingBuilder);
-        IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
+        IApi failingContext = buildAndStart(failingBuilder);
+        IDomain<?> failingUserCtx = failingContext.getDomain("users").orElseThrow();
 
         OperationDefinition deleteAllOp = OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(deleteAllOp);

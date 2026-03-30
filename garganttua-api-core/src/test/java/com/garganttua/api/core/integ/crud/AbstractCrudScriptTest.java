@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.core.workflow.IWorkflow;
@@ -15,18 +15,18 @@ import com.garganttua.core.workflow.WorkflowResult;
 
 /**
  * Base class for CRUD script integration tests.
- * Executes workflow scripts directly, bypassing DomainContext.invoke().
+ * Executes workflow scripts directly, bypassing Domain.invoke().
  * This isolates the test to the .gs script behavior only.
  */
 public abstract class AbstractCrudScriptTest extends AbstractCrudIntegrationTest {
 
-	protected WorkflowResult executeScript(IDomainContext<?> ctx, IOperationRequest request) {
+	protected WorkflowResult executeScript(IDomain<?> ctx, IOperationRequest request) {
 		IWorkflow workflow = ctx.getWorkflow();
 		if (workflow == null) {
 			throw new AssertionError("No workflow configured for domain: " + ctx.getDomainName());
 		}
 
-		// Set caller arg only when caller info is present (normally done by DomainContext.invoke())
+		// Set caller arg only when caller info is present (normally done by Domain.invoke())
 		ICaller caller = request.caller();
 		if (caller != null && caller.tenantId() != null) {
 			request.arg("caller", caller);

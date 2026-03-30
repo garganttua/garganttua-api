@@ -9,15 +9,15 @@ import java.util.Set;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.repository.RepositoryFilterTools;
 import com.garganttua.api.spec.service.Page;
-import com.garganttua.api.core.context.DomainContext;
+import com.garganttua.api.core.context.Domain;
 import com.garganttua.api.core.context.EntityUpdater;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.definition.IDomainDefinition;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.operation.OperationDefinition;
@@ -169,9 +169,9 @@ public class ApiExpressions {
 	@Expression(name = "buildFilter", description = "Builds access filter from caller permissions and domain definition")
 	public static Optional<IFilter> buildFilter(Object caller, Object filter, Object context) {
 		Optional<ICaller> castedCaller = (Optional<ICaller>) caller;
-		IDomainContext<?> dc = context instanceof Optional<?> opt
-				? (IDomainContext<?>) opt.get()
-				: (IDomainContext<?>) context;
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
 		IDomainDefinition<?> domainDef = dc.getDomainDefinition();
 		Optional<IFilter> baseFilter = (Optional<IFilter>) filter;
 		return Optional.ofNullable(
@@ -226,13 +226,13 @@ public class ApiExpressions {
 	}
 
 	@Expression(name = "getContext", description = "Retrieve a domain context by name from the API context")
-	public static IDomainContext<?> getContext(Object request, String domainName) {
+	public static IDomain<?> getContext(Object request, String domainName) {
 		IOperationRequest opRequest = (IOperationRequest) request;
-		IApiContext apiContext = opRequest.arg(IOperationRequest.API_CONTEXT).orElse(null);
+		IApi apiContext = opRequest.arg(IOperationRequest.API_CONTEXT).orElse(null);
 		if (apiContext == null) {
 			throw new ApiException("No API context available in request");
 		}
-		return apiContext.getDomainContext(domainName)
+		return apiContext.getDomain(domainName)
 				.orElseThrow(() -> new ApiException("Domain not found: " + domainName));
 	}
 
@@ -243,7 +243,7 @@ public class ApiExpressions {
 		if (entityList.isEmpty()) return entityList;
 
 		IOperationRequest opRequest = (IOperationRequest) request;
-		DomainContext<?> dc = (DomainContext<?>) opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
+		Domain<?> dc = (Domain<?>) opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
 		if (dc == null || !dc.isDoInjection()) return entityList;
 
 		BeanDefinition<?> entityBeanDefinition = dc.getEntityBeanDefinition();
@@ -269,7 +269,7 @@ public class ApiExpressions {
 
 		try {
 			IOperationRequest opRequest = (IOperationRequest) request;
-			IDomainContext<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
+			IDomain<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
 			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
 			List<IMethodBinder<Void>> afterGetBinders = entityDef.afterGetMethodBuilders();
 
@@ -302,9 +302,9 @@ public class ApiExpressions {
 		List<Object> entityList = (List<Object>) entities;
 		if (entityList.isEmpty()) return entityList;
 
-		IDomainContext<?> dc = context instanceof Optional<?> opt
-				? (IDomainContext<?>) opt.get()
-				: (IDomainContext<?>) context;
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
 		ObjectAddress address = uuid
 				? dc.getEntityDefinition().uuid()
 				: dc.getEntityDefinition().id();
@@ -353,9 +353,9 @@ public class ApiExpressions {
 		String typeStr = unwrapOptional(type) != null ? unwrapOptional(type).toString() : "uuid";
 		String identifierStr = unwrapOptional(identifier) != null ? unwrapOptional(identifier).toString() : null;
 
-		IDomainContext<?> dc = context instanceof Optional<?> opt
-				? (IDomainContext<?>) opt.get()
-				: (IDomainContext<?>) context;
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
 		IDomainDefinition<?> domainDef = dc.getDomainDefinition();
 
 		// Build access control filter
@@ -386,9 +386,9 @@ public class ApiExpressions {
 	@Expression(name = "ensureUuid", description = "Generates a UUID for the entity if the uuid field is null")
 	public static Object ensureUuid(Object entity, Object context) {
 		try {
-			IDomainContext<?> dc = context instanceof Optional<?> opt
-					? (IDomainContext<?>) opt.get()
-					: (IDomainContext<?>) context;
+			IDomain<?> dc = context instanceof Optional<?> opt
+					? (IDomain<?>) opt.get()
+					: (IDomain<?>) context;
 			ObjectAddress uuidAddress = dc.getEntityDefinition().uuid();
 			String fieldName = uuidAddress.toString();
 			Object currentUuid = REFLECTION.getFieldValue(entity, fieldName);
@@ -407,9 +407,9 @@ public class ApiExpressions {
 	public static Object ensureTenantId(Object entity, Object caller, Object context) {
 		try {
 			ICaller c = (ICaller) unwrapOptional(caller);
-			IDomainContext<?> dc = context instanceof Optional<?> opt
-					? (IDomainContext<?>) opt.get()
-					: (IDomainContext<?>) context;
+			IDomain<?> dc = context instanceof Optional<?> opt
+					? (IDomain<?>) opt.get()
+					: (IDomain<?>) context;
 			ObjectAddress tenantIdAddress = dc.getEntityDefinition().tenantId();
 			if (tenantIdAddress == null) return entity;
 			String fieldName = tenantIdAddress.toString();
@@ -428,9 +428,9 @@ public class ApiExpressions {
 	@Expression(name = "validateMandatories", description = "Validates that all @EntityMandatory fields are non-null")
 	public static void validateMandatories(Object entity, Object context) {
 		try {
-			IDomainContext<?> dc = context instanceof Optional<?> opt
-					? (IDomainContext<?>) opt.get()
-					: (IDomainContext<?>) context;
+			IDomain<?> dc = context instanceof Optional<?> opt
+					? (IDomain<?>) opt.get()
+					: (IDomain<?>) context;
 			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
 			List<ObjectAddress> mandatories = entityDef.mandatories();
 			if (mandatories == null || mandatories.isEmpty()) return;
@@ -451,9 +451,9 @@ public class ApiExpressions {
 	@Expression(name = "validateUnicity", description = "Checks unicity constraints against existing entities in repository")
 	public static void validateUnicity(Object entity, Object repository, Object context) throws ApiException {
 		try {
-			IDomainContext<?> dc = context instanceof Optional<?> opt
-					? (IDomainContext<?>) opt.get()
-					: (IDomainContext<?>) context;
+			IDomain<?> dc = context instanceof Optional<?> opt
+					? (IDomain<?>) opt.get()
+					: (IDomain<?>) context;
 			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
 			List<Pair<ObjectAddress, UnicityScope>> unicities = entityDef.unicities();
 			if (unicities == null || unicities.isEmpty()) return;
@@ -523,9 +523,9 @@ public class ApiExpressions {
 	@Expression(name = "updateEntity", description = "Applies authorized field updates from updatedEntity onto storedEntity")
 	public static Object updateEntity(Object caller, Object storedEntity, Object updatedEntity, Object context) {
 		ICaller c = (ICaller) unwrapOptional(caller);
-		IDomainContext<?> dc = context instanceof Optional<?> opt
-				? (IDomainContext<?>) opt.get()
-				: (IDomainContext<?>) context;
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
 		EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
 		return new EntityUpdater().update(c, storedEntity, updatedEntity, entityDef.updates());
 	}
@@ -562,7 +562,7 @@ public class ApiExpressions {
 
 		try {
 			IOperationRequest opRequest = (IOperationRequest) request;
-			IDomainContext<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
+			IDomain<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
 			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
 			List<IMethodBinder<Void>> binders = bindersExtractor.apply(entityDef);
 
@@ -584,7 +584,7 @@ public class ApiExpressions {
 			java.util.function.Function<IEntityDefinition<?>, List<IMethodBinder<Void>>> bindersExtractor) {
 		try {
 			IOperationRequest opRequest = (IOperationRequest) request;
-			IDomainContext<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
+			IDomain<?> dc = opRequest.arg(IOperationRequest.DOMAIN_CONTEXT).orElse(null);
 			IEntityDefinition<?> entityDef = dc.getEntityDefinition();
 			List<IMethodBinder<Void>> binders = bindersExtractor.apply(entityDef);
 
@@ -620,10 +620,10 @@ public class ApiExpressions {
 
 	@Expression(name = "isSecurityDisabled", description = "Returns true if the domain has security disabled")
 	public static boolean isSecurityDisabled(Object context) {
-		IDomainContext<?> dc = context instanceof Optional<?> opt
-				? (IDomainContext<?>) opt.get()
-				: (IDomainContext<?>) context;
-		if (dc instanceof DomainContext<?> domCtx) {
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
+		if (dc instanceof Domain<?> domCtx) {
 			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
 			return domDef.domainSecurityDefinition() == null || domDef.domainSecurityDefinition().disabled();
 		}
@@ -687,10 +687,10 @@ public class ApiExpressions {
 
 	@Expression(name = "authenticatorContext", description = "Returns the IAuthenticatorDefinition from the domain's security definition")
 	public static IAuthenticatorDefinition authenticatorContext(Object context) {
-		IDomainContext<?> dc = context instanceof Optional<?> opt
-				? (IDomainContext<?>) opt.get()
-				: (IDomainContext<?>) context;
-		if (dc instanceof DomainContext<?> domCtx) {
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
+		if (dc instanceof Domain<?> domCtx) {
 			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
 			var secDef = domDef.domainSecurityDefinition();
 			if (secDef != null) {

@@ -2,7 +2,7 @@ package com.garganttua.api.spec.service.pipeline;
 
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.core.reflection.IClass;
@@ -117,7 +117,7 @@ public interface IPipelineContext {
      * Gets the domain context for the current operation.
      * @return the domain context
      */
-    IDomainContext<?> getDomainContext();
+    IDomain<?> getDomain();
 
     // ========== Caller ==========
 

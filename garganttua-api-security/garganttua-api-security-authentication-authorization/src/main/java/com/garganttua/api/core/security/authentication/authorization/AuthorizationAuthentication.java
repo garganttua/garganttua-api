@@ -12,8 +12,8 @@ import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecke
 import com.garganttua.api.core.security.key.KeyHelper;
 import com.garganttua.core.CoreException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @Authentication(findPrincipal = false)
 public class AuthorizationAuthentication extends AbstractAuthentication {
 
-	public AuthorizationAuthentication(IDomainContext<?> domainContext) {
+	public AuthorizationAuthentication(IDomain<?> domainContext) {
 		super(domainContext);
 	}
 
@@ -35,7 +35,7 @@ public class AuthorizationAuthentication extends AbstractAuthentication {
 	}
 
 	@Inject
-	private IApiContext apiContext;
+	private IApi apiContext;
 
 	@Override
 	protected void doAuthentication() {
@@ -43,7 +43,7 @@ public class AuthorizationAuthentication extends AbstractAuthentication {
 			this.ownerId = EntityAuthorizationHelper.getOwnerId(this.credential);
 
 			String ownerDomainName = this.ownerId.split(":")[0];
-			Optional<IDomainContext<?>> ownerDomain = this.apiContext.getDomainContext(ownerDomainName);
+			Optional<IDomain<?>> ownerDomain = this.apiContext.getDomain(ownerDomainName);
 
 			ownerDomain.ifPresent((domainCtx) -> {
 				try {

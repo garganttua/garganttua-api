@@ -16,15 +16,15 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
-import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.core.security.authentication.ApiContextSupplier;
+import com.garganttua.api.core.security.authentication.ApiSupplier;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.SupplyException;
 
-@DisplayName("ApiContextSupplier Tests")
-class ApiContextSupplierTest {
+@DisplayName("ApiSupplier Tests")
+class ApiSupplierTest {
 
     @BeforeAll
     static void initReflection() {
@@ -34,18 +34,18 @@ class ApiContextSupplierTest {
                 .build());
     }
 
-    private ApiContextSupplier supplier;
+    private ApiSupplier supplier;
     @SuppressWarnings("rawtypes")
     private IRuntimeContext runtimeContext;
     private IOperationRequest operationRequest;
-    private IApiContext apiContext;
+    private IApi apiContext;
 
     @BeforeEach
     void setUp() {
-        supplier = new ApiContextSupplier();
+        supplier = new ApiSupplier();
         runtimeContext = mock(IRuntimeContext.class);
         operationRequest = mock(IOperationRequest.class);
-        apiContext = mock(IApiContext.class);
+        apiContext = mock(IApi.class);
     }
 
     @Nested
@@ -53,9 +53,9 @@ class ApiContextSupplierTest {
     class TypeMetadata {
 
         @Test
-        @DisplayName("getSuppliedType returns IApiContext type")
-        void suppliedTypeIsApiContext() {
-            assertEquals(IApiContext.class, supplier.getSuppliedType());
+        @DisplayName("getSuppliedType returns IApi type")
+        void suppliedTypeIsApi() {
+            assertEquals(IApi.class, supplier.getSuppliedType());
         }
 
         @Test
@@ -96,10 +96,10 @@ class ApiContextSupplierTest {
 
         @Test
         @DisplayName("returns apiContext from request")
-        void returnsApiContext() throws SupplyException {
+        void returnsApi() throws SupplyException {
             when(operationRequest.arg(IOperationRequest.API_CONTEXT)).thenReturn(Optional.of(apiContext));
 
-            Optional<IApiContext> result = supplier.supply(runtimeContext);
+            Optional<IApi> result = supplier.supply(runtimeContext);
 
             assertTrue(result.isPresent());
             assertSame(apiContext, result.get());
@@ -107,7 +107,7 @@ class ApiContextSupplierTest {
 
         @Test
         @DisplayName("throws when apiContext is missing from request")
-        void throwsWhenApiContextMissing() {
+        void throwsWhenApiMissing() {
             when(operationRequest.arg(IOperationRequest.API_CONTEXT)).thenReturn(Optional.empty());
 
             assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));

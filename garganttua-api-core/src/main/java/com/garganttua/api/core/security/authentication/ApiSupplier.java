@@ -3,7 +3,7 @@ package com.garganttua.api.core.security.authentication;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
-import com.garganttua.api.spec.context.IApiContext;
+import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
@@ -14,9 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
-public class ApiContextSupplier implements IContextualSupplier<IApiContext, IRuntimeContext> {
+public class ApiSupplier implements IContextualSupplier<IApi, IRuntimeContext> {
 
-    private static final IClass<IApiContext> SUPPLIED_CLASS = IClass.getClass(IApiContext.class);
+    private static final IClass<IApi> SUPPLIED_CLASS = IClass.getClass(IApi.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
 
     @Override
@@ -25,7 +25,7 @@ public class ApiContextSupplier implements IContextualSupplier<IApiContext, IRun
     }
 
     @Override
-    public IClass<IApiContext> getSuppliedClass() {
+    public IClass<IApi> getSuppliedClass() {
         return SUPPLIED_CLASS;
     }
 
@@ -35,8 +35,8 @@ public class ApiContextSupplier implements IContextualSupplier<IApiContext, IRun
     }
 
     @Override
-    public Optional<IApiContext> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering ApiContextSupplier.supply");
+    public Optional<IApi> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
+        log.atTrace().log("Entering ApiSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -48,12 +48,12 @@ public class ApiContextSupplier implements IContextualSupplier<IApiContext, IRun
         }
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
-        Optional<IApiContext> apiContextOpt = request.arg(IOperationRequest.API_CONTEXT);
+        Optional<IApi> apiContextOpt = request.arg(IOperationRequest.API_CONTEXT);
         if (apiContextOpt.isEmpty()) {
             throw new SupplyException("API context not found in operation request");
         }
 
-        log.atDebug().log("ApiContextSupplier resolved apiContext");
+        log.atDebug().log("ApiSupplier resolved apiContext");
         return apiContextOpt;
     }
 

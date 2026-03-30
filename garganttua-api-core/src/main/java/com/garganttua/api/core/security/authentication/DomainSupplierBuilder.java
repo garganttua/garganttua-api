@@ -2,7 +2,7 @@ package com.garganttua.api.core.security.authentication;
 
 import java.lang.reflect.Type;
 
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
@@ -13,9 +13,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
-public class DomainContextSupplierBuilder implements ISupplierBuilder<IDomainContext, IContextualSupplier<IDomainContext, IRuntimeContext>> {
+public class DomainSupplierBuilder implements ISupplierBuilder<IDomain, IContextualSupplier<IDomain, IRuntimeContext>> {
 
-    private static final IClass<IDomainContext> SUPPLIED_CLASS = IClass.getClass(IDomainContext.class);
+    private static final IClass<IDomain> SUPPLIED_CLASS = IClass.getClass(IDomain.class);
 
     @Override
     public Type getSuppliedType() {
@@ -23,7 +23,7 @@ public class DomainContextSupplierBuilder implements ISupplierBuilder<IDomainCon
     }
 
     @Override
-    public IClass<IDomainContext> getSuppliedClass() {
+    public IClass<IDomain> getSuppliedClass() {
         return SUPPLIED_CLASS;
     }
 
@@ -33,9 +33,9 @@ public class DomainContextSupplierBuilder implements ISupplierBuilder<IDomainCon
     }
 
     @Override
-    public IContextualSupplier<IDomainContext, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building DomainContextSupplier");
-        return new DomainContextSupplier();
+    public IContextualSupplier<IDomain, IRuntimeContext> build() throws DslException {
+        log.atDebug().log("Building DomainSupplier");
+        return new DomainSupplier();
     }
 
 }

@@ -11,12 +11,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.builder.ApiContextBuilder;
-import com.garganttua.api.core.context.ApiContext;
+import com.garganttua.api.core.builder.ApiBuilder;
+import com.garganttua.api.core.context.Api;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.definition.IDomainDefinition;
@@ -35,8 +35,8 @@ import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.RuntimeContextFactory;
 
-@DisplayName("ApiContextBuilder Tests")
-class ApiContextBuilderTest {
+@DisplayName("ApiBuilder Tests")
+class ApiBuilderTest {
 
     // Test entity class
     public static class TestEntity {
@@ -106,11 +106,11 @@ class ApiContextBuilderTest {
         }
     }
 
-    private IApiContextBuilder builder;
+    private IApiBuilder builder;
 
     @BeforeEach
     void setUp() {
-        builder = ApiContextBuilder.builder();
+        builder = ApiBuilder.builder();
     }
 
     @Nested
@@ -124,9 +124,9 @@ class ApiContextBuilderTest {
         }
 
         @Test
-        @DisplayName("builder() returns IApiContextBuilder instance")
+        @DisplayName("builder() returns IApiBuilder instance")
         void builderReturnsCorrectType() {
-            assertTrue(builder instanceof IApiContextBuilder);
+            assertTrue(builder instanceof IApiBuilder);
         }
     }
 
@@ -156,7 +156,7 @@ class ApiContextBuilderTest {
         @Test
         @DisplayName("superTenantId() returns builder for chaining")
         void superTenantIdReturnsBuilder() {
-            IApiContextBuilder result = builder.superTenantId("TENANT");
+            IApiBuilder result = builder.superTenantId("TENANT");
             assertSame(builder, result);
         }
     }
@@ -226,12 +226,12 @@ class ApiContextBuilderTest {
             ((IDependentBuilder<IInjectionContextBuilder, ?>) injectionContextBuilder).provide(reflectionBuilder);
 
             injectionContextBuilder.build();
-            // Do NOT pre-build expressionContextBuilder — ApiContextBuilder.provide() adds
+            // Do NOT pre-build expressionContextBuilder — ApiBuilder.provide() adds
             // required packages before triggering the build via handle()
 
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(reflectionBuilder);
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(injectionContextBuilder);
-            ((IDependentBuilder<IApiContextBuilder, IApiContext>) builder).provide(expressionContextBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(reflectionBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(injectionContextBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(expressionContextBuilder);
         }
 
         @Test
@@ -254,15 +254,15 @@ class ApiContextBuilderTest {
                        .up()
                    .up();
 
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
             assertNotNull(context);
-            assertNotNull(((ApiContext) context).getInjectionContext());
+            assertNotNull(((Api) context).getInjectionContext());
         }
 
         @Test
         @DisplayName("build() includes domain context")
-        void buildIncludesDomainContext() throws ApiException {
+        void buildIncludesDomain() throws ApiException {
             builder.multiTenant(false)
                    .domain(IClass.getClass(TestEntity.class))
                        .entity()
@@ -278,9 +278,9 @@ class ApiContextBuilderTest {
                        .up()
                    .up();
 
-            IApiContext context = builder.build();
+            IApi context = builder.build();
 
-            Optional<IDomainContext<?>> domainCtx = context.getDomainContext("testentities");
+            Optional<IDomain<?>> domainCtx = context.getDomain("testentities");
             assertTrue(domainCtx.isPresent());
             assertEquals(IClass.getClass(TestEntity.class), domainCtx.get().getEntityClass());
         }
@@ -303,8 +303,8 @@ class ApiContextBuilderTest {
                        .up()
                    .up();
 
-            IApiContext context = builder.build();
-            Optional<IDomainContext<?>> domainCtx = context.getDomainContext("testentities");
+            IApi context = builder.build();
+            Optional<IDomain<?>> domainCtx = context.getDomain("testentities");
 
             assertTrue(domainCtx.isPresent());
             assertEquals("testentities", domainCtx.get().getDomain());
@@ -350,7 +350,7 @@ class ApiContextBuilderTest {
                        .up()
                    .up();
 
-            IApiContext context = builder.build();
+            IApi context = builder.build();
             assertNotNull(context);
         }
 
@@ -373,7 +373,7 @@ class ApiContextBuilderTest {
                        .up()
                    .up();
 
-            IApiContext context = builder.build();
+            IApi context = builder.build();
             assertNotNull(context);
         }
     }

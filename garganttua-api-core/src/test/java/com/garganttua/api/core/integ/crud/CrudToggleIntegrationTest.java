@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.workflow.WorkflowResult;
@@ -17,9 +17,9 @@ import com.garganttua.core.workflow.WorkflowResult;
 @DisplayName("CRUD operation toggle tests")
 class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
 
-    private IDomainContext<?> buildDomain(DomainConfigurator configurator) throws ApiException {
+    private IDomain<?> buildDomain(DomainConfigurator configurator) throws ApiException {
         CapturingDao dao = new CapturingDao();
-        IApiContextBuilder builder = newBuilder();
+        IApiBuilder builder = newBuilder();
         var domainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
@@ -33,8 +33,8 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         configurator.configure(domainBuilder);
         domainBuilder.up();
 
-        IApiContext context = buildAndStart(builder);
-        return context.getDomainContext("users").orElseThrow();
+        IApi context = buildAndStart(builder);
+        return context.getDomain("users").orElseThrow();
     }
 
     @FunctionalInterface
@@ -42,7 +42,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         void configure(com.garganttua.api.spec.context.dsl.IDomainBuilder<?> builder);
     }
 
-    private WorkflowResult executeOperation(IDomainContext<?> ctx, OperationDefinition op) {
+    private WorkflowResult executeOperation(IDomain<?> ctx, OperationDefinition op) {
         var request = superTenantScriptRequest(op);
         User user = new User();
         user.setName("test");
@@ -57,7 +57,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("createOne is enabled by default")
         void createEnabled() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> {});
+            IDomain<?> ctx = buildDomain(b -> {});
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class)));
             assertTrue(result.isSuccess());
@@ -66,7 +66,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("readAll is enabled by default")
         void readAllEnabled() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> {});
+            IDomain<?> ctx = buildDomain(b -> {});
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class)));
             assertTrue(result.isSuccess());
@@ -80,7 +80,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("creation(false) disables createOne")
         void disableCreation() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.creation(false));
+            IDomain<?> ctx = buildDomain(b -> b.creation(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class)));
             assertFalse(result.isSuccess());
@@ -90,7 +90,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("readAll(false) disables readAll")
         void disableReadAll() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.readAll(false));
+            IDomain<?> ctx = buildDomain(b -> b.readAll(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class)));
             assertFalse(result.isSuccess());
@@ -100,7 +100,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("readOne(false) disables readOne")
         void disableReadOne() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.readOne(false));
+            IDomain<?> ctx = buildDomain(b -> b.readOne(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class)));
             assertFalse(result.isSuccess());
@@ -110,7 +110,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("update(false) disables updateOne")
         void disableUpdate() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.update(false));
+            IDomain<?> ctx = buildDomain(b -> b.update(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.updateOneWithStandardSecurity("users", IClass.getClass(User.class)));
             assertFalse(result.isSuccess());
@@ -120,7 +120,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("deleteOne(false) disables deleteOne")
         void disableDeleteOne() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.deleteOne(false));
+            IDomain<?> ctx = buildDomain(b -> b.deleteOne(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.deleteOneWithStandardSecurity("users", IClass.getClass(User.class)));
             assertFalse(result.isSuccess());
@@ -130,7 +130,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("deleteAll(false) disables deleteAll")
         void disableDeleteAll() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.deleteAll(false));
+            IDomain<?> ctx = buildDomain(b -> b.deleteAll(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.deleteAllWithStandardSecurity("users", IClass.getClass(User.class)));
             assertFalse(result.isSuccess());
@@ -145,7 +145,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("disabling creation does not affect readAll")
         void disableCreationKeepsRead() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.creation(false));
+            IDomain<?> ctx = buildDomain(b -> b.creation(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class)));
             assertTrue(result.isSuccess());
@@ -154,7 +154,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("disabling deleteAll does not affect createOne")
         void disableDeleteKeepsCreate() throws ApiException {
-            IDomainContext<?> ctx = buildDomain(b -> b.deleteAll(false));
+            IDomain<?> ctx = buildDomain(b -> b.deleteAll(false));
             WorkflowResult result = executeOperation(ctx,
                     OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class)));
             assertTrue(result.isSuccess());

@@ -12,8 +12,8 @@ import com.garganttua.api.core.repository.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.context.IEntityContext;
 import com.garganttua.api.spec.definition.IDomainDefinition;
@@ -46,7 +46,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DomainContext<E> extends AbstractLifecycle implements IDomainContext<E> {
+public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     private final DomainDefinition<E> domainDefinition;
     private final List<ISupplier<IEndpoint>> interfaces;
@@ -61,15 +61,18 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
     // Single workflow handling the full pipeline (business → security → execution)
     private IWorkflow workflow;
 
+    public List<ISupplier<IEndpoint>> getInterfaces() { return interfaces; }
+    public List<ISupplier<IEventPublisher>> getEvents() { return events; }
+
     // Bean definition for runtime DI injection on entities
     @Getter
     private BeanDefinition<?> entityBeanDefinition;
     @Getter
     private boolean doInjection;
 
-    private IApiContext apiContext;
+    private IApi apiContext;
 
-    public void setApiContext(IApiContext apiContext) {
+    public void setApi(IApi apiContext) {
         this.apiContext = apiContext;
     }
 
@@ -90,7 +93,7 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         this.workflow = Objects.requireNonNull(workflow, "Workflow cannot be null");
     }
 
-    public DomainContext(DomainDefinition<E> domainDefinition, IEntityContext<E> entityContext,
+    public Domain(DomainDefinition<E> domainDefinition, IEntityContext<E> entityContext,
             IDomainSecurityContext domainSecurityContext,
             List<IDtoContext<?>> dtoContexts,
             List<ISupplier<IEndpoint>> interfaces,
@@ -109,7 +112,7 @@ public class DomainContext<E> extends AbstractLifecycle implements IDomainContex
         
 
         Repository repo = new Repository(this.dtoContexts, entityContext.getEntityClass());
-        repo.setDomainContext(this);
+        repo.setDomain(this);
         this.repository = repo;
     }
 

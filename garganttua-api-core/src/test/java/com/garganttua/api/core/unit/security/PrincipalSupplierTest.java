@@ -18,7 +18,7 @@ import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.definition.IEntityDefinition;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -45,7 +45,7 @@ class PrincipalSupplierTest {
     private PrincipalSupplier supplier;
     @SuppressWarnings("rawtypes")
     private IRuntimeContext runtimeContext;
-    private IDomainContext domainContext;
+    private IDomain domainContext;
     private IEntityDefinition entityDefinition;
     private IOperationRequest operationRequest;
     private ICaller caller;
@@ -55,7 +55,7 @@ class PrincipalSupplierTest {
     void setUp() {
         supplier = new PrincipalSupplier();
         runtimeContext = mock(IRuntimeContext.class);
-        domainContext = mock(IDomainContext.class);
+        domainContext = mock(IDomain.class);
         entityDefinition = mock(IEntityDefinition.class);
         operationRequest = mock(IOperationRequest.class);
         caller = mock(ICaller.class);
@@ -111,7 +111,7 @@ class PrincipalSupplierTest {
         @SuppressWarnings("unchecked")
         @Test
         @DisplayName("throws when domainContext variable is missing")
-        void throwsOnMissingDomainContext() {
+        void throwsOnMissingDomain() {
             when(runtimeContext.getVariable(eq("request"), any(IClass.class))).thenReturn(Optional.of(operationRequest));
             when(runtimeContext.getVariable(eq("domainContext"), any(IClass.class))).thenReturn(Optional.empty());
             assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));

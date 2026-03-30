@@ -16,7 +16,7 @@ import com.garganttua.api.core.definition.AuthenticationDefinition;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
 import com.garganttua.api.spec.security.authentication.IAuthentication;
@@ -27,7 +27,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiContextSecurityBuilder, IAuthenticationContext> implements IAuthenticationBuilder {
+public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiSecurityBuilder, IAuthenticationContext> implements IAuthenticationBuilder {
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
     private IAuthenticationMethodBinderBuilder<?> authenticate;
@@ -35,11 +35,11 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     private IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity;
     private Map<String, IUseCaseBuilder<?, ?, ?>> useCases = new HashMap<>();
 
-    protected AuthenticationBuilder(IApiContextSecurityBuilder link) {
+    protected AuthenticationBuilder(IApiSecurityBuilder link) {
         super(link);
     }
 
-    public AuthenticationBuilder(IApiContextSecurityBuilder link, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
+    public AuthenticationBuilder(IApiSecurityBuilder link, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(link);
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
     }

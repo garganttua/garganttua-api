@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.repository.Repository;
 import com.garganttua.api.core.definition.DtoDefinition;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.context.IDtoContext;
 import com.garganttua.api.spec.dao.IDao;
 import com.garganttua.api.spec.definition.IDomainDefinition;
@@ -243,8 +243,8 @@ class RepositoryTest {
     }
 
     @SuppressWarnings("unchecked")
-    private void setUpDomainContext() throws Exception {
-        IDomainContext<TestEntity> domainContext = mock(IDomainContext.class);
+    private void setUpDomain() throws Exception {
+        IDomain<TestEntity> domainContext = mock(IDomain.class);
         IEntityDefinition<TestEntity> entityDefinition = mock(IEntityDefinition.class);
         IDomainDefinition<TestEntity> domainDefinition = mock(IDomainDefinition.class);
 
@@ -259,7 +259,7 @@ class RepositoryTest {
         when(domainContext.getDomainDefinition()).thenReturn(domainDefinition);
         when(domainContext.getEntityDefinition()).thenReturn(entityDefinition);
 
-        repository.setDomainContext(domainContext);
+        repository.setDomain(domainContext);
     }
 
     private TestDto createTestDto(String id, String uuid, String tenantId, String name) {
@@ -304,22 +304,22 @@ class RepositoryTest {
     }
 
     @Nested
-    @DisplayName("SetDomainContext")
-    class SetDomainContextTests {
+    @DisplayName("SetDomain")
+    class SetDomainTests {
 
         @Test
         @DisplayName("rejects null domainContext")
         void rejectsNull() {
             assertThrows(NullPointerException.class,
-                    () -> repository.setDomainContext(null));
+                    () -> repository.setDomain(null));
         }
 
         @Test
         @DisplayName("accepts valid domainContext")
         @SuppressWarnings("unchecked")
         void acceptsValid() {
-            IDomainContext<TestEntity> dc = mock(IDomainContext.class);
-            assertDoesNotThrow(() -> repository.setDomainContext(dc));
+            IDomain<TestEntity> dc = mock(IDomain.class);
+            assertDoesNotThrow(() -> repository.setDomain(dc));
         }
     }
 
@@ -460,7 +460,7 @@ class RepositoryTest {
         @Test
         @DisplayName("doesExist(entity) returns true when entity exists")
         void existsByEntityTrue() throws Exception {
-            setUpDomainContext();
+            setUpDomain();
             TestEntity entity = createTestEntity("1", "uuid-1", "t1", "Alice");
             repository.save(entity);
 
@@ -470,7 +470,7 @@ class RepositoryTest {
         @Test
         @DisplayName("doesExist(entity) returns false when entity does not exist")
         void existsByEntityFalse() throws Exception {
-            setUpDomainContext();
+            setUpDomain();
             TestEntity entity = createTestEntity("1", "uuid-nonexistent", "t1", "Ghost");
 
             assertFalse(repository.doesExist(entity));
@@ -485,7 +485,7 @@ class RepositoryTest {
 
         @Test
         @DisplayName("doesExist(entity) throws when domain context not set")
-        void existsByEntityThrowsWithoutDomainContext() {
+        void existsByEntityThrowsWithoutDomain() {
             TestEntity entity = createTestEntity("1", "uuid-1", "t1", "Alice");
             assertThrows(ApiException.class, () -> repository.doesExist(entity));
         }

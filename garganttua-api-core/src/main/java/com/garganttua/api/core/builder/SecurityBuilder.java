@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import com.garganttua.api.core.context.security.ApiSecurityContext;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.api.spec.context.dsl.security.IApiContextSecurityBuilder;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
+import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.security.IApiSecurityContext;
@@ -17,17 +17,17 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class ContextSecurityBuilder
+public class SecurityBuilder
         extends
-        AbstractAutomaticLinkedBuilder<IApiContextSecurityBuilder, IApiContextBuilder, IApiSecurityContext>
-        implements IApiContextSecurityBuilder {
+        AbstractAutomaticLinkedBuilder<IApiSecurityBuilder, IApiBuilder, IApiSecurityContext>
+        implements IApiSecurityBuilder {
 
     private Set<String> packages;
     private Map<IClass<?>, IAuthorizationProtocolBuilder> protocols = new HashMap<>();
     private Map<IClass<?>, IAuthenticationBuilder> authentications = new HashMap<>();
     private boolean disabled = false;
 
-    public ContextSecurityBuilder(Set<String> packages, IApiContextBuilder up) {
+    public SecurityBuilder(Set<String> packages, IApiBuilder up) {
         super(up);
         this.packages = packages;
     }
@@ -107,19 +107,19 @@ public class ContextSecurityBuilder
     }
 
     @Override
-    public IApiContextSecurityBuilder disable(boolean b) {
+    public IApiSecurityBuilder disable(boolean b) {
         this.disabled = b;
         return this;
     }
 
     @Override
-    public IApiContextSecurityBuilder withPackage(String packageName) {
+    public IApiSecurityBuilder withPackage(String packageName) {
         this.packages.add(packageName);
         return this;
     }
 
     @Override
-    public IApiContextSecurityBuilder withPackages(String[] packageNames) {
+    public IApiSecurityBuilder withPackages(String[] packageNames) {
         for (String pkg : packageNames) {
             this.packages.add(pkg);
         }

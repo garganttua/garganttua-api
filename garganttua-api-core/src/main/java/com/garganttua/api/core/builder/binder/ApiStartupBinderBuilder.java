@@ -3,8 +3,8 @@ package com.garganttua.api.core.builder.binder;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
-import com.garganttua.api.spec.context.dsl.IApiContextStartupBinderBuilder;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
+import com.garganttua.api.spec.context.dsl.IApiStartupBinderBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
@@ -12,16 +12,16 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-public class ApiContextStartupBinderBuilder
-        extends AbstractMethodBinderBuilder<Void, IApiContextStartupBinderBuilder, IApiContextBuilder, IMethodBinder<Void>>
-        implements IApiContextStartupBinderBuilder {
+public class ApiStartupBinderBuilder
+        extends AbstractMethodBinderBuilder<Void, IApiStartupBinderBuilder, IApiBuilder, IMethodBinder<Void>>
+        implements IApiStartupBinderBuilder {
 
-    public ApiContextStartupBinderBuilder(IApiContextBuilder up,
+    public ApiStartupBinderBuilder(IApiBuilder up,
             ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(up, supplier, Set.of());
     }
 
-    public ApiContextStartupBinderBuilder(IApiContextBuilder up,
+    public ApiStartupBinderBuilder(IApiBuilder up,
             Object object) {
         super(up, FixedSupplierBuilder.of(Objects.requireNonNull(object, "Object cannot be null")), Set.of());
     }

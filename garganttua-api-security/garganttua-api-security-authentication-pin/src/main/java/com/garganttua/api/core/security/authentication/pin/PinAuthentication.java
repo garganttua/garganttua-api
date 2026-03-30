@@ -13,7 +13,7 @@ import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.spec.CoreExceptionCode;
 import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.security.IPasswordEncoder;
 import com.garganttua.api.spec.security.annotations.Authentication;
 import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PinAuthentication extends AbstractAuthentication {
 
-	public PinAuthentication(IDomainContext<?> domainContext) {
+	public PinAuthentication(IDomain<?> domainContext) {
 		super(domainContext);
 	}
 
@@ -46,7 +46,7 @@ public class PinAuthentication extends AbstractAuthentication {
 	protected Object doFindPrincipal(ICaller caller) {
 		try {
 			PinAuthenticatorInfos infos = PinEntityAuthenticatorChecker.checkEntityAuthenticatorClass((Class<?>) this.authenticatorInfos.authenticatorType().getType());
-			IOperationResponse response = this.authenticatorDomainContext.readAll(
+			IOperationResponse response = this.authenticatorDomain.readAll(
 				Filter.eq(infos.loginFieldAddress().toString(), (String) this.principal), null, null, caller);
 			if( response.getResponseCode() == OperationResponseCode.OK ) {
 				List<Object> list = (List<Object>) response.getResponse();
@@ -80,8 +80,8 @@ public class PinAuthentication extends AbstractAuthentication {
 		} else {
 			PinEntityAuthenticatorHelper.resetPinErrorNumber(this.principal);
 		}
-		String uuid = (String) DefaultMapper.reflection().getFieldValue(this.principal, this.authenticatorDomainContext.getUuidFieldAddress());
-		this.authenticatorDomainContext.updateOne(uuid, this.principal, Caller.createTenantCaller(this.tenantId));
+		String uuid = (String) DefaultMapper.reflection().getFieldValue(this.principal, this.authenticatorDomain.getUuidFieldAddress());
+		this.authenticatorDomain.updateOne(uuid, this.principal, Caller.createTenantCaller(this.tenantId));
 	}
 
 	@AuthenticatorSecurityPreProcessing

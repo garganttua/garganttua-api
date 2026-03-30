@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApiContext;
-import com.garganttua.api.spec.context.IDomainContext;
+import com.garganttua.api.spec.context.IApi;
+import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.context.dsl.IApiContextBuilder;
+import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.sort.ISort;
@@ -28,15 +28,15 @@ import com.garganttua.core.workflow.WorkflowResult;
 @DisplayName("ReadAll Script Tests")
 class ReadAllIntegrationTest extends AbstractCrudScriptTest {
 
-    private IApiContext context;
-    private IDomainContext<?> userCtx;
+    private IApi context;
+    private IDomain<?> userCtx;
     private StubDao userDao;
 
     @BeforeEach
     void setUp() throws ApiException {
         userDao = new StubDao();
 
-        IApiContextBuilder builder = newBuilder();
+        IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
@@ -49,7 +49,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
             .up();
 
         context = buildAndStart(builder);
-        userCtx = context.getDomainContext("users").orElseThrow();
+        userCtx = context.getDomain("users").orElseThrow();
     }
 
     @Test
@@ -72,7 +72,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
     @Test
     @DisplayName("readAll returns 500 when repository throws an exception")
     void readAllReturns500OnRepositoryException() throws ApiException {
-        IApiContextBuilder failingBuilder = newBuilder();
+        IApiBuilder failingBuilder = newBuilder();
 
         failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
@@ -85,8 +85,8 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
                 .up()
             .up();
 
-        IApiContext failingContext = buildAndStart(failingBuilder);
-        IDomainContext<?> failingUserCtx = failingContext.getDomainContext("users").orElseThrow();
+        IApi failingContext = buildAndStart(failingBuilder);
+        IDomain<?> failingUserCtx = failingContext.getDomain("users").orElseThrow();
 
         OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(readAllOp);
@@ -236,7 +236,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
     void readAllPassesSortAndPageableToDao() throws ApiException {
         CapturingDao capturingDao = new CapturingDao();
 
-        IApiContextBuilder capBuilder = newBuilder();
+        IApiBuilder capBuilder = newBuilder();
         capBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
                 .entity()
@@ -248,8 +248,8 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
                 .up()
             .up();
 
-        IApiContext capContext = buildAndStart(capBuilder);
-        IDomainContext<?> capUserCtx = capContext.getDomainContext("users").orElseThrow();
+        IApi capContext = buildAndStart(capBuilder);
+        IDomain<?> capUserCtx = capContext.getDomain("users").orElseThrow();
 
         UserDto alice = new UserDto();
         alice.setId("1");

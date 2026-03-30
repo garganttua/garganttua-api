@@ -27,7 +27,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
 
-public interface IDomainContext<E> extends ILifecycle {
+public interface IDomain<E> extends ILifecycle {
 
 	IDomainDefinition<E> getDomainDefinition();
 
