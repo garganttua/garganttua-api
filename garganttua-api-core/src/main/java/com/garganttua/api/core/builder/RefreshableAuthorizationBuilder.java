@@ -1,7 +1,7 @@
 package com.garganttua.api.core.builder;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -46,7 +46,7 @@ public class RefreshableAuthorizationBuilder<E>
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder<E> expirable(Field field) throws ApiException {
+    public IRefreshableAuthorizationBuilder<E> expirable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Instant.class)).address();
@@ -73,7 +73,7 @@ public class RefreshableAuthorizationBuilder<E>
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder<E> revokable(Field field) throws ApiException {
+    public IRefreshableAuthorizationBuilder<E> revokable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
@@ -91,7 +91,7 @@ public class RefreshableAuthorizationBuilder<E>
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder<E> encode(Method method) throws ApiException {
+    public IRefreshableAuthorizationBuilder<E> encode(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         return this;
     }
@@ -121,7 +121,7 @@ public class RefreshableAuthorizationBuilder<E>
     }
 
     @Override
-    public IRefreshableAuthorizationBuilder<E> decode(Method method) throws ApiException {
+    public IRefreshableAuthorizationBuilder<E> decode(IMethod method) throws ApiException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'decode'");
     }

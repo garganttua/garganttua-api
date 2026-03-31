@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Method;
+import com.garganttua.core.reflection.IMethod;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -67,7 +67,7 @@ class AuthenticationBuilderTest {
         @Test
         @DisplayName("authenticate(Method) returns same builder")
         void authenticateMethodReturnsSelf() throws Exception {
-            Method m = TestAuthentication.class.getMethod("authenticate");
+            IMethod m = IClass.getClass(TestAuthentication.class).getMethod("authenticate");
             assertSame(builder, builder.authenticate(m));
         }
 
@@ -87,7 +87,7 @@ class AuthenticationBuilderTest {
         @Test
         @DisplayName("applySecurityOnEntity(Method) returns same builder")
         void applySecurityMethodReturnsSelf() throws Exception {
-            Method m = TestAuthentication.class.getMethod("applySecurityOnEntity");
+            IMethod m = IClass.getClass(TestAuthentication.class).getMethod("applySecurityOnEntity");
             assertSame(builder, builder.applySecurityOnEntity(m));
         }
 
@@ -125,7 +125,7 @@ class AuthenticationBuilderTest {
         @Test
         @DisplayName("authenticate(Method) rejects null")
         void authenticateMethodRejectsNull() {
-            assertThrows(NullPointerException.class, () -> builder.authenticate((Method) null));
+            assertThrows(NullPointerException.class, () -> builder.authenticate((IMethod) null));
         }
 
         @Test
@@ -143,7 +143,7 @@ class AuthenticationBuilderTest {
         @Test
         @DisplayName("applySecurityOnEntity(Method) rejects null")
         void applySecurityMethodRejectsNull() {
-            assertThrows(NullPointerException.class, () -> builder.applySecurityOnEntity((Method) null));
+            assertThrows(NullPointerException.class, () -> builder.applySecurityOnEntity((IMethod) null));
         }
 
         @Test
@@ -175,7 +175,7 @@ class AuthenticationBuilderTest {
         @Test
         @DisplayName("useCase(Method) rejects null")
         void useCaseMethodRejectsNull() {
-            assertThrows(NullPointerException.class, () -> builder.useCase((Method) null));
+            assertThrows(NullPointerException.class, () -> builder.useCase((IMethod) null));
         }
 
         @Test
@@ -202,7 +202,7 @@ class AuthenticationBuilderTest {
         @Test
         @DisplayName("useCase(Method) throws NPE due to null domain builder link")
         void useCaseMethodThrowsNpe() throws Exception {
-            Method m = TestAuthentication.class.getMethod("myUseCase");
+            IMethod m = IClass.getClass(TestAuthentication.class).getMethod("myUseCase");
             assertThrows(NullPointerException.class, () -> builder.useCase(m));
         }
 

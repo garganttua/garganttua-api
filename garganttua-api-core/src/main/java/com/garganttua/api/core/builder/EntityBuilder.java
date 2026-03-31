@@ -1,8 +1,8 @@
 package com.garganttua.api.core.builder;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -81,7 +81,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> id(Field field) throws ApiException {
+    public IEntityBuilder<E> id(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.id = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -108,7 +108,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> uuid(Field field) throws ApiException {
+    public IEntityBuilder<E> uuid(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.uuid = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -135,7 +135,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> tenantId(Field field) throws ApiException {
+    public IEntityBuilder<E> tenantId(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.tenantId = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -153,7 +153,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> mandatory(Field field) throws ApiException {
+    public IEntityBuilder<E> mandatory(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.mandatories.add(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address());
@@ -180,7 +180,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> unicity(Field field) throws ApiException {
+    public IEntityBuilder<E> unicity(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.unicities.add(new Pair<ObjectAddress, UnicityScope>(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address(),
@@ -220,7 +220,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> unicity(Field field, UnicityScope scope) throws ApiException {
+    public IEntityBuilder<E> unicity(IField field, UnicityScope scope) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.unicities.add(
@@ -250,7 +250,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> update(Field field) throws ApiException {
+    public IEntityBuilder<E> update(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.updates.add(new Pair<ObjectAddress, String>(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address(), null));
@@ -279,7 +279,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> update(Field field, String authority) throws ApiException {
+    public IEntityBuilder<E> update(IField field, String authority) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.updates
@@ -313,7 +313,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> annotation(Field field, IClass<? extends Annotation> annotation) throws ApiException {
+    public IEntityBuilder<E> annotation(IField field, IClass<? extends Annotation> annotation) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         Objects.requireNonNull(annotation, "Annotation cannot be null");
 
@@ -331,7 +331,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityBuilder<E> annotation(Method method, IClass<? extends Annotation> annotation) throws ApiException {
+    public IEntityBuilder<E> annotation(IMethod method, IClass<? extends Annotation> annotation) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         Objects.requireNonNull(annotation, "Annotation cannot be null");
 
@@ -347,10 +347,12 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
 
         try {
             Object leaf = this.objectQuery.find(elementAddress).getLast();
-            if (Field.class.isAssignableFrom(leaf.getClass()))
-                this.annotation((Field) leaf, annotation);
+            if (leaf instanceof IField f)
+                this.annotation(f, annotation);
+            else if (leaf instanceof IMethod m)
+                this.annotation(m, annotation);
             else
-                this.annotation((Method) leaf, annotation);
+                throw new ApiException("Unsupported element type: " + leaf.getClass().getName());
 
             return this;
         } catch (ReflectionException e) {
@@ -387,7 +389,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> afterGet(Method method)
+    public IEntityMethodBinderBuilder<E> afterGet(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.afterGetMethodBuilders, true);
     }
@@ -406,7 +408,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> beforeCreate(Method method)
+    public IEntityMethodBinderBuilder<E> beforeCreate(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.beforeCreateMethodBuilders);
     }
@@ -425,7 +427,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> beforeUpdate(Method method)
+    public IEntityMethodBinderBuilder<E> beforeUpdate(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.beforeUpdateMethodBuilders);
     }
@@ -444,7 +446,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> beforeDelete(Method method)
+    public IEntityMethodBinderBuilder<E> beforeDelete(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.beforeDeleteMethodBuilders);
     }
@@ -463,7 +465,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> afterCreate(Method method)
+    public IEntityMethodBinderBuilder<E> afterCreate(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.afterCreateMethodBuilders);
     }
@@ -482,7 +484,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> afterUpdate(Method method)
+    public IEntityMethodBinderBuilder<E> afterUpdate(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.afterUpdateMethodBuilders);
     }
@@ -501,7 +503,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     @Override
-    public IEntityMethodBinderBuilder<E> afterDelete(Method method)
+    public IEntityMethodBinderBuilder<E> afterDelete(IMethod method)
             throws ApiException {
         return this.createEntityMethodBuilder(method.getName(), this.afterDeleteMethodBuilders);
     }
@@ -555,8 +557,17 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     private void throwExceptionIfNoTenantId() throws ApiException {
-        if (this.tenantId == null)
+        if (this.tenantId == null && isMultiTenantEnabled()) {
             throw new ApiException("No tenant id defined for entity " + this.entityClass.getSimpleName());
+        }
+    }
+
+    private boolean isMultiTenantEnabled() {
+        try {
+            return up().up() instanceof ApiBuilder acb && acb.isMultiTenant();
+        } catch (Exception e) {
+            return true; // default to strict
+        }
     }
 
     private void throwExceptionIfNoId() throws ApiException {

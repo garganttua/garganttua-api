@@ -670,6 +670,15 @@ public class ApiExpressions {
 		return c != null && c.ownerId() != null;
 	}
 
+	@Expression(name = "authRequestHasTenantId", description = "Returns true if the IAuthenticationRequest has a non-null tenantId (safe, never throws)")
+	public static boolean authRequestHasTenantId(@Nullable Object entity) {
+		Object unwrapped = unwrapOptional(entity);
+		if (unwrapped instanceof com.garganttua.api.spec.security.authentication.IAuthenticationRequest req) {
+			return req.tenantId() != null;
+		}
+		return false;
+	}
+
 	@Expression(name = "isTenantIdMandatory", description = "Returns true if the operation requires a tenantId based on access level")
 	public static boolean isTenantIdMandatory(Object operation, Object context) {
 		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
@@ -706,6 +715,74 @@ public class ApiExpressions {
 			return def.scope() != null ? def.scope().name() : null;
 		}
 		return null;
+	}
+
+	@Expression(name = "findByLogin", description = "Finds an entity by login field in the repository. Returns the entity or throws if not found.")
+	public static Object findByLogin(@Nullable Object authContextObj, @Nullable Object repositoryObj, @Nullable Object loginValue) {
+		if (authContextObj == null || repositoryObj == null || loginValue == null) {
+			throw new ApiException("findByLogin: authContext, repository and login are required");
+		}
+		IAuthenticatorDefinition authDef = (IAuthenticatorDefinition) authContextObj;
+		IRepository repo = (IRepository) repositoryObj;
+		ObjectAddress loginField = authDef.login();
+		if (loginField == null) {
+			throw new ApiException("findByLogin: no login field configured on authenticator");
+		}
+		IFilter filter = Filter.eq(loginField.toString(), loginValue);
+		List<Object> results = repo.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+		if (results == null || results.isEmpty()) {
+			throw new ApiException("User not found for login: " + loginValue);
+		}
+		return results.get(0);
+	}
+
+	@Expression(name = "checkAccountStatus", description = "Checks enabled/locked/expired flags on an authenticator entity. Returns true if OK, throws if account is disabled/locked/expired.")
+	public static boolean checkAccountStatus(@Nullable Object authContextObj, @Nullable Object entity) {
+		if (authContextObj == null || entity == null) {
+			throw new ApiException("checkAccountStatus: authContext and entity are required");
+		}
+		IAuthenticatorDefinition authDef = (IAuthenticatorDefinition) authContextObj;
+
+		// If alwaysEnabled, skip all checks
+		if (authDef.alwaysEnabled()) {
+			return true;
+		}
+
+		IReflection reflection = DefaultMapper.reflection();
+
+		// Check enabled
+		if (authDef.enabled() != null) {
+			Object value = reflection.getFieldValue(entity, authDef.enabled().toString());
+			if (!Boolean.TRUE.equals(value)) {
+				throw new ApiException("Account is disabled");
+			}
+		}
+
+		// Check accountNonLocked
+		if (authDef.accountNonLocked() != null) {
+			Object value = reflection.getFieldValue(entity, authDef.accountNonLocked().toString());
+			if (!Boolean.TRUE.equals(value)) {
+				throw new ApiException("Account is locked");
+			}
+		}
+
+		// Check accountNonExpired
+		if (authDef.accountNonExpired() != null) {
+			Object value = reflection.getFieldValue(entity, authDef.accountNonExpired().toString());
+			if (!Boolean.TRUE.equals(value)) {
+				throw new ApiException("Account is expired");
+			}
+		}
+
+		// Check credentialsNonExpired
+		if (authDef.credentialsNonExpired() != null) {
+			Object value = reflection.getFieldValue(entity, authDef.credentialsNonExpired().toString());
+			if (!Boolean.TRUE.equals(value)) {
+				throw new ApiException("Credentials are expired");
+			}
+		}
+
+		return true;
 	}
 
 	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the IAuthenticatorDefinition, iterating over authentication methods until one succeeds")

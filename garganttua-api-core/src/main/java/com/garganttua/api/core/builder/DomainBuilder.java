@@ -1,6 +1,6 @@
 package com.garganttua.api.core.builder;
 
-import java.lang.reflect.Field;
+import com.garganttua.core.reflection.IField;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -184,7 +184,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owner(Field field) throws ApiException {
+    public IDomainBuilder<E> owner(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
             throw new ApiException("Entity class must be defined first");
@@ -220,7 +220,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> owned(Field field) throws ApiException {
+    public IDomainBuilder<E> owned(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
             throw new ApiException("Entity class must be defined first");
@@ -256,7 +256,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> shared(Field field) throws ApiException {
+    public IDomainBuilder<E> shared(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
             throw new ApiException("Entity class must be defined first");
@@ -304,7 +304,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> hiddenable(Field field) throws ApiException {
+    public IDomainBuilder<E> hiddenable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
             throw new ApiException("Entity class must be defined first");
@@ -340,7 +340,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> geolocalized(Field field) throws ApiException {
+    public IDomainBuilder<E> geolocalized(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
         if (this.entityBuilder == null) {
             throw new ApiException("Entity class must be defined first");

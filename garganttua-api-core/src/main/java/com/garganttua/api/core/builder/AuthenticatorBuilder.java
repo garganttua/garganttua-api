@@ -1,6 +1,6 @@
 package com.garganttua.api.core.builder;
 
-import java.lang.reflect.Field;
+import com.garganttua.core.reflection.IField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -58,7 +58,7 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder login(Field field) throws ApiException {
+    public IAuthenticatorBuilder login(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.login = FieldResolver
@@ -88,7 +88,7 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder authorities(Field field) throws ApiException {
+    public IAuthenticatorBuilder authorities(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.authorities = FieldResolver
@@ -124,7 +124,7 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder credentialsNonExpired(Field field) throws ApiException {
+    public IAuthenticatorBuilder credentialsNonExpired(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.credentialsNonExpired = FieldResolver
@@ -155,7 +155,7 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder enabled(Field field) throws ApiException {
+    public IAuthenticatorBuilder enabled(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.enabled = FieldResolver
@@ -186,7 +186,7 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonExpired(Field field) throws ApiException {
+    public IAuthenticatorBuilder accountNonExpired(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.accountNonExpired = FieldResolver
@@ -207,7 +207,7 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder accountNonLocked(Field field) throws ApiException {
+    public IAuthenticatorBuilder accountNonLocked(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.accountNonLocked = FieldResolver

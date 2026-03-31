@@ -61,7 +61,12 @@
       "Bash(wc -l __NEW_LINE_c78e7dfb99bf5cda__ echo \"\" echo \"IApiContextBuilder in tests:\" grep -r \"IApiContextBuilder\\\\>\" --include=\"*.java\" */src/test)",
       "Bash(wc -l __NEW_LINE_c78e7dfb99bf5cda__ echo \"\" echo \"All Context* references in tests:\" grep -r \"Context\" --include=\"*.java\" */src/test)",
       "Bash(wc -l })",
-      "Bash(do basename:*)"
+      "Bash(do basename:*)",
+      "Bash(__NEW_LINE_4ec747fd7841a421__ sed:*)",
+      "Bash(__NEW_LINE_4ec747fd7841a421__ echo:*)",
+      "Bash(sed -i 's/IClass.getReflection\\(\\).findMethod\\(IClass.getClass\\(TestAuthentication.class\\), \"\"authenticate\"\"\\).orElseThrow\\(\\)/IClass.getClass\\(TestAuthentication.class\\).getMethod\\(\"\"authenticate\"\"\\)/' garganttua-api-core/src/test/java/com/garganttua/api/core/unit/builder/AuthenticationBuilderTest.java)",
+      "Bash(__NEW_LINE_920f4e3238bd70f1__ sed:*)",
+      "Bash(__NEW_LINE_920f4e3238bd70f1__ echo:*)"
     ]
   }
 }

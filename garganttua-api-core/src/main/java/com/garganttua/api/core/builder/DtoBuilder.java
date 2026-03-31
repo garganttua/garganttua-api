@@ -1,6 +1,6 @@
 package com.garganttua.api.core.builder;
 
-import java.lang.reflect.Field;
+import com.garganttua.core.reflection.IField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -79,7 +79,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> id(Field field) throws ApiException {
+    public IDtoBuilder<E, D> id(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.id = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -106,7 +106,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> uuid(Field field) throws ApiException {
+    public IDtoBuilder<E, D> uuid(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.uuid = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -133,7 +133,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
-    public IDtoBuilder<E, D> tenantId(Field field) throws ApiException {
+    public IDtoBuilder<E, D> tenantId(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.tenantId = FieldResolver.fieldByFieldName(this.dtoClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -155,6 +155,10 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
         this.throwExceptionIfNoUuid();
         this.throwExceptionIfNoTenantId();
         this.throwExceptionIfNoId();
+        if (this.daos.isEmpty()) {
+            throw new ApiException("No DAO configured for dto " + this.dtoClass.getSimpleName()
+                    + ". Use .db(dao) to set a DAO.");
+        }
         if (this.daos.size() > 1) {
             log.atWarn().log(
                     "Multiple Daos set for dto {}. This feature is not yet supported, the first Dao will be used",
@@ -170,8 +174,17 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     private void throwExceptionIfNoTenantId() throws ApiException {
-        if( this.tenantId == null )
-            throw new ApiException("No tenant id defined for dto "+this.dtoClass.getSimpleName());
+        if (this.tenantId == null && isMultiTenantEnabled()) {
+            throw new ApiException("No tenant id defined for dto " + this.dtoClass.getSimpleName());
+        }
+    }
+
+    private boolean isMultiTenantEnabled() {
+        try {
+            return up().up() instanceof ApiBuilder acb && acb.isMultiTenant();
+        } catch (Exception e) {
+            return true; // default to strict
+        }
     }
 
     private void throwExceptionIfNoId() throws ApiException {

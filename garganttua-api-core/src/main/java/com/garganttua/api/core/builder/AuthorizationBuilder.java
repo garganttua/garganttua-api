@@ -1,7 +1,7 @@
 package com.garganttua.api.core.builder;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -47,7 +47,7 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
-    public IAuthorizationBuilder<E> type(Field field) throws ApiException {
+    public IAuthorizationBuilder<E> type(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.type = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
@@ -83,7 +83,7 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
-    public IAuthorizationBuilder<E> authorities(Field field) throws ApiException {
+    public IAuthorizationBuilder<E> authorities(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.authorities = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(List.class)).address();
@@ -110,7 +110,7 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
-    public IAuthorizationBuilder<E> expirable(Field field) throws ApiException {
+    public IAuthorizationBuilder<E> expirable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
         this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Instant.class)).address();
@@ -138,7 +138,7 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
-    public IAuthorizationBuilder<E> revokable(Field field) throws ApiException {
+    public IAuthorizationBuilder<E> revokable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
         this.storable = true;
 

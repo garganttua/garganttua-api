@@ -1,7 +1,7 @@
 package com.garganttua.api.core.builder;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
+import com.garganttua.core.reflection.IMethod;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +52,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(Method method) throws ApiException {
+    public IAuthenticationBuilder authenticate(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, method.getName());
         return this;
@@ -83,7 +83,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(Method method) throws ApiException {
+    public IAuthenticationBuilder applySecurityOnEntity(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
@@ -104,7 +104,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IUseCaseBuilder<?, ?, ?> useCase(Method method) throws ApiException {
+    public IUseCaseBuilder<?, ?, ?> useCase(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         return this.useCases.computeIfAbsent(method.getName(),
                 name -> new UseCaseBuilder<>(name, (IDomainBuilder<?>) null));

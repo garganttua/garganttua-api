@@ -1,6 +1,6 @@
 package com.garganttua.api.spec.context.dsl;
 
-import java.lang.reflect.Field;
+import com.garganttua.core.reflection.IField;
 
 import com.garganttua.api.spec.context.BuildingStage;
 import com.garganttua.api.spec.context.IDomain;
@@ -30,19 +30,19 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainBuilder<E> owner(String string) throws ApiException;
 
-    IDomainBuilder<E> owner(Field field) throws ApiException;
+    IDomainBuilder<E> owner(IField field) throws ApiException;
 
     IDomainBuilder<E> owner(ObjectAddress fieldAddress) throws ApiException;
 
     IDomainBuilder<E> owned(String string) throws ApiException;
 
-    IDomainBuilder<E> owned(Field field) throws ApiException;
+    IDomainBuilder<E> owned(IField field) throws ApiException;
 
     IDomainBuilder<E> owned(ObjectAddress fieldAddress) throws ApiException;
 
     IDomainBuilder<E> publik();
 
-    IDomainBuilder<E> shared(Field field) throws ApiException;
+    IDomainBuilder<E> shared(IField field) throws ApiException;
 
     IDomainBuilder<E> shared(String string) throws ApiException;
 
@@ -50,13 +50,13 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainBuilder<E> geolocalized(String string) throws ApiException;
 
-    IDomainBuilder<E> geolocalized(Field field) throws ApiException;
+    IDomainBuilder<E> geolocalized(IField field) throws ApiException;
 
     IDomainBuilder<E> geolocalized(ObjectAddress fieldAddress) throws ApiException;
 
     IDomainBuilder<E> hiddenable(String string) throws ApiException;
 
-    IDomainBuilder<E> hiddenable(Field field) throws ApiException;
+    IDomainBuilder<E> hiddenable(IField field) throws ApiException;
 
     IDomainBuilder<E> hiddenable(ObjectAddress fieldAddress) throws ApiException;
 

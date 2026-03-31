@@ -1,6 +1,6 @@
 package com.garganttua.api.core.builder;
 
-import java.lang.reflect.Method;
+import com.garganttua.core.reflection.IMethod;
 import java.util.Objects;
 
 import com.garganttua.api.core.context.security.AuthorizationProtocolContext;
@@ -36,7 +36,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder getAuthorization(Method method) throws ApiException {
+    public IAuthorizationProtocolBuilder getAuthorization(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         // TODO: Implement when method binder API is complete
         throw new UnsupportedOperationException("Unimplemented method 'getAuthorization'");
@@ -57,7 +57,7 @@ public class AuthorizationProtocolBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder setAuthorization(Method method) throws ApiException {
+    public IAuthorizationProtocolBuilder setAuthorization(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         // TODO: Implement when method binder API is complete
         throw new UnsupportedOperationException("Unimplemented method 'setAuthorization'");

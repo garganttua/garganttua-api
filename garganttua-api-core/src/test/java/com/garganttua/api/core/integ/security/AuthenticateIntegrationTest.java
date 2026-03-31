@@ -96,6 +96,11 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
                     .authenticator()
                         .login("id")
                         .scope(AuthenticatorScope.tenant)
+                        .enabled("enabled")
+                        .accountNonLocked("accountNonLocked")
+                        .accountNonExpired("accountNonExpired")
+                        .credentialsNonExpired("credentialsNonExpired")
+                        .alwaysEnabled(true)
                         .authentication(authBuilder)
                     .up()
                 .up()
@@ -103,6 +108,18 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
         context = buildAndStart(builder);
         userCtx = context.getDomain("users").orElseThrow();
+
+        // Pre-populate a user in the DAO so findByLogin can find it
+        User existingUser = new User();
+        existingUser.setId("john@example.com");
+        existingUser.setUuid("user-uuid-1");
+        existingUser.setTenantId("SUPER_TENANT");
+        existingUser.setName("John");
+        existingUser.setEnabled(true);
+        existingUser.setAccountNonLocked(true);
+        existingUser.setAccountNonExpired(true);
+        existingUser.setCredentialsNonExpired(true);
+        userDao.save(existingUser);
     }
 
     private OperationRequest authenticateRequest() {
@@ -144,10 +161,10 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
     class RequestValidation {
 
         @Test
-        @DisplayName("returns 400 when no caller is provided")
-        void returns400WhenNoCaller() throws ApiException {
+        @DisplayName("does not require caller — authentication is anonymous entry point")
+        void doesNotRequireCaller() throws ApiException {
             AuthenticationRequest authReq = new AuthenticationRequest(
-                    "john", "secret".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
+                    "john@example.com", "valid-password".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
 
             OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
             OperationRequest request = new OperationRequest(new HashMap<>());
@@ -156,8 +173,9 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
             WorkflowResult result = executeScript(userCtx, request);
 
-            assertFalse(result.isSuccess());
-            assertEquals(400, result.code());
+            // Script should not return 400 (missing caller is OK for authenticate)
+            assertNotEquals(400, result.code(), "authenticate should not require caller");
+            assertNotEquals(-1, result.code(), "script should not abort");
         }
 
         @Test
@@ -177,7 +195,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
     class AuthenticatorScopeTests {
 
         @Test
-        @DisplayName("tenant-scoped authenticator passes when caller has tenantId")
+        @DisplayName("tenant-scoped authenticator passes when entity has tenantId")
         void tenantScopePassesWithTenantId() throws ApiException {
             AuthenticationRequest authReq = new AuthenticationRequest(
                     "john@example.com",
@@ -189,9 +207,25 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
             WorkflowResult result = executeScript(userCtx, request);
 
-            // Script proceeds past the scope check (caller has tenantId)
             assertNotNull(result);
             assertNotEquals(400, result.code(), "should not fail on tenant scope check");
+            assertNotEquals(-1, result.code(), "script should not abort");
+        }
+
+        @Test
+        @DisplayName("tenant-scoped authenticator returns 400 when entity has no tenantId")
+        void tenantScopeFailsWithoutTenantId() throws ApiException {
+            AuthenticationRequest authReq = new AuthenticationRequest(
+                    "john@example.com",
+                    "valid-password".getBytes(StandardCharsets.UTF_8),
+                    null); // no tenantId
+
+            OperationRequest request = authenticateRequest();
+            request.arg("entity", authReq);
+
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(400, result.code(), "tenant scope without tenantId should return 400");
         }
     }
 

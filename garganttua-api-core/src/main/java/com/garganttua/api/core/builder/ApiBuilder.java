@@ -213,7 +213,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			String domainName = entry.getKey();
 			IDomain<?> domainContext = entry.getValue();
 
-			@SuppressWarnings("unchecked")
 			BeanReference<IDomain<?>> domainBeanRef = new BeanReference<>(
 					(IClass<IDomain<?>>) (IClass<?>) IClass.getClass(IDomain.class),
 					Optional.of(BeanStrategy.singleton),
@@ -224,7 +223,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 			// Register the tenant domain context with a well-known bean name
 			if (domainContext.isTenantEntity()) {
-				@SuppressWarnings("unchecked")
 				BeanReference<IDomain<?>> tenantBeanRef = new BeanReference<>(
 						(IClass<IDomain<?>>) (IClass<?>) IClass.getClass(IDomain.class),
 						Optional.of(BeanStrategy.singleton),

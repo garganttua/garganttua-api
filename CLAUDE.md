@@ -53,16 +53,44 @@ ApiBuilder.builder()
 
 **Definition/Context separation** — Definitions (immutable config: `EntityDefinition`, `DomainDefinition`) are built once; Contexts (runtime: `EntityContext`, `Domain`) aggregate definitions and provide services like `invoke(IServiceRequest)`.
 
-**Multi-tenancy** — First-class tenant isolation via `tenantId`/`ownerId` fields and headers. Super-tenant bypasses tenant filtering; magic-owner bypasses ownership. `RepositoryFilterTools` implements the access filter matrix documented in README.md (public/hiddenable/shared/owned entity flag combinations). Can be disabled globally via `ApiBuilder.builder().multiTenant(false)` — strict mode: `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` when multi-tenancy is disabled.
+**Domain roles** — Each domain/entity can have functional roles that determine its behavior in the multi-tenancy model:
+
+- **Tenant** (`.tenant(true)` / `@EntityTenant`) — The entity that represents a tenant (e.g. Organization). Exactly one domain must be marked as tenant when multi-tenancy is enabled. The super-tenant bypasses tenant filtering.
+- **Owner** (`.owner(field)` / `@EntityOwner`) — The entity that owns other entities (e.g. User). The `ownerId` field links owned entities to their owner. Magic-owner bypasses ownership checks.
+- **Owned** (`.owned(field)` / `@EntityOwned`) — An entity that belongs to an owner. The `owned` field references the owner. Access is restricted to the owner (or super-owner).
+
+**Entity characteristics** — Domains can be marked with additional characteristics that affect visibility and access:
+
+- **Public** (`.publik()` / `@EntityPublic`) — Entity is accessible without tenant filtering. No tenantId required on requests.
+- **Geolocalized** (`.geolocalized(field)` / `@EntityGeolocalized`) — Entity has a location field for geographic queries.
+- **Hiddenable** (`.hiddenable(field)` / `@EntityHiddenable`) — Entity can be hidden/soft-deleted via a boolean flag field.
+- **Shared** (`.shared(field)` / `@EntityShared`) — Entity can be shared across tenants/owners via a sharing field.
+
+These roles and characteristics combine to form the access filter matrix implemented in `RepositoryFilterTools` (documented in README.md). For example, an entity that is both owned and hiddenable will have its repository queries filtered by ownerId AND hidden flag.
+
+**Multi-tenancy** — Can be disabled globally via `ApiBuilder.builder().multiTenant(false)` — strict mode: `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` when multi-tenancy is disabled. When disabled, `tenantId` is not required on entities/DTOs.
 
 **Fluent Request Builder** — `IDomain.request()` and `IApi.request(domainName)` return an `IRequestBuilder` with CRUD shortcuts (`createOne(body)`, `readOne(uuid)`, `readAll()`, `updateOne(uuid, body)`, `deleteOne(uuid)`, `deleteAll()`). Chain with `.caller()`, `.filter()`, `.page()`, `.sort()` etc. Terminal: `.execute()` (build+invoke) or `.build()` then `.execute()` for two-step usage.
+
+**Security architecture** — Security is configured per-domain via `.security()`. Each domain can have one or more security roles:
+
+- **Authenticator** (`.security().authenticator()`) — The entity that authenticates (e.g. User). Configures: login field, account status fields (enabled, accountNonLocked, accountNonExpired, credentialsNonExpired), alwaysEnabled flag, authenticator scope (tenant/owner/global), and linked authentication methods. The authenticate workflow (AUTHENTICATE.gs) is auto-registered when an authenticator is configured: it receives an `AuthenticationRequest(login, credentials, tenantId)`, looks up the entity by login, checks account status, then calls `tryAuthenticate`.
+
+- **Authorization** (`.security().authorization()`) — The entity that represents tokens/authorizations (e.g. JWT session). Configures: type field, authorities field, expiration, revocation, storable flag, and optional signable/refreshable capabilities with method bindings for sign/validate/encode/decode.
+
+- **Key** (`.security().key()`) — The entity that stores encryption/signing keys. Configures: algorithm, signature algorithm, lifetime, usage (oneForAll/oneForTenant). Currently a placeholder builder (`IKeyBuilder` is empty).
+
+Security at the API level (`.security()`) registers authentication strategies (`@Authentication` classes with `authenticate()` methods) and authorization protocols. Security at the domain level links domains to these strategies.
+
+The security pipeline for CRUD operations uses VERIFY_ACCESS.gs which checks the operation's access level (anonymous/authenticated/tenant/owner) and validates the authorization token and caller permissions before the business stage runs.
 
 ### Annotation Categories (garganttua-api-spec)
 
 - **Entity identity**: `@EntityId`, `@EntityUuid`, `@EntityTenantId`, `@EntityOwnerId`
 - **Entity visibility**: `@EntityPublic`, `@EntityTenant`, `@EntityOwned`, `@EntityShared`, `@EntityHiddenable`
 - **Entity constraints**: `@EntityMandatory`/`@EntityMandatories`, `@EntityUnicity`/`@EntityUnicities` (scope: TENANT/OWNER/GLOBAL)
-- **Entity lifecycle hooks** (method-level): `@EntityGotFromRepository`, `@EntitySaveMethod`, `@EntityDeleteMethod`
+- **Entity lifecycle hooks** (method-level): `@EntityBeforeCreate`, `@EntityAfterCreate`, `@EntityBeforeUpdate`, `@EntityAfterUpdate`, `@EntityBeforeDelete`, `@EntityAfterDelete`
+- **API-level**: `@Api` (multiTenancy, superTenantId, superTenantAutoCreate)
 - **Security type-level**: `@Authentication`, `@Authenticator` (configures key algorithm, token lifetime, scope), `@Authorization` (signable, renewable)
 - **Security field-level**: `@AuthenticatorLogin`, `@AuthenticatorEnabled`, `@AuthenticatorAuthorities`, `@AuthenticatorRefreshToken`
 - **Security method-level**: `@AuthenticationAuthenticate`, `@AuthorizationSign`, `@AuthorizationValidate`

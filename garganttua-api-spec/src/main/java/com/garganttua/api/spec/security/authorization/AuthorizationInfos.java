@@ -1,11 +1,11 @@
 package com.garganttua.api.spec.security.authorization;
 
-import java.lang.reflect.Constructor;
+import com.garganttua.core.reflection.IConstructor;
 
 import com.garganttua.core.reflection.ObjectAddress;
 
-public record AuthorizationInfos(boolean signable, boolean renewable, Constructor<?> completeConstructor,
-		Constructor<?> rawConstructor, ObjectAddress uuidFieldAddress, ObjectAddress idFieldAddress,
+public record AuthorizationInfos(boolean signable, boolean renewable, IConstructor<?> completeConstructor,
+		IConstructor<?> rawConstructor, ObjectAddress uuidFieldAddress, ObjectAddress idFieldAddress,
 		ObjectAddress tenantIdFieldAddress, ObjectAddress ownerIdFieldAddress,
 		ObjectAddress authoritiesFieldAddress, ObjectAddress creationFieldAddress,
 		ObjectAddress expirationFieldAddress, ObjectAddress revokedFieldAddress,

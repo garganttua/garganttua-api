@@ -39,6 +39,10 @@ public abstract class AbstractCrudIntegrationTest {
         private String tenantId;
         private String name;
         private String email;
+        private Boolean enabled = true;
+        private Boolean accountNonLocked = true;
+        private Boolean accountNonExpired = true;
+        private Boolean credentialsNonExpired = true;
 
         public User() {}
 
@@ -52,6 +56,14 @@ public abstract class AbstractCrudIntegrationTest {
         public void setName(String name) { this.name = name; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+        public Boolean getEnabled() { return enabled; }
+        public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+        public Boolean getAccountNonLocked() { return accountNonLocked; }
+        public void setAccountNonLocked(Boolean accountNonLocked) { this.accountNonLocked = accountNonLocked; }
+        public Boolean getAccountNonExpired() { return accountNonExpired; }
+        public void setAccountNonExpired(Boolean accountNonExpired) { this.accountNonExpired = accountNonExpired; }
+        public Boolean getCredentialsNonExpired() { return credentialsNonExpired; }
+        public void setCredentialsNonExpired(Boolean credentialsNonExpired) { this.credentialsNonExpired = credentialsNonExpired; }
     }
 
     public static class UserDto {
