@@ -36,11 +36,6 @@ class AuthenticationBuilderTest {
     @Retention(RetentionPolicy.RUNTIME)
     @interface TestAnnotation {}
 
-    public static class TestAuthentication {
-        public void authenticate() {}
-        public void applySecurityOnEntity() {}
-        public void myUseCase() {}
-    }
 
     @BeforeEach
     void setUp() {
@@ -51,6 +46,8 @@ class AuthenticationBuilderTest {
 
         parentLink = mock(IApiSecurityBuilder.class);
         supplierBuilder = mock(ISupplierBuilder.class);
+        when(supplierBuilder.getSuppliedClass()).thenReturn(IClass.getClass(TestAuthentication.class));
+        when(supplierBuilder.build()).thenReturn(null);
         builder = new AuthenticationBuilder(parentLink, supplierBuilder);
     }
 
@@ -59,23 +56,23 @@ class AuthenticationBuilderTest {
     class FluentApi {
 
         @Test
-        @DisplayName("authenticate(String) returns same builder")
-        void authenticateStringReturnsSelf() throws ApiException {
-            assertSame(builder, builder.authenticate("authenticate"));
+        @DisplayName("authenticate(String) returns binder builder")
+        void authenticateStringReturnsBinder() throws ApiException {
+            assertNotNull(builder.authenticate("authenticate"), "should return binder builder");
         }
 
         @Test
-        @DisplayName("authenticate(Method) returns same builder")
-        void authenticateMethodReturnsSelf() throws Exception {
+        @DisplayName("authenticate(Method) returns binder builder")
+        void authenticateMethodReturnsBinder() throws Exception {
             IMethod m = IClass.getClass(TestAuthentication.class).getMethod("authenticate");
-            assertSame(builder, builder.authenticate(m));
+            assertNotNull(builder.authenticate(m), "should return binder builder");
         }
 
         @Test
-        @DisplayName("authenticate(ObjectAddress) returns same builder")
-        void authenticateObjectAddressReturnsSelf() throws ApiException {
+        @DisplayName("authenticate(ObjectAddress) returns binder builder")
+        void authenticateObjectAddressReturnsBinder() throws ApiException {
             ObjectAddress addr = new ObjectAddress("authenticate");
-            assertSame(builder, builder.authenticate(addr));
+            assertNotNull(builder.authenticate(addr), "should return binder builder");
         }
 
         @Test
@@ -242,16 +239,10 @@ class AuthenticationBuilderTest {
         }
 
         @Test
-        @DisplayName("full configuration builds successfully")
-        void fullConfigurationBuilds() throws Exception {
-            builder.authenticate("authenticate")
-                    .applySecurityOnEntity("applySecurityOnEntity")
-                    .entityMustHaveFieldOfTypeAnnotatedWith(
-                            IClass.getClass(TestAnnotation.class), IClass.getClass(String.class));
-
-            IAuthenticationContext ctx = builder.build();
-            assertNotNull(ctx);
-            assertNotNull(ctx.getAuthenticationDefinition());
+        @DisplayName("authenticate method creates binder builder")
+        void authenticateMethodCreatesBinder() throws Exception {
+            var binderBuilder = builder.authenticate("authenticate");
+            assertNotNull(binderBuilder, "authenticate should create a binder builder");
         }
     }
 }

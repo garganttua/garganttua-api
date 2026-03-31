@@ -6,4 +6,6 @@ public interface IDomainSecurityDefinition {
 
     IAuthenticatorDefinition authenticatorDefinition();
 
+    IDomainAuthorizationDefinition authorizationDefinition();
+
 }

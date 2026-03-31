@@ -37,15 +37,24 @@ requirePresent(if(@_hasTenantId, true))
 ! -> 400
 
 // Look up the authenticator entity (e.g. User) by login in the repository
-principal <- findByLogin(@authContext, @1, :login(@entity))
+principal <- findByLogin(@authContext, @1, authRequestLogin(@entity))
 ! -> 401
 
 // Check account status (enabled, non-locked, non-expired) unless alwaysEnabled
 checkAccountStatus(@authContext, @principal)
 ! -> 403
 
+// Store principal in the request BEFORE tryAuthenticate (suppliers read it from request)
+setRequestArg(@0, "principal", @principal)
+
+// Prepare runtime context for authenticate method suppliers (principal, credentials, definition)
+prepareAuthContext(@0, @2)
+
 // Attempt authentication
-output <- tryAuthenticate(@authContext)
+_authResult <- tryAuthenticate(@authContext)
 ! -> 401
 
-output <- @output -> 0
+// Store authentication result in the request for downstream stages (CREATE_AUTHORIZATION)
+setRequestArg(@0, "authenticationResult", @_authResult)
+
+output <- @_authResult -> 0

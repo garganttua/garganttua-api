@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
+import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.reflection.ObjectAddress;
 
@@ -19,6 +20,7 @@ public record AuthenticatorDefintion(
         ObjectAddress accountNonExpired,
         AuthenticatorScope scope,
         Map<Annotation, ObjectAddress> requiredAuthenticationFields,
-        List<IAuthenticationDefinition> authenticationDefinitions) implements IAuthenticatorDefinition {
+        List<IAuthenticationDefinition> authenticationDefinitions,
+        IDomainAuthenticatorAuthorizationDefinition authorizationDefinition) implements IAuthenticatorDefinition {
 
 }

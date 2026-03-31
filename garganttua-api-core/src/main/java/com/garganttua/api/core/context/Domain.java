@@ -76,6 +76,10 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         this.apiContext = apiContext;
     }
 
+    public IApi getApiContext() {
+        return this.apiContext;
+    }
+
     @Override
     public boolean isMultiTenant() {
         return this.apiContext != null && this.apiContext.isMultiTenant();

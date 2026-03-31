@@ -13,13 +13,13 @@ import com.garganttua.core.reflection.ObjectAddress;
 public interface IAuthenticationBuilder
                 extends IAutomaticLinkedBuilder<IAuthenticationBuilder, IApiSecurityBuilder, IAuthenticationContext> {
 
-        IAuthenticationBuilder authenticate(
+        IAuthenticationMethodBinderBuilder<?> authenticate(
                         String methodName) throws ApiException;
 
-        IAuthenticationBuilder authenticate(
+        IAuthenticationMethodBinderBuilder<?> authenticate(
                         IMethod method) throws ApiException;
 
-        IAuthenticationBuilder authenticate(
+        IAuthenticationMethodBinderBuilder<?> authenticate(
                         ObjectAddress methodAddress) throws ApiException;
 
         IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,

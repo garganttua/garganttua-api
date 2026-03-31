@@ -252,10 +252,10 @@ public class AuthenticatorBuilder<E> extends
 
     @Override
     public IAuthenticatorAuthorizationBuilder authorization(IDomainBuilder authorization) {
-        Objects.requireNonNull(authorization, "Authentication cannot be null");
+        Objects.requireNonNull(authorization, "Authorization domain cannot be null");
 
         if (this.authenticatorAuthorizationBuilder == null) {
-            this.authenticatorAuthorizationBuilder = new AuthenticatorAuthorizationBuilder<>(this);
+            this.authenticatorAuthorizationBuilder = new AuthenticatorAuthorizationBuilder<>(this, authorization);
         }
 
         return this.authenticatorAuthorizationBuilder;
@@ -268,6 +268,11 @@ public class AuthenticatorBuilder<E> extends
             authenticationDefinitions.add(builder.build().getAuthenticationDefinition());
         }
 
+        // Build authorization definition if configured
+        var authorizationDef = this.authenticatorAuthorizationBuilder != null
+                ? this.authenticatorAuthorizationBuilder.build().getAuthenticatorAuthorizationDefinition()
+                : null;
+
         IAuthenticatorDefinition authenticatorDefinition = new AuthenticatorDefintion(
                 this.alwaysEnabled,
                 this.login,
@@ -278,9 +283,14 @@ public class AuthenticatorBuilder<E> extends
                 this.accountNonExpired,
                 this.scope,
                 null,
-                authenticationDefinitions);
+                authenticationDefinitions,
+                authorizationDef);
 
         return new AuthenticatorContext(authenticatorDefinition);
+    }
+
+    boolean hasAuthorizationConfig() {
+        return this.authenticatorAuthorizationBuilder != null;
     }
 
     @Override

@@ -78,7 +78,7 @@ class DomainDefinitionTest {
     }
 
     private DomainSecurityDefinition defaultSecurityDef() {
-        return new DomainSecurityDefinition(false, null);
+        return new DomainSecurityDefinition(false, null, null);
     }
 
     private IWorkflowDefinition crudWorkflow(Access access, boolean authority) {

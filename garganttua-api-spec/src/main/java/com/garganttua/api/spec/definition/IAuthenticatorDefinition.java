@@ -29,4 +29,6 @@ public interface IAuthenticatorDefinition {
 
     List<IAuthenticationDefinition> authenticationDefinitions();
 
+    IDomainAuthenticatorAuthorizationDefinition authorizationDefinition();
+
 }

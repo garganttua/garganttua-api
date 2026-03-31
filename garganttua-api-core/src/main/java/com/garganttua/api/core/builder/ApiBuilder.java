@@ -52,9 +52,9 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 	private ApiBuilder() {
 		super(Set.of(
-						DependencySpec.require(IInjectionContextBuilder.class, DependencyPhase.BUILD),
-						DependencySpec.require(IExpressionContextBuilder.class, DependencyPhase.BUILD),
-						DependencySpec.require(IReflectionBuilder.class, DependencyPhase.BUILD)));
+						DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD),
+						DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class), DependencyPhase.BUILD),
+						DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
 	}
 
 	private final Set<String> packages = ConcurrentHashMap.newKeySet();

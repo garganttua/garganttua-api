@@ -2,9 +2,12 @@ package com.garganttua.api.core.builder.binder;
 
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationMethodBinderBuilder;
+import com.garganttua.api.spec.security.authentication.IAuthentication;
+
 import java.util.Set;
 
 import com.garganttua.api.spec.ApiException;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
@@ -21,6 +24,7 @@ public class AuthenticationMethodBinderBuilder<ExecutionReturn> extends Abstract
     public AuthenticationMethodBinderBuilder(IAuthenticationBuilder up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName) {
         super(up, supplier, Set.of());
         this.authenticateMethodName = methodName;
+        this.method(methodName, null);
     }
 
     public String getAuthenticateMethodName() {

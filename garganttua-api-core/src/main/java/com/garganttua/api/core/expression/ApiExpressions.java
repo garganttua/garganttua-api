@@ -6,52 +6,55 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.api.core.filter.Filter;
-import com.garganttua.api.core.repository.RepositoryFilterTools;
-import com.garganttua.api.spec.service.Page;
+import org.javatuples.Pair;
+
+import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.context.Domain;
 import com.garganttua.api.core.context.EntityUpdater;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.definition.EntityDefinition;
+import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.api.core.repository.RepositoryFilterTools;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.definition.IEntityDefinition;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.operation.Access;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
+import com.garganttua.api.spec.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.spec.definition.IDomainDefinition;
+import com.garganttua.api.spec.definition.IEntityDefinition;
+import com.garganttua.api.spec.entity.annotations.UnicityScope;
+import com.garganttua.api.spec.filter.IFilter;
+import com.garganttua.api.spec.operation.Access;
+import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.api.spec.pageable.IPageable;
+import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.authentication.IAuthentication;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
-import com.garganttua.core.reflection.IMethodReturn;
-import com.garganttua.core.reflection.binders.IContextualMethodBinder;
-import com.garganttua.core.reflection.binders.IMethodBinder;
+import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.service.Page;
 import com.garganttua.api.spec.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
-import jakarta.annotation.Nullable;
 import com.garganttua.core.expression.context.ExpressionVariableContext;
 import com.garganttua.core.expression.context.IExpressionVariableResolver;
 import com.garganttua.core.injection.BeanDefinition;
+import com.garganttua.core.injection.context.beans.BeanFactory;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethodReturn;
+import com.garganttua.core.reflection.IReflection;
+import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.binders.IContextualMethodBinder;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.core.script.IScript;
-import com.garganttua.core.script.context.ScriptExecutionContext;
 import com.garganttua.core.script.context.ScriptContext;
-import com.garganttua.core.injection.context.beans.BeanFactory;
-import com.garganttua.api.spec.entity.annotations.UnicityScope;
-import com.garganttua.core.reflection.IReflection;
-import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.reflection.binders.IMethodBinder;
-import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.script.context.ScriptExecutionContext;
 import com.github.f4b6a3.uuid.UuidCreator;
-import org.javatuples.Pair;
+
+import jakarta.annotation.Nullable;
 
 public class ApiExpressions {
 
@@ -670,6 +673,15 @@ public class ApiExpressions {
 		return c != null && c.ownerId() != null;
 	}
 
+	@Expression(name = "authRequestLogin", description = "Extracts the login from an IAuthenticationRequest (safe, never throws)")
+	public static @Nullable Object authRequestLogin(@Nullable Object entity) {
+		Object unwrapped = unwrapOptional(entity);
+		if (unwrapped instanceof com.garganttua.api.spec.security.authentication.IAuthenticationRequest req) {
+			return req.login();
+		}
+		return null;
+	}
+
 	@Expression(name = "authRequestHasTenantId", description = "Returns true if the IAuthenticationRequest has a non-null tenantId (safe, never throws)")
 	public static boolean authRequestHasTenantId(@Nullable Object entity) {
 		Object unwrapped = unwrapOptional(entity);
@@ -717,6 +729,174 @@ public class ApiExpressions {
 		return null;
 	}
 
+	@Expression(name = "hasAuthorizationConfig", description = "Returns true if the authenticator has an authorization definition configured")
+	public static boolean hasAuthorizationConfig(@Nullable Object authContextObj) {
+		if (authContextObj instanceof IAuthenticatorDefinition def) {
+			return def.authorizationDefinition() != null;
+		}
+		return false;
+	}
+
+	@Expression(name = "authorizationDefinition", description = "Returns the IDomainAuthorizationDefinition from the domain's security definition")
+	public static @Nullable Object authorizationDefinition(@Nullable Object context) {
+		IDomain<?> dc = context instanceof Optional<?> opt
+				? (IDomain<?>) opt.get()
+				: (IDomain<?>) context;
+		if (dc instanceof Domain<?> domCtx) {
+			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
+			var secDef = domDef.domainSecurityDefinition();
+			if (secDef != null) {
+				return secDef.authorizationDefinition();
+			}
+		}
+		return null;
+	}
+
+	@Expression(name = "createAuthorizationEntity", description = "Creates a new authorization entity with fields populated from authentication result, principal uuid and tenant id")
+	public static Object createAuthorizationEntity(@Nullable Object authorizationDefObj,
+			@Nullable Object authenticationResult, @Nullable Object authContextObj,
+			@Nullable Object principalUuid, @Nullable Object tenantId) {
+		if (authorizationDefObj == null || authenticationResult == null) {
+			throw new ApiException("createAuthorizationEntity: authorizationDef and authenticationResult are required");
+		}
+
+		IDomainAuthorizationDefinition authzDef = (IDomainAuthorizationDefinition) authorizationDefObj;
+		IAuthentication authResult = (IAuthentication) authenticationResult;
+		IAuthenticatorDefinition authDef = authContextObj != null ? (IAuthenticatorDefinition) authContextObj : null;
+		IReflection reflection = DefaultMapper.reflection();
+
+		try {
+			// Get the authorization domain — build lazily from the stored builder
+			IDomain<?> authzDomain = null;
+			if (authDef != null && authDef.authorizationDefinition() != null
+					&& authDef.authorizationDefinition().authorizationDomainBuilder() != null) {
+				authzDomain = (IDomain<?>) authDef.authorizationDefinition().authorizationDomainBuilder().build();
+			}
+			if (authzDomain == null) {
+				throw new ApiException("createAuthorizationEntity: authorization domain not configured");
+			}
+			if (!authzDomain.isOwnedEntity()) {
+				throw new ApiException("Authorization domain '" + authzDomain.getDomainName()
+						+ "' must be owned (use .owned(field) on the domain builder)");
+			}
+
+			// Instantiate the authorization entity
+			Object entity = authzDomain.getEntityClass().getConstructor().newInstance();
+
+			// Set ownerId (uuid of the principal)
+			ObjectAddress ownedField = authzDomain.getDomainDefinition().owned();
+			if (ownedField != null && principalUuid != null) {
+				reflection.setFieldValue(entity, ownedField, principalUuid);
+			}
+
+			// Set tenantId if multi-tenant
+			ObjectAddress tenantField = authzDomain.getTenantIdFieldAddress();
+			if (tenantField != null && tenantId != null) {
+				reflection.setFieldValue(entity, tenantField, tenantId);
+			}
+
+			// Set authorization fields
+			if (authzDef.type() != null) {
+				reflection.setFieldValue(entity, authzDef.type(), "Bearer");
+			}
+			if (authzDef.authorities() != null && authResult.authorities() != null) {
+				reflection.setFieldValue(entity, authzDef.authorities(), authResult.authorities());
+			}
+			if (authzDef.creation() != null) {
+				reflection.setFieldValue(entity, authzDef.creation(), java.time.Instant.now());
+			}
+			if (authzDef.expiration() != null && authDef.authorizationDefinition() != null) {
+				var authzAuthDef = authDef.authorizationDefinition();
+				if (authzAuthDef.unit() != null && authzAuthDef.duration() > 0) {
+					long millis = authzAuthDef.unit().toMillis(authzAuthDef.duration());
+					reflection.setFieldValue(entity, authzDef.expiration(), java.time.Instant.now().plusMillis(millis));
+				}
+			}
+			if (authzDef.revoked() != null) {
+				reflection.setFieldValue(entity, authzDef.revoked(), false);
+			}
+
+			return entity;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Failed to create authorization entity: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "lookupValidAuthorization", description = "Looks up a valid (non-expired, non-revoked) authorization owned by the principal via the authorization domain's readAll workflow.")
+	public static @Nullable Object lookupValidAuthorization(@Nullable Object authorizationDefObj,
+			@Nullable Object authContextObj, @Nullable Object principalUuid, @Nullable Object tenantId) {
+		if (authorizationDefObj == null || authContextObj == null || principalUuid == null) {
+			return null;
+		}
+		try {
+			IDomainAuthorizationDefinition authzDef = (IDomainAuthorizationDefinition) authorizationDefObj;
+			IAuthenticatorDefinition authDef = (IAuthenticatorDefinition) authContextObj;
+
+			// Get the authorization domain — build lazily from the stored builder
+			var authzAuthDef = authDef.authorizationDefinition();
+			if (authzAuthDef == null || authzAuthDef.authorizationDomainBuilder() == null) return null;
+			IDomain<?> authzDomain = (IDomain<?>) authzAuthDef.authorizationDomainBuilder().build();
+			if (authzDomain == null) return null;
+
+			// Build filters: owned = principalUuid AND revoked = false
+			java.util.List<IFilter> filters = new java.util.ArrayList<>();
+
+			// Filter by owner (uuid of the principal)
+			ObjectAddress ownedField = authzDomain.getDomainDefinition().owned();
+			if (ownedField != null) {
+				filters.add(Filter.eq(ownedField.toString(), principalUuid));
+			}
+
+			// Filter by tenant if multi-tenant
+			if (tenantId != null) {
+				ObjectAddress tenantField = authzDomain.getTenantIdFieldAddress();
+				if (tenantField != null) {
+					filters.add(Filter.eq(tenantField.toString(), tenantId));
+				}
+			}
+
+			// Filter non-revoked
+			if (authzDef.revoked() != null) {
+				filters.add(Filter.eq(authzDef.revoked().toString(), false));
+			}
+
+			IFilter combinedFilter = filters.isEmpty() ? null
+					: filters.size() == 1 ? filters.get(0)
+					: Filter.and(filters.toArray(new Filter[0]));
+
+			// Invoke readAll on the authorization domain with a super caller
+			ICaller superCaller = Caller.createSuperCaller();
+			var response = authzDomain.readAll(combinedFilter, null, null, superCaller);
+			if (response.getResponseCode() == com.garganttua.api.spec.service.OperationResponseCode.OK
+					&& response.getResponse() instanceof java.util.List<?> results
+					&& !results.isEmpty()) {
+				return results.get(0);
+			}
+			return null;
+		} catch (Exception e) {
+			// Lookup failed — return null, let the caller create a new authorization
+			return null;
+		}
+	}
+
+	@Expression(name = "setRequestArg", description = "Sets a named argument on the operation request")
+	public static boolean setRequestArg(@Nullable Object request, @Nullable Object key, @Nullable Object value) {
+		if (request == null || key == null) return false;
+		IOperationRequest opRequest = (IOperationRequest) request;
+		opRequest.arg(key.toString(), value);
+		return true;
+	}
+
+	@Expression(name = "isAuthorizationStorable", description = "Returns true if the authorization definition has storable=true")
+	public static boolean isAuthorizationStorable(@Nullable Object authorizationDefObj) {
+		if (authorizationDefObj instanceof IDomainAuthorizationDefinition def) {
+			return def.storable();
+		}
+		return false;
+	}
+
 	@Expression(name = "findByLogin", description = "Finds an entity by login field in the repository. Returns the entity or throws if not found.")
 	public static Object findByLogin(@Nullable Object authContextObj, @Nullable Object repositoryObj, @Nullable Object loginValue) {
 		if (authContextObj == null || repositoryObj == null || loginValue == null) {
@@ -728,7 +908,8 @@ public class ApiExpressions {
 		if (loginField == null) {
 			throw new ApiException("findByLogin: no login field configured on authenticator");
 		}
-		IFilter filter = Filter.eq(loginField.toString(), loginValue);
+		String loginFieldName = loginField.toString();
+		IFilter filter = Filter.eq(loginFieldName, loginValue);
 		List<Object> results = repo.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
 		if (results == null || results.isEmpty()) {
 			throw new ApiException("User not found for login: " + loginValue);
@@ -785,8 +966,20 @@ public class ApiExpressions {
 		return true;
 	}
 
+	@Expression(name = "prepareAuthContext", description = "Prepares the runtime context with request and domainContext variables for authenticate method suppliers")
+	public static boolean prepareAuthContext(@Nullable Object request, @Nullable Object domainContext) {
+		IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
+		if (runtimeCtx != null && request != null) {
+			runtimeCtx.setVariable("request", request);
+		}
+		if (runtimeCtx != null && domainContext != null) {
+			runtimeCtx.setVariable("domainContext", domainContext);
+		}
+		return true;
+	}
+
 	@Expression(name = "tryAuthenticate", description = "Attempts authentication using the IAuthenticatorDefinition, iterating over authentication methods until one succeeds")
-	public static Object tryAuthenticate(Object authenticatorDefinition) {
+	public static Object tryAuthenticate(@Nullable Object authenticatorDefinition) {
 		if (authenticatorDefinition == null) {
 			throw new ApiException("No authenticator definition available");
 		}
@@ -795,6 +988,9 @@ public class ApiExpressions {
 			List<IAuthenticationDefinition> authDefs = def.authenticationDefinitions();
 			if (authDefs == null || authDefs.isEmpty()) {
 				throw new ApiException("No authentication methods configured");
+			}
+
+			for (IAuthenticationDefinition ad : authDefs) {
 			}
 
 			return authDefs.stream()
@@ -816,26 +1012,12 @@ public class ApiExpressions {
 				return null;
 			}
 
+			// The binder is self-contained — all parameter suppliers are already configured
+			// by the user via the DSL builder. Execute with runtime context for contextual suppliers.
 			Optional<? extends IMethodReturn<?>> result;
 			if (binder instanceof IContextualMethodBinder<?, ?> contextualBinder) {
-				// Contextual binder — must depend on IRuntimeContext
-				IClass<?> ownerContextType = contextualBinder.getOwnerContextType();
-				if (ownerContextType != null && !ownerContextType.isAssignableFrom(IClass.getClass(IRuntimeContext.class))) {
-					throw new ApiException("Authentication method binder requires " + ownerContextType.getSimpleName()
-							+ " but only IRuntimeContext is available");
-				}
-
-				Arrays.stream(contextualBinder.getParametersContextTypes()).forEach(paramCtx -> {
-					if (paramCtx != null && !paramCtx.isAssignableFrom(IClass.getClass(IRuntimeContext.class))) {
-						throw new ApiException("Authentication method binder has parameter context " + paramCtx.getSimpleName()
-								+ " which is not supported (only IRuntimeContext is available)");
-					}
-				});
-
 				IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
-
-				IContextualMethodBinder<?, Object> rawBinder = (IContextualMethodBinder<?, Object>) contextualBinder;
-				result = rawBinder.execute(runtimeCtx);
+				result = ((IContextualMethodBinder<?, Object>) contextualBinder).execute(runtimeCtx);
 			} else {
 				result = binder.execute();
 			}
@@ -845,12 +1027,11 @@ public class ApiExpressions {
 			}
 
 			Object returned = result.get().single();
-			if (returned instanceof IAuthentication auth && auth.authenticated()) {
-				return auth;
+			if (returned instanceof IAuthentication auth) {
+				if (auth.authenticated()) return auth;
 			}
 			return null;
 		} catch (Exception e) {
-			// This authentication method failed, try the next one
 			return null;
 		}
 	}

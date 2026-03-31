@@ -494,6 +494,7 @@ public class DomainBuilder<E>
     protected synchronized IDomain<E> doBuild() throws ApiException {
 
         this.throwExceptionIfNoDto();
+        this.validateSecurityRoles();
 
         // Build DTO contexts and extract definitions
         List<IDtoContext<?>> dtoContexts = new ArrayList<>();
@@ -639,6 +640,26 @@ public class DomainBuilder<E>
             }
         }
 
+        // Add authorization creation stage after authenticate (only when authenticator has authorization)
+        boolean hasAuthorization = this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthorization();
+        if (hasAuthorization) {
+            // Runs only when business operation is "authenticate" and _code is 0 (success).
+            // Passes the authentication result to CREATE_AUTHORIZATION.gs via the request.
+            String createAuthScript =
+                    "_ref <- include(\"classpath:scripts/business/CREATE_AUTHORIZATION.gs\")\n"
+                  + "_code <- run_script(@_ref, @0, @1, @2)\n"
+                  + "output <- if(equals(@_code, 0), script_output(@_ref), @output)\n";
+            mergedBuilder.stage("create-authorization")
+                    .when("equals(businessOperation(@0), \"authenticate\")")
+                    .script(createAuthScript)
+                        .name("create-authorization")
+                        .inline()
+                        .up()
+                    .up();
+        }
+
         // Final unconditional stage: propagate the exit code from _code using pipe clauses.
         String exitCodeScript =
                 "0\n"
@@ -768,6 +789,28 @@ public class DomainBuilder<E>
     private void throwExceptionIfNoDto() throws ApiException {
         if (this.dtos.size() == 0) {
             throw new ApiException("No dto declared for domain " + this.domainName);
+        }
+    }
+
+    private void validateSecurityRoles() throws ApiException {
+        if (this.securityBuilder == null) return;
+        DomainSecurityBuilder<E> secBuilder = (DomainSecurityBuilder<E>) this.securityBuilder;
+
+        // Rule 1: A domain with authorization role MUST be owned
+        if (secBuilder.hasAuthorization() && this.owned == null) {
+            throw new ApiException("Domain '" + this.domainName
+                    + "' has an authorization configuration but is not owned. "
+                    + "An authorization entity always belongs to a principal — use .owned(field) on the domain builder.");
+        }
+
+        // Rule 2: An authenticator domain that produces an authorization MUST be owner
+        if (secBuilder.hasAuthenticator()) {
+            var authenticatorBuilder = (AuthenticatorBuilder<E>) secBuilder.getAuthenticator();
+            if (authenticatorBuilder.hasAuthorizationConfig() && this.owner == null) {
+                throw new ApiException("Domain '" + this.domainName
+                        + "' is an authenticator that produces authorizations but is not an owner. "
+                        + "The authenticator entity must own the authorization entities — use .owner(field) on the domain builder.");
+            }
         }
     }
 

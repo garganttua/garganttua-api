@@ -38,31 +38,10 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
      * Simulates an authentication method (like LoginPasswordAuthentication).
      * Compares credentials against a hardcoded password.
      */
-    public static class StubAuthentication {
-
-        public IAuthentication authenticate(Object principal, byte[] credentials, IAuthenticatorDefinition definition) {
-            String password = new String(credentials, StandardCharsets.UTF_8);
-            boolean success = "valid-password".equals(password);
-            return new Authentication(
-                    success,
-                    success ? principal : null,
-                    credentials,
-                    success ? "auth-token-for-" + principal : null,
-                    success ? List.of("ROLE_USER") : null,
-                    true, true, true, true);
-        }
-    }
 
     /**
      * Always-failing authentication method.
      */
-    public static class FailingAuthentication {
-
-        public IAuthentication authenticate(Object principal, byte[] credentials, IAuthenticatorDefinition definition) {
-            return new Authentication(false, null, credentials, null, null,
-                    true, true, true, true);
-        }
-    }
 
     private IApi context;
     private IDomain<?> userCtx;
@@ -76,10 +55,13 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
         IApiBuilder builder = newBuilder();
 
-        // Register the authentication method at API level
+        // Register the authentication method at API level with parameter suppliers
         var authBuilder = builder.security()
                 .authentication(new FixedSupplierBuilder<>(stubAuth, IClass.getClass(StubAuthentication.class)));
-        authBuilder.authenticate("authenticate");
+        authBuilder.authenticate("authenticate")
+                .withParam(0, new com.garganttua.api.core.security.authentication.AuthenticatePrincipalSupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
         authBuilder.up();
 
         // Register domain with authenticator referencing the authentication method
@@ -109,16 +91,12 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         context = buildAndStart(builder);
         userCtx = context.getDomain("users").orElseThrow();
 
-        // Pre-populate a user in the DAO so findByLogin can find it
-        User existingUser = new User();
+        // Pre-populate a user DTO in the DAO (the pipeline works with DTOs, not entities)
+        UserDto existingUser = new UserDto();
         existingUser.setId("john@example.com");
         existingUser.setUuid("user-uuid-1");
         existingUser.setTenantId("SUPER_TENANT");
         existingUser.setName("John");
-        existingUser.setEnabled(true);
-        existingUser.setAccountNonLocked(true);
-        existingUser.setAccountNonExpired(true);
-        existingUser.setCredentialsNonExpired(true);
         userDao.save(existingUser);
     }
 

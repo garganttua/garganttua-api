@@ -9,15 +9,22 @@ import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilde
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.fields.FieldResolver;
+import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class SignableAuthorizationBuilder<E> extends AbstractAutomaticLinkedBuilder<ISignableAuthorizationBuilder<E>, IAuthorizationBuilder<E>, Object> implements ISignableAuthorizationBuilder<E> {
 
-    private IClass<?> entityClass;
+    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+
+    private final IClass<?> entityClass;
+    private ObjectAddress signatureField;
+    private ObjectAddress getDataToSignMethod;
 
     public SignableAuthorizationBuilder(IAuthorizationBuilder<E> authorizationBuilder,
             IClass<?> entityClass) {
-                super(authorizationBuilder);
+        super(authorizationBuilder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
@@ -26,37 +33,59 @@ public class SignableAuthorizationBuilder<E> extends AbstractAutomaticLinkedBuil
     }
 
     @Override
-    public ISignableAuthorizationBuilder<E> signature(String string) throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'signature'");
+    public ISignableAuthorizationBuilder<E> signature(String fieldName) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        this.signatureField = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address();
+        return this;
     }
 
     @Override
     public ISignableAuthorizationBuilder<E> signature(IField field) throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'signature'");
+        Objects.requireNonNull(field, "Field cannot be null");
+        this.signatureField = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address();
+        return this;
     }
 
     @Override
     public ISignableAuthorizationBuilder<E> signature(ObjectAddress fieldAddress) throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'signature'");
+        Objects.requireNonNull(fieldAddress, "Field address cannot be null");
+        this.signatureField = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address();
+        return this;
     }
 
     @Override
-    public ISignableAuthorizationBuilder<E> getDataToSign(String string) throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'getDataToSign'");
+    public ISignableAuthorizationBuilder<E> getDataToSign(String methodName) throws ApiException {
+        Objects.requireNonNull(methodName, "Method name cannot be null");
+        this.getDataToSignMethod = new ObjectAddress(methodName);
+        return this;
     }
 
     @Override
     public ISignableAuthorizationBuilder<E> getDataToSign(IMethod method) throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'getDataToSign'");
+        Objects.requireNonNull(method, "Method cannot be null");
+        this.getDataToSignMethod = new ObjectAddress(method.getName());
+        return this;
     }
 
     @Override
-    public ISignableAuthorizationBuilder<E> getDataToSign(ObjectAddress fieldAddress) throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'getDataToSign'");
+    public ISignableAuthorizationBuilder<E> getDataToSign(ObjectAddress methodAddress) throws ApiException {
+        Objects.requireNonNull(methodAddress, "Method address cannot be null");
+        this.getDataToSignMethod = methodAddress;
+        return this;
+    }
+
+    ObjectAddress getSignatureField() {
+        return this.signatureField;
+    }
+
+    ObjectAddress getGetDataToSignMethod() {
+        return this.getDataToSignMethod;
     }
 
     @Override
     protected synchronized Object doBuild() throws ApiException {
-        throw new UnsupportedOperationException("Unimplemented method 'doBuild'");
+        // The signable data is collected by the parent AuthorizationBuilder
+        // via getSignatureField() / getGetDataToSignMethod()
+        return null;
     }
 }

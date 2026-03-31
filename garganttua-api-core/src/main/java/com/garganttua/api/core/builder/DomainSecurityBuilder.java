@@ -61,11 +61,26 @@ public class DomainSecurityBuilder<E>
             IAuthenticatorContext authenticatorContext = (IAuthenticatorContext) this.authenticator.build();
             authenticatorDefinition = authenticatorContext.getAuthenticatorDefinition();
         }
-        return new DomainSecurityDefinition(this.disabled, authenticatorDefinition);
+        com.garganttua.api.spec.definition.IDomainAuthorizationDefinition authorizationDefinition = null;
+        if (this.authorization != null) {
+            var authorizationContext = (com.garganttua.api.spec.security.context.IAuthorizationContext) this.authorization.build();
+            if (authorizationContext != null) {
+                authorizationDefinition = authorizationContext.getAuthorizationDefinition();
+            }
+        }
+        return new DomainSecurityDefinition(this.disabled, authenticatorDefinition, authorizationDefinition);
     }
 
     boolean hasAuthenticator() {
         return this.authenticator != null;
+    }
+
+    boolean hasAuthorization() {
+        return this.authorization != null;
+    }
+
+    IAuthenticatorBuilder<E> getAuthenticator() {
+        return this.authenticator;
     }
 
     @Override

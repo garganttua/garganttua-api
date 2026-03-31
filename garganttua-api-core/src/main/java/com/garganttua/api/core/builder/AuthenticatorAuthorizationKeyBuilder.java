@@ -58,12 +58,12 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
 
     @Override
     protected synchronized IAuthenticatorAuthorizationKeyContext doBuild() throws ApiException {
-        return new AuthenticatorAuthorizationKeyContext(this.duration,
+        return new AuthenticatorAuthorizationKeyContext(
+                this.duration != null ? this.duration : 0,
                 this.unit,
                 this.usage,
                 this.algorithm,
-                this.signAlgorithm,
-                this.key);
+                this.signAlgorithm);
     }
 
     @Override

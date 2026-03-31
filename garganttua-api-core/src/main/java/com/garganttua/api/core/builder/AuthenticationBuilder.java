@@ -13,6 +13,7 @@ import org.javatuples.Pair;
 import com.garganttua.api.core.builder.binder.AuthenticationMethodBinderBuilder;
 import com.garganttua.api.core.context.security.AuthenticationContext;
 import com.garganttua.api.core.definition.AuthenticationDefinition;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
@@ -45,25 +46,25 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(String methodName) throws ApiException {
+    public IAuthenticationMethodBinderBuilder<?> authenticate(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
         this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName);
-        return this;
+        return this.authenticate;
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(IMethod method) throws ApiException {
+    public IAuthenticationMethodBinderBuilder<?> authenticate(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, method.getName());
-        return this;
+        return this.authenticate;
     }
 
     @Override
-    public IAuthenticationBuilder authenticate(ObjectAddress methodAddress) throws ApiException {
+    public IAuthenticationMethodBinderBuilder<?> authenticate(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
         String methodName = methodAddress.getElement(methodAddress.length() - 1);
         this.authenticate = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName);
-        return this;
+        return this.authenticate;
     }
 
     @Override
@@ -121,18 +122,16 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     @Override
     protected synchronized IAuthenticationContext doBuild() throws ApiException {
 
-        // Validate that the authenticate method exists and returns IAuthentication
-        if (this.authenticate != null && this.authenticate.method() != null) {
-            if (!this.authenticate.method().getReturnType().isAssignableFrom(IClass.getClass(IAuthentication.class))) {
-                throw new ApiException("Authenticate method must return IAuthentication");
-            }
-        }
+        // Build method binders
+        IMethodBinder<?> authenticateBinder = this.authenticate != null ? this.authenticate.build() : null;
+
+        IMethodBinder<?> applySecurityBinder = this.applySecurityOnEntity != null ? this.applySecurityOnEntity.build() : null;
 
         AuthenticationDefinition definition = new AuthenticationDefinition(
                 this.supplier,
-                null,
+                authenticateBinder,
                 this.fieldAnnotations,
-                null,
+                applySecurityBinder,
                 this.useCases.values());
         return new AuthenticationContext(definition);
     }

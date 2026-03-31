@@ -191,19 +191,31 @@ public class AuthorizationBuilder<E>
 
     @Override
     protected synchronized IAuthorizationContext doBuild() throws ApiException {
+        // Collect signable fields if configured
+        ObjectAddress signatureField = null;
+        ObjectAddress getDataToSignMethod = null;
+        if (this.signable != null) {
+            SignableAuthorizationBuilder<E> sb = (SignableAuthorizationBuilder<E>) this.signable;
+            sb.build();
+            signatureField = sb.getSignatureField();
+            getDataToSignMethod = sb.getGetDataToSignMethod();
+        }
+
+        // Collect refreshable fields if configured
+        ObjectAddress refreshExpiration = null;
+        ObjectAddress refreshRevoked = null;
+        if (this.refreshable != null) {
+            RefreshableAuthorizationBuilder<E> rb = (RefreshableAuthorizationBuilder<E>) this.refreshable;
+            rb.build();
+            refreshExpiration = rb.getExpiration();
+            refreshRevoked = rb.getRevoked();
+        }
+
         return new AuthorizationContext(
-                this.type,
-                this.revoked,
-                this.creation,
-                this.expiration,
-                this.authorities,
-                this.toByteArray,
-                this.validate,
-                this.validateAgainst,
-                this.fromByteArray,
-                this.signable.build(),
-                this.refreshable.build(),
-                this.storable);
+                this.type, this.authorities, this.expiration, this.creation, this.revoked,
+                this.storable, this.signable != null, this.refreshable != null,
+                signatureField, getDataToSignMethod,
+                refreshExpiration, refreshRevoked);
     }
 
     @Override

@@ -1,7 +1,17 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
+import java.util.concurrent.TimeUnit;
 
-public record DomainAuthenticatorAuthorizationDefinition() implements IDomainAuthenticatorAuthorizationDefinition {
+import com.garganttua.api.spec.context.dsl.IDomainBuilder;
+import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
+import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationKeyDefinition;
+
+public record DomainAuthenticatorAuthorizationDefinition(
+		int duration,
+		TimeUnit unit,
+		int refreshDuration,
+		TimeUnit refreshUnit,
+		IDomainAuthenticatorAuthorizationKeyDefinition keyDefinition,
+		IDomainBuilder<?> authorizationDomainBuilder) implements IDomainAuthenticatorAuthorizationDefinition {
 
 }
