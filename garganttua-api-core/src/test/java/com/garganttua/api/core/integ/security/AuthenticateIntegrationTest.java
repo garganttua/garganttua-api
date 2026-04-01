@@ -59,7 +59,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         var authBuilder = builder.security()
                 .authentication(new FixedSupplierBuilder<>(stubAuth, IClass.getClass(StubAuthentication.class)));
         authBuilder.authenticate("authenticate")
-                .withParam(0, new com.garganttua.api.core.security.authentication.AuthenticatePrincipalSupplierBuilder())
+                .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
                 .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
                 .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
         authBuilder.up();

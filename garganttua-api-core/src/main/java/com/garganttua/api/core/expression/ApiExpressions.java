@@ -881,6 +881,14 @@ public class ApiExpressions {
 		}
 	}
 
+	@Expression(name = "authResultPrincipal", description = "Extracts the principal from an IAuthentication result")
+	public static Object authResultPrincipal(@Nullable Object authResult) {
+		if (authResult instanceof IAuthentication auth) {
+			return auth.principal();
+		}
+		return null;
+	}
+
 	@Expression(name = "setRequestArg", description = "Sets a named argument on the operation request")
 	public static boolean setRequestArg(@Nullable Object request, @Nullable Object key, @Nullable Object value) {
 		if (request == null || key == null) return false;

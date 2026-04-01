@@ -6,9 +6,9 @@
 #  Flow:
 #  1. Extract AuthenticationRequest entity (login + credentials + tenantId)
 #  2. Check authenticator scope — if tenant-scoped, tenantId must be present
-#  3. Look up the authenticator entity (User) by login in the repository
-#  4. Check account status (enabled, locked, expired) unless alwaysEnabled
-#  5. Attempt authentication via configured authentication methods
+#  3. Prepare runtime context for authentication suppliers
+#  4. Attempt authentication — PrincipalSupplier handles findByLogin + account status checks
+#  5. Store results for downstream stages (CREATE_AUTHORIZATION)
 #
 #  No caller is required — authentication is the entry point for anonymous users.
 #
@@ -36,25 +36,16 @@ _hasTenantId <- if(equals(@scope, "tenant"), authRequestHasTenantId(@entity), tr
 requirePresent(if(@_hasTenantId, true))
 ! -> 400
 
-// Look up the authenticator entity (e.g. User) by login in the repository
-principal <- findByLogin(@authContext, @1, authRequestLogin(@entity))
-! -> 401
-
-// Check account status (enabled, non-locked, non-expired) unless alwaysEnabled
-checkAccountStatus(@authContext, @principal)
-! -> 403
-
-// Store principal in the request BEFORE tryAuthenticate (suppliers read it from request)
-setRequestArg(@0, "principal", @principal)
-
-// Prepare runtime context for authenticate method suppliers (principal, credentials, definition)
+// Prepare runtime context for authenticate method suppliers
+// PrincipalSupplier will do findByLogin + checkAccountStatus
 prepareAuthContext(@0, @2)
 
 // Attempt authentication
 _authResult <- tryAuthenticate(@authContext)
 ! -> 401
 
-// Store authentication result in the request for downstream stages (CREATE_AUTHORIZATION)
+// Store principal and authentication result in the request for downstream stages
+setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
 setRequestArg(@0, "authenticationResult", @_authResult)
 
 output <- @_authResult -> 0
