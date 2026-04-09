@@ -109,7 +109,7 @@ public class AuthenticatorBuilder<E> extends
 
     @Override
     public IAuthenticatorBuilder alwaysEnabled(boolean b) {
-        this.alwaysEnabled = true;
+        this.alwaysEnabled = b;
         return this;
     }
 

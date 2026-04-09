@@ -6,7 +6,7 @@
 #  @in operationRequest: [0] IOperationRequest
 #  @in repository: [1] IRepository
 #  @in domainContext: [2] IDomainContext
-#  @out entities -> output: List
+#  @out output -> output: List
 #  @return 0: SUCCESS
 #@end
 

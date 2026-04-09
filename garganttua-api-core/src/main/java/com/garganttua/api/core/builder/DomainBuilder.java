@@ -586,34 +586,61 @@ public class DomainBuilder<E>
                     TechnicalOperation.create, Scope.oneEntity);
         }
 
-        // Add security stage before CRUD stages (runs for all operations)
+        // Compute configuration flags
         boolean securityEnabled = this.securityBuilder != null
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
+        boolean hasAuthorization = this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig();
+
+        // Collect all code variable names (ScriptGenerator pattern: _stageName_scriptName_code)
+        List<String> codeVars = new ArrayList<>();
         if (securityEnabled) {
-            // Run VERIFY_ACCESS — stores result in _security_code
-            String securityScript =
-                    "_ref <- include(\"classpath:scripts/security/VERIFY_ACCESS.gs\")\n"
-                  + "_security_code <- run_script(@_ref, @0, @1, @2)\n";
-            mergedBuilder.stage("security")
-                    .script(securityScript)
-                        .name("verify-access")
+            codeVars.add("_security_verify_access_code");
+        }
+        for (String label : this.workflows.keySet()) {
+            if (CRUD_SCRIPT_PATHS.containsKey(label)) {
+                String sanitized = label.replace("-", "_");
+                codeVars.add("_" + sanitized + "_" + sanitized + "_code");
+            }
+        }
+        if (hasAuthorization) {
+            codeVars.add("_create_authorization_create_authorization_code");
+        }
+
+        // Initialize all code variables to 405 (Method Not Allowed)
+        // Stages that execute will overwrite with their actual return code
+        if (!codeVars.isEmpty()) {
+            StringBuilder initCodeScript = new StringBuilder();
+            for (String codeVar : codeVars) {
+                initCodeScript.append(codeVar).append(" <- 405\n");
+            }
+            mergedBuilder.stage("init-codes")
+                    .script(initCodeScript.toString())
+                        .name("init-codes")
                         .inline()
                         .up()
                     .up();
         }
 
-        // Initialize _code: use _security_code if security failed, otherwise 405 (Method Not Allowed)
-        String initCodeScript = securityEnabled
-                ? "_code <- if(equals(@_security_code, 0), 405, @_security_code)\n"
-                : "_code <- 405\n";
-        mergedBuilder.stage("init-code")
-                .script(initCodeScript)
-                    .name("init-default-code")
-                    .inline()
-                    .up()
-                .up();
+        // Security stage (runs for all operations, checks access level)
+        if (securityEnabled) {
+            mergedBuilder.stage("security")
+                    .script("classpath:scripts/security/VERIFY_ACCESS.gs")
+                        .name("verify-access")
+                        .input("operationRequest", "@0")
+                        .input("repository", "@1")
+                        .input("domainContext", "@2")
+                        .up()
+                    .up();
+        }
 
-        // Add business operation stages
+        // Security guard condition for CRUD stages — skip if security failed
+        String securityGuard = securityEnabled
+                ? "equals(@_security_verify_access_code, 0)"
+                : null;
+
+        // Business operation stages
         for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
             String label = entry.getKey();
             DomainWorkflowBuilder<E> wb = entry.getValue();
@@ -623,56 +650,58 @@ public class DomainBuilder<E>
 
             String scriptPath = CRUD_SCRIPT_PATHS.get(label);
             if (scriptPath != null) {
-                // Guard: skip if _code was changed by security (not 405 anymore)
-                String dispatchScript =
-                        "requirePresent(if(equals(@_code, 405), true))\n"
-                      + "! -> 0\n"
-                      + "_ref <- include(\"classpath:" + scriptPath + "\")\n"
-                      + "_code <- run_script(@_ref, @0, @1, @2)\n"
-                      + "output <- if(equals(@_code, 0), script_output(@_ref), 0)\n";
-                mergedBuilder.stage(label)
+                var scriptBuilder = mergedBuilder.stage(label)
                         .when("equals(businessOperation(@0), \"" + label + "\")")
-                        .script(dispatchScript)
+                        .script("classpath:" + scriptPath)
                             .name(label)
-                            .inline()
-                            .up()
-                        .up();
+                            .input("operationRequest", "@0")
+                            .input("repository", "@1")
+                            .input("domainContext", "@2");
+                // Output mapping — let the header @out declaration handle it
+                // Scripts with @out void won't have output mappings
+                if (securityGuard != null) {
+                    scriptBuilder.when(securityGuard);
+                }
+                scriptBuilder.up().up();
             }
         }
 
-        // Add authorization creation stage after authenticate (only when authenticator has authorization)
-        boolean hasAuthorization = this.securityBuilder != null
-                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
-                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthorization();
+        // Authorization creation stage after authenticate
         if (hasAuthorization) {
-            // Runs only when business operation is "authenticate" and _code is 0 (success).
-            // Passes the authentication result to CREATE_AUTHORIZATION.gs via the request.
-            String createAuthScript =
-                    "_ref <- include(\"classpath:scripts/business/CREATE_AUTHORIZATION.gs\")\n"
-                  + "_code <- run_script(@_ref, @0, @1, @2)\n"
-                  + "output <- if(equals(@_code, 0), script_output(@_ref), @output)\n";
+            String createAuthGuard = "equals(@_authenticate_authenticate_code, 0)";
+            if (securityGuard != null) {
+                createAuthGuard = "and(" + createAuthGuard + ", " + securityGuard + ")";
+            }
             mergedBuilder.stage("create-authorization")
                     .when("equals(businessOperation(@0), \"authenticate\")")
-                    .script(createAuthScript)
+                    .script("classpath:scripts/business/CREATE_AUTHORIZATION.gs")
                         .name("create-authorization")
-                        .inline()
+                        .input("operationRequest", "@0")
+                        .input("repository", "@1")
+                        .input("domainContext", "@2")
+                        .input("authResult", "@output")
+                        .output("output", "output")
+                        .when(createAuthGuard)
                         .up()
                     .up();
         }
 
-        // Final unconditional stage: propagate the exit code from _code using pipe clauses.
-        String exitCodeScript =
-                "0\n"
-              + "    | equals(@_code, 0) -> 0\n"
-              + "    | equals(@_code, 400) -> 400\n"
-              + "    | equals(@_code, 401) -> 401\n"
-              + "    | equals(@_code, 403) -> 403\n"
-              + "    | equals(@_code, 404) -> 404\n"
-              + "    | equals(@_code, 409) -> 409\n"
-              + "    | equals(@_code, 500) -> 500\n"
-              + "    | equals(@_code, 405) -> 405\n";
+        // Exit code propagation — propagate the first non-zero code as the workflow exit code
+        // Default to 405 (Method Not Allowed) if no stage executed
+        // Priority: errors first, then success (0), default 405
+        StringBuilder exitCodeScript = new StringBuilder("405 -> 405\n");
+        // Error codes take priority (first match wins in pipe clauses)
+        for (int code : List.of(500, 409, 404, 403, 401, 400)) {
+            for (String codeVar : codeVars) {
+                exitCodeScript.append("    | equals(@").append(codeVar).append(", ").append(code).append(") -> ").append(code).append("\n");
+            }
+        }
+        // Success code (0) overrides default 405
+        for (String codeVar : codeVars) {
+            exitCodeScript.append("    | equals(@").append(codeVar).append(", 0) -> 0\n");
+        }
         mergedBuilder.stage("exit-code")
-                .script(exitCodeScript)
+                .script(exitCodeScript.toString())
                     .name("propagate-exit-code")
                     .inline()
                     .up()

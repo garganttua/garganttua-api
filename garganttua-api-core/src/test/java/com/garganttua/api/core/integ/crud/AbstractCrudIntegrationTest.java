@@ -343,22 +343,18 @@ public abstract class AbstractCrudIntegrationTest {
 
         IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
                 .childContextFactory(new RuntimeContextFactory());
-        IExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
 
         // InjectionContextBuilder requires IReflectionBuilder; provide before building
         ((IDependentBuilder<IInjectionContextBuilder, ?>) injectionContextBuilder).provide(reflectionBuilder);
-
-        // Build injection context (required dependency)
         injectionContextBuilder.build();
 
-        // Pre-build expressionContextBuilder with the same packages that
-        // ApiBuilder.provide() would add. This avoids the tryResolve() race
-        // where the ExpressionContextBuilder builds during dependency resolution
-        // before the scanner is fully warmed up.
+        // ExpressionContextBuilder uses IInjectionContextBuilder; provide before building
+        IExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
         expressionContextBuilder.autoDetect(true);
         expressionContextBuilder.withPackage("com.garganttua.core.expression.functions");
         expressionContextBuilder.withPackage("com.garganttua.core.script.functions");
         expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
+        ((IDependentBuilder<IExpressionContextBuilder, ?>) expressionContextBuilder).provide(injectionContextBuilder);
         expressionContextBuilder.build();
 
         ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(reflectionBuilder);

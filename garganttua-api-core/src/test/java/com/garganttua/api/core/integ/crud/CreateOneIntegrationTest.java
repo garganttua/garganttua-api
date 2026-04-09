@@ -59,7 +59,11 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
 
         WorkflowResult result = executeScript(userCtx, request);
 
-        assertTrue(result.isSuccess());
+        assertTrue(result.isSuccess(), () -> {
+            var workflow = (com.garganttua.core.workflow.Workflow) userCtx.getWorkflow();
+            return "Workflow failed with code " + result.code()
+                    + "\nGenerated script:\n" + workflow.getGeneratedScript();
+        });
         assertNotNull(result.output());
         assertTrue(result.output() instanceof User);
 

@@ -18,13 +18,10 @@ import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
 import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.security.authentication.Authentication;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
 import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
-import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.workflow.WorkflowResult;
 
@@ -171,37 +168,121 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Nested
-    @DisplayName("Authorization creation in workflow")
-    class WorkflowIntegration {
+    @DisplayName("Authorization entity creation")
+    class AuthorizationEntityCreation {
 
         @Test
-        @DisplayName("successful authentication returns code 0 with IAuthentication result")
-        void successfulAuthenticationReturnsCode0() throws ApiException {
+        @DisplayName("successful authentication returns a TokenEntity, not an IAuthentication")
+        void successfulAuthReturnsTokenEntity() throws ApiException {
             OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
             WorkflowResult result = executeScript(userCtx, request);
 
             assertEquals(0, result.code(), "workflow should succeed with code 0");
             assertNotNull(result.output(), "workflow should produce an output");
+            assertInstanceOf(TokenEntity.class, result.output(),
+                    "output should be a TokenEntity (authorization), not an IAuthentication");
         }
 
         @Test
-        @DisplayName("successful authentication result contains authorities")
-        void authenticationResultContainsAuthorities() throws ApiException {
+        @DisplayName("authorization entity has a generated uuid")
+        void authorizationEntityHasUuid() throws ApiException {
             OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
             WorkflowResult result = executeScript(userCtx, request);
 
-            assertEquals(0, result.code(), "workflow should succeed");
-            assertInstanceOf(com.garganttua.api.spec.security.authentication.IAuthentication.class, result.output());
-            com.garganttua.api.spec.security.authentication.IAuthentication auth =
-                    (com.garganttua.api.spec.security.authentication.IAuthentication) result.output();
-            assertTrue(auth.authenticated(), "should be authenticated");
-            assertNotNull(auth.authorities(), "authorities should be set");
-            assertTrue(auth.authorities().contains("ROLE_USER"), "authorities should contain ROLE_USER");
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertNotNull(token.getUuid(), "authorization entity must have a generated uuid");
+            assertFalse(token.getUuid().isBlank(), "uuid must not be blank");
         }
 
         @Test
-        @DisplayName("failed authentication returns 401")
-        void failedAuthenticationReturns401() throws ApiException {
+        @DisplayName("authorization entity has correct ownerId (principal uuid)")
+        void authorizationEntityHasCorrectOwnerId() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertEquals("user-uuid-1", token.getOwnerId(),
+                    "ownerId should be the uuid of the authenticated principal");
+        }
+
+        @Test
+        @DisplayName("authorization entity has correct tenantId")
+        void authorizationEntityHasCorrectTenantId() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertEquals("SUPER_TENANT", token.getTenantId(),
+                    "tenantId should be propagated from the authentication request");
+        }
+
+        @Test
+        @DisplayName("authorization entity has authorities from authentication result")
+        void authorizationEntityHasAuthorities() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertNotNull(token.getAuthorities(), "authorities should be set");
+            assertTrue(token.getAuthorities().contains("ROLE_USER"),
+                    "authorities should contain ROLE_USER from StubAuthentication");
+        }
+
+        @Test
+        @DisplayName("authorization entity has token type from authentication result")
+        void authorizationEntityHasTokenType() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertEquals("auth-token", token.getTokenType(),
+                    "tokenType should come from the authentication result authorization field");
+        }
+
+        @Test
+        @DisplayName("authorization entity has expiration set based on lifeTime config")
+        void authorizationEntityHasExpiration() throws ApiException {
+            Instant before = Instant.now();
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+            Instant after = Instant.now();
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertNotNull(token.getExpiresAt(), "expiration should be set");
+            // lifeTime is 60 minutes
+            Instant expectedMin = before.plusSeconds(60 * 60 - 1);
+            Instant expectedMax = after.plusSeconds(60 * 60 + 1);
+            assertTrue(token.getExpiresAt().isAfter(expectedMin),
+                    "expiration should be ~60 minutes in the future");
+            assertTrue(token.getExpiresAt().isBefore(expectedMax),
+                    "expiration should be ~60 minutes in the future");
+        }
+
+        @Test
+        @DisplayName("authorization entity has revoked set to false")
+        void authorizationEntityHasRevokedFalse() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertEquals(false, token.getRevoked(), "newly created authorization should not be revoked");
+        }
+    }
+
+    @Nested
+    @DisplayName("Authentication failures do not create authorization")
+    class AuthenticationFailures {
+
+        @Test
+        @DisplayName("wrong password returns 401, no authorization created")
+        void wrongPasswordReturns401() throws ApiException {
             OperationRequest request = authenticateRequest("john@example.com", "wrong-password", "SUPER_TENANT");
             WorkflowResult result = executeScript(userCtx, request);
 
@@ -209,17 +290,26 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
-        @DisplayName("unknown login returns 401")
+        @DisplayName("unknown login returns 401, no authorization created")
         void unknownLoginReturns401() throws ApiException {
             OperationRequest request = authenticateRequest("unknown@example.com", "valid-password", "SUPER_TENANT");
             WorkflowResult result = executeScript(userCtx, request);
 
             assertEquals(401, result.code(), "unknown login should return 401");
         }
+
+        @Test
+        @DisplayName("missing tenantId on tenant-scoped authenticator returns 400")
+        void missingTenantIdReturns400() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", null);
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(400, result.code(), "tenant scope without tenantId should return 400");
+        }
     }
 
     @Nested
-    @DisplayName("Authorization entity validation")
+    @DisplayName("Authorization domain structural validation")
     class AuthorizationValidation {
 
         @Test

@@ -36,7 +36,7 @@ public abstract class AbstractCrudScriptTest extends AbstractCrudIntegrationTest
 		request.arg("domainContext", ctx);
 		request.arg("repository", ctx.getRepository());
 
-		Map<String, Object> params = new HashMap<>();
+		Map<String, Object> params = new java.util.LinkedHashMap<>();
 		params.put("$1", ctx.getRepository());
 		params.put("$2", ctx);
 

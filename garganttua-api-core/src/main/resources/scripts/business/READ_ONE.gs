@@ -6,7 +6,7 @@
 #  @in operationRequest: [0] IOperationRequest
 #  @in repository: [1] IRepository
 #  @in domainContext: [2] IDomainContext
-#  @out result -> output: Object
+#  @out output -> output: Object
 #  @return 0: SUCCESS
 #@end
 

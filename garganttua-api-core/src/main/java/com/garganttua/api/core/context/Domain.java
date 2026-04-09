@@ -403,11 +403,12 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             }
             request.arg("caller", caller);
 
-            Map<String, Object> workflowParams = new HashMap<>();
+            // Map "body" to "entity" for script compatibility
+            request.arg(IOperationRequest.BODY).ifPresent(body -> request.arg("entity", body));
+
+            Map<String, Object> workflowParams = new java.util.LinkedHashMap<>();
             workflowParams.put("$1", this.repository);
             workflowParams.put("$2", this);
-            workflowParams.put("request", request);
-            workflowParams.put("domainContext", this);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = this.workflow.execute(input, options);
 

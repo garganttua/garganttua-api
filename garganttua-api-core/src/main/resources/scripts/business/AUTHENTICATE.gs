@@ -15,7 +15,7 @@
 #  @in operationRequest: [0] IOperationRequest
 #  @in repository: [1] IRepository
 #  @in domainContext: [2] IDomainContext
-#  @out result -> output: Object
+#  @out output -> output: Object
 #  @return 0: SUCCESS
 #@end
 
@@ -36,6 +36,9 @@ _hasTenantId <- if(equals(@scope, "tenant"), authRequestHasTenantId(@entity), tr
 requirePresent(if(@_hasTenantId, true))
 ! -> 400
 
+// Propagate tenantId from the authentication request for downstream stages
+setRequestArg(@0, "tenantId", authRequestTenantId(@entity))
+
 // Prepare runtime context for authenticate method suppliers
 // PrincipalSupplier will do findByLogin + checkAccountStatus
 prepareAuthContext(@0, @2)
@@ -44,8 +47,7 @@ prepareAuthContext(@0, @2)
 _authResult <- tryAuthenticate(@authContext)
 ! -> 401
 
-// Store principal and authentication result in the request for downstream stages
+// Store principal in the request for downstream stages
 setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
-setRequestArg(@0, "authenticationResult", @_authResult)
 
 output <- @_authResult -> 0

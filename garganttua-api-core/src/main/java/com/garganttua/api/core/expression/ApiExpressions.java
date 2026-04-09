@@ -12,6 +12,7 @@ import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.context.Domain;
 import com.garganttua.api.core.context.EntityUpdater;
 import com.garganttua.api.core.definition.DomainDefinition;
+
 import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
@@ -32,6 +33,7 @@ import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.authentication.IAuthentication;
+import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.Page;
@@ -149,6 +151,11 @@ public class ApiExpressions {
 			return opt.orElseThrow(() -> new ApiException("Required value is empty"));
 		}
 		return value;
+	}
+
+	@Expression(name = "and", description = "Logical AND of two boolean values")
+	public static boolean andExpr(boolean a, boolean b) {
+		return a && b;
 	}
 
 	@Expression(name = "equals", description = "Returns true when both arguments are equal")
@@ -737,7 +744,7 @@ public class ApiExpressions {
 		return false;
 	}
 
-	@Expression(name = "authorizationDefinition", description = "Returns the IDomainAuthorizationDefinition from the domain's security definition")
+	@Expression(name = "authorizationDefinition", description = "Returns the IDomainAuthorizationDefinition from the domain's security definition, resolving from the linked authorization domain if needed")
 	public static @Nullable Object authorizationDefinition(@Nullable Object context) {
 		IDomain<?> dc = context instanceof Optional<?> opt
 				? (IDomain<?>) opt.get()
@@ -746,7 +753,16 @@ public class ApiExpressions {
 			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
 			var secDef = domDef.domainSecurityDefinition();
 			if (secDef != null) {
-				return secDef.authorizationDefinition();
+				// Direct authorization definition on this domain
+				if (secDef.authorizationDefinition() != null) {
+					return secDef.authorizationDefinition();
+				}
+				// Follow authenticator chain via API context (already built domains)
+				IDomain<?> authzDomain = resolveAuthorizationDomain(dc);
+				if (authzDomain != null && authzDomain.getDomainDefinition() instanceof DomainDefinition<?> dd
+						&& dd.domainSecurityDefinition() != null) {
+					return dd.domainSecurityDefinition().authorizationDefinition();
+				}
 			}
 		}
 		return null;
@@ -754,7 +770,7 @@ public class ApiExpressions {
 
 	@Expression(name = "createAuthorizationEntity", description = "Creates a new authorization entity with fields populated from authentication result, principal uuid and tenant id")
 	public static Object createAuthorizationEntity(@Nullable Object authorizationDefObj,
-			@Nullable Object authenticationResult, @Nullable Object authContextObj,
+			@Nullable Object authenticationResult, @Nullable Object domainContextObj,
 			@Nullable Object principalUuid, @Nullable Object tenantId) {
 		if (authorizationDefObj == null || authenticationResult == null) {
 			throw new ApiException("createAuthorizationEntity: authorizationDef and authenticationResult are required");
@@ -762,16 +778,21 @@ public class ApiExpressions {
 
 		IDomainAuthorizationDefinition authzDef = (IDomainAuthorizationDefinition) authorizationDefObj;
 		IAuthentication authResult = (IAuthentication) authenticationResult;
-		IAuthenticatorDefinition authDef = authContextObj != null ? (IAuthenticatorDefinition) authContextObj : null;
+		IDomain<?> authenticatorDomain = domainContextObj instanceof Optional<?> opt
+				? (IDomain<?>) opt.get() : (IDomain<?>) domainContextObj;
+		IAuthenticatorDefinition authDef = null;
+		if (authenticatorDomain instanceof Domain<?> domCtx) {
+			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
+			var secDef = domDef.domainSecurityDefinition();
+			if (secDef != null) {
+				authDef = secDef.authenticatorDefinition();
+			}
+		}
 		IReflection reflection = DefaultMapper.reflection();
 
 		try {
-			// Get the authorization domain — build lazily from the stored builder
-			IDomain<?> authzDomain = null;
-			if (authDef != null && authDef.authorizationDefinition() != null
-					&& authDef.authorizationDefinition().authorizationDomainBuilder() != null) {
-				authzDomain = (IDomain<?>) authDef.authorizationDefinition().authorizationDomainBuilder().build();
-			}
+			// Get the authorization domain from the API context via the pre-resolved domain name
+			IDomain<?> authzDomain = resolveAuthorizationDomain(authenticatorDomain);
 			if (authzDomain == null) {
 				throw new ApiException("createAuthorizationEntity: authorization domain not configured");
 			}
@@ -782,6 +803,13 @@ public class ApiExpressions {
 
 			// Instantiate the authorization entity
 			Object entity = authzDomain.getEntityClass().getConstructor().newInstance();
+
+			// Generate uuid
+			ObjectAddress uuidAddress = authzDomain.getEntityDefinition().uuid();
+			if (uuidAddress != null) {
+				reflection.setFieldValue(entity, uuidAddress.toString(),
+						UuidCreator.getTimeOrderedEpoch().toString());
+			}
 
 			// Set ownerId (uuid of the principal)
 			ObjectAddress ownedField = authzDomain.getDomainDefinition().owned();
@@ -796,8 +824,8 @@ public class ApiExpressions {
 			}
 
 			// Set authorization fields
-			if (authzDef.type() != null) {
-				reflection.setFieldValue(entity, authzDef.type(), "Bearer");
+			if (authzDef.type() != null && authResult.authorization() != null) {
+				reflection.setFieldValue(entity, authzDef.type(), authResult.authorization());
 			}
 			if (authzDef.authorities() != null && authResult.authorities() != null) {
 				reflection.setFieldValue(entity, authzDef.authorities(), authResult.authorities());
@@ -826,18 +854,17 @@ public class ApiExpressions {
 
 	@Expression(name = "lookupValidAuthorization", description = "Looks up a valid (non-expired, non-revoked) authorization owned by the principal via the authorization domain's readAll workflow.")
 	public static @Nullable Object lookupValidAuthorization(@Nullable Object authorizationDefObj,
-			@Nullable Object authContextObj, @Nullable Object principalUuid, @Nullable Object tenantId) {
-		if (authorizationDefObj == null || authContextObj == null || principalUuid == null) {
+			@Nullable Object domainContextObj, @Nullable Object principalUuid, @Nullable Object tenantId) {
+		if (authorizationDefObj == null || domainContextObj == null || principalUuid == null) {
 			return null;
 		}
 		try {
 			IDomainAuthorizationDefinition authzDef = (IDomainAuthorizationDefinition) authorizationDefObj;
-			IAuthenticatorDefinition authDef = (IAuthenticatorDefinition) authContextObj;
+			IDomain<?> authenticatorDomain = domainContextObj instanceof Optional<?> opt
+					? (IDomain<?>) opt.get() : (IDomain<?>) domainContextObj;
 
-			// Get the authorization domain — build lazily from the stored builder
-			var authzAuthDef = authDef.authorizationDefinition();
-			if (authzAuthDef == null || authzAuthDef.authorizationDomainBuilder() == null) return null;
-			IDomain<?> authzDomain = (IDomain<?>) authzAuthDef.authorizationDomainBuilder().build();
+			// Get the authorization domain from the API context
+			IDomain<?> authzDomain = resolveAuthorizationDomain(authenticatorDomain);
 			if (authzDomain == null) return null;
 
 			// Build filters: owned = principalUuid AND revoked = false
@@ -862,6 +889,11 @@ public class ApiExpressions {
 				filters.add(Filter.eq(authzDef.revoked().toString(), false));
 			}
 
+			// Filter non-expired
+			if (authzDef.expiration() != null) {
+				filters.add(Filter.gt(authzDef.expiration().toString(), java.time.Instant.now()));
+			}
+
 			IFilter combinedFilter = filters.isEmpty() ? null
 					: filters.size() == 1 ? filters.get(0)
 					: Filter.and(filters.toArray(new Filter[0]));
@@ -879,6 +911,86 @@ public class ApiExpressions {
 			// Lookup failed — return null, let the caller create a new authorization
 			return null;
 		}
+	}
+
+	/**
+	 * Resolves the authorization domain from the authenticator domain's API context
+	 * using the pre-resolved domain name stored at build time.
+	 */
+	private static IDomain<?> resolveAuthorizationDomain(IDomain<?> authenticatorDomain) {
+		if (authenticatorDomain instanceof Domain<?> domCtx) {
+			var domDef = (DomainDefinition<?>) domCtx.getDomainDefinition();
+			var secDef = domDef.domainSecurityDefinition();
+			if (secDef != null && secDef.authenticatorDefinition() != null
+					&& secDef.authenticatorDefinition().authorizationDefinition() != null
+					&& secDef.authenticatorDefinition().authorizationDefinition().authorizationDomainBuilder() != null) {
+				IApi apiContext = domCtx.getApiContext();
+				if (apiContext != null) {
+					try {
+						var builder = secDef.authenticatorDefinition().authorizationDefinition().authorizationDomainBuilder();
+						String simpleName = builder.getEntityClass().getSimpleName();
+						String domainName = com.garganttua.api.spec.Pluralizer.toPlural(simpleName.toLowerCase());
+						return apiContext.getDomain(domainName).orElse(null);
+					} catch (Exception e) {
+						return null;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	@Expression(name = "createAuthorizationEntity2", description = "Creates an authorization entity from an authentication result and domain context")
+	public static Object createAuthorizationEntity2(@Nullable Object authResultObj, @Nullable Object domainContextObj) {
+		if (authResultObj == null || domainContextObj == null) {
+			throw new ApiException("createAuthorizationEntity2: authResult and domainContext are required");
+		}
+
+		IAuthentication authResult = (IAuthentication) authResultObj;
+		IDomain<?> authenticatorDomain = domainContextObj instanceof Optional<?> opt
+				? (IDomain<?>) opt.get() : (IDomain<?>) domainContextObj;
+
+		// Extract principal uuid from the authentication result
+		String principalUuid = null;
+		Object principal = authResult.principal();
+		if (principal != null && authenticatorDomain.getEntityDefinition() != null) {
+			ObjectAddress uuidAddr = authenticatorDomain.getEntityDefinition().uuid();
+			if (uuidAddr != null) {
+				try {
+					Object val = DefaultMapper.reflection().getFieldValue(principal, uuidAddr.toString());
+					principalUuid = val != null ? val.toString() : null;
+				} catch (Exception e) {
+					// ignore — principal may not have the uuid field
+				}
+			}
+		}
+
+		// Extract tenantId from the principal
+		String tenantId = null;
+		if (principal != null) {
+			ObjectAddress tenantAddr = authenticatorDomain.getTenantIdFieldAddress();
+			if (tenantAddr != null) {
+				try {
+					Object val = DefaultMapper.reflection().getFieldValue(principal, tenantAddr.toString());
+					tenantId = val != null ? val.toString() : null;
+				} catch (Exception e) {
+					// ignore
+				}
+			}
+		}
+
+		// Get authorization definition from the domain chain
+		IDomainAuthorizationDefinition authzDef = (IDomainAuthorizationDefinition) authorizationDefinition(authenticatorDomain);
+
+		return createAuthorizationEntity(authzDef, authResult, authenticatorDomain, principalUuid, tenantId);
+	}
+
+	@Expression(name = "authRequestTenantId", description = "Extracts the tenantId from an IAuthenticationRequest")
+	public static @Nullable String authRequestTenantId(@Nullable Object request) {
+		if (request instanceof IAuthenticationRequest authReq) {
+			return authReq.tenantId();
+		}
+		return null;
 	}
 
 	@Expression(name = "authResultPrincipal", description = "Extracts the principal from an IAuthentication result")
@@ -1051,11 +1163,17 @@ public class ApiExpressions {
 		return value;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static <T> Optional<T> unwrap(Object value, Class<T> type) {
-		if (value instanceof Optional<?> opt) {
-			return (Optional<T>) opt;
+		// Unwrap nested Optionals (can happen when values pass through execute_script)
+		Object unwrapped = value;
+		while (unwrapped instanceof Optional<?> opt) {
+			if (opt.isEmpty()) return Optional.empty();
+			Object inner = opt.get();
+			if (type.isInstance(inner)) return Optional.of(type.cast(inner));
+			unwrapped = inner;
 		}
-		return Optional.ofNullable(type.isInstance(value) ? type.cast(value) : null);
+		return Optional.ofNullable(type.isInstance(unwrapped) ? type.cast(unwrapped) : null);
 	}
 
 }
