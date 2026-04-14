@@ -160,24 +160,4 @@ public class CallerFilter extends SpringHttpApiFilter {
 		return request;
 	}
 
-	public static void printRequest(HttpServletRequest request) {
-		System.out.println("Request Method: " + request.getMethod());
-		System.out.println("Request URI: " + request.getRequestURI());
-		System.out.println("Request URL: " + request.getRequestURL());
-		System.out.println("Protocol: " + request.getProtocol());
-		System.out.println("Remote Address: " + request.getRemoteAddr());
-		System.out.println("Query String: " + request.getQueryString());
-		System.out.println("Headers:");
-
-		// Print headers
-		request.getHeaderNames().asIterator().forEachRemaining(headerName -> {
-			System.out.println(headerName + ": " + request.getHeader(headerName));
-		});
-
-		System.out.println("Parameters:");
-		// Print parameters
-		request.getParameterMap().forEach((key, value) -> {
-			System.out.println(key + ": " + String.join(", ", value));
-		});
-	}
 }

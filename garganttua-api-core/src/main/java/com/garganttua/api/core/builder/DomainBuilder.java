@@ -65,8 +65,6 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.workflow.IWorkflow;
-import com.garganttua.core.workflow.dsl.IWorkflowBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
 
 public class DomainBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiBuilder, IDomain<E>>
@@ -548,19 +546,8 @@ public class DomainBuilder<E>
                     ucb.hasAuthority()));
         }
 
-        // Build workflow definitions (metadata) and workflow stages.
-        // Each CRUD operation gets its own stage with a when() condition
-        // that matches the business operation label. The CRUD script content
-        // is loaded from classpath and inlined into the stage.
+        // Build workflow definitions (metadata)
         Map<String, IWorkflowDefinition> workflowDefinitions = new HashMap<>();
-        IWorkflowBuilder mergedBuilder = WorkflowBuilder.create().name(this.domainName);
-        if (this.injectionContextBuilder != null) {
-            mergedBuilder.provide(this.injectionContextBuilder);
-        }
-        if (this.expressionContextBuilder != null) {
-            mergedBuilder.provide(this.expressionContextBuilder);
-        }
-
         for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
             DomainWorkflowBuilder<E> wb = entry.getValue();
             if (wb.isSecurityDisabled()) {
@@ -593,121 +580,10 @@ public class DomainBuilder<E>
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
                 && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig();
 
-        // Collect all code variable names (ScriptGenerator pattern: _stageName_scriptName_code)
-        List<String> codeVars = new ArrayList<>();
-        if (securityEnabled) {
-            codeVars.add("_security_verify_access_code");
-        }
-        for (String label : this.workflows.keySet()) {
-            if (CRUD_SCRIPT_PATHS.containsKey(label)) {
-                String sanitized = label.replace("-", "_");
-                codeVars.add("_" + sanitized + "_" + sanitized + "_code");
-            }
-        }
-        if (hasAuthorization) {
-            codeVars.add("_create_authorization_create_authorization_code");
-        }
-
-        // Initialize all code variables to 405 (Method Not Allowed)
-        // Stages that execute will overwrite with their actual return code
-        if (!codeVars.isEmpty()) {
-            StringBuilder initCodeScript = new StringBuilder();
-            for (String codeVar : codeVars) {
-                initCodeScript.append(codeVar).append(" <- 405\n");
-            }
-            mergedBuilder.stage("init-codes")
-                    .script(initCodeScript.toString())
-                        .name("init-codes")
-                        .inline()
-                        .up()
-                    .up();
-        }
-
-        // Security stage (runs for all operations, checks access level)
-        if (securityEnabled) {
-            mergedBuilder.stage("security")
-                    .script("classpath:scripts/security/VERIFY_ACCESS.gs")
-                        .name("verify-access")
-                        .input("operationRequest", "@0")
-                        .input("repository", "@1")
-                        .input("domainContext", "@2")
-                        .up()
-                    .up();
-        }
-
-        // Security guard condition for CRUD stages — skip if security failed
-        String securityGuard = securityEnabled
-                ? "equals(@_security_verify_access_code, 0)"
-                : null;
-
-        // Business operation stages
-        for (Map.Entry<String, DomainWorkflowBuilder<E>> entry : this.workflows.entrySet()) {
-            String label = entry.getKey();
-            DomainWorkflowBuilder<E> wb = entry.getValue();
-            if (wb.isSecurityDisabled()) {
-                continue;
-            }
-
-            String scriptPath = CRUD_SCRIPT_PATHS.get(label);
-            if (scriptPath != null) {
-                var scriptBuilder = mergedBuilder.stage(label)
-                        .when("equals(businessOperation(@0), \"" + label + "\")")
-                        .script("classpath:" + scriptPath)
-                            .name(label)
-                            .input("operationRequest", "@0")
-                            .input("repository", "@1")
-                            .input("domainContext", "@2");
-                // Output mapping — let the header @out declaration handle it
-                // Scripts with @out void won't have output mappings
-                if (securityGuard != null) {
-                    scriptBuilder.when(securityGuard);
-                }
-                scriptBuilder.up().up();
-            }
-        }
-
-        // Authorization creation stage after authenticate
-        if (hasAuthorization) {
-            String createAuthGuard = "equals(@_authenticate_authenticate_code, 0)";
-            if (securityGuard != null) {
-                createAuthGuard = "and(" + createAuthGuard + ", " + securityGuard + ")";
-            }
-            mergedBuilder.stage("create-authorization")
-                    .when("equals(businessOperation(@0), \"authenticate\")")
-                    .script("classpath:scripts/business/CREATE_AUTHORIZATION.gs")
-                        .name("create-authorization")
-                        .input("operationRequest", "@0")
-                        .input("repository", "@1")
-                        .input("domainContext", "@2")
-                        .input("authResult", "@output")
-                        .output("output", "output")
-                        .when(createAuthGuard)
-                        .up()
-                    .up();
-        }
-
-        // Exit code propagation — propagate the first non-zero code as the workflow exit code
-        // Default to 405 (Method Not Allowed) if no stage executed
-        // Priority: errors first, then success (0), default 405
-        StringBuilder exitCodeScript = new StringBuilder("405 -> 405\n");
-        // Error codes take priority (first match wins in pipe clauses)
-        for (int code : List.of(500, 409, 404, 403, 401, 400)) {
-            for (String codeVar : codeVars) {
-                exitCodeScript.append("    | equals(@").append(codeVar).append(", ").append(code).append(") -> ").append(code).append("\n");
-            }
-        }
-        // Success code (0) overrides default 405
-        for (String codeVar : codeVars) {
-            exitCodeScript.append("    | equals(@").append(codeVar).append(", 0) -> 0\n");
-        }
-        mergedBuilder.stage("exit-code")
-                .script(exitCodeScript.toString())
-                    .name("propagate-exit-code")
-                    .inline()
-                    .up()
-                .up();
-
-        IWorkflow builtWorkflow = mergedBuilder.build();
+        // Assemble workflow stages via dedicated assembler
+        IWorkflow builtWorkflow = new DomainWorkflowAssembler<E>(
+                this.domainName, this.workflows, securityEnabled, hasAuthorization,
+                this.injectionContextBuilder, this.expressionContextBuilder).assemble();
 
         // Cast entities for create/upsert lists
         List<E> createEntitiesCast = this.createEntities.stream()
@@ -770,16 +646,6 @@ public class DomainBuilder<E>
         return domainContext;
     }
 
-    private static final Map<String, String> CRUD_SCRIPT_PATHS = Map.of(
-            BusinessOperation.create.getLabel(), "scripts/business/CREATE_ONE.gs",
-            BusinessOperation.readAll.getLabel(), "scripts/business/READ_ALL.gs",
-            BusinessOperation.readOne.getLabel(), "scripts/business/READ_ONE.gs",
-            BusinessOperation.update.getLabel(), "scripts/business/UPDATE_ONE.gs",
-            BusinessOperation.deleteOne.getLabel(), "scripts/business/DELETE_ONE.gs",
-            BusinessOperation.deleteAll.getLabel(), "scripts/business/DELETE_ALL.gs",
-            BusinessOperation.authenticate.getLabel(), "scripts/business/AUTHENTICATE.gs"
-    );
-
     private void initDefaultCrudWorkflows() {
         registerCrudMetadata(BusinessOperation.create.getLabel(), TechnicalOperation.create, Scope.oneEntity);
         registerCrudMetadata(BusinessOperation.readAll.getLabel(), TechnicalOperation.read, Scope.allEntities);
@@ -795,25 +661,6 @@ public class DomainBuilder<E>
         this.workflows.put(name, wb);
     }
 
-
-    /**
-     * Generates a small inline dispatch script that includes a CRUD script from the
-     * classpath and executes it via run_script(). Pipe clauses handle output capture
-     * and exit code propagation.
-     */
-    private static String generateDispatchScript(String scriptPath) {
-        return "_ref <- include(\"classpath:" + scriptPath + "\")\n"
-             + "_code <- run_script(@_ref, @0, @1, @2)\n"
-             + "    | equals(@_code, 0) => output <- script_output(@_ref)\n"
-             + "    | equals(@_code, 0) -> 0\n"
-             + "    | equals(@_code, 400) -> 400\n"
-             + "    | equals(@_code, 401) -> 401\n"
-             + "    | equals(@_code, 403) -> 403\n"
-             + "    | equals(@_code, 404) -> 404\n"
-             + "    | equals(@_code, 409) -> 409\n"
-             + "    | equals(@_code, 500) -> 500\n"
-             + "    | equals(@_code, 405) -> 405\n";
-    }
 
     private void throwExceptionIfNoDto() throws ApiException {
         if (this.dtos.size() == 0) {

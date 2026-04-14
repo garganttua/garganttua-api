@@ -10,7 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.expression.ApiExpressions;
+import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.definition.IAuthenticationDefinition;
 import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
@@ -116,21 +116,21 @@ class TryAuthenticateTest {
         @Test
         @DisplayName("throws when authenticatorDefinition is null")
         void throwsWhenNull() {
-            assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(null));
+            assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(null));
         }
 
         @Test
         @DisplayName("throws when no authentication methods configured")
         void throwsWhenNoAuthMethods() {
             IAuthenticatorDefinition def = authenticatorWith(List.of());
-            assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+            assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
         }
 
         @Test
         @DisplayName("throws when authenticationDefinitions is null")
         void throwsWhenAuthDefsNull() {
             IAuthenticatorDefinition def = authenticatorWith(null);
-            assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+            assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
         }
     }
 
@@ -146,7 +146,7 @@ class TryAuthenticateTest {
             IAuthenticationDefinition authDef = authDefWithBinder(binder);
             IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
-            Object result = ApiExpressions.tryAuthenticate(def);
+            Object result = SecurityExpressions.tryAuthenticate(def);
 
             assertInstanceOf(IAuthentication.class, result);
             IAuthentication returned = (IAuthentication) result;
@@ -163,7 +163,7 @@ class TryAuthenticateTest {
             IAuthenticationDefinition authDef = authDefWithBinder(binder);
             IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
-            assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+            assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
         }
 
         @Test
@@ -173,7 +173,7 @@ class TryAuthenticateTest {
             IAuthenticationDefinition authDef = authDefWithBinder(binder);
             IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
-            assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+            assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
         }
 
         @Test
@@ -184,7 +184,7 @@ class TryAuthenticateTest {
             IAuthenticationDefinition validDef = authDefWithBinder(nonContextualBinderReturning(auth));
             IAuthenticatorDefinition def = authenticatorWith(List.of(nullBinderDef, validDef));
 
-            Object result = ApiExpressions.tryAuthenticate(def);
+            Object result = SecurityExpressions.tryAuthenticate(def);
 
             assertInstanceOf(IAuthentication.class, result);
             assertTrue(((IAuthentication) result).authenticated());
@@ -205,7 +205,7 @@ class TryAuthenticateTest {
                 IAuthenticationDefinition authDef = authDefWithBinder(binder);
                 IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
-                Object result = ApiExpressions.tryAuthenticate(def);
+                Object result = SecurityExpressions.tryAuthenticate(def);
 
                 assertInstanceOf(IAuthentication.class, result);
                 assertTrue(((IAuthentication) result).authenticated());
@@ -223,7 +223,7 @@ class TryAuthenticateTest {
                 IAuthenticationDefinition authDef = authDefWithBinder(binder);
                 IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
-                assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+                assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
             } finally {
                 RuntimeExpressionContext.clear();
             }
@@ -243,7 +243,7 @@ class TryAuthenticateTest {
                 IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
                 // Should fail because String is not IRuntimeContext — caught and treated as failed attempt
-                assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+                assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
             } finally {
                 RuntimeExpressionContext.clear();
             }
@@ -268,7 +268,7 @@ class TryAuthenticateTest {
 
             IAuthenticatorDefinition def = authenticatorWith(List.of(failDef, successDef));
 
-            Object result = ApiExpressions.tryAuthenticate(def);
+            Object result = SecurityExpressions.tryAuthenticate(def);
 
             assertInstanceOf(IAuthentication.class, result);
             assertTrue(((IAuthentication) result).authenticated());
@@ -285,7 +285,7 @@ class TryAuthenticateTest {
 
             IAuthenticatorDefinition def = authenticatorWith(List.of(failDef1, failDef2));
 
-            ApiException ex = assertThrows(ApiException.class, () -> ApiExpressions.tryAuthenticate(def));
+            ApiException ex = assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
             assertTrue(ex.getMessage().contains("All authentication methods failed"));
         }
 
@@ -305,7 +305,7 @@ class TryAuthenticateTest {
 
             IAuthenticatorDefinition def = authenticatorWith(List.of(throwingDef, successDef));
 
-            Object result = ApiExpressions.tryAuthenticate(def);
+            Object result = SecurityExpressions.tryAuthenticate(def);
 
             assertInstanceOf(IAuthentication.class, result);
             assertTrue(((IAuthentication) result).authenticated());
