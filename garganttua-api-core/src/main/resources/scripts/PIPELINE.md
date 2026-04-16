@@ -113,13 +113,13 @@ Security disabled:  ... --> [5. business checks] --------------------------> [7.
    |
    v
 +-------------------------------+
-|  4. data                      |  optional (Mode A only)
+|  9. data                      |  optional (Mode A only)
 |  (serialization)              |  response object -> raw response
 +-------------------------------+
    |
    v
 +-------------------------------+
-|  1. protocol                  |  optional (Mode A only)
+|  10. protocol                  |  optional (Mode A only)
 |  (response)                   |  raw response -> transport response
 +-------------------------------+
    |

@@ -85,21 +85,6 @@
 			</dependency>
 			<dependency>
 				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-spring-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-spring-security-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-spring-interface-rest</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-native-image-config</artifactId>
 				<version>${project.version}</version>
 			</dependency>
@@ -328,7 +313,7 @@
 		<module>garganttua-api-dao</module>
 		<!-- <module>garganttua-api-security</module>
 		<module>garganttua-api-interface</module> -->
-		<!-- <module>garganttua-api-spring</module>
-		<module>garganttua-api-native-image</module> -->
+		<!-- <module>garganttua-api-javalin</module> -->
+		<!-- <module>garganttua-api-native-image</module> -->
 	</modules>
 </project>

@@ -29,4 +29,4 @@ tenantMandatory <- isTenantIdMandatory(@operation, @2)
 if(equals(true, @tenantMandatory), requireTenantId(@caller))
 ! -> 400
 
--> 200
+output <- 0 -> 0

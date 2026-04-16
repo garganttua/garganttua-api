@@ -27,3 +27,5 @@ ownerMandatory <- isOwnerIdMandatory(@operation, @2)
 // If mandatory, validate ownerId is present
 if(equals(true, @ownerMandatory), requireOwnerId(@caller))
 ! -> 400
+
+output <- 0 -> 0

@@ -580,9 +580,14 @@ public class DomainBuilder<E>
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
                 && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig();
 
+        // Compute domain characteristics for workflow assembly
+        boolean multiTenancyEnabled = this.up() instanceof ApiBuilder acb && acb.isMultiTenant();
+        boolean isOwnerOrOwned = this.owner != null || this.owned != null;
+
         // Assemble workflow stages via dedicated assembler
         IWorkflow builtWorkflow = new DomainWorkflowAssembler<E>(
                 this.domainName, this.workflows, securityEnabled, hasAuthorization,
+                multiTenancyEnabled, isOwnerOrOwned,
                 this.injectionContextBuilder, this.expressionContextBuilder).assemble();
 
         // Cast entities for create/upsert lists
