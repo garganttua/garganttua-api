@@ -77,7 +77,8 @@
       "Bash(GIT_DIR=\"/home/jeremy/1 - GARGANTTUA/1 - PROJECTS/1 - INTERNAL/garganttua-api/.git\" git log *)",
       "Bash(ls garganttua-api-core/src/main/java/com/garganttua/api/core/expression/)",
       "Bash(ls garganttua-api-core/src/main/java/com/garganttua/api/core/builder/)",
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(git push *)"
     ]
   }
 }

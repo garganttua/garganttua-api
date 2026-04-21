@@ -16,12 +16,14 @@ import com.garganttua.core.workflow.dsl.WorkflowBuilder;
  * and authorization stages. Stage ordering follows the pipeline documented in PIPELINE.md:
  * <ol>
  *   <li>init-codes — initialize all code variables to 405</li>
+ *   <li>protocol-extract — (Mode A only) raw request → rawBody, contentType, accept, caller…</li>
  *   <li>deserialize — (Mode A only) raw body → DTO</li>
  *   <li>business-rules — TENANT_RULES (if multitenancy) + OWNER_RULES (if owner/owned)</li>
  *   <li>security — VERIFY_ACCESS + VERIFY_TENANT + VERIFY_OWNER (conditional)</li>
  *   <li>business operations — CRUD/AUTHENTICATE (guarded by preceding stages)</li>
  *   <li>create-authorization — after successful authenticate</li>
  *   <li>serialize — (Mode A only) DTO → raw body using Accept</li>
+ *   <li>protocol-response — (Mode A only) output + status → transport response</li>
  *   <li>exit-code — propagate first error code</li>
  * </ol>
  */
@@ -77,8 +79,12 @@ class DomainWorkflowAssembler<E> {
 
 		buildInitCodesStage(builder, allCodeVars);
 
+		// Stage 1 — protocol extract (Mode A only, gated on rawRequest presence)
+		List<String> protocolExtractCodeVars = buildExtractProtocolStage(builder);
+
 		// Stage 4 — deserialize (Mode A only, gated on rawBody presence)
-		List<String> deserializeCodeVars = buildDeserializeStage(builder);
+		List<String> deserializeCodeVars = new ArrayList<>(protocolExtractCodeVars);
+		deserializeCodeVars.addAll(buildDeserializeStage(builder, buildCompoundGuard(protocolExtractCodeVars)));
 
 		// Stage 5 — business rules (guarded by deserialize)
 		String deserializeGuard = buildCompoundGuard(deserializeCodeVars);
@@ -99,6 +105,12 @@ class DomainWorkflowAssembler<E> {
 		// on its own — only errors propagate via allCodeVars.
 		buildSerializeStage(builder);
 
+		// Stage 10 — protocol response (Mode A only, gated on rawRequest presence).
+		// Runs unconditionally in Mode A so it builds proper transport responses for
+		// both success and error paths. Kept out of operationCodeVars for the same
+		// reason as serialize.
+		buildResponseProtocolStage(builder);
+
 		buildExitCodeStage(builder, allCodeVars, operationCodeVars);
 
 		return builder.build();
@@ -106,6 +118,9 @@ class DomainWorkflowAssembler<E> {
 
 	private List<String> collectCodeVars() {
 		List<String> codeVars = new ArrayList<>();
+
+		// Stage 1 — protocol extract (always declared; guarded at runtime)
+		codeVars.add("_protocol_extract_protocol_extract_code");
 
 		// Stage 4 — deserialize (always declared; guarded at runtime)
 		codeVars.add("_deserialize_deserialize_code");
@@ -145,6 +160,9 @@ class DomainWorkflowAssembler<E> {
 		// Stage 9 — serialize (always declared; guarded at runtime)
 		codeVars.add("_serialize_serialize_code");
 
+		// Stage 10 — protocol response (always declared; guarded at runtime)
+		codeVars.add("_protocol_response_protocol_response_code");
+
 		return codeVars;
 	}
 
@@ -158,8 +176,10 @@ class DomainWorkflowAssembler<E> {
 		List<String> passThruVars = new ArrayList<>();
 		if (multiTenancyEnabled) passThruVars.add("_tenant_rules_tenant_rules_code");
 		if (isOwnerOrOwned) passThruVars.add("_owner_rules_owner_rules_code");
+		passThruVars.add("_protocol_extract_protocol_extract_code");
 		passThruVars.add("_deserialize_deserialize_code");
 		passThruVars.add("_serialize_serialize_code");
+		passThruVars.add("_protocol_response_protocol_response_code");
 
 		StringBuilder initCodeScript = new StringBuilder();
 		for (String codeVar : allCodeVars) {
@@ -175,12 +195,35 @@ class DomainWorkflowAssembler<E> {
 	}
 
 	/**
-	 * Stage 4 — Deserialize. Runs only when rawBody is present (Mode A). Returns
-	 * the deserialize code var for chaining into downstream guards.
+	 * Stage 1 — Protocol extract. Runs only when rawRequest is present (Mode A).
+	 * Resolves the matching IProtocol and populates rawBody, contentType, accept,
+	 * path, method, rawAuthorization, queryParameters, and caller args on the
+	 * operation request. Downstream stages consume them transparently.
 	 */
-	private List<String> buildDeserializeStage(IWorkflowBuilder builder) {
+	private List<String> buildExtractProtocolStage(IWorkflowBuilder builder) {
+		builder.stage("protocol-extract")
+				.when("notNull(:arg(@0, \"rawRequest\"))")
+				.script("classpath:scripts/protocol/EXTRACT.gs")
+					.name("protocol-extract")
+					.input("operationRequest", "@0")
+					.input("apiContext", "@3")
+					.up()
+				.up();
+		return new ArrayList<>(List.of("_protocol_extract_protocol_extract_code"));
+	}
+
+	/**
+	 * Stage 4 — Deserialize. Runs only when rawBody is present (Mode A) AND the
+	 * upstream extract stage succeeded. Returns the deserialize code var for
+	 * chaining into downstream guards.
+	 */
+	private List<String> buildDeserializeStage(IWorkflowBuilder builder, String upstreamGuard) {
+		String guard = "notNull(:arg(@0, \"rawBody\"))";
+		if (upstreamGuard != null) {
+			guard = "and(" + guard + ", " + upstreamGuard + ")";
+		}
 		builder.stage("deserialize")
-				.when("notNull(:arg(@0, \"rawBody\"))")
+				.when(guard)
 				.script("classpath:scripts/data/DESERIALIZE.gs")
 					.name("deserialize")
 					.input("operationRequest", "@0")
@@ -199,6 +242,25 @@ class DomainWorkflowAssembler<E> {
 				.when("notNull(:arg(@0, \"accept\"))")
 				.script("classpath:scripts/data/SERIALIZE.gs")
 					.name("serialize")
+					.input("operationRequest", "@0")
+					.input("apiContext", "@3")
+					.input("previousOutput", "@output")
+					.output("output", "output")
+					.up()
+				.up();
+	}
+
+	/**
+	 * Stage 10 — Protocol response. Runs only when rawRequest is present (Mode A).
+	 * Invokes the matching IProtocol.buildResponse to turn the pipeline output into
+	 * a transport-native response. Intentionally runs without any success guard so
+	 * error paths still produce a valid transport response.
+	 */
+	private void buildResponseProtocolStage(IWorkflowBuilder builder) {
+		builder.stage("protocol-response")
+				.when("notNull(:arg(@0, \"rawRequest\"))")
+				.script("classpath:scripts/protocol/RESPONSE.gs")
+					.name("protocol-response")
 					.input("operationRequest", "@0")
 					.input("apiContext", "@3")
 					.input("previousOutput", "@output")

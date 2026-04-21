@@ -7,6 +7,7 @@ import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
+import com.garganttua.api.spec.protocol.IProtocol;
 import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -24,6 +25,8 @@ public interface IApi extends ILifecycle {
     boolean isMultiTenant();
 
     List<ISerializer> getSerializers();
+
+    List<IProtocol<?, ?>> getProtocols();
 
 
     // --- Request builder ---

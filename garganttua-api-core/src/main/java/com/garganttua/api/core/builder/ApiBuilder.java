@@ -22,6 +22,8 @@ import com.garganttua.api.spec.context.dsl.IApiStartupBinderBuilder;
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.spec.protocol.IProtocol;
+import com.garganttua.api.spec.protocol.Protocol;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.serialization.Serializer;
@@ -72,6 +74,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<ApiStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
 	private final List<ISerializer> serializers = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> serializerBuilders = new CopyOnWriteArrayList<>();
+	private final List<IProtocol<?, ?>> protocols = new CopyOnWriteArrayList<>();
+	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> protocolBuilders = new CopyOnWriteArrayList<>();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
@@ -155,6 +159,20 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	public IApiBuilder serializer(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
 		Objects.requireNonNull(bean, "Serializer supplier builder cannot be null");
 		this.serializerBuilders.add(bean);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder protocol(IProtocol<?, ?> protocol) throws ApiException {
+		Objects.requireNonNull(protocol, "Protocol cannot be null");
+		this.protocols.add(protocol);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder protocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
+		Objects.requireNonNull(bean, "Protocol supplier builder cannot be null");
+		this.protocolBuilders.add(bean);
 		return this;
 	}
 
@@ -338,10 +356,19 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 			log.atDebug().log("Built {} serializers", builtSerializers.size());
 
+			// Build protocols
+			List<IProtocol<?, ?>> builtProtocols = new ArrayList<>(this.protocols);
+			for (ISupplierBuilder<?, ? extends ISupplier<?>> pb : this.protocolBuilders) {
+				ISupplier<?> supplier = pb.build();
+				Object protocol = supplier.supply();
+				builtProtocols.add((IProtocol<?, ?>) protocol);
+			}
+			log.atDebug().log("Built {} protocols", builtProtocols.size());
+
 			// Create and return API context
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
-					startupBinders, builtSerializers);
+					startupBinders, builtSerializers, builtProtocols);
 
 			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");
@@ -357,6 +384,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	protected void doAutoDetection() throws ApiException {
 		log.atTrace().log("Entering doAutoDetection() method");
 		autoDetectSerializers();
+		autoDetectProtocols();
 		log.atTrace().log("Exiting doAutoDetection() method");
 	}
 
@@ -400,6 +428,66 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			log.atDebug().log("Auto-detected {} @Serializer class(es) across {} package(s)",
 					discovered, this.packages.size());
 		}
+	}
+
+	/**
+	 * Scans the configured packages for classes annotated with {@link Protocol}
+	 * and registers their instances on the global protocol pool. Behaves like
+	 * {@link #autoDetectSerializers()}: no-op without packages or without a
+	 * reflection scanner; dedup by class against manually-registered protocols.
+	 */
+	private void autoDetectProtocols() {
+		if (this.packages.isEmpty()) {
+			return;
+		}
+		com.garganttua.core.reflection.IReflection reflection;
+		try {
+			reflection = IClass.getReflection();
+		} catch (Exception e) {
+			log.atWarn().log("No IReflection available for @Protocol auto-detection: {}", e.getMessage());
+			return;
+		}
+
+		IClass<Protocol> annotation = IClass.getClass(Protocol.class);
+		java.util.Set<Class<?>> seen = new java.util.HashSet<>();
+		for (IProtocol<?, ?> registered : this.protocols) {
+			seen.add(registered.getClass());
+		}
+
+		int discovered = 0;
+		for (String pkg : this.packages) {
+			List<IClass<?>> found = reflection.getClassesWithAnnotation(pkg, annotation);
+			for (IClass<?> clazz : found) {
+				IProtocol<?, ?> instance = instantiateProtocol(clazz);
+				if (!seen.add(instance.getClass())) {
+					continue;
+				}
+				this.protocols.add(instance);
+				discovered++;
+			}
+		}
+		if (discovered > 0) {
+			log.atDebug().log("Auto-detected {} @Protocol class(es) across {} package(s)",
+					discovered, this.packages.size());
+		}
+	}
+
+	// package-private for unit testing
+	static IProtocol<?, ?> instantiateProtocol(IClass<?> clazz) {
+		Object instance;
+		try {
+			instance = clazz.getConstructor().newInstance();
+		} catch (Exception e) {
+			throw new ApiException(
+					"Failed to instantiate @Protocol class '" + clazz.getName()
+					+ "'. A public no-arg constructor is required.", e);
+		}
+		if (!(instance instanceof IProtocol<?, ?> protocol)) {
+			throw new ApiException(
+					"Class '" + clazz.getName() + "' is annotated with @Protocol "
+					+ "but does not implement " + IProtocol.class.getName());
+		}
+		return protocol;
 	}
 
 	// package-private for unit testing
