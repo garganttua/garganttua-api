@@ -16,10 +16,12 @@ import com.garganttua.core.workflow.dsl.WorkflowBuilder;
  * and authorization stages. Stage ordering follows the pipeline documented in PIPELINE.md:
  * <ol>
  *   <li>init-codes — initialize all code variables to 405</li>
+ *   <li>deserialize — (Mode A only) raw body → DTO</li>
  *   <li>business-rules — TENANT_RULES (if multitenancy) + OWNER_RULES (if owner/owned)</li>
  *   <li>security — VERIFY_ACCESS + VERIFY_TENANT + VERIFY_OWNER (conditional)</li>
  *   <li>business operations — CRUD/AUTHENTICATE (guarded by preceding stages)</li>
  *   <li>create-authorization — after successful authenticate</li>
+ *   <li>serialize — (Mode A only) DTO → raw body using Accept</li>
  *   <li>exit-code — propagate first error code</li>
  * </ol>
  */
@@ -75,8 +77,13 @@ class DomainWorkflowAssembler<E> {
 
 		buildInitCodesStage(builder, allCodeVars);
 
-		// Stage 5 — business rules (no guard, always run when configured)
-		List<String> businessRuleCodeVars = buildBusinessRulesStages(builder);
+		// Stage 4 — deserialize (Mode A only, gated on rawBody presence)
+		List<String> deserializeCodeVars = buildDeserializeStage(builder);
+
+		// Stage 5 — business rules (guarded by deserialize)
+		String deserializeGuard = buildCompoundGuard(deserializeCodeVars);
+		List<String> businessRuleCodeVars = new ArrayList<>(deserializeCodeVars);
+		businessRuleCodeVars.addAll(buildBusinessRulesStages(builder, deserializeGuard));
 
 		// Stage 6 — security (guarded by business rules)
 		String businessRulesGuard = buildCompoundGuard(businessRuleCodeVars);
@@ -87,6 +94,11 @@ class DomainWorkflowAssembler<E> {
 		List<String> operationCodeVars = buildBusinessOperationStages(builder, fullGuard);
 		operationCodeVars.addAll(buildCreateAuthorizationStage(builder, fullGuard));
 
+		// Stage 9 — serialize (Mode A only, gated on Accept presence).
+		// Kept out of operationCodeVars so its pass-through "0" does not signal success
+		// on its own — only errors propagate via allCodeVars.
+		buildSerializeStage(builder);
+
 		buildExitCodeStage(builder, allCodeVars, operationCodeVars);
 
 		return builder.build();
@@ -94,6 +106,9 @@ class DomainWorkflowAssembler<E> {
 
 	private List<String> collectCodeVars() {
 		List<String> codeVars = new ArrayList<>();
+
+		// Stage 4 — deserialize (always declared; guarded at runtime)
+		codeVars.add("_deserialize_deserialize_code");
 
 		// Business rules code vars
 		if (multiTenancyEnabled) {
@@ -127,18 +142,24 @@ class DomainWorkflowAssembler<E> {
 			codeVars.add("_create_authorization_create_authorization_code");
 		}
 
+		// Stage 9 — serialize (always declared; guarded at runtime)
+		codeVars.add("_serialize_serialize_code");
+
 		return codeVars;
 	}
 
 	private void buildInitCodesStage(IWorkflowBuilder builder, List<String> allCodeVars) {
 		if (allCodeVars.isEmpty()) return;
 
-		// Collect business rules code vars — these are initialized to 0 (pass by default)
-		// because they may be skipped (e.g. for authenticate operations) and must not
-		// block downstream security/CRUD stages when skipped.
+		// Code vars initialized to 0 (pass by default) — for stages that are skipped
+		// under normal conditions and must not block downstream stages when skipped:
+		// - business rules (skipped for authenticate operations)
+		// - deserialize/serialize (skipped in Mode B, i.e. no raw body / no Accept header)
 		List<String> passThruVars = new ArrayList<>();
 		if (multiTenancyEnabled) passThruVars.add("_tenant_rules_tenant_rules_code");
 		if (isOwnerOrOwned) passThruVars.add("_owner_rules_owner_rules_code");
+		passThruVars.add("_deserialize_deserialize_code");
+		passThruVars.add("_serialize_serialize_code");
 
 		StringBuilder initCodeScript = new StringBuilder();
 		for (String codeVar : allCodeVars) {
@@ -154,18 +175,55 @@ class DomainWorkflowAssembler<E> {
 	}
 
 	/**
+	 * Stage 4 — Deserialize. Runs only when rawBody is present (Mode A). Returns
+	 * the deserialize code var for chaining into downstream guards.
+	 */
+	private List<String> buildDeserializeStage(IWorkflowBuilder builder) {
+		builder.stage("deserialize")
+				.when("notNull(:arg(@0, \"rawBody\"))")
+				.script("classpath:scripts/data/DESERIALIZE.gs")
+					.name("deserialize")
+					.input("operationRequest", "@0")
+					.input("apiContext", "@3")
+					.up()
+				.up();
+		return new ArrayList<>(List.of("_deserialize_deserialize_code"));
+	}
+
+	/**
+	 * Stage 9 — Serialize. Runs only when the Accept header is present (Mode A).
+	 * Consumes the previous stage's output as the payload to serialize.
+	 */
+	private void buildSerializeStage(IWorkflowBuilder builder) {
+		builder.stage("serialize")
+				.when("notNull(:arg(@0, \"accept\"))")
+				.script("classpath:scripts/data/SERIALIZE.gs")
+					.name("serialize")
+					.input("operationRequest", "@0")
+					.input("apiContext", "@3")
+					.input("previousOutput", "@output")
+					.output("output", "output")
+					.up()
+				.up();
+	}
+
+	/**
 	 * Stage 5 — Business rules. Returns the list of code variable names for the guard chain.
 	 */
 	/** Guard to skip business rules for authenticate operations (no caller available). */
 	private static final String NOT_AUTHENTICATE_GUARD =
 			"equals(equals(businessOperation(@0), \"authenticate\"), false)";
 
-	private List<String> buildBusinessRulesStages(IWorkflowBuilder builder) {
+	private List<String> buildBusinessRulesStages(IWorkflowBuilder builder, String upstreamGuard) {
 		List<String> codeVars = new ArrayList<>();
+
+		String tenantGuard = upstreamGuard == null
+				? NOT_AUTHENTICATE_GUARD
+				: "and(" + NOT_AUTHENTICATE_GUARD + ", " + upstreamGuard + ")";
 
 		if (multiTenancyEnabled) {
 			builder.stage("tenant-rules")
-					.when(NOT_AUTHENTICATE_GUARD)
+					.when(tenantGuard)
 					.script("classpath:scripts/business/TENANT_RULES.gs")
 						.name("tenant-rules")
 						.input("operationRequest", "@0")
@@ -178,8 +236,8 @@ class DomainWorkflowAssembler<E> {
 
 		if (isOwnerOrOwned) {
 			String ownerGuard = multiTenancyEnabled
-					? "and(" + NOT_AUTHENTICATE_GUARD + ", equals(@_tenant_rules_tenant_rules_code, 0))"
-					: NOT_AUTHENTICATE_GUARD;
+					? "and(" + tenantGuard + ", equals(@_tenant_rules_tenant_rules_code, 0))"
+					: tenantGuard;
 			builder.stage("owner-rules")
 					.when(ownerGuard)
 					.script("classpath:scripts/business/OWNER_RULES.gs")

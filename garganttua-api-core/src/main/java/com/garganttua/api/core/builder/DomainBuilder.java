@@ -648,6 +648,7 @@ public class DomainBuilder<E>
         domainContext.setWorkflow(builtWorkflow);
         domainContext.setEntityBeanDefinition(entityBeanDefinition);
         domainContext.setDoInjection(this.doInjection);
+
         return domainContext;
     }
 

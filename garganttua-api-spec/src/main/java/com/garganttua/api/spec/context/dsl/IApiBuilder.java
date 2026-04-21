@@ -3,6 +3,7 @@ package com.garganttua.api.spec.context.dsl;
 import com.garganttua.api.spec.context.BuildingStage;
 import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
+import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -24,5 +25,9 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder multiTenant(boolean enabled) throws ApiException;
 
 	IApiSecurityBuilder security();
+
+	IApiBuilder serializer(ISerializer serializer) throws ApiException;
+
+	IApiBuilder serializer(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
 }

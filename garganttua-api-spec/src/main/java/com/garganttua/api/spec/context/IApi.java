@@ -1,11 +1,13 @@
 package com.garganttua.api.spec.context;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
+import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
 import com.garganttua.api.spec.service.IRequestBuilder;
@@ -20,6 +22,8 @@ public interface IApi extends ILifecycle {
     String getSuperTenantId();
 
     boolean isMultiTenant();
+
+    List<ISerializer> getSerializers();
 
 
     // --- Request builder ---

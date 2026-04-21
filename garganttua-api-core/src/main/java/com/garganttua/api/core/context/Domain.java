@@ -409,6 +409,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             Map<String, Object> workflowParams = new java.util.LinkedHashMap<>();
             workflowParams.put("$1", this.repository);
             workflowParams.put("$2", this);
+            workflowParams.put("$3", this.apiContext);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = this.workflow.execute(input, options);
 

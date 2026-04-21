@@ -23,6 +23,8 @@ import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
+import com.garganttua.api.spec.serialization.ISerializer;
+import com.garganttua.api.spec.serialization.Serializer;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
@@ -68,6 +70,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final Map<IClass<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
 	private volatile SecurityBuilder securityBuilder;
 	private final List<ApiStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
+	private final List<ISerializer> serializers = new CopyOnWriteArrayList<>();
+	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> serializerBuilders = new CopyOnWriteArrayList<>();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
@@ -138,6 +142,20 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			this.securityBuilder = new SecurityBuilder(this.packages, this);
 		}
 		return this.securityBuilder;
+	}
+
+	@Override
+	public IApiBuilder serializer(ISerializer serializer) throws ApiException {
+		Objects.requireNonNull(serializer, "Serializer cannot be null");
+		this.serializers.add(serializer);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder serializer(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
+		Objects.requireNonNull(bean, "Serializer supplier builder cannot be null");
+		this.serializerBuilders.add(bean);
+		return this;
 	}
 
 	public String[] getPackages() {
@@ -311,9 +329,19 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 			log.atDebug().log("Built {} startup binders", startupBinders.size());
 
+			// Build serializers
+			List<ISerializer> builtSerializers = new ArrayList<>(this.serializers);
+			for (ISupplierBuilder<?, ? extends ISupplier<?>> sb : this.serializerBuilders) {
+				ISupplier<?> supplier = sb.build();
+				Object serializer = supplier.supply();
+				builtSerializers.add((ISerializer) serializer);
+			}
+			log.atDebug().log("Built {} serializers", builtSerializers.size());
+
 			// Create and return API context
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
-					this.superTenantId, this.superTenantAutoCreate, this.multiTenant, startupBinders);
+					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
+					startupBinders, builtSerializers);
 
 			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");
@@ -328,9 +356,68 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	@Override
 	protected void doAutoDetection() throws ApiException {
 		log.atTrace().log("Entering doAutoDetection() method");
-		// Base auto-detection without dependencies
-		// Could scan for @Entity annotated classes in packages
+		autoDetectSerializers();
 		log.atTrace().log("Exiting doAutoDetection() method");
+	}
+
+	/**
+	 * Scans the configured packages for classes annotated with {@link Serializer}
+	 * and registers their instances on the global serializer pool. Silently
+	 * no-ops when no packages are configured or when no reflection scanner is
+	 * available (e.g. native image without pre-computed metadata).
+	 */
+	private void autoDetectSerializers() {
+		if (this.packages.isEmpty()) {
+			return;
+		}
+		com.garganttua.core.reflection.IReflection reflection;
+		try {
+			reflection = IClass.getReflection();
+		} catch (Exception e) {
+			log.atWarn().log("No IReflection available for @Serializer auto-detection: {}", e.getMessage());
+			return;
+		}
+
+		IClass<Serializer> annotation = IClass.getClass(Serializer.class);
+		java.util.Set<Class<?>> seen = new java.util.HashSet<>();
+		for (ISerializer registered : this.serializers) {
+			seen.add(registered.getClass());
+		}
+
+		int discovered = 0;
+		for (String pkg : this.packages) {
+			List<IClass<?>> found = reflection.getClassesWithAnnotation(pkg, annotation);
+			for (IClass<?> clazz : found) {
+				ISerializer instance = instantiateSerializer(clazz);
+				if (!seen.add(instance.getClass())) {
+					continue;
+				}
+				this.serializers.add(instance);
+				discovered++;
+			}
+		}
+		if (discovered > 0) {
+			log.atDebug().log("Auto-detected {} @Serializer class(es) across {} package(s)",
+					discovered, this.packages.size());
+		}
+	}
+
+	// package-private for unit testing
+	static ISerializer instantiateSerializer(IClass<?> clazz) {
+		Object instance;
+		try {
+			instance = clazz.getConstructor().newInstance();
+		} catch (Exception e) {
+			throw new ApiException(
+					"Failed to instantiate @Serializer class '" + clazz.getName()
+					+ "'. A public no-arg constructor is required.", e);
+		}
+		if (!(instance instanceof ISerializer serializer)) {
+			throw new ApiException(
+					"Class '" + clazz.getName() + "' is annotated with @Serializer "
+					+ "but does not implement " + ISerializer.class.getName());
+		}
+		return serializer;
 	}
 
 	@Override

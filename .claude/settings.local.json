@@ -70,7 +70,14 @@
       "Bash(sed -i 's/.authorization\\(tokenDomainBuilder\\)/.authorization\\(\\(com.garganttua.api.spec.context.dsl.IDomainBuilder\\) tokenDomainBuilder\\)/' garganttua-api-core/src/test/java/com/garganttua/api/core/integ/security/CreateAuthorizationIntegrationTest.java)",
       "Bash(sed -i 's/.authorization\\(tokenBuilder\\)/.authorization\\(\\(com.garganttua.api.spec.context.dsl.IDomainBuilder\\) tokenBuilder\\)/' garganttua-api-core/src/test/java/com/garganttua/api/core/integ/security/CreateAuthorizationIntegrationTest.java)",
       "Bash(sed -i '/System.out.println.*=== RESULT/d' garganttua-api-core/src/test/java/com/garganttua/api/core/integ/security/CreateAuthorizationIntegrationTest.java)",
-      "Bash(sed -i '/System.out.println.*doesNotRequireCaller/d' garganttua-api-core/src/test/java/com/garganttua/api/core/integ/security/AuthenticateIntegrationTest.java)"
+      "Bash(sed -i '/System.out.println.*doesNotRequireCaller/d' garganttua-api-core/src/test/java/com/garganttua/api/core/integ/security/AuthenticateIntegrationTest.java)",
+      "Bash(sed -i 's/#  @out result -> output/#  @out output -> output/g' business/AUTHENTICATE.gs business/CREATE_ONE.gs business/DELETE_ALL.gs business/DELETE_ONE.gs business/READ_ONE.gs business/UPDATE_ONE.gs)",
+      "Bash(sed -i 's/#  @out entities -> output/#  @out output -> output/g' business/READ_ALL.gs)",
+      "Bash(sort -u -t' ' -k5)",
+      "Bash(GIT_DIR=\"/home/jeremy/1 - GARGANTTUA/1 - PROJECTS/1 - INTERNAL/garganttua-api/.git\" git log *)",
+      "Bash(ls garganttua-api-core/src/main/java/com/garganttua/api/core/expression/)",
+      "Bash(ls garganttua-api-core/src/main/java/com/garganttua/api/core/builder/)",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

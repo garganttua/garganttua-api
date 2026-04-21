@@ -17,6 +17,7 @@ import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.repository.IRepository;
+import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -45,9 +46,11 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     private final boolean superTenantAutoCreate;
     private final boolean multiTenant;
     private final List<IMethodBinder<Void>> startupBinders;
+    private final List<ISerializer> serializers;
 
     public Api(IInjectionContext injectionContext, Map<String, IDomain<?>> domainContexts,
-            String superTenantId, boolean superTenantAutoCreate, boolean multiTenant, List<IMethodBinder<Void>> startupBinders) {
+            String superTenantId, boolean superTenantAutoCreate, boolean multiTenant,
+            List<IMethodBinder<Void>> startupBinders, List<ISerializer> serializers) {
         this.injectionContext = Objects.requireNonNull(injectionContext, "Injection context cannot be null");
         this.domainContexts = Collections.unmodifiableMap(new HashMap<>(
                 Objects.requireNonNull(domainContexts, "Domain contexts cannot be null")));
@@ -56,6 +59,13 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
         this.multiTenant = multiTenant;
         this.startupBinders = Collections.unmodifiableList(new ArrayList<>(
                 Objects.requireNonNull(startupBinders, "Startup binders cannot be null")));
+        this.serializers = Collections.unmodifiableList(new ArrayList<>(
+                Objects.requireNonNull(serializers, "Serializers cannot be null")));
+    }
+
+    @Override
+    public List<ISerializer> getSerializers() {
+        return this.serializers;
     }
 
     @Override
