@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.BusinessOperation;
+import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.workflow.WorkflowResult;
 
@@ -44,7 +44,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
 
     @FunctionalInterface
     interface SecurityConfigurator {
-        void configure(com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder<?> builder);
+        void configure(com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder<?> builder);
     }
 
     // --- Helpers ---

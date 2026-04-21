@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.context.security.AuthenticationContext;
 import com.garganttua.api.core.definition.AuthenticationDefinition;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
 
 @DisplayName("AuthenticationContext Tests")
 class AuthenticationContextTest {

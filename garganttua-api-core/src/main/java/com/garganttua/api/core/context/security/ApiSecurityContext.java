@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.security.IApiSecurityContext;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.security.context.IAuthenticationContext;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.security.IApiSecurityContext;
+import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.commons.security.context.IAuthenticationContext;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleException;
 import com.garganttua.core.lifecycle.LifecycleStatus;

@@ -5,13 +5,13 @@ import java.util.Map;
 
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.api.commons.CoreExceptionCode;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
-import com.garganttua.api.spec.security.annotations.AuthenticatorRefreshToken;
+import com.garganttua.api.commons.security.annotations.AuthenticatorRefreshToken;
 
 public class RefreshAuthorizationAuthenticatorChecker {
 

@@ -2,7 +2,7 @@ package com.garganttua.api.core.security.authentication;
 
 import java.lang.reflect.Type;
 
-import com.garganttua.api.spec.security.authorization.IAuthorization;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;

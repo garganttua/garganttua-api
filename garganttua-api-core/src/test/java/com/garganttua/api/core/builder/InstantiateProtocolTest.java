@@ -10,9 +10,9 @@ import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.protocol.IProtocol;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;

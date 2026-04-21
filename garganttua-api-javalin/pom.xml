@@ -15,7 +15,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-spec</artifactId>
+			<artifactId>garganttua-api-commons</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua</groupId>

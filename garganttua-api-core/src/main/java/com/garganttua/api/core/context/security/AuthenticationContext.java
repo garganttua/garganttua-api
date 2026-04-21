@@ -3,9 +3,9 @@ package com.garganttua.api.core.context.security;
 import java.util.Objects;
 
 import com.garganttua.api.core.definition.AuthenticationDefinition;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.api.spec.security.context.IAuthenticationContext;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.security.context.IAuthenticationContext;
 
 
 public class AuthenticationContext implements IAuthenticationContext {

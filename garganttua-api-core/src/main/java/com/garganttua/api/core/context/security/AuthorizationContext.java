@@ -1,8 +1,8 @@
 package com.garganttua.api.core.context.security;
 
 import com.garganttua.api.core.definition.DomainAuthorizationDefinition;
-import com.garganttua.api.spec.security.context.IAuthorizationContext;
-import com.garganttua.api.spec.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.security.context.IAuthorizationContext;
+import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public class AuthorizationContext implements IAuthorizationContext {

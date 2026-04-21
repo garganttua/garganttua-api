@@ -1,0 +1,64 @@
+package com.garganttua.api.commons.context.dsl.security;
+
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.security.IDomainSecurityContext;
+import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
+
+public interface IDomainSecurityBuilder<E>
+		extends IAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext> {
+
+	IAuthorizationBuilder<E> authorization();
+
+	IDomainSecurityBuilder<E> disable(boolean b);
+
+	IKeyBuilder<E> key();
+
+	IAuthenticatorBuilder<E> authenticator();
+
+	IDomainSecurityBuilder<E> useCase(IUseCaseBuilder<?, ?, ?> useCaseBuilder, boolean authority, Access access);
+
+	// --- CRUD access level ---
+
+	IDomainSecurityBuilder<E> creationAccess(Access access);
+
+	IDomainSecurityBuilder<E> readAllAccess(Access access);
+
+	IDomainSecurityBuilder<E> readOneAccess(Access access);
+
+	IDomainSecurityBuilder<E> updateAccess(Access access);
+
+	IDomainSecurityBuilder<E> deleteOneAccess(Access access);
+
+	IDomainSecurityBuilder<E> deleteAllAccess(Access access);
+
+	// --- CRUD authority (boolean: auto-generated authority name) ---
+
+	IDomainSecurityBuilder<E> creationAuthority(boolean authority);
+
+	IDomainSecurityBuilder<E> readAllAuthority(boolean authority);
+
+	IDomainSecurityBuilder<E> readOneAuthority(boolean authority);
+
+	IDomainSecurityBuilder<E> updateAuthority(boolean authority);
+
+	IDomainSecurityBuilder<E> deleteOneAuthority(boolean authority);
+
+	IDomainSecurityBuilder<E> deleteAllAuthority(boolean authority);
+
+	// --- CRUD authority (String: custom authority name) ---
+
+	IDomainSecurityBuilder<E> creationAuthority(String authority);
+
+	IDomainSecurityBuilder<E> readAllAuthority(String authority);
+
+	IDomainSecurityBuilder<E> readOneAuthority(String authority);
+
+	IDomainSecurityBuilder<E> updateAuthority(String authority);
+
+	IDomainSecurityBuilder<E> deleteOneAuthority(String authority);
+
+	IDomainSecurityBuilder<E> deleteAllAuthority(String authority);
+
+}

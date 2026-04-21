@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.spec.definition.IEntityDefinition;
-import com.garganttua.api.spec.entity.annotations.UnicityScope;
+import com.garganttua.api.commons.definition.IEntityDefinition;
+import com.garganttua.api.commons.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IMethodBinder;

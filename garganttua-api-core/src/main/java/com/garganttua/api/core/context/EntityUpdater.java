@@ -5,9 +5,9 @@ import java.util.List;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.mapper.DefaultMapper;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.entity.IEntityUpdater;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.entity.IEntityUpdater;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 

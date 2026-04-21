@@ -11,12 +11,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.protocol.IProtocol;
-import com.garganttua.api.spec.protocol.Protocol;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.protocol.IProtocol;
+import com.garganttua.api.commons.protocol.Protocol;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("@Protocol auto-detection")

@@ -7,21 +7,21 @@ import java.util.Optional;
 
 import com.garganttua.api.core.context.security.DomainSecurityContext;
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.security.context.IAuthenticatorContext;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
-import com.garganttua.api.spec.endpoint.IEndpoint;
-import com.garganttua.api.spec.security.IDomainSecurityContext;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.BusinessOperation;
+import com.garganttua.api.commons.security.context.IAuthenticatorContext;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.commons.context.dsl.security.IKeyBuilder;
+import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -58,9 +58,9 @@ public class DomainSecurityBuilder<E>
             IAuthenticatorContext authenticatorContext = (IAuthenticatorContext) this.authenticator.build();
             authenticatorDefinition = authenticatorContext.getAuthenticatorDefinition();
         }
-        com.garganttua.api.spec.definition.IDomainAuthorizationDefinition authorizationDefinition = null;
+        com.garganttua.api.commons.definition.IDomainAuthorizationDefinition authorizationDefinition = null;
         if (this.authorization != null) {
-            var authorizationContext = (com.garganttua.api.spec.security.context.IAuthorizationContext) this.authorization.build();
+            var authorizationContext = (com.garganttua.api.commons.security.context.IAuthorizationContext) this.authorization.build();
             if (authorizationContext != null) {
                 authorizationDefinition = authorizationContext.getAuthorizationDefinition();
             }

@@ -3,8 +3,8 @@ package com.garganttua.api.core.security.authentication;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;

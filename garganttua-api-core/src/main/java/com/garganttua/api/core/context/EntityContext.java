@@ -3,7 +3,7 @@ package com.garganttua.api.core.context;
 import java.util.Objects;
 
 import com.garganttua.api.core.definition.EntityDefinition;
-import com.garganttua.api.spec.context.IEntityContext;
+import com.garganttua.api.commons.context.IEntityContext;
 import com.garganttua.core.reflection.IClass;
 
 import lombok.Getter;

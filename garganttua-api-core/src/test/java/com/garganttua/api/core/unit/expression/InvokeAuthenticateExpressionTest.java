@@ -23,17 +23,17 @@ import org.mockito.ArgumentCaptor;
 import com.garganttua.api.core.context.Api;
 import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
-import com.garganttua.api.spec.security.authentication.Authentication;
+import com.garganttua.api.commons.security.authentication.Authentication;
 import com.garganttua.api.core.service.OperationResponse;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.security.authorization.IAuthorization;
-import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.OperationResponseCode;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.security.authentication.IAuthentication;
+import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
+import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("SecurityExpressions — authenticate pipeline bridge")

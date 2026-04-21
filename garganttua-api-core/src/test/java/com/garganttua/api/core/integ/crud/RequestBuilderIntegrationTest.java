@@ -7,13 +7,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.caller.Caller;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("RequestBuilder Integration Tests")

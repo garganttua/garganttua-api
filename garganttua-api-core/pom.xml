@@ -13,7 +13,7 @@
 		<!-- Garganttua API -->
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-spec</artifactId>
+			<artifactId>garganttua-api-commons</artifactId>
 		</dependency>
 
 		<!-- Garganttua Core -->

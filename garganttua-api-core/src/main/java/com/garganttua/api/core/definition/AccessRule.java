@@ -1,8 +1,8 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.security.IAccessRule;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.security.IAccessRule;
 
 public record AccessRule(
         String authority,

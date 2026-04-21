@@ -19,10 +19,10 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.expression.ApiExpressions;
 import com.garganttua.api.core.expression.AuthorizationProtocolExpressions;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.security.authorization.IAuthorization;
-import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
+import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("AuthorizationProtocolExpressions")

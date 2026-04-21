@@ -9,25 +9,25 @@ import com.garganttua.api.core.context.Domain;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.definition.IDomainAuthorizationDefinition;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.Pluralizer;
-import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.security.authorization.IAuthorization;
-import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.Pluralizer;
+import com.garganttua.api.commons.repository.IRepository;
+import com.garganttua.api.commons.security.authentication.IAuthentication;
+import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
+import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -313,7 +313,7 @@ public class SecurityExpressions {
 
 			ICaller superCaller = Caller.createSuperCaller();
 			var response = authzDomain.readAll(combinedFilter, null, null, superCaller);
-			if (response.getResponseCode() == com.garganttua.api.spec.service.OperationResponseCode.OK
+			if (response.getResponseCode() == com.garganttua.api.commons.service.OperationResponseCode.OK
 					&& response.getResponse() instanceof java.util.List<?> results
 					&& !results.isEmpty()) {
 				return results.get(0);

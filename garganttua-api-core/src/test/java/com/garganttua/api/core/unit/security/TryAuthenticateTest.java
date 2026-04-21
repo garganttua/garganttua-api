@@ -11,11 +11,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.expression.SecurityExpressions;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.security.authentication.Authentication;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.security.authentication.Authentication;
+import com.garganttua.api.commons.security.authentication.IAuthentication;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;

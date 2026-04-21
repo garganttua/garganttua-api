@@ -1,6 +1,6 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.definition.IDtoDefinition;
+import com.garganttua.api.commons.definition.IDtoDefinition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 

@@ -4,10 +4,10 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
-import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDefinition;
+import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public record AuthenticatorDefintion(

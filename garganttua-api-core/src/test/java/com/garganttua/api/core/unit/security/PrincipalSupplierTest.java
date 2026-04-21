@@ -15,12 +15,12 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.core.security.authentication.PrincipalSupplier;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.definition.IDomainSecurityDefinition;
-import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
+import com.garganttua.api.commons.repository.IRepository;
+import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;

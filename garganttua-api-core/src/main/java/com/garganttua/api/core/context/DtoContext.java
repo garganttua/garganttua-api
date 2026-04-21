@@ -3,9 +3,9 @@ package com.garganttua.api.core.context;
 import java.util.Objects;
 
 import com.garganttua.api.core.definition.DtoDefinition;
-import com.garganttua.api.spec.context.IDtoContext;
-import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.context.IDtoContext;
+import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.api.commons.ApiException;
 import java.util.List;
 
 import com.garganttua.api.core.mapper.DefaultMapper;

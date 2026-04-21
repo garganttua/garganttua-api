@@ -1,7 +1,7 @@
 package com.garganttua.api.core.context.security;
 
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.security.context.IAuthenticatorContext;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.security.context.IAuthenticatorContext;
 
 public class AuthenticatorContext implements IAuthenticatorContext {
 

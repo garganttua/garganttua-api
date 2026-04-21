@@ -10,13 +10,13 @@ import java.util.Optional;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.api.spec.sort.SortDirection;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.pageable.IPageable;
+import com.garganttua.api.commons.sort.ISort;
+import com.garganttua.api.commons.sort.SortDirection;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.mongodb.client.FindIterable;
@@ -44,7 +44,7 @@ public class MongoDao implements IDao {
 	@Override
 	public void registerDomain(IDomainDefinition domainDefinition) {
 		if (domainDefinition != null && domainDefinition.dtoDefinitions() != null && !domainDefinition.dtoDefinitions().isEmpty()) {
-			this.dtoClass = ((com.garganttua.api.spec.definition.IDtoDefinition<?>) domainDefinition.dtoDefinitions().get(0)).dtoClass();
+			this.dtoClass = ((com.garganttua.api.commons.definition.IDtoDefinition<?>) domainDefinition.dtoDefinitions().get(0)).dtoClass();
 		}
 	}
 

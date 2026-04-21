@@ -14,12 +14,12 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
@@ -141,7 +141,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .alwaysEnabled(true)
                     .authentication(authBuilder);
         authenticatorBuilder
-                    .authorization((com.garganttua.api.spec.context.dsl.IDomainBuilder) tokenDomainBuilder)
+                    .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tokenDomainBuilder)
                         .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES);
 
         userDomainBuilder.up();
@@ -357,7 +357,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                             .scope(AuthenticatorScope.tenant)
                             .alwaysEnabled(true)
                             .authentication(ab)
-                            .authorization((com.garganttua.api.spec.context.dsl.IDomainBuilder) tb);
+                            .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tb);
                 ub.up();
 
                 buildAndStart(bldr);
@@ -412,7 +412,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                             .scope(AuthenticatorScope.tenant)
                             .alwaysEnabled(true)
                             .authentication(ab)
-                            .authorization((com.garganttua.api.spec.context.dsl.IDomainBuilder) tb);
+                            .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tb);
                 ub.up();
 
                 buildAndStart(bldr);

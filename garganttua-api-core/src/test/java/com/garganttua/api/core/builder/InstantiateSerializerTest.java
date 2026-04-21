@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.MimeType;
-import com.garganttua.api.spec.serialization.ISerializer;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.MimeType;
+import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;

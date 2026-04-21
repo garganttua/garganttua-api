@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.builder.AuthenticationBuilder;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
-import com.garganttua.api.spec.security.context.IAuthenticationContext;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.dsl.security.IApiSecurityBuilder;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.security.context.IAuthenticationContext;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;

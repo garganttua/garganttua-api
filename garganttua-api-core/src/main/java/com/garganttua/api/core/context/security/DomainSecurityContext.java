@@ -3,8 +3,8 @@ package com.garganttua.api.core.context.security;
 import java.util.Objects;
 
 import com.garganttua.api.core.definition.DomainSecurityDefinition;
-import com.garganttua.api.spec.definition.IDomainSecurityDefinition;
-import com.garganttua.api.spec.security.IDomainSecurityContext;
+import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
+import com.garganttua.api.commons.security.IDomainSecurityContext;
 
 public class DomainSecurityContext implements IDomainSecurityContext {
 

@@ -1,11 +1,11 @@
 package com.garganttua.api.core.builder.binder;
 
-import com.garganttua.api.spec.context.IUseCase;
-import com.garganttua.api.spec.context.dsl.IUseCaseBinderBuilder;
-import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.commons.context.IUseCase;
+import com.garganttua.api.commons.context.dsl.IUseCaseBinderBuilder;
+import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
 import java.util.Set;
 
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;

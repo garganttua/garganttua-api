@@ -5,9 +5,9 @@ import com.garganttua.api.core.filter.Filter;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.filter.IFilter;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.core.reflection.ObjectAddress;
 
 import lombok.extern.slf4j.Slf4j;

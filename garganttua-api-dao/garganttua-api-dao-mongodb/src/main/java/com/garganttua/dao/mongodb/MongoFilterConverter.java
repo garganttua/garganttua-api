@@ -5,8 +5,8 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.filter.IFilter;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.filter.IFilter;
 import com.mongodb.client.model.Filters;
 
 public class MongoFilterConverter {

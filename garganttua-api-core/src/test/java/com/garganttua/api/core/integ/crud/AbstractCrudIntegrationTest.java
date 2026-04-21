@@ -7,16 +7,16 @@ import java.util.Optional;
 
 import com.garganttua.api.core.builder.ApiBuilder;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.sort.ISort;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.pageable.IPageable;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.sort.ISort;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.expression.dsl.ExpressionContextBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
@@ -255,10 +255,10 @@ public abstract class AbstractCrudIntegrationTest {
             return new ArrayList<>(storage);
         }
 
-        private List<Object> filterStorage(com.garganttua.api.spec.filter.IFilter f) {
+        private List<Object> filterStorage(com.garganttua.api.commons.filter.IFilter f) {
             if ("$and".equals(f.getName()) && f.getFilters() != null) {
                 List<Object> result = new ArrayList<>(storage);
-                for (com.garganttua.api.spec.filter.IFilter sub : f.getFilters()) {
+                for (com.garganttua.api.commons.filter.IFilter sub : f.getFilters()) {
                     result = filterList(result, sub);
                 }
                 return result;
@@ -266,10 +266,10 @@ public abstract class AbstractCrudIntegrationTest {
             return filterList(new ArrayList<>(storage), f);
         }
 
-        private List<Object> filterList(List<Object> list, com.garganttua.api.spec.filter.IFilter f) {
+        private List<Object> filterList(List<Object> list, com.garganttua.api.commons.filter.IFilter f) {
             if ("$field".equals(f.getName()) && f.getFilters() != null) {
                 String fieldName = String.valueOf(f.getValue());
-                com.garganttua.api.spec.filter.IFilter operator = f.getFilters().get(0);
+                com.garganttua.api.commons.filter.IFilter operator = f.getFilters().get(0);
                 if ("$eq".equals(operator.getName())) {
                     Object expected = operator.getValue();
                     List<Object> result = new ArrayList<>();

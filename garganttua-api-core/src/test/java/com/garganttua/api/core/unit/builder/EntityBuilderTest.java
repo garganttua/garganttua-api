@@ -10,10 +10,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.spec.context.IEntityContext;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.IEntityBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.context.IEntityContext;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IEntityBuilder;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;

@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.expression.ProtocolExpressions;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.protocol.IProtocol;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.protocol.IProtocol;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("ProtocolExpressions")

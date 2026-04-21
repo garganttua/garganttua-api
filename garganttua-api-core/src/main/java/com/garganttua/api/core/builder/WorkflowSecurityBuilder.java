@@ -2,12 +2,12 @@ package com.garganttua.api.core.builder;
 
 import java.util.Objects;
 
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
-import com.garganttua.api.spec.context.dsl.security.IWorkflowSecurityBuilder;
-import com.garganttua.api.spec.security.IWorkflowSecurity;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.context.dsl.IDomainWorkflowBuilder;
+import com.garganttua.api.commons.context.dsl.security.IWorkflowSecurityBuilder;
+import com.garganttua.api.commons.security.IWorkflowSecurity;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 
 public class WorkflowSecurityBuilder<E>
 		extends AbstractAutomaticLinkedBuilder<IWorkflowSecurityBuilder<E>, IDomainWorkflowBuilder<E>, IWorkflowSecurity>

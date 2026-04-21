@@ -1,10 +1,10 @@
 package com.garganttua.api.core.builder.binder;
 
-import com.garganttua.api.spec.context.dsl.security.IRefreshableAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IRefreshableAuthorizationMethodBinderBuilder;
+import com.garganttua.api.commons.context.dsl.security.IRefreshableAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IRefreshableAuthorizationMethodBinderBuilder;
 import java.util.Set;
 
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;

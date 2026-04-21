@@ -3,12 +3,12 @@ package com.garganttua.api.core.builder;
 import java.util.List;
 import java.util.Objects;
 
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.endpoint.IEndpoint;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.commons.endpoint.IEndpoint;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;

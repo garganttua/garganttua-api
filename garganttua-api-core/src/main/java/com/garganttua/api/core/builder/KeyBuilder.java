@@ -1,9 +1,9 @@
 package com.garganttua.api.core.builder;
 
-import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
-import com.garganttua.api.spec.security.IKeyContext;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.commons.context.dsl.security.IKeyBuilder;
+import com.garganttua.api.commons.security.IKeyContext;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
 

@@ -20,19 +20,19 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.expression.SerializationExpressions;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.MimeType;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.definition.IDtoDefinition;
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.operation.OperationType;
-import com.garganttua.api.spec.operation.Scope;
-import com.garganttua.api.spec.operation.TechnicalOperation;
-import com.garganttua.api.spec.serialization.ISerializer;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.MimeType;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.definition.IDtoDefinition;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.operation.OperationType;
+import com.garganttua.api.commons.operation.Scope;
+import com.garganttua.api.commons.operation.TechnicalOperation;
+import com.garganttua.api.commons.serialization.ISerializer;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("SerializationExpressions")

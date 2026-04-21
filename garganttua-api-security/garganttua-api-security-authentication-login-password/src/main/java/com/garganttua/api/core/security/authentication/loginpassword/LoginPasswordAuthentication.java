@@ -2,9 +2,9 @@ package com.garganttua.api.core.security.authentication.loginpassword;
 
 import javax.inject.Inject;
 
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.security.IPasswordEncoder;
-import com.garganttua.api.spec.security.annotations.Authentication;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.security.IPasswordEncoder;
+import com.garganttua.api.commons.security.annotations.Authentication;
 import com.garganttua.core.CoreException;
 
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +16,10 @@ public class LoginPasswordAuthentication {
 	@Inject
 	private IPasswordEncoder encoder;
 
-	protected com.garganttua.api.spec.security.authentication.IAuthentication authenticate(Object principal, byte[] credential, IAuthenticatorDefinition definition) throws CoreException {
+	protected com.garganttua.api.commons.security.authentication.IAuthentication authenticate(Object principal, byte[] credential, IAuthenticatorDefinition definition) throws CoreException {
 		String encodedPassword = "";
 		boolean matches = this.encoder.matches(new String(credential), encodedPassword);
-		return new com.garganttua.api.spec.security.authentication.Authentication(
+		return new com.garganttua.api.commons.security.authentication.Authentication(
 				matches, principal, null, null, null, true, true, true, true);
 	}
 

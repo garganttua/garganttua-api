@@ -18,16 +18,16 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.security.exceptions.SecurityException;
 import com.garganttua.api.core.security.key.Key;
 import com.garganttua.api.core.security.key.KeyRealm;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.api.commons.CoreExceptionCode;
 import com.garganttua.core.CoreException;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.security.key.EncryptionMode;
-import com.garganttua.api.spec.security.key.EncryptionPaddingMode;
-import com.garganttua.api.spec.security.key.KeyAlgorithm;
-import com.garganttua.api.spec.security.key.KeyType;
-import com.garganttua.api.spec.security.key.SignatureAlgorithm;
-import com.garganttua.api.spec.security.key.IKey;
-import com.garganttua.api.spec.security.key.IKeyRealm;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.security.key.EncryptionMode;
+import com.garganttua.api.commons.security.key.EncryptionPaddingMode;
+import com.garganttua.api.commons.security.key.KeyAlgorithm;
+import com.garganttua.api.commons.security.key.KeyType;
+import com.garganttua.api.commons.security.key.SignatureAlgorithm;
+import com.garganttua.api.commons.security.key.IKey;
+import com.garganttua.api.commons.security.key.IKeyRealm;
 
 public class TestJWTAuthorization {
 	

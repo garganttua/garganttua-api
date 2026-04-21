@@ -3,10 +3,10 @@ package com.garganttua.api.core.context.security;
 import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.definition.DomainAuthenticatorAuthorizationDefinition;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationContext;
-import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationKeyContext;
-import com.garganttua.api.spec.definition.IDomainAuthenticatorAuthorizationDefinition;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationContext;
+import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationKeyContext;
+import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDefinition;
 
 public class AuthenticatorAuthorizationContext implements IAuthenticatorAuthorizationContext {
 

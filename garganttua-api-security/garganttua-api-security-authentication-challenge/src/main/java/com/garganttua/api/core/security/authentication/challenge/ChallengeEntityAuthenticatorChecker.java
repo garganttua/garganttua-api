@@ -9,16 +9,16 @@ import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.api.commons.CoreExceptionCode;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.reflection.IObjectQuery;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
-import com.garganttua.api.spec.security.annotations.AuthenticatorKeyRealm;
-import com.garganttua.api.spec.security.key.KeyAlgorithm;
-import com.garganttua.api.spec.security.key.IKeyRealm;
+import com.garganttua.api.commons.security.annotations.AuthenticatorKeyRealm;
+import com.garganttua.api.commons.security.key.KeyAlgorithm;
+import com.garganttua.api.commons.security.key.IKeyRealm;
 
 public class ChallengeEntityAuthenticatorChecker {
 

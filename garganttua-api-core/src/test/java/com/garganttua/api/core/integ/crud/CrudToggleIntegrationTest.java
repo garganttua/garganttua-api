@@ -6,11 +6,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.operation.OperationDefinition;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.workflow.WorkflowResult;
 
@@ -39,7 +39,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
 
     @FunctionalInterface
     interface DomainConfigurator {
-        void configure(com.garganttua.api.spec.context.dsl.IDomainBuilder<?> builder);
+        void configure(com.garganttua.api.commons.context.dsl.IDomainBuilder<?> builder);
     }
 
     private WorkflowResult executeOperation(IDomain<?> ctx, OperationDefinition op) {

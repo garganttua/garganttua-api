@@ -1,6 +1,6 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public record DomainAuthorizationDefinition(

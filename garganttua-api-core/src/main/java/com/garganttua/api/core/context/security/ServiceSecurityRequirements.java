@@ -1,6 +1,6 @@
 package com.garganttua.api.core.context.security;
 
-import com.garganttua.api.spec.security.context.IServiceSecurityRequirements;
+import com.garganttua.api.commons.security.context.IServiceSecurityRequirements;
 
 public class ServiceSecurityRequirements implements IServiceSecurityRequirements {
 

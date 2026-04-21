@@ -6,18 +6,18 @@ import java.util.Optional;
 
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.repository.RepositoryFilterTools;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.definition.IEntityDefinition;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.repository.IRepository;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.Page;
-import com.garganttua.api.spec.sort.ISort;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.definition.IEntityDefinition;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.pageable.IPageable;
+import com.garganttua.api.commons.repository.IRepository;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.Page;
+import com.garganttua.api.commons.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.ObjectAddress;
 
@@ -100,7 +100,7 @@ public class CrudExpressions {
 		if (apiContext == null) {
 			throw new ApiException("No API context available in request");
 		}
-		return ((com.garganttua.api.spec.context.IApi) apiContext).getDomain(domainName)
+		return ((com.garganttua.api.commons.context.IApi) apiContext).getDomain(domainName)
 				.orElseThrow(() -> new ApiException("Domain not found: " + domainName));
 	}
 

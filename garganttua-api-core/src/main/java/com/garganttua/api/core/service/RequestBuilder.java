@@ -3,17 +3,17 @@ package com.garganttua.api.core.service;
 import java.util.List;
 import java.util.UUID;
 
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.service.ArgKey;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.IRequest;
-import com.garganttua.api.spec.service.IRequestBuilder;
-import com.garganttua.api.spec.sort.ISort;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.pageable.IPageable;
+import com.garganttua.api.commons.service.ArgKey;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.IRequest;
+import com.garganttua.api.commons.service.IRequestBuilder;
+import com.garganttua.api.commons.sort.ISort;
 
 public class RequestBuilder implements IRequestBuilder {
 

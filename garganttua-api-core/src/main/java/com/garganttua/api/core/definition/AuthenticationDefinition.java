@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
-import com.garganttua.api.spec.definition.IAuthenticationDefinition;
+import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.commons.definition.IAuthenticationDefinition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;

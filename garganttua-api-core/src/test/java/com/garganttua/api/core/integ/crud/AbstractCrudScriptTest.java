@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
 import com.garganttua.core.workflow.WorkflowInput;

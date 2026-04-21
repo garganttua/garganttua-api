@@ -13,19 +13,19 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.operation.OperationType;
-import com.garganttua.api.spec.operation.Scope;
-import com.garganttua.api.spec.operation.TechnicalOperation;
-import com.garganttua.api.spec.security.authorization.IAuthorization;
-import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.operation.OperationType;
+import com.garganttua.api.commons.operation.Scope;
+import com.garganttua.api.commons.operation.TechnicalOperation;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
+import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("VERIFY_AUTHORIZATION with @AuthorizationProtocol decoders")

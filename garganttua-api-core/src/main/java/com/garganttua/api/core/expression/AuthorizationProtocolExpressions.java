@@ -3,10 +3,10 @@ package com.garganttua.api.core.expression;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.security.authorization.IAuthorization;
-import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
+import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.core.expression.annotations.Expression;
 
 import jakarta.annotation.Nullable;

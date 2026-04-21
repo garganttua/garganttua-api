@@ -16,7 +16,7 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
-import com.garganttua.api.spec.context.IDomain;
+import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.core.security.authentication.DomainSupplier;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;

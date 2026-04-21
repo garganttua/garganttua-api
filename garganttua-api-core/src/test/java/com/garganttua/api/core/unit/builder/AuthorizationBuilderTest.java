@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.builder.AuthorizationBuilder;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.spec.definition.IDomainAuthorizationDefinition;
-import com.garganttua.api.spec.security.context.IAuthorizationContext;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.security.context.IAuthorizationContext;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;

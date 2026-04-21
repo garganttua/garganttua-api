@@ -4,14 +4,14 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.context.security.AuthenticatorAuthorizationKeyContext;
-import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationKeyContext;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
-import com.garganttua.api.spec.security.annotations.AuthenticatorKeyUsage;
-import com.garganttua.api.spec.security.key.KeyAlgorithm;
-import com.garganttua.api.spec.security.key.SignatureAlgorithm;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationKeyContext;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
+import com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage;
+import com.garganttua.api.commons.security.key.KeyAlgorithm;
+import com.garganttua.api.commons.security.key.SignatureAlgorithm;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
 public class AuthenticatorAuthorizationKeyBuilder<E> extends

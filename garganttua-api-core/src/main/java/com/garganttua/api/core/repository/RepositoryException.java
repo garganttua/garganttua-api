@@ -1,6 +1,6 @@
 package com.garganttua.api.core.repository;
 
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 
 public class RepositoryException extends ApiException {
 

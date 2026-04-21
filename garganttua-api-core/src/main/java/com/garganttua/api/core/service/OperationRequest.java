@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.operation.OperationPath;
-import com.garganttua.api.spec.service.ArgKey;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.operation.OperationPath;
+import com.garganttua.api.commons.service.ArgKey;
+import com.garganttua.api.commons.service.IOperationRequest;
 
 public class OperationRequest implements IOperationRequest {
 

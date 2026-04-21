@@ -11,9 +11,9 @@ import com.garganttua.api.core.security.ExpirationTools;
 import com.garganttua.api.core.security.entity.tools.EntityAuthenticatorHelper;
 import com.garganttua.core.CoreException;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.security.key.IKeyRealm;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.security.key.IKeyRealm;
 
 public class ChallengeEntityAuthenticatorHelper {
 

@@ -1,7 +1,7 @@
 package com.garganttua.api.core.service;
 
-import com.garganttua.api.spec.service.IOperationResponse;
-import com.garganttua.api.spec.service.OperationResponseCode;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.OperationResponseCode;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

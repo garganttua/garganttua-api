@@ -4,13 +4,13 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.context.security.AuthenticatorAuthorizationContext;
-import com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationContext;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationContext;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 
 public class AuthenticatorAuthorizationBuilder<E> extends
         AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationBuilder<E>, IAuthenticatorBuilder<E>, IAuthenticatorAuthorizationContext>
@@ -52,7 +52,7 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     @Override
     protected synchronized IAuthenticatorAuthorizationContext doBuild() throws ApiException {
         var keyContext = this.authenticatorAuthorizationKey != null
-                ? (com.garganttua.api.spec.security.context.IAuthenticatorAuthorizationKeyContext) this.authenticatorAuthorizationKey.build()
+                ? (com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationKeyContext) this.authenticatorAuthorizationKey.build()
                 : null;
         // Store the authorization domain builder — it will be built later by ApiBuilder.
         // Validation (owned check) happens at runtime in CREATE_AUTHORIZATION.gs.

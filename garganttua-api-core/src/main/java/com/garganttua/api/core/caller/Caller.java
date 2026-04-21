@@ -2,7 +2,7 @@ package com.garganttua.api.core.caller;
 
 import java.util.List;
 
-import com.garganttua.api.spec.caller.ICaller;
+import com.garganttua.api.commons.caller.ICaller;
 
 public record Caller(
 		String tenantId,

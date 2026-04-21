@@ -75,7 +75,7 @@
 			<!-- Garganttua API modules -->
 			<dependency>
 				<groupId>com.garganttua</groupId>
-				<artifactId>garganttua-api-spec</artifactId>
+				<artifactId>garganttua-api-commons</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 			<dependency>
@@ -308,7 +308,7 @@
 	</build>
 
 	<modules>
-		<module>garganttua-api-spec</module>
+		<module>garganttua-api-commons</module>
 		<module>garganttua-api-core</module>
 		<module>garganttua-api-dao</module>
 		<!-- <module>garganttua-api-security</module>

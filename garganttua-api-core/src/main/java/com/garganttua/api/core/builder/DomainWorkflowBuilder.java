@@ -2,14 +2,14 @@ package com.garganttua.api.core.builder;
 
 import java.util.Objects;
 
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.operation.Scope;
-import com.garganttua.api.spec.operation.TechnicalOperation;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.IDomainWorkflowBuilder;
-import com.garganttua.api.spec.context.dsl.security.IWorkflowSecurityBuilder;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.operation.Scope;
+import com.garganttua.api.commons.operation.TechnicalOperation;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IDomainWorkflowBuilder;
+import com.garganttua.api.commons.context.dsl.security.IWorkflowSecurityBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.workflow.IWorkflow;

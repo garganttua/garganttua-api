@@ -4,10 +4,10 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import java.util.Objects;
 
-import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.ISignableAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;

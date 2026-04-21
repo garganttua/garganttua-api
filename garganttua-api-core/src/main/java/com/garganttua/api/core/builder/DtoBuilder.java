@@ -7,11 +7,11 @@ import java.util.Objects;
 
 import com.garganttua.api.core.context.DtoContext;
 import com.garganttua.api.core.definition.DtoDefinition;
-import com.garganttua.api.spec.context.IDtoContext;
-import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.IDtoBuilder;
-import com.garganttua.api.spec.dao.IDao;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.context.IDtoContext;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IDtoBuilder;
+import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IObjectQuery;

@@ -14,17 +14,17 @@ import org.junit.jupiter.api.Test;
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.operation.BusinessOperation;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.security.authentication.Authentication;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
-import com.garganttua.api.spec.security.authenticator.AuthenticatorScope;
-import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.operation.BusinessOperation;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.security.authentication.Authentication;
+import com.garganttua.api.commons.security.authentication.IAuthentication;
+import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.workflow.WorkflowResult;
@@ -233,7 +233,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         @DisplayName("implements IAuthenticationRequest")
         void implementsInterface() {
             AuthenticationRequest req = new AuthenticationRequest("x", new byte[0], null);
-            assertInstanceOf(com.garganttua.api.spec.security.authentication.IAuthenticationRequest.class, req);
+            assertInstanceOf(com.garganttua.api.commons.security.authentication.IAuthenticationRequest.class, req);
         }
     }
 }

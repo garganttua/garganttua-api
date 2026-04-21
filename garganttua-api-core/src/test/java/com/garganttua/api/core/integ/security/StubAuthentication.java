@@ -3,9 +3,9 @@ package com.garganttua.api.core.integ.security;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.security.authentication.Authentication;
-import com.garganttua.api.spec.security.authentication.IAuthentication;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.security.authentication.Authentication;
+import com.garganttua.api.commons.security.authentication.IAuthentication;
 
 /**
  * Simulates an authentication method (like LoginPasswordAuthentication).

@@ -10,12 +10,12 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.MimeType;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.serialization.ISerializer;
-import com.garganttua.api.spec.serialization.Serializer;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.MimeType;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.serialization.ISerializer;
+import com.garganttua.api.commons.serialization.Serializer;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("@Serializer auto-detection")

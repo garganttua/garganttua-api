@@ -1,6 +1,6 @@
 package com.garganttua.api.core.security.authentication;
 
-import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
 
 public record AuthenticationRequest(
 	String login,

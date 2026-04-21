@@ -1,6 +1,6 @@
 package com.garganttua.api.core.filter;
 
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 
 public class FilterException extends ApiException {
 

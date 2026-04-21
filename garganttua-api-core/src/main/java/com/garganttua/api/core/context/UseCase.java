@@ -4,9 +4,9 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 import java.util.Set;
 
-import com.garganttua.api.spec.context.IUseCase;
-import com.garganttua.api.spec.operation.Scope;
-import com.garganttua.api.spec.operation.TechnicalOperation;
+import com.garganttua.api.commons.context.IUseCase;
+import com.garganttua.api.commons.operation.Scope;
+import com.garganttua.api.commons.operation.TechnicalOperation;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.reflection.ReflectionException;

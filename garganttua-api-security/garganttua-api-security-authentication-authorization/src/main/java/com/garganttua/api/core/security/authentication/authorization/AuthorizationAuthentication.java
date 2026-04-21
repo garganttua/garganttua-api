@@ -11,14 +11,14 @@ import com.garganttua.api.core.security.authorization.EntityAuthorizationHelper;
 import com.garganttua.api.core.security.entity.checker.EntityAuthenticatorChecker;
 import com.garganttua.api.core.security.key.KeyHelper;
 import com.garganttua.core.CoreException;
-import com.garganttua.api.spec.caller.ICaller;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.security.annotations.Authentication;
-import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPostProcessing;
-import com.garganttua.api.spec.security.annotations.AuthenticatorSecurityPreProcessing;
-import com.garganttua.api.spec.security.authenticator.AuthenticatorInfos;
-import com.garganttua.api.spec.security.key.IKeyRealm;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.security.annotations.Authentication;
+import com.garganttua.api.commons.security.annotations.AuthenticatorSecurityPostProcessing;
+import com.garganttua.api.commons.security.annotations.AuthenticatorSecurityPreProcessing;
+import com.garganttua.api.commons.security.authenticator.AuthenticatorInfos;
+import com.garganttua.api.commons.security.key.IKeyRealm;
 
 import lombok.extern.slf4j.Slf4j;
 

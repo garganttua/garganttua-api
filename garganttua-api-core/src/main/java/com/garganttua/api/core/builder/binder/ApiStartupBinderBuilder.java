@@ -3,9 +3,9 @@ package com.garganttua.api.core.builder.binder;
 import java.util.Objects;
 import java.util.Set;
 
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.context.dsl.IApiStartupBinderBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.context.dsl.IApiStartupBinderBuilder;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;

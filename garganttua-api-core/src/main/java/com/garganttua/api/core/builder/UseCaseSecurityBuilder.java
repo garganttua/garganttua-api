@@ -1,11 +1,11 @@
 package com.garganttua.api.core.builder;
 
-import com.garganttua.api.spec.operation.Access;
-import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
-import com.garganttua.api.spec.context.dsl.security.IUseCaseSecurityBuilder;
-import com.garganttua.api.spec.security.IUseCaseSecurity;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.commons.context.dsl.security.IUseCaseSecurityBuilder;
+import com.garganttua.api.commons.security.IUseCaseSecurity;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.ApiException;
 
 public class UseCaseSecurityBuilder<I, O, E>
         extends AbstractAutomaticLinkedBuilder<IUseCaseSecurityBuilder<I, O, E>, IUseCaseBuilder<I, O, E>, IUseCaseSecurity>

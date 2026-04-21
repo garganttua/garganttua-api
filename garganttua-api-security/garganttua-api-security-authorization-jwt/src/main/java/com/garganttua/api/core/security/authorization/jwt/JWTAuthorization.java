@@ -9,11 +9,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.garganttua.api.core.security.authorization.SignableAuthorization;
 import com.garganttua.api.core.security.exceptions.SecurityException;
-import com.garganttua.api.spec.CoreExceptionCode;
+import com.garganttua.api.commons.CoreExceptionCode;
 import com.garganttua.core.CoreException;
-import com.garganttua.api.spec.entity.annotations.EntityOwned;
-import com.garganttua.api.spec.security.annotations.AuthorizationToByteArray;
-import com.garganttua.api.spec.security.annotations.AuthorizationType;
+import com.garganttua.api.commons.entity.annotations.EntityOwned;
+import com.garganttua.api.commons.security.annotations.AuthorizationToByteArray;
+import com.garganttua.api.commons.security.annotations.AuthorizationType;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
 

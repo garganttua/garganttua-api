@@ -5,11 +5,11 @@ import java.util.List;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.spec.definition.IDomainDefinition;
-import com.garganttua.api.spec.definition.IDtoDefinition;
-import com.garganttua.api.spec.filter.IFilter;
-import com.garganttua.api.spec.filter.IFilterMapper;
-import com.garganttua.api.spec.ApiException;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.definition.IDtoDefinition;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.filter.IFilterMapper;
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 
 import lombok.extern.slf4j.Slf4j;

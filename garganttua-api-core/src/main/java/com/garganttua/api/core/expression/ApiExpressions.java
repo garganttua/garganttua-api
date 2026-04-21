@@ -30,9 +30,9 @@ public class ApiExpressions {
 
 	@Expression(name = "requirePresent", description = "Throws ApiException if value is null or an empty Optional, otherwise returns the unwrapped value")
 	public static Object requirePresent(@Nullable Object value) {
-		if (value == null) throw new com.garganttua.api.spec.ApiException("Required value is null");
+		if (value == null) throw new com.garganttua.api.commons.ApiException("Required value is null");
 		if (value instanceof Optional<?> opt) {
-			return opt.orElseThrow(() -> new com.garganttua.api.spec.ApiException("Required value is empty"));
+			return opt.orElseThrow(() -> new com.garganttua.api.commons.ApiException("Required value is empty"));
 		}
 		return value;
 	}

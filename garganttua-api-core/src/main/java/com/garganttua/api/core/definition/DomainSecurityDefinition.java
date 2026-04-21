@@ -1,8 +1,8 @@
 package com.garganttua.api.core.definition;
 
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
-import com.garganttua.api.spec.definition.IDomainAuthorizationDefinition;
-import com.garganttua.api.spec.definition.IDomainSecurityDefinition;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
 
 public record DomainSecurityDefinition(
     boolean disabled,

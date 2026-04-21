@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import com.garganttua.api.core.context.Domain;
 import com.garganttua.api.core.definition.DomainDefinition;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;

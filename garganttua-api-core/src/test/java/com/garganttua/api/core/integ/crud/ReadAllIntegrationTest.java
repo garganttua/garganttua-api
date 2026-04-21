@@ -5,23 +5,23 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.util.HashMap;
 import java.util.List;
 
-import com.garganttua.api.spec.service.Page;
+import com.garganttua.api.commons.service.Page;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.service.OperationRequest;
-import com.garganttua.api.spec.ApiException;
-import com.garganttua.api.spec.context.IApi;
-import com.garganttua.api.spec.context.IDomain;
-import com.garganttua.api.spec.operation.OperationDefinition;
-import com.garganttua.api.spec.context.dsl.IApiBuilder;
-import com.garganttua.api.spec.pageable.IPageable;
-import com.garganttua.api.spec.service.IOperationRequest;
-import com.garganttua.api.spec.sort.ISort;
-import com.garganttua.api.spec.sort.Sort;
-import com.garganttua.api.spec.sort.SortDirection;
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.pageable.IPageable;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.sort.ISort;
+import com.garganttua.api.commons.sort.Sort;
+import com.garganttua.api.commons.sort.SortDirection;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.workflow.WorkflowResult;
 
