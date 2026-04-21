@@ -50,7 +50,13 @@ public class AuthenticateCredentialsSupplier implements IContextualSupplier<byte
 
         Object entity = entityOpt.get();
         if (entity instanceof IAuthenticationRequest authReq) {
-            return Optional.of(authReq.credentials());
+            Object creds = authReq.credentials();
+            if (creds == null) return Optional.empty();
+            if (creds instanceof byte[] bytes) return Optional.of(bytes);
+            // Credentials is a non-byte[] shape (e.g. IAuthorization for token flow):
+            // this supplier only handles login+password byte arrays. Yield to other
+            // suppliers/strategies designed for the runtime shape at hand.
+            return Optional.empty();
         }
 
         throw new SupplyException("Entity is not an IAuthenticationRequest: " + entity.getClass().getName());

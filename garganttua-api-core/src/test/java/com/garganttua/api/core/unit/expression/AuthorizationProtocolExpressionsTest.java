@@ -23,6 +23,7 @@ import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
 import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
+import com.garganttua.core.reflection.IClass;
 
 @DisplayName("AuthorizationProtocolExpressions")
 class AuthorizationProtocolExpressionsTest {
@@ -49,6 +50,7 @@ class AuthorizationProtocolExpressionsTest {
 		StubProtocol(String scheme) { this.scheme = scheme; }
 
 		@Override public String scheme() { return scheme; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 
 		@Override
 		public IAuthorization decode(String rawAuthorizationValue, IApi api) throws ApiException {
@@ -298,6 +300,9 @@ class AuthorizationProtocolExpressionsTest {
 		void wrapsRuntime() {
 			IAuthorizationProtocol p = new IAuthorizationProtocol() {
 				@Override public String scheme() { return "Bearer"; }
+				@Override public com.garganttua.core.reflection.IClass<?> targetDomain() {
+					return com.garganttua.core.reflection.IClass.getClass(Object.class);
+				}
 				@Override public IAuthorization decode(String v, IApi api) {
 					throw new IllegalStateException("boom");
 				}

@@ -2,6 +2,7 @@ package com.garganttua.api.spec.security.authorization;
 
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.api.spec.context.IApi;
+import com.garganttua.core.reflection.IClass;
 
 /**
  * Scheme-level decoder for authorization headers.
@@ -36,6 +37,22 @@ public interface IAuthorizationProtocol {
 	 * Examples: {@code "Bearer"}, {@code "Basic"}, {@code "ApiKey"}.
 	 */
 	String scheme();
+
+	/**
+	 * Entity class of the domain on which {@code VERIFY_AUTHORIZATION.gs} should
+	 * invoke the {@code authenticate} pipeline to validate the decoded token.
+	 * <p>
+	 * Typical values:
+	 * <ul>
+	 *   <li>Bearer JWT → the token entity class (dual-role domain: both
+	 *       {@code .security().authorization()} and {@code .security().authenticator()}).</li>
+	 *   <li>Basic → the authenticator entity class (e.g. {@code User.class}).</li>
+	 *   <li>ApiKey → the ApiKey entity class (also dual-role).</li>
+	 * </ul>
+	 * Looked up at runtime via {@code IApi.getDomains()} matching on
+	 * {@code IDomain.getEntityClass()}.
+	 */
+	IClass<?> targetDomain();
 
 	/**
 	 * Decode the portion of the {@code Authorization} header AFTER the scheme

@@ -39,6 +39,10 @@ public abstract class AbstractCrudScriptTest extends AbstractCrudIntegrationTest
 		Map<String, Object> params = new java.util.LinkedHashMap<>();
 		params.put("$1", ctx.getRepository());
 		params.put("$2", ctx);
+		// $3 = apiContext — required by stages that decode/serialize/extract/verify-authorization
+		if (ctx instanceof com.garganttua.api.core.context.Domain<?> dc) {
+			params.put("$3", dc.getApiContext());
+		}
 
 		WorkflowInput input = WorkflowInput.of(request, params);
 		return workflow.execute(input, WorkflowExecutionOptions.none());

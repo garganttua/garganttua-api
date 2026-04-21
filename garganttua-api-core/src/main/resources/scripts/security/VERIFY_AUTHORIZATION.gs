@@ -2,11 +2,14 @@
 
 #@workflow
 #  Verifies authorization access before processing an operation.
+#  Flow:
 #  - Anonymous access -> immediate success.
-#  - Authorization already present (Mode B caller pre-populated it) -> success.
-#  - Otherwise: parse the rawAuthorization header, resolve the scheme protocol
-#    against the API's IAuthorizationProtocol pool, decode it into an
-#    IAuthorization, and write it back to the request args.
+#  - Authorization already present (Mode B caller pre-populated it) -> success
+#    (the caller has vouched for the authorization).
+#  - Otherwise: parse rawAuthorization, resolve the scheme protocol, decode it,
+#    then invoke the protocol's target domain's authenticate pipeline with the
+#    decoded authorization as credentials. Store the resolved principal for
+#    downstream stages.
 #
 #  @in operationRequest: [0] IOperationRequest
 #  @in repository:       [1] IRepository
@@ -15,7 +18,7 @@
 #  @out output -> output: int
 #  @return 0:   SUCCESS
 #  @return 400: malformed Authorization header (no scheme/value separator)
-#  @return 401: missing token, unknown scheme, or decode failure
+#  @return 401: missing token, unknown scheme, decode failure, or authenticate rejected the token
 #@end
 
 operation     <- :arg(@0, "operation")
@@ -51,5 +54,17 @@ authz    <- decodeAuthorization(@protocol, @value, @3)
 ! -> 401
 
 setRequestArg(@0, "authorization", @authz)
+
+// Validate the decoded authorization by invoking the target domain's authenticate
+// pipeline. The IAuthentication strategy on that domain checks signature, expiration,
+// revocation, and resolves the principal.
+_targetClass <- protocolTargetDomain(@protocol)
+_targetDomain <- resolveDomainByEntityClass(@3, @_targetClass)
+_tenantId <- :arg(@0, "tenantId")
+_authRequest <- buildAuthRequestFromAuthorization(@authz, @_tenantId)
+_authResult <- invokeAuthenticate(@3, @_targetDomain, @_authRequest)
+! -> 401
+
+setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
 
 output <- 0 -> 0

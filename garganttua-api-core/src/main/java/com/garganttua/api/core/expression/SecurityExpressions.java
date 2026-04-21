@@ -24,8 +24,12 @@ import com.garganttua.api.spec.repository.IRepository;
 import com.garganttua.api.spec.security.authentication.IAuthentication;
 import com.garganttua.api.spec.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.spec.security.authorization.IAuthorization;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.spec.service.IOperationRequest;
+import com.garganttua.api.spec.service.IOperationResponse;
+import com.garganttua.api.spec.service.OperationResponseCode;
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.binders.IContextualMethodBinder;
@@ -545,5 +549,95 @@ public class SecurityExpressions {
 		} catch (Exception e) {
 			return null;
 		}
+	}
+
+	// ----- Authorization → authenticate pipeline bridge -----
+
+	@Expression(name = "protocolTargetDomain",
+			description = "Returns the entity class that an IAuthorizationProtocol declares as its target — the domain on which the authenticate pipeline should run for tokens decoded by this protocol.")
+	public static IClass<?> protocolTargetDomain(@Nullable Object protocol) {
+		IAuthorizationProtocol p = (IAuthorizationProtocol) unwrapOptional(protocol);
+		if (p == null) {
+			throw new ApiException("Authorization protocol is null");
+		}
+		IClass<?> target = p.targetDomain();
+		if (target == null) {
+			throw new ApiException(
+					"IAuthorizationProtocol '" + p.getClass().getName()
+					+ "' returned null from targetDomain()");
+		}
+		return target;
+	}
+
+	@Expression(name = "resolveDomainByEntityClass",
+			description = "Iterates over IApi.getDomain and returns the first domain whose entity class matches. Throws 500 if none found.")
+	public static IDomain<?> resolveDomainByEntityClass(@Nullable Object apiContext, @Nullable Object entityClass) {
+		IApi api = (IApi) unwrapOptional(apiContext);
+		IClass<?> target = (IClass<?>) unwrapOptional(entityClass);
+		if (api == null) {
+			throw new ApiException("API context is null");
+		}
+		if (target == null) {
+			throw new ApiException("Target entity class is null");
+		}
+		if (api instanceof com.garganttua.api.core.context.Api concrete) {
+			for (IDomain<?> domain : concrete.getDomains().values()) {
+				IClass<?> domainEntity = domain.getEntityClass();
+				if (domainEntity != null && domainEntity.equals(target)) {
+					return domain;
+				}
+			}
+		}
+		throw new ApiException(
+				"No domain registered for entity class: " + target.getName());
+	}
+
+	@Expression(name = "buildAuthRequestFromAuthorization",
+			description = "Wraps a decoded IAuthorization into an IAuthenticationRequest (credentials slot) so it can be forwarded to the authenticate pipeline.")
+	public static IAuthenticationRequest buildAuthRequestFromAuthorization(@Nullable Object authorization, @Nullable Object tenantId) {
+		IAuthorization authz = (IAuthorization) unwrapOptional(authorization);
+		if (authz == null) {
+			throw new ApiException("Authorization is null — cannot build authentication request");
+		}
+		String tenant = tenantId == null ? null : String.valueOf(unwrapOptional(tenantId));
+		if (tenant != null && tenant.equals("null")) tenant = null;
+		return new com.garganttua.api.core.security.authentication.AuthenticationRequest(null, authz, tenant);
+	}
+
+	@Expression(name = "invokeAuthenticate",
+			description = "Synchronously invokes the 'authenticate' operation on the given target domain with the provided IAuthenticationRequest as body. Returns the resulting IAuthentication or throws ApiException on failure (mapped to 401 by the caller).")
+	public static IAuthentication invokeAuthenticate(@Nullable Object apiContext, @Nullable Object targetDomain, @Nullable Object authRequest) {
+		IApi api = (IApi) unwrapOptional(apiContext);
+		IDomain<?> domain = (IDomain<?>) unwrapOptional(targetDomain);
+		IAuthenticationRequest req = (IAuthenticationRequest) unwrapOptional(authRequest);
+		if (api == null || domain == null || req == null) {
+			throw new ApiException("invokeAuthenticate: apiContext, targetDomain and authRequest must all be non-null");
+		}
+
+		@SuppressWarnings({"unchecked", "rawtypes"})
+		IClass<?> entityClass = ((IDomain) domain).getEntityClass();
+		com.garganttua.api.core.service.OperationRequest invocation =
+				new com.garganttua.api.core.service.OperationRequest(new java.util.HashMap<>());
+		invocation.arg(IOperationRequest.OPERATION,
+				OperationDefinition.authenticate(domain.getDomainName(), entityClass));
+		invocation.arg("entity", req);
+		if (req.tenantId() != null) {
+			invocation.arg(IOperationRequest.TENANT_ID, req.tenantId());
+			invocation.arg(IOperationRequest.REQUESTED_TENANT_ID, req.tenantId());
+		}
+
+		IOperationResponse response = domain.invoke(invocation);
+		OperationResponseCode code = response.getResponseCode();
+		if (code != OperationResponseCode.OK && code != OperationResponseCode.CREATED) {
+			throw new ApiException("Authenticate invocation on domain '" + domain.getDomainName()
+					+ "' returned " + code + ": " + response.getResponse());
+		}
+		Object body = response.getResponse();
+		if (body instanceof IAuthentication auth) {
+			return auth;
+		}
+		throw new ApiException("Authenticate invocation on domain '" + domain.getDomainName()
+				+ "' did not return an IAuthentication — got: "
+				+ (body == null ? "null" : body.getClass().getName()));
 	}
 }

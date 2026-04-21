@@ -36,18 +36,21 @@ class InstantiateAuthorizationProtocolTest {
 	public static class PrivateCtorProtocol implements IAuthorizationProtocol {
 		private PrivateCtorProtocol() {}
 		@Override public String scheme() { return "Bearer"; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 		@Override public IAuthorization decode(String v, IApi api) { return null; }
 	}
 
 	public static class ThrowingCtorProtocol implements IAuthorizationProtocol {
 		public ThrowingCtorProtocol() { throw new IllegalStateException("boom"); }
 		@Override public String scheme() { return "Bearer"; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 		@Override public IAuthorization decode(String v, IApi api) { return null; }
 	}
 
 	public static class ValidProtocol implements IAuthorizationProtocol {
 		public ValidProtocol() {}
 		@Override public String scheme() { return "Bearer"; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 		@Override public IAuthorization decode(String v, IApi api) { return null; }
 	}
 

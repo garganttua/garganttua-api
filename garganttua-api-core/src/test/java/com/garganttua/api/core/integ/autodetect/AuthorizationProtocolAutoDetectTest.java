@@ -26,12 +26,14 @@ class AuthorizationProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 	@AuthorizationProtocol
 	public static class AutoDetectedBearerProtocol implements IAuthorizationProtocol {
 		@Override public String scheme() { return "Bearer"; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 		@Override public IAuthorization decode(String value, IApi api) { return null; }
 	}
 
 	@AuthorizationProtocol
 	public static class AutoDetectedBasicProtocol implements IAuthorizationProtocol {
 		@Override public String scheme() { return "Basic"; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 		@Override public IAuthorization decode(String value, IApi api) { return null; }
 	}
 

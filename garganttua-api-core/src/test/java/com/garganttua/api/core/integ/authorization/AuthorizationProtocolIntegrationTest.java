@@ -56,6 +56,7 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 		}
 
 		@Override public String scheme() { return scheme; }
+		@Override public IClass<?> targetDomain() { return IClass.getClass(User.class); }
 
 		@Override
 		public IAuthorization decode(String value, IApi api) throws ApiException {
