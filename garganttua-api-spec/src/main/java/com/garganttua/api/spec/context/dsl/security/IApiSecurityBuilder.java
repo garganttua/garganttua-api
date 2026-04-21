@@ -18,10 +18,6 @@ public interface IApiSecurityBuilder
 
     IAuthenticationBuilder authentication(IClass<?> authenticationClass) throws ApiException;
 
-    IAuthorizationProtocolBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException;
-
-    IAuthorizationProtocolBuilder authorizationProtocol(IClass<?> authorizationProtocolClass) throws ApiException;
-
     Optional<IAuthenticationBuilder> isAuthenticationAvailable(IClass<?> authenticationClass);
 
     IApiSecurityBuilder disable(boolean b);

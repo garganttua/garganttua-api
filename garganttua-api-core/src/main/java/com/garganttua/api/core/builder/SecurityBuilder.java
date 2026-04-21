@@ -9,7 +9,6 @@ import com.garganttua.api.core.context.security.ApiSecurityContext;
 import com.garganttua.api.spec.context.dsl.IApiBuilder;
 import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.security.IApiSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.spec.ApiException;
@@ -23,7 +22,6 @@ public class SecurityBuilder
         implements IApiSecurityBuilder {
 
     private Set<String> packages;
-    private Map<IClass<?>, IAuthorizationProtocolBuilder> protocols = new HashMap<>();
     private Map<IClass<?>, IAuthenticationBuilder> authentications = new HashMap<>();
     private boolean disabled = false;
 
@@ -48,22 +46,6 @@ public class SecurityBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> supplier)
-            throws ApiException {
-        Objects.requireNonNull(supplier, "Supplier class cannot be null");
-        Objects.requireNonNull(supplier.getSuppliedClass(), "Supplier should provide an object class");
-
-        IAuthorizationProtocolBuilder builder;
-        if (!this.protocols.containsKey(supplier.getSuppliedClass())) {
-            builder = new AuthorizationProtocolBuilder(this, supplier);
-            this.protocols.put(supplier.getSuppliedClass(), builder);
-        } else {
-            builder = this.protocols.get(supplier.getSuppliedClass());
-        }
-        return builder;
-    }
-
-    @Override
     public Optional<IAuthenticationBuilder> isAuthenticationAvailable(IClass<?> authenticationClass) {
         IAuthenticationBuilder builder = this.authentications.get(authenticationClass);
         return Optional.ofNullable(builder);
@@ -76,23 +58,10 @@ public class SecurityBuilder
     }
 
     @Override
-    public IAuthorizationProtocolBuilder authorizationProtocol(IClass<?> authorizationProtocolClass)
-            throws ApiException {
-        IAuthorizationProtocolBuilder builder = this.protocols.get(authorizationProtocolClass);
-        if (builder != null) {
-            return builder;
-        }
-        throw new ApiException("No protocol found for class " + authorizationProtocolClass.getName());
-    }
-
-    @Override
     protected synchronized IApiSecurityContext doBuild() throws ApiException {
-        // Build all authentication and protocol contexts
+        // Build all authentication contexts
         for (IAuthenticationBuilder authBuilder : this.authentications.values()) {
             authBuilder.build();
-        }
-        for (IAuthorizationProtocolBuilder protocolBuilder : this.protocols.values()) {
-            protocolBuilder.build();
         }
 
         return new ApiSecurityContext(this.disabled);

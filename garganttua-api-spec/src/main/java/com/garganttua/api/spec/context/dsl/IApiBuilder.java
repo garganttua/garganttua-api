@@ -4,6 +4,7 @@ import com.garganttua.api.spec.context.BuildingStage;
 import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.protocol.IProtocol;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.ApiException;
 import com.garganttua.core.dsl.dependency.IDependentBuilder;
@@ -34,5 +35,9 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder protocol(IProtocol<?, ?> protocol) throws ApiException;
 
 	IApiBuilder protocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
+
+	IApiBuilder authorizationProtocol(IAuthorizationProtocol protocol) throws ApiException;
+
+	IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
 }

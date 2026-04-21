@@ -19,7 +19,7 @@ import com.garganttua.core.workflow.dsl.WorkflowBuilder;
  *   <li>protocol-extract — (Mode A only) raw request → rawBody, contentType, accept, caller…</li>
  *   <li>deserialize — (Mode A only) raw body → DTO</li>
  *   <li>business-rules — TENANT_RULES (if multitenancy) + OWNER_RULES (if owner/owned)</li>
- *   <li>security — VERIFY_ACCESS + VERIFY_TENANT + VERIFY_OWNER (conditional)</li>
+ *   <li>security — VERIFY_AUTHORIZATION + VERIFY_TENANT + VERIFY_OWNER (conditional)</li>
  *   <li>business operations — CRUD/AUTHENTICATE (guarded by preceding stages)</li>
  *   <li>create-authorization — after successful authenticate</li>
  *   <li>serialize — (Mode A only) DTO → raw body using Accept</li>
@@ -135,7 +135,7 @@ class DomainWorkflowAssembler<E> {
 
 		// Security code vars
 		if (securityEnabled) {
-			codeVars.add("_verify_access_verify_access_code");
+			codeVars.add("_verify_authorization_verify_authorization_code");
 			if (multiTenancyEnabled) {
 				codeVars.add("_verify_tenant_verify_tenant_code");
 			}
@@ -332,20 +332,21 @@ class DomainWorkflowAssembler<E> {
 
 		if (!securityEnabled) return codeVars;
 
-		// VERIFY_ACCESS — authorization token check
-		var accessScript = builder.stage("verify-access")
-				.script("classpath:scripts/security/VERIFY_ACCESS.gs")
-					.name("verify-access")
+		// VERIFY_AUTHORIZATION — authorization token check + scheme-based decoding
+		var accessScript = builder.stage("verify-authorization")
+				.script("classpath:scripts/security/VERIFY_AUTHORIZATION.gs")
+					.name("verify-authorization")
 					.input("operationRequest", "@0")
 					.input("repository", "@1")
-					.input("domainContext", "@2");
+					.input("domainContext", "@2")
+					.input("apiContext", "@3");
 		if (businessRulesGuard != null) {
 			accessScript.when(businessRulesGuard);
 		}
 		accessScript.up().up();
-		codeVars.add("_verify_access_verify_access_code");
+		codeVars.add("_verify_authorization_verify_authorization_code");
 
-		// Guard for subsequent security scripts: business rules + verify-access
+		// Guard for subsequent security scripts: business rules + verify-authorization
 		String accessGuard = buildCompoundGuard(codeVars);
 
 		// VERIFY_TENANT — tenant access check

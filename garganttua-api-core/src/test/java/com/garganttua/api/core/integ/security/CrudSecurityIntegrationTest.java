@@ -163,7 +163,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Nested
-    @DisplayName("VERIFY_ACCESS script enforcement")
+    @DisplayName("VERIFY_AUTHORIZATION script enforcement")
     class VerifyAccessEnforcement {
 
         @Test

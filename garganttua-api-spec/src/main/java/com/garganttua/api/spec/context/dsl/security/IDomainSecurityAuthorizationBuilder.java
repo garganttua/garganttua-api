@@ -9,6 +9,4 @@ public interface IDomainSecurityAuthorizationBuilder<E> extends IAutomaticLinked
 
     IDomainSecurityAuthorizationBuilder<E> interfasse(IClass<? extends IEndpoint> interfaceClass) throws ApiException;
 
-    IDomainSecurityAuthorizationBuilder<E> protocol(IAuthorizationProtocolBuilder protocol);
-
 }

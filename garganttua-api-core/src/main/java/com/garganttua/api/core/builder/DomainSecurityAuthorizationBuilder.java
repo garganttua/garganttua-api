@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 
 import com.garganttua.api.spec.context.dsl.IDomainBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.endpoint.IEndpoint;
@@ -20,7 +19,6 @@ public class DomainSecurityAuthorizationBuilder<E>
 
     private IDomainBuilder<E> authorizationDomain;
     private List<ISupplierBuilder<?, ? extends ISupplier<?>>> interfaces;
-    private IAuthorizationProtocolBuilder protocol;
 
     public DomainSecurityAuthorizationBuilder(DomainSecurityBuilder<E> domainSecurityBuilder,
             IDomainBuilder<E> authorizationDomain, List<ISupplierBuilder<?, ? extends ISupplier<?>>> interfaces) {
@@ -36,12 +34,6 @@ public class DomainSecurityAuthorizationBuilder<E>
         if (this.interfaces.stream().noneMatch(i -> i.getSuppliedClass().equals(interfaceClass))) {
             throw new ApiException("Interface " + interfaceClass.getName() + " is not part of the domain");
         }
-        return this;
-    }
-
-    @Override
-    public IDomainSecurityAuthorizationBuilder<E> protocol(IAuthorizationProtocolBuilder protocol) {
-        this.protocol = Objects.requireNonNull(protocol, "Protocol cannot be null");
         return this;
     }
 

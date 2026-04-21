@@ -24,6 +24,8 @@ import com.garganttua.api.spec.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.spec.protocol.IProtocol;
 import com.garganttua.api.spec.protocol.Protocol;
+import com.garganttua.api.spec.security.authorization.AuthorizationProtocol;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.spec.security.context.IAuthenticationContext;
 import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.serialization.Serializer;
@@ -76,6 +78,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> serializerBuilders = new CopyOnWriteArrayList<>();
 	private final List<IProtocol<?, ?>> protocols = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> protocolBuilders = new CopyOnWriteArrayList<>();
+	private final List<IAuthorizationProtocol> authorizationProtocols = new CopyOnWriteArrayList<>();
+	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> authorizationProtocolBuilders = new CopyOnWriteArrayList<>();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
@@ -173,6 +177,20 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	public IApiBuilder protocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
 		Objects.requireNonNull(bean, "Protocol supplier builder cannot be null");
 		this.protocolBuilders.add(bean);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder authorizationProtocol(IAuthorizationProtocol protocol) throws ApiException {
+		Objects.requireNonNull(protocol, "Authorization protocol cannot be null");
+		this.authorizationProtocols.add(protocol);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
+		Objects.requireNonNull(bean, "Authorization protocol supplier builder cannot be null");
+		this.authorizationProtocolBuilders.add(bean);
 		return this;
 	}
 
@@ -365,10 +383,19 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 			log.atDebug().log("Built {} protocols", builtProtocols.size());
 
+			// Build authorization protocols
+			List<IAuthorizationProtocol> builtAuthzProtocols = new ArrayList<>(this.authorizationProtocols);
+			for (ISupplierBuilder<?, ? extends ISupplier<?>> ab : this.authorizationProtocolBuilders) {
+				ISupplier<?> supplier = ab.build();
+				Object authzProtocol = supplier.supply();
+				builtAuthzProtocols.add((IAuthorizationProtocol) authzProtocol);
+			}
+			log.atDebug().log("Built {} authorization protocols", builtAuthzProtocols.size());
+
 			// Create and return API context
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
-					startupBinders, builtSerializers, builtProtocols);
+					startupBinders, builtSerializers, builtProtocols, builtAuthzProtocols);
 
 			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");
@@ -385,6 +412,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		log.atTrace().log("Entering doAutoDetection() method");
 		autoDetectSerializers();
 		autoDetectProtocols();
+		autoDetectAuthorizationProtocols();
 		log.atTrace().log("Exiting doAutoDetection() method");
 	}
 
@@ -470,6 +498,65 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			log.atDebug().log("Auto-detected {} @Protocol class(es) across {} package(s)",
 					discovered, this.packages.size());
 		}
+	}
+
+	/**
+	 * Scans the configured packages for classes annotated with {@link AuthorizationProtocol}
+	 * and registers their instances on the global authorization-protocol pool.
+	 * Mirrors {@link #autoDetectSerializers()} / {@link #autoDetectProtocols()}.
+	 */
+	private void autoDetectAuthorizationProtocols() {
+		if (this.packages.isEmpty()) {
+			return;
+		}
+		com.garganttua.core.reflection.IReflection reflection;
+		try {
+			reflection = IClass.getReflection();
+		} catch (Exception e) {
+			log.atWarn().log("No IReflection available for @AuthorizationProtocol auto-detection: {}", e.getMessage());
+			return;
+		}
+
+		IClass<AuthorizationProtocol> annotation = IClass.getClass(AuthorizationProtocol.class);
+		java.util.Set<Class<?>> seen = new java.util.HashSet<>();
+		for (IAuthorizationProtocol registered : this.authorizationProtocols) {
+			seen.add(registered.getClass());
+		}
+
+		int discovered = 0;
+		for (String pkg : this.packages) {
+			List<IClass<?>> found = reflection.getClassesWithAnnotation(pkg, annotation);
+			for (IClass<?> clazz : found) {
+				IAuthorizationProtocol instance = instantiateAuthorizationProtocol(clazz);
+				if (!seen.add(instance.getClass())) {
+					continue;
+				}
+				this.authorizationProtocols.add(instance);
+				discovered++;
+			}
+		}
+		if (discovered > 0) {
+			log.atDebug().log("Auto-detected {} @AuthorizationProtocol class(es) across {} package(s)",
+					discovered, this.packages.size());
+		}
+	}
+
+	// package-private for unit testing
+	static IAuthorizationProtocol instantiateAuthorizationProtocol(IClass<?> clazz) {
+		Object instance;
+		try {
+			instance = clazz.getConstructor().newInstance();
+		} catch (Exception e) {
+			throw new ApiException(
+					"Failed to instantiate @AuthorizationProtocol class '" + clazz.getName()
+					+ "'. A public no-arg constructor is required.", e);
+		}
+		if (!(instance instanceof IAuthorizationProtocol protocol)) {
+			throw new ApiException(
+					"Class '" + clazz.getName() + "' is annotated with @AuthorizationProtocol "
+					+ "but does not implement " + IAuthorizationProtocol.class.getName());
+		}
+		return protocol;
 	}
 
 	// package-private for unit testing

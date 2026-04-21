@@ -8,6 +8,7 @@ import com.garganttua.api.spec.caller.ICaller;
 import com.garganttua.api.spec.filter.IFilter;
 import com.garganttua.api.spec.pageable.IPageable;
 import com.garganttua.api.spec.protocol.IProtocol;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.service.IOperationRequest;
 import com.garganttua.api.spec.service.IOperationResponse;
@@ -27,6 +28,8 @@ public interface IApi extends ILifecycle {
     List<ISerializer> getSerializers();
 
     List<IProtocol<?, ?>> getProtocols();
+
+    List<IAuthorizationProtocol> getAuthorizationProtocols();
 
 
     // --- Request builder ---

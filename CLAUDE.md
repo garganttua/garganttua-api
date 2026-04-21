@@ -82,7 +82,7 @@ These roles and characteristics combine to form the access filter matrix impleme
 
 Security at the API level (`.security()`) registers authentication strategies (`@Authentication` classes with `authenticate()` methods) and authorization protocols. Security at the domain level links domains to these strategies.
 
-The security pipeline for CRUD operations uses VERIFY_ACCESS.gs which checks the operation's access level (anonymous/authenticated/tenant/owner) and validates the authorization token and caller permissions before the business stage runs.
+The security pipeline for CRUD operations uses VERIFY_AUTHORIZATION.gs which checks the operation's access level (anonymous/authenticated/tenant/owner) and validates the authorization token and caller permissions before the business stage runs.
 
 ### Annotation Categories (garganttua-api-spec)
 

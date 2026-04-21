@@ -18,6 +18,7 @@ import com.garganttua.api.spec.context.IApi;
 import com.garganttua.api.spec.context.IDomain;
 import com.garganttua.api.spec.protocol.IProtocol;
 import com.garganttua.api.spec.repository.IRepository;
+import com.garganttua.api.spec.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.spec.serialization.ISerializer;
 import com.garganttua.api.spec.operation.OperationDefinition;
 import com.garganttua.api.spec.service.IOperationRequest;
@@ -49,11 +50,13 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     private final List<IMethodBinder<Void>> startupBinders;
     private final List<ISerializer> serializers;
     private final List<IProtocol<?, ?>> protocols;
+    private final List<IAuthorizationProtocol> authorizationProtocols;
 
     public Api(IInjectionContext injectionContext, Map<String, IDomain<?>> domainContexts,
             String superTenantId, boolean superTenantAutoCreate, boolean multiTenant,
             List<IMethodBinder<Void>> startupBinders, List<ISerializer> serializers,
-            List<IProtocol<?, ?>> protocols) {
+            List<IProtocol<?, ?>> protocols,
+            List<IAuthorizationProtocol> authorizationProtocols) {
         this.injectionContext = Objects.requireNonNull(injectionContext, "Injection context cannot be null");
         this.domainContexts = Collections.unmodifiableMap(new HashMap<>(
                 Objects.requireNonNull(domainContexts, "Domain contexts cannot be null")));
@@ -66,6 +69,8 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
                 Objects.requireNonNull(serializers, "Serializers cannot be null")));
         this.protocols = Collections.unmodifiableList(new ArrayList<>(
                 Objects.requireNonNull(protocols, "Protocols cannot be null")));
+        this.authorizationProtocols = Collections.unmodifiableList(new ArrayList<>(
+                Objects.requireNonNull(authorizationProtocols, "Authorization protocols cannot be null")));
     }
 
     @Override
@@ -76,6 +81,11 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     @Override
     public List<IProtocol<?, ?>> getProtocols() {
         return this.protocols;
+    }
+
+    @Override
+    public List<IAuthorizationProtocol> getAuthorizationProtocols() {
+        return this.authorizationProtocols;
     }
 
     @Override

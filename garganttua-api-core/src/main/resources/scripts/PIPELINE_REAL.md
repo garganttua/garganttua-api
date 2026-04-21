@@ -76,7 +76,7 @@ runtime gates; the request enters the pipeline at stage 5 (business rules).
    |
    v
 +-------------------------------+
-|  6a. VERIFY_ACCESS.gs         |  if securityEnabled
+|  6a. VERIFY_AUTHORIZATION.gs         |  if securityEnabled
 |     Check authorization token |  guard: business rules OK
 +-------------------------------+
    |
@@ -148,7 +148,7 @@ configuration. Not all stages are present in every domain's workflow.
 |------|--------|-----------|
 | `multiTenancyEnabled` | `ApiBuilder.isMultiTenant()` | TENANT_RULES, VERIFY_TENANT |
 | `isOwnerOrOwned` | domain has `.owner()` or `.owned()` | OWNER_RULES, VERIFY_OWNER |
-| `securityEnabled` | domain has `.security()` config | VERIFY_ACCESS, VERIFY_TENANT, VERIFY_OWNER |
+| `securityEnabled` | domain has `.security()` config | VERIFY_AUTHORIZATION, VERIFY_TENANT, VERIFY_OWNER |
 | `hasAuthorization` | authenticator with authorization config | CREATE_AUTHORIZATION |
 
 The protocol/data stages (1, 4, 9, 10) are **always declared** on every
@@ -166,7 +166,7 @@ Full Mode A workflow (multitenancy + owner + security + authorization):
 ```
 init-codes -> protocol-extract -> deserialize
     -> TENANT_RULES -> OWNER_RULES
-    -> VERIFY_ACCESS -> VERIFY_TENANT -> VERIFY_OWNER
+    -> VERIFY_AUTHORIZATION -> VERIFY_TENANT -> VERIFY_OWNER
     -> [CRUD/AUTHENTICATE] -> CREATE_AUTHORIZATION
     -> serialize -> protocol-response -> exit-code
 ```
@@ -183,7 +183,7 @@ protocol-extract : when(rawRequest != null)
 deserialize      : when(rawBody != null AND protocol_extract == 0)
 TENANT_RULES     : when(not authenticate AND deserialize == 0)
 OWNER_RULES      : when(not authenticate AND tenant_rules == 0)
-VERIFY_ACCESS    : when(all business rules == 0)
+VERIFY_AUTHORIZATION    : when(all business rules == 0)
 VERIFY_TENANT    : when(all business rules == 0 AND verify_access == 0)
 VERIFY_OWNER     : when(all preceding == 0)
 CRUD operations  : when(businessOperation matches AND all security == 0)
@@ -311,11 +311,11 @@ the raw request's class).
 
 ---
 
-### 6a. VERIFY_ACCESS.gs
+### 6a. VERIFY_AUTHORIZATION.gs
 
 **Condition:** `securityEnabled` (build-time)
 
-**Script:** `scripts/security/VERIFY_ACCESS.gs`
+**Script:** `scripts/security/VERIFY_AUTHORIZATION.gs`
 
 **Logic:**
 1. Extract `operation` from `@0`
@@ -462,7 +462,7 @@ Reads all code variables and produces the final workflow return code.
 | Code | Stage(s) | Meaning |
 |------|----------|---------|
 | 400 | protocol-extract, deserialize, TENANT_RULES, OWNER_RULES, CRUD | Bad request: extraction/body/validation failure |
-| 401 | VERIFY_ACCESS | Unauthorized: missing authorization token |
+| 401 | VERIFY_AUTHORIZATION | Unauthorized: missing authorization token |
 | 403 | VERIFY_TENANT, VERIFY_OWNER | Forbidden: missing tenant/owner access |
 | 404 | READ_ONE, UPDATE_ONE, DELETE_ONE | Not found: entity does not exist |
 | 405 | exit-code (default) | Method not allowed: no operation matched |
@@ -483,7 +483,7 @@ Reads all code variables and produces the final workflow return code.
 | Protocol scripts | `scripts/protocol/EXTRACT.gs`, `RESPONSE.gs` |
 | Data scripts (ser/deser) | `scripts/data/DESERIALIZE.gs`, `SERIALIZE.gs` |
 | Business rules scripts | `scripts/business/TENANT_RULES.gs`, `OWNER_RULES.gs` |
-| Security scripts | `scripts/security/VERIFY_ACCESS.gs`, `VERIFY_TENANT.gs`, `VERIFY_OWNER.gs` |
+| Security scripts | `scripts/security/VERIFY_AUTHORIZATION.gs`, `VERIFY_TENANT.gs`, `VERIFY_OWNER.gs` |
 | CRUD scripts | `scripts/business/CREATE_ONE.gs`, `READ_ALL.gs`, `READ_ONE.gs`, `UPDATE_ONE.gs`, `DELETE_ONE.gs`, `DELETE_ALL.gs` |
 | Auth scripts | `scripts/business/AUTHENTICATE.gs`, `CREATE_AUTHORIZATION.gs` |
 | Expression classes | `core/expression/ApiExpressions.java`, `CrudExpressions.java`, `EntityLifecycleExpressions.java`, `SecurityExpressions.java`, `SerializationExpressions.java`, `ProtocolExpressions.java` |

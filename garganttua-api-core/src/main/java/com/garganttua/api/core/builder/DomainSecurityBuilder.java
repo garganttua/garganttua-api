@@ -1,6 +1,5 @@
 package com.garganttua.api.core.builder;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -16,7 +15,6 @@ import com.garganttua.api.spec.context.dsl.IDomainBuilder;
 import com.garganttua.api.spec.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.api.spec.context.dsl.security.IAuthorizationBuilder;
-import com.garganttua.api.spec.context.dsl.security.IAuthorizationProtocolBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.spec.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.spec.context.dsl.security.IKeyBuilder;
@@ -38,7 +36,6 @@ public class DomainSecurityBuilder<E>
     private boolean hasCrudSecurityConfig = false;
     private IAuthorizationBuilder authorization;
     private IClass<?> entityClass;
-    private Map<ISupplierBuilder<?, ? extends ISupplier<?>>, IAuthorizationProtocolBuilder> authorizationProtocols = new HashMap<>();
     private IAuthenticatorBuilder authenticator;
     private IKeyBuilder key;
 
@@ -99,18 +96,6 @@ public class DomainSecurityBuilder<E>
         if (this.authorization == null)
             this.authorization = new AuthorizationBuilder(this, this.entityClass);
         return this.authorization;
-    }
-
-    public IDomainSecurityBuilder<E> authorizationProtocol(IClass<?> interfaceClass,
-            IAuthorizationProtocolBuilder protocole) throws ApiException {
-
-        Optional<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaceObjectSupplierBuilder = this.interfaces.stream()
-                .filter(inter -> interfaceClass.isAssignableFrom(inter.getSuppliedClass())).findFirst();
-        interfaceObjectSupplierBuilder.orElseThrow(() -> new ApiException(
-                "Interface object supplier builder not found for class " + interfaceClass.getSimpleName()));
-        this.authorizationProtocols.put(interfaceObjectSupplierBuilder.get(), protocole);
-
-        return this;
     }
 
     @Override
