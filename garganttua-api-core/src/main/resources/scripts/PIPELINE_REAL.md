@@ -7,45 +7,66 @@ Each domain gets a single merged workflow assembled at build time by
 — there is no nested sub-workflow invocation. Stage execution is controlled by
 `when()` guard expressions that check the return codes of preceding stages.
 
-All `.gs` scripts receive the same three positional arguments:
+`.gs` scripts receive up to four positional arguments:
 
-| Arg | Binding     | Type               |
-|-----|-------------|--------------------|
-| `@0` | `operationRequest` | `IOperationRequest` |
-| `@1` | `repository`       | `IRepository`       |
-| `@2` | `domainContext`    | `IDomain`           |
+| Arg | Binding           | Type                | Used by                              |
+|-----|-------------------|---------------------|--------------------------------------|
+| `@0` | `operationRequest` | `IOperationRequest` | every stage                          |
+| `@1` | `repository`       | `IRepository`       | business rules, security, CRUD       |
+| `@2` | `domainContext`    | `IDomain`           | business rules, security, CRUD       |
+| `@3` | `apiContext`       | `IApi`              | protocol-extract, deserialize, serialize, protocol-response |
+
+Scripts under `scripts/protocol/` and `scripts/data/` declare only `@0` and `@3`
+in their headers because they do not need the domain-local repository/context.
 
 ### Entry modes
 
-**Mode A — Full pipeline (raw request):**
-The interface layer (e.g. Spring REST) handles protocol decoding, caller
-construction, operation detection, and data deserialization before entering
-the workflow. These are Java-side responsibilities, not `.gs` stages.
+**Mode A — Transport-native request (raw):**
+The client sets `rawRequest` (e.g. `HttpServletRequest`, `byte[]`, Javalin
+`Context`) on the `IOperationRequest` before invoking. The pipeline then runs
+the full chain: protocol-extract → deserialize → business rules → security →
+operation → serialize → protocol-response. Stages 1/4/9/10 are gated on the
+presence of the corresponding transport artifacts (`rawRequest`, `rawBody`,
+`accept`) and become no-ops otherwise.
 
-**Mode B — Pre-built caller:**
-The client builds an `ICaller` + `IOperationRequest` directly and calls
-`IDomain.invoke()` or executes the workflow. The pipeline starts at the
-first `.gs` stage.
+**Mode B — Pre-built caller + typed body:**
+The caller builds an `ICaller` and an `IOperationRequest` directly and
+invokes `IDomain`/`IApi`. The protocol and data stages are skipped by their
+runtime gates; the request enters the pipeline at stage 5 (business rules).
 
 ---
 
 ## Stage Ordering
 
 ```
- IOperationRequest + IRepository + IDomain
+ IOperationRequest + IRepository + IDomain + IApi
    |
    v
 +-------------------------------+
 |  0. init-codes (inline)       |  always
-|     Initialize code vars      |  business rules -> 0 (pass-through)
-|                               |  operations -> 405 (not executed)
+|     Initialize code vars      |  pass-through stages -> 0
+|                               |  operations/skippable -> 405
++-------------------------------+
+   |
+   v
++-------------------------------+
+|  1. protocol-extract          |  Mode A only, gated on rawRequest
+|     EXTRACT.gs                |  raw request -> rawBody, contentType,
+|                               |  accept, path, method, caller, …
++-------------------------------+
+   |
+   v
++-------------------------------+
+|  4. deserialize               |  Mode A only, gated on rawBody +
+|     DESERIALIZE.gs            |  extract succeeded
+|     raw bytes -> entity       |
 +-------------------------------+
    |
    v
 +-------------------------------+
 |  5a. TENANT_RULES.gs          |  if multiTenancyEnabled
 |     Validate tenantId present |  skipped for authenticate
-+-------------------------------+  guard: not authenticate
++-------------------------------+  guard: not authenticate [+ deserialize OK]
    |
    v
 +-------------------------------+
@@ -92,7 +113,22 @@ first `.gs` stage.
    |
    v
 +-------------------------------+
-|  9. exit-code (inline)        |  always
+|  9. serialize                 |  Mode A only, gated on accept header
+|     SERIALIZE.gs              |  previous output -> raw bytes
+|                               |  (ALWAYS outside success guard chain)
++-------------------------------+
+   |
+   v
++-------------------------------+
+| 10. protocol-response         |  Mode A only, gated on rawRequest
+|     RESPONSE.gs               |  bytes/object + status -> transport
+|                               |  response. Runs on success AND error
+|                               |  paths so 4xx/5xx get a proper response.
++-------------------------------+
+   |
+   v
++-------------------------------+
+| 11. exit-code (inline)        |  always
 |     Propagate first error     |  errors from ALL stages
 |     or operation success      |  success only from operations
 +-------------------------------+
@@ -115,15 +151,24 @@ configuration. Not all stages are present in every domain's workflow.
 | `securityEnabled` | domain has `.security()` config | VERIFY_ACCESS, VERIFY_TENANT, VERIFY_OWNER |
 | `hasAuthorization` | authenticator with authorization config | CREATE_AUTHORIZATION |
 
-Minimal workflow (no multitenancy, no security, no owner):
+The protocol/data stages (1, 4, 9, 10) are **always declared** on every
+workflow — they are gated at runtime by `notNull(:arg(@0, "rawRequest"))`
+and `notNull(:arg(@0, "rawBody"))` / `notNull(:arg(@0, "accept"))`. Mode B
+invocations skip them transparently.
+
+Minimal workflow (no multitenancy, no security, no owner, Mode B only):
 ```
-init-codes -> [CRUD stages] -> exit-code
+init-codes -> protocol-extract(skip) -> deserialize(skip)
+    -> [CRUD stages] -> serialize(skip) -> protocol-response(skip) -> exit-code
 ```
 
-Full workflow (multitenancy + owner + security + authorization):
+Full Mode A workflow (multitenancy + owner + security + authorization):
 ```
-init-codes -> TENANT_RULES -> OWNER_RULES -> VERIFY_ACCESS -> VERIFY_TENANT
--> VERIFY_OWNER -> [CRUD/AUTHENTICATE] -> CREATE_AUTHORIZATION -> exit-code
+init-codes -> protocol-extract -> deserialize
+    -> TENANT_RULES -> OWNER_RULES
+    -> VERIFY_ACCESS -> VERIFY_TENANT -> VERIFY_OWNER
+    -> [CRUD/AUTHENTICATE] -> CREATE_AUTHORIZATION
+    -> serialize -> protocol-response -> exit-code
 ```
 
 ---
@@ -134,17 +179,29 @@ Stages are chained via `when()` conditions that check the return code of
 preceding stages. A stage only executes if its guard evaluates to `true`.
 
 ```
-Business rules  : when(not authenticate)
-OWNER_RULES     : when(not authenticate AND tenant_rules == 0)
-VERIFY_ACCESS   : when(all business rules == 0)
-VERIFY_TENANT   : when(all business rules == 0 AND verify_access == 0)
-VERIFY_OWNER    : when(all preceding == 0)
-CRUD operations : when(businessOperation matches AND all security == 0)
-CREATE_AUTHZ    : when(authenticate AND authenticate_code == 0 AND all security == 0)
+protocol-extract : when(rawRequest != null)
+deserialize      : when(rawBody != null AND protocol_extract == 0)
+TENANT_RULES     : when(not authenticate AND deserialize == 0)
+OWNER_RULES      : when(not authenticate AND tenant_rules == 0)
+VERIFY_ACCESS    : when(all business rules == 0)
+VERIFY_TENANT    : when(all business rules == 0 AND verify_access == 0)
+VERIFY_OWNER     : when(all preceding == 0)
+CRUD operations  : when(businessOperation matches AND all security == 0)
+CREATE_AUTHZ     : when(authenticate AND authenticate_code == 0 AND all security == 0)
+serialize        : when(accept != null)
+protocol-response: when(rawRequest != null)  -- runs even on errors
+exit-code        : always
 ```
 
 Guards are built dynamically as nested `and(equals(@var, 0), ...)` expressions
 by `DomainWorkflowAssembler.buildCompoundGuard()`.
+
+**Note:** `serialize` and `protocol-response` intentionally sit outside the
+success guard chain — their `_code` vars are pass-through (init to 0) and they
+are NOT added to `operationCodeVars`. This ensures:
+- a skipped serialize/response (Mode B or no `Accept`) doesn't signal success,
+- a failing upstream stage (e.g. 4xx from deserialize) still triggers the
+  response stage so the transport gets a proper error payload.
 
 ---
 
@@ -153,9 +210,11 @@ by `DomainWorkflowAssembler.buildCompoundGuard()`.
 Each stage gets a code variable named `_<stageName>_<scriptName>_code`.
 The `init-codes` stage sets initial values:
 
-- **Business rules** vars initialized to **0** (pass-through by default).
-  These stages may be skipped (e.g. for authenticate operations) and must
-  not block downstream stages when skipped.
+- **Pass-through** vars initialized to **0** — stages that may be skipped and
+  must not block downstream stages when skipped:
+  - Business rules (skipped for authenticate)
+  - `protocol-extract`, `deserialize`, `serialize`, `protocol-response`
+    (skipped in Mode B or when the gate artifact is missing)
 - **All other** vars initialized to **405** (Method Not Allowed).
   A CRUD operation that doesn't match the request stays at 405.
 
@@ -166,6 +225,55 @@ The `init-codes` stage sets initial values:
 ### 0. init-codes (inline)
 
 Sets all code variables to their initial values. This stage always runs.
+
+---
+
+### 1. protocol-extract (EXTRACT.gs)
+
+**Condition (runtime):** `notNull(:arg(@0, "rawRequest"))` — Mode A only.
+
+**Script:** `scripts/protocol/EXTRACT.gs`
+
+**Inputs:** `operationRequest` (`@0`), `apiContext` (`@3`).
+
+**Logic:**
+1. `resolveProtocol(api, rawRequest)` — picks the first registered
+   `IProtocol` whose `requestType().isInstance(rawRequest)` → 415 if none.
+2. Delegates `getRawBody`, `getContentType`, `getAccept`, `getPath`,
+   `getMethod`, `getAuthorization`, `getQueryParameters`, `getCaller`
+   to the resolved protocol (each → 400 on failure).
+3. Writes every extracted field back onto `@0` via `setRequestArg(...)`
+   so downstream stages consume them through the normal arg channel.
+4. `setCallerArgs(@0, caller)` expands the `ICaller` into individual
+   `tenantId`, `callerId`, `ownerId`, `authorities`, `superTenant`,
+   `superOwner` args.
+
+**Errors:** `400` (extraction threw), `415` (no protocol registered for
+the raw request's class).
+
+---
+
+### 4. deserialize (DESERIALIZE.gs)
+
+**Condition (runtime):** `notNull(:arg(@0, "rawBody"))` AND
+`equals(@_protocol_extract_…_code, 0)`.
+
+**Script:** `scripts/data/DESERIALIZE.gs`
+
+**Inputs:** `operationRequest` (`@0`), `apiContext` (`@3`).
+
+**Logic:**
+1. Check `operationExpectsBody(operation)` — short-circuits to 0 on
+   read/delete operations.
+2. `resolveSerializer(api, contentType)` → 415 if no serializer handles
+   the `Content-Type`.
+3. `resolveBodyType(operation, api)` → entity class (fallback to first
+   DTO when the operation has no entity class).
+4. `deserialize(serializer, bytes, entityClass)` → 400 on malformed body.
+5. Write the result back as `body` and `entity` via `setRequestArg`.
+
+**Errors:** `400` (malformed body), `415` (unsupported Content-Type),
+`500` (internal type resolution).
 
 ---
 
@@ -289,7 +397,50 @@ Each operation is a separate stage with a `when()` condition:
 
 ---
 
-### 9. exit-code (inline)
+### 9. serialize (SERIALIZE.gs)
+
+**Condition (runtime):** `notNull(:arg(@0, "accept"))` — Mode A only.
+
+**Script:** `scripts/data/SERIALIZE.gs`
+
+**Inputs:** `operationRequest` (`@0`), `apiContext` (`@3`),
+`previousOutput` (`@output`).
+
+**Logic:**
+1. `negotiateSerializer(api, acceptHeader)` — parses the `Accept` header
+   (first-match strategy, falls back to JSON for `*/*` or missing) → 406
+   if nothing matches.
+2. `serialize(serializer, previousOutput)` → 500 on failure.
+3. Writes `output` as `byte[]`.
+
+**Errors:** `406` (no acceptable serializer), `500` (serialization failure).
+
+---
+
+### 10. protocol-response (RESPONSE.gs)
+
+**Condition (runtime):** `notNull(:arg(@0, "rawRequest"))` — Mode A only.
+
+**Script:** `scripts/protocol/RESPONSE.gs`
+
+**Inputs:** `operationRequest` (`@0`), `apiContext` (`@3`),
+`previousOutput` (`@output`).
+
+**Logic:**
+1. `resolveProtocol(api, rawRequest)` — same lookup as stage 1.
+2. `buildProtocolResponse(protocol, rawRequest, previousOutput, status)`
+   — handles both `byte[]` (serialize produced it) and raw `Object`
+   payloads (serialize was skipped because `Accept` was absent).
+3. Writes the transport-native response as `output`.
+
+Runs unconditionally in Mode A so that 4xx/5xx error paths still produce
+a valid transport response instead of a bare `WorkflowResult`.
+
+**Errors:** `500` (protocol resolution or `buildResponse` failure).
+
+---
+
+### 11. exit-code (inline)
 
 Reads all code variables and produces the final workflow return code.
 
@@ -299,19 +450,26 @@ Reads all code variables and produces the final workflow return code.
 2. **Success** (checked only on operation stages): code == 0
 3. **Default:** 405 (no operation executed)
 
+> **Limitation (known):** 406 (serialize) and 415 (protocol-extract /
+> deserialize) are not yet propagated by the exit-code table — they fall
+> through to 405. Adding them is a one-line append in
+> `buildExitCodeStage`.
+
 ---
 
 ## Error Code Summary
 
 | Code | Stage(s) | Meaning |
 |------|----------|---------|
-| 400 | TENANT_RULES, OWNER_RULES, CRUD | Bad request: missing tenantId/ownerId, validation failure |
+| 400 | protocol-extract, deserialize, TENANT_RULES, OWNER_RULES, CRUD | Bad request: extraction/body/validation failure |
 | 401 | VERIFY_ACCESS | Unauthorized: missing authorization token |
 | 403 | VERIFY_TENANT, VERIFY_OWNER | Forbidden: missing tenant/owner access |
 | 404 | READ_ONE, UPDATE_ONE, DELETE_ONE | Not found: entity does not exist |
 | 405 | exit-code (default) | Method not allowed: no operation matched |
+| 406 | serialize | Not acceptable: no serializer matches `Accept` header |
 | 409 | CREATE_ONE, UPDATE_ONE | Conflict: unicity constraint violation |
-| 500 | any | Internal error: persistence, hooks, or authorization failure |
+| 415 | protocol-extract, deserialize | Unsupported: no protocol for transport or serializer for Content-Type |
+| 500 | any | Internal error: persistence, hooks, build-response, serialize |
 
 ---
 
@@ -321,8 +479,13 @@ Reads all code variables and produces the final workflow return code.
 |-----------|------|
 | Workflow assembler | `core/builder/DomainWorkflowAssembler.java` |
 | Domain builder (passes flags) | `core/builder/DomainBuilder.java` |
+| Api builder (registers protocols/serializers + auto-detect) | `core/builder/ApiBuilder.java` |
+| Protocol scripts | `scripts/protocol/EXTRACT.gs`, `RESPONSE.gs` |
+| Data scripts (ser/deser) | `scripts/data/DESERIALIZE.gs`, `SERIALIZE.gs` |
 | Business rules scripts | `scripts/business/TENANT_RULES.gs`, `OWNER_RULES.gs` |
 | Security scripts | `scripts/security/VERIFY_ACCESS.gs`, `VERIFY_TENANT.gs`, `VERIFY_OWNER.gs` |
 | CRUD scripts | `scripts/business/CREATE_ONE.gs`, `READ_ALL.gs`, `READ_ONE.gs`, `UPDATE_ONE.gs`, `DELETE_ONE.gs`, `DELETE_ALL.gs` |
 | Auth scripts | `scripts/business/AUTHENTICATE.gs`, `CREATE_AUTHORIZATION.gs` |
-| Expression classes | `core/expression/CrudExpressions.java`, `EntityLifecycleExpressions.java`, `SecurityExpressions.java`, `ApiExpressions.java` |
+| Expression classes | `core/expression/ApiExpressions.java`, `CrudExpressions.java`, `EntityLifecycleExpressions.java`, `SecurityExpressions.java`, `SerializationExpressions.java`, `ProtocolExpressions.java` |
+| Protocol contract | `spec/protocol/IProtocol.java`, `Protocol.java` (annotation) |
+| Serializer contract | `spec/serialization/ISerializer.java`, `Serializer.java` (annotation), `spec/MimeType.java` |
