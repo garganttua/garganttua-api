@@ -414,6 +414,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		autoDetectProtocols();
 		autoDetectAuthorizationProtocols();
 		new com.garganttua.api.core.builder.scan.EntityAnnotationScanner(this, this.packages).scan();
+		new com.garganttua.api.core.builder.scan.SecurityAnnotationScanner(this, this.packages).scan();
 		log.atTrace().log("Exiting doAutoDetection() method");
 	}
 
