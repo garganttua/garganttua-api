@@ -356,6 +356,8 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
             if (def.shared() != null) flags.add("shared");
             if (def.hiddenable() != null) flags.add("hiddenable");
             if (def.geolocalized() != null) flags.add("geolocalized");
+            if (def.superOwner() != null) flags.add("superOwner");
+            if (def.superTenant() != null) flags.add("superTenant");
             if (!flags.isEmpty()) {
                 domainInfo.append(" [").append(String.join(", ", flags)).append("]");
             }

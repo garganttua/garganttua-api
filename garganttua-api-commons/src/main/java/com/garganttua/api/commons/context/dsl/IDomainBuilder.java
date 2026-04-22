@@ -60,6 +60,18 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainBuilder<E> hiddenable(ObjectAddress fieldAddress) throws ApiException;
 
+    IDomainBuilder<E> superOwner(String string) throws ApiException;
+
+    IDomainBuilder<E> superOwner(IField field) throws ApiException;
+
+    IDomainBuilder<E> superOwner(ObjectAddress fieldAddress) throws ApiException;
+
+    IDomainBuilder<E> superTenant(String string) throws ApiException;
+
+    IDomainBuilder<E> superTenant(IField field) throws ApiException;
+
+    IDomainBuilder<E> superTenant(ObjectAddress fieldAddress) throws ApiException;
+
     IEntityBuilder<E> name(String name) throws ApiException;
 
     IClass<E> getEntityClass() throws ApiException;

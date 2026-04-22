@@ -34,5 +34,9 @@ public interface IDomainDefinition<E> {
 
     ObjectAddress geolocalized();
 
+    ObjectAddress superOwner();
+
+    ObjectAddress superTenant();
+
     List<IMethodBinder<Void>> startupBinders();
 }

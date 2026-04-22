@@ -93,6 +93,8 @@ public class DomainBuilder<E>
     private volatile ObjectAddress shared;
     private volatile ObjectAddress hiddenable;
     private volatile ObjectAddress geolocalized;
+    private volatile ObjectAddress superOwner;
+    private volatile ObjectAddress superTenant;
     private volatile IDomainSecurityBuilder<E> securityBuilder;
     private final Map<IClass<?>, IDtoBuilder> dtos = new ConcurrentHashMap<>();
     private final Map<String, IUseCaseBuilder<?, ?, E>> useCases = new ConcurrentHashMap<>();
@@ -358,6 +360,66 @@ public class DomainBuilder<E>
 
         this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Object.class)).address();
 
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> superOwner(String fieldName) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+        this.superOwner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> superOwner(IField field) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+        this.superOwner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> superOwner(ObjectAddress fieldAddress) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+        this.superOwner = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> superTenant(String fieldName) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+        this.superTenant = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> superTenant(IField field) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+        this.superTenant = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        return this;
+    }
+
+    @Override
+    public IDomainBuilder<E> superTenant(ObjectAddress fieldAddress) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address cannot be null");
+        if (this.entityBuilder == null) {
+            throw new ApiException("Entity class must be defined first");
+        }
+        this.superTenant = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
         return this;
     }
 
@@ -637,6 +699,8 @@ public class DomainBuilder<E>
                         this.shared,
                         this.hiddenable,
                         this.geolocalized,
+                        this.superOwner,
+                        this.superTenant,
                         useCaseDefinitions,
                         workflowDefinitions,
                         securityDefinition),
