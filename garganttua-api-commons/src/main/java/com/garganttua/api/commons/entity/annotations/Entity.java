@@ -9,21 +9,21 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Entity {
 
-	boolean allow_creation() default true;
+	boolean creation() default true;
 
-	boolean allow_read_all() default true;
+	boolean readAll() default true;
 
-	boolean allow_read_one() default true;
+	boolean readOne() default true;
 
-	boolean allow_update_one() default true;
+	boolean update() default true;
 
-	boolean allow_delete_one() default true;
+	boolean deleteOne() default true;
 
-	boolean allow_delete_all() default true;
+	boolean deleteAll() default true;
 
-	String[] interfaces();
+	String[] interfaces() default {};
 
 	String eventPublisher() default "";
 
-	String domain();
+	String domain() default "";
 }
