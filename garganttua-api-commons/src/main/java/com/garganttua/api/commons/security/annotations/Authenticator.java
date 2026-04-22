@@ -21,18 +21,14 @@ public @interface Authenticator {
 	TimeUnit authorizationLifeTimeUnit() default TimeUnit.MINUTES;
 
 	int authorizationRefreshTokenLifeTime() default 120;
-	
+
 	TimeUnit authorizationRefreshTokenLifeTimeUnit() default TimeUnit.MINUTES;
-	
-	String[] interfaces() default {};
-	
+
 	Class<?>[] authentications() default {void.class};
 
 	Class<?> authorizationKey() default void.class;
 
 	AuthenticatorKeyUsage authorizationKeyUsage() default AuthenticatorKeyUsage.oneForTenant;
-
-	boolean autoCreateAuthorizationKey() default false;
 
 	KeyAlgorithm authorizationKeyAlgorithm() default KeyAlgorithm.RSA_4096;
 
