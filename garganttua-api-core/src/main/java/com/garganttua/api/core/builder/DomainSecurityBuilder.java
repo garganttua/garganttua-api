@@ -12,12 +12,10 @@ import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.security.context.IAuthenticatorContext;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
-import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.commons.context.dsl.security.IKeyBuilder;
 import com.garganttua.api.commons.endpoint.IEndpoint;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
@@ -37,7 +35,6 @@ public class DomainSecurityBuilder<E>
     private IAuthorizationBuilder authorization;
     private IClass<?> entityClass;
     private IAuthenticatorBuilder authenticator;
-    private IKeyBuilder key;
 
     public DomainSecurityBuilder(IDomainBuilder<E> domainBuilder,
             List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces,
@@ -99,23 +96,10 @@ public class DomainSecurityBuilder<E>
     }
 
     @Override
-    public IKeyBuilder key() {
-        if (this.key == null)
-            this.key = new KeyBuilder(this, this.entityClass);
-        return this.key;
-    }
-
-    @Override
     public IAuthenticatorBuilder authenticator() {
         if (this.authenticator == null)
             this.authenticator = new AuthenticatorBuilder(this, this.entityClass);
         return this.authenticator;
-    }
-
-    @Override
-    public IDomainSecurityBuilder<E> useCase(IUseCaseBuilder<?, ?, ?> useCaseBuilder, boolean authority, Access acceess) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'useCase'");
     }
 
     boolean isDisabled() {

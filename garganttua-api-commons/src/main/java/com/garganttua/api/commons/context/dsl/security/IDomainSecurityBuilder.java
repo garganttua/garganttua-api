@@ -1,7 +1,6 @@
 package com.garganttua.api.commons.context.dsl.security;
 
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
-import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
@@ -13,11 +12,12 @@ public interface IDomainSecurityBuilder<E>
 
 	IDomainSecurityBuilder<E> disable(boolean b);
 
-	IKeyBuilder<E> key();
-
 	IAuthenticatorBuilder<E> authenticator();
 
-	IDomainSecurityBuilder<E> useCase(IUseCaseBuilder<?, ?, ?> useCaseBuilder, boolean authority, Access access);
+	// Per-use-case security is configured via IUseCaseBuilder.security() — see
+	// IUseCaseSecurityBuilder. There is intentionally no useCase(...) method
+	// here: declaring it twice would let two different paths set the same
+	// state with no merge rule.
 
 	// --- CRUD access level ---
 

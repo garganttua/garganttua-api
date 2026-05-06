@@ -76,8 +76,12 @@ runtime gates; the request enters the pipeline at stage 5 (business rules).
    |
    v
 +-------------------------------+
-|  6a. VERIFY_AUTHORIZATION.gs         |  if securityEnabled
-|     Check authorization token |  guard: business rules OK
+|  6a. VERIFY_AUTHORIZATION.gs  |  if securityEnabled
+|     parse Authorization header|  guard: business rules OK
+|     -> resolveProtocol        |
+|     -> decodeAuthorization    |
+|     -> verifyIfSignable (crypto)
+|     -> invokeAuthenticate     |
 +-------------------------------+
    |
    v
@@ -108,7 +112,8 @@ runtime gates; the request enters the pipeline at stage 5 (business rules).
    v
 +-------------------------------+
 |  8+. CREATE_AUTHORIZATION.gs  |  if hasAuthorization
-|     Create token after auth   |  guard: authenticate succeeded + all security OK
+|     createAuthorizationEntity |  guard: authenticate succeeded + all security OK
+|     -> signIfSignable (crypto)|
 +-------------------------------+
    |
    v
@@ -150,6 +155,14 @@ configuration. Not all stages are present in every domain's workflow.
 | `isOwnerOrOwned` | domain has `.owner()` or `.owned()` | OWNER_RULES, VERIFY_OWNER |
 | `securityEnabled` | domain has `.security()` config | VERIFY_AUTHORIZATION, VERIFY_TENANT, VERIFY_OWNER |
 | `hasAuthorization` | authenticator with authorization config | CREATE_AUTHORIZATION |
+
+The signature sub-step inside VERIFY_AUTHORIZATION and CREATE_AUTHORIZATION is
+**not** a build-time flag — it is decided at runtime per request via
+`isAuthorizationSignable(...)` against the resolved authorization definition.
+A signable authorization further requires the user to have wired an
+`IKeyRealm` supplier through `.keyRealm(...)` on the authenticator's
+authorization DSL; the API ships no `IKeyRealm` implementation, callers
+inject one (typically from `garganttua-crypto`).
 
 The protocol/data stages (1, 4, 9, 10) are **always declared** on every
 workflow — they are gated at runtime by `notNull(:arg(@0, "rawRequest"))`
@@ -318,12 +331,44 @@ the raw request's class).
 **Script:** `scripts/security/VERIFY_AUTHORIZATION.gs`
 
 **Logic:**
-1. Extract `operation` from `@0`
-2. Get access level via `operationAccess(@operation)`
-3. If not anonymous, check `notNull(:arg(@0, "authorization"))`
-4. `requirePresent(...)` -> 401
+1. Resolve the operation's access level via `operationAccess(@operation)`.
+   Anonymous operations short-circuit to success — no token required.
+2. If a typed `authorization` is already on the request (Mode B caller
+   pre-populated it), trust it and short-circuit to success.
+3. Otherwise read `rawAuthorization` from the request:
+   - missing → **401**;
+   - parse the scheme (`Bearer`, `Basic`, `ApiKey`, …) and value via
+     `parseAuthorizationScheme` / `parseAuthorizationValue` — **400** on a
+     malformed header;
+   - resolve the matching `IAuthorizationProtocol` via
+     `resolveAuthorizationProtocol(@apiContext, @scheme)` — **401** when no
+     protocol is registered for the scheme;
+   - decode the value through the protocol — **401** on decode failure;
+   - publish the decoded `IAuthorization` back on the request as
+     `authorization`.
+4. Resolve the protocol's `targetDomain` (`protocolTargetDomain` then
+   `resolveDomainByEntityClass`) — the authenticator domain on which token
+   validation runs.
+5. **Cryptographic signature check** — `verifyIfSignable(@authz, @_targetDomain)`:
+   - no-op (returns `true`) when the resolved authorization definition is
+     not `signable=true`;
+   - otherwise resolves the user-provided `IKeyRealm` via
+     `resolveKeyRealm(@_targetDomain)`, calls `getKeyForSignatureVerification()`,
+     reads the entity's signature field, recomputes the bytes via the
+     declared `getDataToSign` method, and verifies. A tampered token (bad
+     bytes, malformed DER, key mismatch) returns **false** and lands at **401** —
+     never propagates as 500. Signable but no key realm wired throws and
+     also lands at **401** (the token is unverifiable as far as the client is
+     concerned).
+6. Business validation — `invokeAuthenticate(@apiContext, @_targetDomain,
+   @_authRequest)` runs the target domain's `authenticate` pipeline with the
+   decoded authorization as credentials. The domain's `IAuthentication`
+   strategy checks expiration / revocation / principal lookup. Failure → **401**.
+7. Publish the resolved principal on the request.
 
-**Errors:** `401` — missing authorization token for non-anonymous access
+**Errors:** `400` (malformed `Authorization` header), `401` (any of: missing
+token, unknown scheme, decode failure, invalid signature, signable without
+key realm wired, expired/revoked token, unknown principal).
 
 ---
 
@@ -384,16 +429,33 @@ Each operation is a separate stage with a `when()` condition:
 
 **Script:** `scripts/business/CREATE_AUTHORIZATION.gs`
 
-**Input:** Receives `authResult` from the authenticate stage output (`@output`).
+**Input:** Receives the authentication result from the authenticate stage as
+`@3` (positional arg, distinct from the usual `apiContext` slot — this
+script is wired with `(operationRequest, repository, domainContext, authResult)`).
 
 **Logic:**
-1. Require auth result present
-2. Create authorization entity from auth result + domain context
-   (`createAuthorizationEntity2`)
-3. If storable, save to repository via authorization domain
-4. Return authorization entity as output
+1. Require auth result present (skip silently otherwise — authentication
+   failed and the workflow already carries the proper error code).
+2. `createAuthorizationEntity2(@authResult, @domainContext)` — instantiates
+   the linked authorization entity, copies the principal uuid into the
+   `owned` field, propagates `tenantId`, sets `creation`/`expiration`/
+   `revoked=false`, fills `type`/`authorities` from the auth result.
+   Failure → **500**.
+3. **Cryptographic signing** — `signIfSignable(@output, @domainContext)`:
+   - no-op when the resolved authorization is not `signable=true`;
+   - otherwise resolves the user-provided `IKeyRealm` via
+     `resolveKeyRealm`, calls `getKeyForSigning()`, invokes the entity's
+     declared `getDataToSign` method, signs the bytes and writes the result
+     into the entity's signature field. Misconfiguration (signable but no
+     key realm wired) throws → **500** (deployer fault, not a client fault).
+4. Return the (possibly signed) authorization entity as the workflow output.
 
-**Errors:** `500` — authorization entity creation/storage failure
+**Note:** `storable=true` is exposed by the DSL and reflected on
+`IDomainAuthorizationDefinition`, but the persistence step is **not** wired
+into this script today — saving is an open item for the storable path.
+
+**Errors:** `500` — authorization entity creation, signing failure, or
+signable-but-no-keyRealm misconfiguration.
 
 ---
 
@@ -461,15 +523,15 @@ Reads all code variables and produces the final workflow return code.
 
 | Code | Stage(s) | Meaning |
 |------|----------|---------|
-| 400 | protocol-extract, deserialize, TENANT_RULES, OWNER_RULES, CRUD | Bad request: extraction/body/validation failure |
-| 401 | VERIFY_AUTHORIZATION | Unauthorized: missing authorization token |
+| 400 | protocol-extract, deserialize, TENANT_RULES, OWNER_RULES, VERIFY_AUTHORIZATION (header parse), CRUD | Bad request: extraction/body/validation failure, malformed `Authorization` header |
+| 401 | VERIFY_AUTHORIZATION | Unauthorized: missing token, unknown scheme, decode failure, **invalid signature**, **signable token with no key realm wired**, expired/revoked, unknown principal |
 | 403 | VERIFY_TENANT, VERIFY_OWNER | Forbidden: missing tenant/owner access |
 | 404 | READ_ONE, UPDATE_ONE, DELETE_ONE | Not found: entity does not exist |
 | 405 | exit-code (default) | Method not allowed: no operation matched |
 | 406 | serialize | Not acceptable: no serializer matches `Accept` header |
 | 409 | CREATE_ONE, UPDATE_ONE | Conflict: unicity constraint violation |
 | 415 | protocol-extract, deserialize | Unsupported: no protocol for transport or serializer for Content-Type |
-| 500 | any | Internal error: persistence, hooks, build-response, serialize |
+| 500 | any | Internal error: persistence, hooks, build-response, serialize, **CREATE_AUTHORIZATION when signable but no key realm wired** |
 
 ---
 
@@ -487,5 +549,7 @@ Reads all code variables and produces the final workflow return code.
 | CRUD scripts | `scripts/business/CREATE_ONE.gs`, `READ_ALL.gs`, `READ_ONE.gs`, `UPDATE_ONE.gs`, `DELETE_ONE.gs`, `DELETE_ALL.gs` |
 | Auth scripts | `scripts/business/AUTHENTICATE.gs`, `CREATE_AUTHORIZATION.gs` |
 | Expression classes | `core/expression/ApiExpressions.java`, `CrudExpressions.java`, `EntityLifecycleExpressions.java`, `SecurityExpressions.java`, `SerializationExpressions.java`, `ProtocolExpressions.java` |
+| Signature expressions (Phase 1) | `SecurityExpressions.isAuthorizationSignable`, `resolveKeyRealm`, `signAuthorization`, `verifyAuthorizationSignature`, `signIfSignable`, `verifyIfSignable` |
+| Crypto contract (used, not implemented) | `com.garganttua.core.crypto.IKey`, `IKeyRealm`, `IKeyAlgorithm`, `SignatureAlgorithm` (interfaces from `garganttua-core/garganttua-commons`; the API ships no impl) |
 | Protocol contract | `spec/protocol/IProtocol.java`, `Protocol.java` (annotation) |
 | Serializer contract | `spec/serialization/ISerializer.java`, `Serializer.java` (annotation), `spec/MimeType.java` |
