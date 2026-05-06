@@ -6,15 +6,15 @@ import com.garganttua.api.core.definition.DomainAuthenticatorAuthorizationKeyDef
 import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationKeyContext;
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition;
 import com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage;
-import com.garganttua.api.commons.security.key.KeyAlgorithm;
-import com.garganttua.api.commons.security.key.SignatureAlgorithm;
+import com.garganttua.core.crypto.IKeyAlgorithm;
+import com.garganttua.core.crypto.SignatureAlgorithm;
 
 public class AuthenticatorAuthorizationKeyContext implements IAuthenticatorAuthorizationKeyContext {
 
     private final DomainAuthenticatorAuthorizationKeyDefinition authenticatorAuthorizationKeyDefinition;
 
     public AuthenticatorAuthorizationKeyContext(int duration, TimeUnit unit, AuthenticatorKeyUsage usage,
-            KeyAlgorithm algorithm, SignatureAlgorithm signAlgorithm) {
+            IKeyAlgorithm algorithm, SignatureAlgorithm signAlgorithm) {
         this.authenticatorAuthorizationKeyDefinition = new DomainAuthenticatorAuthorizationKeyDefinition(
                 usage, algorithm, signAlgorithm, duration, unit);
     }

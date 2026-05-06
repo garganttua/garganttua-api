@@ -7,17 +7,16 @@ import java.lang.annotation.Target;
 import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
-import com.garganttua.api.commons.security.key.KeyAlgorithm;
-import com.garganttua.api.commons.security.key.SignatureAlgorithm;
+import com.garganttua.core.crypto.SignatureAlgorithm;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Authenticator {
-	
+
 	Class<?> authorization() default void.class;
-	
+
 	int authorizationLifeTime() default 60;
-	
+
 	TimeUnit authorizationLifeTimeUnit() default TimeUnit.MINUTES;
 
 	int authorizationRefreshTokenLifeTime() default 120;
@@ -30,7 +29,12 @@ public @interface Authenticator {
 
 	AuthenticatorKeyUsage authorizationKeyUsage() default AuthenticatorKeyUsage.oneForTenant;
 
-	KeyAlgorithm authorizationKeyAlgorithm() default KeyAlgorithm.RSA_4096;
+	/**
+	 * Algorithm name resolved at scan time against the user-provided
+	 * {@code IKeyAlgorithm} registry. Empty string defers resolution to the
+	 * fluent DSL.
+	 */
+	String authorizationKeyAlgorithm() default "";
 
 	SignatureAlgorithm authorizationSignatureAlgorithm() default SignatureAlgorithm.SHA512;
 

@@ -7,6 +7,9 @@ import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationContext;
 import com.garganttua.api.commons.security.context.IAuthenticatorAuthorizationKeyContext;
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDefinition;
+import com.garganttua.core.crypto.IKeyRealm;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public class AuthenticatorAuthorizationContext implements IAuthenticatorAuthorizationContext {
 
@@ -14,11 +17,12 @@ public class AuthenticatorAuthorizationContext implements IAuthenticatorAuthoriz
 
     public AuthenticatorAuthorizationContext(int duration, TimeUnit unit, int refreshDuration,
             TimeUnit refreshUnit, IAuthenticatorAuthorizationKeyContext keyContext,
-            IDomainBuilder<?> authorizationDomainBuilder) {
+            IDomainBuilder<?> authorizationDomainBuilder,
+            ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm) {
         this.authenticatorAuthorizationDefinition = new DomainAuthenticatorAuthorizationDefinition(
                 duration, unit, refreshDuration, refreshUnit,
                 keyContext != null ? keyContext.getAuthenticatorAuthorizationKeyDefinition() : null,
-                authorizationDomainBuilder);
+                authorizationDomainBuilder, keyRealm);
     }
 
     @Override

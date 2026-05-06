@@ -9,8 +9,8 @@ import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
 import com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage;
-import com.garganttua.api.commons.security.key.KeyAlgorithm;
-import com.garganttua.api.commons.security.key.SignatureAlgorithm;
+import com.garganttua.core.crypto.IKeyAlgorithm;
+import com.garganttua.core.crypto.SignatureAlgorithm;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
@@ -21,7 +21,7 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     private Integer duration;
     private TimeUnit unit;
     private AuthenticatorKeyUsage usage;
-    private KeyAlgorithm algorithm;
+    private IKeyAlgorithm algorithm;
     private SignatureAlgorithm signAlgorithm;
     private IDomainBuilder key;
 
@@ -32,26 +32,26 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     }
 
     @Override
-    public AuthenticatorAuthorizationKeyBuilder usage(AuthenticatorKeyUsage usage) {
+    public AuthenticatorAuthorizationKeyBuilder<E> usage(AuthenticatorKeyUsage usage) {
         this.usage = Objects.requireNonNull(usage, "Usage cannot be null");
         return this;
     }
 
     @Override
-    public AuthenticatorAuthorizationKeyBuilder algorithm(KeyAlgorithm algo) {
+    public AuthenticatorAuthorizationKeyBuilder<E> algorithm(IKeyAlgorithm algo) {
         this.algorithm = Objects.requireNonNull(algo, "Algorithm cannot be null");
         return this;
     }
 
     @Override
-    public AuthenticatorAuthorizationKeyBuilder signatureAlgorithm(SignatureAlgorithm algo) {
+    public AuthenticatorAuthorizationKeyBuilder<E> signatureAlgorithm(SignatureAlgorithm algo) {
         this.signAlgorithm = Objects.requireNonNull(algo, "Algorithm cannot be null");
         return this;
     }
 
     @Override
-    public AuthenticatorAuthorizationKeyBuilder lifeTime(int duration, TimeUnit unit) {
-        this.duration = Objects.requireNonNull(duration, "Duration cannot be null");
+    public AuthenticatorAuthorizationKeyBuilder<E> lifeTime(int duration, TimeUnit unit) {
+        this.duration = duration;
         this.unit = Objects.requireNonNull(unit, "Unit cannot be null");
         return this;
     }

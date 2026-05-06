@@ -4,12 +4,12 @@ import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition;
 import com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage;
-import com.garganttua.api.commons.security.key.KeyAlgorithm;
-import com.garganttua.api.commons.security.key.SignatureAlgorithm;
+import com.garganttua.core.crypto.IKeyAlgorithm;
+import com.garganttua.core.crypto.SignatureAlgorithm;
 
 public record DomainAuthenticatorAuthorizationKeyDefinition(
 		AuthenticatorKeyUsage usage,
-		KeyAlgorithm algorithm,
+		IKeyAlgorithm algorithm,
 		SignatureAlgorithm signatureAlgorithm,
 		int duration,
 		TimeUnit unit) implements IDomainAuthenticatorAuthorizationKeyDefinition {

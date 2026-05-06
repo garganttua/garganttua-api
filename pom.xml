@@ -145,6 +145,11 @@
 				<artifactId>garganttua-runtime-reflection</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-crypto</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
 
 			<!-- Third-party dependencies -->
 			<dependency>

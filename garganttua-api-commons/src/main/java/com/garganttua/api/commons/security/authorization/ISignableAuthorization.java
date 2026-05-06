@@ -1,6 +1,6 @@
 package com.garganttua.api.commons.security.authorization;
 
-import com.garganttua.api.commons.security.key.IKeyRealm;
+import com.garganttua.core.crypto.IKeyRealm;
 import com.garganttua.api.commons.ApiException;
 
 public interface ISignableAuthorization {

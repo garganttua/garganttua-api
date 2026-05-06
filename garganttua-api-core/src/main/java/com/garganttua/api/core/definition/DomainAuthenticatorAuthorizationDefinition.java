@@ -5,6 +5,9 @@ import java.util.concurrent.TimeUnit;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDefinition;
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition;
+import com.garganttua.core.crypto.IKeyRealm;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public record DomainAuthenticatorAuthorizationDefinition(
 		int duration,
@@ -12,6 +15,7 @@ public record DomainAuthenticatorAuthorizationDefinition(
 		int refreshDuration,
 		TimeUnit refreshUnit,
 		IDomainAuthenticatorAuthorizationKeyDefinition keyDefinition,
-		IDomainBuilder<?> authorizationDomainBuilder) implements IDomainAuthenticatorAuthorizationDefinition {
+		IDomainBuilder<?> authorizationDomainBuilder,
+		ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm) implements IDomainAuthenticatorAuthorizationDefinition {
 
 }

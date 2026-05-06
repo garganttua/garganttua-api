@@ -9,7 +9,10 @@ import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationKeyBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.core.crypto.IKeyRealm;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.api.commons.ApiException;
 
 public class AuthenticatorAuthorizationBuilder<E> extends
@@ -22,6 +25,7 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     private TimeUnit refreshUnit;
     private IDomainBuilder keyDomain;
     private AuthenticatorAuthorizationKeyBuilder authenticatorAuthorizationKey;
+    private ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm;
     private final IDomainBuilder authorizationDomainBuilder;
 
     public AuthenticatorAuthorizationBuilder(IAuthenticatorBuilder<E> authenticatorBuilder, IDomainBuilder authorizationDomainBuilder) {
@@ -30,23 +34,30 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorAuthorizationBuilder lifeTime(int duration, TimeUnit unit) {
+    public IAuthenticatorAuthorizationBuilder<E> lifeTime(int duration, TimeUnit unit) {
         this.duration = duration;
         this.unit = Objects.requireNonNull(unit, "Unit cannot be null");
         return this;
     }
 
     @Override
-    public IAuthenticatorAuthorizationBuilder refreshLifeTime(int duration, TimeUnit unit) {
+    public IAuthenticatorAuthorizationBuilder<E> refreshLifeTime(int duration, TimeUnit unit) {
         this.refreshDuration = duration;
         this.refreshUnit = Objects.requireNonNull(unit, "Unit cannot be null");
         return this;
     }
 
     @Override
-    public IAuthenticatorAuthorizationKeyBuilder key(IDomainBuilder key) {
+    public IAuthenticatorAuthorizationKeyBuilder<E> key(IDomainBuilder key) {
         this.keyDomain = Objects.requireNonNull(key, "Key cannot be null");
         return this.authenticatorAuthorizationKey = new AuthenticatorAuthorizationKeyBuilder(this, key);
+    }
+
+    @Override
+    public IAuthenticatorAuthorizationBuilder<E> keyRealm(
+            ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm) {
+        this.keyRealm = Objects.requireNonNull(keyRealm, "Key realm supplier cannot be null");
+        return this;
     }
 
     @Override
@@ -59,7 +70,8 @@ public class AuthenticatorAuthorizationBuilder<E> extends
         return new AuthenticatorAuthorizationContext(
                 this.duration, this.unit,
                 this.refreshDuration, this.refreshUnit,
-                keyContext, this.authorizationDomainBuilder);
+                keyContext, this.authorizationDomainBuilder,
+                this.keyRealm);
     }
 
     @Override
