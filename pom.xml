@@ -58,7 +58,7 @@
 		<geojson-jackson.version>1.14</geojson-jackson.version>
 		<javax.inject.version>1</javax.inject.version>
 		<json-path.version>2.9.0</json-path.version>
-		<jackson.version>2.17.0</jackson.version>
+		<jackson.version>2.18.6</jackson.version>
 
 		<!-- Test dependencies -->
 		<junit.version>5.11.4</junit.version>
@@ -196,6 +196,11 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-annotations</artifactId>
+				<version>${jackson.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-core</artifactId>
 				<version>${jackson.version}</version>
 			</dependency>
 			<dependency>
