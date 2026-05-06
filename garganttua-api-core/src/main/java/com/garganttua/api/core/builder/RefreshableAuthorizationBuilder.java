@@ -119,6 +119,8 @@ public class RefreshableAuthorizationBuilder<E>
 
     ObjectAddress getExpiration() { return this.expiration; }
     ObjectAddress getRevoked() { return this.revoked; }
+    ObjectAddress getEncodeMethod() { return this.encodeMethod; }
+    ObjectAddress getDecodeMethod() { return this.decodeMethod; }
 
     @Override
     protected synchronized E doBuild() {

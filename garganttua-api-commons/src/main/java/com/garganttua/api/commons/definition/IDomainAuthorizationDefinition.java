@@ -28,4 +28,18 @@ public interface IDomainAuthorizationDefinition {
 
 	ObjectAddress refreshRevoked();
 
+	/**
+	 * Method on the authorization entity that produces a transport-friendly
+	 * encoded form (e.g. JWT compact serialization). Declared via
+	 * {@code .refreshable().encode(method)}. {@code null} when not configured.
+	 */
+	ObjectAddress encodeMethod();
+
+	/**
+	 * Method that decodes a transport-friendly encoded authorization back into
+	 * a typed entity. Declared via {@code .refreshable().decode(method)}.
+	 * {@code null} when not configured.
+	 */
+	ObjectAddress decodeMethod();
+
 }

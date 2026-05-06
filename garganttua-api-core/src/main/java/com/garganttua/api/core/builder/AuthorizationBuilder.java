@@ -201,21 +201,29 @@ public class AuthorizationBuilder<E>
             getDataToSignMethod = sb.getGetDataToSignMethod();
         }
 
-        // Collect refreshable fields if configured
+        // Collect refreshable fields if configured. Encode/decode methods are
+        // declared inside the refreshable builder but are conceptually for the
+        // whole authorization (used to produce a transport-friendly form);
+        // we plumb them through so the runtime expressions can invoke them.
         ObjectAddress refreshExpiration = null;
         ObjectAddress refreshRevoked = null;
+        ObjectAddress encodeMethod = null;
+        ObjectAddress decodeMethod = null;
         if (this.refreshable != null) {
             RefreshableAuthorizationBuilder<E> rb = (RefreshableAuthorizationBuilder<E>) this.refreshable;
             rb.build();
             refreshExpiration = rb.getExpiration();
             refreshRevoked = rb.getRevoked();
+            encodeMethod = rb.getEncodeMethod();
+            decodeMethod = rb.getDecodeMethod();
         }
 
         return new AuthorizationContext(
                 this.type, this.authorities, this.expiration, this.creation, this.revoked,
                 this.storable, this.signable != null, this.refreshable != null,
                 signatureField, getDataToSignMethod,
-                refreshExpiration, refreshRevoked);
+                refreshExpiration, refreshRevoked,
+                encodeMethod, decodeMethod);
     }
 
     @Override

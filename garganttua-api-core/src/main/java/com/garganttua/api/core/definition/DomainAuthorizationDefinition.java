@@ -15,6 +15,8 @@ public record DomainAuthorizationDefinition(
 		ObjectAddress signatureField,
 		ObjectAddress getDataToSignMethod,
 		ObjectAddress refreshExpiration,
-		ObjectAddress refreshRevoked) implements IDomainAuthorizationDefinition {
+		ObjectAddress refreshRevoked,
+		ObjectAddress encodeMethod,
+		ObjectAddress decodeMethod) implements IDomainAuthorizationDefinition {
 
 }
