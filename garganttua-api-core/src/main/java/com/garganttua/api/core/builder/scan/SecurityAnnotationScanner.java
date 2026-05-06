@@ -6,11 +6,35 @@ import java.util.Set;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
+import com.garganttua.api.commons.context.dsl.security.IRefreshableAuthorizationBuilder;
+import com.garganttua.api.commons.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.api.commons.security.annotations.Authentication;
 import com.garganttua.api.commons.security.annotations.AuthenticationAuthenticate;
+import com.garganttua.api.commons.security.annotations.Authenticator;
+import com.garganttua.api.commons.security.annotations.AuthenticatorAccountNonExpired;
+import com.garganttua.api.commons.security.annotations.AuthenticatorAccountNonLocked;
+import com.garganttua.api.commons.security.annotations.AuthenticatorAuthorities;
+import com.garganttua.api.commons.security.annotations.AuthenticatorCredentialsNonExpired;
+import com.garganttua.api.commons.security.annotations.AuthenticatorEnabled;
+import com.garganttua.api.commons.security.annotations.AuthenticatorLogin;
+import com.garganttua.api.commons.security.annotations.Authorization;
+import com.garganttua.api.commons.security.annotations.AuthorizationAuthorities;
+import com.garganttua.api.commons.security.annotations.AuthorizationDecode;
+import com.garganttua.api.commons.security.annotations.AuthorizationEncode;
+import com.garganttua.api.commons.security.annotations.AuthorizationExpiration;
+import com.garganttua.api.commons.security.annotations.AuthorizationRefreshTokenExpiration;
+import com.garganttua.api.commons.security.annotations.AuthorizationRevoked;
+import com.garganttua.api.commons.security.annotations.AuthorizationSign;
+import com.garganttua.api.commons.security.annotations.AuthorizationSignature;
+import com.garganttua.api.commons.security.annotations.AuthorizationType;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
@@ -18,13 +42,28 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Scans configured packages for {@link Authentication}-annotated classes and
- * registers them on the API security builder. For each authentication class,
- * the {@link AuthenticationAuthenticate}-annotated method is bound as the
- * authenticate operation.
+ * Scans configured packages for security-related annotations and applies them
+ * onto the API builder.
  *
- * <p>Silently no-ops when no packages are configured or when no
- * {@link IReflection} is available.
+ * <p>Three passes run in order:
+ * <ol>
+ *   <li>{@link Authentication} classes — registered as authentication strategies
+ *       on {@code apiBuilder.security()} with the {@link AuthenticationAuthenticate}
+ *       method bound.</li>
+ *   <li>{@link Authorization} classes — assumed to also be {@code @Entity},
+ *       so {@link EntityAnnotationScanner} has already created their domain;
+ *       this scanner re-acquires the same domain builder (via
+ *       {@code apiBuilder.domain(class)} which is {@code computeIfAbsent})
+ *       and applies {@code .security().authorization()} from the type-level
+ *       and field/method-level annotations.</li>
+ *   <li>{@link Authenticator} classes — same approach: re-acquire builder,
+ *       apply {@code .security().authenticator()}, link to the configured
+ *       {@code authentications()} via {@link IApiSecurityBuilder#isAuthenticationAvailable}
+ *       and to the {@code authorization()} domain by re-acquiring its builder.</li>
+ * </ol>
+ *
+ * Silently no-ops when no packages are configured or when no
+ * {@link IReflection} is available (e.g. native image without metadata).
  */
 @Slf4j
 public final class SecurityAnnotationScanner {
@@ -45,10 +84,18 @@ public final class SecurityAnnotationScanner {
         try {
             reflection = IClass.getReflection();
         } catch (Exception e) {
-            log.atWarn().log("No IReflection available for @Authentication auto-detection: {}", e.getMessage());
+            log.atWarn().log("No IReflection available for security auto-detection: {}", e.getMessage());
             return;
         }
 
+        scanAuthentications(reflection);
+        scanAuthorizations(reflection);
+        scanAuthenticators(reflection);
+    }
+
+    // ─────────────────── @Authentication ───────────────────
+
+    private void scanAuthentications(IReflection reflection) throws ApiException {
         IClass<Authentication> annotation = IClass.getClass(Authentication.class);
         IApiSecurityBuilder security = this.apiBuilder.security();
 
@@ -60,7 +107,7 @@ public final class SecurityAnnotationScanner {
                     continue;
                 }
                 Object instance = instantiate(authClass);
-                @SuppressWarnings({"rawtypes", "unchecked"})
+                @SuppressWarnings({ "rawtypes", "unchecked" })
                 FixedSupplierBuilder supplier = new FixedSupplierBuilder<>(instance, (IClass) authClass);
                 IAuthenticationBuilder authBuilder = security.authentication(supplier);
                 bindAuthenticate(reflection, authBuilder, authClass);
@@ -69,17 +116,6 @@ public final class SecurityAnnotationScanner {
         }
         if (registered > 0) {
             log.atDebug().log("Auto-detected {} @Authentication class(es)", registered);
-        }
-    }
-
-    private static Object instantiate(IClass<?> clazz) {
-        try {
-            return clazz.getConstructor().newInstance();
-        } catch (Throwable t) {
-            throw new IllegalStateException(
-                    "Failed to instantiate @Authentication class " + clazz.getName()
-                            + ": needs a public no-arg constructor",
-                    t);
         }
     }
 
@@ -92,6 +128,184 @@ public final class SecurityAnnotationScanner {
                     authClass.getSimpleName());
             return;
         }
-        authBuilder.authenticate(method.get().getName());
+        var binder = authBuilder.authenticate(method.get().getName());
+
+        // Auto-wire standard parameter suppliers based on declared parameter types.
+        // The canonical authenticate signature is
+        // {@code (Object principal, byte[] credentials, IAuthenticatorDefinition def)}.
+        // Authors who want a different signature can still override via DSL after scan.
+        IClass<?>[] paramTypes = method.get().getParameterTypes();
+        IClass<?> bytesClass = IClass.getClass(byte[].class);
+        IClass<?> definitionClass = IClass.getClass(
+                com.garganttua.api.commons.definition.IAuthenticatorDefinition.class);
+        for (int i = 0; i < paramTypes.length; i++) {
+            IClass<?> p = paramTypes[i];
+            if (bytesClass.equals(p)) {
+                binder.withParam(i, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder());
+            } else if (definitionClass.equals(p) || p.represents(com.garganttua.api.commons.definition.IAuthenticatorDefinition.class)) {
+                binder.withParam(i, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+            } else {
+                // Default: the principal entity (the matched user). PrincipalSupplier
+                // resolves it from the in-flight authentication request via the runtime
+                // context populated by AUTHENTICATE.gs.
+                binder.withParam(i, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder());
+            }
+        }
+    }
+
+    // ─────────────────── @Authorization ───────────────────
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void scanAuthorizations(IReflection reflection) throws ApiException {
+        IClass<Authorization> anno = IClass.getClass(Authorization.class);
+        int registered = 0;
+        for (String pkg : this.packages) {
+            for (IClass<?> authzClass : reflection.getClassesWithAnnotation(pkg, anno)) {
+                Authorization a = authzClass.getAnnotation(anno);
+
+                IDomainBuilder<Object> domain = (IDomainBuilder<Object>) this.apiBuilder.domain((IClass) authzClass);
+                IDomainSecurityBuilder<Object> sec = domain.security();
+                IAuthorizationBuilder<Object> authzBuilder = sec.authorization();
+
+                applyAuthorizationFields(reflection, authzBuilder, authzClass);
+                if (a.signable()) {
+                    applySignable(reflection, authzBuilder, authzClass);
+                }
+                if (a.renewable()) {
+                    applyRefreshable(reflection, authzBuilder, authzClass);
+                }
+                authzBuilder.up();
+                sec.up();
+                registered++;
+            }
+        }
+        if (registered > 0) {
+            log.atDebug().log("Auto-detected {} @Authorization class(es)", registered);
+        }
+    }
+
+    private void applyAuthorizationFields(IReflection reflection, IAuthorizationBuilder<Object> authzBuilder, IClass<?> authzClass)
+            throws ApiException {
+        Optional<IField> typeF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationType.class));
+        if (typeF.isPresent()) authzBuilder.type(typeF.get().getName());
+
+        Optional<IField> authoritiesF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationAuthorities.class));
+        if (authoritiesF.isPresent()) authzBuilder.authorities(authoritiesF.get().getName());
+
+        Optional<IField> expirationF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationExpiration.class));
+        if (expirationF.isPresent()) authzBuilder.expirable(expirationF.get().getName());
+
+        Optional<IField> revokedF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationRevoked.class));
+        if (revokedF.isPresent()) authzBuilder.revokable(revokedF.get().getName());
+    }
+
+    private void applySignable(IReflection reflection, IAuthorizationBuilder<Object> authzBuilder, IClass<?> authzClass)
+            throws ApiException {
+        ISignableAuthorizationBuilder<Object> signable = authzBuilder.signable();
+        Optional<IField> sigF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationSignature.class));
+        if (sigF.isPresent()) signable.signature(sigF.get().getName());
+        Optional<IMethod> signM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationSign.class));
+        if (signM.isPresent()) signable.getDataToSign(signM.get().getName());
+        signable.up();
+    }
+
+    private void applyRefreshable(IReflection reflection, IAuthorizationBuilder<Object> authzBuilder, IClass<?> authzClass)
+            throws ApiException {
+        IRefreshableAuthorizationBuilder<Object> refreshable = authzBuilder.refreshable();
+        Optional<IField> refExpF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationRefreshTokenExpiration.class));
+        if (refExpF.isPresent()) refreshable.expirable(refExpF.get().getName());
+        Optional<IMethod> encM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationEncode.class));
+        if (encM.isPresent()) refreshable.encode(encM.get().getName());
+        Optional<IMethod> decM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationDecode.class));
+        if (decM.isPresent()) refreshable.decode(decM.get().getName());
+        refreshable.up();
+    }
+
+    // ─────────────────── @Authenticator ───────────────────
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void scanAuthenticators(IReflection reflection) throws ApiException {
+        IClass<Authenticator> anno = IClass.getClass(Authenticator.class);
+        IApiSecurityBuilder apiSec = this.apiBuilder.security();
+        int registered = 0;
+        for (String pkg : this.packages) {
+            for (IClass<?> authrClass : reflection.getClassesWithAnnotation(pkg, anno)) {
+                Authenticator a = authrClass.getAnnotation(anno);
+
+                IDomainBuilder<Object> domain = (IDomainBuilder<Object>) this.apiBuilder.domain((IClass) authrClass);
+                IDomainSecurityBuilder<Object> sec = domain.security();
+                IAuthenticatorBuilder<Object> authrBuilder = sec.authenticator();
+
+                applyAuthenticatorFields(reflection, authrBuilder, authrClass);
+                authrBuilder.scope(a.scope());
+
+                // Link to the configured authentication strategies
+                for (Class<?> auth : a.authentications()) {
+                    if (auth == null || auth == void.class) continue;
+                    IClass<?> authIClass = IClass.getClass(auth);
+                    Optional<IAuthenticationBuilder> linked = apiSec.isAuthenticationAvailable(authIClass);
+                    if (linked.isEmpty()) {
+                        log.atWarn().log(
+                                "@Authenticator on {} references @Authentication {} but it was not registered; ignoring linkage",
+                                authrClass.getSimpleName(), authIClass.getSimpleName());
+                        continue;
+                    }
+                    authrBuilder.authentication(linked.get());
+                }
+
+                // Link to the authorization domain (if declared) and configure lifetime.
+                if (a.authorization() != null && a.authorization() != void.class) {
+                    IClass<?> authzClass = IClass.getClass(a.authorization());
+                    IDomainBuilder<Object> authzDomain =
+                            (IDomainBuilder<Object>) this.apiBuilder.domain((IClass) authzClass);
+                    var authzAuth = authrBuilder.authorization(authzDomain);
+                    authzAuth.lifeTime(a.authorizationLifeTime(), a.authorizationLifeTimeUnit());
+                    authzAuth.refreshLifeTime(a.authorizationRefreshTokenLifeTime(),
+                            a.authorizationRefreshTokenLifeTimeUnit());
+                    authzAuth.up();
+                }
+
+                authrBuilder.up();
+                sec.up();
+                registered++;
+            }
+        }
+        if (registered > 0) {
+            log.atDebug().log("Auto-detected {} @Authenticator class(es)", registered);
+        }
+    }
+
+    private void applyAuthenticatorFields(IReflection reflection, IAuthenticatorBuilder<Object> authrBuilder, IClass<?> authrClass)
+            throws ApiException {
+        Optional<IField> loginF = reflection.findFieldAnnotatedWith(authrClass, IClass.getClass(AuthenticatorLogin.class));
+        if (loginF.isPresent()) authrBuilder.login(loginF.get().getName());
+
+        Optional<IField> enabledF = reflection.findFieldAnnotatedWith(authrClass, IClass.getClass(AuthenticatorEnabled.class));
+        if (enabledF.isPresent()) authrBuilder.enabled(enabledF.get().getName());
+
+        Optional<IField> nonLockedF = reflection.findFieldAnnotatedWith(authrClass, IClass.getClass(AuthenticatorAccountNonLocked.class));
+        if (nonLockedF.isPresent()) authrBuilder.accountNonLocked(nonLockedF.get().getName());
+
+        Optional<IField> nonExpiredF = reflection.findFieldAnnotatedWith(authrClass, IClass.getClass(AuthenticatorAccountNonExpired.class));
+        if (nonExpiredF.isPresent()) authrBuilder.accountNonExpired(nonExpiredF.get().getName());
+
+        Optional<IField> credsNonExpiredF = reflection.findFieldAnnotatedWith(authrClass, IClass.getClass(AuthenticatorCredentialsNonExpired.class));
+        if (credsNonExpiredF.isPresent()) authrBuilder.credentialsNonExpired(credsNonExpiredF.get().getName());
+
+        Optional<IField> authoritiesF = reflection.findFieldAnnotatedWith(authrClass, IClass.getClass(AuthenticatorAuthorities.class));
+        if (authoritiesF.isPresent()) authrBuilder.authorities(authoritiesF.get().getName());
+    }
+
+    // ─────────────────── helpers ───────────────────
+
+    private static Object instantiate(IClass<?> clazz) {
+        try {
+            return clazz.getConstructor().newInstance();
+        } catch (Throwable t) {
+            throw new IllegalStateException(
+                    "Failed to instantiate @Authentication class " + clazz.getName()
+                            + ": needs a public no-arg constructor",
+                    t);
+        }
     }
 }
