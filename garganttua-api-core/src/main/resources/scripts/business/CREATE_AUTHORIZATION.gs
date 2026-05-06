@@ -24,4 +24,26 @@ requirePresent(if(notNull(@3), 1))
 output <- createAuthorizationEntity2(@3, @2)
 ! -> 500
 
+// If the authorization is signable, sign it now. The user must wire an
+// IKeyRealm via .keyRealm(...) on the authenticator's authorization key DSL —
+// signIfSignable throws ApiException (mapped to 500) when signable but the
+// key realm is missing. No-op when not signable.
+signIfSignable(@output, @2)
+! -> 500
+
+// If the authorization declares a transport encode method (.refreshable().encode(...)),
+// invoke it post-sign to produce the wire form (e.g. JWT compact serialization).
+// The encoded form is published on the request as `encodedAuthorization` for
+// downstream stages (RESPONSE.gs, custom protocols). No-op when no encode method
+// is configured.
+_encoded <- encodeIfPossible(@output, @2)
+! -> 500
+setRequestArg(@0, "encodedAuthorization", @_encoded)
+
+// Persist the freshly-issued authorization to the linked authorization domain
+// when storable (i.e. .revokable(...) was called or .storable(true)). Lets the
+// token be looked up + revoked later. No-op for stateless tokens.
+persistIfStorable(@output, @2)
+! -> 500
+
 output <- @output -> 0

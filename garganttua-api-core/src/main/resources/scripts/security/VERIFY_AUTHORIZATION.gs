@@ -60,6 +60,16 @@ setRequestArg(@0, "authorization", @authz)
 // revocation, and resolves the principal.
 _targetClass <- protocolTargetDomain(@protocol)
 _targetDomain <- resolveDomainByEntityClass(@3, @_targetClass)
+
+// Verify the cryptographic signature when the target authorization is signable.
+// Returns true when not signable or signature is valid; false on mismatch.
+// Misconfiguration (no key realm wired) throws — mapped to 401 here so a
+// broken setup is treated as an unverifiable token rather than a 500.
+_sigOk <- verifyIfSignable(@authz, @_targetDomain)
+! -> 401
+requirePresent(if(@_sigOk, 1))
+! -> 401
+
 _tenantId <- :arg(@0, "tenantId")
 _authRequest <- buildAuthRequestFromAuthorization(@authz, @_tenantId)
 _authResult <- invokeAuthenticate(@3, @_targetDomain, @_authRequest)

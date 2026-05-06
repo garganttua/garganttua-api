@@ -28,6 +28,8 @@ import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
+import com.garganttua.core.crypto.IKey;
+import com.garganttua.core.crypto.IKeyRealm;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -37,6 +39,7 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.IMethodReturn;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.runtime.RuntimeExpressionContext;
+import com.garganttua.core.supply.ISupplier;
 
 import jakarta.annotation.Nullable;
 
@@ -264,6 +267,24 @@ public class SecurityExpressions {
 				reflection.setFieldValue(entity, authzDef.revoked(), false);
 			}
 
+			// Refresh-token fields — populated when the authorization is refreshable.
+			// The expiration window comes from the authenticator's authorization def
+			// ({@code refreshLifeTime}). The revoked flag starts at false so the
+			// authorization domain's repository can later flip it to invalidate.
+			if (authzDef.refreshable()) {
+				if (authzDef.refreshExpiration() != null && authDef.authorizationDefinition() != null) {
+					var authzAuthDef = authDef.authorizationDefinition();
+					if (authzAuthDef.refreshUnit() != null && authzAuthDef.refreshDuration() > 0) {
+						long millis = authzAuthDef.refreshUnit().toMillis(authzAuthDef.refreshDuration());
+						reflection.setFieldValue(entity, authzDef.refreshExpiration(),
+								java.time.Instant.now().plusMillis(millis));
+					}
+				}
+				if (authzDef.refreshRevoked() != null) {
+					reflection.setFieldValue(entity, authzDef.refreshRevoked(), false);
+				}
+			}
+
 			return entity;
 		} catch (ApiException e) {
 			throw e;
@@ -420,6 +441,382 @@ public class SecurityExpressions {
 			return def.storable();
 		}
 		return false;
+	}
+
+	@Expression(name = "persistIfStorable",
+			description = "Persists the freshly-issued authorization entity to the linked authorization domain's repository when the resolved authorization definition has storable=true. No-op otherwise.")
+	public static boolean persistIfStorable(@Nullable Object authzEntity, @Nullable Object authenticatorDomain) {
+		if (authzEntity == null || authenticatorDomain == null) {
+			throw new ApiException("persistIfStorable: entity and authenticatorDomain are required");
+		}
+		Object defObj = authorizationDefinition(authenticatorDomain);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.storable()) {
+			return true;
+		}
+		IDomain<?> authzDomain = resolveAuthorizationDomain(toDomain(authenticatorDomain));
+		if (authzDomain == null) {
+			throw new ApiException("persistIfStorable: storable authorization but no authorization domain linked");
+		}
+		try {
+			authzDomain.getRepository().save(authzEntity);
+			return true;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("persistIfStorable: failed to save authorization: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "isAuthorizationSignable",
+			description = "Returns true if the resolved authorization definition is configured as signable")
+	public static boolean isAuthorizationSignable(@Nullable Object domainContext) {
+		Object def = authorizationDefinition(domainContext);
+		return def instanceof IDomainAuthorizationDefinition d && d.signable();
+	}
+
+	@Expression(name = "resolveKeyRealm",
+			description = "Resolves the user-provided IKeyRealm from the authenticator's authorization definition. Throws ApiException if not configured.")
+	public static IKeyRealm resolveKeyRealm(@Nullable Object domainContext) {
+		IDomain<?> domain = toDomain(domainContext);
+		DomainDefinition<?> domDef = toDomainDefinition(domain);
+		if (domDef == null) {
+			throw new ApiException("resolveKeyRealm: invalid domain context");
+		}
+		var secDef = domDef.domainSecurityDefinition();
+		if (secDef == null || secDef.authenticatorDefinition() == null
+				|| secDef.authenticatorDefinition().authorizationDefinition() == null) {
+			throw new ApiException("resolveKeyRealm: no authenticator authorization configured on domain '"
+					+ (domain != null ? domain.getDomainName() : "<null>") + "'");
+		}
+		var authzAuthDef = secDef.authenticatorDefinition().authorizationDefinition();
+		var supplierBuilder = authzAuthDef.keyRealm();
+		if (supplierBuilder == null) {
+			throw new ApiException("resolveKeyRealm: domain '" + domain.getDomainName()
+					+ "' declares a signable authorization but no .keyRealm(...) supplier was configured on its authenticator's authorization DSL");
+		}
+		try {
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			ISupplier<? extends IKeyRealm> supplier = (ISupplier) supplierBuilder.build();
+			Optional<? extends IKeyRealm> realmOpt = supplier.supply();
+			return realmOpt.orElseThrow(
+					() -> new ApiException("resolveKeyRealm: keyRealm supplier returned empty for domain '"
+							+ domain.getDomainName() + "'"));
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("resolveKeyRealm: failed to obtain IKeyRealm: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "signAuthorization",
+			description = "Signs an authorization entity by invoking its getDataToSign method, signing with keyRealm.getKeyForSigning(), and writing the signature back into the configured signature field.")
+	public static boolean signAuthorization(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable Object keyRealmObj) {
+		if (authzEntity == null || domainContext == null || keyRealmObj == null) {
+			throw new ApiException("signAuthorization: entity, domainContext and keyRealm are required");
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.signable()) {
+			throw new ApiException("signAuthorization: authorization is not signable on the resolved domain");
+		}
+		ObjectAddress dataMethod = authzDef.getDataToSignMethod();
+		ObjectAddress sigField = authzDef.signatureField();
+		if (dataMethod == null) {
+			throw new ApiException("signAuthorization: signable authorization has no getDataToSign method configured");
+		}
+		if (sigField == null) {
+			throw new ApiException("signAuthorization: signable authorization has no signature field configured");
+		}
+		IKeyRealm realm = (IKeyRealm) unwrapOptional(keyRealmObj);
+		if (realm == null) {
+			throw new ApiException("signAuthorization: keyRealm is null");
+		}
+		try {
+			IReflection reflection = DefaultMapper.reflection();
+			byte[] data = reflection.invokeMethod(
+					authzEntity,
+					dataMethod.toString(),
+					IClass.getClass(byte[].class));
+			if (data == null) {
+				throw new ApiException("signAuthorization: getDataToSign returned null");
+			}
+			IKey key = realm.getKeyForSigning();
+			byte[] signature = key.sign(data);
+			reflection.setFieldValue(authzEntity, sigField, signature);
+			return true;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("signAuthorization failed: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "signIfSignable",
+			description = "If the resolved authorization is signable, resolves the user-provided IKeyRealm and signs the entity. No-op when not signable. Throws when signable but no key realm is configured.")
+	public static boolean signIfSignable(@Nullable Object authzEntity, @Nullable Object domainContext) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("signIfSignable: entity and domainContext are required");
+		}
+		if (!isAuthorizationSignable(domainContext)) {
+			return true;
+		}
+		IKeyRealm realm = resolveKeyRealm(domainContext);
+		return signAuthorization(authzEntity, domainContext, realm);
+	}
+
+	@Expression(name = "verifyIfSignable",
+			description = "If the resolved authorization is signable, resolves the user-provided IKeyRealm and verifies the entity's signature. Returns true when not signable or signature valid; false on signature mismatch. Throws when signable but no key realm is configured.")
+	public static boolean verifyIfSignable(@Nullable Object authzEntity, @Nullable Object domainContext) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("verifyIfSignable: entity and domainContext are required");
+		}
+		if (!isAuthorizationSignable(domainContext)) {
+			return true;
+		}
+		IKeyRealm realm = resolveKeyRealm(domainContext);
+		return verifyAuthorizationSignature(authzEntity, domainContext, realm);
+	}
+
+	@Expression(name = "verifyAuthorizationSignature",
+			description = "Verifies the signature on an authorization entity by invoking getDataToSign, reading the signature field, and calling keyRealm.getKeyForSignatureVerification().verifySignature. Returns true on valid signature, false on mismatch; throws on misconfiguration.")
+	public static boolean verifyAuthorizationSignature(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable Object keyRealmObj) {
+		if (authzEntity == null || domainContext == null || keyRealmObj == null) {
+			throw new ApiException("verifyAuthorizationSignature: entity, domainContext and keyRealm are required");
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.signable()) {
+			throw new ApiException("verifyAuthorizationSignature: authorization is not signable on the resolved domain");
+		}
+		ObjectAddress dataMethod = authzDef.getDataToSignMethod();
+		ObjectAddress sigField = authzDef.signatureField();
+		if (dataMethod == null) {
+			throw new ApiException("verifyAuthorizationSignature: signable authorization has no getDataToSign method configured");
+		}
+		if (sigField == null) {
+			throw new ApiException("verifyAuthorizationSignature: signable authorization has no signature field configured");
+		}
+		IKeyRealm realm = (IKeyRealm) unwrapOptional(keyRealmObj);
+		if (realm == null) {
+			throw new ApiException("verifyAuthorizationSignature: keyRealm is null");
+		}
+		IReflection reflection = DefaultMapper.reflection();
+		byte[] data;
+		byte[] signature;
+		IKey key;
+		try {
+			data = reflection.invokeMethod(
+					authzEntity,
+					dataMethod.toString(),
+					IClass.getClass(byte[].class));
+			if (data == null) {
+				throw new ApiException("verifyAuthorizationSignature: getDataToSign returned null");
+			}
+			Object sigVal = reflection.getFieldValue(authzEntity, sigField.toString());
+			if (!(sigVal instanceof byte[] sig)) {
+				throw new ApiException("verifyAuthorizationSignature: signature field on authorization entity is empty or not a byte[]");
+			}
+			signature = sig;
+			key = realm.getKeyForSignatureVerification();
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("verifyAuthorizationSignature failed: " + e.getMessage(), e);
+		}
+		// Crypto errors during verification (malformed signature bytes, decoding
+		// failure, key/algorithm mismatch) map to "signature invalid" rather than
+		// surfacing as a misconfiguration ApiException. A tampered token must
+		// land as 401, not 500.
+		try {
+			return key.verifySignature(signature, data);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	// ----- Encode authorization to transport-friendly form (Phase 3) -----
+
+	@Expression(name = "hasEncodeMethod",
+			description = "Returns true when the resolved authorization definition declares an encode method (set via .refreshable().encode(method) on the DSL).")
+	public static boolean hasEncodeMethod(@Nullable Object domainContext) {
+		Object def = authorizationDefinition(domainContext);
+		return def instanceof IDomainAuthorizationDefinition d && d.encodeMethod() != null;
+	}
+
+	@Expression(name = "encodeAuthorization",
+			description = "Invokes the user-declared encode method on an authorization entity and returns its result (typically a String for HTTP transport, or a byte[] for binary protocols). Return type is whatever the entity's method returns.")
+	public static Object encodeAuthorization(@Nullable Object authzEntity, @Nullable Object domainContext) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("encodeAuthorization: entity and domainContext are required");
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || authzDef.encodeMethod() == null) {
+			throw new ApiException("encodeAuthorization: no encode method configured on authorization definition");
+		}
+		String methodName = authzDef.encodeMethod().toString();
+		try {
+			IReflection reflection = DefaultMapper.reflection();
+			IClass<?> entityClass = IClass.getClass(authzEntity.getClass());
+			com.garganttua.core.reflection.IMethod method = reflection.resolveMethod(entityClass, methodName)
+					.orElseThrow(() -> new ApiException("encodeAuthorization: method '" + methodName
+							+ "' not found on " + authzEntity.getClass().getName()));
+			return method.invoke(authzEntity);
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("encodeAuthorization failed: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "encodeIfPossible",
+			description = "If the resolved authorization declares an encode method, invokes it and returns the encoded form. Returns null when no encode method is configured (no-op for setups that ship the entity directly).")
+	public static @Nullable Object encodeIfPossible(@Nullable Object authzEntity, @Nullable Object domainContext) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("encodeIfPossible: entity and domainContext are required");
+		}
+		if (!hasEncodeMethod(domainContext)) {
+			return null;
+		}
+		return encodeAuthorization(authzEntity, domainContext);
+	}
+
+	// ----- Refresh authorization (Phase 2) -----
+
+	@Expression(name = "isAuthorizationRefreshable",
+			description = "Returns true if the resolved authorization definition is configured as refreshable (i.e. .refreshable() was called on its DSL).")
+	public static boolean isAuthorizationRefreshable(@Nullable Object domainContext) {
+		Object def = authorizationDefinition(domainContext);
+		return def instanceof IDomainAuthorizationDefinition d && d.refreshable();
+	}
+
+	@Expression(name = "refreshNotRevoked",
+			description = "Reads the refresh-revoked field on an authorization entity (the field declared by .refreshable().revokable(field)). Returns true if not revoked or no refresh-revoked field is configured. Returns false if the field reads true.")
+	public static boolean refreshNotRevoked(@Nullable Object authzEntity, @Nullable Object domainContext) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("refreshNotRevoked: entity and domainContext are required");
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
+			throw new ApiException("refreshNotRevoked: authorization definition not resolved");
+		}
+		ObjectAddress refreshRevoked = authzDef.refreshRevoked();
+		if (refreshRevoked == null) {
+			// No refresh-revoked field configured — treat as never revoked.
+			return true;
+		}
+		try {
+			Object value = DefaultMapper.reflection().getFieldValue(authzEntity, refreshRevoked.toString());
+			return !Boolean.TRUE.equals(value);
+		} catch (Exception e) {
+			throw new ApiException("refreshNotRevoked: failed to read refresh-revoked field: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "refreshNotExpired",
+			description = "Reads the refresh-expiration Instant on an authorization entity (the field declared by .refreshable().expirable(field)). Returns true when the expiration is in the future or no field is configured. Returns false when the refresh has expired.")
+	public static boolean refreshNotExpired(@Nullable Object authzEntity, @Nullable Object domainContext) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("refreshNotExpired: entity and domainContext are required");
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
+			throw new ApiException("refreshNotExpired: authorization definition not resolved");
+		}
+		ObjectAddress refreshExpiration = authzDef.refreshExpiration();
+		if (refreshExpiration == null) {
+			// No refresh-expiration field configured — treat as no expiration.
+			return true;
+		}
+		try {
+			Object value = DefaultMapper.reflection().getFieldValue(authzEntity, refreshExpiration.toString());
+			if (!(value instanceof java.time.Instant exp)) {
+				// Field present but null or wrong type — treat as expired (refuse).
+				return false;
+			}
+			return exp.isAfter(java.time.Instant.now());
+		} catch (Exception e) {
+			throw new ApiException("refreshNotExpired: failed to read refresh-expiration field: " + e.getMessage(), e);
+		}
+	}
+
+	@Expression(name = "findPrincipalByOwnerUuid",
+			description = "Looks up the principal entity in the authenticator domain's repository using the ownerId stored on an existing authorization. Returns the entity or throws if absent.")
+	public static Object findPrincipalByOwnerUuid(@Nullable Object authzEntity, @Nullable Object authenticatorDomain, @Nullable Object repositoryObj) {
+		if (authzEntity == null || authenticatorDomain == null || repositoryObj == null) {
+			throw new ApiException("findPrincipalByOwnerUuid: entity, authenticatorDomain and repository are required");
+		}
+		IDomain<?> domain = toDomain(authenticatorDomain);
+		IRepository repo = (IRepository) repositoryObj;
+
+		IDomain<?> authzDomain = resolveAuthorizationDomain(domain);
+		if (authzDomain == null) {
+			throw new ApiException("findPrincipalByOwnerUuid: no authorization domain linked to '"
+					+ (domain != null ? domain.getDomainName() : "<null>") + "'");
+		}
+		ObjectAddress ownedField = authzDomain.getDomainDefinition().owned();
+		if (ownedField == null) {
+			throw new ApiException("findPrincipalByOwnerUuid: authorization domain '"
+					+ authzDomain.getDomainName() + "' is not owned");
+		}
+		Object ownerUuid;
+		try {
+			ownerUuid = DefaultMapper.reflection().getFieldValue(authzEntity, ownedField.toString());
+		} catch (Exception e) {
+			throw new ApiException("findPrincipalByOwnerUuid: failed to read ownerId from authorization: " + e.getMessage(), e);
+		}
+		if (ownerUuid == null) {
+			throw new ApiException("findPrincipalByOwnerUuid: authorization has no ownerId set");
+		}
+		ObjectAddress uuidField = domain.getEntityDefinition() != null ? domain.getEntityDefinition().uuid() : null;
+		if (uuidField == null) {
+			throw new ApiException("findPrincipalByOwnerUuid: authenticator domain '"
+					+ domain.getDomainName() + "' has no uuid field");
+		}
+		IFilter filter = Filter.eq(uuidField.toString(), ownerUuid);
+		List<Object> results = repo.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+		if (results == null || results.isEmpty()) {
+			throw new ApiException("Principal not found for ownerId: " + ownerUuid);
+		}
+		return results.get(0);
+	}
+
+	@Expression(name = "synthAuthFromPrincipal",
+			description = "Builds a synthetic IAuthentication from a resolved principal and the authorities/type carried by an existing authorization entity, used to feed createAuthorizationEntity2 during a refresh operation.")
+	public static IAuthentication synthAuthFromPrincipal(@Nullable Object principal, @Nullable Object existingAuthzEntity, @Nullable Object domainContext) {
+		if (principal == null || existingAuthzEntity == null || domainContext == null) {
+			throw new ApiException("synthAuthFromPrincipal: principal, existingAuthz and domainContext are required");
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
+			throw new ApiException("synthAuthFromPrincipal: authorization definition not resolved");
+		}
+		IReflection reflection = DefaultMapper.reflection();
+		Object tokenType = null;
+		if (authzDef.type() != null) {
+			try {
+				tokenType = reflection.getFieldValue(existingAuthzEntity, authzDef.type().toString());
+			} catch (Exception ignored) {
+				// keep null — the new entity will simply have no type
+			}
+		}
+		List<String> authorities = null;
+		if (authzDef.authorities() != null) {
+			try {
+				Object raw = reflection.getFieldValue(existingAuthzEntity, authzDef.authorities().toString());
+				if (raw instanceof List<?> list) {
+					@SuppressWarnings("unchecked")
+					List<String> typed = (List<String>) list;
+					authorities = typed;
+				}
+			} catch (Exception ignored) {
+				// keep null
+			}
+		}
+		return new com.garganttua.api.commons.security.authentication.Authentication(
+				true,
+				principal,
+				null,
+				tokenType,
+				authorities,
+				true, true, true, true);
 	}
 
 	@Expression(name = "findByLogin", description = "Finds an entity by login field in the repository. Returns the entity or throws if not found.")
