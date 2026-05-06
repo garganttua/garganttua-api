@@ -25,6 +25,8 @@ public record Operation(
 	static BusinessOperation computeBusinessOperation(TechnicalOperation techOp, Scope scope, OperationType type) {
 		if (type == OperationType.authentication)
 			return BusinessOperation.authenticate;
+		if (type == OperationType.refreshAuthorization)
+			return BusinessOperation.refreshAuthorization;
 		if (type == OperationType.usesCase)
 			return BusinessOperation.useCase;
 		if (type == OperationType.workflow)
@@ -46,6 +48,9 @@ public record Operation(
 			}
 			return "authenticate-one-" + Singularizer.toSingular(entityName);
 		}
+		if (type == OperationType.refreshAuthorization) {
+			return "refresh-authorization-" + Singularizer.toSingular(entityName);
+		}
 		if (scope == Scope.allEntities || scope == Scope.listOfEntities) {
 			return techOp + "-" + scope + "-" + Pluralizer.toPlural(entityName);
 		}
@@ -59,6 +64,8 @@ public record Operation(
 		String base = "/" + Pluralizer.toPlural(entity.getSimpleName().toLowerCase());
 		if (type == OperationType.authentication)
 			return new OperationPath(base + "/authenticate");
+		if (type == OperationType.refreshAuthorization)
+			return new OperationPath(base + "/refresh");
 		if (scope == Scope.oneEntity)
 			return new OperationPath(base + "/${uuid}");
 		return new OperationPath(base);

@@ -46,6 +46,18 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 				OperationType.authentication, false, Access.anonymous);
 	}
 
+	/**
+	 * Refresh-authorization operation: trades a still-valid (non-expired,
+	 * non-revoked) authorization for a freshly issued one. Runs on the
+	 * authenticator domain. Anonymous from the framework's perspective — the
+	 * caller authenticates by presenting the existing authorization in the
+	 * request body, and the script validates it directly.
+	 */
+	public static OperationDefinition refreshAuthorization(String domainName, IClass<?> entity) {
+		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity,
+				OperationType.refreshAuthorization, false, Access.anonymous);
+	}
+
 	public static OperationDefinition workflowWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
 			Scope scope) {
 		return new OperationDefinition(domainName, operation, entity, scope, OperationType.workflow, true, Access.authenticated);

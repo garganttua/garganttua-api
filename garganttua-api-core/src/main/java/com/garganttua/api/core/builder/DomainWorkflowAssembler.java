@@ -36,7 +36,8 @@ class DomainWorkflowAssembler<E> {
 			BusinessOperation.update.getLabel(), "scripts/business/UPDATE_ONE.gs",
 			BusinessOperation.deleteOne.getLabel(), "scripts/business/DELETE_ONE.gs",
 			BusinessOperation.deleteAll.getLabel(), "scripts/business/DELETE_ALL.gs",
-			BusinessOperation.authenticate.getLabel(), "scripts/business/AUTHENTICATE.gs"
+			BusinessOperation.authenticate.getLabel(), "scripts/business/AUTHENTICATE.gs",
+			BusinessOperation.refreshAuthorization.getLabel(), "scripts/business/REFRESH_AUTHORIZATION.gs"
 	);
 
 	private final String domainName;
@@ -272,9 +273,14 @@ class DomainWorkflowAssembler<E> {
 	/**
 	 * Stage 5 — Business rules. Returns the list of code variable names for the guard chain.
 	 */
-	/** Guard to skip business rules for authenticate operations (no caller available). */
+	/**
+	 * Guard to skip business rules for operations that have no caller available
+	 * — namely {@code authenticate} and {@code refreshAuthorization}, which both
+	 * run anonymously with the credentials carried in the body.
+	 */
 	private static final String NOT_AUTHENTICATE_GUARD =
-			"equals(equals(businessOperation(@0), \"authenticate\"), false)";
+			"and(equals(equals(businessOperation(@0), \"authenticate\"), false),"
+			+ " equals(equals(businessOperation(@0), \"refreshAuthorization\"), false))";
 
 	private List<String> buildBusinessRulesStages(IWorkflowBuilder builder, String upstreamGuard) {
 		List<String> codeVars = new ArrayList<>();
@@ -460,8 +466,10 @@ class DomainWorkflowAssembler<E> {
 	 */
 	private void buildExitCodeStage(IWorkflowBuilder builder, List<String> allCodeVars, List<String> operationCodeVars) {
 		StringBuilder exitCodeScript = new StringBuilder("405 -> 405\n");
-		// Error codes from any stage (infrastructure or operation)
-		for (int code : List.of(500, 409, 404, 403, 401, 400)) {
+		// Error codes from any stage (infrastructure or operation).
+		// Order matters — 500 is the most severe, but 415 / 406 must beat 405
+		// (the default), so they sit above the success branch and below the rest.
+		for (int code : List.of(500, 415, 409, 406, 404, 403, 401, 400)) {
 			for (String codeVar : allCodeVars) {
 				exitCodeScript.append("    | equals(@").append(codeVar).append(", ").append(code).append(") -> ").append(code).append("\n");
 			}

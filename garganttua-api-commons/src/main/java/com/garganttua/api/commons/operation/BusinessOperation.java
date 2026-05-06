@@ -12,6 +12,7 @@ public enum BusinessOperation {
     deleteOne("deleteOne"),
     deleteAll("deleteAll"),
     authenticate("authenticate"),
+    refreshAuthorization("refreshAuthorization"),
     useCase("useCase"),
     workflow("workflow");
 

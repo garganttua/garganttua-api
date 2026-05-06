@@ -635,6 +635,18 @@ public class DomainBuilder<E>
                     TechnicalOperation.create, Scope.oneEntity);
         }
 
+        // Auto-register refreshAuthorization workflow when the authenticator has
+        // an authorization config and the linked authorization is refreshable.
+        // The runtime guard inside REFRESH_AUTHORIZATION.gs additionally checks
+        // isAuthorizationRefreshable so a misconfiguration just rejects requests.
+        if (this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig()
+                && !this.workflows.containsKey(BusinessOperation.refreshAuthorization.getLabel())) {
+            registerCrudMetadata(BusinessOperation.refreshAuthorization.getLabel(),
+                    TechnicalOperation.create, Scope.oneEntity);
+        }
+
         // Compute configuration flags
         boolean securityEnabled = this.securityBuilder != null
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
