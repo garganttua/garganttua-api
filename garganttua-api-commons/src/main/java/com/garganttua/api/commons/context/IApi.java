@@ -40,12 +40,12 @@ public interface IApi extends ILifecycle {
 
     // --- Workflow invocation ---
 
-    default IOperationResponse invoke(String domainName, IOperationRequest request) {
-        return getDomainOrThrow(domainName).invoke(request);
+    default IOperationResponse invoke(IOperationRequest request) {
+        return getDomainOrThrow(request.domain()).invoke(request);
     }
 
-    default IOperationResponse invoke(String domainName, IOperationRequest request, WorkflowExecutionOptions options) {
-        return getDomainOrThrow(domainName).invoke(request, options);
+    default IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) {
+        return getDomainOrThrow(request.domain()).invoke(request, options);
     }
 
     // --- CRUD convenience methods ---

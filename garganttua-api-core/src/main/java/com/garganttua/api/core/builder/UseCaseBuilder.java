@@ -158,6 +158,10 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
         return this.securityBuilder != null && this.securityBuilder.hasAuthority();
     }
 
+    String getCustomAuthority() {
+        return this.securityBuilder != null ? this.securityBuilder.getCustomAuthority() : null;
+    }
+
     @Override
     protected synchronized IUseCase<I, O> doBuild() throws ApiException {
         return new UseCase<>(

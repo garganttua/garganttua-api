@@ -20,5 +20,12 @@ public interface IWorkflowDefinition {
 
 	boolean authority();
 
+	/**
+	 * Custom authority name configured on the workflow via
+	 * {@code workflow().security().authority(String)}, or {@code null} when no
+	 * explicit name was provided.
+	 */
+	String authorityName();
+
 	boolean custom();
 }

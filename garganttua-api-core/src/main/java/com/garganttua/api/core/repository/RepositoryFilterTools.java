@@ -243,13 +243,23 @@ public class RepositoryFilterTools {
 
         Filter buildTenantFilter() {
             if (!multiTenant) return null;
-            ObjectAddress tenantIdField = domainDefinition.entityDefinition() != null
-                    ? domainDefinition.entityDefinition().tenantId()
-                    : null;
-            if (requestedTenantId == null || tenantIdField == null) {
+            if (requestedTenantId == null || domainDefinition.entityDefinition() == null) {
                 return null;
             }
-            return Filter.eq(tenantIdField.toString(), requestedTenantId);
+            ObjectAddress filterField = domainDefinition.entityDefinition().tenantId();
+            // For a tenant entity (domain marked .tenant(true)) that does NOT
+            // carry a tenantId field, the entity's uuid plays the role of
+            // tenantId — without this fallback a non-super caller would see
+            // every tenant row (no filter → no isolation). When tenantId IS
+            // configured we keep filtering on it for backwards compatibility
+            // with domains that mark .tenant(true) + .tenantId(field) together.
+            if (filterField == null && Boolean.TRUE.equals(domainDefinition.tenant())) {
+                filterField = domainDefinition.entityDefinition().uuid();
+            }
+            if (filterField == null) {
+                return null;
+            }
+            return Filter.eq(filterField.toString(), requestedTenantId);
         }
 
         Filter buildShareFilter() {

@@ -66,6 +66,31 @@ public class SecurityExpressions {
 		return opDef.authority();
 	}
 
+	@Expression(name = "operationAuthorityName",
+			description = "Returns the authority name enforced for the operation: the explicit name configured via "
+					+ "authority(String), or the auto-generated default <domain>:<operation> when only authority(true) "
+					+ "was set. Returns null when no authority is required.")
+	public static @Nullable String operationAuthorityName(@Nullable Object operation) {
+		if (operation == null) return null;
+		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
+		if (opDef == null) return null;
+		return opDef.effectiveAuthorityName();
+	}
+
+	@Expression(name = "callerHasAuthority",
+			description = "Returns true when the caller carries an authority equal to the supplied name. "
+					+ "Safe: returns false when caller is null, has no authorities, or the name is blank. "
+					+ "Super-tenant and super-owner callers bypass the check.")
+	public static boolean callerHasAuthority(@Nullable Object caller, @Nullable Object authorityName) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		if (c == null) return false;
+		if (c.superTenant() || c.superOwner()) return true;
+		Object name = unwrapOptional(authorityName);
+		if (!(name instanceof String authority) || authority.isBlank()) return false;
+		java.util.List<String> authorities = c.authorities();
+		return authorities != null && authorities.contains(authority);
+	}
+
 	@Expression(name = "isSecurityDisabled", description = "Returns true if the domain has security disabled")
 	public static boolean isSecurityDisabled(Object context) {
 		IDomain<?> dc = toDomain(context);
@@ -293,7 +318,11 @@ public class SecurityExpressions {
 		}
 	}
 
-	@Expression(name = "lookupValidAuthorization", description = "Looks up a valid (non-expired, non-revoked) authorization owned by the principal via the authorization domain's readAll workflow.")
+	@Expression(name = "lookupValidAuthorization",
+			description = "Looks up a valid (non-expired, non-revoked) authorization owned by the principal "
+					+ "via a direct repository query on the authorization domain. Bypasses the workflow on "
+					+ "purpose: this is a framework-internal lookup, not user-triggered traffic, so the "
+					+ "authorization pipeline (which expects a caller-supplied token) does not apply.")
 	public static @Nullable Object lookupValidAuthorization(@Nullable Object authorizationDefObj,
 			@Nullable Object domainContextObj, @Nullable Object principalUuid, @Nullable Object tenantId) {
 		if (authorizationDefObj == null || domainContextObj == null || principalUuid == null) {
@@ -332,14 +361,14 @@ public class SecurityExpressions {
 					: filters.size() == 1 ? filters.get(0)
 					: Filter.and(filters.toArray(new Filter[0]));
 
-			ICaller superCaller = Caller.createSuperCaller();
-			var response = authzDomain.readAll(combinedFilter, null, null, superCaller);
-			if (response.getResponseCode() == com.garganttua.api.commons.service.OperationResponseCode.OK
-					&& response.getResponse() instanceof java.util.List<?> results
-					&& !results.isEmpty()) {
-				return results.get(0);
-			}
-			return null;
+			// Direct repository query — bypasses VERIFY_AUTHORIZATION (which would
+			// reject an internal lookup that has no caller-supplied token) and
+			// VERIFY_TENANT (irrelevant here: the principal/tenant scoping is
+			// already encoded in the filters above). This is a framework-internal
+			// read, not a user-triggered request.
+			java.util.List<Object> results = authzDomain.getRepository().getEntities(
+					Optional.empty(), Optional.ofNullable(combinedFilter), Optional.empty());
+			return (results != null && !results.isEmpty()) ? results.get(0) : null;
 		} catch (Exception e) {
 			return null;
 		}

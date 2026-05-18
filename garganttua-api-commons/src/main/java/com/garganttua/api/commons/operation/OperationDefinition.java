@@ -8,42 +8,42 @@ import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 
 public record OperationDefinition(String domainName, TechnicalOperation technicalOperation, IClass<?> entity, Scope scope,
-		OperationType type, boolean authority, Access access) {
+		OperationType type, boolean authority, String authorityName, Access access) {
 
 	// --- Static factory methods ---
 
 	public static OperationDefinition readOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition createOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition useCaseWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
 			Scope scope) {
-		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, true, Access.tenant);
+		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition deleteAllWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition deleteOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition updateOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition readAllWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, null, Access.tenant);
 	}
 
 	public static OperationDefinition authenticate(String domainName, IClass<?> entity) {
 		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity,
-				OperationType.authentication, false, Access.anonymous);
+				OperationType.authentication, false, null, Access.anonymous);
 	}
 
 	/**
@@ -55,44 +55,44 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 	 */
 	public static OperationDefinition refreshAuthorization(String domainName, IClass<?> entity) {
 		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity,
-				OperationType.refreshAuthorization, false, Access.anonymous);
+				OperationType.refreshAuthorization, false, null, Access.anonymous);
 	}
 
 	public static OperationDefinition workflowWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
 			Scope scope) {
-		return new OperationDefinition(domainName, operation, entity, scope, OperationType.workflow, true, Access.authenticated);
+		return new OperationDefinition(domainName, operation, entity, scope, OperationType.workflow, true, null, Access.authenticated);
 	}
 
-	public static OperationDefinition readOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	public static OperationDefinition readOne(String domainName, IClass<?> entity, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition createOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	public static OperationDefinition createOne(String domainName, IClass<?> entity, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition readAll(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, authority, access);
+	public static OperationDefinition readAll(String domainName, IClass<?> entity, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition updateOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new OperationDefinition(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	public static OperationDefinition updateOne(String domainName, IClass<?> entity, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition deleteOne(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, authority, access);
+	public static OperationDefinition deleteOne(String domainName, IClass<?> entity, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition deleteAll(String domainName, IClass<?> entity, boolean authority, Access access) {
-		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, authority, access);
+	public static OperationDefinition deleteAll(String domainName, IClass<?> entity, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition useCase(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, Access access) {
-		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, authority, access);
+	public static OperationDefinition useCase(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, authority, authorityName, access);
 	}
 
-	public static OperationDefinition workflow(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, Access access) {
-		return new OperationDefinition(domainName, operation, entity, scope, OperationType.workflow, authority, access);
+	public static OperationDefinition workflow(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, String authorityName, Access access) {
+		return new OperationDefinition(domainName, operation, entity, scope, OperationType.workflow, authority, authorityName, access);
 	}
 
 	// --- Operation derivation ---
@@ -113,6 +113,21 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 
 	public BusinessOperation getBusinessOperation() {
 		return Operation.computeBusinessOperation(technicalOperation, scope, type);
+	}
+
+	/**
+	 * Resolves the authority name actually enforced by the pipeline:
+	 * <ul>
+	 *   <li>{@code null} when {@link #authority()} is {@code false} (no check);</li>
+	 *   <li>the explicit {@link #authorityName()} when one was configured;</li>
+	 *   <li>otherwise the auto-generated default
+	 *       {@code <domainName>:<businessOperation.label>}.</li>
+	 * </ul>
+	 */
+	public String effectiveAuthorityName() {
+		if (!authority) return null;
+		if (authorityName != null && !authorityName.isBlank()) return authorityName;
+		return domainName + ":" + getBusinessOperation().getLabel();
 	}
 
 	// --- Matching ---

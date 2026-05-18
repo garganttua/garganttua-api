@@ -149,6 +149,10 @@ public class DomainWorkflowBuilder<E>
 		return this.securityBuilder != null && this.securityBuilder.hasAuthority();
 	}
 
+	String getCustomAuthority() {
+		return this.securityBuilder != null ? this.securityBuilder.getCustomAuthority() : null;
+	}
+
 	boolean isSecurityDisabled() {
 		return this.securityBuilder != null && this.securityBuilder.isDisabled();
 	}

@@ -375,7 +375,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     @Override
     public IRequestBuilder request() {
-        return new RequestBuilder(this);
+        return RequestBuilder.builder(this);
     }
 
     @Override

@@ -171,6 +171,17 @@ public class DomainBuilder<E>
         return this;
     }
 
+    /**
+     * Package-private accessor used by {@link EntityBuilder} and
+     * {@link DtoBuilder} to skip the {@code tenantId} requirement when the
+     * domain entity is itself the tenant (its own uuid plays the role of
+     * tenantId — see {@code FilterContext.buildTenantFilter} for the
+     * downstream filter rewrite).
+     */
+    boolean isTenantDomain() {
+        return this.tenant;
+    }
+
     @Override
     public IDomainBuilder<E> owner(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
@@ -605,7 +616,8 @@ public class DomainBuilder<E>
                     ucb.getScope(),
                     ucb.getOperation(),
                     ucb.getAccess(),
-                    ucb.hasAuthority()));
+                    ucb.hasAuthority(),
+                    ucb.getCustomAuthority()));
         }
 
         // Build workflow definitions (metadata)
@@ -624,6 +636,7 @@ public class DomainBuilder<E>
                     wb.getOperation(),
                     wb.getAccess(),
                     wb.hasAuthority(),
+                    wb.getCustomAuthority(),
                     wb.isCustom()));
         }
 

@@ -57,4 +57,19 @@ public abstract class AbstractCrudScriptTest extends AbstractCrudIntegrationTest
 		request.arg(IOperationRequest.SUPER_OWNER, true);
 		return request;
 	}
+
+	/**
+	 * Non-super tenant script request. Use this when the test wants to exercise
+	 * the full security pipeline (token decoding, rejection) — the
+	 * {@code superTenantScriptRequest} variant bypasses VERIFY_AUTHORIZATION.
+	 */
+	protected static OperationRequest tenantScriptRequest(OperationDefinition operation, String tenantId) {
+		OperationRequest request = new OperationRequest(new HashMap<>());
+		request.arg(IOperationRequest.OPERATION, operation);
+		request.arg(IOperationRequest.TENANT_ID, tenantId);
+		request.arg(IOperationRequest.REQUESTED_TENANT_ID, tenantId);
+		request.arg(IOperationRequest.SUPER_TENANT, false);
+		request.arg(IOperationRequest.SUPER_OWNER, false);
+		return request;
+	}
 }

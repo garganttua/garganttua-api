@@ -143,6 +143,7 @@ class DomainWorkflowAssembler<E> {
 			if (isOwnerOrOwned) {
 				codeVars.add("_verify_owner_verify_owner_code");
 			}
+			codeVars.add("_verify_authority_verify_authority_code");
 		}
 
 		// CRUD operation code vars
@@ -385,6 +386,22 @@ class DomainWorkflowAssembler<E> {
 			ownerScript.up().up();
 			codeVars.add("_verify_owner_verify_owner_code");
 		}
+
+		// VERIFY_AUTHORITY — caller's authority check (per-operation, 403 on miss).
+		// Runs after token decoding / tenant / owner so the caller is fully resolved
+		// and the operation lookup is stable.
+		String authorityGuard = buildCompoundGuard(codeVars);
+		var authorityScript = builder.stage("verify-authority")
+				.script("classpath:scripts/security/VERIFY_AUTHORITY.gs")
+					.name("verify-authority")
+					.input("operationRequest", "@0")
+					.input("repository", "@1")
+					.input("domainContext", "@2");
+		if (authorityGuard != null) {
+			authorityScript.when(authorityGuard);
+		}
+		authorityScript.up().up();
+		codeVars.add("_verify_authority_verify_authority_code");
 
 		return codeVars;
 	}

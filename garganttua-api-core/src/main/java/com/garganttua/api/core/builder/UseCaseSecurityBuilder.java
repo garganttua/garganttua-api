@@ -13,6 +13,7 @@ public class UseCaseSecurityBuilder<I, O, E>
 
     private boolean disabled = false;
     private boolean authority = false;
+    private String customAuthority;
     private Access access = Access.authenticated;
 
     public UseCaseSecurityBuilder(IUseCaseBuilder<I, O, E> up) {
@@ -28,6 +29,14 @@ public class UseCaseSecurityBuilder<I, O, E>
     @Override
     public IUseCaseSecurityBuilder<I, O, E> authority(boolean authority) {
         this.authority = authority;
+        this.customAuthority = null;
+        return this;
+    }
+
+    @Override
+    public IUseCaseSecurityBuilder<I, O, E> authority(String customAuthority) {
+        this.authority = true;
+        this.customAuthority = java.util.Objects.requireNonNull(customAuthority, "Custom authority cannot be null");
         return this;
     }
 
@@ -41,40 +50,52 @@ public class UseCaseSecurityBuilder<I, O, E>
         return this.authority;
     }
 
+    String getCustomAuthority() {
+        return this.customAuthority;
+    }
+
     Access getAccess() {
         return this.access;
     }
 
     @Override
     protected synchronized IUseCaseSecurity doBuild() throws ApiException {
-        // Return a simple implementation of IUseCaseSecurity
-        return new UseCaseSecurityImpl(this.disabled, this.authority, this.access);
+        return new UseCaseSecurityImpl(this.disabled, this.authority, this.customAuthority, this.access);
     }
 
     @Override
     protected void doAutoDetection() throws ApiException {
-        // No auto-detection for use case security - all configuration is explicit
     }
 
     private static class UseCaseSecurityImpl implements IUseCaseSecurity {
         private final boolean disabled;
         private final boolean authority;
+        private final String customAuthority;
         private final Access access;
 
-        public UseCaseSecurityImpl(boolean disabled, boolean authority, Access access) {
+        public UseCaseSecurityImpl(boolean disabled, boolean authority, String customAuthority, Access access) {
             this.disabled = disabled;
             this.authority = authority;
+            this.customAuthority = customAuthority;
             this.access = access;
         }
 
+        @Override
         public boolean isDisabled() {
             return disabled;
         }
 
+        @Override
         public boolean hasAuthority() {
             return authority;
         }
 
+        @Override
+        public String customAuthority() {
+            return customAuthority;
+        }
+
+        @Override
         public Access getAccess() {
             return access;
         }

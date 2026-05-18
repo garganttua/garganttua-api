@@ -106,15 +106,23 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 	}
 
 	private OperationRequest readOneRequest(String rawAuthorization) {
-		// Seed an entity to avoid 404 noise
+		// Seed an entity to avoid 404 noise. Use the same tenantId as the
+		// caller below so the request reaches the entity.
 		User seeded = new User();
 		seeded.setUuid("u-1");
-		seeded.setTenantId("SUPER_TENANT");
+		seeded.setTenantId("acme");
 		seeded.setName("alice");
 		dao.getStorage().add(seeded);
 
-		OperationRequest req = superTenantRequest(
-				OperationDefinition.readOneWithStandardSecurity("users", IClass.getClass(User.class)));
+		// Non-super-tenant caller so VERIFY_AUTHORIZATION actually runs and
+		// the decoder paths under test get exercised (super-tenant would
+		// bypass the entire script). Operation has authority=false so the
+		// downstream VERIFY_AUTHORITY check doesn't 403 us — this suite is
+		// about decoder routing, not authority enforcement.
+		OperationRequest req = tenantRequest(
+				OperationDefinition.readOne("users", IClass.getClass(User.class),
+						false, null, com.garganttua.api.commons.operation.Access.tenant),
+				"acme");
 		req.arg("type", "uuid");
 		req.arg("identifier", "u-1");
 		if (rawAuthorization != null) {
@@ -125,7 +133,7 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 
 	private OperationDefinition anonymousReadOne() {
 		return new OperationDefinition("users", TechnicalOperation.read, IClass.getClass(User.class),
-				Scope.oneEntity, OperationType.standard, false, Access.anonymous);
+				Scope.oneEntity, OperationType.standard, false, null, Access.anonymous);
 	}
 
 	@Nested

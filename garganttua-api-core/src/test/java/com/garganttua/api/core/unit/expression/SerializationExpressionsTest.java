@@ -42,7 +42,7 @@ class SerializationExpressionsTest {
 
 	private static OperationDefinition opWith(TechnicalOperation tech) {
 		return new OperationDefinition("users", tech, IClass.getClass(Dto.class), Scope.oneEntity,
-				OperationType.standard, false, Access.anonymous);
+				OperationType.standard, false, null, Access.anonymous);
 	}
 
 	private static ISerializer fakeSerializer(MimeType mime, byte[] serialized, Object deserialized) {
@@ -340,7 +340,7 @@ class SerializationExpressionsTest {
 
 		private OperationDefinition opWithoutEntity() {
 			return new OperationDefinition("users", TechnicalOperation.create, null, Scope.oneEntity,
-					OperationType.standard, false, Access.anonymous);
+					OperationType.standard, false, null, Access.anonymous);
 		}
 
 		@Test

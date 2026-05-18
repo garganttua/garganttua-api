@@ -387,4 +387,21 @@ public abstract class AbstractCrudIntegrationTest {
         request.arg(IOperationRequest.SUPER_OWNER, true);
         return request;
     }
+
+    /**
+     * Non-super tenant caller. Use this when the test wants to exercise the
+     * full security pipeline (token decoding, rejection paths). Since the
+     * 2026-05-18 security-flaw remediation removed the super-tenant bypass
+     * from VERIFY_AUTHORIZATION, super-callers and tenant callers traverse
+     * the same path — but this helper keeps the intent explicit.
+     */
+    protected static OperationRequest tenantRequest(OperationDefinition operation, String tenantId) {
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, operation);
+        request.arg(IOperationRequest.TENANT_ID, tenantId);
+        request.arg(IOperationRequest.REQUESTED_TENANT_ID, tenantId);
+        request.arg(IOperationRequest.SUPER_TENANT, false);
+        request.arg(IOperationRequest.SUPER_OWNER, false);
+        return request;
+    }
 }

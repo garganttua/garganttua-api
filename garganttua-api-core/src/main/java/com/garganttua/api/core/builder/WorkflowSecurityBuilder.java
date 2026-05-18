@@ -50,7 +50,7 @@ public class WorkflowSecurityBuilder<E>
 
 	@Override
 	protected synchronized IWorkflowSecurity doBuild() throws ApiException {
-		return new WorkflowSecurityImpl(this.disabled, this.authority, this.access);
+		return new WorkflowSecurityImpl(this.disabled, this.authority, this.customAuthority, this.access);
 	}
 
 	@Override
@@ -77,11 +77,13 @@ public class WorkflowSecurityBuilder<E>
 
 		private final boolean disabled;
 		private final boolean authority;
+		private final String customAuthority;
 		private final Access access;
 
-		public WorkflowSecurityImpl(boolean disabled, boolean authority, Access access) {
+		public WorkflowSecurityImpl(boolean disabled, boolean authority, String customAuthority, Access access) {
 			this.disabled = disabled;
 			this.authority = authority;
+			this.customAuthority = customAuthority;
 			this.access = access;
 		}
 
@@ -93,6 +95,11 @@ public class WorkflowSecurityBuilder<E>
 		@Override
 		public boolean hasAuthority() {
 			return authority;
+		}
+
+		@Override
+		public String customAuthority() {
+			return customAuthority;
 		}
 
 		@Override

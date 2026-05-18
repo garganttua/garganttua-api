@@ -11,6 +11,12 @@
 #    decoded authorization as credentials. Store the resolved principal for
 #    downstream stages.
 #
+#  NOTE: there is no super-tenant short-circuit. The superTenant flag on a
+#  caller is a cross-tenancy *capability* (filter level), not a substitute for
+#  identity proof. Framework-internal operations (autoCreateMasterTenant,
+#  lookupValidAuthorization) write/read directly via the repository instead
+#  of going through this pipeline.
+#
 #  @in operationRequest: [0] IOperationRequest
 #  @in repository:       [1] IRepository
 #  @in domainContext:    [2] IDomain

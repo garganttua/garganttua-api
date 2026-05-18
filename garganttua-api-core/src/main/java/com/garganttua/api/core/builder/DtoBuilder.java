@@ -174,7 +174,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     private void throwExceptionIfNoTenantId() throws ApiException {
-        if (this.tenantId == null && isMultiTenantEnabled()) {
+        if (this.tenantId == null && isMultiTenantEnabled() && !isTenantDomain()) {
             throw new ApiException("No tenant id defined for dto " + this.dtoClass.getSimpleName());
         }
     }
@@ -184,6 +184,18 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
             return up().up() instanceof ApiBuilder acb && acb.isMultiTenant();
         } catch (Exception e) {
             return true; // default to strict
+        }
+    }
+
+    /**
+     * True when the parent domain is marked {@code .tenant(true)} — see
+     * {@link EntityBuilder} for the matching skip.
+     */
+    private boolean isTenantDomain() {
+        try {
+            return up() instanceof DomainBuilder<?> db && db.isTenantDomain();
+        } catch (Exception e) {
+            return false;
         }
     }
 

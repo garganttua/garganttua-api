@@ -9,5 +9,6 @@ public record UseCaseDefinition(
         Scope scope,
         TechnicalOperation operation,
         Access access,
-        boolean authority) implements IUseCaseDefinition {
+        boolean authority,
+        String authorityName) implements IUseCaseDefinition {
 }

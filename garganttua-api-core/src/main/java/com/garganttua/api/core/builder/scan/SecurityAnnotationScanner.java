@@ -17,6 +17,7 @@ import com.garganttua.api.commons.context.dsl.security.ISignableAuthorizationBui
 import com.garganttua.api.commons.security.annotations.Authentication;
 import com.garganttua.api.commons.security.annotations.AuthenticationAuthenticate;
 import com.garganttua.api.commons.security.annotations.Authenticator;
+import com.garganttua.api.commons.security.annotations.AuthenticatorAlwaysEnabled;
 import com.garganttua.api.commons.security.annotations.AuthenticatorAccountNonExpired;
 import com.garganttua.api.commons.security.annotations.AuthenticatorAccountNonLocked;
 import com.garganttua.api.commons.security.annotations.AuthenticatorAuthorities;
@@ -238,6 +239,9 @@ public final class SecurityAnnotationScanner {
 
                 applyAuthenticatorFields(reflection, authrBuilder, authrClass);
                 authrBuilder.scope(a.scope());
+                if (authrClass.getAnnotation(IClass.getClass(AuthenticatorAlwaysEnabled.class)) != null) {
+                    authrBuilder.alwaysEnabled(true);
+                }
 
                 // Link to the configured authentication strategies
                 for (Class<?> auth : a.authentications()) {
@@ -262,6 +266,10 @@ public final class SecurityAnnotationScanner {
                     authzAuth.lifeTime(a.authorizationLifeTime(), a.authorizationLifeTimeUnit());
                     authzAuth.refreshLifeTime(a.authorizationRefreshTokenLifeTime(),
                             a.authorizationRefreshTokenLifeTimeUnit());
+
+                    // Apply crypto / key configuration when the annotation declares it.
+                    applyAuthorizationKey(a, authrClass, authzAuth);
+
                     authzAuth.up();
                 }
 
@@ -273,6 +281,54 @@ public final class SecurityAnnotationScanner {
         if (registered > 0) {
             log.atDebug().log("Auto-detected {} @Authenticator class(es)", registered);
         }
+    }
+
+    /**
+     * Wires the {@code authorizationKey*} parameters of {@link Authenticator}
+     * onto the authenticator's authorization-key builder. Only the parts that
+     * can be resolved cleanly from the annotation alone are applied:
+     * <ul>
+     *   <li>{@code authorizationKey()} (when not {@code void.class}) — resolves
+     *       the key domain via {@code apiBuilder.domain(keyClass)};</li>
+     *   <li>{@code authorizationKeyUsage()} — copies the enum directly;</li>
+     *   <li>{@code authorizationSignatureAlgorithm()} — copies the enum directly;</li>
+     *   <li>{@code authorizationKeyLifeTime()} + {@code authorizationKeyLifeTimeUnit()} —
+     *       sets the configured TTL.</li>
+     * </ul>
+     * {@code authorizationKeyAlgorithm()} (a String name) is intentionally
+     * <strong>not</strong> wired here: the DSL takes an {@link com.garganttua.core.crypto.IKeyAlgorithm}
+     * instance and the framework ships no name-to-instance registry. Callers
+     * who need a specific algorithm must use the fluent DSL to inject one.
+     */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private void applyAuthorizationKey(Authenticator a, IClass<?> authrClass,
+            com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationBuilder<Object> authzAuth)
+            throws ApiException {
+        Class<?> keyClass = a.authorizationKey();
+        if (keyClass == null || keyClass == void.class) {
+            // No key domain declared — skip the whole key sub-builder so users
+            // who don't enable signing/crypto see no key context wired.
+            if (!a.authorizationKeyAlgorithm().isBlank()) {
+                log.atWarn().log(
+                        "@Authenticator on {} declares authorizationKeyAlgorithm=\"{}\" but no authorizationKey "
+                                + "class — algorithm resolution is skipped (use the fluent DSL to wire an IKeyAlgorithm)",
+                        authrClass.getSimpleName(), a.authorizationKeyAlgorithm());
+            }
+            return;
+        }
+
+        IDomainBuilder<Object> keyDomain = (IDomainBuilder<Object>) this.apiBuilder.domain((IClass) IClass.getClass(keyClass));
+        var keyBuilder = authzAuth.key(keyDomain);
+        keyBuilder.usage(a.authorizationKeyUsage());
+        keyBuilder.signatureAlgorithm(a.authorizationSignatureAlgorithm());
+        keyBuilder.lifeTime(a.authorizationKeyLifeTime(), a.authorizationKeyLifeTimeUnit());
+        if (!a.authorizationKeyAlgorithm().isBlank()) {
+            log.atWarn().log(
+                    "@Authenticator on {} declares authorizationKeyAlgorithm=\"{}\" — ignored at scan time "
+                            + "(no name-to-IKeyAlgorithm registry); wire it manually via .algorithm(...) if needed",
+                    authrClass.getSimpleName(), a.authorizationKeyAlgorithm());
+        }
+        keyBuilder.up();
     }
 
     private void applyAuthenticatorFields(IReflection reflection, IAuthenticatorBuilder<Object> authrBuilder, IClass<?> authrClass)

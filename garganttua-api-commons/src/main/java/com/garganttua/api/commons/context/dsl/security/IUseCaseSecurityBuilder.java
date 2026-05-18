@@ -12,6 +12,8 @@ public interface IUseCaseSecurityBuilder<I, O, E>
 
     IUseCaseSecurityBuilder<I, O, E> authority(boolean authority);
 
+    IUseCaseSecurityBuilder<I, O, E> authority(String customAuthority);
+
     IUseCaseSecurityBuilder<I, O, E> access(Access acceess);
 
 }

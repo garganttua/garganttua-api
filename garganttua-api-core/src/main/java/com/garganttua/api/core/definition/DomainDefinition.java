@@ -64,7 +64,7 @@ public record DomainDefinition<E>(
 
     @FunctionalInterface
     private interface CrudFactory {
-        OperationDefinition create(String domainName, IClass<?> entityClass, boolean authority, Access access);
+        OperationDefinition create(String domainName, IClass<?> entityClass, boolean authority, String authorityName, Access access);
     }
 
     private void addCrudIfPresent(List<OperationDefinition> ops, BusinessOperation bo, CrudFactory f, IClass<?> entityClass) {
@@ -72,7 +72,7 @@ public record DomainDefinition<E>(
         if (wfDef != null) {
             Access access = wfDef.access() != null ? wfDef.access() : Access.authenticated;
             boolean authority = wfDef.authority();
-            ops.add(f.create(domainName, entityClass, authority, access));
+            ops.add(f.create(domainName, entityClass, authority, wfDef.authorityName(), access));
         }
     }
 
@@ -84,7 +84,7 @@ public record DomainDefinition<E>(
                     Objects.requireNonNullElse(wfDef.operation(), TechnicalOperation.read),
                     entityClass,
                     Objects.requireNonNullElse(wfDef.scope(), Scope.allEntities),
-                    wfDef.authority(), wfDef.access()));
+                    wfDef.authority(), wfDef.authorityName(), wfDef.access()));
         }
     }
 
@@ -95,7 +95,7 @@ public record DomainDefinition<E>(
                     Objects.requireNonNullElse(ucDef.operation(), TechnicalOperation.read),
                     entityClass,
                     Objects.requireNonNullElse(ucDef.scope(), Scope.allEntities),
-                    ucDef.authority(), ucDef.access()));
+                    ucDef.authority(), ucDef.authorityName(), ucDef.access()));
         }
     }
 

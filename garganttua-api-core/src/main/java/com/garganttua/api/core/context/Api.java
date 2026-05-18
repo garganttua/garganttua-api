@@ -10,21 +10,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.commons.ApiException;
-import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.serialization.ISerializer;
-import com.garganttua.api.commons.operation.OperationDefinition;
-import com.garganttua.api.commons.service.IOperationRequest;
-import com.garganttua.api.commons.service.IOperationResponse;
-import com.garganttua.api.commons.service.OperationResponseCode;
-import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionContext;
@@ -222,67 +215,72 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
         return null;
     }
 
-    private IOperationRequest buildStartupRequest(IDomain<?> domainContext,
-            OperationDefinition operation, ICaller caller) {
-        OperationRequest request = new OperationRequest(new HashMap<>());
-        request.arg(IOperationRequest.OPERATION, operation);
-        request.arg(IOperationRequest.TENANT_ID, caller.tenantId());
-        request.arg(IOperationRequest.REQUESTED_TENANT_ID, caller.requestedTenantId());
-        request.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
-        request.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
-        return request;
-    }
-
+    /**
+     * Bootstraps the master tenant row by writing it directly to the tenant
+     * domain's repository — <strong>without</strong> going through the public
+     * workflow pipeline. This is a deliberate framework-internal operation:
+     *
+     * <ul>
+     *   <li>It runs synchronously during {@code onStart()}, before any user
+     *       traffic, so there is no caller to authorize anyway.</li>
+     *   <li>Going through {@code Domain.invoke()} would force this bootstrap
+     *       through {@code VERIFY_AUTHORIZATION}, which has no idea how to
+     *       authorize a system-level write — historically this required a
+     *       super-tenant short-circuit in the script that turned out to be a
+     *       security flaw (any caller could fake {@code superTenant=true}).</li>
+     * </ul>
+     *
+     * <p>Consequence: {@code @EntityBeforeCreate} / {@code @EntityAfterCreate}
+     * hooks declared on the tenant entity <strong>do not fire</strong> for the
+     * master row. This is intentional — those hooks belong to user-triggered
+     * lifecycle, not to framework bootstrap. If you need to react to the
+     * master tenant being created, hook on {@link ILifecycle#onStart()} of the
+     * tenant domain (which still runs after this method).
+     */
     private void autoCreateMasterTenant(IDomain<?> tenantDomain) {
         log.info("Auto-creating master tenant with id '{}'", this.superTenantId);
-        ICaller caller = new Caller(this.superTenantId, this.superTenantId, null, null, true, true, null);
 
-        // Check if master tenant already exists
-        IOperationRequest readRequest = buildStartupRequest(tenantDomain,
-                OperationDefinition.readOneWithStandardSecurity(
-                        tenantDomain.getDomainName(), tenantDomain.getEntityClass()),
-                caller);
-        readRequest.arg("type", "uuid");
-        readRequest.arg("identifier", this.superTenantId);
-        IOperationResponse readResponse = tenantDomain.invoke(readRequest);
-        if (readResponse.getResponseCode() == OperationResponseCode.OK) {
+        IRepository repository = tenantDomain.getRepository();
+        if (repository.doesExist(this.superTenantId)) {
             log.info("Master tenant '{}' already exists, skipping auto-creation", this.superTenantId);
             return;
         }
 
-        // Create a minimal tenant entity via reflection
         try {
+            // Build a minimal entity via reflection. UUID = superTenantId; the
+            // tenantId field is set to the same value only if the entity carries
+            // one (a tenant entity may legitimately omit it — its uuid plays
+            // that role downstream, see RepositoryFilterTools.buildTenantFilter).
             IClass<?> entityClass = tenantDomain.getEntityClass();
             Object tenantEntity = entityClass.getConstructor().newInstance();
 
             IReflection reflection = reflection();
-            // Set UUID to superTenantId
             ObjectAddress uuidAddress = tenantDomain.getEntityDefinition().uuid();
             reflection.setFieldValue(tenantEntity, uuidAddress, this.superTenantId);
 
-            // Set tenantId to superTenantId
             ObjectAddress tenantIdAddress = tenantDomain.getTenantIdFieldAddress();
             if (tenantIdAddress != null) {
                 reflection.setFieldValue(tenantEntity, tenantIdAddress, this.superTenantId);
             }
 
-            IOperationRequest createRequest = buildStartupRequest(tenantDomain,
-                    OperationDefinition.createOneWithStandardSecurity(
-                            tenantDomain.getDomainName(), tenantDomain.getEntityClass()),
-                    caller);
-            createRequest.arg("entity", tenantEntity);
-            IOperationResponse createResponse = tenantDomain.invoke(createRequest);
-            OperationResponseCode code = createResponse.getResponseCode();
-            if (code == OperationResponseCode.CREATED || code == OperationResponseCode.OK) {
+            // Direct repository write — no workflow, no security pipeline, no
+            // lifecycle hooks. The repository handles the entity → DTO mapping
+            // internally (see Repository.save).
+            repository.save(tenantEntity);
+
+            // Sanity check: confirm the entity actually landed. Catches the
+            // "DAO save returned but the row isn't queryable" class of bug.
+            if (repository.doesExist(this.superTenantId)) {
                 log.info("Master tenant '{}' auto-created successfully", this.superTenantId);
             } else {
-                log.warn("Could not auto-create master tenant '{}': {} (code={}). "
-                        + "Consider registering the master tenant entity via .create() on the tenant domain builder.",
-                        this.superTenantId, createResponse.getResponse(), code);
+                log.error("repository.save returned but master tenant '{}' is not present in the "
+                        + "repository afterwards. Consider registering the master tenant entity "
+                        + "via .upsert(...) on the tenant domain builder.",
+                        this.superTenantId);
             }
         } catch (Exception e) {
             log.warn("Could not auto-create master tenant '{}': {}. "
-                    + "Consider registering the master tenant entity via .create() on the tenant domain builder.",
+                    + "Consider registering the master tenant entity via .upsert(...) on the tenant domain builder.",
                     this.superTenantId, e.getMessage());
         }
     }

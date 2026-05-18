@@ -557,7 +557,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     }
 
     private void throwExceptionIfNoTenantId() throws ApiException {
-        if (this.tenantId == null && isMultiTenantEnabled()) {
+        if (this.tenantId == null && isMultiTenantEnabled() && !isTenantDomain()) {
             throw new ApiException("No tenant id defined for entity " + this.entityClass.getSimpleName());
         }
     }
@@ -567,6 +567,19 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
             return up().up() instanceof ApiBuilder acb && acb.isMultiTenant();
         } catch (Exception e) {
             return true; // default to strict
+        }
+    }
+
+    /**
+     * True when the parent domain is marked {@code .tenant(true)} — i.e. the
+     * entity IS the tenant. Such entities don't carry a tenantId field; their
+     * uuid plays that role downstream (see {@code FilterContext.buildTenantFilter}).
+     */
+    private boolean isTenantDomain() {
+        try {
+            return up() instanceof DomainBuilder<?> db && db.isTenantDomain();
+        } catch (Exception e) {
+            return false;
         }
     }
 

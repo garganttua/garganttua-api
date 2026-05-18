@@ -14,7 +14,6 @@ import com.garganttua.api.commons.security.context.IAuthenticatorContext;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthorizationBuilder;
-import com.garganttua.api.commons.context.dsl.security.IDomainSecurityAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.commons.endpoint.IEndpoint;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
@@ -29,7 +28,6 @@ public class DomainSecurityBuilder<E>
         implements IDomainSecurityBuilder<E> {
 
     private List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces;
-    private IDomainSecurityAuthorizationBuilder domainSecurityAuthorizationBuilder;
     private boolean disabled = false;
     private boolean hasCrudSecurityConfig = false;
     private IAuthorizationBuilder authorization;

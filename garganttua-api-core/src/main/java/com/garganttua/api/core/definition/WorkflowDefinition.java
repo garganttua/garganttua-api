@@ -13,6 +13,7 @@ public record WorkflowDefinition(
 		TechnicalOperation operation,
 		Access access,
 		boolean authority,
+		String authorityName,
 		boolean custom
 ) implements IWorkflowDefinition {
 

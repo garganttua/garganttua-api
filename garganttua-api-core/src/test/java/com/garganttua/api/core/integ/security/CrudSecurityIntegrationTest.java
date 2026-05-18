@@ -57,8 +57,11 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
     }
 
     private WorkflowResult executeWithoutAuth(IDomain<?> ctx, OperationDefinition op) {
-        // Request with no authorization token — should fail for non-anonymous access
-        OperationRequest request = superTenantScriptRequest(op);
+        // Request with no authorization token — should fail for non-anonymous access.
+        // Use a non-super-tenant caller to stay aligned with how a real caller
+        // would invoke this op (super and tenant callers traverse the same path
+        // since the 2026-05-18 super-tenant bypass remediation).
+        OperationRequest request = tenantScriptRequest(op, "acme");
         User user = new User();
         user.setName("test");
         request.arg("entity", user);
@@ -66,8 +69,8 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
     }
 
     private WorkflowResult executeWithAuth(IDomain<?> ctx, OperationDefinition op) {
-        // Request with authorization token set
-        OperationRequest request = superTenantScriptRequest(op);
+        // Request with authorization token set — Mode B caller has vouched for it.
+        OperationRequest request = tenantScriptRequest(op, "acme");
         request.arg("authorization", new Object()); // non-null authorization
         User user = new User();
         user.setName("test");

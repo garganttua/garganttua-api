@@ -2,10 +2,12 @@ package com.garganttua.api.core.service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiFunction;
 
 import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.pageable.IPageable;
 import com.garganttua.api.commons.service.ArgKey;
@@ -14,13 +16,19 @@ import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.IRequest;
 import com.garganttua.api.commons.service.IRequestBuilder;
 import com.garganttua.api.commons.sort.ISort;
+import com.garganttua.core.reflection.IClass;
 
 public class RequestBuilder implements IRequestBuilder {
 
 	private final IDomain<?> domainContext;
 	private final IOperationRequest operationRequest;
 
-	public RequestBuilder(IDomain<?> domainContext) {
+
+	public static IRequestBuilder builder(IDomain<?> domain) {
+		return new RequestBuilder(domain);
+	}
+
+	private RequestBuilder(IDomain<?> domainContext) {
 		this.domainContext = domainContext;
 		this.operationRequest = new OperationRequest(null);
 	}
@@ -142,18 +150,33 @@ public class RequestBuilder implements IRequestBuilder {
 		return this;
 	}
 
+	/**
+	 * Resolves the {@link OperationDefinition} for a given CRUD slot by first
+	 * looking up the domain's registered operations (so any DSL-configured
+	 * access / authority overrides are honoured), falling back to the supplied
+	 * "standard security" default when the domain doesn't expose that op (e.g.
+	 * the CRUD flag was turned off via {@code .creation(false)}).
+	 */
+	private OperationDefinition resolveOperation(BusinessOperation businessOp,
+			BiFunction<String, IClass<?>, OperationDefinition> fallback) {
+		return domainContext.getDomainDefinition().operations().stream()
+				.filter(op -> op.getBusinessOperation() == businessOp)
+				.findFirst()
+				.orElseGet(() -> fallback.apply(domainContext.getDomainName(), domainContext.getEntityClass()));
+	}
+
 	@Override
 	public IRequestBuilder createOne(Object body) {
-		operation(OperationDefinition.createOneWithStandardSecurity(
-				domainContext.getDomainName(), domainContext.getEntityClass()));
+		operation(resolveOperation(BusinessOperation.create,
+				OperationDefinition::createOneWithStandardSecurity));
 		param("entity", body);
 		return this;
 	}
 
 	@Override
 	public IRequestBuilder readOne(String uuid) {
-		operation(OperationDefinition.readOneWithStandardSecurity(
-				domainContext.getDomainName(), domainContext.getEntityClass()));
+		operation(resolveOperation(BusinessOperation.readOne,
+				OperationDefinition::readOneWithStandardSecurity));
 		param("type", "uuid");
 		param("identifier", uuid);
 		return this;
@@ -161,15 +184,15 @@ public class RequestBuilder implements IRequestBuilder {
 
 	@Override
 	public IRequestBuilder readAll() {
-		operation(OperationDefinition.readAllWithStandardSecurity(
-				domainContext.getDomainName(), domainContext.getEntityClass()));
+		operation(resolveOperation(BusinessOperation.readAll,
+				OperationDefinition::readAllWithStandardSecurity));
 		return this;
 	}
 
 	@Override
 	public IRequestBuilder updateOne(String uuid, Object body) {
-		operation(OperationDefinition.updateOneWithStandardSecurity(
-				domainContext.getDomainName(), domainContext.getEntityClass()));
+		operation(resolveOperation(BusinessOperation.update,
+				OperationDefinition::updateOneWithStandardSecurity));
 		param("type", "uuid");
 		param("identifier", uuid);
 		param("entity", body);
@@ -178,8 +201,8 @@ public class RequestBuilder implements IRequestBuilder {
 
 	@Override
 	public IRequestBuilder deleteOne(String uuid) {
-		operation(OperationDefinition.deleteOneWithStandardSecurity(
-				domainContext.getDomainName(), domainContext.getEntityClass()));
+		operation(resolveOperation(BusinessOperation.deleteOne,
+				OperationDefinition::deleteOneWithStandardSecurity));
 		param("type", "uuid");
 		param("identifier", uuid);
 		return this;
@@ -187,8 +210,8 @@ public class RequestBuilder implements IRequestBuilder {
 
 	@Override
 	public IRequestBuilder deleteAll() {
-		operation(OperationDefinition.deleteAllWithStandardSecurity(
-				domainContext.getDomainName(), domainContext.getEntityClass()));
+		operation(resolveOperation(BusinessOperation.deleteAll,
+				OperationDefinition::deleteAllWithStandardSecurity));
 		return this;
 	}
 
