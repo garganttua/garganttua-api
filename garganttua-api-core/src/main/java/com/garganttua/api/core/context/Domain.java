@@ -374,7 +374,12 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     @Override
     public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) {
         ensureStarted();
+        long startNanos = System.nanoTime();
+        OperationResponse response = doInvoke(request, options);
+        return response.withProcessingTime(java.time.Duration.ofNanos(System.nanoTime() - startNanos));
+    }
 
+    private OperationResponse doInvoke(IOperationRequest request, WorkflowExecutionOptions options) {
         if (this.workflow == null) {
             log.warn("No workflow configured for domain {}", this.domainDefinition.domainName());
             return OperationResponse.notAvailable("No workflow configured for domain: " + this.domainDefinition.domainName());
