@@ -34,9 +34,21 @@ public interface IApi extends ILifecycle {
 
     // --- Request builder ---
 
-    default IRequestBuilder request(String domainName) {
-        return getDomainOrThrow(domainName).request();
-    }
+    /**
+     * Returns a fluent {@link IRequestBuilder} bound to the named domain.
+     * Equivalent to {@code getDomain(domainName).orElseThrow().request()},
+     * with a clearer error message when the domain is unknown.
+     *
+     * @param domainName the registered domain name (auto-generated as the
+     *                   plural lowercase of the entity class name, e.g.
+     *                   {@code "users"} for {@code User})
+     * @return a fresh builder — chain {@code .caller(...)}, the CRUD shortcut
+     *         ({@code readAll()}, {@code createOne(body)}, …), and
+     *         {@code .execute()} or {@code .build().execute()}.
+     * @throws com.garganttua.api.commons.ApiException if {@code domainName}
+     *         does not resolve to a registered domain
+     */
+    IRequestBuilder request(String domainName);
 
     // --- Workflow invocation ---
 

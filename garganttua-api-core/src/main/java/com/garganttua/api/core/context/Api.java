@@ -18,6 +18,7 @@ import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.serialization.ISerializer;
+import com.garganttua.api.commons.service.IRequestBuilder;
 import com.garganttua.core.injection.BeanReference;
 import com.garganttua.core.injection.DiException;
 import com.garganttua.core.injection.IInjectionContext;
@@ -84,6 +85,15 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     @Override
     public Optional<IDomain<?>> getDomain(String domainName) {
         return Optional.ofNullable(this.domainContexts.get(domainName));
+    }
+
+    @Override
+    public IRequestBuilder request(String domainName) {
+        IDomain<?> domain = this.domainContexts.get(domainName);
+        if (domain == null) {
+            throw new ApiException("Domain not found: " + domainName);
+        }
+        return domain.request();
     }
 
     public IInjectionContext getInjectionContext() {
