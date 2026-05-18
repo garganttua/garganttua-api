@@ -20,15 +20,11 @@ import com.garganttua.api.commons.definition.IDomainDefinition;
 import com.garganttua.api.commons.event.IEventPublisher;
 import com.garganttua.api.commons.endpoint.IEndpoint;
 import com.garganttua.api.commons.repository.IRepository;
-import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.service.IOperationResponse;
-import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IRequestBuilder;
-import com.garganttua.api.core.caller.Caller;
-import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -244,54 +240,73 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         log.debug("Successfully executed all startup binders for domain {}", this.domainDefinition.domainName());
     }
 
-    private ICaller createStartupCaller() {
-        String superTenantId = this.apiContext.getSuperTenantId();
-        return new Caller(superTenantId, superTenantId, null, null, true, true, null);
-    }
-
-    private IOperationRequest buildStartupRequest(OperationDefinition operation, ICaller caller) {
-        OperationRequest request = new OperationRequest(new java.util.HashMap<>());
-        request.arg(IOperationRequest.OPERATION, operation);
-        request.arg(IOperationRequest.TENANT_ID, caller.tenantId());
-        request.arg(IOperationRequest.REQUESTED_TENANT_ID, caller.requestedTenantId());
-        request.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
-        request.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
-        return request;
-    }
-
+    /**
+     * Best-effort create of declared {@code createEntity(...)} entries at startup.
+     * Writes go straight through the repository — <strong>not</strong> through
+     * {@link #invoke(IOperationRequest)}.
+     *
+     * <p>This runs from inside {@link #doStart()}, before the lifecycle has
+     * flipped to STARTED, so calling {@code invoke()} from here would trip
+     * {@code AbstractLifecycle.ensureStarted()} (regression observed in the
+     * example app's tenant domain). The same rationale that drives
+     * {@code Api.autoCreateMasterTenant} applies here: framework bootstrap
+     * has no caller to authorize and no reason to traverse the public
+     * workflow.
+     *
+     * <p>Consequence: {@code @EntityBeforeCreate} / {@code @EntityAfterCreate}
+     * hooks do <strong>not</strong> fire for these entities. If you need
+     * lifecycle hooks for startup data, use an API-level startup binder
+     * instead — it runs after every domain has started.
+     */
     private void createStartupEntities() {
         List<E> createEntities = this.domainDefinition.createEntities();
         if (createEntities == null || createEntities.isEmpty()) {
             return;
         }
-        ICaller caller = createStartupCaller();
-        log.info("Creating {} startup entities for domain {}", createEntities.size(),
-                this.domainDefinition.domainName());
+        IReflection reflection = reflection();
+        String uuidFieldPath = this.domainDefinition.entityDefinition().uuid().toString();
+        log.info("Creating {} startup entities for domain {} (direct repository writes)",
+                createEntities.size(), this.domainDefinition.domainName());
         for (E entity : createEntities) {
-            IOperationRequest request = buildStartupRequest(
-                    OperationDefinition.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
-            request.arg("entity", entity);
-            IOperationResponse response = invoke(request);
-            OperationResponseCode code = response.getResponseCode();
-            if (code == OperationResponseCode.CREATED || code == OperationResponseCode.OK) {
-                log.info("Startup entity created successfully for domain {}", this.domainDefinition.domainName());
-            } else {
-                log.warn("Startup entity creation returned {} for domain {} (entity may already exist): {}",
-                        code, this.domainDefinition.domainName(), response.getResponse());
+            try {
+                Object uuidValue = reflection.getFieldValue(entity, uuidFieldPath);
+                String uuid = uuidValue != null ? uuidValue.toString() : null;
+                if (uuid != null && this.repository.doesExist(uuid)) {
+                    log.warn("Startup entity (uuid={}) already exists for domain {}, skipping",
+                            uuid, this.domainDefinition.domainName());
+                    continue;
+                }
+                this.repository.save(entity);
+                log.info("Startup entity created (uuid={}) for domain {}", uuid,
+                        this.domainDefinition.domainName());
+            } catch (ApiException e) {
+                log.warn("Startup entity creation failed for domain {} (best-effort, continuing): {}",
+                        this.domainDefinition.domainName(), e.getMessage());
             }
         }
     }
 
+    /**
+     * Fail-fast upsert of declared {@code upsertEntity(...)} entries at startup.
+     * Same rationale and constraints as {@link #createStartupEntities()}:
+     * direct repository writes, no workflow, no lifecycle hooks.
+     *
+     * <p>Upsert semantics here = "delete then save" when the uuid already
+     * exists. We do not rely on the DAO implementing native upsert because
+     * {@link com.garganttua.api.commons.dao.IDao} makes no such guarantee —
+     * the test in-memory DAO appends on every save. The delete-then-save
+     * pair is the only IDao-portable way to express "make sure this row is
+     * now exactly the declared value".
+     */
     private void upsertStartupEntities() {
         List<E> upsertEntities = this.domainDefinition.upsertEntities();
         if (upsertEntities == null || upsertEntities.isEmpty()) {
             return;
         }
-        ICaller caller = createStartupCaller();
         IReflection reflection = reflection();
         String uuidFieldPath = this.domainDefinition.entityDefinition().uuid().toString();
-        log.info("Upserting {} startup entities for domain {}", upsertEntities.size(),
-                this.domainDefinition.domainName());
+        log.info("Upserting {} startup entities for domain {} (direct repository writes)",
+                upsertEntities.size(), this.domainDefinition.domainName());
         for (E entity : upsertEntities) {
             try {
                 Object uuidValue = reflection.getFieldValue(entity, uuidFieldPath);
@@ -300,41 +315,14 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                     throw new ApiException("Upsert startup entity has no UUID for domain "
                             + this.domainDefinition.domainName());
                 }
-                // Try to read existing entity
-                IOperationRequest readRequest = buildStartupRequest(
-                        OperationDefinition.readOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
-                readRequest.arg("type", "uuid");
-                readRequest.arg("identifier", uuid);
-                IOperationResponse readResponse = invoke(readRequest);
-                if (readResponse.getResponseCode() == OperationResponseCode.OK) {
-                    // Entity exists, update it
-                    IOperationRequest updateRequest = buildStartupRequest(
-                            OperationDefinition.updateOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
-                    updateRequest.arg("type", "uuid");
-                    updateRequest.arg("identifier", uuid);
-                    updateRequest.arg("entity", entity);
-                    IOperationResponse updateResponse = invoke(updateRequest);
-                    OperationResponseCode updateCode = updateResponse.getResponseCode();
-                    if (updateCode != OperationResponseCode.OK && updateCode != OperationResponseCode.UPDATED) {
-                        throw new ApiException("Failed to update startup entity (uuid=" + uuid
-                                + ") for domain " + this.domainDefinition.domainName()
-                                + ": " + updateResponse.getResponse());
-                    }
-                    log.info("Startup entity updated (uuid={}) for domain {}", uuid,
+                if (this.repository.doesExist(uuid)) {
+                    this.repository.delete(entity);
+                    this.repository.save(entity);
+                    log.info("Startup entity replaced (uuid={}) for domain {}", uuid,
                             this.domainDefinition.domainName());
                 } else {
-                    // Entity does not exist, create it
-                    IOperationRequest createRequest = buildStartupRequest(
-                            OperationDefinition.createOneWithStandardSecurity(getDomainName(), getEntityClass()), caller);
-                    createRequest.arg("entity", entity);
-                    IOperationResponse createResponse = invoke(createRequest);
-                    OperationResponseCode createCode = createResponse.getResponseCode();
-                    if (createCode != OperationResponseCode.CREATED && createCode != OperationResponseCode.OK) {
-                        throw new ApiException("Failed to create startup entity (uuid=" + uuid
-                                + ") for domain " + this.domainDefinition.domainName()
-                                + ": " + createResponse.getResponse());
-                    }
-                    log.info("Startup entity created via upsert (uuid={}) for domain {}", uuid,
+                    this.repository.save(entity);
+                    log.info("Startup entity created (uuid={}) for domain {}", uuid,
                             this.domainDefinition.domainName());
                 }
             } catch (ApiException e) {
