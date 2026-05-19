@@ -493,6 +493,17 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 							+ "@KeyPublicMaterial / @KeyPrivateMaterial, or call .key().realmName(...)... "
 							+ "on its domain builder.");
 				}
+
+				// Rotation creates new keys — it implies generation. Refuse the
+				// inconsistent combination at build time so the user catches it
+				// before the first sign call.
+				var keyConfig = authzAuthDef.keyDefinition();
+				if (keyConfig.autoRotate() && !keyConfig.autoGenerate()) {
+					throw new ApiException("Domain '" + domain.getDomainName()
+							+ "' configures .autoRotate(true) with .autoGenerate(false) on its key DSL — "
+							+ "rotation creates a new key, which is a generation. Either flip autoGenerate "
+							+ "to true, or flip autoRotate to false.");
+				}
 			}
 		}
 	}

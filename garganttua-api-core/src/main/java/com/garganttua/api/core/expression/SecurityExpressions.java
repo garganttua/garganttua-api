@@ -580,12 +580,31 @@ public class SecurityExpressions {
 					+ "' for realmName '" + realmName + "': " + e.getMessage(), e);
 		}
 		IReflection reflection = DefaultMapper.reflection();
+		boolean hadExistingButUnusable = false;
 		if (existing != null && !existing.isEmpty()) {
 			Object entity = pickUsable(existing, keyEntDef, reflection);
 			if (entity != null) {
 				return com.garganttua.api.core.security.key.KeyRealmFactory.materialize(entity, keyEntDef, reflection);
 			}
-			// All matching keys are revoked / expired — fall through and create a fresh one.
+			// All matching keys are expired or revoked — the caller's policy
+			// flags decide whether the framework rotates silently or refuses.
+			hadExistingButUnusable = true;
+		}
+
+		// No usable key. Two policy gates:
+		//   - autoRotate=false + unusable key in storage → refuse; user owns rotation.
+		//   - autoGenerate=false + nothing in storage    → refuse; key must be seeded out of band.
+		if (hadExistingButUnusable && !keyConfig.autoRotate()) {
+			throw new ApiException("resolveKeyRealm: the only key on domain '" + keyDomain.getDomainName()
+					+ "' matching realmName '" + realmName + "' is expired or revoked, and "
+					+ ".autoRotate(false) was configured. Rotate the key out of band, or enable "
+					+ ".autoRotate(true) on the authenticator's .key(...) DSL.");
+		}
+		if (!hadExistingButUnusable && !keyConfig.autoGenerate()) {
+			throw new ApiException("resolveKeyRealm: no key found on domain '" + keyDomain.getDomainName()
+					+ "' for realmName '" + realmName + "', and .autoGenerate(false) was configured. "
+					+ "Seed the key out of band, or enable .autoGenerate(true) on the authenticator's "
+					+ ".key(...) DSL.");
 		}
 
 		Object newEntity = com.garganttua.api.core.security.key.KeyRealmFactory.generateAndStamp(

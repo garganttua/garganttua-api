@@ -24,6 +24,8 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     private IKeyAlgorithm algorithm;
     private SignatureAlgorithm signAlgorithm;
     private IDomainBuilder key;
+    private boolean autoGenerate = true;
+    private boolean autoRotate = false;
 
     public AuthenticatorAuthorizationKeyBuilder(IAuthenticatorAuthorizationBuilder<E> authenticatorAuthorizationBuilder,
             IDomainBuilder<E> key) {
@@ -57,6 +59,18 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
     }
 
     @Override
+    public AuthenticatorAuthorizationKeyBuilder<E> autoGenerate(boolean enabled) {
+        this.autoGenerate = enabled;
+        return this;
+    }
+
+    @Override
+    public AuthenticatorAuthorizationKeyBuilder<E> autoRotate(boolean enabled) {
+        this.autoRotate = enabled;
+        return this;
+    }
+
+    @Override
     protected synchronized IAuthenticatorAuthorizationKeyContext doBuild() throws ApiException {
         return new AuthenticatorAuthorizationKeyContext(
                 this.duration != null ? this.duration : 0,
@@ -64,7 +78,9 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
                 this.usage,
                 this.algorithm,
                 this.signAlgorithm,
-                this.key);
+                this.key,
+                this.autoGenerate,
+                this.autoRotate);
     }
 
     @Override

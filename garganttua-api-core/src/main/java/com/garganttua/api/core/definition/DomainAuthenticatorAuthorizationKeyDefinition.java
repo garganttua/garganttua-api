@@ -14,6 +14,8 @@ public record DomainAuthenticatorAuthorizationKeyDefinition(
 		SignatureAlgorithm signatureAlgorithm,
 		int duration,
 		TimeUnit unit,
-		IDomainBuilder<?> keyDomain) implements IDomainAuthenticatorAuthorizationKeyDefinition {
+		IDomainBuilder<?> keyDomain,
+		boolean autoGenerate,
+		boolean autoRotate) implements IDomainAuthenticatorAuthorizationKeyDefinition {
 
 }

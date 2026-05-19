@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -191,8 +192,12 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         CapturingDao keyDao;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     private Wired buildApi(AuthenticatorKeyUsage usage) throws ApiException {
+        return buildApi(usage, true, false);
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Wired buildApi(AuthenticatorKeyUsage usage, boolean autoGenerate, boolean autoRotate) throws ApiException {
         Wired w = new Wired();
         w.userDao = new CapturingDao();
         w.tokenDao = new CapturingDao();
@@ -234,8 +239,11 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                 .up();
 
         // ─── @Key entity domain — declared via the .key() sub-builder ───
+        // Marked owned("ownerId") because oneForEach keys are scoped per
+        // caller — the framework stamps caller.ownerId() onto this field.
         var keyBuilder = builder.domain(IClass.getClass(CryptoKey.class))
                 .tenant(true)
+                .owned("ownerId")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -278,6 +286,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                 .algorithm(KeyAlgorithm.EC_256)
                 .signatureAlgorithm(SignatureAlgorithm.SHA256)
                 .lifeTime(1, java.util.concurrent.TimeUnit.HOURS)
+                .autoGenerate(autoGenerate)
+                .autoRotate(autoRotate)
                 .up();
         userBuilder.up();
 
@@ -301,6 +311,27 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(authOp);
         request.arg("entity", authReq);
+        return request;
+    }
+
+    /**
+     * Bare OperationRequest carrying just the caller fields (tenantId, ownerId)
+     * — used to test the persisted-key resolver directly, bypassing the
+     * authenticate workflow. The realmName scoping for oneForEach depends on
+     * the caller's ownerId, which the authenticate flow itself does not
+     * provide (the caller is anonymous at authentication time). Tests that
+     * want to assert per-caller scoping must therefore drive resolveKeyRealm
+     * with a request that has an owner set.
+     */
+    private static OperationRequest callerRequest(String tenantId, String ownerId) {
+        OperationRequest request = new OperationRequest(new java.util.HashMap<>());
+        if (tenantId != null) {
+            request.arg(com.garganttua.api.commons.service.IOperationRequest.TENANT_ID, tenantId);
+            request.arg(com.garganttua.api.commons.service.IOperationRequest.REQUESTED_TENANT_ID, tenantId);
+        }
+        if (ownerId != null) {
+            request.arg(com.garganttua.api.commons.service.IOperationRequest.OWNER_ID, ownerId);
+        }
         return request;
     }
 
@@ -475,6 +506,243 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             assertArrayEquals(originalPrivate, afterLookup.getPrivateMaterial(),
                     "lookup must not rewrite persisted bytes");
             assertArrayEquals(originalPublic, afterLookup.getPublicMaterial());
+        }
+    }
+
+    @Nested
+    @DisplayName("oneForEach — one key per caller (per tenant + ownerId)")
+    class OneForEach {
+
+        @Test
+        @DisplayName("two callers in the same tenant with distinct ownerIds get distinct keys")
+        void distinctCallersDistinctKeys() throws Exception {
+            // oneForEach scoping uses caller.ownerId() to differentiate keys
+            // within a tenant. The authenticate workflow runs with an
+            // anonymous caller (by design — login is the entry point), so we
+            // drive resolveKeyRealm directly with caller-bearing requests.
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForEach);
+
+            com.garganttua.core.crypto.IKeyRealm realm1 =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", "owner-1"));
+            com.garganttua.core.crypto.IKeyRealm realm2 =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", "owner-2"));
+
+            assertEquals(2, w.keyDao.getStorage().size(),
+                    "oneForEach must create a distinct key per ownerId, even within the same tenant");
+            assertNotEquals(realm1.getName(), realm2.getName(),
+                    "the two realms must have distinct names");
+            assertTrue(realm1.getName().endsWith(":owner-1"),
+                    "first realm name must end with the caller's ownerId — got: " + realm1.getName());
+            assertTrue(realm2.getName().endsWith(":owner-2"),
+                    "second realm name must end with the caller's ownerId — got: " + realm2.getName());
+        }
+
+        @Test
+        @DisplayName("same caller twice reuses its dedicated key")
+        void sameCallerSameKey() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForEach);
+
+            com.garganttua.core.crypto.IKeyRealm first =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", "owner-1"));
+            com.garganttua.core.crypto.IKeyRealm second =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", "owner-1"));
+
+            assertEquals(1, w.keyDao.getStorage().size(),
+                    "second call from the same caller must reuse the existing key");
+            assertEquals(first.getName(), second.getName());
+        }
+
+        @Test
+        @DisplayName("the persisted key carries the caller's tenantId AND ownerId")
+        void stampingFromCaller() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForEach);
+            com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                    w.userCtx, callerRequest("TENANT_X", "owner-99"));
+
+            CryptoKeyDto stored = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            assertEquals("TENANT_X", stored.getTenantId(),
+                    "oneForEach stamps the caller's tenant onto the key entity");
+            assertEquals("owner-99", stored.getOwnerId(),
+                    "oneForEach stamps the caller's owner onto the key entity");
+        }
+    }
+
+    @Nested
+    @DisplayName("Expiration — autoRotate=true rotates expired/revoked keys silently")
+    class Expiration {
+
+        @Test
+        @DisplayName("autoRotate=true: an expired key is skipped and a fresh one is generated")
+        void expiredKeySkipped() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll, true, true);
+
+            // First call: generates and persists a key
+            com.garganttua.core.crypto.IKeyRealm initial =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", null));
+            assertEquals(1, w.keyDao.getStorage().size());
+            CryptoKeyDto stored = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            byte[] originalPrivate = stored.getPrivateMaterial().clone();
+
+            // Force the persisted key to be in the past — emulates the key
+            // outliving its configured lifeTime.
+            stored.setExpiration(Instant.now().minusSeconds(60));
+
+            // Second call: with autoRotate=true the resolver skips the expired
+            // entry and generates a fresh one. The old entity stays in storage
+            // (its public material remains useful for verifying tokens signed
+            // before rotation).
+            com.garganttua.core.crypto.IKeyRealm refreshed =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", null));
+
+            assertEquals(2, w.keyDao.getStorage().size(),
+                    "an expired key in storage must not be reused — the resolver must materialize a fresh key");
+            CryptoKeyDto fresh = (CryptoKeyDto) w.keyDao.getStorage().get(1);
+            assertFalse(java.util.Arrays.equals(originalPrivate, fresh.getPrivateMaterial()),
+                    "the freshly generated key must have distinct private material from the expired one");
+            assertTrue(fresh.getExpiration().isAfter(Instant.now()),
+                    "the freshly generated key must have a future expiration");
+            assertNotNull(refreshed);
+        }
+
+        @Test
+        @DisplayName("autoRotate=true: a revoked key is skipped and a fresh one is generated")
+        void revokedKeySkipped() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll, true, true);
+
+            com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                    w.userCtx, callerRequest("TENANT_A", null));
+            assertEquals(1, w.keyDao.getStorage().size());
+            CryptoKeyDto stored = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            stored.setRevoked(true);
+
+            com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                    w.userCtx, callerRequest("TENANT_A", null));
+
+            assertEquals(2, w.keyDao.getStorage().size(),
+                    "a revoked key in storage must not be reused");
+            CryptoKeyDto fresh = (CryptoKeyDto) w.keyDao.getStorage().get(1);
+            assertFalse(fresh.isRevoked(),
+                    "the freshly generated key must not carry the revoked flag");
+        }
+    }
+
+    @Nested
+    @DisplayName("Lifecycle flags — autoGenerate / autoRotate are opt-out / opt-in respectively")
+    class LifecycleFlags {
+
+        @Test
+        @DisplayName("autoGenerate=false + missing key in storage: resolver throws with a parlant message")
+        void autoGenerateFalseMissingKeyThrows() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll, false, false);
+
+            assertEquals(0, w.keyDao.getStorage().size(), "key DAO must start empty");
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", null)));
+            assertTrue(ex.getMessage().contains("autoGenerate(false)"),
+                    "error must mention the autoGenerate flag explicitly — got: " + ex.getMessage());
+            assertTrue(ex.getMessage().contains("realmName 'cryptokeys:global'")
+                            || ex.getMessage().contains("cryptokeys:global"),
+                    "error must mention the realmName that was sought — got: " + ex.getMessage());
+            assertEquals(0, w.keyDao.getStorage().size(),
+                    "no key must be created when autoGenerate=false");
+        }
+
+        @Test
+        @DisplayName("autoGenerate=false + seeded key: resolver finds it (no generation needed)")
+        void autoGenerateFalseSeededWorks() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll, false, false);
+
+            // Seed a key out of band — emulates an admin import / HSM operator.
+            java.security.KeyPair pair = java.security.KeyPairGenerator.getInstance("EC")
+                    .generateKeyPair();
+            CryptoKeyDto seed = new CryptoKeyDto();
+            seed.setUuid("seed-uuid");
+            seed.setRealmName("cryptokeys:global");
+            seed.setAlgorithm("EC-256");
+            seed.setSignatureAlgorithm("SHA256");
+            seed.setPublicMaterial(pair.getPublic().getEncoded());
+            seed.setPrivateMaterial(pair.getPrivate().getEncoded());
+            seed.setExpiration(Instant.now().plusSeconds(3600));
+            seed.setRevoked(false);
+            w.keyDao.save(seed);
+
+            com.garganttua.core.crypto.IKeyRealm realm =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", null));
+            assertEquals("cryptokeys:global", realm.getName(),
+                    "the seeded key must be returned verbatim");
+            assertEquals(1, w.keyDao.getStorage().size(),
+                    "no new key must be created — the seed is reused");
+        }
+
+        @Test
+        @DisplayName("autoRotate=false + expired key in storage: resolver throws with a parlant message")
+        void autoRotateFalseExpiredKeyThrows() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll, true, false);
+
+            // First call seeds a usable key
+            com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                    w.userCtx, callerRequest("TENANT_A", null));
+            assertEquals(1, w.keyDao.getStorage().size());
+            CryptoKeyDto stored = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            stored.setExpiration(Instant.now().minusSeconds(60));
+
+            // Second call: expired key + autoRotate=false → throw
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", null)));
+            assertTrue(ex.getMessage().contains("autoRotate(false)"),
+                    "error must mention the autoRotate flag explicitly — got: " + ex.getMessage());
+            assertTrue(ex.getMessage().contains("expired or revoked"),
+                    "error must explain why the existing key was rejected — got: " + ex.getMessage());
+            assertEquals(1, w.keyDao.getStorage().size(),
+                    "no second key must be generated when autoRotate=false");
+        }
+
+        @Test
+        @DisplayName("autoRotate=false + revoked key in storage: resolver throws (same path as expired)")
+        void autoRotateFalseRevokedKeyThrows() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll, true, false);
+
+            com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                    w.userCtx, callerRequest("TENANT_A", null));
+            CryptoKeyDto stored = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            stored.setRevoked(true);
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.resolveKeyRealm(
+                            w.userCtx, callerRequest("TENANT_A", null)));
+            assertTrue(ex.getMessage().contains("autoRotate(false)"));
+        }
+
+        @Test
+        @DisplayName("autoRotate=true + autoGenerate=false: ApiBuilder.build refuses the inconsistent combo")
+        void rotateWithoutGenerateRefusedAtBuild() {
+            // Build with autoRotate=true, autoGenerate=false → invalid.
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> buildApi(AuthenticatorKeyUsage.oneForAll, false, true));
+            String unwrapped = unwrap(ex);
+            assertTrue(unwrapped.contains("autoRotate(true)"),
+                    "build error must mention the autoRotate flag — got: " + unwrapped);
+            assertTrue(unwrapped.contains("autoGenerate(false)"),
+                    "build error must mention the autoGenerate flag — got: " + unwrapped);
+        }
+
+        private static String unwrap(Throwable t) {
+            StringBuilder sb = new StringBuilder();
+            for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+                if (sb.length() > 0) sb.append(" | ");
+                sb.append(cur.getMessage());
+            }
+            return sb.toString();
         }
     }
 }

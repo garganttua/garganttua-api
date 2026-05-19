@@ -31,4 +31,19 @@ public interface IDomainAuthenticatorAuthorizationKeyDefinition {
 	 */
 	IDomainBuilder<?> keyDomain();
 
+	/**
+	 * Whether the framework auto-creates a missing key on the configured
+	 * key domain at first lookup. Default {@code true} (backward
+	 * compatible). {@code false} means an absent key surfaces an
+	 * {@code ApiException} at runtime — keys must be seeded out of band.
+	 */
+	boolean autoGenerate();
+
+	/**
+	 * Whether the framework auto-rotates a key whose persisted entry is
+	 * expired or revoked. Default {@code false} (opt-in). Requires
+	 * {@link #autoGenerate()} to be {@code true} (enforced at build time).
+	 */
+	boolean autoRotate();
+
 }

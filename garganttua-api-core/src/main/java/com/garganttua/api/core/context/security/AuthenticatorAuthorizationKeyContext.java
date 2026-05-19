@@ -15,9 +15,10 @@ public class AuthenticatorAuthorizationKeyContext implements IAuthenticatorAutho
     private final DomainAuthenticatorAuthorizationKeyDefinition authenticatorAuthorizationKeyDefinition;
 
     public AuthenticatorAuthorizationKeyContext(int duration, TimeUnit unit, AuthenticatorKeyUsage usage,
-            IKeyAlgorithm algorithm, SignatureAlgorithm signAlgorithm, IDomainBuilder<?> keyDomain) {
+            IKeyAlgorithm algorithm, SignatureAlgorithm signAlgorithm, IDomainBuilder<?> keyDomain,
+            boolean autoGenerate, boolean autoRotate) {
         this.authenticatorAuthorizationKeyDefinition = new DomainAuthenticatorAuthorizationKeyDefinition(
-                usage, algorithm, signAlgorithm, duration, unit, keyDomain);
+                usage, algorithm, signAlgorithm, duration, unit, keyDomain, autoGenerate, autoRotate);
     }
 
     @Override
