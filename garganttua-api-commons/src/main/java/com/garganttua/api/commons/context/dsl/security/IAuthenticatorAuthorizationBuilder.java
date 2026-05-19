@@ -15,13 +15,28 @@ public interface IAuthenticatorAuthorizationBuilder<E> extends IAutomaticLinkedB
 
     IAuthenticatorAuthorizationBuilder<E> refreshLifeTime(int i, TimeUnit days);
 
-    IAuthenticatorAuthorizationKeyBuilder<E> key(IDomainBuilder<E> key);
+    /**
+     * Mode <strong>persisté</strong>: declares a key domain (an entity marked
+     * {@code @Key} or built with {@code .key()} on its {@code IDomainBuilder})
+     * as the backing store. The framework will auto-create the key on first
+     * use and look it up on subsequent calls, scoping the visibility according
+     * to {@link com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage}.
+     *
+     * <p>Returns the key sub-builder so the caller can configure
+     * {@code .usage(...)}, {@code .algorithm(...)}, {@code .signatureAlgorithm(...)},
+     * {@code .lifeTime(...)}.
+     */
+    IAuthenticatorAuthorizationKeyBuilder<E> key(IDomainBuilder<E> keyDomain);
 
     /**
-     * Wires the user-provided {@link IKeyRealm} supplier used by the signing /
-     * verification stages of the pipeline. The API ships no {@code IKeyRealm}
-     * implementation — callers inject one (e.g. from {@code garganttua-crypto}).
+     * Mode <strong>direct</strong>: wires a user-provided {@link IKeyRealm}
+     * supplier (Vault, HSM, in-memory fixed realm for tests). The supplier
+     * takes full responsibility for materializing the key — the framework
+     * does not look at {@code usage} in this mode and does nothing extra.
+     *
+     * <p>Returns the parent builder: this mode has no sub-configuration —
+     * the supplier knows what the key is.
      */
-    IAuthenticatorAuthorizationBuilder<E> keyRealm(ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm);
+    IAuthenticatorAuthorizationBuilder<E> key(ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealmSupplier);
 
 }

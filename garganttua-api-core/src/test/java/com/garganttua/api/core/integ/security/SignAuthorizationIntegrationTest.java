@@ -224,7 +224,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         authenticatorBuilder
                     .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tokenDomainBuilder)
                         .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES)
-                        .keyRealm(new FixedKeyRealmSupplierBuilder(keyRealm));
+                        .key(new FixedKeyRealmSupplierBuilder(keyRealm));
 
         userDomainBuilder.up();
 
@@ -414,7 +414,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .id("id").uuid("uuid").tenantId("tenantId")
                         .db(localUserDao)
                     .up();
-            // Authenticator with linked authorization but NO .keyRealm(...)
+            // Authenticator with linked authorization but NO .key(supplier) nor .key(domain)
             ub.security()
                     .authenticator()
                         .login("id")
@@ -438,7 +438,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT"));
 
             assertEquals(500, result.code(),
-                    "signable but no .keyRealm() wired must surface as 500 from CREATE_AUTHORIZATION");
+                    "signable but no .key(...) wired must surface as 500 from CREATE_AUTHORIZATION");
         }
 
         @Test

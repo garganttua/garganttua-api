@@ -48,15 +48,27 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorAuthorizationKeyBuilder<E> key(IDomainBuilder key) {
-        this.keyDomain = Objects.requireNonNull(key, "Key cannot be null");
-        return this.authenticatorAuthorizationKey = new AuthenticatorAuthorizationKeyBuilder(this, key);
+    public IAuthenticatorAuthorizationKeyBuilder<E> key(IDomainBuilder<E> keyDomain) {
+        Objects.requireNonNull(keyDomain, "Key domain cannot be null");
+        if (this.keyRealm != null) {
+            throw new IllegalStateException(
+                    "key(supplier) and key(domain) are mutually exclusive on the same authorization "
+                            + "— supplier already declared");
+        }
+        this.keyDomain = keyDomain;
+        return this.authenticatorAuthorizationKey = new AuthenticatorAuthorizationKeyBuilder(this, keyDomain);
     }
 
     @Override
-    public IAuthenticatorAuthorizationBuilder<E> keyRealm(
-            ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm) {
-        this.keyRealm = Objects.requireNonNull(keyRealm, "Key realm supplier cannot be null");
+    public IAuthenticatorAuthorizationBuilder<E> key(
+            ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealmSupplier) {
+        Objects.requireNonNull(keyRealmSupplier, "Key realm supplier cannot be null");
+        if (this.keyDomain != null) {
+            throw new IllegalStateException(
+                    "key(supplier) and key(domain) are mutually exclusive on the same authorization "
+                            + "— domain already declared");
+        }
+        this.keyRealm = keyRealmSupplier;
         return this;
     }
 

@@ -39,4 +39,12 @@ public interface IDomainDefinition<E> {
     ObjectAddress superTenant();
 
     List<IMethodBinder<Void>> startupBinders();
+
+    /**
+     * Field-layout descriptor for the key-role entity, or {@code null} when
+     * this domain is not marked as a key domain. Populated by the entity-role
+     * scanner when {@code @Key} is detected on the entity class, or by the
+     * DSL {@code .key()} sub-builder.
+     */
+    IDomainKeyDefinition keyDefinition();
 }

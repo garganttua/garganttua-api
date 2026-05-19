@@ -11,6 +11,7 @@ import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.operation.Scope;
 import com.garganttua.api.commons.operation.TechnicalOperation;
 import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.definition.IDomainKeyDefinition;
 import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
 import com.garganttua.api.commons.definition.IDtoDefinition;
 import com.garganttua.api.commons.definition.IEntityDefinition;
@@ -38,7 +39,8 @@ public record DomainDefinition<E>(
         ObjectAddress superTenant,
         Map<String, IUseCaseDefinition> useCases,
         Map<String, IWorkflowDefinition> workflows,
-        IDomainSecurityDefinition domainSecurityDefinition) implements IDomainDefinition<E> {
+        IDomainSecurityDefinition domainSecurityDefinition,
+        IDomainKeyDefinition keyDefinition) implements IDomainDefinition<E> {
 
     @Override
     public List<OperationDefinition> operations() {

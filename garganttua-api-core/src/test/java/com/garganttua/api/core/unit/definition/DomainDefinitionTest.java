@@ -74,7 +74,8 @@ class DomainDefinitionTest {
                 null, null, null, null, null, null, null,
                 useCases,
                 workflows,
-                securityDef);
+                securityDef,
+                null);
     }
 
     private DomainSecurityDefinition defaultSecurityDef() {

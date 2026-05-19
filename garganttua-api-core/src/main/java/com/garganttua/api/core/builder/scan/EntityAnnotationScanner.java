@@ -38,6 +38,15 @@ import com.garganttua.api.commons.entity.annotations.EntityTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenantId;
 import com.garganttua.api.commons.entity.annotations.EntityUnicity;
 import com.garganttua.api.commons.entity.annotations.EntityUuid;
+import com.garganttua.api.commons.security.annotations.Key;
+import com.garganttua.api.commons.security.annotations.KeyAlgorithm;
+import com.garganttua.api.commons.security.annotations.KeyExpiration;
+import com.garganttua.api.commons.security.annotations.KeyPrivateMaterial;
+import com.garganttua.api.commons.security.annotations.KeyPublicMaterial;
+import com.garganttua.api.commons.security.annotations.KeyRealmName;
+import com.garganttua.api.commons.security.annotations.KeyRevoked;
+import com.garganttua.api.commons.security.annotations.KeySignatureAlgorithm;
+import com.garganttua.api.commons.context.dsl.IDomainKeyBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
@@ -146,7 +155,51 @@ public final class EntityAnnotationScanner {
         applyTypeLevelMarkers(domain, entityClass);
         applyEntityFields(reflection, domain, entityClass);
         applyLifecycleHooks(reflection, domain, entityClass);
+        applyKeyRole(reflection, domain, entityClass);
         applyDto(reflection, domain, entityClass, dtoClass);
+    }
+
+    /**
+     * If the entity carries {@link Key}, materialize the key sub-builder
+     * via {@code domain.key()} and wire each
+     * {@link KeyRealmName}/{@link KeyAlgorithm}/{@link KeySignatureAlgorithm}/
+     * {@link KeyPublicMaterial}/{@link KeyPrivateMaterial}/{@link KeyExpiration}/
+     * {@link KeyRevoked} field via the matching setter on the sub-builder.
+     */
+    private void applyKeyRole(IReflection reflection, IDomainBuilder<Object> domain, IClass<?> entityClass)
+            throws ApiException {
+        if (entityClass.getAnnotation(IClass.getClass(Key.class)) == null) {
+            return;
+        }
+        IDomainKeyBuilder<Object> keyBuilder = domain.key();
+
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyRealmName.class))
+                .ifPresent(f -> apply(() -> keyBuilder.realmName(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyAlgorithm.class))
+                .ifPresent(f -> apply(() -> keyBuilder.algorithm(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeySignatureAlgorithm.class))
+                .ifPresent(f -> apply(() -> keyBuilder.signatureAlgorithm(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyPublicMaterial.class))
+                .ifPresent(f -> apply(() -> keyBuilder.publicMaterial(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyPrivateMaterial.class))
+                .ifPresent(f -> apply(() -> keyBuilder.privateMaterial(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyExpiration.class))
+                .ifPresent(f -> apply(() -> keyBuilder.expiration(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyRevoked.class))
+                .ifPresent(f -> apply(() -> keyBuilder.revoked(f.getName())));
+    }
+
+    @FunctionalInterface
+    private interface ThrowingApiCall {
+        void run() throws ApiException;
+    }
+
+    private static void apply(ThrowingApiCall call) {
+        try {
+            call.run();
+        } catch (ApiException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void applyEntityAnnotation(IDomainBuilder<Object> domain, IClass<?> entityClass) {

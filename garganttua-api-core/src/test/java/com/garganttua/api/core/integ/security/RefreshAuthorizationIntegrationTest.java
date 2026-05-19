@@ -202,7 +202,7 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tokenDomainBuilder)
                         .lifeTime(60, TimeUnit.MINUTES)
                         .refreshLifeTime(120, TimeUnit.MINUTES)
-                        .keyRealm(new FixedKeyRealmSupplierBuilder(keyRealm));
+                        .key(new FixedKeyRealmSupplierBuilder(keyRealm));
 
         userDomainBuilder.up();
 

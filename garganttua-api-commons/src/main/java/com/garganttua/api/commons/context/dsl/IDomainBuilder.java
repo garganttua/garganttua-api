@@ -78,6 +78,14 @@ public interface IDomainBuilder<E> extends IAutomaticLinkedBuilder<IDomainBuilde
 
     IDomainSecurityBuilder<E> security() throws ApiException;
 
+    /**
+     * Marks this domain as a key domain — its entity holds cryptographic
+     * key material and the framework will use it as the storage backend
+     * when an authenticator's authorization declares
+     * {@code .key(IDomainBuilder)} for auto-create / lookup.
+     */
+    IDomainKeyBuilder<E> key() throws ApiException;
+
     <D> IDtoBuilder<E, D> dto(IClass<D> dtoClass) throws ApiException;
 
     <I, O> IUseCaseBuilder<I, O, E> useCase(String useCaseName, IClass<I> inputType, IClass<O> outputType);
