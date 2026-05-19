@@ -406,23 +406,68 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
             WorkflowResult result = this.workflow.execute(input, options);
 
+            String opLabel = resolveOperationLabel(request);
+            String domainName = this.domainDefinition.domainName();
+
             if (result.isSuccess()) {
                 return OperationResponse.ok(result.output());
             } else if (result.hasAborted()) {
-                String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
-                log.error("Workflow failed for domain {}: {}", this.domainDefinition.domainName(), errorMsg);
+                String errorMsg = nonBlank(result.exceptionMessage())
+                        .orElseGet(() -> "Operation '" + opLabel + "' on domain '" + domainName
+                                + "' aborted unexpectedly");
+                log.error("Workflow aborted for domain {} op {}: {}", domainName, opLabel, errorMsg);
                 return OperationResponse.error(errorMsg);
             } else {
-                String errorMsg = result.exceptionMessage().orElse("Workflow execution failed");
-                log.warn("Workflow returned code {} for domain {}: {}",
-                        result.code(), this.domainDefinition.domainName(), errorMsg);
+                String errorMsg = nonBlank(result.exceptionMessage())
+                        .orElseGet(() -> defaultMessageForCode(result.code(), opLabel, domainName));
+                log.warn("Workflow returned code {} for domain {} op {}: {}",
+                        result.code(), domainName, opLabel, errorMsg);
                 return mapWorkflowCode(result.code(), errorMsg);
             }
         } catch (Exception e) {
             log.error("Error executing workflow for domain {}: {}",
                     this.domainDefinition.domainName(), e.getMessage(), e);
-            return OperationResponse.error("Workflow execution error: " + e.getMessage());
+            return OperationResponse.error("Workflow execution error on domain '"
+                    + this.domainDefinition.domainName() + "': " + e.getMessage());
         }
+    }
+
+    private static java.util.Optional<String> nonBlank(java.util.Optional<String> opt) {
+        return opt.filter(s -> s != null && !s.isBlank());
+    }
+
+    private static String resolveOperationLabel(IOperationRequest request) {
+        return request.arg(IOperationRequest.OPERATION)
+                .map(op -> op.getBusinessOperation())
+                .map(bo -> bo.getLabel())
+                .orElse("unknown");
+    }
+
+    /**
+     * Builds a parlant fallback for workflow failures where no script-level
+     * message reached {@code WorkflowResult.exceptionMessage} — e.g. scripts
+     * that return {@code ! -> CODE} after a guard that doesn't raise. Without
+     * this, the operator-facing error would be the unhelpful "Workflow
+     * execution failed" string.
+     */
+    static String defaultMessageForCode(Integer code, String opLabel, String domainName) {
+        if (code == null) {
+            return "Operation '" + opLabel + "' on domain '" + domainName + "' failed";
+        }
+        return switch (code) {
+            case 400 -> "Bad request — '" + opLabel + "' on '" + domainName
+                    + "' rejected by validation";
+            case 401 -> "Authorization required to perform '" + opLabel
+                    + "' on '" + domainName + "'";
+            case 403 -> "Forbidden — caller lacks the privilege to perform '"
+                    + opLabel + "' on '" + domainName + "'";
+            case 404 -> "Not found — no matching resource for '" + opLabel
+                    + "' on '" + domainName + "'";
+            case 409 -> "Conflict — '" + opLabel + "' on '" + domainName
+                    + "' could not be applied to the current state";
+            default -> "Operation '" + opLabel + "' on '" + domainName
+                    + "' failed with code " + code;
+        };
     }
 
     private OperationResponse mapWorkflowCode(Integer code, String message) {
