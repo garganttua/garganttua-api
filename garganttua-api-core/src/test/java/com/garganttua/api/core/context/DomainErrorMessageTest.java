@@ -131,6 +131,146 @@ class DomainErrorMessageTest {
         }
     }
 
+    @Nested
+    @DisplayName("Stage-aware functional hints (the path mon général flagged on 2026-05-19)")
+    class StageHints {
+
+        @Test
+        @DisplayName("owner_rules + 400 -> 'Owner rules failed — required ownerId missing'")
+        void ownerRulesIs400() {
+            String hint = Domain.stageFunctionalHint("owner_rules_owner_rules", 400);
+            assertTrue(hint != null && hint.contains("Owner rules failed"),
+                    "must produce a parlant owner-rules hint; got: " + hint);
+            assertTrue(hint.contains("ownerId missing"),
+                    "must explicitly mention the missing ownerId; got: " + hint);
+        }
+
+        @Test
+        @DisplayName("tenant_rules + 400 -> 'Tenant rules failed — required tenantId missing'")
+        void tenantRulesIs400() {
+            String hint = Domain.stageFunctionalHint("tenant_rules_tenant_rules", 400);
+            assertTrue(hint != null && hint.contains("Tenant rules failed"),
+                    "must produce a parlant tenant-rules hint; got: " + hint);
+            assertTrue(hint.contains("tenantId missing"),
+                    "must explicitly mention the missing tenantId; got: " + hint);
+        }
+
+        @Test
+        @DisplayName("verify_authorization + 401 -> 'Authorization required' with the missing/malformed hint")
+        void verifyAuthorizationIs401() {
+            String hint = Domain.stageFunctionalHint("verify_authorization_verify_authorization", 401);
+            assertTrue(hint != null && hint.contains("Authorization required"),
+                    "must mention authorization being required; got: " + hint);
+            assertTrue(hint.contains("missing") || hint.contains("rejected"),
+                    "should hint at the actual failure mode; got: " + hint);
+        }
+
+        @Test
+        @DisplayName("verify_owner -> 'caller is not the owner of the resource'")
+        void verifyOwner() {
+            String hint = Domain.stageFunctionalHint("verify_owner_verify_owner", 403);
+            assertTrue(hint != null && hint.contains("Owner verification"),
+                    "must mention owner verification; got: " + hint);
+            assertTrue(hint.contains("not the owner"),
+                    "must explain WHY (caller is not the owner); got: " + hint);
+        }
+
+        @Test
+        @DisplayName("verify_authority -> 'caller lacks the required authority'")
+        void verifyAuthority() {
+            String hint = Domain.stageFunctionalHint("verify_authority_verify_authority", 403);
+            assertTrue(hint != null && hint.contains("lacks the required authority"),
+                    "must mention the missing authority; got: " + hint);
+        }
+
+        @Test
+        @DisplayName("null stage key returns null (lets the caller fall back to per-code default)")
+        void nullStage() {
+            assertEquals(null, Domain.stageFunctionalHint(null, 400),
+                    "null stage must return null, not a hint");
+        }
+
+        @Test
+        @DisplayName("unknown stage key returns null (graceful fall-through)")
+        void unknownStage() {
+            assertEquals(null, Domain.stageFunctionalHint("some_random_stage", 400),
+                    "unknown stages must return null so the caller falls back");
+        }
+    }
+
+    @Nested
+    @DisplayName("functionalMessage end-to-end on a synthetic WorkflowResult")
+    class FunctionalMessage {
+
+        @Test
+        @DisplayName("when a stage variable is non-zero, the message names the FUNCTIONAL cause (not 'rejected by validation')")
+        void picksUpStageHint() {
+            // Synthetic WorkflowResult that mirrors what Workflow.execute would
+            // produce when OWNER_RULES.gs does `! -> 400` after the
+            // requireOwnerId guard fails. The variable name format
+            // (_<stage>_<script>_code) is set by garganttua-core's
+            // Workflow.collectVariables.
+            java.util.Map<String, Object> vars = new java.util.HashMap<>();
+            vars.put("_owner_rules_owner_rules_code", 400);
+            java.time.Instant now = java.time.Instant.now();
+            com.garganttua.core.workflow.WorkflowResult result =
+                    new com.garganttua.core.workflow.WorkflowResult(
+                            java.util.UUID.randomUUID(), null, 400, vars,
+                            java.util.Map.of(), now, now,
+                            java.util.Optional.empty(), java.util.Optional.empty());
+
+            String msg = Domain.functionalMessage(result, "deleteAll", "authorizations");
+
+            assertTrue(msg.contains("Owner rules failed"),
+                    "must name the functional cause (Owner rules failed); got: " + msg);
+            assertTrue(msg.contains("ownerId missing"),
+                    "must name what's missing (ownerId); got: " + msg);
+            assertTrue(msg.contains("deleteAll") && msg.contains("authorizations"),
+                    "must still name the op and the domain for context; got: " + msg);
+            assertFalse(msg.contains("rejected by validation"),
+                    "must NOT fall back to the generic per-code line when a stage hint is available; got: "
+                            + msg);
+        }
+
+        @Test
+        @DisplayName("when NO stage variable is non-zero, falls back to defaultMessageForCode")
+        void fallsBackWhenNoStageMarker() {
+            // Empty variables — engine produced a code but no stage code surfaced.
+            java.time.Instant now = java.time.Instant.now();
+            com.garganttua.core.workflow.WorkflowResult result =
+                    new com.garganttua.core.workflow.WorkflowResult(
+                            java.util.UUID.randomUUID(), null, 404, java.util.Map.of(),
+                            java.util.Map.of(), now, now,
+                            java.util.Optional.empty(), java.util.Optional.empty());
+
+            String msg = Domain.functionalMessage(result, "readOne", "users");
+
+            assertTrue(msg.contains("Not found"),
+                    "must use the per-code default; got: " + msg);
+            assertTrue(msg.contains("readOne") && msg.contains("users"),
+                    "must still carry op + domain context; got: " + msg);
+        }
+
+        @Test
+        @DisplayName("findFailingStage skips zero codes and picks the first non-zero one")
+        void findFailingStageSkipsZero() {
+            java.util.Map<String, Object> vars = new java.util.LinkedHashMap<>();
+            vars.put("_verify_tenant_verify_tenant_code", 0);
+            vars.put("_owner_rules_owner_rules_code", 400);
+            vars.put("_verify_owner_verify_owner_code", 0);
+            java.time.Instant now = java.time.Instant.now();
+            com.garganttua.core.workflow.WorkflowResult result =
+                    new com.garganttua.core.workflow.WorkflowResult(
+                            java.util.UUID.randomUUID(), null, 400, vars,
+                            java.util.Map.of(), now, now,
+                            java.util.Optional.empty(), java.util.Optional.empty());
+
+            String stage = Domain.findFailingStage(result).orElse(null);
+            assertTrue(stage != null && stage.startsWith("owner_rules"),
+                    "must pick the non-zero owner_rules stage, not the zero ones; got: " + stage);
+        }
+    }
+
     /**
      * Asserts the message is not the old useless "Workflow execution failed"
      * sentinel. This is exactly the regression mon général flagged.

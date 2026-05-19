@@ -412,23 +412,38 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             if (result.isSuccess()) {
                 return OperationResponse.ok(result.output());
             } else if (result.hasAborted()) {
-                String errorMsg = nonBlank(result.exceptionMessage())
-                        .orElseGet(() -> "Operation '" + opLabel + "' on domain '" + domainName
-                                + "' aborted unexpectedly");
-                log.error("Workflow aborted for domain {} op {}: {}", domainName, opLabel, errorMsg);
-                return OperationResponse.error(errorMsg);
+                // The workflow surfaced a Throwable directly — propagate it.
+                // Fallback synthesizes an ApiException when the engine produced
+                // an abort with no exception (defensive — shouldn't normally
+                // happen).
+                Throwable cause = result.exception()
+                        .orElseGet(() -> new ApiException(
+                                nonBlank(result.exceptionMessage()).orElseGet(() ->
+                                        "Operation '" + opLabel + "' on domain '" + domainName
+                                                + "' aborted unexpectedly")));
+                log.error("Workflow aborted for domain {} op {}: {}", domainName, opLabel,
+                        cause.getMessage(), cause);
+                return OperationResponse.error(cause);
             } else {
-                String errorMsg = nonBlank(result.exceptionMessage())
-                        .orElseGet(() -> defaultMessageForCode(result.code(), opLabel, domainName));
+                // Non-zero code with NO exception attached — the `! -> CODE`
+                // pattern in stage scripts catches the functional exception
+                // and resets the script's lastException, so it never reaches
+                // WorkflowResult. We synthesize a Throwable carrying the
+                // best-available functional message so the response uniformly
+                // exposes an exception on failure paths.
+                String msg = nonBlank(result.exceptionMessage())
+                        .orElseGet(() -> functionalMessage(result, opLabel, domainName));
+                ApiException synthesized = new ApiException(msg);
                 log.warn("Workflow returned code {} for domain {} op {}: {}",
-                        result.code(), domainName, opLabel, errorMsg);
-                return mapWorkflowCode(result.code(), errorMsg);
+                        result.code(), domainName, opLabel, msg);
+                return mapWorkflowCode(result.code(), synthesized);
             }
         } catch (Exception e) {
             log.error("Error executing workflow for domain {}: {}",
                     this.domainDefinition.domainName(), e.getMessage(), e);
-            return OperationResponse.error("Workflow execution error on domain '"
-                    + this.domainDefinition.domainName() + "': " + e.getMessage());
+            return OperationResponse.error(new ApiException(
+                    "Workflow execution error on domain '"
+                            + this.domainDefinition.domainName() + "': " + e.getMessage(), e));
         }
     }
 
@@ -444,11 +459,98 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     }
 
     /**
-     * Builds a parlant fallback for workflow failures where no script-level
-     * message reached {@code WorkflowResult.exceptionMessage} — e.g. scripts
-     * that return {@code ! -> CODE} after a guard that doesn't raise. Without
-     * this, the operator-facing error would be the unhelpful "Workflow
-     * execution failed" string.
+     * Builds a parlant fallback message for the case mon général flagged on
+     * 2026-05-19: a stage script does {@code ! -> CODE}, which catches the
+     * functional exception and ends the script with a non-zero code — but
+     * garganttua-core's {@code Workflow.execute} clears the script's
+     * {@code lastException} on non-aborted exits, so the caught message
+     * (e.g. "Owner ID is required for this operation") never reaches
+     * {@code WorkflowResult.exceptionMessage()}. The operator only sees the
+     * generic code, with no clue WHAT went wrong functionally.
+     *
+     * <p>Workaround: inspect the per-stage {@code _<stage>_<script>_code}
+     * variables that the workflow engine does surface, find the first stage
+     * whose code is non-zero, and translate the stage identity into a
+     * functional explanation. Not as precise as recovering the original
+     * exception text, but far more useful than "rejected by validation".
+     *
+     * <p>An evolution proposal has been filed with garganttua-core to
+     * propagate {@code lastExceptionMessage} on non-aborted exits too —
+     * once that lands, the workaround can shrink back to using the
+     * exception message directly.
+     */
+    static String functionalMessage(WorkflowResult result, String opLabel, String domainName) {
+        Integer code = result.code();
+        String stage = findFailingStage(result).orElse(null);
+        String hint = stageFunctionalHint(stage, code);
+        if (hint != null) {
+            return hint + " — '" + opLabel + "' on '" + domainName + "'"
+                    + (code != null ? " (code " + code + ")" : "");
+        }
+        return defaultMessageForCode(code, opLabel, domainName);
+    }
+
+    /**
+     * Scans the workflow variables for the first non-zero per-stage code.
+     * Variables of the form {@code _<stage>_<script>_code} are populated by
+     * garganttua-core's {@code Workflow.collectVariables} on every stage
+     * execution, regardless of success or failure of the parent workflow.
+     */
+    static java.util.Optional<String> findFailingStage(WorkflowResult result) {
+        if (result == null || result.variables() == null) {
+            return java.util.Optional.empty();
+        }
+        return result.variables().entrySet().stream()
+                .filter(e -> e.getKey() != null
+                        && e.getKey().startsWith("_")
+                        && e.getKey().endsWith("_code"))
+                .filter(e -> e.getValue() instanceof Integer i && i != 0)
+                .map(java.util.Map.Entry::getKey)
+                // Strip leading underscore and trailing "_code", keep the
+                // raw "<stage>_<script>" body so the hint can match prefixes
+                // even when the script name differs from the stage name.
+                .map(k -> k.substring(1, k.length() - "_code".length()))
+                .findFirst();
+    }
+
+    /**
+     * Translates a sanitized stage identifier into a functional sentence.
+     * Falls through to {@code null} for unknown stages, letting the caller
+     * use the generic per-code fallback instead.
+     */
+    static String stageFunctionalHint(String stageKey, Integer code) {
+        if (stageKey == null) {
+            return null;
+        }
+        // Stage names are slugified by the workflow engine: "-" becomes "_".
+        // Match against the prefix because <stage>_<script> is collapsed
+        // (e.g. "owner_rules_owner_rules").
+        if (stageKey.startsWith("verify_authorization")) {
+            return code != null && code == 401
+                    ? "Authorization required (token missing, malformed, or rejected)"
+                    : "Authorization verification failed";
+        }
+        if (stageKey.startsWith("verify_tenant")) {
+            return "Tenant verification failed — caller's tenantId does not match the request";
+        }
+        if (stageKey.startsWith("verify_owner")) {
+            return "Owner verification failed — caller is not the owner of the resource";
+        }
+        if (stageKey.startsWith("verify_authority")) {
+            return "Authority check failed — caller lacks the required authority";
+        }
+        if (stageKey.startsWith("tenant_rules")) {
+            return "Tenant rules failed — required tenantId missing on the caller";
+        }
+        if (stageKey.startsWith("owner_rules")) {
+            return "Owner rules failed — required ownerId missing on the caller";
+        }
+        return null;
+    }
+
+    /**
+     * Generic per-code fallback used when no failing stage can be
+     * identified. Still names the operation and domain for context.
      */
     static String defaultMessageForCode(Integer code, String opLabel, String domainName) {
         if (code == null) {
@@ -470,14 +572,14 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         };
     }
 
-    private OperationResponse mapWorkflowCode(Integer code, String message) {
+    private OperationResponse mapWorkflowCode(Integer code, Throwable cause) {
         return switch (code) {
-            case 400 -> OperationResponse.badRequest(message);
-            case 401 -> OperationResponse.unauthorized(message);
-            case 403 -> OperationResponse.forbidden(message);
-            case 404 -> OperationResponse.notFound(message);
-            case 409 -> OperationResponse.badRequest(message);
-            default -> OperationResponse.error(message);
+            case 400 -> OperationResponse.badRequest(cause);
+            case 401 -> OperationResponse.unauthorized(cause);
+            case 403 -> OperationResponse.forbidden(cause);
+            case 404 -> OperationResponse.notFound(cause);
+            case 409 -> OperationResponse.badRequest(cause);
+            default -> OperationResponse.error(cause);
         };
     }
 

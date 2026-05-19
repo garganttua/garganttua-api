@@ -65,7 +65,7 @@ class DomainInvokeErrorResponseTest extends AbstractCrudIntegrationTest {
     class DirectRejection {
 
         @Test
-        @DisplayName("missing caller -> 400 with 'No caller provided' (already parlant, baseline)")
+        @DisplayName("missing caller -> 400 with a Throwable carrying 'No caller provided'")
         void noCaller() throws ApiException {
             IApi api = buildUnsecuredProducts(new StubDao());
             IDomain<?> domain = api.getDomain("products").orElseThrow();
@@ -76,8 +76,10 @@ class DomainInvokeErrorResponseTest extends AbstractCrudIntegrationTest {
                     .execute();
 
             assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
-            assertEquals("No caller provided", response.getResponse(),
-                    "the direct guard message must reach the response verbatim");
+            Throwable cause = response.getException().orElseThrow(
+                    () -> new AssertionError("response must carry an exception on failure; got: " + response));
+            assertEquals("No caller provided", cause.getMessage(),
+                    "the exception's message must match the direct guard wording");
             assertNotGeneric(response);
         }
     }

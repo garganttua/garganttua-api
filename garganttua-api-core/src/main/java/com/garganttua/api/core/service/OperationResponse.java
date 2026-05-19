@@ -2,6 +2,7 @@ package com.garganttua.api.core.service;
 
 import java.time.Duration;
 
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
 
@@ -50,36 +51,78 @@ public class OperationResponse implements IOperationResponse {
         return new OperationResponse(OperationResponseCode.DELETED, data);
     }
 
+    // ───── Failure factories ─────
+    //
+    // Per mon général (2026-05-19): failures carry the Throwable, not a bare
+    // string. The String-taking overloads remain for ergonomic call sites
+    // (Domain.invoke, helper code) — they wrap the message into an
+    // ApiException so downstream readers can rely on getException() being
+    // populated in EVERY failure path. This keeps the public contract
+    // uniform: response.getResponse() returns a payload on success, a
+    // Throwable on failure, never a raw String.
+
+    public static OperationResponse notFound(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.NOT_FOUND, cause);
+    }
+
     public static OperationResponse notFound(String message) {
-        return new OperationResponse(OperationResponseCode.NOT_FOUND, message);
+        return notFound(new ApiException(message));
+    }
+
+    public static OperationResponse badRequest(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.CLIENT_ERROR, cause);
     }
 
     public static OperationResponse badRequest(String message) {
-        return new OperationResponse(OperationResponseCode.CLIENT_ERROR, message);
+        return badRequest(new ApiException(message));
+    }
+
+    public static OperationResponse error(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.SERVER_ERROR, cause);
     }
 
     public static OperationResponse error(String message) {
-        return new OperationResponse(OperationResponseCode.SERVER_ERROR, message);
+        return error(new ApiException(message));
+    }
+
+    public static OperationResponse unauthorized(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.UNAUTHORIZED, cause);
     }
 
     public static OperationResponse unauthorized(String message) {
-        return new OperationResponse(OperationResponseCode.UNAUTHORIZED, message);
+        return unauthorized(new ApiException(message));
+    }
+
+    public static OperationResponse forbidden(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.FORBIDDEN, cause);
     }
 
     public static OperationResponse forbidden(String message) {
-        return new OperationResponse(OperationResponseCode.FORBIDDEN, message);
+        return forbidden(new ApiException(message));
+    }
+
+    public static OperationResponse notAvailable(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.NOT_AVAILABLE, cause);
     }
 
     public static OperationResponse notAvailable(String message) {
-        return new OperationResponse(OperationResponseCode.NOT_AVAILABLE, message);
+        return notAvailable(new ApiException(message));
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("OperationResponse{code=")
                 .append(responseCode)
-                .append(", response=")
-                .append(response);
+                .append(", response=");
+        if (response instanceof Throwable t) {
+            // Compact, single-line representation. Full stack lives on the
+            // Throwable for callers that want it.
+            sb.append(t.getClass().getSimpleName())
+                    .append(": ")
+                    .append(t.getMessage());
+        } else {
+            sb.append(response);
+        }
         if (processingTime != null) {
             sb.append(", processingTime=").append(processingTime.toMillis()).append("ms");
         }
