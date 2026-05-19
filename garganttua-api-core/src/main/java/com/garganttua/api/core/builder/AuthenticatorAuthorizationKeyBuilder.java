@@ -63,7 +63,8 @@ public class AuthenticatorAuthorizationKeyBuilder<E> extends
                 this.unit,
                 this.usage,
                 this.algorithm,
-                this.signAlgorithm);
+                this.signAlgorithm,
+                this.key);
     }
 
     @Override

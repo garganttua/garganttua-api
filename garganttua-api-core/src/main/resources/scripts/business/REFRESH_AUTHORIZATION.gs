@@ -33,7 +33,9 @@ requirePresent(if(isAuthorizationRefreshable(@2), 1))
 
 // Verify the cryptographic signature when applicable. A tampered or
 // unsignable-but-misconfigured token must surface as 401, not 500.
-_sigOk <- verifyIfSignable(@entity, @2)
+// @0 (operationRequest) is forwarded so persisted-mode key lookup can
+// scope by caller — anonymous on refresh, by design.
+_sigOk <- verifyIfSignable(@entity, @2, @0)
 ! -> 401
 requirePresent(if(@_sigOk, 1))
 ! -> 401
@@ -60,7 +62,7 @@ output <- createAuthorizationEntity2(@_authResult, @2)
 ! -> 500
 
 // Sign the fresh entity if signable.
-signIfSignable(@output, @2)
+signIfSignable(@output, @2, @0)
 ! -> 500
 
 // Encode the freshly signed authorization to its transport form, if a method

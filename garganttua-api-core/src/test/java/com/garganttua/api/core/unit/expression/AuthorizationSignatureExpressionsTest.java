@@ -141,17 +141,18 @@ class AuthorizationSignatureExpressionsTest {
             when(builder.build()).thenReturn(supplier);
             when(authzAuthDef.keyRealm()).thenReturn(builder);
 
-            IKeyRealm out = SecurityExpressions.resolveKeyRealm(domain);
+            IKeyRealm out = SecurityExpressions.resolveKeyRealm(domain, null);
             assertSame(realm, out);
         }
 
         @Test
-        @DisplayName("throws when no keyRealm supplier is configured")
+        @DisplayName("throws when neither .key(supplier) nor .key(domain) is configured")
         void throwsWhenNotConfigured() {
             when(authzAuthDef.keyRealm()).thenReturn(null);
+            when(authzAuthDef.keyDefinition()).thenReturn(null);
             ApiException ex = assertThrows(ApiException.class,
-                    () -> SecurityExpressions.resolveKeyRealm(domain));
-            assertTrue(ex.getMessage().contains("keyRealm"));
+                    () -> SecurityExpressions.resolveKeyRealm(domain, null));
+            assertTrue(ex.getMessage().contains("neither .key(supplier) nor .key(domain)"));
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -165,7 +166,7 @@ class AuthorizationSignatureExpressionsTest {
             when(authzAuthDef.keyRealm()).thenReturn(builder);
 
             ApiException ex = assertThrows(ApiException.class,
-                    () -> SecurityExpressions.resolveKeyRealm(domain));
+                    () -> SecurityExpressions.resolveKeyRealm(domain, null));
             assertTrue(ex.getMessage().contains("returned empty"));
         }
 
@@ -174,7 +175,7 @@ class AuthorizationSignatureExpressionsTest {
         void throwsWhenNoAuthzAuthDef() {
             when(authDef.authorizationDefinition()).thenReturn(null);
             ApiException ex = assertThrows(ApiException.class,
-                    () -> SecurityExpressions.resolveKeyRealm(domain));
+                    () -> SecurityExpressions.resolveKeyRealm(domain, null));
             assertTrue(ex.getMessage().contains("no authenticator authorization"));
         }
     }
@@ -352,7 +353,7 @@ class AuthorizationSignatureExpressionsTest {
             when(authzDef.signable()).thenReturn(false);
             // No keyRealm wired — proves the composite never even tries to resolve it.
             TokenEntity entity = new TokenEntity();
-            assertTrue(SecurityExpressions.signIfSignable(entity, domain));
+            assertTrue(SecurityExpressions.signIfSignable(entity, domain, null));
             // Field stays untouched
             org.junit.jupiter.api.Assertions.assertNull(entity.signature);
         }
@@ -365,18 +366,19 @@ class AuthorizationSignatureExpressionsTest {
             when(signingKey.sign(any(byte[].class))).thenReturn(new byte[] { 0x55 });
             wireKeyRealm(keyRealmReturning(signingKey, null));
 
-            assertTrue(SecurityExpressions.signIfSignable(entity, domain));
+            assertTrue(SecurityExpressions.signIfSignable(entity, domain, null));
             assertArrayEquals(new byte[] { 0x55 }, entity.signature);
         }
 
         @Test
-        @DisplayName("signIfSignable throws when signable but no keyRealm wired")
+        @DisplayName("signIfSignable throws when signable but neither supplier nor key domain wired")
         void signThrowsWhenSignableButNoRealm() {
-            // signable=true, keyRealm=null
+            // signable=true, no supplier, no key domain
             when(authzAuthDef.keyRealm()).thenReturn(null);
+            when(authzAuthDef.keyDefinition()).thenReturn(null);
             ApiException ex = assertThrows(ApiException.class,
-                    () -> SecurityExpressions.signIfSignable(new TokenEntity(), domain));
-            assertTrue(ex.getMessage().contains("keyRealm"));
+                    () -> SecurityExpressions.signIfSignable(new TokenEntity(), domain, null));
+            assertTrue(ex.getMessage().contains("neither .key(supplier) nor .key(domain)"));
         }
 
         @Test
@@ -384,7 +386,7 @@ class AuthorizationSignatureExpressionsTest {
         void verifyNoOpWhenNotSignable() {
             when(authzDef.signable()).thenReturn(false);
             TokenEntity entity = new TokenEntity();
-            assertTrue(SecurityExpressions.verifyIfSignable(entity, domain));
+            assertTrue(SecurityExpressions.verifyIfSignable(entity, domain, null));
         }
 
         @Test
@@ -396,7 +398,7 @@ class AuthorizationSignatureExpressionsTest {
             when(verifyingKey.verifySignature(any(byte[].class), any(byte[].class))).thenReturn(false);
             wireKeyRealm(keyRealmReturning(null, verifyingKey));
 
-            assertFalse(SecurityExpressions.verifyIfSignable(entity, domain));
+            assertFalse(SecurityExpressions.verifyIfSignable(entity, domain, null));
         }
 
         @Test
@@ -408,7 +410,7 @@ class AuthorizationSignatureExpressionsTest {
             when(verifyingKey.verifySignature(any(byte[].class), any(byte[].class))).thenReturn(true);
             wireKeyRealm(keyRealmReturning(null, verifyingKey));
 
-            assertTrue(SecurityExpressions.verifyIfSignable(entity, domain));
+            assertTrue(SecurityExpressions.verifyIfSignable(entity, domain, null));
         }
     }
 

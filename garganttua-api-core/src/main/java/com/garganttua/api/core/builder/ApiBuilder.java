@@ -352,6 +352,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				}
 			}
 
+			// Validate that every domain whose linked authorization is signable
+			// also has a key configured (either .key(supplier) or .key(domain)).
+			// Surfaces misconfiguration at build time rather than failing at the
+			// first sign call. Mirrors the runtime check in
+			// SecurityExpressions.resolveKeyRealm.
+			validateSignableKeyConfig(domainContexts);
+
 			// Build security context if configured
 			if (this.securityBuilder != null) {
 				this.securityBuilder.build();
@@ -416,6 +423,87 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		new com.garganttua.api.core.builder.scan.EntityAnnotationScanner(this, this.packages).scan();
 		new com.garganttua.api.core.builder.scan.SecurityAnnotationScanner(this, this.packages).scan();
 		log.atTrace().log("Exiting doAutoDetection() method");
+	}
+
+	/**
+	 * Walks every authenticator domain, finds its linked authorization
+	 * definition, and refuses the build when the authorization is signable
+	 * but no key was configured — either via {@code .key(supplier)} on the
+	 * authenticator's authorization DSL, or via {@code .key(domain)} pointing
+	 * at a {@code @Key}-marked entity domain.
+	 *
+	 * <p>Also rejects {@code .key(domain)} when the referenced domain has not
+	 * actually been marked as a key domain (no {@code .key()} sub-builder, no
+	 * {@code @Key} annotation), keeping symmetry with how {@code .authenticator()}
+	 * requires its target to be marked.
+	 */
+	private void validateSignableKeyConfig(Map<String, IDomain<?>> domainContexts) throws ApiException {
+		for (IDomain<?> domain : domainContexts.values()) {
+			if (!(domain.getDomainDefinition() instanceof com.garganttua.api.core.definition.DomainDefinition<?> domDef)) {
+				continue;
+			}
+			com.garganttua.api.commons.definition.IDomainSecurityDefinition secDef = domDef.domainSecurityDefinition();
+			if (secDef == null) continue;
+			com.garganttua.api.commons.definition.IAuthenticatorDefinition authDef = secDef.authenticatorDefinition();
+			if (authDef == null) continue;
+			com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDefinition authzAuthDef =
+					authDef.authorizationDefinition();
+			if (authzAuthDef == null) continue;
+
+			// Resolve the linked authorization domain to inspect its signable flag.
+			com.garganttua.api.commons.context.dsl.IDomainBuilder<?> authzDomainBuilder =
+					authzAuthDef.authorizationDomainBuilder();
+			if (authzDomainBuilder == null) continue;
+
+			IDomain<?> authzDomain = findDomainByEntityClass(domainContexts, authzDomainBuilder.getEntityClass());
+			if (authzDomain == null) continue;
+			com.garganttua.api.commons.definition.IDomainSecurityDefinition authzSecDef =
+					authzDomain.getDomainDefinition() instanceof com.garganttua.api.core.definition.DomainDefinition<?> authzDef
+							? authzDef.domainSecurityDefinition() : null;
+			com.garganttua.api.commons.definition.IDomainAuthorizationDefinition signableDef =
+					authzSecDef != null ? authzSecDef.authorizationDefinition() : null;
+			if (signableDef == null || !signableDef.signable()) continue;
+
+			boolean hasSupplier = authzAuthDef.keyRealm() != null;
+			boolean hasKeyDomain = authzAuthDef.keyDefinition() != null
+					&& authzAuthDef.keyDefinition().keyDomain() != null;
+			if (!hasSupplier && !hasKeyDomain) {
+				throw new ApiException("Domain '" + domain.getDomainName()
+						+ "' declares a signable authorization (linked to domain '"
+						+ authzDomain.getDomainName()
+						+ "') but neither .key(supplier) nor .key(domain) is wired on its "
+						+ "authenticator's authorization DSL. Add one before .build().");
+			}
+
+			if (hasKeyDomain) {
+				IDomain<?> keyDomain = findDomainByEntityClass(domainContexts,
+						authzAuthDef.keyDefinition().keyDomain().getEntityClass());
+				if (keyDomain == null) {
+					throw new ApiException("Domain '" + domain.getDomainName()
+							+ "' references a .key(domain) whose entity class '"
+							+ authzAuthDef.keyDefinition().keyDomain().getEntityClass().getName()
+							+ "' did not resolve to a registered domain on the API. Make sure "
+							+ ".domain(KeyEntity.class) was declared before .build().");
+				}
+				if (keyDomain.getDomainDefinition().keyDefinition() == null) {
+					throw new ApiException("Domain '" + domain.getDomainName()
+							+ "' references key domain '" + keyDomain.getDomainName()
+							+ "' which is not marked as a @Key domain. Annotate the entity with @Key "
+							+ "and its fields with @KeyRealmName / @KeyAlgorithm / @KeySignatureAlgorithm / "
+							+ "@KeyPublicMaterial / @KeyPrivateMaterial, or call .key().realmName(...)... "
+							+ "on its domain builder.");
+				}
+			}
+		}
+	}
+
+	private static IDomain<?> findDomainByEntityClass(Map<String, IDomain<?>> domains, IClass<?> target) {
+		if (target == null) return null;
+		for (IDomain<?> domain : domains.values()) {
+			IClass<?> entityClass = domain.getEntityClass();
+			if (entityClass != null && entityClass.equals(target)) return domain;
+		}
+		return null;
 	}
 
 	/**

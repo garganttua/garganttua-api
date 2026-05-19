@@ -71,7 +71,7 @@ _targetDomain <- resolveDomainByEntityClass(@3, @_targetClass)
 // Returns true when not signable or signature is valid; false on mismatch.
 // Misconfiguration (no key realm wired) throws — mapped to 401 here so a
 // broken setup is treated as an unverifiable token rather than a 500.
-_sigOk <- verifyIfSignable(@authz, @_targetDomain)
+_sigOk <- verifyIfSignable(@authz, @_targetDomain, @0)
 ! -> 401
 requirePresent(if(@_sigOk, 1))
 ! -> 401

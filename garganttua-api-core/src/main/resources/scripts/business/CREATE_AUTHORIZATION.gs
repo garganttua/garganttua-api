@@ -24,11 +24,14 @@ requirePresent(if(notNull(@3), 1))
 output <- createAuthorizationEntity2(@3, @2)
 ! -> 500
 
-// If the authorization is signable, sign it now. The user must wire an
-// IKeyRealm via .keyRealm(...) on the authenticator's authorization key DSL —
-// signIfSignable throws ApiException (mapped to 500) when signable but the
-// key realm is missing. No-op when not signable.
-signIfSignable(@output, @2)
+// If the authorization is signable, sign it now. The user must either wire an
+// ISupplierBuilder<IKeyRealm> via .key(supplier) or declare a @Key entity
+// domain via .key(domain) on the authenticator's authorization DSL.
+// signIfSignable throws ApiException (mapped to 500) when signable but no
+// key is configured. The operationRequest (@0) is forwarded so the
+// persisted-mode lookup can scope the realm by caller. No-op when not
+// signable.
+signIfSignable(@output, @2, @0)
 ! -> 500
 
 // If the authorization declares a transport encode method (.refreshable().encode(...)),

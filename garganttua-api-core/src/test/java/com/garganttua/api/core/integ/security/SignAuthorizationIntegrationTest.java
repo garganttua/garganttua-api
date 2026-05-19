@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -318,7 +319,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
             // Now verify on the token domain (which holds the signable contract)
             // — same code path that VERIFY_AUTHORIZATION.gs takes for a decoded token.
-            assertTrue(SecurityExpressions.verifyIfSignable(token, userCtx),
+            assertTrue(SecurityExpressions.verifyIfSignable(token, userCtx, null),
                     "freshly signed token must pass verifyIfSignable on the authenticator domain");
         }
 
@@ -335,7 +336,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             tampered[0] ^= 0x55;
             token.setSignature(tampered);
 
-            assertFalse(SecurityExpressions.verifyIfSignable(token, userCtx),
+            assertFalse(SecurityExpressions.verifyIfSignable(token, userCtx, null),
                     "a token with mutated signature must not verify");
         }
 
@@ -352,7 +353,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             // to a different payload.
             token.setOwnerId("attacker-uuid");
 
-            assertFalse(SecurityExpressions.verifyIfSignable(token, userCtx),
+            assertFalse(SecurityExpressions.verifyIfSignable(token, userCtx, null),
                     "mutated payload must not verify against the original signature");
             assertArrayEquals(originalSignature, token.getSignature(),
                     "signature itself was untouched — it's the payload that changed");
@@ -360,12 +361,12 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Nested
-    @DisplayName("Misconfiguration: signable but no keyRealm wired")
+    @DisplayName("Misconfiguration: signable but no key wired")
     class MissingKeyRealm {
 
         @Test
-        @DisplayName("CREATE_AUTHORIZATION returns 500 when the authenticator declares a signable authorization but no keyRealm supplier")
-        void noKeyRealmReturns500() throws Exception {
+        @DisplayName("ApiBuilder.build() refuses to build when the authenticator declares a signable authorization but no .key(supplier) nor .key(domain) is wired")
+        void noKeyRefusedAtBuildTime() throws Exception {
             CapturingDao localUserDao = new CapturingDao();
             CapturingDao localTokenDao = new CapturingDao();
 
@@ -425,20 +426,26 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES);
             ub.up();
 
-            IApi api = buildAndStart(builder);
-            IDomain<?> userCtxLocal = api.getDomain("users").orElseThrow();
+            // The build itself must fail — we never get to the runtime pipeline. This
+            // matches the policy that misconfiguration is caught at .build() rather
+            // than at the first sign call.
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> buildAndStart(builder),
+                    "ApiBuilder must refuse a signable authorization with no .key(...) configured");
+            String fullMessage = unwrap(ex);
+            assertTrue(fullMessage.contains("neither .key(supplier) nor .key(domain)"),
+                    "build error must explain the missing key configuration — got: " + fullMessage);
+            assertTrue(fullMessage.contains("signable authorization"),
+                    "build error must mention the signable authorization that triggered the check — got: " + fullMessage);
+        }
 
-            UserDto u = new UserDto();
-            u.setId("john@example.com");
-            u.setUuid("user-uuid-1");
-            u.setTenantId("SUPER_TENANT");
-            localUserDao.save(u);
-
-            WorkflowResult result = executeScript(userCtxLocal,
-                    authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT"));
-
-            assertEquals(500, result.code(),
-                    "signable but no .key(...) wired must surface as 500 from CREATE_AUTHORIZATION");
+        private static String unwrap(Throwable t) {
+            StringBuilder sb = new StringBuilder();
+            for (Throwable cur = t; cur != null; cur = cur.getCause()) {
+                if (sb.length() > 0) sb.append(" | ");
+                sb.append(cur.getMessage());
+            }
+            return sb.toString();
         }
 
         @Test

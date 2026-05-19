@@ -49,6 +49,10 @@
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-runtime-reflection</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-crypto</artifactId>
+		</dependency>
 
 		<!-- Third-party -->
 		<dependency>
@@ -60,11 +64,6 @@
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflections</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-crypto</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

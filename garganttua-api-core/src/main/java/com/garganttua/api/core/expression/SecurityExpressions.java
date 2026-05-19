@@ -504,8 +504,8 @@ public class SecurityExpressions {
 	}
 
 	@Expression(name = "resolveKeyRealm",
-			description = "Resolves the user-provided IKeyRealm from the authenticator's authorization definition. Throws ApiException if not configured.")
-	public static IKeyRealm resolveKeyRealm(@Nullable Object domainContext) {
+			description = "Resolves an IKeyRealm for sign/verify. Two modes: (1) supplier — uses the user-provided ISupplierBuilder<IKeyRealm> declared via .key(supplier); (2) persisted — looks up or auto-creates a key entity on the domain declared via .key(domain), scoped by AuthenticatorKeyUsage (oneForAll / oneForTenant / oneForEach). The optional operationRequest argument carries the caller used to scope the realmName in persisted mode.")
+	public static IKeyRealm resolveKeyRealm(@Nullable Object domainContext, @Nullable Object operationRequest) {
 		IDomain<?> domain = toDomain(domainContext);
 		DomainDefinition<?> domDef = toDomainDefinition(domain);
 		if (domDef == null) {
@@ -518,22 +518,180 @@ public class SecurityExpressions {
 					+ (domain != null ? domain.getDomainName() : "<null>") + "'");
 		}
 		var authzAuthDef = secDef.authenticatorDefinition().authorizationDefinition();
+
+		// Mode A: supplier — takes priority when declared. The supplier owns its
+		// materialization (Vault, HSM, in-memory test realm); the framework does
+		// not look at usage().
 		var supplierBuilder = authzAuthDef.keyRealm();
-		if (supplierBuilder == null) {
-			throw new ApiException("resolveKeyRealm: domain '" + domain.getDomainName()
-					+ "' declares a signable authorization but no .keyRealm(...) supplier was configured on its authenticator's authorization DSL");
+		if (supplierBuilder != null) {
+			try {
+				@SuppressWarnings({ "unchecked", "rawtypes" })
+				ISupplier<? extends IKeyRealm> supplier = (ISupplier) supplierBuilder.build();
+				Optional<? extends IKeyRealm> realmOpt = supplier.supply();
+				return realmOpt.orElseThrow(
+						() -> new ApiException("resolveKeyRealm: key supplier returned empty for domain '"
+								+ domain.getDomainName() + "'"));
+			} catch (ApiException e) {
+				throw e;
+			} catch (Exception e) {
+				throw new ApiException("resolveKeyRealm: failed to obtain IKeyRealm from supplier: " + e.getMessage(), e);
+			}
 		}
+
+		// Mode B: persisted key entity domain — lookup-or-create, scoped by
+		// AuthenticatorKeyUsage. The realmName encodes the scope ("global",
+		// per-tenant, per-caller) so a single repository query by realmName
+		// returns the right key for the caller.
+		var keyConfig = authzAuthDef.keyDefinition();
+		if (keyConfig != null && keyConfig.keyDomain() != null) {
+			return resolvePersistedKeyRealm(domain, keyConfig, operationRequest);
+		}
+
+		throw new ApiException("resolveKeyRealm: domain '" + domain.getDomainName()
+				+ "' declares a signable authorization but neither .key(supplier) nor .key(domain) "
+				+ "was configured on its authenticator's authorization DSL");
+	}
+
+	private static IKeyRealm resolvePersistedKeyRealm(IDomain<?> authenticatorDomain,
+			com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition keyConfig,
+			@Nullable Object operationRequest) {
+		IDomain<?> keyDomain = resolveKeyDomain(authenticatorDomain, keyConfig);
+		if (keyDomain == null) {
+			throw new ApiException("resolveKeyRealm: the configured .key(domain) entity class '"
+					+ keyConfig.keyDomain().getClass().getName()
+					+ "' did not resolve to a registered domain on the API");
+		}
+		com.garganttua.api.commons.definition.IDomainKeyDefinition keyEntDef =
+				keyDomain.getDomainDefinition().keyDefinition();
+		if (keyEntDef == null) {
+			throw new ApiException("resolveKeyRealm: key domain '" + keyDomain.getDomainName()
+					+ "' is not marked as a @Key domain — declare .key().realmName(...).publicMaterial(...)... on it");
+		}
+
+		ICaller caller = extractCaller(operationRequest);
+		String realmName = buildRealmName(keyConfig.usage(), caller, keyDomain.getDomainName());
+
+		IFilter filter = Filter.eq(keyEntDef.realmName().toString(), realmName);
+		List<Object> existing;
 		try {
-			@SuppressWarnings({ "unchecked", "rawtypes" })
-			ISupplier<? extends IKeyRealm> supplier = (ISupplier) supplierBuilder.build();
-			Optional<? extends IKeyRealm> realmOpt = supplier.supply();
-			return realmOpt.orElseThrow(
-					() -> new ApiException("resolveKeyRealm: keyRealm supplier returned empty for domain '"
-							+ domain.getDomainName() + "'"));
-		} catch (ApiException e) {
-			throw e;
+			existing = keyDomain.getRepository().getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
 		} catch (Exception e) {
-			throw new ApiException("resolveKeyRealm: failed to obtain IKeyRealm: " + e.getMessage(), e);
+			throw new ApiException("resolveKeyRealm: failed to query key domain '" + keyDomain.getDomainName()
+					+ "' for realmName '" + realmName + "': " + e.getMessage(), e);
+		}
+		IReflection reflection = DefaultMapper.reflection();
+		if (existing != null && !existing.isEmpty()) {
+			Object entity = pickUsable(existing, keyEntDef, reflection);
+			if (entity != null) {
+				return com.garganttua.api.core.security.key.KeyRealmFactory.materialize(entity, keyEntDef, reflection);
+			}
+			// All matching keys are revoked / expired — fall through and create a fresh one.
+		}
+
+		Object newEntity = com.garganttua.api.core.security.key.KeyRealmFactory.generateAndStamp(
+				keyDomain.getEntityClass(), keyEntDef,
+				keyConfig.algorithm(), keyConfig.signatureAlgorithm(),
+				realmName, keyConfig.duration(), keyConfig.unit(), reflection);
+		stampIdentityAndTenancy(newEntity, keyDomain, keyConfig.usage(), caller, reflection);
+
+		try {
+			keyDomain.getRepository().save(newEntity);
+		} catch (Exception e) {
+			throw new ApiException("resolveKeyRealm: failed to persist freshly-generated key on domain '"
+					+ keyDomain.getDomainName() + "' for realmName '" + realmName + "': " + e.getMessage(), e);
+		}
+		return com.garganttua.api.core.security.key.KeyRealmFactory.materialize(newEntity, keyEntDef, reflection);
+	}
+
+	private static IDomain<?> resolveKeyDomain(IDomain<?> authenticatorDomain,
+			com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition keyConfig) {
+		if (!(authenticatorDomain instanceof Domain<?> domCtx)) return null;
+		IApi apiContext = domCtx.getApiContext();
+		if (apiContext == null) return null;
+		try {
+			IClass<?> entityClass = keyConfig.keyDomain().getEntityClass();
+			String domainName = Pluralizer.toPlural(entityClass.getSimpleName().toLowerCase());
+			return apiContext.getDomain(domainName).orElse(null);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	private static ICaller extractCaller(@Nullable Object operationRequest) {
+		Object unwrapped = unwrapOptional(operationRequest);
+		if (unwrapped instanceof IOperationRequest req) {
+			ICaller caller = req.caller();
+			if (caller != null) return caller;
+		}
+		return Caller.createAnonymousCaller();
+	}
+
+	private static String buildRealmName(com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage usage,
+			ICaller caller, String keyDomainName) {
+		String base = keyDomainName != null ? keyDomainName : "key";
+		if (usage == null || usage == com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage.oneForAll) {
+			return base + ":global";
+		}
+		String tenant = caller.tenantId() != null ? caller.tenantId() : "anonymous";
+		return switch (usage) {
+			case oneForAll -> base + ":global";
+			case oneForTenant -> base + ":tenant:" + tenant;
+			case oneForEach -> {
+				String scoped = caller.ownerId() != null ? caller.ownerId()
+						: (caller.callerId() != null ? caller.callerId() : "anonymous");
+				yield base + ":caller:" + tenant + ":" + scoped;
+			}
+		};
+	}
+
+	private static Object pickUsable(List<Object> candidates,
+			com.garganttua.api.commons.definition.IDomainKeyDefinition keyEntDef, IReflection reflection) {
+		for (Object entity : candidates) {
+			if (keyEntDef.revoked() != null) {
+				Object revoked = reflection.getFieldValue(entity, keyEntDef.revoked().toString());
+				if (Boolean.TRUE.equals(revoked)) continue;
+			}
+			if (keyEntDef.expiration() != null) {
+				Object exp = reflection.getFieldValue(entity, keyEntDef.expiration().toString());
+				if (exp != null && isExpired(exp)) continue;
+			}
+			return entity;
+		}
+		return null;
+	}
+
+	private static boolean isExpired(Object value) {
+		long now = System.currentTimeMillis();
+		if (value instanceof java.util.Date d) return d.getTime() <= now;
+		if (value instanceof java.time.Instant i) return i.toEpochMilli() <= now;
+		if (value instanceof Long l) return l <= now;
+		return false;
+	}
+
+	private static void stampIdentityAndTenancy(Object entity, IDomain<?> keyDomain,
+			com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage usage,
+			ICaller caller, IReflection reflection) {
+		ObjectAddress uuidAddr = keyDomain.getEntityDefinition() != null
+				? keyDomain.getEntityDefinition().uuid() : null;
+		if (uuidAddr != null) {
+			reflection.setFieldValue(entity, uuidAddr.toString(),
+					com.github.f4b6a3.uuid.UuidCreator.getTimeOrderedEpoch().toString());
+		}
+
+		ObjectAddress tenantAddr = keyDomain.getTenantIdFieldAddress();
+		if (tenantAddr != null) {
+			String stampedTenant = usage == com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage.oneForAll
+					? null : caller.tenantId();
+			if (stampedTenant != null) {
+				reflection.setFieldValue(entity, tenantAddr, stampedTenant);
+			}
+		}
+
+		ObjectAddress ownedAddr = keyDomain.getDomainDefinition() != null
+				? keyDomain.getDomainDefinition().owned() : null;
+		if (ownedAddr != null && usage == com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage.oneForEach
+				&& caller.ownerId() != null) {
+			reflection.setFieldValue(entity, ownedAddr, caller.ownerId());
 		}
 	}
 
@@ -580,28 +738,28 @@ public class SecurityExpressions {
 	}
 
 	@Expression(name = "signIfSignable",
-			description = "If the resolved authorization is signable, resolves the user-provided IKeyRealm and signs the entity. No-op when not signable. Throws when signable but no key realm is configured.")
-	public static boolean signIfSignable(@Nullable Object authzEntity, @Nullable Object domainContext) {
+			description = "If the resolved authorization is signable, resolves the key realm (supplier or persisted) and signs the entity. The operationRequest argument is forwarded to resolveKeyRealm to scope the persisted-mode realmName by caller. No-op when not signable. Throws when signable but no key is configured.")
+	public static boolean signIfSignable(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable Object operationRequest) {
 		if (authzEntity == null || domainContext == null) {
 			throw new ApiException("signIfSignable: entity and domainContext are required");
 		}
 		if (!isAuthorizationSignable(domainContext)) {
 			return true;
 		}
-		IKeyRealm realm = resolveKeyRealm(domainContext);
+		IKeyRealm realm = resolveKeyRealm(domainContext, operationRequest);
 		return signAuthorization(authzEntity, domainContext, realm);
 	}
 
 	@Expression(name = "verifyIfSignable",
-			description = "If the resolved authorization is signable, resolves the user-provided IKeyRealm and verifies the entity's signature. Returns true when not signable or signature valid; false on signature mismatch. Throws when signable but no key realm is configured.")
-	public static boolean verifyIfSignable(@Nullable Object authzEntity, @Nullable Object domainContext) {
+			description = "If the resolved authorization is signable, resolves the key realm (supplier or persisted) and verifies the entity's signature. The operationRequest argument is forwarded to resolveKeyRealm to scope the persisted-mode realmName by caller. Returns true when not signable or signature valid; false on signature mismatch. Throws when signable but no key is configured.")
+	public static boolean verifyIfSignable(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable Object operationRequest) {
 		if (authzEntity == null || domainContext == null) {
 			throw new ApiException("verifyIfSignable: entity and domainContext are required");
 		}
 		if (!isAuthorizationSignable(domainContext)) {
 			return true;
 		}
-		IKeyRealm realm = resolveKeyRealm(domainContext);
+		IKeyRealm realm = resolveKeyRealm(domainContext, operationRequest);
 		return verifyAuthorizationSignature(authzEntity, domainContext, realm);
 	}
 
