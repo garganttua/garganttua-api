@@ -102,14 +102,14 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
     class DslPropagation {
 
         @Test
-        @DisplayName("creationAuthority(true) is exposed on the operation with effective name <domain>:<op>")
+        @DisplayName("creationAuthority(true) is exposed on the operation with effective name <technicalOp>-<scope>-<entity>")
         void booleanAuthorityProducesAutoName() throws ApiException {
             IDomain<?> ctx = buildDomain(b -> b.creationAuthority(true));
             OperationDefinition op = op(ctx, BusinessOperation.create);
             assertTrue(op.authority(), "operation should require authority");
             assertNull(op.authorityName(), "no explicit authority name was configured");
-            assertEquals("users:create", op.effectiveAuthorityName(),
-                    "default name should be <domain>:<business-operation-label>");
+            assertEquals("create-one-user", op.effectiveAuthorityName(),
+                    "default name should be <technicalOperation>-<scope>-<entity-singular-or-plural>");
         }
 
         @Test
@@ -143,8 +143,8 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
                     .deleteAllAuthority(true));
             assertEquals("write", op(ctx, BusinessOperation.create).effectiveAuthorityName());
             assertEquals("read", op(ctx, BusinessOperation.readAll).effectiveAuthorityName());
-            // boolean only → auto-generated using business-operation label
-            assertEquals("users:deleteAll", op(ctx, BusinessOperation.deleteAll).effectiveAuthorityName());
+            // boolean only → auto-generated using <technicalOp>-<scope>-<entity-plural-for-all>
+            assertEquals("delete-all-users", op(ctx, BusinessOperation.deleteAll).effectiveAuthorityName());
             // unconfigured operations stay unauthorized
             assertNull(op(ctx, BusinessOperation.readOne).effectiveAuthorityName());
         }
@@ -186,7 +186,7 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
                     .creationAuthority(true));
             OperationDefinition op = op(ctx, BusinessOperation.create);
             WorkflowResult result = executeScript(ctx,
-                    authenticatedRequest(op, List.of("users:create")));
+                    authenticatedRequest(op, List.of("create-one-user")));
             assertTrue(result.isSuccess(),
                     "caller has the expected authority but the request failed. code=" + result.code()
                             + " vars=" + result.variables());

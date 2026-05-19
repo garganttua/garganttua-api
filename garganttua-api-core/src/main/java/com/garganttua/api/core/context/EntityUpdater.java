@@ -30,13 +30,11 @@ public class EntityUpdater implements IEntityUpdater{
 		}
 
 		try {
-			List<String> callerAuthorities = caller.authorities();
-
 			for (Pair<ObjectAddress, String> entry : updateAuthorizations) {
 				ObjectAddress fieldAddress = entry.getValue0();
 				String requiredAuthority = entry.getValue1();
 
-				if (isAuthorized(callerAuthorities, requiredAuthority)) {
+				if (isAuthorized(caller, requiredAuthority)) {
 					String fieldName = fieldAddress.toString();
 					Object updatedValue = REFLECTION.getFieldValue(updatedEntity, fieldName);
 					if (updatedValue != null) {
@@ -53,12 +51,33 @@ public class EntityUpdater implements IEntityUpdater{
 		return storedEntity;
 	}
 
-	private static boolean isAuthorized(List<String> callerAuthorities, String requiredAuthority) {
+	/**
+	 * Decides whether the caller may write the field guarded by
+	 * {@code requiredAuthority}. The rules mirror
+	 * {@code SecurityExpressions.callerHasAuthority}:
+	 *
+	 * <ul>
+	 *   <li>No authority required (null or empty) → allowed.</li>
+	 *   <li>Super-tenant or super-owner caller → bypass; they are system
+	 *       callers and the authority gate does not apply.</li>
+	 *   <li>Otherwise the caller must carry the named authority in
+	 *       {@code caller.authorities()}; a {@code null} or empty list
+	 *       fails the check (the previous "null means unrestricted"
+	 *       behaviour was a security hole — a freshly-built
+	 *       {@code Caller.createTenantCaller} has null authorities and
+	 *       must not bypass field-level gates).</li>
+	 * </ul>
+	 */
+	private static boolean isAuthorized(ICaller caller, String requiredAuthority) {
 		if (requiredAuthority == null || requiredAuthority.isEmpty()) {
 			return true;
 		}
-		if (callerAuthorities == null) {
+		if (caller.superTenant() || caller.superOwner()) {
 			return true;
+		}
+		List<String> callerAuthorities = caller.authorities();
+		if (callerAuthorities == null) {
+			return false;
 		}
 		return callerAuthorities.contains(requiredAuthority);
 	}

@@ -55,13 +55,17 @@ class EntityUpdaterTest {
     // --- Test Caller ---
 
     private static ICaller callerWith(List<String> authorities) {
+        return callerWith(authorities, false, false);
+    }
+
+    private static ICaller callerWith(List<String> authorities, boolean superTenant, boolean superOwner) {
         return new ICaller() {
             @Override public String tenantId() { return "T1"; }
             @Override public String requestedTenantId() { return "T1"; }
             @Override public String ownerId() { return "O1"; }
             @Override public String callerId() { return "C1"; }
-            @Override public boolean superTenant() { return false; }
-            @Override public boolean superOwner() { return false; }
+            @Override public boolean superTenant() { return superTenant; }
+            @Override public boolean superOwner() { return superOwner; }
             @Override public List<String> authorities() { return authorities; }
         };
     }
@@ -206,8 +210,13 @@ class EntityUpdaterTest {
         }
 
         @Test
-        @DisplayName("updates field when caller authorities is null (no restriction)")
-        void updatesWhenCallerAuthoritiesNull() {
+        @DisplayName("caller with null authorities is NOT authorized — null is not a bypass")
+        void rejectsWhenCallerAuthoritiesNull() {
+            // Regression: a caller with no authorities at all (null list) used
+            // to bypass every field-level gate — a freshly-built tenant caller
+            // has null authorities, which let unprivileged callers update
+            // authority-gated fields silently. The new contract: null/empty
+            // authorities + required authority => skip the field.
             Product stored = new Product("Old", 10.0, "Cat", "secret");
             Product updated = new Product("New", 10.0, "Cat", "secret");
 
@@ -217,7 +226,63 @@ class EntityUpdaterTest {
 
             updater.update(callerWith(null), stored, updated, authorizations);
 
+            assertEquals("Old", stored.getName(),
+                    "caller has no authorities — the field-level gate must skip the update");
+        }
+
+        @Test
+        @DisplayName("caller with empty authorities list is NOT authorized")
+        void rejectsWhenCallerAuthoritiesEmpty() {
+            Product stored = new Product("Old", 10.0, "Cat", "secret");
+            Product updated = new Product("New", 10.0, "Cat", "secret");
+
+            List<Pair<ObjectAddress, String>> authorizations = List.of(
+                    Pair.with(new ObjectAddress("name"), "ROLE_ADMIN")
+            );
+
+            updater.update(callerWith(List.of()), stored, updated, authorizations);
+
+            assertEquals("Old", stored.getName(),
+                    "empty authorities + required authority => no bypass");
+        }
+
+        @Test
+        @DisplayName("super-tenant caller bypasses field-level authority gates")
+        void superTenantBypassesGate() {
+            Product stored = new Product("Old", 10.0, "Cat", "secret");
+            Product updated = new Product("New", 99.0, "NewCat", "hacked");
+
+            List<Pair<ObjectAddress, String>> authorizations = List.of(
+                    Pair.with(new ObjectAddress("name"), "ROLE_ADMIN"),
+                    Pair.with(new ObjectAddress("price"), "ROLE_PRICING"),
+                    Pair.with(new ObjectAddress("category"), "ROLE_CATEGORY_EDITOR")
+            );
+
+            // null authorities on the super-tenant — but the super flag bypasses
+            // the gate (mirrors SecurityExpressions.callerHasAuthority).
+            updater.update(callerWith(null, /*superTenant*/ true, /*superOwner*/ false),
+                    stored, updated, authorizations);
+
             assertEquals("New", stored.getName());
+            assertEquals(99.0, stored.getPrice());
+            assertEquals("NewCat", stored.getCategory());
+        }
+
+        @Test
+        @DisplayName("super-owner caller bypasses field-level authority gates")
+        void superOwnerBypassesGate() {
+            Product stored = new Product("Old", 10.0, "Cat", "secret");
+            Product updated = new Product("New", 99.0, "NewCat", "hacked");
+
+            List<Pair<ObjectAddress, String>> authorizations = List.of(
+                    Pair.with(new ObjectAddress("name"), "ROLE_ADMIN")
+            );
+
+            updater.update(callerWith(null, /*superTenant*/ false, /*superOwner*/ true),
+                    stored, updated, authorizations);
+
+            assertEquals("New", stored.getName(),
+                    "super-owner caller must also bypass the field-level authority gate");
         }
 
         @Test

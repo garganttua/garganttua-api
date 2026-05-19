@@ -127,7 +127,7 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 	public String effectiveAuthorityName() {
 		if (!authority) return null;
 		if (authorityName != null && !authorityName.isBlank()) return authorityName;
-		return domainName + ":" + getBusinessOperation().getLabel();
+		return this.getDefaultAuthorityName();
 	}
 
 	// --- Matching ---
@@ -153,10 +153,14 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 
 	@Override
 	public String toString() {
-		return this.domainName + "-" + technicalOperation + "-" + scope + "-"
-				+ ((scope == Scope.allEntities || scope == Scope.listOfEntities)
-						? Pluralizer.toPlural(this.entity.getSimpleName().toLowerCase())
-						: Singularizer.toSingular(this.entity.getSimpleName().toLowerCase()));
+		return this.domainName + "-" + this.getDefaultAuthorityName();
+	}
+
+	private String getDefaultAuthorityName() {
+		return technicalOperation + "-" + scope + "-"
+						+ ((scope == Scope.allEntities || scope == Scope.listOfEntities)
+								? Pluralizer.toPlural(this.entity.getSimpleName().toLowerCase())
+								: Singularizer.toSingular(this.entity.getSimpleName().toLowerCase()));
 	}
 
 	@Override

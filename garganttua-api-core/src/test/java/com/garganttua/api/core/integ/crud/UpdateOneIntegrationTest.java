@@ -235,4 +235,174 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         dto.setEmail(email);
         userDao.getStorage().add(dto);
     }
+
+    // ─── Field-level authority enforcement through the pipeline ────────────
+    //
+    // The setUp() build above only declares .update("name") / .update("email")
+    // — no authority gate. These tests rebuild the API with an authority gate
+    // on the 'name' field and assert that UPDATE_ONE.gs honours it end-to-end
+    // (the script delegates to updateEntity expression → EntityUpdater).
+
+    @org.junit.jupiter.api.Nested
+    @DisplayName("Field-level update authority enforcement (entity().update(field, \"auth\"))")
+    class FieldLevelAuthority {
+
+        private IApi guardedContext;
+        private IDomain<?> guardedUserCtx;
+        private CapturingDao guardedDao;
+
+        @BeforeEach
+        void buildGuardedApi() throws ApiException {
+            guardedDao = new CapturingDao();
+            IApiBuilder b = newBuilder();
+            b.domain(IClass.getClass(User.class))
+                    .tenant(true)
+                    .entity()
+                        .id("id").uuid("uuid").tenantId("tenantId")
+                        // 'name' requires the "user-update-name" authority
+                        .update("name", "user-update-name")
+                        // 'email' is freely updatable — no authority gate
+                        .update("email")
+                    .up()
+                    .dto(IClass.getClass(UserDto.class))
+                        .id("id").uuid("uuid").tenantId("tenantId")
+                        .db(guardedDao)
+                    .up()
+                .up();
+            guardedContext = buildAndStart(b);
+            guardedUserCtx = guardedContext.getDomain("users").orElseThrow();
+            UserDto seed = new UserDto();
+            seed.setId("1");
+            seed.setUuid("uuid-bob");
+            seed.setTenantId("TENANT_A");
+            seed.setName("Bob");
+            seed.setEmail("bob@example.com");
+            guardedDao.getStorage().add(seed);
+        }
+
+        /**
+         * Bare tenant caller with the supplied authority list — bypasses
+         * VERIFY_AUTHORIZATION (Mode B: pre-populated authorization arg) so
+         * the test focuses on field-level enforcement inside UPDATE_ONE.gs.
+         */
+        private OperationRequest tenantUpdate(java.util.List<String> authorities, User body) {
+            OperationDefinition op = OperationDefinition.updateOneWithStandardSecurity(
+                    "users", IClass.getClass(User.class));
+            OperationRequest req = new OperationRequest(new HashMap<>());
+            req.arg(IOperationRequest.OPERATION, op);
+            req.arg(IOperationRequest.TENANT_ID, "TENANT_A");
+            req.arg(IOperationRequest.REQUESTED_TENANT_ID, "TENANT_A");
+            req.arg(IOperationRequest.CALLER_ID, "user-1");
+            req.arg(IOperationRequest.OWNER_ID, "user-1");
+            req.arg(IOperationRequest.SUPER_TENANT, false);
+            req.arg(IOperationRequest.SUPER_OWNER, false);
+            req.arg(IOperationRequest.AUTHORITIES, authorities);
+            req.arg("authorization", new Object()); // Mode B: pre-resolved
+            req.arg("caller", new com.garganttua.api.core.caller.Caller(
+                    "TENANT_A", "TENANT_A", "user-1", "user-1", false, false, authorities));
+            req.arg("entity", body);
+            req.arg("type", "uuid");
+            req.arg("identifier", "uuid-bob");
+            return req;
+        }
+
+        @Test
+        @DisplayName("caller WITH the required authority can update the guarded field")
+        void callerWithAuthorityUpdatesField() throws ApiException {
+            User body = new User();
+            body.setName("Bob Renamed");
+            WorkflowResult result = executeScript(guardedUserCtx,
+                    tenantUpdate(java.util.List.of("user-update-name"), body));
+
+            assertTrue(result.isSuccess(),
+                    "caller has 'user-update-name' — update must succeed. code=" + result.code());
+            User updated = (User) result.output();
+            assertEquals("Bob Renamed", updated.getName(),
+                    "guarded field must be updated when the caller carries the authority");
+        }
+
+        @Test
+        @DisplayName("caller WITHOUT the required authority sees the guarded field silently preserved")
+        void callerWithoutAuthoritySkipsField() throws ApiException {
+            User body = new User();
+            body.setName("Bob Hacked");
+            body.setEmail("hacked@example.com");
+
+            WorkflowResult result = executeScript(guardedUserCtx,
+                    // 'other-role' is not the required authority
+                    tenantUpdate(java.util.List.of("other-role"), body));
+
+            assertTrue(result.isSuccess(),
+                    "the update operation itself succeeds — only the guarded field is skipped. code=" + result.code());
+            User updated = (User) result.output();
+            assertEquals("Bob", updated.getName(),
+                    "guarded 'name' field must NOT be updated — caller lacks 'user-update-name'");
+            assertEquals("hacked@example.com", updated.getEmail(),
+                    "ungated 'email' field must still be updated — no authority required");
+        }
+
+        @Test
+        @DisplayName("caller with null authorities cannot update the guarded field (regression — null is not a bypass)")
+        void callerWithNullAuthoritiesSkipsField() throws ApiException {
+            User body = new User();
+            body.setName("Bob NullAuth");
+
+            WorkflowResult result = executeScript(guardedUserCtx, tenantUpdate(null, body));
+
+            assertTrue(result.isSuccess(), "operation succeeds; only the gated field is skipped");
+            User updated = (User) result.output();
+            assertEquals("Bob", updated.getName(),
+                    "regression guard: a caller with null authorities used to bypass — must now skip the guarded field");
+        }
+
+        @Test
+        @DisplayName("caller with empty authorities list cannot update the guarded field")
+        void callerWithEmptyAuthoritiesSkipsField() throws ApiException {
+            User body = new User();
+            body.setName("Bob Empty");
+
+            WorkflowResult result = executeScript(guardedUserCtx,
+                    tenantUpdate(java.util.List.of(), body));
+
+            assertTrue(result.isSuccess());
+            User updated = (User) result.output();
+            assertEquals("Bob", updated.getName(),
+                    "empty authorities + required gate → skipped");
+        }
+
+        @Test
+        @DisplayName("super-tenant caller bypasses the field-level gate (matches super-caller convention)")
+        void superTenantBypassesGate() throws ApiException {
+            User body = new User();
+            body.setName("Bob By Super");
+
+            // Custom super-caller pinned to TENANT_A — the seeded entity lives
+            // on TENANT_A and using the canned superTenantScriptRequest (which
+            // hardcodes "SUPER_TENANT") would miss the row before the
+            // field-level gate even runs.
+            OperationDefinition op = OperationDefinition.updateOneWithStandardSecurity(
+                    "users", IClass.getClass(User.class));
+            OperationRequest req = new OperationRequest(new HashMap<>());
+            req.arg(IOperationRequest.OPERATION, op);
+            req.arg(IOperationRequest.TENANT_ID, "TENANT_A");
+            req.arg(IOperationRequest.REQUESTED_TENANT_ID, "TENANT_A");
+            req.arg(IOperationRequest.SUPER_TENANT, true);
+            req.arg(IOperationRequest.SUPER_OWNER, true);
+            // No authorities — super flag must be enough to bypass the gate.
+            req.arg("caller", new com.garganttua.api.core.caller.Caller(
+                    "TENANT_A", "TENANT_A", null, null, true, true, null));
+            req.arg("authorization", new Object()); // Mode B
+            req.arg("entity", body);
+            req.arg("type", "uuid");
+            req.arg("identifier", "uuid-bob");
+
+            WorkflowResult result = executeScript(guardedUserCtx, req);
+            assertTrue(result.isSuccess(),
+                    "super-tenant on the right tenant must succeed. code=" + result.code()
+                            + " response=" + result.variables());
+            User updated = (User) result.output();
+            assertEquals("Bob By Super", updated.getName(),
+                    "super-tenant caller bypasses every authority gate, including field-level ones");
+        }
+    }
 }

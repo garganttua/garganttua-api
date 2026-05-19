@@ -45,10 +45,17 @@ public interface IApi extends ILifecycle {
 
     /**
      * Returns the sorted, deduplicated list of every authority name enforced
-     * by any operation on any domain registered on the API. Names come from
-     * {@code OperationDefinition.effectiveAuthorityName()} — either an
-     * explicit {@code .authority("name")} or the auto-generated
-     * {@code <domain>:<operation>} default.
+     * anywhere on any domain. Two sources are merged:
+     * <ul>
+     *   <li><b>Operation-level</b> —
+     *       {@code OperationDefinition.effectiveAuthorityName()} for every
+     *       operation. Either an explicit {@code .authority("name")} or the
+     *       auto-generated default.</li>
+     *   <li><b>Field-level</b> — every non-null authority declared via
+     *       {@code entity().update(field, "auth-name")} on the entity DSL.
+     *       These guard a specific field of the update operation, independent
+     *       of the operation-level authority.</li>
+     * </ul>
      *
      * <p>This method is unprotected — the security check is done by
      * {@link #getAuthoritiesForCaller(com.garganttua.api.commons.caller.ICaller)}.

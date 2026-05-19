@@ -98,13 +98,32 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
         java.util.TreeSet<String> sorted = new java.util.TreeSet<>();
         for (IDomain<?> domain : this.domainContexts.values()) {
             if (domain.getDomainDefinition() == null) continue;
+
+            // Source 1: operation-level authorities — every domain operation
+            // contributes its effectiveAuthorityName() (null when authority is
+            // not enforced).
             List<com.garganttua.api.commons.operation.OperationDefinition> ops =
                     domain.getDomainDefinition().operations();
-            if (ops == null) continue;
-            for (com.garganttua.api.commons.operation.OperationDefinition op : ops) {
-                String name = op.effectiveAuthorityName();
-                if (name != null && !name.isBlank()) {
-                    sorted.add(name);
+            if (ops != null) {
+                for (com.garganttua.api.commons.operation.OperationDefinition op : ops) {
+                    String name = op.effectiveAuthorityName();
+                    if (name != null && !name.isBlank()) {
+                        sorted.add(name);
+                    }
+                }
+            }
+
+            // Source 2: field-level update authorities — declared via
+            // entity().update(field, "auth-name") on the DSL. These guard a
+            // specific field of an update operation; they're independent of
+            // the operation-level authority and live on the EntityDefinition.
+            java.util.Map<com.garganttua.core.reflection.ObjectAddress, String> fieldAuths =
+                    domain.getAuthorizedUpdateFieldsAndAuthorizations();
+            if (fieldAuths != null) {
+                for (String name : fieldAuths.values()) {
+                    if (name != null && !name.isBlank()) {
+                        sorted.add(name);
+                    }
                 }
             }
         }

@@ -41,6 +41,11 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
                 .owner("uuid")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
+                    // Field-level update authority — guards mutation of 'name'
+                    // independent of the operation-level update authority.
+                    // Must surface in getAuthorities() alongside the
+                    // operation-level names.
+                    .update("name", "user-update-name")
                 .up()
                 .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -121,12 +126,102 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
                                 + ": '" + names.get(i - 1) + "' vs '" + names.get(i) + "'");
             }
 
-            // The default authority name pattern is "<domain>:<operation>". Both
-            // declared domains must appear in the result.
-            assertTrue(names.stream().anyMatch(n -> n.startsWith("users:")),
-                    "users domain must contribute at least one authority — got: " + names);
-            assertTrue(names.stream().anyMatch(n -> n.startsWith("projects:")),
-                    "projects domain must contribute at least one authority — got: " + names);
+            // The default authority name pattern is "<technicalOperation>-<scope>-<entity>",
+            // where <entity> is the singular form for oneEntity scope and plural for
+            // allEntities scope. Both declared domains must contribute at least
+            // one authority — we assert by suffix on the entity name (which lives
+            // in the trailing segment of the name).
+            assertTrue(names.stream().anyMatch(n -> n.endsWith("-user")),
+                    "users domain must contribute at least one one-entity authority (e.g. create-one-user) — got: "
+                            + names);
+            assertTrue(names.stream().anyMatch(n -> n.endsWith("-users")),
+                    "users domain must contribute at least one all-entities authority (e.g. read-all-users) — got: "
+                            + names);
+            assertTrue(names.stream().anyMatch(n -> n.endsWith("-project")),
+                    "projects domain must contribute at least one one-entity authority (e.g. create-one-project) — got: "
+                            + names);
+            assertTrue(names.stream().anyMatch(n -> n.endsWith("-projects")),
+                    "projects domain must contribute at least one all-entities authority (e.g. read-all-projects) — got: "
+                            + names);
+
+            // Also pin the exact wiring: each .creationAuthority(true) on the
+            // setup must surface as create-one-<entity-singular>, each
+            // .readAllAuthority(true) as read-all-<entity-plural>. This is the
+            // contract callers will pattern-match against.
+            assertTrue(names.contains("create-one-user"),
+                    "users.creationAuthority(true) must produce 'create-one-user' — got: " + names);
+            assertTrue(names.contains("create-one-project"),
+                    "projects.creationAuthority(true) must produce 'create-one-project' — got: " + names);
+            assertTrue(names.contains("read-all-users"),
+                    "users.readAllAuthority(true) must produce 'read-all-users' — got: " + names);
+            assertTrue(names.contains("read-all-projects"),
+                    "projects.readAllAuthority(true) must produce 'read-all-projects' — got: " + names);
+
+            // Field-level update authority (entity().update("name",
+            // "user-update-name")) must also surface — distinct from
+            // operation-level names, stored on EntityDefinition.updates().
+            assertTrue(names.contains("user-update-name"),
+                    "field-level .update(\"name\", \"user-update-name\") must surface in getAuthorities() — got: "
+                            + names);
+        }
+
+        @Test
+        @DisplayName("a field-level update authority alone (no operation-level authority on the domain) still surfaces")
+        void fieldLevelAuthorityAloneSurfaces() throws ApiException {
+            // Build a minimal API with NO operation-level authority anywhere —
+            // only a field-level update authority. Proves getAuthorities()
+            // does not depend on operation-level configuration to find
+            // field-level entries.
+            IApiBuilder builder = newBuilder();
+            var users = builder.domain(IClass.getClass(User.class))
+                    .tenant(true)
+                    .entity()
+                        .id("id").uuid("uuid").tenantId("tenantId")
+                        .update("email", "user-update-email-only")
+                    .up()
+                    .dto(IClass.getClass(UserDto.class))
+                        .id("id").uuid("uuid").tenantId("tenantId")
+                        .db(new CapturingDao())
+                    .up();
+            users.up();
+            IApi api = buildAndStart(builder);
+
+            List<String> names = api.getAuthorities();
+            assertTrue(names.contains("user-update-email-only"),
+                    "field-level update authority must surface even when no operation-level "
+                            + "authority is configured on the domain — got: " + names);
+            // And no spurious operation-level names leaked in.
+            assertFalse(names.stream().anyMatch(n -> n.startsWith("create-")
+                            || n.startsWith("read-")
+                            || n.startsWith("delete-")
+                            || n.startsWith("update-")),
+                    "no operation-level authority was configured — none must appear — got: " + names);
+        }
+
+        @Test
+        @DisplayName("a field declared updatable WITHOUT an authority does NOT contribute to the list")
+        void fieldWithoutAuthorityIsNotListed() throws ApiException {
+            // Same setup but using the non-authority overload: update(field)
+            // without the second arg. The pair has a null right-hand side —
+            // it must be filtered out by getAuthorities().
+            IApiBuilder builder = newBuilder();
+            var users = builder.domain(IClass.getClass(User.class))
+                    .tenant(true)
+                    .entity()
+                        .id("id").uuid("uuid").tenantId("tenantId")
+                        .update("email") // no authority — just marked updatable
+                    .up()
+                    .dto(IClass.getClass(UserDto.class))
+                        .id("id").uuid("uuid").tenantId("tenantId")
+                        .db(new CapturingDao())
+                    .up();
+            users.up();
+            IApi api = buildAndStart(builder);
+
+            List<String> names = api.getAuthorities();
+            assertTrue(names.isEmpty(),
+                    "no authority anywhere → list must be empty (updatable-without-authority is not an authority) — got: "
+                            + names);
         }
 
         @Test
