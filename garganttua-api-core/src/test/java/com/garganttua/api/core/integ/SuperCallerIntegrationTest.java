@@ -141,7 +141,7 @@ class SuperCallerIntegrationTest extends AbstractCrudIntegrationTest {
     class DeprecatedFactory {
 
         @Test
-        @DisplayName("still produces a null-tenantId caller that Domain.invoke rejects with 400")
+        @DisplayName("still produces a null-tenantId super caller that Domain.invoke rejects with 400 (parlant 'missing tenantId' message)")
         @SuppressWarnings("deprecation")
         void noArgGetsRejected() throws ApiException {
             CapturingDao dao = new CapturingDao();
@@ -154,15 +154,19 @@ class SuperCallerIntegrationTest extends AbstractCrudIntegrationTest {
                     .build()
                     .execute();
 
-            // Pins the deprecation rationale: removing the Domain.invoke null-tenant guard
-            // (or making the no-arg factory produce a non-null tenantId silently) would
-            // hide this class of misuse. The deprecation javadoc on createSuperCaller()
-            // documents the migration path.
+            // Pins the deprecation rationale: the no-arg factory sets
+            // superTenant=true but tenantId=null. That's a malformed caller
+            // (super flags require a tenantId binding), distinct from "no
+            // caller provided" which now auto-creates an anonymous caller.
+            // Since 2026-05-19, the rejection message names the missing
+            // tenantId and points at the correct factory.
             assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode(),
-                    "no-arg super caller must still be rejected; got " + response.getResponseCode());
+                    "deprecated no-arg super caller must still be rejected; got " + response.getResponseCode());
             String msg = String.valueOf(response.getResponse());
-            assertTrue(msg.contains("No caller provided"),
-                    "rejection message should be 'No caller provided'; got: " + msg);
+            assertTrue(msg.contains("missing tenantId"),
+                    "rejection message must name the actual problem (missing tenantId); got: " + msg);
+            assertTrue(msg.contains("createSuperCaller(superTenantId)"),
+                    "rejection message must point at the correct factory; got: " + msg);
             assertFalse(dao.getStorage().size() > 1,
                     "DAO must not have grown — the request was rejected before reaching the operation");
         }

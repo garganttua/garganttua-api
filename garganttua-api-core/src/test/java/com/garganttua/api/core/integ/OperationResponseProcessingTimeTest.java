@@ -125,23 +125,28 @@ class OperationResponseProcessingTimeTest extends AbstractCrudIntegrationTest {
         }
 
         @Test
-        @DisplayName("a rejected call (no caller -> 400) also carries a stamped processingTime")
-        void rejectedCallIsAlsoTimed() throws ApiException {
+        @DisplayName("a no-caller call (auto-anonymous) on an unsecured domain still gets a stamped processingTime")
+        void anonymousCallIsAlsoTimed() throws ApiException {
             IApi api = buildUnsecuredDomain(new StubDao());
             IDomain<?> domain = api.getDomain("products").orElseThrow();
 
-            // No .caller(...) on the builder — Domain.invoke short-circuits with
-            // CLIENT_ERROR "No caller provided". The response must still be
-            // stamped: operators care about timing for failed paths too.
+            // No .caller(...) on the builder. Since 2026-05-19, Domain.invoke
+            // auto-creates an anonymous caller in that case (mon général's
+            // request) — anonymous traffic on an unsecured domain passes
+            // through fine. The point of this test is just that the response
+            // is still stamped with a duration regardless of the path taken.
             IOperationResponse response = RequestBuilder.builder(domain)
                     .readAll()
                     .build()
                     .execute();
 
-            assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode(),
-                    "sanity: missing caller must yield CLIENT_ERROR; got " + response);
+            // Sanity: the unsecured Product domain has no .security() so
+            // VERIFY_AUTHORIZATION never runs and the anonymous caller flows
+            // through to a clean OK.
+            assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                    "anonymous traffic on an unsecured domain must succeed; got " + response);
             Duration time = response.getProcessingTime();
-            assertNotNull(time, "failed paths must be stamped too");
+            assertNotNull(time, "even fast paths must be stamped");
             assertFalse(time.isNegative());
         }
 

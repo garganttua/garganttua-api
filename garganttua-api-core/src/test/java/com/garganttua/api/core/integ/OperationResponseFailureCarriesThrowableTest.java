@@ -115,12 +115,36 @@ class OperationResponseFailureCarriesThrowableTest extends AbstractCrudIntegrati
     class EndToEnd {
 
         @Test
-        @DisplayName("missing caller -> response.getException() yields an ApiException with the parlant message")
-        void noCaller() throws ApiException {
+        @DisplayName("no caller -> auto-anonymous caller; unsecured domain accepts the call (no exception in response)")
+        void noCallerAutoAnonymous() throws ApiException {
+            // Since 2026-05-19, Domain.invoke materializes an anonymous caller
+            // when none is provided. On an unsecured domain VERIFY_AUTHORIZATION
+            // is not in the pipeline at all, so the request reaches the
+            // operation and succeeds.
             IApi api = buildUnsecuredProducts(new StubDao());
             IDomain<?> domain = api.getDomain("products").orElseThrow();
 
             IOperationResponse response = RequestBuilder.builder(domain)
+                    .readAll()
+                    .build()
+                    .execute();
+
+            assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                    "no-caller readAll on an unsecured domain must succeed via the anonymous "
+                            + "caller; got " + response);
+            assertEquals(java.util.Optional.empty(), response.getException(),
+                    "success responses must NOT expose an exception; got: " + response.getException());
+        }
+
+        @Test
+        @DisplayName("malformed super caller (null tenantId) is still rejected with a parlant 'missing tenantId' exception")
+        @SuppressWarnings("deprecation")
+        void malformedSuperCallerStillRejected() throws ApiException {
+            IApi api = buildUnsecuredProducts(new StubDao());
+            IDomain<?> domain = api.getDomain("products").orElseThrow();
+
+            IOperationResponse response = RequestBuilder.builder(domain)
+                    .caller(Caller.createSuperCaller())  // null tenantId + superTenant=true
                     .readAll()
                     .build()
                     .execute();
@@ -130,7 +154,8 @@ class OperationResponseFailureCarriesThrowableTest extends AbstractCrudIntegrati
                     () -> new AssertionError("response must expose an exception; got: " + response));
             assertTrue(ex instanceof ApiException,
                     "the wrapped exception must be an ApiException; got: " + ex.getClass());
-            assertEquals("No caller provided", ex.getMessage());
+            assertTrue(ex.getMessage().contains("missing tenantId"),
+                    "message must name the missing tenantId; got: " + ex.getMessage());
         }
 
         @Test

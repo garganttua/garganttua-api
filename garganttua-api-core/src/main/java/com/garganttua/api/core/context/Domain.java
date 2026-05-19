@@ -12,6 +12,7 @@ import com.garganttua.api.core.repository.Repository;
 import com.garganttua.api.core.definition.DomainDefinition;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.IDtoContext;
@@ -391,8 +392,24 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             request.arg(IOperationRequest.DOMAIN_CONTEXT, this);
             request.arg(IOperationRequest.REPOSITORY, this.repository);
             ICaller caller = request.caller();
-            if (caller == null || caller.tenantId() == null) {
-                return OperationResponse.badRequest("No caller provided");
+            if (isEmptyCaller(caller)) {
+                // No caller information at all on the request — materialize a
+                // best-effort one based on the request body, and let
+                // VERIFY_AUTHORIZATION decide whether the operation accepts
+                // anonymous/auth traffic (anonymous ops pass, non-anonymous
+                // ops get a clean 401 from the security script).
+                caller = autoCreateCallerFromBody(request);
+            } else if (caller.tenantId() == null) {
+                // Caller has SOME information (super flags, ownerId, callerId,
+                // …) but lacks a tenantId. This is almost always a misuse —
+                // most notably the deprecated no-arg createSuperCaller()
+                // which sets superTenant=true with tenantId=null. Reject
+                // explicitly so the caller gets a parlant error instead of
+                // silent under-isolation downstream.
+                return OperationResponse.badRequest(new ApiException(
+                        "Caller is missing tenantId — super and owner flags require a "
+                                + "tenantId binding (use Caller.createSuperCaller(superTenantId) "
+                                + "or Caller.createTenantCaller(tenantId))"));
             }
             request.arg("caller", caller);
 
@@ -428,15 +445,18 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                 // Non-zero code with NO exception attached — the `! -> CODE`
                 // pattern in stage scripts catches the functional exception
                 // and resets the script's lastException, so it never reaches
-                // WorkflowResult. We synthesize a Throwable carrying the
-                // best-available functional message so the response uniformly
-                // exposes an exception on failure paths.
-                String msg = nonBlank(result.exceptionMessage())
-                        .orElseGet(() -> functionalMessage(result, opLabel, domainName));
-                ApiException synthesized = new ApiException(msg);
+                // WorkflowResult. We recover the original exception by
+                // *replaying* the script-side check in Java when we can
+                // identify which stage failed (e.g. owner_rules running
+                // requireOwnerId). That gives the caller the exact same
+                // ApiException — same wording, same type — that the script
+                // raised. Falls back to a synthesized message-only
+                // ApiException for stages we cannot replay.
+                Throwable functional = recoverFunctionalException(
+                        result, request, opLabel, domainName);
                 log.warn("Workflow returned code {} for domain {} op {}: {}",
-                        result.code(), domainName, opLabel, msg);
-                return mapWorkflowCode(result.code(), synthesized);
+                        result.code(), domainName, opLabel, functional.getMessage());
+                return mapWorkflowCode(result.code(), functional);
             }
         } catch (Exception e) {
             log.error("Error executing workflow for domain {}: {}",
@@ -451,6 +471,54 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         return opt.filter(s -> s != null && !s.isBlank());
     }
 
+    /**
+     * Builds the caller {@code Domain.invoke} will use when the incoming
+     * request carries no caller information. The default is anonymous
+     * ({@link Caller#createAnonymousCaller()}), but a few request shapes
+     * leak enough information for us to materialize a tenant-scoped
+     * pre-authentication caller:
+     *
+     * <ul>
+     *   <li>{@link IAuthenticationRequest} body with a non-blank
+     *       {@code tenantId()} → pin that tenantId on the caller so
+     *       AUTHENTICATE.gs (and the user-lookup it performs) scope the
+     *       login + password match to the right tenant. The caller still
+     *       has no callerId / ownerId / authorities — it is not yet
+     *       authenticated; it's a tenant context, not an identity.</li>
+     * </ul>
+     */
+    static ICaller autoCreateCallerFromBody(IOperationRequest request) {
+        Object body = request == null ? null
+                : request.arg(IOperationRequest.BODY).orElse(null);
+        if (body instanceof com.garganttua.api.commons.security.authentication.IAuthenticationRequest authReq) {
+            String tenantId = authReq.tenantId();
+            if (tenantId != null && !tenantId.isBlank()) {
+                return new Caller(tenantId, tenantId, null, null, false, false, null);
+            }
+        }
+        return Caller.createAnonymousCaller();
+    }
+
+    /**
+     * True when the caller carries no meaningful information — every
+     * identification field is null and neither super flag is set. This is
+     * exactly the synthetic Caller {@code OperationRequest.caller()} produces
+     * when no .caller(...) / .tenantId(...) / .ownerId(...) builder call ran.
+     * In that case Domain.invoke swaps in {@link #autoCreateCallerFromBody}.
+     */
+    static boolean isEmptyCaller(ICaller caller) {
+        if (caller == null) {
+            return true;
+        }
+        return caller.tenantId() == null
+                && caller.requestedTenantId() == null
+                && caller.callerId() == null
+                && caller.ownerId() == null
+                && !caller.superTenant()
+                && !caller.superOwner()
+                && (caller.authorities() == null || caller.authorities().isEmpty());
+    }
+
     private static String resolveOperationLabel(IOperationRequest request) {
         return request.arg(IOperationRequest.OPERATION)
                 .map(op -> op.getBusinessOperation())
@@ -459,29 +527,142 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     }
 
     /**
-     * Builds a parlant fallback message for the case mon général flagged on
-     * 2026-05-19: a stage script does {@code ! -> CODE}, which catches the
-     * functional exception and ends the script with a non-zero code — but
-     * garganttua-core's {@code Workflow.execute} clears the script's
-     * {@code lastException} on non-aborted exits, so the caught message
-     * (e.g. "Owner ID is required for this operation") never reaches
-     * {@code WorkflowResult.exceptionMessage()}. The operator only sees the
-     * generic code, with no clue WHAT went wrong functionally.
+     * Recovers the functional exception that the script-side guard would have
+     * thrown, by replaying the same check Java-side. This addresses the gap
+     * mon général flagged on 2026-05-19: a stage script doing
+     * {@code ! -> CODE} catches the original exception and ends the script
+     * with a non-zero code, but garganttua-core's {@code Workflow.execute}
+     * clears {@code lastException} on non-aborted exits — so the original
+     * message ("Owner ID is required for this operation") never reaches
+     * {@code WorkflowResult.exceptionMessage()}.
      *
-     * <p>Workaround: inspect the per-stage {@code _<stage>_<script>_code}
-     * variables that the workflow engine does surface, find the first stage
-     * whose code is non-zero, and translate the stage identity into a
-     * functional explanation. Not as precise as recovering the original
-     * exception text, but far more useful than "rejected by validation".
+     * <p>By identifying the failing stage from
+     * {@code _<stage>_<script>_code} variables (populated by
+     * {@code Workflow.collectVariables} regardless of script outcome), we
+     * can invoke the matching Java-side validator and produce <strong>the
+     * exact same {@link ApiException}</strong> the script would have
+     * raised — same wording, same type. For stages we cannot replay, a
+     * synthesized {@code ApiException} carries the best message we can
+     * build from the stage hint and the response code.
      *
-     * <p>An evolution proposal has been filed with garganttua-core to
-     * propagate {@code lastExceptionMessage} on non-aborted exits too —
-     * once that lands, the workaround can shrink back to using the
-     * exception message directly.
+     * <p>An evolution proposal will be filed with garganttua-core to
+     * propagate the script's last caught exception on non-aborted exits;
+     * once that lands, the replay logic can shrink back to reading the
+     * exception directly.
      */
-    static String functionalMessage(WorkflowResult result, String opLabel, String domainName) {
+    Throwable recoverFunctionalException(WorkflowResult result, IOperationRequest request,
+                                         String opLabel, String domainName) {
         Integer code = result.code();
         String stage = findFailingStage(result).orElse(null);
+
+        // 1) Stage-based replay — only works when garganttua-core's
+        //    collectVariables surfaces the matching _<stage>_<script>_code
+        //    variable. Per-stage code vars for stages whose names contain
+        //    dashes ("tenant-rules", "verify-authorization", …) DON'T make
+        //    it into result.variables() because collectVariables uses the
+        //    raw stage.name() as a script-variable lookup key while
+        //    ScriptGenerator sanitizes that same name when writing the
+        //    script (replaces "-" with "_"). This is a garganttua-core gap
+        //    — see also tryReplayValidator's notes.
+        Throwable replayed = tryReplayValidator(stage, code, request);
+        if (replayed != null) {
+            return replayed;
+        }
+
+        // 2) Inference-based replay — independent of which stage variable
+        //    the engine managed to surface. Looks at the operation's access
+        //    requirements and the caller's state, then invokes the same
+        //    SecurityExpressions guard the script would have invoked.
+        //    Recovers the original ApiException wording verbatim.
+        Throwable inferred = tryReplayFromRequestState(code, request);
+        if (inferred != null) {
+            return inferred;
+        }
+
+        // 3) Fallback: synthesize an ApiException with the most informative
+        //    message we can build from stage + code.
+        String msg = nonBlank(result.exceptionMessage())
+                .orElseGet(() -> functionalMessage(stage, code, opLabel, domainName));
+        return new ApiException(msg);
+    }
+
+    /**
+     * Replays the validator that matches the request's state (caller +
+     * operation access requirements). Catches the thrown exception so the
+     * caller can hand it straight back to the response — same type, same
+     * wording as the script-side guard.
+     *
+     * <p>This complements {@link #tryReplayValidator(String, Integer,
+     * IOperationRequest)}: stage-based replay needs the engine to surface
+     * a per-stage code variable, which is broken for dashed-name stages
+     * (security and business rules); inference-based replay reads only the
+     * caller + operation, so it works regardless of variable visibility.
+     */
+    static Throwable tryReplayFromRequestState(Integer code, IOperationRequest request) {
+        if (request == null || code == null || code != 400) {
+            return null;
+        }
+        ICaller caller = request.caller();
+        com.garganttua.api.commons.operation.OperationDefinition op =
+                request.arg(IOperationRequest.OPERATION).orElse(null);
+        if (op == null) {
+            return null;
+        }
+        com.garganttua.api.commons.operation.Access access = op.access();
+        boolean needsOwner = access == com.garganttua.api.commons.operation.Access.owner;
+        boolean needsTenant = needsOwner
+                || access == com.garganttua.api.commons.operation.Access.tenant;
+        try {
+            if (needsOwner && (caller == null || caller.ownerId() == null)) {
+                com.garganttua.api.core.expression.SecurityExpressions.requireOwnerId(caller);
+            }
+            if (needsTenant && (caller == null || caller.tenantId() == null)) {
+                com.garganttua.api.core.expression.SecurityExpressions.requireTenantId(caller);
+            }
+        } catch (RuntimeException replayed) {
+            return replayed;
+        }
+        return null;
+    }
+
+    /**
+     * Attempts to replay the validation that the named stage's script would
+     * have performed. Returns the thrown exception (so the caller can pass
+     * it on), or {@code null} when no replay is wired up for this stage.
+     *
+     * <p>This is the bridge that recovers the lost functional message — the
+     * Java-side helper throws exactly the same {@link ApiException} the
+     * script would have surfaced before {@code ! -> CODE} ate it.
+     */
+    static Throwable tryReplayValidator(String stage, Integer code, IOperationRequest request) {
+        if (stage == null || code == null || request == null) {
+            return null;
+        }
+        ICaller caller = request.caller();
+        if (caller == null) {
+            return null;
+        }
+        try {
+            if (stage.startsWith("owner_rules") && code == 400) {
+                com.garganttua.api.core.expression.SecurityExpressions.requireOwnerId(caller);
+                return null;
+            }
+            if (stage.startsWith("tenant_rules") && code == 400) {
+                com.garganttua.api.core.expression.SecurityExpressions.requireTenantId(caller);
+                return null;
+            }
+        } catch (RuntimeException replayed) {
+            // This IS the original exception — same class, same message.
+            return replayed;
+        }
+        return null;
+    }
+
+    /**
+     * Synthesizes a message-only fallback when replay isn't possible.
+     * Uses the stage-aware hint when available, then the per-code default.
+     */
+    static String functionalMessage(String stage, Integer code, String opLabel, String domainName) {
         String hint = stageFunctionalHint(stage, code);
         if (hint != null) {
             return hint + " — '" + opLabel + "' on '" + domainName + "'"

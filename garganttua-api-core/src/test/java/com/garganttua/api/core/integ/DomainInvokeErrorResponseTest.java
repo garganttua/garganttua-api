@@ -65,8 +65,11 @@ class DomainInvokeErrorResponseTest extends AbstractCrudIntegrationTest {
     class DirectRejection {
 
         @Test
-        @DisplayName("missing caller -> 400 with a Throwable carrying 'No caller provided'")
-        void noCaller() throws ApiException {
+        @DisplayName("no caller -> auto-anonymous, request reaches the operation on unsecured domain")
+        void noCallerAutoAnonymous() throws ApiException {
+            // Since 2026-05-19, missing caller materializes an anonymous one
+            // instead of being rejected with 400. The unsecured Product
+            // domain accepts the anonymous traffic.
             IApi api = buildUnsecuredProducts(new StubDao());
             IDomain<?> domain = api.getDomain("products").orElseThrow();
 
@@ -75,11 +78,28 @@ class DomainInvokeErrorResponseTest extends AbstractCrudIntegrationTest {
                     .build()
                     .execute();
 
+            assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                    "anonymous traffic on an unsecured domain must succeed; got " + response);
+        }
+
+        @Test
+        @DisplayName("malformed super caller (null tenantId) -> 400 carrying a parlant 'missing tenantId' Throwable")
+        @SuppressWarnings("deprecation")
+        void malformedSuperCallerIsRejected() throws ApiException {
+            IApi api = buildUnsecuredProducts(new StubDao());
+            IDomain<?> domain = api.getDomain("products").orElseThrow();
+
+            IOperationResponse response = RequestBuilder.builder(domain)
+                    .caller(com.garganttua.api.core.caller.Caller.createSuperCaller())
+                    .readAll()
+                    .build()
+                    .execute();
+
             assertEquals(OperationResponseCode.CLIENT_ERROR, response.getResponseCode());
             Throwable cause = response.getException().orElseThrow(
                     () -> new AssertionError("response must carry an exception on failure; got: " + response));
-            assertEquals("No caller provided", cause.getMessage(),
-                    "the exception's message must match the direct guard wording");
+            assertTrue(cause.getMessage().contains("missing tenantId"),
+                    "rejection message must name the actual problem; got: " + cause.getMessage());
             assertNotGeneric(response);
         }
     }

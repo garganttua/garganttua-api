@@ -2,8 +2,10 @@ package com.garganttua.api.core.context;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,21 @@ import org.junit.jupiter.api.Test;
  */
 @DisplayName("Domain.defaultMessageForCode — parlant fallbacks for empty exception messages")
 class DomainErrorMessageTest {
+
+    /**
+     * IOperationRequest's static initializer wires its ArgKey constants via
+     * {@code IClass.getClass(...)} — which requires {@code IClass.setReflection(...)}
+     * to have been called. The integration tests do this through their
+     * builder fixture; here we set it up directly so the ReplayValidator
+     * tests can build a stub request without crashing.
+     */
+    @BeforeAll
+    static void initReflection() {
+        com.garganttua.core.reflection.IClass.setReflection(
+                com.garganttua.core.reflection.dsl.ReflectionBuilder.builder()
+                        .withProvider(new com.garganttua.core.reflection.runtime.RuntimeReflectionProvider())
+                        .build());
+    }
 
     @Nested
     @DisplayName("Known HTTP-like codes")
@@ -199,27 +216,14 @@ class DomainErrorMessageTest {
     }
 
     @Nested
-    @DisplayName("functionalMessage end-to-end on a synthetic WorkflowResult")
+    @DisplayName("functionalMessage (synthesis-only fallback)")
     class FunctionalMessage {
 
         @Test
-        @DisplayName("when a stage variable is non-zero, the message names the FUNCTIONAL cause (not 'rejected by validation')")
+        @DisplayName("known stage + code -> message names the FUNCTIONAL cause (not 'rejected by validation')")
         void picksUpStageHint() {
-            // Synthetic WorkflowResult that mirrors what Workflow.execute would
-            // produce when OWNER_RULES.gs does `! -> 400` after the
-            // requireOwnerId guard fails. The variable name format
-            // (_<stage>_<script>_code) is set by garganttua-core's
-            // Workflow.collectVariables.
-            java.util.Map<String, Object> vars = new java.util.HashMap<>();
-            vars.put("_owner_rules_owner_rules_code", 400);
-            java.time.Instant now = java.time.Instant.now();
-            com.garganttua.core.workflow.WorkflowResult result =
-                    new com.garganttua.core.workflow.WorkflowResult(
-                            java.util.UUID.randomUUID(), null, 400, vars,
-                            java.util.Map.of(), now, now,
-                            java.util.Optional.empty(), java.util.Optional.empty());
-
-            String msg = Domain.functionalMessage(result, "deleteAll", "authorizations");
+            String msg = Domain.functionalMessage("owner_rules_owner_rules", 400,
+                    "deleteAll", "authorizations");
 
             assertTrue(msg.contains("Owner rules failed"),
                     "must name the functional cause (Owner rules failed); got: " + msg);
@@ -233,17 +237,9 @@ class DomainErrorMessageTest {
         }
 
         @Test
-        @DisplayName("when NO stage variable is non-zero, falls back to defaultMessageForCode")
+        @DisplayName("unknown stage -> falls back to defaultMessageForCode")
         void fallsBackWhenNoStageMarker() {
-            // Empty variables — engine produced a code but no stage code surfaced.
-            java.time.Instant now = java.time.Instant.now();
-            com.garganttua.core.workflow.WorkflowResult result =
-                    new com.garganttua.core.workflow.WorkflowResult(
-                            java.util.UUID.randomUUID(), null, 404, java.util.Map.of(),
-                            java.util.Map.of(), now, now,
-                            java.util.Optional.empty(), java.util.Optional.empty());
-
-            String msg = Domain.functionalMessage(result, "readOne", "users");
+            String msg = Domain.functionalMessage(null, 404, "readOne", "users");
 
             assertTrue(msg.contains("Not found"),
                     "must use the per-code default; got: " + msg);
@@ -268,6 +264,281 @@ class DomainErrorMessageTest {
             String stage = Domain.findFailingStage(result).orElse(null);
             assertTrue(stage != null && stage.startsWith("owner_rules"),
                     "must pick the non-zero owner_rules stage, not the zero ones; got: " + stage);
+        }
+    }
+
+    @Nested
+    @DisplayName("autoCreateCallerFromBody — body-aware materialization")
+    class AutoCreateCallerFromBody {
+
+        private com.garganttua.api.commons.service.IOperationRequest requestWithBody(Object body) {
+            return new com.garganttua.api.commons.service.IOperationRequest() {
+                @Override public java.util.Map<String, Object> args() { return java.util.Map.of(); }
+                @SuppressWarnings("unchecked")
+                @Override
+                public <T> java.util.Optional<T> arg(
+                        com.garganttua.api.commons.service.ArgKey<T> key) {
+                    if (key == com.garganttua.api.commons.service.IOperationRequest.BODY) {
+                        return java.util.Optional.ofNullable((T) body);
+                    }
+                    return java.util.Optional.empty();
+                }
+                @Override public <T> void arg(
+                        com.garganttua.api.commons.service.ArgKey<T> key, T value) { /* no-op */ }
+                @Override public String domain() { return null; }
+                @Override public com.garganttua.api.commons.caller.ICaller caller() { return null; }
+                @Override public com.garganttua.api.commons.operation.OperationDefinition operation() { return null; }
+                @Override public com.garganttua.api.commons.operation.OperationPath operationPath() { return null; }
+                @Override public java.util.UUID executionUuid() { return null; }
+                @Override public java.util.UUID correlationUuid() { return null; }
+            };
+        }
+
+        @Test
+        @DisplayName("AuthenticationRequest with tenantId -> caller pinned to that tenantId, otherwise empty")
+        void authRequestWithTenantId() {
+            com.garganttua.api.commons.security.authentication.IAuthenticationRequest auth =
+                    new com.garganttua.api.core.security.authentication.AuthenticationRequest(
+                            "alice@acme", new byte[]{1, 2, 3}, "acme");
+
+            com.garganttua.api.commons.caller.ICaller caller =
+                    Domain.autoCreateCallerFromBody(requestWithBody(auth));
+
+            assertEquals("acme", caller.tenantId(),
+                    "tenantId from AuthenticationRequest must be pinned on the caller; got: "
+                            + caller.tenantId());
+            assertEquals("acme", caller.requestedTenantId(),
+                    "requestedTenantId must mirror tenantId so downstream tenant filtering "
+                            + "scopes to the right tenant; got: " + caller.requestedTenantId());
+            assertEquals(null, caller.callerId(),
+                    "callerId must stay null — the caller is not yet authenticated");
+            assertEquals(null, caller.ownerId(),
+                    "ownerId must stay null — the caller is not yet authenticated");
+            assertFalse(caller.superTenant(),
+                    "auto-created auth caller must NOT carry super flags");
+            assertFalse(caller.superOwner(),
+                    "auto-created auth caller must NOT carry super flags");
+        }
+
+        @Test
+        @DisplayName("AuthenticationRequest with NULL tenantId -> anonymous (totally null caller)")
+        void authRequestWithNullTenantId() {
+            com.garganttua.api.commons.security.authentication.IAuthenticationRequest auth =
+                    new com.garganttua.api.core.security.authentication.AuthenticationRequest(
+                            "alice@acme", new byte[]{1, 2, 3}, null);
+
+            com.garganttua.api.commons.caller.ICaller caller =
+                    Domain.autoCreateCallerFromBody(requestWithBody(auth));
+
+            assertEquals(null, caller.tenantId(),
+                    "null tenantId on the AuthenticationRequest must fall through to anonymous; "
+                            + "got: " + caller.tenantId());
+            assertTrue(Domain.isEmptyCaller(caller),
+                    "with no tenantId in the body, the materialized caller must be the bare anonymous "
+                            + "caller (everything null, no super flags)");
+        }
+
+        @Test
+        @DisplayName("AuthenticationRequest with BLANK tenantId -> anonymous (blank treated like null)")
+        void authRequestWithBlankTenantId() {
+            com.garganttua.api.commons.security.authentication.IAuthenticationRequest auth =
+                    new com.garganttua.api.core.security.authentication.AuthenticationRequest(
+                            "alice@acme", new byte[]{1, 2, 3}, "   ");
+
+            com.garganttua.api.commons.caller.ICaller caller =
+                    Domain.autoCreateCallerFromBody(requestWithBody(auth));
+
+            assertEquals(null, caller.tenantId(),
+                    "blank tenantId must be treated like null — pinning whitespace would propagate "
+                            + "to downstream filters and never match any real row");
+        }
+
+        @Test
+        @DisplayName("non-AuthenticationRequest body (eg a User entity) -> anonymous")
+        void nonAuthBody() {
+            Object userBody = new Object();  // arbitrary, NOT IAuthenticationRequest
+
+            com.garganttua.api.commons.caller.ICaller caller =
+                    Domain.autoCreateCallerFromBody(requestWithBody(userBody));
+
+            assertTrue(Domain.isEmptyCaller(caller),
+                    "non-auth body must fall through to anonymous — the tenantId-pinning behavior "
+                            + "is scoped to IAuthenticationRequest, not all bodies; got: " + caller);
+        }
+
+        @Test
+        @DisplayName("null body -> anonymous")
+        void nullBody() {
+            com.garganttua.api.commons.caller.ICaller caller =
+                    Domain.autoCreateCallerFromBody(requestWithBody(null));
+
+            assertTrue(Domain.isEmptyCaller(caller),
+                    "null body must yield a plain anonymous caller; got: " + caller);
+        }
+
+        @Test
+        @DisplayName("null request -> anonymous (defensive)")
+        void nullRequest() {
+            com.garganttua.api.commons.caller.ICaller caller =
+                    Domain.autoCreateCallerFromBody(null);
+
+            assertTrue(Domain.isEmptyCaller(caller),
+                    "null request must yield a plain anonymous caller; got: " + caller);
+        }
+    }
+
+    @Nested
+    @DisplayName("isEmptyCaller — detects 'no real caller' for the anonymous-swap path")
+    class IsEmptyCaller {
+
+        @Test
+        @DisplayName("anonymous caller is empty (swap is idempotent)")
+        void anonymousIsEmpty() {
+            assertTrue(Domain.isEmptyCaller(
+                            com.garganttua.api.core.caller.Caller.createAnonymousCaller()),
+                    "createAnonymousCaller() must be detected as empty so swapping it back in "
+                            + "would be a no-op (no risk of infinite loops or surprise mutation)");
+        }
+
+        @Test
+        @DisplayName("null caller is empty (defensive)")
+        void nullIsEmpty() {
+            assertTrue(Domain.isEmptyCaller(null),
+                    "null caller must be detected as empty so the auto-swap covers the "
+                            + "edge case where caller() itself returns null");
+        }
+
+        @Test
+        @DisplayName("tenant caller is NOT empty")
+        void tenantCallerIsNotEmpty() {
+            assertFalse(Domain.isEmptyCaller(
+                            com.garganttua.api.core.caller.Caller.createTenantCaller("acme")),
+                    "a caller with a tenantId carries meaningful info — must NOT be detected as empty");
+        }
+
+        @Test
+        @DisplayName("caller with just an ownerId is NOT empty")
+        void ownerOnlyIsNotEmpty() {
+            com.garganttua.api.commons.caller.ICaller ownerOnly =
+                    new com.garganttua.api.core.caller.Caller(
+                            null, null, null, "user-1", false, false, null);
+            assertFalse(Domain.isEmptyCaller(ownerOnly),
+                    "an ownerId by itself is meaningful info — must NOT be detected as empty");
+        }
+
+        @Test
+        @DisplayName("malformed super caller (null tenantId + superTenant=true) is NOT empty")
+        @SuppressWarnings("deprecation")
+        void malformedSuperIsNotEmpty() {
+            assertFalse(Domain.isEmptyCaller(
+                            com.garganttua.api.core.caller.Caller.createSuperCaller()),
+                    "the super flag alone marks a non-empty caller — even with null tenantId — so "
+                            + "the deprecated factory's misuse path routes to the explicit "
+                            + "rejection branch, not to the anonymous swap");
+        }
+
+        @Test
+        @DisplayName("caller with authorities only is NOT empty")
+        void authoritiesOnlyIsNotEmpty() {
+            com.garganttua.api.commons.caller.ICaller authoritiesOnly =
+                    new com.garganttua.api.core.caller.Caller(
+                            null, null, null, null, false, false, java.util.List.of("admin"));
+            assertFalse(Domain.isEmptyCaller(authoritiesOnly),
+                    "a non-empty authorities list is meaningful — must NOT be detected as empty");
+        }
+    }
+
+    @Nested
+    @DisplayName("tryReplayValidator — recovers the EXACT exception the script would have thrown")
+    class ReplayValidator {
+
+        /**
+         * Stub {@link com.garganttua.api.commons.service.IOperationRequest}
+         * that only implements {@link IOperationRequest#caller()}. Sidesteps
+         * the static initialization on the concrete {@code OperationRequest}
+         * (which pulls {@code IClass.getClass(...)} via ArgKey and requires
+         * {@code IClass.setReflection()} — not set in a pure unit test).
+         */
+        private com.garganttua.api.commons.service.IOperationRequest requestWith(
+                String tenantId, String ownerId) {
+            com.garganttua.api.commons.caller.ICaller caller =
+                    new com.garganttua.api.core.caller.Caller(
+                            tenantId, tenantId, null, ownerId, false, false, null);
+            return new com.garganttua.api.commons.service.IOperationRequest() {
+                @Override public java.util.Map<String, Object> args() { return java.util.Map.of(); }
+                @Override public <T> java.util.Optional<T> arg(
+                        com.garganttua.api.commons.service.ArgKey<T> key) { return java.util.Optional.empty(); }
+                @Override public <T> void arg(
+                        com.garganttua.api.commons.service.ArgKey<T> key, T value) { /* no-op */ }
+                @Override public String domain() { return null; }
+                @Override public com.garganttua.api.commons.caller.ICaller caller() { return caller; }
+                @Override public com.garganttua.api.commons.operation.OperationDefinition operation() { return null; }
+                @Override public com.garganttua.api.commons.operation.OperationPath operationPath() { return null; }
+                @Override public java.util.UUID executionUuid() { return null; }
+                @Override public java.util.UUID correlationUuid() { return null; }
+            };
+        }
+
+        @Test
+        @DisplayName("owner_rules + 400 with caller missing ownerId -> ApiException 'Owner ID is required for this operation' (same as requireOwnerId)")
+        void ownerRulesReplayMatchesRequireOwnerId() {
+            // Caller has tenantId but NO ownerId — the exact scenario that
+            // triggers requireOwnerId() to throw in the script.
+            com.garganttua.api.commons.service.IOperationRequest request = requestWith("acme", null);
+
+            Throwable replayed = Domain.tryReplayValidator("owner_rules_owner_rules", 400, request);
+
+            assertNotNull(replayed,
+                    "the replay must surface the exception that requireOwnerId would have thrown");
+            assertTrue(replayed instanceof com.garganttua.api.commons.ApiException,
+                    "the replayed exception must be the same type as the script-side helper would throw "
+                            + "(ApiException); got: " + replayed.getClass());
+            assertEquals("Owner ID is required for this operation", replayed.getMessage(),
+                    "the replayed exception's message must MATCH VERBATIM the wording from "
+                            + "SecurityExpressions.requireOwnerId — so the operator sees the same "
+                            + "functional explanation, not a synthesized one");
+        }
+
+        @Test
+        @DisplayName("tenant_rules + 400 with caller missing tenantId -> 'Tenant ID is required for this operation'")
+        void tenantRulesReplayMatchesRequireTenantId() {
+            com.garganttua.api.commons.service.IOperationRequest request = requestWith(null, null);
+
+            Throwable replayed = Domain.tryReplayValidator("tenant_rules_tenant_rules", 400, request);
+
+            assertNotNull(replayed,
+                    "tenant_rules replay must produce an exception when tenantId is missing");
+            assertEquals("Tenant ID is required for this operation", replayed.getMessage(),
+                    "the replayed exception must mirror SecurityExpressions.requireTenantId wording");
+        }
+
+        @Test
+        @DisplayName("owner_rules + 400 with a caller that DOES have ownerId -> returns null (no exception to replay)")
+        void ownerRulesReplayReturnsNullWhenValid() {
+            // Caller HAS both tenantId and ownerId — requireOwnerId will not throw.
+            com.garganttua.api.commons.service.IOperationRequest request = requestWith("acme", "user-1");
+
+            Throwable replayed = Domain.tryReplayValidator("owner_rules_owner_rules", 400, request);
+
+            assertEquals(null, replayed,
+                    "when the validator does NOT throw, replay must return null so the caller "
+                            + "falls back to the synthesized message");
+        }
+
+        @Test
+        @DisplayName("unknown stage -> returns null (caller falls back)")
+        void unknownStageReturnsNull() {
+            com.garganttua.api.commons.service.IOperationRequest request = requestWith("acme", null);
+
+            assertEquals(null, Domain.tryReplayValidator("some_random_stage", 400, request),
+                    "unknown stages have no replay path; must return null");
+        }
+
+        @Test
+        @DisplayName("null request -> returns null (defensive)")
+        void nullRequestReturnsNull() {
+            assertEquals(null, Domain.tryReplayValidator("owner_rules_owner_rules", 400, null),
+                    "null request must short-circuit the replay; got non-null");
         }
     }
 

@@ -64,6 +64,24 @@ public record Caller(
 		return new Caller(tenantId, tenantId, null, ownerId, false, false, null);
 	}
 
+	/**
+	 * Builds the caller that {@code Domain.invoke} auto-creates when a request
+	 * arrives with no caller information at all. Every field is null and both
+	 * super flags are false — the caller is, by definition, unauthenticated.
+	 *
+	 * <p>Anonymous operations ({@code Access.anonymous}) pass freely with
+	 * this caller because {@code VERIFY_AUTHORIZATION.gs} short-circuits on
+	 * the anonymous branch. Any non-anonymous operation gets rejected by the
+	 * same script with 401 — the framework treats "no caller" as "not
+	 * authenticated", not as "no request".
+	 *
+	 * <p>Use this directly only when you explicitly want anonymous semantics;
+	 * the common path is to let {@code Domain.invoke} fill it in for you.
+	 */
+	public static ICaller createAnonymousCaller() {
+		return new Caller(null, null, null, null, false, false, null);
+	}
+
 	public Caller withCallerId(String callerId) {
 		return new Caller(tenantId, requestedTenantId, callerId, ownerId, superTenant, superOwner, authorities);
 	}
