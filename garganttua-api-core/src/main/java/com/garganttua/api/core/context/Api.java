@@ -45,12 +45,14 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     private final List<ISerializer> serializers;
     private final List<IProtocol<?, ?>> protocols;
     private final List<IAuthorizationProtocol> authorizationProtocols;
+    private final com.garganttua.api.commons.context.IAuthoritiesEndpoint authoritiesEndpoint;
 
     public Api(IInjectionContext injectionContext, Map<String, IDomain<?>> domainContexts,
             String superTenantId, boolean superTenantAutoCreate, boolean multiTenant,
             List<IMethodBinder<Void>> startupBinders, List<ISerializer> serializers,
             List<IProtocol<?, ?>> protocols,
-            List<IAuthorizationProtocol> authorizationProtocols) {
+            List<IAuthorizationProtocol> authorizationProtocols,
+            com.garganttua.api.commons.context.IAuthoritiesEndpoint authoritiesEndpoint) {
         this.injectionContext = Objects.requireNonNull(injectionContext, "Injection context cannot be null");
         this.domainContexts = Collections.unmodifiableMap(new HashMap<>(
                 Objects.requireNonNull(domainContexts, "Domain contexts cannot be null")));
@@ -65,6 +67,10 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
                 Objects.requireNonNull(protocols, "Protocols cannot be null")));
         this.authorizationProtocols = Collections.unmodifiableList(new ArrayList<>(
                 Objects.requireNonNull(authorizationProtocols, "Authorization protocols cannot be null")));
+        // null is a legitimate value: it signals that .exposeAuthorities() was
+        // never called, and getAuthoritiesEndpoint() must propagate that null
+        // to transport modules so they skip the route.
+        this.authoritiesEndpoint = authoritiesEndpoint;
     }
 
     @Override
@@ -80,6 +86,80 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     @Override
     public List<IAuthorizationProtocol> getAuthorizationProtocols() {
         return this.authorizationProtocols;
+    }
+
+    @Override
+    public com.garganttua.api.commons.context.IAuthoritiesEndpoint getAuthoritiesEndpoint() {
+        return this.authoritiesEndpoint;
+    }
+
+    @Override
+    public List<String> getAuthorities() {
+        java.util.TreeSet<String> sorted = new java.util.TreeSet<>();
+        for (IDomain<?> domain : this.domainContexts.values()) {
+            if (domain.getDomainDefinition() == null) continue;
+            List<com.garganttua.api.commons.operation.OperationDefinition> ops =
+                    domain.getDomainDefinition().operations();
+            if (ops == null) continue;
+            for (com.garganttua.api.commons.operation.OperationDefinition op : ops) {
+                String name = op.effectiveAuthorityName();
+                if (name != null && !name.isBlank()) {
+                    sorted.add(name);
+                }
+            }
+        }
+        return new ArrayList<>(sorted);
+    }
+
+    @Override
+    public List<String> getAuthoritiesForCaller(com.garganttua.api.commons.caller.ICaller caller) {
+        if (this.authoritiesEndpoint == null) {
+            throw new ApiException("Authorities endpoint is not exposed — call "
+                    + ".exposeAuthorities() on ApiBuilder to enable it.");
+        }
+        com.garganttua.api.commons.operation.Access access = this.authoritiesEndpoint.access();
+        // Anonymous bypass — no caller checks needed.
+        if (access == com.garganttua.api.commons.operation.Access.anonymous) {
+            return getAuthorities();
+        }
+        // Below this line the caller must be non-null and authenticated.
+        if (caller == null) {
+            throw new ApiException("Authorities endpoint requires access=" + access
+                    + " but no caller was provided.");
+        }
+        boolean superCaller = caller.superTenant() || caller.superOwner();
+        switch (access) {
+            case authenticated:
+                if (!superCaller && caller.tenantId() == null) {
+                    throw new ApiException("Authorities endpoint requires an authenticated caller "
+                            + "(no tenantId on the caller).");
+                }
+                break;
+            case tenant:
+                if (!superCaller && caller.requestedTenantId() == null) {
+                    throw new ApiException("Authorities endpoint requires a tenant-scoped caller "
+                            + "(no requestedTenantId).");
+                }
+                break;
+            case owner:
+                if (!superCaller && caller.ownerId() == null) {
+                    throw new ApiException("Authorities endpoint requires an owner-scoped caller "
+                            + "(no ownerId).");
+                }
+                break;
+            default:
+                break;
+        }
+        // Authority gate — super-tenant / super-owner bypass it.
+        String requiredAuthority = this.authoritiesEndpoint.authority();
+        if (requiredAuthority != null && !superCaller) {
+            List<String> authorities = caller.authorities();
+            if (authorities == null || !authorities.contains(requiredAuthority)) {
+                throw new ApiException("Authorities endpoint requires authority '"
+                        + requiredAuthority + "', which the caller does not carry.");
+            }
+        }
+        return getAuthorities();
     }
 
     @Override

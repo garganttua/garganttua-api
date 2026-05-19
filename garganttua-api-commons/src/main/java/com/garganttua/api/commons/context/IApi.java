@@ -31,6 +31,50 @@ public interface IApi extends ILifecycle {
 
     List<IAuthorizationProtocol> getAuthorizationProtocols();
 
+    // --- Authorities endpoint ---
+
+    /**
+     * Returns the descriptor for the framework-provided "list authorities"
+     * endpoint, or {@code null} when the endpoint has not been exposed via
+     * {@link com.garganttua.api.commons.context.dsl.IApiBuilder#exposeAuthorities()}.
+     *
+     * <p>Modules that publish the API over a transport (HTTP, RPC, …) check
+     * this to decide whether to wire the corresponding route.
+     */
+    IAuthoritiesEndpoint getAuthoritiesEndpoint();
+
+    /**
+     * Returns the sorted, deduplicated list of every authority name enforced
+     * by any operation on any domain registered on the API. Names come from
+     * {@code OperationDefinition.effectiveAuthorityName()} — either an
+     * explicit {@code .authority("name")} or the auto-generated
+     * {@code <domain>:<operation>} default.
+     *
+     * <p>This method is unprotected — the security check is done by
+     * {@link #getAuthoritiesForCaller(com.garganttua.api.commons.caller.ICaller)}.
+     * Direct calls bypass authentication and are reserved for framework
+     * internals.
+     */
+    List<String> getAuthorities();
+
+    /**
+     * Returns {@link #getAuthorities()} after enforcing the access level and
+     * (optional) authority configured via
+     * {@link com.garganttua.api.commons.context.dsl.IApiBuilder#exposeAuthorities()}.
+     *
+     * <p>Throws {@link ApiException} when:
+     * <ul>
+     *   <li>the endpoint was not exposed at all;</li>
+     *   <li>the caller does not meet the configured access level
+     *       (anonymous-only callers on an authenticated endpoint, etc.);</li>
+     *   <li>an authority gate was configured and the caller does not carry it.</li>
+     * </ul>
+     *
+     * <p>Super-tenant and super-owner callers bypass the authority gate
+     * (mirrors {@code callerHasAuthority}). They still must meet the access
+     * level requirements.
+     */
+    List<String> getAuthoritiesForCaller(ICaller caller);
 
     // --- Request builder ---
 

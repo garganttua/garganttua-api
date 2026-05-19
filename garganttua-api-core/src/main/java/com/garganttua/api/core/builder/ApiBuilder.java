@@ -84,6 +84,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
 	private volatile IInjectionContext injectionContext;
+	private volatile AuthoritiesEndpointBuilder authoritiesEndpointBuilder;
 
 	public static IApiBuilder builder() {
 		return new ApiBuilder();
@@ -192,6 +193,14 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		Objects.requireNonNull(bean, "Authorization protocol supplier builder cannot be null");
 		this.authorizationProtocolBuilders.add(bean);
 		return this;
+	}
+
+	@Override
+	public com.garganttua.api.commons.context.dsl.IAuthoritiesEndpointBuilder exposeAuthorities() throws ApiException {
+		if (this.authoritiesEndpointBuilder == null) {
+			this.authoritiesEndpointBuilder = new AuthoritiesEndpointBuilder(this);
+		}
+		return this.authoritiesEndpointBuilder;
 	}
 
 	public String[] getPackages() {
@@ -399,10 +408,20 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 			log.atDebug().log("Built {} authorization protocols", builtAuthzProtocols.size());
 
+			// Build the authorities-endpoint descriptor when opted-in. Null when
+			// the user did not call .exposeAuthorities() — the Api context
+			// surfaces that as IApi.getAuthoritiesEndpoint() == null and
+			// IApi.getAuthoritiesForCaller refuses every call.
+			com.garganttua.api.commons.context.IAuthoritiesEndpoint authoritiesEndpoint = null;
+			if (this.authoritiesEndpointBuilder != null) {
+				authoritiesEndpoint = this.authoritiesEndpointBuilder.build();
+			}
+
 			// Create and return API context
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
-					startupBinders, builtSerializers, builtProtocols, builtAuthzProtocols);
+					startupBinders, builtSerializers, builtProtocols, builtAuthzProtocols,
+					authoritiesEndpoint);
 
 			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");

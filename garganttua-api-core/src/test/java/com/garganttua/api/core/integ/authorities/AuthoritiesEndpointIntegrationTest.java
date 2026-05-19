@@ -1,0 +1,338 @@
+package com.garganttua.api.core.integ.authorities;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IAuthoritiesEndpoint;
+import com.garganttua.api.commons.context.dsl.IApiBuilder;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.core.caller.Caller;
+import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
+import com.garganttua.core.reflection.IClass;
+
+@DisplayName("Authorities endpoint — opt-in DSL + IApi method + caller-level security check")
+class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
+
+    /**
+     * Two minimal domains used to populate the authorities pool. Both opt
+     * into authority enforcement on a subset of their CRUD operations so the
+     * enumeration has something to return; authority names follow the
+     * default {@code <domain>:<operation>} pattern (no explicit
+     * {@code .creationAuthority("custom-name")}).
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private IApi buildApi(boolean expose, Access access, String authority) throws ApiException {
+        IApiBuilder builder = newBuilder();
+
+        var users = builder.domain(IClass.getClass(User.class))
+                .tenant(true)
+                .owner("uuid")
+                .entity()
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                .up()
+                .dto(IClass.getClass(UserDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(new CapturingDao())
+                .up();
+        users.security()
+                .creationAuthority(true)
+                .readAllAuthority(true)
+                .readOneAuthority(true);
+        users.up();
+
+        // Second domain so we can assert that the result is deduped across
+        // domains and sorted alphabetically.
+        var projects = builder.domain(IClass.getClass(Project.class))
+                .tenant(true)
+                .entity()
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                .up()
+                .dto(IClass.getClass(ProjectDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(new CapturingDao())
+                .up();
+        projects.security()
+                .creationAuthority(true)
+                .readAllAuthority(true);
+        projects.up();
+
+        if (expose) {
+            var ep = builder.exposeAuthorities();
+            if (access != null) ep.access(access);
+            if (authority != null) ep.authority(authority);
+            ep.up();
+        }
+        return buildAndStart(builder);
+    }
+
+    public static class Project {
+        private String id;
+        private String uuid;
+        private String tenantId;
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUuid() { return uuid; }
+        public void setUuid(String uuid) { this.uuid = uuid; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+    }
+
+    public static class ProjectDto {
+        private String id;
+        private String uuid;
+        private String tenantId;
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        public String getUuid() { return uuid; }
+        public void setUuid(String uuid) { this.uuid = uuid; }
+        public String getTenantId() { return tenantId; }
+        public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+    }
+
+    @Nested
+    @DisplayName("getAuthorities() — pure enumeration, ignores the endpoint exposure flag")
+    class Enumeration {
+
+        @Test
+        @DisplayName("returns a sorted, deduplicated list of effectiveAuthorityName across all domains")
+        void enumerates() throws ApiException {
+            IApi api = buildApi(false, null, null);
+            List<String> names = api.getAuthorities();
+            assertNotNull(names);
+            assertFalse(names.isEmpty(),
+                    "default CRUD operations must each contribute an effectiveAuthorityName");
+
+            // Sorted alphabetically — assert the result is monotonic.
+            for (int i = 1; i < names.size(); i++) {
+                assertTrue(names.get(i - 1).compareTo(names.get(i)) < 0,
+                        "list must be sorted, deduped — found violation at index " + i
+                                + ": '" + names.get(i - 1) + "' vs '" + names.get(i) + "'");
+            }
+
+            // The default authority name pattern is "<domain>:<operation>". Both
+            // declared domains must appear in the result.
+            assertTrue(names.stream().anyMatch(n -> n.startsWith("users:")),
+                    "users domain must contribute at least one authority — got: " + names);
+            assertTrue(names.stream().anyMatch(n -> n.startsWith("projects:")),
+                    "projects domain must contribute at least one authority — got: " + names);
+        }
+
+        @Test
+        @DisplayName("the same name is never returned twice (dedup is real, not just a sorted concat)")
+        void dedup() throws ApiException {
+            IApi api = buildApi(false, null, null);
+            List<String> names = api.getAuthorities();
+            assertEquals(names.size(), names.stream().distinct().count(),
+                    "duplicates leaked into the result: " + names);
+        }
+    }
+
+    @Nested
+    @DisplayName("getAuthoritiesEndpoint() — descriptor visibility for transport modules")
+    class Descriptor {
+
+        @Test
+        @DisplayName("returns null when .exposeAuthorities() was not called")
+        void notExposedYieldsNullDescriptor() throws ApiException {
+            IApi api = buildApi(false, null, null);
+            assertNull(api.getAuthoritiesEndpoint(),
+                    "endpoint must report null when not opted in — transports skip the route on null");
+        }
+
+        @Test
+        @DisplayName("returns a descriptor with the chosen access and authority when opted in")
+        void exposedYieldsDescriptor() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, "ops:authorities:read");
+            IAuthoritiesEndpoint endpoint = api.getAuthoritiesEndpoint();
+            assertNotNull(endpoint);
+            assertEquals(Access.authenticated, endpoint.access());
+            assertEquals("ops:authorities:read", endpoint.authority());
+        }
+
+        @Test
+        @DisplayName(".exposeAuthorities().up() with no setter yields access=authenticated and no authority")
+        void defaultsAreAuthenticatedAndNoAuthority() throws ApiException {
+            IApi api = buildApi(true, null, null);
+            IAuthoritiesEndpoint endpoint = api.getAuthoritiesEndpoint();
+            assertNotNull(endpoint);
+            assertEquals(Access.authenticated, endpoint.access(),
+                    "default access must be 'authenticated' (intentionally not anonymous — "
+                            + "exposing the authority matrix to the public is the unsafe choice)");
+            assertNull(endpoint.authority(),
+                    "default authority gate must be null — no specific authority required");
+        }
+    }
+
+    @Nested
+    @DisplayName("getAuthoritiesForCaller — security enforcement")
+    class SecurityCheck {
+
+        @Test
+        @DisplayName("endpoint not exposed → throws regardless of caller (super-callers included)")
+        void notExposedAlwaysThrows() throws ApiException {
+            IApi api = buildApi(false, null, null);
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> api.getAuthoritiesForCaller(Caller.createSuperCaller("SUPER_TENANT")));
+            assertTrue(ex.getMessage().contains("not exposed"),
+                    "error must say the endpoint is not exposed — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("access=anonymous → list returned for any caller, even null")
+        void anonymousNeedsNoCaller() throws ApiException {
+            IApi api = buildApi(true, Access.anonymous, null);
+            List<String> names = api.getAuthoritiesForCaller(null);
+            assertNotNull(names);
+            assertFalse(names.isEmpty());
+
+            // Same result for an anonymous caller record.
+            List<String> sameAgain = api.getAuthoritiesForCaller(Caller.createAnonymousCaller());
+            assertEquals(names, sameAgain);
+        }
+
+        @Test
+        @DisplayName("access=authenticated + anonymous caller → throws with parlant message")
+        void authenticatedRejectsAnonymous() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, null);
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> api.getAuthoritiesForCaller(Caller.createAnonymousCaller()));
+            assertTrue(ex.getMessage().contains("authenticated")
+                            || ex.getMessage().contains("tenantId"),
+                    "error must explain why the anonymous caller was rejected — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("access=authenticated + tenant-scoped caller → list returned")
+        void authenticatedAcceptsTenantCaller() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, null);
+            List<String> names = api.getAuthoritiesForCaller(Caller.createTenantCaller("ACME"));
+            assertNotNull(names);
+            assertFalse(names.isEmpty());
+        }
+
+        @Test
+        @DisplayName("access=tenant + caller without requestedTenantId → throws")
+        void tenantAccessRequiresRequestedTenant() throws ApiException {
+            IApi api = buildApi(true, Access.tenant, null);
+            // A caller with no tenant info at all (anonymous-like).
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> api.getAuthoritiesForCaller(Caller.createAnonymousCaller()));
+            assertTrue(ex.getMessage().contains("tenant"),
+                    "error must mention the tenant requirement — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("access=owner + caller without ownerId → throws")
+        void ownerAccessRequiresOwnerId() throws ApiException {
+            IApi api = buildApi(true, Access.owner, null);
+            // A tenant-scoped caller without owner.
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> api.getAuthoritiesForCaller(Caller.createTenantCaller("ACME")));
+            assertTrue(ex.getMessage().contains("owner"),
+                    "error must mention the owner requirement — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("authority gate + caller with the right authority → list returned")
+        void authorityGatePasses() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, "ops:authorities:read");
+            Caller caller = (Caller) Caller.createTenantCaller("ACME");
+            caller = caller.withAuthorities(List.of("ops:authorities:read", "noise"));
+            List<String> names = api.getAuthoritiesForCaller(caller);
+            assertNotNull(names);
+            assertFalse(names.isEmpty());
+        }
+
+        @Test
+        @DisplayName("authority gate + caller without the required authority → throws")
+        void authorityGateBlocks() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, "ops:authorities:read");
+            Caller caller = (Caller) Caller.createTenantCaller("ACME");
+            caller = caller.withAuthorities(List.of("unrelated:authority"));
+            final Caller finalCaller = caller;
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> api.getAuthoritiesForCaller(finalCaller));
+            assertTrue(ex.getMessage().contains("ops:authorities:read"),
+                    "error must name the required authority — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("authority gate + caller with NO authorities at all → throws")
+        void authorityGateBlocksNullAuthorities() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, "ops:authorities:read");
+            Caller caller = (Caller) Caller.createTenantCaller("ACME");
+            // No .withAuthorities — authorities() returns null
+            assertNull(caller.authorities(), "test prerequisite: caller starts with no authorities");
+            final Caller finalCaller = caller;
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> api.getAuthoritiesForCaller(finalCaller));
+            assertTrue(ex.getMessage().contains("ops:authorities:read"));
+        }
+
+        @Test
+        @DisplayName("super-tenant bypasses the authority gate but still must meet the access level")
+        void superTenantBypassesAuthorityGate() throws ApiException {
+            IApi api = buildApi(true, Access.authenticated, "ops:authorities:read");
+            // Super-tenant has tenantId set internally — meets 'authenticated' AND bypasses authority.
+            List<String> names = api.getAuthoritiesForCaller(
+                    Caller.createSuperCaller("SUPER_TENANT"));
+            assertNotNull(names);
+            assertFalse(names.isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("DSL guards")
+    class DslGuards {
+
+        @Test
+        @DisplayName(".access(null) is rejected with a parlant message")
+        void rejectsNullAccess() throws ApiException {
+            IApiBuilder builder = newBuilder();
+            // The reject happens at the setter call — no .build() needed.
+            assertThrows(NullPointerException.class,
+                    () -> builder.exposeAuthorities().access(null));
+        }
+
+        @Test
+        @DisplayName(".authority(blank) is rejected with a parlant message")
+        void rejectsBlankAuthority() throws ApiException {
+            IApiBuilder builder = newBuilder();
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> builder.exposeAuthorities().authority(" "));
+            assertTrue(ex.getMessage().contains("null or blank"),
+                    "error must explain the blank rejection — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName(".authority(null) is rejected")
+        void rejectsNullAuthority() throws ApiException {
+            IApiBuilder builder = newBuilder();
+            assertThrows(ApiException.class,
+                    () -> builder.exposeAuthorities().authority(null));
+        }
+
+        @Test
+        @DisplayName("calling .exposeAuthorities() twice returns the same builder instance (idempotent)")
+        void exposeIsIdempotent() throws ApiException {
+            IApiBuilder builder = newBuilder();
+            var first = builder.exposeAuthorities();
+            var second = builder.exposeAuthorities();
+            assertEquals(first, second,
+                    "second .exposeAuthorities() must reuse the first builder so .access/.authority "
+                            + "configured earlier are not lost when the user re-enters the sub-builder");
+        }
+    }
+}

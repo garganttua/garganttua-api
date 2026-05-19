@@ -40,4 +40,24 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 
 	IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
+	/**
+	 * Opt-in: exposes the framework-provided endpoint that lists every
+	 * authority enforced anywhere on the API (one entry per distinct
+	 * {@link com.garganttua.api.commons.operation.OperationDefinition#effectiveAuthorityName()}
+	 * across all domains).
+	 *
+	 * <p>Returns a sub-builder so the caller picks the access level and
+	 * (optionally) the authority required to call the endpoint. The
+	 * default — when {@code .exposeAuthorities().up()} is called with no
+	 * further setter — is {@code Access.authenticated} with no
+	 * authority gate.
+	 *
+	 * <p>When this method is never called, the endpoint is not exposed:
+	 * {@link com.garganttua.api.commons.context.IApi#getAuthoritiesEndpoint()}
+	 * returns {@code null} and
+	 * {@link com.garganttua.api.commons.context.IApi#getAuthoritiesForCaller(com.garganttua.api.commons.caller.ICaller)}
+	 * refuses every call with an {@link ApiException}.
+	 */
+	IAuthoritiesEndpointBuilder exposeAuthorities() throws ApiException;
+
 }
