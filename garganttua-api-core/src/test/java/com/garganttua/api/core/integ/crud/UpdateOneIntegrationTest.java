@@ -297,7 +297,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
             req.arg(IOperationRequest.SUPER_TENANT, false);
             req.arg(IOperationRequest.SUPER_OWNER, false);
             req.arg(IOperationRequest.AUTHORITIES, authorities);
-            req.arg("authorization", new Object()); // Mode B: pre-resolved
+            req.arg("authorization", new com.garganttua.api.core.integ.TestAuthorization()); // Mode B: pre-resolved
             req.arg("caller", new com.garganttua.api.core.caller.Caller(
                     "TENANT_A", "TENANT_A", "user-1", "user-1", false, false, authorities));
             req.arg("entity", body);
@@ -391,7 +391,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
             // No authorities — super flag must be enough to bypass the gate.
             req.arg("caller", new com.garganttua.api.core.caller.Caller(
                     "TENANT_A", "TENANT_A", null, null, true, true, null));
-            req.arg("authorization", new Object()); // Mode B
+            req.arg("authorization", new com.garganttua.api.core.integ.TestAuthorization()); // Mode B
             req.arg("entity", body);
             req.arg("type", "uuid");
             req.arg("identifier", "uuid-bob");

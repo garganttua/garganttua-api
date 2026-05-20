@@ -12,10 +12,12 @@ import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.api.core.caller.Caller;
+import com.garganttua.api.core.integ.TestAuthorization;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.api.core.service.RequestBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -113,13 +115,17 @@ class VerifyAuthorizationNoBypassForSuperTenantTest extends AbstractCrudIntegrat
             IApi api = buildSecuredDomain(Access.authenticated);
             IDomain<?> domain = api.getDomain("users").orElseThrow();
 
-            // Mode B: the caller has vouched for the authorization by setting it
-            // on the request directly. VERIFY_AUTHORIZATION sees a non-null
-            // "authorization" arg and short-circuits to success without trying
-            // to decode rawAuthorization. The op then runs and returns OK.
+            // Mode B: the caller has pre-decoded the authorization and set a
+            // real IAuthorization on the request. VERIFY_AUTHORIZATION skips
+            // the parsing/decode step but still runs verifyAuthorization, which
+            // falls through to TestAuthorization.validate() (no-op) since the
+            // fixture has no matching authenticator domain. The op then runs
+            // and returns OK. Contrast: the *bypass* variant of this test below
+            // confirms a missing authorization arg still gets rejected — Mode B
+            // is an efficiency shortcut for the decode side, not a free pass.
             IOperationResponse response = RequestBuilder.builder(domain)
                     .caller(Caller.createSuperCaller(api.getSuperTenantId()))
-                    .param(IOperationRequest.AUTHORIZATION.name(), new Object())
+                    .param(IOperationRequest.AUTHORIZATION.name(), new TestAuthorization())
                     .readAll()
                     .build()
                     .execute();
@@ -131,6 +137,40 @@ class VerifyAuthorizationNoBypassForSuperTenantTest extends AbstractCrudIntegrat
             // the authorization stage and actually executed the readAll.
             assertNotEquals(OperationResponseCode.UNAUTHORIZED, response.getResponseCode(),
                     "Mode B should bypass the rawAuthorization decode, not be rejected for missing it");
+        }
+
+        @Test
+        @DisplayName("Mode B with an authorization whose validate() throws is rejected — closes the pre-fix bypass where Mode B short-circuited the whole script (regression of the 2026-05-20 sig+validate skip)")
+        void modeBStillEnforcesValidate() throws ApiException {
+            IApi api = buildSecuredDomain(Access.authenticated);
+            IDomain<?> domain = api.getDomain("users").orElseThrow();
+
+            // Pre-fix behaviour: VERIFY_AUTHORIZATION's Mode B branch returned 0
+            // as soon as `authorization` was non-null on the request. That meant
+            // ANY object — including one whose intrinsic validate() rejects the
+            // token — would walk straight past the security stage. Post-fix:
+            // verifyAuthorization runs validate() (when no authenticator domain
+            // resolves) and surfaces its ApiException as 401.
+            IAuthorization rejecting = new IAuthorization() {
+                @Override public void revoke() {}
+                @Override public void isRevoked() {}
+                @Override public void isExpired() {}
+                @Override public void validateAgainst(IAuthorization ref, Object... args) {}
+                @Override public void validate(Object... args) {
+                    throw new com.garganttua.api.commons.ApiException("token revoked");
+                }
+            };
+
+            IOperationResponse response = RequestBuilder.builder(domain)
+                    .caller(Caller.createSuperCaller(api.getSuperTenantId()))
+                    .param(IOperationRequest.AUTHORIZATION.name(), rejecting)
+                    .readAll()
+                    .build()
+                    .execute();
+
+            assertEquals(OperationResponseCode.UNAUTHORIZED, response.getResponseCode(),
+                    "Mode B must NOT bypass validate(): a rejecting authz has to surface as 401. "
+                            + "Got code=" + response.getResponseCode() + " response=" + response.getResponse());
         }
     }
 

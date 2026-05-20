@@ -1,21 +1,27 @@
 #!/usr/bin/env gs
 
 #@workflow
-#  Verifies authorization access before processing an operation.
-#  Flow:
-#  - Anonymous access -> immediate success.
-#  - Authorization already present (Mode B caller pre-populated it) -> success
-#    (the caller has vouched for the authorization).
-#  - Otherwise: parse rawAuthorization, resolve the scheme protocol, decode it,
-#    then invoke the protocol's target domain's authenticate pipeline with the
-#    decoded authorization as credentials. Store the resolved principal for
-#    downstream stages.
+#  Verifies authorization before a non-anonymous operation runs.
 #
-#  NOTE: there is no super-tenant short-circuit. The superTenant flag on a
-#  caller is a cross-tenancy *capability* (filter level), not a substitute for
-#  identity proof. Framework-internal operations (autoCreateMasterTenant,
-#  lookupValidAuthorization) write/read directly via the repository instead
-#  of going through this pipeline.
+#  Two input modes:
+#  - Mode A — rawAuthorization header on the request. Parsing + protocol
+#    resolution + decode happen inside decodeRequestAuthorization.
+#  - Mode B — caller has already decoded the IAuthorization and set it on
+#    operationRequest.authorization. Parsing/decoding is skipped (efficiency
+#    shortcut for trusted in-process callers), but signature verification and
+#    server-side validation still run. The caller is trusted to have decoded
+#    correctly; it is NOT trusted to have validated expiration / revocation /
+#    account status. Server-side enforcement is mandatory in both modes.
+#
+#  After decode, verifyAuthorization performs:
+#    - resolve the target authenticator domain (Mode A: protocol.targetDomain;
+#      Mode B: from the IAuthorization instance's class — null tolerated)
+#    - verify the cryptographic signature (no-op when not signable)
+#    - if an authenticator is wired on the target domain, invoke the
+#      authenticate pipeline (account status + principal resolution)
+#    - otherwise fall back to IAuthorization.validate() (intrinsic checks:
+#      expiration, revocation, user-defined rules)
+#    - returns the resolved IAuthentication, which carries the principal
 #
 #  @in operationRequest: [0] IOperationRequest
 #  @in repository:       [1] IRepository
@@ -23,62 +29,34 @@
 #  @in apiContext:       [3] IApi
 #  @out output -> output: int
 #  @return 0:   SUCCESS
-#  @return 400: malformed Authorization header (no scheme/value separator)
-#  @return 401: missing token, unknown scheme, decode failure, or authenticate rejected the token
+#  @return 400: malformed Authorization header (Mode A: no scheme/value separator)
+#  @return 401: missing token, unknown scheme, decode failure, signature
+#               mismatch, validation rejected
 #@end
 
 operation     <- :arg(@0, "operation")
 access        <- operationAccess(@operation)
 _isAnonymous  <- equals(@access, "anonymous")
 
-// Short-circuit: anonymous operations need no authorization
+// Anonymous operations need no authorization — short-circuit success.
 requirePresent(if(equals(@_isAnonymous, false), 1))
 ! -> 0
 
-// Non-anonymous: do we already have a decoded authorization (Mode B)?
-_hasAuth <- notNull(:arg(@0, "authorization"))
-requirePresent(if(equals(@_hasAuth, false), 1))
-! -> 0
-
-// Need to decode. Do we have rawAuthorization?
-_hasRaw <- notNull(:arg(@0, "rawAuthorization"))
-requirePresent(if(@_hasRaw, 1))
-! -> 401
-
-// Decode rawAuthorization -> IAuthorization via the matching scheme protocol
-raw      <- rawAuthorizationAsString(:arg(@0, "rawAuthorization"))
-scheme   <- parseAuthorizationScheme(@raw)
-! -> 400
-
-value    <- parseAuthorizationValue(@raw)
-! -> 400
-
-protocol <- resolveAuthorizationProtocol(@3, @scheme)
-! -> 401
-
-authz    <- decodeAuthorization(@protocol, @value, @3)
+// Mode A or Mode B unified. decodeRequestAuthorization short-circuits Mode B
+// internally; in Mode A it parses + resolves the protocol + decodes, and
+// stashes the protocol on the request for the verify step to find.
+// AuthorizationFormatException → 400 (malformed header).
+// Other ApiException → 401 (missing token, unknown scheme, decode failure).
+authz <- decodeRequestAuthorization(@0, @3)
+! com.garganttua.api.commons.security.authorization.AuthorizationFormatException.Class -> 400
 ! -> 401
 
 setRequestArg(@0, "authorization", @authz)
 
-// Validate the decoded authorization by invoking the target domain's authenticate
-// pipeline. The IAuthentication strategy on that domain checks signature, expiration,
-// revocation, and resolves the principal.
-_targetClass <- protocolTargetDomain(@protocol)
-_targetDomain <- resolveDomainByEntityClass(@3, @_targetClass)
-
-// Verify the cryptographic signature when the target authorization is signable.
-// Returns true when not signable or signature is valid; false on mismatch.
-// Misconfiguration (no key realm wired) throws — mapped to 401 here so a
-// broken setup is treated as an unverifiable token rather than a 500.
-_sigOk <- verifyIfSignable(@authz, @_targetDomain, @0)
-! -> 401
-requirePresent(if(@_sigOk, 1))
-! -> 401
-
-_tenantId <- :arg(@0, "tenantId")
-_authRequest <- buildAuthRequestFromAuthorization(@authz, @_tenantId)
-_authResult <- invokeAuthenticate(@3, @_targetDomain, @_authRequest)
+// Single server-side verification step. Handles signature + authenticator
+// invocation + intrinsic validate(), tolerating Mode B without a registered
+// target domain.
+_authResult <- verifyAuthorization(@3, @authz, @0)
 ! -> 401
 
 setRequestArg(@0, "principal", authResultPrincipal(@_authResult))

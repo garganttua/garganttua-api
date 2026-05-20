@@ -1207,6 +1207,71 @@ public class SecurityExpressions {
 		return new com.garganttua.api.core.security.authentication.AuthenticationRequest(null, authz, tenant);
 	}
 
+	@Expression(name = "verifyAuthorization",
+			description = "Single server-side verification step used by VERIFY_AUTHORIZATION.gs. Resolves the authenticator domain (Mode A: from the protocol stashed on the request; Mode B: from the authz's runtime class). Verifies the signature when the resolved domain marks the authorization signable. Then either invokes the authenticate pipeline (when an authenticator is wired) or calls IAuthorization.validate() (intrinsic checks: expiration, revocation, custom rules). Mode B may not match any registered domain — that's allowed, and we fall through to authz.validate() without a target. Throws ApiException (→ 401) on signature mismatch or validation rejection.")
+	public static IAuthentication verifyAuthorization(@Nullable Object apiContext,
+			@Nullable Object authorization, @Nullable Object operationRequest) {
+		IApi api = (IApi) unwrapOptional(apiContext);
+		IAuthorization authz = (IAuthorization) unwrapOptional(authorization);
+		if (api == null || authz == null) {
+			throw new ApiException("verifyAuthorization: apiContext and authorization are required");
+		}
+
+		// Resolve the target authenticator domain. Null is tolerated: that's the
+		// Mode B path where the caller's IAuthorization instance has no matching
+		// registered domain (e.g. a stateless self-validating token).
+		IDomain<?> targetDomain = resolveOptionalAuthenticatorDomain(api, operationRequest, authz);
+
+		if (targetDomain != null) {
+			boolean sigOk = verifyIfSignable(authz, targetDomain, operationRequest);
+			if (!sigOk) {
+				throw new ApiException("Authorization signature verification failed");
+			}
+
+			DomainDefinition<?> domDef = toDomainDefinition(targetDomain);
+			boolean hasAuthenticator = domDef != null
+					&& domDef.domainSecurityDefinition() != null
+					&& domDef.domainSecurityDefinition().authenticatorDefinition() != null;
+			if (hasAuthenticator) {
+				Object tenantId = operationRequest == null ? null
+						: ((IOperationRequest) unwrapOptional(operationRequest))
+								.arg("tenantId").orElse(null);
+				IAuthenticationRequest authRequest = buildAuthRequestFromAuthorization(authz, tenantId);
+				return invokeAuthenticate(api, targetDomain, authRequest);
+			}
+		}
+
+		// No target domain or target without authenticator — fall back to the
+		// authorization's intrinsic validate(). Signed-but-untracked tokens still
+		// have their signature checked above (when a target resolved); fully
+		// untracked Mode B authorizations rely on validate() alone, which is what
+		// the IAuthorization contract is for.
+		try {
+			authz.validate();
+		} catch (ApiException ae) {
+			throw ae;
+		} catch (RuntimeException re) {
+			throw new ApiException("Authorization validation failed: " + re.getMessage(), re);
+		}
+		return new com.garganttua.api.commons.security.authentication.Authentication(
+				true, authz, null, authz, java.util.List.of(), true, true, true, true);
+	}
+
+	private static IDomain<?> resolveOptionalAuthenticatorDomain(IApi api, Object operationRequest, IAuthorization authz) {
+		IClass<?> targetClass = AuthorizationProtocolExpressions
+				.resolveAuthorizationTargetClass(operationRequest, authz);
+		if (targetClass == null || api == null) return null;
+		if (api instanceof com.garganttua.api.core.context.Api concrete) {
+			for (IDomain<?> domain : concrete.getDomains().values()) {
+				IClass<?> domainEntity = domain.getEntityClass();
+				if (domainEntity != null && domainEntity.equals(targetClass)) {
+					return domain;
+				}
+			}
+		}
+		return null;
+	}
+
 	@Expression(name = "invokeAuthenticate",
 			description = "Synchronously invokes the 'authenticate' operation on the given target domain with the provided IAuthenticationRequest as body. Returns the resulting IAuthentication or throws ApiException on failure (mapped to 401 by the caller).")
 	public static IAuthentication invokeAuthenticate(@Nullable Object apiContext, @Nullable Object targetDomain, @Nullable Object authRequest) {

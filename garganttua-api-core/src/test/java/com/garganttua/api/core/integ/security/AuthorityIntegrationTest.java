@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.caller.Caller;
+import com.garganttua.api.core.integ.TestAuthorization;
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.commons.ApiException;
@@ -71,9 +72,11 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
 
     /**
      * Builds a Mode-B request with a non-super-tenant caller carrying the
-     * supplied authorities. Mode B means we bypass EXTRACT (no rawRequest)
-     * and a pre-populated authorization token (so VERIFY_AUTHORIZATION
-     * short-circuits to success).
+     * supplied authorities. Mode B short-circuits the parsing/decode side of
+     * VERIFY_AUTHORIZATION; the {@link TestAuthorization} fixture has no
+     * matching domain so verifyAuthorization falls through to its no-op
+     * validate(). That lets these tests focus on authority enforcement
+     * downstream of VERIFY_AUTHORIZATION.
      */
     private OperationRequest authenticatedRequest(OperationDefinition operation, List<String> authorities) {
         OperationRequest request = new OperationRequest(new HashMap<>());
@@ -85,7 +88,7 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
         request.arg(IOperationRequest.SUPER_TENANT, false);
         request.arg(IOperationRequest.SUPER_OWNER, false);
         request.arg(IOperationRequest.AUTHORITIES, authorities);
-        request.arg("authorization", new Object()); // Mode B: pre-resolved authorization
+        request.arg("authorization", new TestAuthorization());
         // AbstractCrudScriptTest.executeScript materializes the caller from these args
         request.arg("caller", new Caller("TENANT_A", "TENANT_A", "user-1", "user-1", false, false, authorities));
         User entity = new User();
@@ -262,7 +265,7 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
             OperationDefinition op = op(ctx, BusinessOperation.create);
             // Super-tenant caller with NO authorities should still pass
             OperationRequest request = superTenantScriptRequest(op);
-            request.arg("authorization", new Object());
+            request.arg("authorization", new TestAuthorization());
             request.arg(IOperationRequest.AUTHORITIES, List.<String>of());
             Caller superCaller = new Caller("SUPER_TENANT", "SUPER_TENANT", "super-user", "super-user",
                     true, true, List.of());

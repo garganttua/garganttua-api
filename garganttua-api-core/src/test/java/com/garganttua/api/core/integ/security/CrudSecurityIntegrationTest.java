@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.core.integ.TestAuthorization;
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.commons.ApiException;
@@ -69,9 +70,12 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
     }
 
     private WorkflowResult executeWithAuth(IDomain<?> ctx, OperationDefinition op) {
-        // Request with authorization token set — Mode B caller has vouched for it.
+        // Request with a Mode B pre-decoded IAuthorization. The fixture has no
+        // matching domain — verifyAuthorization falls through to validate(),
+        // which is a no-op on TestAuthorization. Sufficient to exercise the
+        // "authenticated access accepts a token" path without crypto setup.
         OperationRequest request = tenantScriptRequest(op, "acme");
-        request.arg("authorization", new Object()); // non-null authorization
+        request.arg("authorization", new TestAuthorization());
         User user = new User();
         user.setName("test");
         request.arg("entity", user);
