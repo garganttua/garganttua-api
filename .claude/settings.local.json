@@ -78,7 +78,9 @@
       "Bash(ls garganttua-api-core/src/main/java/com/garganttua/api/core/expression/)",
       "Bash(ls garganttua-api-core/src/main/java/com/garganttua/api/core/builder/)",
       "Bash(awk '{print $NF}')",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(rm garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/IKey.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/IKeyAlgorithm.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/IKeyRealm.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/KeyAlgorithm.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/KeyType.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/KeyRealmType.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/SignatureAlgorithm.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/EncryptionMode.java garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key/EncryptionPaddingMode.java)",
+      "Bash(rmdir garganttua-api-commons/src/main/java/com/garganttua/api/commons/security/key)"
     ]
   }
 }
