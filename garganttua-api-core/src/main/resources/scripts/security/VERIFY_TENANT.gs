@@ -26,6 +26,6 @@ _isOwner <- equals(@access, "owner")
 _needsTenantId <- if(@_isTenant, true, @_isOwner)
 _hasTenantId <- if(@_needsTenantId, callerHasTenantId(@caller), true)
 requirePresent(if(@_hasTenantId, true))
-! -> 403
+! => recordCaughtException(@0, @exception) -> 403
 
 output <- 0 -> 0

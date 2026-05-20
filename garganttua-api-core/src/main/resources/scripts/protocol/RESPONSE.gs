@@ -20,9 +20,9 @@ rawRequest <- :arg(@0, "rawRequest")
 status     <- :arg(@0, "exitCode")
 
 protocol <- resolveProtocol(@1, @rawRequest)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 response <- buildProtocolResponse(@protocol, @rawRequest, @2, @status)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 output <- @response -> 0

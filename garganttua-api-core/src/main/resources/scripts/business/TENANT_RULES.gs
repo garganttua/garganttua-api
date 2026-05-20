@@ -17,16 +17,16 @@ caller <- :arg(@0, "caller")
 operation <- :arg(@0, "operation")
 
 requirePresent(@caller)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 requirePresent(@operation)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Check if tenantId is mandatory for this operation
 tenantMandatory <- isTenantIdMandatory(@operation, @2)
 
 // If mandatory, validate tenantId is present
 if(equals(true, @tenantMandatory), requireTenantId(@caller))
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 output <- 0 -> 0

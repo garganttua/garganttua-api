@@ -16,25 +16,25 @@ lookupType <- :arg(@0, "type")
 lookupId <- :arg(@0, "identifier")
 
 requirePresent(@caller)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 filter <- buildGetOneFilter(@caller, @lookupType, @lookupId, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Read entities matching the filter
 entities <- getEntities(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"))
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Extract single entity from results
 entity <- first(@entities)
-! -> 404
+! => recordCaughtException(@0, @exception) -> 404
 
 // Inject dependencies and run lifecycle hooks (reuse list-based expressions)
 entities <- asList(@entity)
 entities <- doInjection(@0, @entities)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 entities <- runAfterGet(@entities, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 entity <- first(@entities)
 
 output <- @entity -> 0

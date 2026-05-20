@@ -24,56 +24,56 @@
 // Extract the authorization entity carried in the body
 entity <- :arg(@0, "entity")
 requirePresent(@entity)
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 entity <- optionalGet(@entity)
 
 // Reject early when the linked authorization is not refreshable at all
 requirePresent(if(isAuthorizationRefreshable(@2), 1))
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 
 // Verify the cryptographic signature when applicable. A tampered or
 // unsignable-but-misconfigured token must surface as 401, not 500.
 // @0 (operationRequest) is forwarded so persisted-mode key lookup can
 // scope by caller — anonymous on refresh, by design.
 _sigOk <- verifyIfSignable(@entity, @2, @0)
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 requirePresent(if(@_sigOk, 1))
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 
 // Refresh-revoked / refresh-expired guards
 requirePresent(if(refreshNotRevoked(@entity, @2), 1))
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 requirePresent(if(refreshNotExpired(@entity, @2), 1))
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 
 // Resolve the principal from the authorization's ownerId (lookup via the
 // authenticator domain's repository).
 _principal <- findPrincipalByOwnerUuid(@entity, @2, @1)
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 
 // Build a synthetic IAuthentication carrying the resolved principal +
 // authorities/type from the existing authorization.
 _authResult <- synthAuthFromPrincipal(@_principal, @entity, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Mint a fresh authorization entity (re-uses the same code path as
 // CREATE_AUTHORIZATION on the login side).
 output <- createAuthorizationEntity2(@_authResult, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Sign the fresh entity if signable.
 signIfSignable(@output, @2, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Encode the freshly signed authorization to its transport form, if a method
 // is declared. Symmetric to CREATE_AUTHORIZATION.
 _encoded <- encodeIfPossible(@output, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 setRequestArg(@0, "encodedAuthorization", @_encoded)
 
 // Persist the freshly-minted authorization when storable.
 persistIfStorable(@output, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Propagate the principal to downstream stages.
 setRequestArg(@0, "principal", @_principal)

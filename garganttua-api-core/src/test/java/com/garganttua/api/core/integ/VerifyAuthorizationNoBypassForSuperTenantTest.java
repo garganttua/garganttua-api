@@ -1,7 +1,9 @@
 package com.garganttua.api.core.integ;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -137,6 +139,55 @@ class VerifyAuthorizationNoBypassForSuperTenantTest extends AbstractCrudIntegrat
             // the authorization stage and actually executed the readAll.
             assertNotEquals(OperationResponseCode.UNAUTHORIZED, response.getResponseCode(),
                     "Mode B should bypass the rawAuthorization decode, not be rejected for missing it");
+        }
+
+        @Test
+        @DisplayName("Failure response carries the exact exception thrown by validate() — not the synthesised generic fallback")
+        void failureCarriesExactExceptionMessage() throws ApiException {
+            IApi api = buildSecuredDomain(Access.authenticated);
+            IDomain<?> domain = api.getDomain("users").orElseThrow();
+
+            // A bespoke ApiException subclass so we can assert both wording and
+            // type travelled through the script's catch handler intact —
+            // recordCaughtException stashes the throwable on the request and
+            // Domain.doInvoke surfaces it instead of synthesising a generic
+            // "Authorization required to perform 'readAll' on 'users'".
+            class TokenRevokedException extends com.garganttua.api.commons.ApiException {
+                TokenRevokedException(String msg) { super(msg); }
+            }
+            IAuthorization rejecting = new IAuthorization() {
+                @Override public void revoke() {}
+                @Override public void isRevoked() {}
+                @Override public void isExpired() {}
+                @Override public void validateAgainst(IAuthorization ref, Object... args) {}
+                @Override public void validate(Object... args) {
+                    throw new TokenRevokedException("session 0xabc was revoked at 2026-05-19T18:43:12Z");
+                }
+            };
+
+            IOperationResponse response = RequestBuilder.builder(domain)
+                    .caller(Caller.createTenantCaller("acme"))
+                    .param(IOperationRequest.AUTHORIZATION.name(), rejecting)
+                    .readAll()
+                    .build()
+                    .execute();
+
+            assertEquals(OperationResponseCode.UNAUTHORIZED, response.getResponseCode(),
+                    "validate() rejection must surface as 401");
+
+            // The response body carries the exact exception — same wording,
+            // same type — that validate() threw, not a generic "Authorization
+            // required" replacement.
+            Object body = response.getResponse();
+            assertNotNull(body, "failure response body must carry the cause");
+            assertInstanceOf(TokenRevokedException.class, body,
+                    "expected the original TokenRevokedException, got "
+                            + (body == null ? "null" : body.getClass().getName())
+                            + ": " + body);
+            Throwable cause = (Throwable) body;
+            assertEquals("session 0xabc was revoked at 2026-05-19T18:43:12Z",
+                    cause.getMessage(),
+                    "exact validate() message must reach the OperationResponse");
         }
 
         @Test

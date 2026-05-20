@@ -29,13 +29,13 @@ rawBody <- :arg(@0, "rawBody")
 contentType <- :arg(@0, "contentType")
 
 serializer <- resolveSerializer(@1, @contentType)
-! -> 415
+! => recordCaughtException(@0, @exception) -> 415
 
 targetType <- resolveBodyType(@operation, @1)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 body <- deserialize(@serializer, @rawBody, @targetType)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Write deserialized body back into request for downstream CRUD stages
 setRequestArg(@0, "body", @body)

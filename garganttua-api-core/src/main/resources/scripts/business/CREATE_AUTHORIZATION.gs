@@ -22,7 +22,7 @@ requirePresent(if(notNull(@3), 1))
 
 // Create authorization entity from the auth result and domain context
 output <- createAuthorizationEntity2(@3, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // If the authorization is signable, sign it now. The user must either wire an
 // ISupplierBuilder<IKeyRealm> via .key(supplier) or declare a @Key entity
@@ -32,7 +32,7 @@ output <- createAuthorizationEntity2(@3, @2)
 // persisted-mode lookup can scope the realm by caller. No-op when not
 // signable.
 signIfSignable(@output, @2, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // If the authorization declares a transport encode method (.refreshable().encode(...)),
 // invoke it post-sign to produce the wire form (e.g. JWT compact serialization).
@@ -40,13 +40,13 @@ signIfSignable(@output, @2, @0)
 // downstream stages (RESPONSE.gs, custom protocols). No-op when no encode method
 // is configured.
 _encoded <- encodeIfPossible(@output, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 setRequestArg(@0, "encodedAuthorization", @_encoded)
 
 // Persist the freshly-issued authorization to the linked authorization domain
 // when storable (i.e. .revokable(...) was called or .storable(true)). Lets the
 // token be looked up + revoked later. No-op for stateless tokens.
 persistIfStorable(@output, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 output <- @output -> 0

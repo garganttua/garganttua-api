@@ -29,6 +29,6 @@ requirePresent(if(@_requires, 1))
 _authority <- operationAuthorityName(@operation)
 _hasAuth <- callerHasAuthority(@caller, @_authority)
 requirePresent(if(@_hasAuth, true))
-! -> 403
+! => recordCaughtException(@0, @exception) -> 403
 
 output <- 0 -> 0

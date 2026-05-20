@@ -464,6 +464,24 @@ public class SecurityExpressions {
 		return true;
 	}
 
+	/**
+	 * Well-known request arg under which {@link #recordCaughtException} stashes
+	 * the exception object. Domain.doInvoke reads it back to surface the exact
+	 * type + message on OperationResponse failures rather than the generic
+	 * fallback wording.
+	 */
+	public static final String LAST_EXCEPTION_ARG = "_lastException";
+
+	@Expression(name = "recordCaughtException",
+			description = "Catch-handler companion for the script's `! => recordCaughtException(@0, @exception) -> CODE` pattern. Stores the throwable bound to `@exception` on the operation request under the well-known '_lastException' key, so Domain.doInvoke can surface the exact exception type + message on the OperationResponse instead of falling back to a synthesised wording. Returns true on success; never throws (a broken catch handler must not turn a captured error into a SERVER_ERROR).")
+	public static boolean recordCaughtException(@Nullable Object request, @Nullable Object exception) {
+		if (!(request instanceof IOperationRequest opRequest)) return false;
+		Object unwrapped = unwrapOptional(exception);
+		if (!(unwrapped instanceof Throwable t)) return false;
+		opRequest.arg(LAST_EXCEPTION_ARG, t);
+		return true;
+	}
+
 	@Expression(name = "isAuthorizationStorable", description = "Returns true if the authorization definition has storable=true")
 	public static boolean isAuthorizationStorable(@Nullable Object authorizationDefObj) {
 		if (authorizationDefObj instanceof IDomainAuthorizationDefinition def) {

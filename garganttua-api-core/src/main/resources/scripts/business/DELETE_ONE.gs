@@ -15,33 +15,33 @@ lookupType <- :arg(@0, "type")
 lookupId <- :arg(@0, "identifier")
 
 requirePresent(@caller)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Build filter for single entity lookup (uuid or id)
 filter <- buildGetOneFilter(@caller, @lookupType, @lookupId, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Find the entity
 entities <- getEntities(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"))
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entity <- first(@entities)
-! -> 404
+! => recordCaughtException(@0, @exception) -> 404
 
 // Run @BeforeDelete lifecycle hooks
 entities <- asList(@entity)
 entities <- runBeforeDelete(@entities, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Delete entity
 entity <- first(@entities)
 deleteEntity(@1, @entity)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Run @AfterDelete lifecycle hooks
 entities <- asList(@entity)
 entities <- runAfterDelete(@entities, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entity <- first(@entities)
 output <- @entity -> 0

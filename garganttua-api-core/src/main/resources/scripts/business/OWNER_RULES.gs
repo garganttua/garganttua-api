@@ -16,16 +16,16 @@ caller <- :arg(@0, "caller")
 operation <- :arg(@0, "operation")
 
 requirePresent(@caller)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 requirePresent(@operation)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Check if ownerId is mandatory for this operation
 ownerMandatory <- isOwnerIdMandatory(@operation, @2)
 
 // If mandatory, validate ownerId is present
 if(equals(true, @ownerMandatory), requireOwnerId(@caller))
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 output <- 0 -> 0

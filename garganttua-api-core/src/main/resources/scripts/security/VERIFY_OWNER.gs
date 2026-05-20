@@ -24,6 +24,6 @@ _isOwner <- equals(@access, "owner")
 // callerHasOwnerId is safe (returns false instead of throwing).
 _hasOwnerId <- if(@_isOwner, callerHasOwnerId(@caller), true)
 requirePresent(if(@_hasOwnerId, true))
-! -> 403
+! => recordCaughtException(@0, @exception) -> 403
 
 output <- 0 -> 0

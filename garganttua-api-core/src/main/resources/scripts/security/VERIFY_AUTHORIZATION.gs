@@ -47,9 +47,12 @@ requirePresent(if(equals(@_isAnonymous, false), 1))
 // stashes the protocol on the request for the verify step to find.
 // AuthorizationFormatException → 400 (malformed header).
 // Other ApiException → 401 (missing token, unknown scheme, decode failure).
+// `! => recordCaughtException(@0, @exception) -> CODE` captures the original
+// throwable on the request so Domain.doInvoke can surface its exact type +
+// message on the OperationResponse instead of a generic fallback wording.
 authz <- decodeRequestAuthorization(@0, @3)
-! com.garganttua.api.commons.security.authorization.AuthorizationFormatException.Class -> 400
-! -> 401
+! com.garganttua.api.commons.security.authorization.AuthorizationFormatException.Class => recordCaughtException(@0, @exception) -> 400
+! => recordCaughtException(@0, @exception) -> 401
 
 setRequestArg(@0, "authorization", @authz)
 
@@ -57,7 +60,7 @@ setRequestArg(@0, "authorization", @authz)
 // invocation + intrinsic validate(), tolerating Mode B without a registered
 // target domain.
 _authResult <- verifyAuthorization(@3, @authz, @0)
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 
 setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
 

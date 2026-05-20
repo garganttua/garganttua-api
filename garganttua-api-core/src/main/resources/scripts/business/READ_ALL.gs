@@ -19,36 +19,36 @@ outputMode <- :arg(@0, "mode")
 domainName <- :arg(@0, "domainName")
 
 requirePresent(@caller)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Build filter from caller
 filter <- buildFilter(@caller, @filter, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Read all entities from the repository
 entities <- getEntities(@1, @pageable, @filter, @sort)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entities <- if(equals(@outputMode, "full"), (
     entities <- doInjection(@0, @entities)
     entities <- runAfterGet(@entities, @0)
 ), @entities)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entities <- if(equals(@outputMode, "uuid"), (
     entities <- reduceToUuids(@entities, @2)
 ), @entities)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entities <- if(equals(@outputMode, "id"), (
     entities <- reduceToIds(@entities, @2)
 ), @entities)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entities <- if(notNull(@pageable), (
     totalCount <- getCount(@1, @filter)
     entities <- encapsulateInPage(@entities, @totalCount)
 ), @entities)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 output <- @entities -> 0

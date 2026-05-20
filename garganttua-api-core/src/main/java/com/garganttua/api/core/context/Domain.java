@@ -542,15 +542,23 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                 // Non-zero code with NO exception attached — the `! -> CODE`
                 // pattern in stage scripts catches the functional exception
                 // and resets the script's lastException, so it never reaches
-                // WorkflowResult. We recover the original exception by
-                // *replaying* the script-side check in Java when we can
-                // identify which stage failed (e.g. owner_rules running
-                // requireOwnerId). That gives the caller the exact same
-                // ApiException — same wording, same type — that the script
-                // raised. Falls back to a synthesized message-only
-                // ApiException for stages we cannot replay.
-                Throwable functional = recoverFunctionalException(
-                        result, request, opLabel, domainName);
+                // WorkflowResult. Recovery order:
+                //   1. Scripts that use `! => recordCaughtException(@0, @exception) -> CODE`
+                //      have stashed the original Throwable on the request under
+                //      LAST_EXCEPTION_ARG; surface it verbatim (same class,
+                //      same message).
+                //   2. Otherwise replay the script-side check Java-side when
+                //      the failing stage is identifiable (e.g. owner_rules
+                //      running requireOwnerId).
+                //   3. Otherwise synthesise a message-only ApiException from
+                //      stage + code.
+                Throwable recorded = (Throwable) request
+                        .arg(com.garganttua.api.core.expression.SecurityExpressions.LAST_EXCEPTION_ARG)
+                        .filter(Throwable.class::isInstance)
+                        .orElse(null);
+                Throwable functional = recorded != null
+                        ? recorded
+                        : recoverFunctionalException(result, request, opLabel, domainName);
                 log.warn("Workflow returned code {} for domain {} op {}: {}",
                         result.code(), domainName, opLabel, functional.getMessage());
                 return mapWorkflowCode(result.code(), functional);

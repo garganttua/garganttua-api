@@ -16,45 +16,45 @@ lookupType <- :arg(@0, "type")
 lookupId <- :arg(@0, "identifier")
 
 requirePresent(@caller)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 requirePresent(@entity)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 entity <- optionalGet(@entity)
 
 // Find existing entity by uuid/id
 filter <- buildGetOneFilter(@caller, @lookupType, @lookupId, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 entities <- getEntities(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"))
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 storedEntity <- first(@entities)
-! -> 404
+! => recordCaughtException(@0, @exception) -> 404
 
 // Apply authorized field updates
 storedEntity <- updateEntity(@caller, @storedEntity, @entity, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Validate mandatory fields on the merged entity
 validateMandatories(@storedEntity, @2)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Check unicity constraints on the merged entity
 validateUnicity(@storedEntity, @1, @2)
-! -> 409
+! => recordCaughtException(@0, @exception) -> 409
 
 // Run @BeforeUpdate lifecycle hooks
 storedEntity <- runBeforeUpdate(@storedEntity, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Persist
 saveEntity(@1, @storedEntity)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 // Run @AfterUpdate lifecycle hooks
 storedEntity <- runAfterUpdate(@storedEntity, @0)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 output <- @storedEntity -> 0

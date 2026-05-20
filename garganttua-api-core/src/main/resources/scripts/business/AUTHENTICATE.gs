@@ -23,7 +23,7 @@
 entity <- :arg(@0, "entity")
 
 requirePresent(@entity)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 entity <- optionalGet(@entity)
 
@@ -34,7 +34,7 @@ authContext <- authenticatorContext(@2)
 scope <- authenticatorScope(@authContext)
 _hasTenantId <- if(equals(@scope, "tenant"), authRequestHasTenantId(@entity), true)
 requirePresent(if(@_hasTenantId, true))
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Propagate tenantId from the authentication request for downstream stages
 setRequestArg(@0, "tenantId", authRequestTenantId(@entity))
@@ -45,7 +45,7 @@ prepareAuthContext(@0, @2)
 
 // Attempt authentication
 _authResult <- tryAuthenticate(@authContext)
-! -> 401
+! => recordCaughtException(@0, @exception) -> 401
 
 // Store principal in the request for downstream stages
 setRequestArg(@0, "principal", authResultPrincipal(@_authResult))

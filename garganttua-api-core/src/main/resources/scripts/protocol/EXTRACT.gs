@@ -20,31 +20,31 @@
 rawRequest  <- :arg(@0, "rawRequest")
 
 protocol    <- resolveProtocol(@1, @rawRequest)
-! -> 415
+! => recordCaughtException(@0, @exception) -> 415
 
 rawBody     <- extractRawBody(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 contentType <- extractContentType(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 accept      <- extractAccept(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 path        <- extractPath(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 method      <- extractMethod(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 auth        <- extractAuthorization(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 params      <- extractQueryParameters(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 caller      <- extractCaller(@protocol, @rawRequest)
-! -> 400
+! => recordCaughtException(@0, @exception) -> 400
 
 // Write extracted fields into the operation request for downstream stages
 setRequestArg(@0, "rawBody", @rawBody)

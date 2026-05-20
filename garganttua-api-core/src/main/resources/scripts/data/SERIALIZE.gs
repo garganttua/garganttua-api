@@ -19,9 +19,9 @@
 accept <- :arg(@0, "accept")
 
 serializer <- negotiateSerializer(@1, @accept)
-! -> 406
+! => recordCaughtException(@0, @exception) -> 406
 
 rawBody <- serialize(@serializer, @2)
-! -> 500
+! => recordCaughtException(@0, @exception) -> 500
 
 output <- @rawBody -> 0
