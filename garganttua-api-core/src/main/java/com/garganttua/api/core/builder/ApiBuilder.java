@@ -80,6 +80,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> protocolBuilders = new CopyOnWriteArrayList<>();
 	private final List<IAuthorizationProtocol> authorizationProtocols = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> authorizationProtocolBuilders = new CopyOnWriteArrayList<>();
+	private final List<com.garganttua.api.commons.observability.IApiObserver> observers = new CopyOnWriteArrayList<>();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
@@ -192,6 +193,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	public IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
 		Objects.requireNonNull(bean, "Authorization protocol supplier builder cannot be null");
 		this.authorizationProtocolBuilders.add(bean);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException {
+		Objects.requireNonNull(observer, "Observer cannot be null");
+		this.observers.add(observer);
 		return this;
 	}
 
@@ -421,7 +429,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
 					startupBinders, builtSerializers, builtProtocols, builtAuthzProtocols,
-					authoritiesEndpoint);
+					authoritiesEndpoint, new ArrayList<>(this.observers));
 
 			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");

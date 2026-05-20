@@ -46,13 +46,15 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     private final List<IProtocol<?, ?>> protocols;
     private final List<IAuthorizationProtocol> authorizationProtocols;
     private final com.garganttua.api.commons.context.IAuthoritiesEndpoint authoritiesEndpoint;
+    private final List<com.garganttua.api.commons.observability.IApiObserver> observers;
 
     public Api(IInjectionContext injectionContext, Map<String, IDomain<?>> domainContexts,
             String superTenantId, boolean superTenantAutoCreate, boolean multiTenant,
             List<IMethodBinder<Void>> startupBinders, List<ISerializer> serializers,
             List<IProtocol<?, ?>> protocols,
             List<IAuthorizationProtocol> authorizationProtocols,
-            com.garganttua.api.commons.context.IAuthoritiesEndpoint authoritiesEndpoint) {
+            com.garganttua.api.commons.context.IAuthoritiesEndpoint authoritiesEndpoint,
+            List<com.garganttua.api.commons.observability.IApiObserver> observers) {
         this.injectionContext = Objects.requireNonNull(injectionContext, "Injection context cannot be null");
         this.domainContexts = Collections.unmodifiableMap(new HashMap<>(
                 Objects.requireNonNull(domainContexts, "Domain contexts cannot be null")));
@@ -71,6 +73,23 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
         // never called, and getAuthoritiesEndpoint() must propagate that null
         // to transport modules so they skip the route.
         this.authoritiesEndpoint = authoritiesEndpoint;
+        this.observers = Collections.unmodifiableList(new ArrayList<>(
+                observers != null ? observers : List.of()));
+    }
+
+    @Override
+    public List<com.garganttua.api.commons.observability.IApiObserver> getObservers() {
+        return this.observers;
+    }
+
+    @Override
+    public java.util.Map<String, com.garganttua.api.commons.observability.OperationStats> getOperationStats() {
+        for (com.garganttua.api.commons.observability.IApiObserver obs : this.observers) {
+            if (obs instanceof com.garganttua.api.core.observability.StatsObserver stats) {
+                return stats.snapshot();
+            }
+        }
+        return java.util.Map.of();
     }
 
     @Override

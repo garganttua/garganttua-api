@@ -41,6 +41,22 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
 	/**
+	 * Registers an observer that the framework calls at operation
+	 * boundaries on every {@code Domain.invoke} (start + end). Multiple
+	 * calls add multiple observers — the framework fires them in
+	 * registration order.
+	 *
+	 * <p>Opt-in: when no observer is registered, the framework skips
+	 * event construction entirely — zero overhead on the hot path
+	 * beyond an {@code isEmpty()} check.
+	 *
+	 * <p>Observer exceptions are caught and logged by the framework;
+	 * a broken observer must never turn a successful business
+	 * operation into a 500.
+	 */
+	IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException;
+
+	/**
 	 * Opt-in: exposes the framework-provided endpoint that lists every
 	 * authority enforced anywhere on the API (one entry per distinct
 	 * {@link com.garganttua.api.commons.operation.OperationDefinition#effectiveAuthorityName()}

@@ -375,9 +375,98 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     @Override
     public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) {
         ensureStarted();
+        // Observability: skip every allocation when no observer is wired —
+        // the typical case for production traffic where the user opted out.
+        java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers = activeObservers();
         long startNanos = System.nanoTime();
-        OperationResponse response = doInvoke(request, options);
-        return response.withProcessingTime(java.time.Duration.ofNanos(System.nanoTime() - startNanos));
+        if (observers.isEmpty()) {
+            OperationResponse response = doInvoke(request, options);
+            return response.withProcessingTime(java.time.Duration.ofNanos(System.nanoTime() - startNanos));
+        }
+        return invokeWithObservability(request, options, observers, startNanos);
+    }
+
+    @SuppressWarnings("unchecked")
+    private IOperationResponse invokeWithObservability(IOperationRequest request,
+            WorkflowExecutionOptions options,
+            java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers,
+            long startNanos) {
+        // Pin the executionUuid before doInvoke so both events carry it; the
+        // tweak in doInvoke preserves a pre-set EXECUTION_UUID rather than
+        // overwriting it.
+        java.util.UUID executionUuid = UuidCreator.getTimeOrderedEpoch();
+        request.arg(IOperationRequest.EXECUTION_UUID, executionUuid);
+
+        java.time.Instant startedAt = java.time.Instant.now();
+        com.garganttua.api.commons.operation.OperationDefinition operation =
+                ((java.util.Optional<com.garganttua.api.commons.operation.OperationDefinition>)
+                        request.arg(IOperationRequest.OPERATION)).orElse(null);
+        ICaller startCaller = request.caller();
+
+        fireOnStart(observers, new com.garganttua.api.commons.observability.OperationEvent(
+                executionUuid,
+                this.domainDefinition.domainName(),
+                operation, startCaller,
+                startedAt, null, null, null, null));
+
+        OperationResponse response = null;
+        Throwable failure = null;
+        try {
+            response = doInvoke(request, options);
+            return response.withProcessingTime(java.time.Duration.ofNanos(System.nanoTime() - startNanos));
+        } catch (RuntimeException e) {
+            failure = e;
+            throw e;
+        } finally {
+            java.time.Duration duration = java.time.Duration.ofNanos(System.nanoTime() - startNanos);
+            java.time.Instant endedAt = startedAt.plus(duration);
+            // Re-read caller in case doInvoke materialized an anonymous one.
+            ICaller endCaller = request.caller();
+            com.garganttua.api.commons.service.OperationResponseCode code =
+                    response != null ? response.getResponseCode() : null;
+            fireOnEnd(observers, new com.garganttua.api.commons.observability.OperationEvent(
+                    executionUuid,
+                    this.domainDefinition.domainName(),
+                    operation,
+                    endCaller != null ? endCaller : startCaller,
+                    startedAt,
+                    endedAt,
+                    duration,
+                    code,
+                    failure));
+        }
+    }
+
+    private java.util.List<com.garganttua.api.commons.observability.IApiObserver> activeObservers() {
+        if (this.apiContext == null) return java.util.List.of();
+        java.util.List<com.garganttua.api.commons.observability.IApiObserver> obs = this.apiContext.getObservers();
+        return obs == null ? java.util.List.of() : obs;
+    }
+
+    private void fireOnStart(
+            java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers,
+            com.garganttua.api.commons.observability.OperationEvent event) {
+        for (com.garganttua.api.commons.observability.IApiObserver o : observers) {
+            try {
+                o.onOperationStart(event);
+            } catch (RuntimeException e) {
+                log.warn("Observer {} threw on operation start — ignored to protect the pipeline",
+                        o.getClass().getName(), e);
+            }
+        }
+    }
+
+    private void fireOnEnd(
+            java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers,
+            com.garganttua.api.commons.observability.OperationEvent event) {
+        for (com.garganttua.api.commons.observability.IApiObserver o : observers) {
+            try {
+                o.onOperationEnd(event);
+            } catch (RuntimeException e) {
+                log.warn("Observer {} threw on operation end — ignored to protect the pipeline",
+                        o.getClass().getName(), e);
+            }
+        }
     }
 
     private OperationResponse doInvoke(IOperationRequest request, WorkflowExecutionOptions options) {
@@ -387,7 +476,15 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         }
 
         try {
-            request.arg(IOperationRequest.EXECUTION_UUID, UuidCreator.getTimeOrderedEpoch());
+            // Only generate a UUID when the caller (or the observability path
+            // above) didn't already set one — keeps the start/end events
+            // correlatable and lets a transport set a request-id of its own.
+            @SuppressWarnings("unchecked")
+            java.util.Optional<java.util.UUID> existing =
+                    (java.util.Optional<java.util.UUID>) request.arg(IOperationRequest.EXECUTION_UUID);
+            if (existing.isEmpty()) {
+                request.arg(IOperationRequest.EXECUTION_UUID, UuidCreator.getTimeOrderedEpoch());
+            }
             request.arg(IOperationRequest.API_CONTEXT, this.apiContext);
             request.arg(IOperationRequest.DOMAIN_CONTEXT, this);
             request.arg(IOperationRequest.REPOSITORY, this.repository);
