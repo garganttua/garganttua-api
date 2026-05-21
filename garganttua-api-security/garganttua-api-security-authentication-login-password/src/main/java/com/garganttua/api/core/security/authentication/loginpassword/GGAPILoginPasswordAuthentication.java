@@ -6,8 +6,11 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import com.garganttua.api.core.caller.GGAPICaller;
+import com.garganttua.api.core.entity.tools.GGAPIEntityHelper;
 import com.garganttua.api.core.filter.GGAPILiteral;
 import com.garganttua.api.core.security.authentication.AbstractGGAPIAuthentication;
+import com.garganttua.api.core.security.authentication.pin.GGAPIPinEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.entity.tools.GGAPIEntityAuthenticatorHelper;
 import com.garganttua.api.core.security.exceptions.GGAPISecurityException;
 import com.garganttua.api.spec.GGAPIException;
@@ -48,6 +51,21 @@ public class GGAPILoginPasswordAuthentication extends AbstractGGAPIAuthenticatio
 		}
 		String encodedPassword =  GGAPILoginPasswordEntityAuthenticatorHelper.getPassword(this.principal);
 		this.authenticated = this.encoder.matches((String) this.credential, encodedPassword);
+
+		// Sync the shared lock counter with the PIN module when the authenticator
+		// also carries a PIN error counter — a successful password login must reset
+		// the counter, otherwise mixing PIN failures with password successes ends
+		// up locking the account. No-op for password-only authenticators.
+		try {
+			if( !this.authenticated ) {
+				GGAPIPinEntityAuthenticatorHelper.incrementPinErrorNumber(this.principal);
+			} else {
+				GGAPIPinEntityAuthenticatorHelper.resetPinErrorNumber(this.principal);
+			}
+			GGAPIEntityHelper.save(this.principal, GGAPICaller.createTenantCaller(this.tenantId), new HashMap<String, String>());
+		} catch (GGAPIException e) {
+			log.atTrace().log("Authenticator is not PIN-equipped, skipping error counter sync", e);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
