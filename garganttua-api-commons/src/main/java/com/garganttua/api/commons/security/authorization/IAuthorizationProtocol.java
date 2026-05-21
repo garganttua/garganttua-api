@@ -9,17 +9,21 @@ import com.garganttua.core.reflection.IClass;
  * <p>
  * An {@code IAuthorizationProtocol} handles exactly one authentication scheme
  * (as defined by RFC 7235 § 2.1 — {@code Bearer}, {@code Basic}, {@code ApiKey},
- * or custom). It converts the raw header value into a typed {@link IAuthorization}
- * that the rest of the pipeline can validate and reason about.
+ * or custom). It converts the raw header value into the user-defined POJO whose
+ * class is the protocol's {@link #targetDomain()} entity. No interface contract
+ * is imposed on the returned entity: signature, expiration, and revocation are
+ * derived from the DSL field declarations on
+ * {@code IDomainAuthorizationDefinition} (`.signable().signature(...)`,
+ * `.expirable(...)`, `.revokable(...)`).
  * <p>
  * The framework discriminates protocols by comparing {@link #scheme()} with the
  * first whitespace-delimited token of the raw {@code Authorization} header,
  * case-insensitively. Registration order acts as priority: register more specific
  * protocols before generic ones.
  * <p>
- * Invoked from {@code VERIFY_AUTHORIZATION.gs} only when the target operation requires
- * authorization and no {@code IAuthorization} has been pre-populated on the
- * request (Mode B pass-through). Anonymous operations never hit a protocol.
+ * Invoked from {@code VERIFY_AUTHORIZATION.gs} only when the target operation
+ * requires authorization and no authorization entity has been pre-populated on
+ * the request (Mode B pass-through). Anonymous operations never hit a protocol.
  * <p>
  * Implementations are registered either:
  * <ul>
@@ -62,8 +66,9 @@ public interface IAuthorizationProtocol {
 	 * @param rawAuthorizationValue the header value after the scheme token
 	 * @param api                   the enclosing API context (access to registered
 	 *                              beans, decoders, domains, etc.)
-	 * @return a typed {@link IAuthorization} representing the decoded token
+	 * @return the decoded authorization entity — same runtime class as
+	 *         {@link #targetDomain()}, no interface contract required
 	 * @throws ApiException if the value cannot be decoded into a valid authorization
 	 */
-	IAuthorization decode(String rawAuthorizationValue, IApi api) throws ApiException;
+	Object decode(String rawAuthorizationValue, IApi api) throws ApiException;
 }

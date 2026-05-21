@@ -23,7 +23,6 @@ import com.garganttua.api.commons.Pluralizer;
 import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authentication.IAuthentication;
 import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
@@ -104,7 +103,7 @@ public class SecurityExpressions {
 	@Expression(name = "requireAuthentication", description = "Checks that the caller has been authenticated (authorization present in request)")
 	public static boolean requireAuthentication(@Nullable Object request) {
 		IOperationRequest opRequest = (IOperationRequest) request;
-		Optional<IAuthorization> authorization = (Optional<IAuthorization>) opRequest.arg(IOperationRequest.AUTHORIZATION);
+		Optional<Object> authorization = opRequest.arg(IOperationRequest.AUTHORIZATION);
 		if (authorization.isEmpty()) {
 			throw new ApiException("Authentication required but no authorization token provided");
 		}
@@ -1214,9 +1213,9 @@ public class SecurityExpressions {
 	}
 
 	@Expression(name = "buildAuthRequestFromAuthorization",
-			description = "Wraps a decoded IAuthorization into an IAuthenticationRequest (credentials slot) so it can be forwarded to the authenticate pipeline.")
+			description = "Wraps a decoded authorization entity into an IAuthenticationRequest (credentials slot) so it can be forwarded to the authenticate pipeline. The credentials slot is an Object — strategies pattern-match on runtime type to decide whether they handle this shape.")
 	public static IAuthenticationRequest buildAuthRequestFromAuthorization(@Nullable Object authorization, @Nullable Object tenantId) {
-		IAuthorization authz = (IAuthorization) unwrapOptional(authorization);
+		Object authz = unwrapOptional(authorization);
 		if (authz == null) {
 			throw new ApiException("Authorization is null — cannot build authentication request");
 		}
@@ -1226,17 +1225,17 @@ public class SecurityExpressions {
 	}
 
 	@Expression(name = "verifyAuthorization",
-			description = "Single server-side verification step used by VERIFY_AUTHORIZATION.gs. Resolves the authenticator domain (Mode A: from the protocol stashed on the request; Mode B: from the authz's runtime class). Verifies the signature when the resolved domain marks the authorization signable. Then either invokes the authenticate pipeline (when an authenticator is wired) or calls IAuthorization.validate() (intrinsic checks: expiration, revocation, custom rules). Mode B may not match any registered domain — that's allowed, and we fall through to authz.validate() without a target. Throws ApiException (→ 401) on signature mismatch or validation rejection.")
+			description = "Single server-side verification step used by VERIFY_AUTHORIZATION.gs. Resolves the authenticator domain (Mode A: from the protocol stashed on the request; Mode B: from the authz entity's runtime class). When the resolved domain has an authorization definition: verifies the signature (when signable), then either invokes the authenticate pipeline (when an authenticator is wired) or runs field-based validation from the DSL (`revoked` + `expiration` ObjectAddresses on IDomainAuthorizationDefinition). When Mode B has no matching registered domain (untracked token from a trusted in-process caller) the framework has no DSL to enforce against and accepts the pre-decoded entity as-is. Throws ApiException (→ 401) on signature mismatch or validation rejection.")
 	public static IAuthentication verifyAuthorization(@Nullable Object apiContext,
 			@Nullable Object authorization, @Nullable Object operationRequest) {
 		IApi api = (IApi) unwrapOptional(apiContext);
-		IAuthorization authz = (IAuthorization) unwrapOptional(authorization);
+		Object authz = unwrapOptional(authorization);
 		if (api == null || authz == null) {
 			throw new ApiException("verifyAuthorization: apiContext and authorization are required");
 		}
 
 		// Resolve the target authenticator domain. Null is tolerated: that's the
-		// Mode B path where the caller's IAuthorization instance has no matching
+		// Mode B path where the caller's authorization entity has no matching
 		// registered domain (e.g. a stateless self-validating token).
 		IDomain<?> targetDomain = resolveOptionalAuthenticatorDomain(api, operationRequest, authz);
 
@@ -1257,25 +1256,55 @@ public class SecurityExpressions {
 				IAuthenticationRequest authRequest = buildAuthRequestFromAuthorization(authz, tenantId);
 				return invokeAuthenticate(api, targetDomain, authRequest);
 			}
+
+			// Target domain resolved but no authenticator — run DSL-driven
+			// intrinsic checks (revoked flag, expiration timestamp) derived
+			// from the field declarations on IDomainAuthorizationDefinition.
+			// Custom validation rules belong on a future lifecycle hook on
+			// the authz domain.
+			validateAuthorizationFromDefinition(authz, targetDomain);
 		}
 
-		// No target domain or target without authenticator — fall back to the
-		// authorization's intrinsic validate(). Signed-but-untracked tokens still
-		// have their signature checked above (when a target resolved); fully
-		// untracked Mode B authorizations rely on validate() alone, which is what
-		// the IAuthorization contract is for.
-		try {
-			authz.validate();
-		} catch (ApiException ae) {
-			throw ae;
-		} catch (RuntimeException re) {
-			throw new ApiException("Authorization validation failed: " + re.getMessage(), re);
-		}
+		// No target domain (Mode B untracked token): trust the in-process
+		// caller. Signature was already checked above when a target resolved;
+		// without one, there's no DSL to derive intrinsic checks from.
 		return new com.garganttua.api.commons.security.authentication.Authentication(
 				true, authz, null, authz, java.util.List.of(), true, true, true, true);
 	}
 
-	private static IDomain<?> resolveOptionalAuthenticatorDomain(IApi api, Object operationRequest, IAuthorization authz) {
+	/**
+	 * DSL-driven intrinsic validation. Reads the {@code revoked} and
+	 * {@code expiration} ObjectAddresses from
+	 * {@link IDomainAuthorizationDefinition} and verifies the entity's fields
+	 * against them. Either check raises a parlant {@link ApiException} so the
+	 * `! => recordCaughtException(@0, @exception) -> 401` pattern surfaces the
+	 * exact message on the OperationResponse.
+	 */
+	static void validateAuthorizationFromDefinition(Object authzEntity, IDomain<?> targetDomain) {
+		Object defObj = authorizationDefinition(targetDomain);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
+			return;
+		}
+		IReflection reflection = DefaultMapper.reflection();
+
+		ObjectAddress revokedAddr = authzDef.revoked();
+		if (revokedAddr != null) {
+			Object value = reflection.getFieldValue(authzEntity, revokedAddr.toString());
+			if (value instanceof Boolean b && b) {
+				throw new ApiException("Authorization revoked");
+			}
+		}
+
+		ObjectAddress expirationAddr = authzDef.expiration();
+		if (expirationAddr != null) {
+			Object value = reflection.getFieldValue(authzEntity, expirationAddr.toString());
+			if (value != null && isExpired(value)) {
+				throw new ApiException("Authorization expired");
+			}
+		}
+	}
+
+	private static IDomain<?> resolveOptionalAuthenticatorDomain(IApi api, Object operationRequest, Object authz) {
 		IClass<?> targetClass = AuthorizationProtocolExpressions
 				.resolveAuthorizationTargetClass(operationRequest, authz);
 		if (targetClass == null || api == null) return null;

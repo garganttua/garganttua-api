@@ -53,7 +53,7 @@ public class AuthenticateCredentialsSupplier implements IContextualSupplier<byte
             Object creds = authReq.credentials();
             if (creds == null) return Optional.empty();
             if (creds instanceof byte[] bytes) return Optional.of(bytes);
-            // Credentials is a non-byte[] shape (e.g. IAuthorization for token flow):
+            // Credentials is a non-byte[] shape (token entity in the verify flow):
             // this supplier only handles login+password byte arrays. Yield to other
             // suppliers/strategies designed for the runtime shape at hand.
             return Optional.empty();

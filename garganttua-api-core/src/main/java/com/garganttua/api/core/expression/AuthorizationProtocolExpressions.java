@@ -6,7 +6,6 @@ import java.util.Locale;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.security.authorization.AuthorizationFormatException;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.expression.annotations.Expression;
@@ -99,8 +98,8 @@ public class AuthorizationProtocolExpressions {
 	}
 
 	@Expression(name = "decodeAuthorization",
-			description = "Delegates to IAuthorizationProtocol.decode(value, api). Errors are wrapped as ApiException.")
-	public static IAuthorization decodeAuthorization(@Nullable Object protocol, @Nullable Object value, @Nullable Object apiContext) {
+			description = "Delegates to IAuthorizationProtocol.decode(value, api). Returns the entity the protocol produces (any user-defined POJO matching the protocol's targetDomain — no interface contract). Errors are wrapped as ApiException.")
+	public static Object decodeAuthorization(@Nullable Object protocol, @Nullable Object value, @Nullable Object apiContext) {
 		IAuthorizationProtocol p = (IAuthorizationProtocol) unwrapOptional(protocol);
 		String v = stringOrNull(value);
 		IApi api = (IApi) unwrapOptional(apiContext);
@@ -128,8 +127,8 @@ public class AuthorizationProtocolExpressions {
 	private static final String DECODED_PROTOCOL_ARG = "_authzProtocol";
 
 	@Expression(name = "decodeRequestAuthorization",
-			description = "Single-call decoder used by VERIFY_AUTHORIZATION.gs. Mode B: returns the IAuthorization already on operationRequest.authorization unchanged (no parsing). Mode A: reads rawAuthorization, parses scheme/value, resolves the matching IAuthorizationProtocol, decodes, stores the resolved protocol back on the request for downstream targetDomain resolution, and returns the decoded IAuthorization. Throws AuthorizationFormatException on malformed header (→ 400) and ApiException on missing token / unknown scheme / decode failure (→ 401).")
-	public static IAuthorization decodeRequestAuthorization(@Nullable Object operationRequest, @Nullable Object apiContext) {
+			description = "Single-call decoder used by VERIFY_AUTHORIZATION.gs. Mode B: returns the authorization entity already on operationRequest.authorization unchanged (no parsing — caller has pre-decoded; the framework treats any non-null Object as a valid token shape and lets the DSL/definition lookup decide what to do with it). Mode A: reads rawAuthorization, parses scheme/value, resolves the matching IAuthorizationProtocol, decodes, stores the resolved protocol back on the request for downstream targetDomain resolution, and returns the decoded entity. Throws AuthorizationFormatException on malformed header (→ 400) and ApiException on missing token / unknown scheme / decode failure (→ 401).")
+	public static Object decodeRequestAuthorization(@Nullable Object operationRequest, @Nullable Object apiContext) {
 		IOperationRequest req = (IOperationRequest) unwrapOptional(operationRequest);
 		if (req == null) {
 			throw new ApiException("decodeRequestAuthorization: operationRequest is null");
@@ -137,9 +136,7 @@ public class AuthorizationProtocolExpressions {
 		// Mode B — caller has already decoded; return as-is, do not touch protocol arg.
 		Object existing = req.arg(IOperationRequest.AUTHORIZATION).orElse(null);
 		if (existing != null) {
-			if (existing instanceof IAuthorization a) return a;
-			throw new ApiException("decodeRequestAuthorization: pre-populated 'authorization' arg is not an IAuthorization (got "
-					+ existing.getClass().getName() + ")");
+			return existing;
 		}
 		// Mode A — parse + resolve + decode.
 		Object rawArg = req.arg(IOperationRequest.RAW_AUTHORIZATION).orElse(null);
@@ -150,14 +147,14 @@ public class AuthorizationProtocolExpressions {
 		String scheme = parseAuthorizationScheme(raw);
 		String value = parseAuthorizationValue(raw);
 		IAuthorizationProtocol protocol = resolveAuthorizationProtocol(apiContext, scheme);
-		IAuthorization decoded = decodeAuthorization(protocol, value, apiContext);
+		Object decoded = decodeAuthorization(protocol, value, apiContext);
 		// Hand the protocol to resolveAuthorizationTargetClass via the request.
 		req.arg(DECODED_PROTOCOL_ARG, protocol);
 		return decoded;
 	}
 
 	@Expression(name = "resolveAuthorizationTargetClass",
-			description = "Returns the IClass<?> identifying the authenticator domain to dispatch sign-verification and validation against. Mode A: pulls the protocol stashed by decodeRequestAuthorization off the request and returns protocol.targetDomain(). Mode B: no protocol — falls back to the runtime class of the supplied IAuthorization instance. Always returns a non-null class.")
+			description = "Returns the IClass<?> identifying the authenticator domain to dispatch sign-verification and validation against. Mode A: pulls the protocol stashed by decodeRequestAuthorization off the request and returns protocol.targetDomain(). Mode B: no protocol — falls back to the runtime class of the supplied authorization entity. Always returns a non-null class.")
 	public static IClass<?> resolveAuthorizationTargetClass(@Nullable Object operationRequest, @Nullable Object authorization) {
 		IOperationRequest req = (IOperationRequest) unwrapOptional(operationRequest);
 		Object authz = unwrapOptional(authorization);

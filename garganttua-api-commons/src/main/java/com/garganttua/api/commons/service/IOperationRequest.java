@@ -14,7 +14,6 @@ import com.garganttua.api.commons.operation.TechnicalOperation;
 import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.api.commons.pageable.IPageable;
 import com.garganttua.api.commons.repository.IRepository;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.sort.ISort;
 import com.garganttua.core.reflection.IClass;
 
@@ -49,7 +48,7 @@ public interface IOperationRequest {
 	ArgKey<UUID> EXECUTION_UUID = ArgKey.of("executionUuid", IClass.getClass(UUID.class));
 	ArgKey<UUID> CORRELATION_UUID = ArgKey.of("correlationUuid", IClass.getClass(UUID.class));
 
-	ArgKey<IAuthorization> AUTHORIZATION = ArgKey.of("authorization", IClass.getClass(IAuthorization.class));
+	ArgKey<Object> AUTHORIZATION = ArgKey.of("authorization", IClass.getClass(Object.class));
 	ArgKey<Byte[]> RAW_AUTHORIZATION = ArgKey.of("rawAuthorization", IClass.getClass(Byte[].class));
 
 	ArgKey<IApi> API_CONTEXT = ArgKey.of("apiContext", IClass.getClass(IApi.class));

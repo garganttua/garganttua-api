@@ -2,7 +2,6 @@ package com.garganttua.api.core.security.authentication;
 
 import java.lang.reflect.Type;
 
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.runtime.IRuntimeContext;
@@ -13,9 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @SuppressWarnings("rawtypes")
-public class AuthorizationSupplierBuilder implements ISupplierBuilder<IAuthorization, IContextualSupplier<IAuthorization, IRuntimeContext>> {
+public class AuthorizationSupplierBuilder implements ISupplierBuilder<Object, IContextualSupplier<Object, IRuntimeContext>> {
 
-    private static final IClass<IAuthorization> SUPPLIED_CLASS = IClass.getClass(IAuthorization.class);
+    private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);
 
     @Override
     public Type getSuppliedType() {
@@ -23,7 +22,7 @@ public class AuthorizationSupplierBuilder implements ISupplierBuilder<IAuthoriza
     }
 
     @Override
-    public IClass<IAuthorization> getSuppliedClass() {
+    public IClass<Object> getSuppliedClass() {
         return SUPPLIED_CLASS;
     }
 
@@ -33,7 +32,7 @@ public class AuthorizationSupplierBuilder implements ISupplierBuilder<IAuthoriza
     }
 
     @Override
-    public IContextualSupplier<IAuthorization, IRuntimeContext> build() throws DslException {
+    public IContextualSupplier<Object, IRuntimeContext> build() throws DslException {
         log.atDebug().log("Building AuthorizationSupplier");
         return new AuthorizationSupplier();
     }

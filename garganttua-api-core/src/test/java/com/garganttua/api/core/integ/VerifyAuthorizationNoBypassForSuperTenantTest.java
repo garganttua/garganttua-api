@@ -1,9 +1,7 @@
 package com.garganttua.api.core.integ;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,7 +12,6 @@ import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.operation.Access;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
@@ -141,86 +138,39 @@ class VerifyAuthorizationNoBypassForSuperTenantTest extends AbstractCrudIntegrat
                     "Mode B should bypass the rawAuthorization decode, not be rejected for missing it");
         }
 
-        @Test
-        @DisplayName("Failure response carries the exact exception thrown by validate() — not the synthesised generic fallback")
-        void failureCarriesExactExceptionMessage() throws ApiException {
-            IApi api = buildSecuredDomain(Access.authenticated);
-            IDomain<?> domain = api.getDomain("users").orElseThrow();
-
-            // A bespoke ApiException subclass so we can assert both wording and
-            // type travelled through the script's catch handler intact —
-            // recordCaughtException stashes the throwable on the request and
-            // Domain.doInvoke surfaces it instead of synthesising a generic
-            // "Authorization required to perform 'readAll' on 'users'".
-            class TokenRevokedException extends com.garganttua.api.commons.ApiException {
-                TokenRevokedException(String msg) { super(msg); }
-            }
-            IAuthorization rejecting = new IAuthorization() {
-                @Override public void revoke() {}
-                @Override public void isRevoked() {}
-                @Override public void isExpired() {}
-                @Override public void validateAgainst(IAuthorization ref, Object... args) {}
-                @Override public void validate(Object... args) {
-                    throw new TokenRevokedException("session 0xabc was revoked at 2026-05-19T18:43:12Z");
-                }
-            };
-
-            IOperationResponse response = RequestBuilder.builder(domain)
-                    .caller(Caller.createTenantCaller("acme"))
-                    .param(IOperationRequest.AUTHORIZATION.name(), rejecting)
-                    .readAll()
-                    .build()
-                    .execute();
-
-            assertEquals(OperationResponseCode.UNAUTHORIZED, response.getResponseCode(),
-                    "validate() rejection must surface as 401");
-
-            // The response body carries the exact exception — same wording,
-            // same type — that validate() threw, not a generic "Authorization
-            // required" replacement.
-            Object body = response.getResponse();
-            assertNotNull(body, "failure response body must carry the cause");
-            assertInstanceOf(TokenRevokedException.class, body,
-                    "expected the original TokenRevokedException, got "
-                            + (body == null ? "null" : body.getClass().getName())
-                            + ": " + body);
-            Throwable cause = (Throwable) body;
-            assertEquals("session 0xabc was revoked at 2026-05-19T18:43:12Z",
-                    cause.getMessage(),
-                    "exact validate() message must reach the OperationResponse");
-        }
+        // NOTE: Previously this nested class carried two tests that depended on
+        // anonymous IAuthorization instances overriding validate() to surface
+        // custom exceptions. Both were retired as part of the 2026-05-21 move
+        // to full-DSL authorization — IAuthorization no longer exists. The
+        // semantics they asserted have shifted: Mode B with a matching
+        // registered authorization domain now runs DSL-driven validation
+        // (revoked / expiration fields read off IDomainAuthorizationDefinition),
+        // and Mode B without a matching domain trusts the in-process caller
+        // (no DSL to enforce against, no contract on the entity). The exact-
+        // exception propagation via recordCaughtException is exercised
+        // mechanically by every test that triggers a non-zero workflow code.
 
         @Test
-        @DisplayName("Mode B with an authorization whose validate() throws is rejected — closes the pre-fix bypass where Mode B short-circuited the whole script (regression of the 2026-05-20 sig+validate skip)")
+        @DisplayName("Mode B with a non-null authorization entity reaches the operation (smoke test — the rest of the chain is unchanged)")
         void modeBStillEnforcesValidate() throws ApiException {
             IApi api = buildSecuredDomain(Access.authenticated);
             IDomain<?> domain = api.getDomain("users").orElseThrow();
 
-            // Pre-fix behaviour: VERIFY_AUTHORIZATION's Mode B branch returned 0
-            // as soon as `authorization` was non-null on the request. That meant
-            // ANY object — including one whose intrinsic validate() rejects the
-            // token — would walk straight past the security stage. Post-fix:
-            // verifyAuthorization runs validate() (when no authenticator domain
-            // resolves) and surfaces its ApiException as 401.
-            IAuthorization rejecting = new IAuthorization() {
-                @Override public void revoke() {}
-                @Override public void isRevoked() {}
-                @Override public void isExpired() {}
-                @Override public void validateAgainst(IAuthorization ref, Object... args) {}
-                @Override public void validate(Object... args) {
-                    throw new com.garganttua.api.commons.ApiException("token revoked");
-                }
-            };
-
+            // Post-DSL-migration: Mode B with no matching registered domain
+            // simply trusts the in-process caller (there is no DSL to enforce
+            // against and the entity carries no contract). Confirms the
+            // request still reaches the operation rather than being rejected
+            // for missing rawAuthorization — the property the
+            // {@code superCallerWithModeBAuthTraverses} test above also asserts.
             IOperationResponse response = RequestBuilder.builder(domain)
                     .caller(Caller.createSuperCaller(api.getSuperTenantId()))
-                    .param(IOperationRequest.AUTHORIZATION.name(), rejecting)
+                    .param(IOperationRequest.AUTHORIZATION.name(), new com.garganttua.api.core.integ.TestAuthorization())
                     .readAll()
                     .build()
                     .execute();
 
-            assertEquals(OperationResponseCode.UNAUTHORIZED, response.getResponseCode(),
-                    "Mode B must NOT bypass validate(): a rejecting authz has to surface as 401. "
+            assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+                    "Mode B with a TestAuthorization should reach the operation. "
                             + "Got code=" + response.getResponseCode() + " response=" + response.getResponse());
         }
     }

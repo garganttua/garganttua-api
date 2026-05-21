@@ -16,7 +16,6 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.core.security.authentication.AuthorizationSupplier;
 import com.garganttua.core.reflection.IClass;
@@ -38,14 +37,15 @@ class AuthorizationSupplierTest {
     @SuppressWarnings("rawtypes")
     private IRuntimeContext runtimeContext;
     private IOperationRequest operationRequest;
-    private IAuthorization authorization;
+    private Object authorization;
 
     @BeforeEach
     void setUp() {
         supplier = new AuthorizationSupplier();
         runtimeContext = mock(IRuntimeContext.class);
         operationRequest = mock(IOperationRequest.class);
-        authorization = mock(IAuthorization.class);
+        // Plain Object — no interface contract on authorization entities.
+        authorization = new Object();
     }
 
     @Nested
@@ -53,9 +53,9 @@ class AuthorizationSupplierTest {
     class TypeMetadata {
 
         @Test
-        @DisplayName("getSuppliedType returns IAuthorization type")
-        void suppliedTypeIsAuthorization() {
-            assertEquals(IAuthorization.class, supplier.getSuppliedType());
+        @DisplayName("getSuppliedType returns Object type — no interface contract on authorization entities")
+        void suppliedTypeIsObject() {
+            assertEquals(Object.class, supplier.getSuppliedType());
         }
 
         @Test
@@ -99,7 +99,7 @@ class AuthorizationSupplierTest {
         void returnsAuthorization() throws SupplyException {
             when(operationRequest.arg(IOperationRequest.AUTHORIZATION)).thenReturn(Optional.of(authorization));
 
-            Optional<IAuthorization> result = supplier.supply(runtimeContext);
+            Optional<Object> result = supplier.supply(runtimeContext);
 
             assertTrue(result.isPresent());
             assertSame(authorization, result.get());
@@ -110,7 +110,7 @@ class AuthorizationSupplierTest {
         void returnsEmptyWhenNoAuthorization() throws SupplyException {
             when(operationRequest.arg(IOperationRequest.AUTHORIZATION)).thenReturn(Optional.empty());
 
-            Optional<IAuthorization> result = supplier.supply(runtimeContext);
+            Optional<Object> result = supplier.supply(runtimeContext);
 
             assertTrue(result.isEmpty());
         }

@@ -21,22 +21,16 @@ import com.garganttua.api.core.expression.ApiExpressions;
 import com.garganttua.api.core.expression.AuthorizationProtocolExpressions;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("AuthorizationProtocolExpressions")
 class AuthorizationProtocolExpressionsTest {
 
-	/** Stub authorization implementation — minimum to satisfy IAuthorization contract. */
-	static class FakeAuth implements IAuthorization {
+	/** Plain authorization entity — no interface contract required. */
+	static class FakeAuth {
 		final String marker;
 		FakeAuth(String marker) { this.marker = marker; }
-		@Override public void isExpired() {}
-		@Override public void isRevoked() {}
-		@Override public void revoke() {}
-		@Override public void validate(Object... args) {}
-		@Override public void validateAgainst(IAuthorization other, Object... args) {}
 	}
 
 	/** Records the last decode invocation arguments. */
@@ -44,7 +38,7 @@ class AuthorizationProtocolExpressionsTest {
 		final String scheme;
 		String lastValue;
 		IApi lastApi;
-		IAuthorization canned;
+		Object canned;
 		ApiException toThrow;
 
 		StubProtocol(String scheme) { this.scheme = scheme; }
@@ -53,7 +47,7 @@ class AuthorizationProtocolExpressionsTest {
 		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
 
 		@Override
-		public IAuthorization decode(String rawAuthorizationValue, IApi api) throws ApiException {
+		public Object decode(String rawAuthorizationValue, IApi api) throws ApiException {
 			this.lastValue = rawAuthorizationValue;
 			this.lastApi = api;
 			if (toThrow != null) throw toThrow;
@@ -277,7 +271,7 @@ class AuthorizationProtocolExpressionsTest {
 			p.canned = auth;
 			IApi api = mock(IApi.class);
 
-			IAuthorization result = AuthorizationProtocolExpressions.decodeAuthorization(p, "xyz.abc", api);
+			Object result = AuthorizationProtocolExpressions.decodeAuthorization(p, "xyz.abc", api);
 			assertSame(auth, result);
 			assertEquals("xyz.abc", p.lastValue);
 			assertSame(api, p.lastApi);
@@ -303,7 +297,7 @@ class AuthorizationProtocolExpressionsTest {
 				@Override public com.garganttua.core.reflection.IClass<?> targetDomain() {
 					return com.garganttua.core.reflection.IClass.getClass(Object.class);
 				}
-				@Override public IAuthorization decode(String v, IApi api) {
+				@Override public Object decode(String v, IApi api) {
 					throw new IllegalStateException("boom");
 				}
 			};

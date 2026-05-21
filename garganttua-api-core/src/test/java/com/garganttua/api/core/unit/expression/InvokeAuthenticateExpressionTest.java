@@ -30,7 +30,6 @@ import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.security.authentication.IAuthentication;
 import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.OperationResponseCode;
@@ -42,13 +41,7 @@ class InvokeAuthenticateExpressionTest {
 	static class FixtureEntity {}
 	static class OtherEntity {}
 
-	static class FixtureAuth implements IAuthorization {
-		@Override public void isExpired() {}
-		@Override public void isRevoked() {}
-		@Override public void revoke() {}
-		@Override public void validate(Object... args) {}
-		@Override public void validateAgainst(IAuthorization other, Object... args) {}
-	}
+	static class FixtureAuth {}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static IAuthorizationProtocol protocolWithTarget(IClass<?> target) {
@@ -145,7 +138,7 @@ class InvokeAuthenticateExpressionTest {
 	class BuildAuthRequestFromAuthorization {
 
 		@Test
-		@DisplayName("wraps the IAuthorization into a new AuthenticationRequest with credentials=authz and null login")
+		@DisplayName("wraps the authorization entity into a new AuthenticationRequest with credentials=authz and null login")
 		void happyPath() {
 			FixtureAuth authz = new FixtureAuth();
 			IAuthenticationRequest req = SecurityExpressions.buildAuthRequestFromAuthorization(authz, "tenant-1");

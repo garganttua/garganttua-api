@@ -22,7 +22,6 @@ import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.operation.OperationType;
 import com.garganttua.api.commons.operation.Scope;
 import com.garganttua.api.commons.operation.TechnicalOperation;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
@@ -31,15 +30,11 @@ import com.garganttua.core.reflection.IClass;
 @DisplayName("VERIFY_AUTHORIZATION with @AuthorizationProtocol decoders")
 class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 
-	/** Minimal IAuthorization for the tests. */
-	static class CannedAuth implements IAuthorization {
+	/** Minimal authorization entity for the tests. No interface contract — the
+	 *  framework treats it as a POJO, validation comes from the DSL. */
+	static class CannedAuth {
 		final String marker;
 		CannedAuth(String marker) { this.marker = marker; }
-		@Override public void isExpired() {}
-		@Override public void isRevoked() {}
-		@Override public void revoke() {}
-		@Override public void validate(Object... args) {}
-		@Override public void validateAgainst(IAuthorization other, Object... args) {}
 	}
 
 	/** Records every call so tests can assert delegation. */
@@ -47,10 +42,10 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 		final String scheme;
 		final AtomicInteger decodeCount = new AtomicInteger();
 		String lastValue;
-		IAuthorization canned;
+		Object canned;
 		boolean throwOnDecode;
 
-		RecordingProtocol(String scheme, IAuthorization canned) {
+		RecordingProtocol(String scheme, Object canned) {
 			this.scheme = scheme;
 			this.canned = canned;
 		}
@@ -59,7 +54,7 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 		@Override public IClass<?> targetDomain() { return IClass.getClass(User.class); }
 
 		@Override
-		public IAuthorization decode(String value, IApi api) throws ApiException {
+		public Object decode(String value, IApi api) throws ApiException {
 			this.lastValue = value;
 			this.decodeCount.incrementAndGet();
 			if (throwOnDecode) throw new ApiException("decode failed for scheme " + scheme);

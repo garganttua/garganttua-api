@@ -14,7 +14,7 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.security.authorization.AuthorizationProtocol;
-import com.garganttua.api.commons.security.authorization.IAuthorization;
+
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.core.reflection.IClass;
 
@@ -27,14 +27,14 @@ class AuthorizationProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 	public static class AutoDetectedBearerProtocol implements IAuthorizationProtocol {
 		@Override public String scheme() { return "Bearer"; }
 		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
-		@Override public IAuthorization decode(String value, IApi api) { return null; }
+		@Override public Object decode(String value, IApi api) { return null; }
 	}
 
 	@AuthorizationProtocol
 	public static class AutoDetectedBasicProtocol implements IAuthorizationProtocol {
 		@Override public String scheme() { return "Basic"; }
 		@Override public IClass<?> targetDomain() { return IClass.getClass(Object.class); }
-		@Override public IAuthorization decode(String value, IApi api) { return null; }
+		@Override public Object decode(String value, IApi api) { return null; }
 	}
 
 	@Nested
