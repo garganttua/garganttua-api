@@ -150,7 +150,7 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
                 builder.build();
                 fail("Building a non-tenant entity without tenantId in multi-tenant mode must still throw");
             } catch (ApiException ok) {
-                assertTrue(ok.getMessage().contains("No tenant id defined"),
+                assertTrue(ok.getMessage().contains("tenantId"),
                         "Validation should reference the missing tenantId; got: " + ok.getMessage());
             }
         }

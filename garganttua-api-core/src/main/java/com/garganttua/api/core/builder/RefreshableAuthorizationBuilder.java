@@ -13,13 +13,16 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class RefreshableAuthorizationBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IRefreshableAuthorizationBuilder<E>, IAuthorizationBuilder<E>, E>
         implements IRefreshableAuthorizationBuilder<E> {
 
-    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+    // Reflection provider is whatever the user installed via IClass.setReflection().
+    // Resolved lazily per call so the framework never picks an implementation.
+    private static IReflectionProvider provider() {
+        return IClass.getReflection();
+    }
 
     private final IClass<?> entityClass;
     private ObjectAddress revoked;
@@ -36,42 +39,42 @@ public class RefreshableAuthorizationBuilder<E>
     @Override
     public IRefreshableAuthorizationBuilder<E> expirable(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        this.expiration = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Instant.class)).address();
+        this.expiration = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Instant.class)).address();
         return this;
     }
 
     @Override
     public IRefreshableAuthorizationBuilder<E> expirable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Instant.class)).address();
+        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Instant.class)).address();
         return this;
     }
 
     @Override
     public IRefreshableAuthorizationBuilder<E> expirable(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Instant.class)).address();
+        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Instant.class)).address();
         return this;
     }
 
     @Override
     public IRefreshableAuthorizationBuilder<E> revokable(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IRefreshableAuthorizationBuilder<E> revokable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IRefreshableAuthorizationBuilder<E> revokable(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        this.revoked = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
+        this.revoked = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Boolean.class)).address();
         return this;
     }
 

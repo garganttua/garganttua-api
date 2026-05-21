@@ -19,13 +19,16 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class AuthorizationBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IAuthorizationBuilder<E>, IDomainSecurityBuilder<E>, IAuthorizationContext>
         implements IAuthorizationBuilder<E> {
 
-    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+    // Reflection provider is whatever the user installed via IClass.setReflection().
+    // Resolved lazily per call so the framework never picks an implementation.
+    private static IReflectionProvider provider() {
+        return IClass.getReflection();
+    }
 
     private IClass<?> entityClass;
     private ObjectAddress type;
@@ -50,7 +53,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> type(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
-        this.type = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.type = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -59,7 +62,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> type(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.type = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.type = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -68,7 +71,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> type(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
-        this.type = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.type = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -77,7 +80,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> authorities(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.authorities = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(List.class)).address();
+        this.authorities = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(List.class)).address();
 
         return this;
     }
@@ -86,7 +89,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> authorities(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
-        this.authorities = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(List.class)).address();
+        this.authorities = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(List.class)).address();
 
         return this;
     }
@@ -95,7 +98,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> authorities(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
-        this.authorities = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(List.class)).address();
+        this.authorities = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(List.class)).address();
 
         return this;
     }
@@ -104,7 +107,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> expirable(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
 
-        this.expiration = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Instant.class)).address();
+        this.expiration = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Instant.class)).address();
 
         return this;
     }
@@ -113,7 +116,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> expirable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field name cannot be null");
 
-        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Instant.class)).address();
+        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Instant.class)).address();
 
         return this;
     }
@@ -122,7 +125,7 @@ public class AuthorizationBuilder<E>
     public IAuthorizationBuilder<E> expirable(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Instant.class)).address();
+        this.expiration = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Instant.class)).address();
 
         return this;
     }
@@ -132,7 +135,7 @@ public class AuthorizationBuilder<E>
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         this.storable = true;
 
-        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -142,7 +145,7 @@ public class AuthorizationBuilder<E>
         Objects.requireNonNull(field, "Field name cannot be null");
         this.storable = true;
 
-        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        this.revoked = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -152,7 +155,7 @@ public class AuthorizationBuilder<E>
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
         this.storable = true;
 
-        this.revoked = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
+        this.revoked = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Boolean.class)).address();
 
         return this;
     }

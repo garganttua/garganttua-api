@@ -60,7 +60,6 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -70,7 +69,11 @@ public class DomainBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiBuilder, IDomain<E>>
         implements IDomainBuilder<E> {
 
-    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+    // Reflection provider is whatever the user installed via IClass.setReflection().
+    // Resolved lazily per call so the framework never picks an implementation.
+    private static IReflectionProvider provider() {
+        return IClass.getReflection();
+    }
 
     private volatile String domainName;
     private volatile IClass<?> entityClass;
@@ -121,7 +124,7 @@ public class DomainBuilder<E>
         super(builder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity Class cannot be null");
         try {
-            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass, PROVIDER);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass, provider());
         } catch (ReflectionException e) {
             throw new ApiException(e.getMessage(), e);
         }
@@ -166,7 +169,10 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> tenant(boolean b) throws ApiException {
         if (b && this.up() instanceof ApiBuilder acb && !acb.isMultiTenant()) {
-            throw new ApiException("Cannot mark domain as tenant when multi-tenancy is disabled");
+            throw new ApiException("Cannot mark domain '" + this.domainName + "' as the tenant — "
+                    + "multi-tenancy is disabled on the parent API. Either drop the .tenant(true) call "
+                    + "(single-tenant apps do not need a tenant entity), or remove the .multiTenant(false) "
+                    + "call on the apiBuilder to re-enable multi-tenancy.");
         }
         this.tenant = b;
         return this;
@@ -186,11 +192,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> owner(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.owner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.owner = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -198,11 +202,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> owner(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.owner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.owner = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -210,11 +212,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> owner(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.owner = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.owner = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -222,11 +222,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> owned(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.owned = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.owned = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -234,11 +232,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> owned(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.owned = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.owned = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -246,11 +242,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> owned(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.owned = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.owned = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -270,11 +264,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> shared(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.shared = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.shared = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -282,11 +274,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> shared(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.shared = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.shared = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -294,11 +284,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> shared(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.shared = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.shared = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -306,11 +294,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> hiddenable(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -318,11 +304,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> hiddenable(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        this.hiddenable = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -330,11 +314,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> hiddenable(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.hiddenable = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
+        this.hiddenable = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Boolean.class)).address();
 
         return this;
     }
@@ -342,11 +324,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> geolocalized(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Object.class)).address();
 
         return this;
     }
@@ -354,11 +334,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> geolocalized(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Object.class)).address();
 
         return this;
     }
@@ -366,11 +344,9 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> geolocalized(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
+        requireEntityDeclared();
 
-        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Object.class)).address();
 
         return this;
     }
@@ -378,60 +354,48 @@ public class DomainBuilder<E>
     @Override
     public IDomainBuilder<E> superOwner(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
-        this.superOwner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        requireEntityDeclared();
+        this.superOwner = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IDomainBuilder<E> superOwner(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
-        this.superOwner = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        requireEntityDeclared();
+        this.superOwner = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IDomainBuilder<E> superOwner(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
-        this.superOwner = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
+        requireEntityDeclared();
+        this.superOwner = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IDomainBuilder<E> superTenant(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
-        this.superTenant = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(Boolean.class)).address();
+        requireEntityDeclared();
+        this.superTenant = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IDomainBuilder<E> superTenant(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
-        this.superTenant = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(Boolean.class)).address();
+        requireEntityDeclared();
+        this.superTenant = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Boolean.class)).address();
         return this;
     }
 
     @Override
     public IDomainBuilder<E> superTenant(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        if (this.entityBuilder == null) {
-            throw new ApiException("Entity class must be defined first");
-        }
-        this.superTenant = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(Boolean.class)).address();
+        requireEntityDeclared();
+        this.superTenant = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Boolean.class)).address();
         return this;
     }
 
@@ -447,7 +411,7 @@ public class DomainBuilder<E>
         this.entityClass = entityClass;
 
         try {
-            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass, PROVIDER);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass, provider());
         } catch (ReflectionException e) {
             throw new ApiException(e.getMessage(), e);
         }
@@ -459,16 +423,15 @@ public class DomainBuilder<E>
 
     @Override
     public IDomainSecurityBuilder<E> security() throws ApiException {
-        if (this.securityBuilder == null)
-            throw new ApiException("Security builder is null, please set entity class first");
+        // securityBuilder is wired in the IClass-based constructor; null means
+        // this domain was created from a name only.
+        requireEntityClassSet("security");
         return this.securityBuilder;
     }
 
     @Override
     public com.garganttua.api.commons.context.dsl.IDomainKeyBuilder<E> key() throws ApiException {
-        if (this.entityClass == null) {
-            throw new ApiException("Entity class must be set before declaring .key()");
-        }
+        requireEntityClassSet("key");
         if (this.keyBuilder == null) {
             this.keyBuilder = new DomainKeyBuilder<>(this, this.entityClass);
         }
@@ -477,8 +440,7 @@ public class DomainBuilder<E>
 
     @Override
     public <D> IDtoBuilder<E, D> dto(IClass<D> dtoClass) throws ApiException {
-        if( this.entityClass == null )
-            throw new ApiException("Entity class must be set before declaring a dto");
+        requireEntityClassSet("dto");
 
         IDtoBuilder<E, D> dtoBuilder = (IDtoBuilder<E, D>) this.dtos.computeIfAbsent(dtoClass, clazz -> {
             return new DtoBuilder<>(clazz, this);
@@ -563,14 +525,46 @@ public class DomainBuilder<E>
         }
     }
 
+    /**
+     * Throws with a concrete recipe when a domain-level method is called before
+     * {@code .entity(...)} has produced an entity builder. The stack trace
+     * surfaces the offending method name, the message surfaces the fix.
+     */
+    private void requireEntityDeclared() throws ApiException {
+        if (this.entityBuilder == null) {
+            String entityHint = this.entityClass != null
+                    ? this.entityClass.getSimpleName()
+                    : "MyEntity";
+            throw new ApiException(
+                    "This call requires .entity() to be declared first on domain '"
+                    + this.domainName + "'. Example:\n"
+                    + "\n"
+                    + "    apiBuilder.domain(" + entityHint + ".class)\n"
+                    + "        .entity().id(\"id\").uuid(\"uuid\").tenantId(\"tenantId\").up()\n"
+                    + "        // <- now field-resolving calls like .owner/.owned/.shared/.hiddenable/.geolocalized work\n"
+                    + "\n"
+                    + "(The stack trace shows which specific method was called.)");
+        }
+    }
+
+    /**
+     * Throws with a concrete recipe when a method needs the entity class to be
+     * known but the domain was created from a name only (no {@code IClass}).
+     */
+    private void requireEntityClassSet(String calledMethod) throws ApiException {
+        if (this.entityClass == null) {
+            throw new ApiException(
+                    "." + calledMethod + "() needs an entity class on domain '"
+                    + this.domainName + "', but this domain was created from a name only. "
+                    + "Use apiBuilder.domain(MyEntity.class) instead of the name-only overload, "
+                    + "or call .entity(MyEntity.class) on this domain before ." + calledMethod + "().");
+        }
+    }
+
     @Override
     public IClass<E> getEntityClass() throws ApiException {
-        if (this.entityClass != null) {
-            IClass<E> result = (IClass<E>) this.entityClass;
-            return result;
-        }
-
-        throw new ApiException("Entity class is not set !");
+        requireEntityClassSet("getEntityClass");
+        return (IClass<E>) this.entityClass;
     }
 
     @Override
@@ -774,7 +768,18 @@ public class DomainBuilder<E>
 
     private void throwExceptionIfNoDto() throws ApiException {
         if (this.dtos.size() == 0) {
-            throw new ApiException("No dto declared for domain " + this.domainName);
+            String entityHint = this.entityClass != null
+                    ? this.entityClass.getSimpleName()
+                    : "MyEntity";
+            throw new ApiException("No dto declared for domain '" + this.domainName + "'. "
+                    + "Each domain needs at least one DTO (the persisted shape — fields, id/uuid/tenantId mapping, DAO). Example:\n"
+                    + "\n"
+                    + "    apiBuilder.domain(" + entityHint + ".class)\n"
+                    + "        .entity().id(\"id\").uuid(\"uuid\").tenantId(\"tenantId\").up()\n"
+                    + "        .dto(" + entityHint + "Dto.class)             // <- missing\n"
+                    + "            .id(\"id\").uuid(\"uuid\").tenantId(\"tenantId\")\n"
+                    + "            .db(new MyDao())\n"
+                    + "        .up()");
         }
     }
 
@@ -807,8 +812,7 @@ public class DomainBuilder<E>
 
     @Override
     public synchronized IEntityBuilder<E> entity() throws ApiException {
-        if( this.entityClass == null )
-            throw new ApiException("Entity class is not set");
+        requireEntityClassSet("entity");
 
         if( this.entityBuilder == null)
             this.entityBuilder = new EntityBuilder<>(entityClass, this);

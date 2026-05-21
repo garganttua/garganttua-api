@@ -27,7 +27,6 @@ import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.fields.FieldResolver;
 import com.garganttua.core.reflection.query.ObjectQueryFactory;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -39,7 +38,11 @@ import lombok.extern.slf4j.Slf4j;
 public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuilder<E>, IDomainBuilder<E>, IEntityContext<E>>
         implements IEntityBuilder<E> {
 
-    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+    // Reflection provider is whatever the user installed via IClass.setReflection().
+    // Resolved lazily per call so the framework never picks an implementation.
+    private static IReflectionProvider provider() {
+        return IClass.getReflection();
+    }
 
     @Getter
     private IClass<?> entityClass;
@@ -65,7 +68,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
         try {
-            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass, PROVIDER);
+            this.objectQuery = ObjectQueryFactory.objectQuery(this.entityClass, provider());
         } catch (ReflectionException e) {
             throw new ApiException(e.getMessage(), e);
         }
@@ -75,7 +78,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> id(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.id = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.id = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -84,7 +87,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> id(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.id = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.id = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -93,7 +96,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> id(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.id = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.id = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -102,7 +105,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> uuid(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.uuid = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.uuid = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -111,7 +114,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> uuid(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.uuid = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.uuid = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -120,7 +123,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> uuid(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.uuid = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.uuid = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -129,7 +132,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> tenantId(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.tenantId = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, IClass.getClass(String.class)).address();
+        this.tenantId = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -138,7 +141,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> tenantId(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.tenantId = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), IClass.getClass(String.class)).address();
+        this.tenantId = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -147,7 +150,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> tenantId(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.tenantId = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, IClass.getClass(String.class)).address();
+        this.tenantId = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
         return this;
     }
@@ -156,7 +159,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> mandatory(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.mandatories.add(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address());
+        this.mandatories.add(FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address());
 
         return this;
     }
@@ -165,7 +168,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> mandatory(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
-        this.mandatories.add(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address());
+        this.mandatories.add(FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address());
 
         return this;
     }
@@ -174,7 +177,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> mandatory(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
-        this.mandatories.add(FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address());
+        this.mandatories.add(FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address());
 
         return this;
     }
@@ -183,7 +186,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> unicity(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.unicities.add(new Pair<ObjectAddress, UnicityScope>(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address(),
+        this.unicities.add(new Pair<ObjectAddress, UnicityScope>(FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address(),
                 UnicityScope.system));
 
         return this;
@@ -194,7 +197,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.unicities.add(new Pair<ObjectAddress, UnicityScope>(
-                FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address(), UnicityScope.system));
+                FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address(), UnicityScope.system));
 
         return this;
     }
@@ -204,7 +207,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.unicities.add(new Pair<ObjectAddress, UnicityScope>(
-                FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address(), UnicityScope.system));
+                FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), UnicityScope.system));
 
         return this;
     }
@@ -214,7 +217,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.unicities.add(new Pair<ObjectAddress, UnicityScope>(
-                FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address(), scope));
+                FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address(), scope));
 
         return this;
     }
@@ -224,7 +227,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.unicities.add(
-                new Pair<ObjectAddress, UnicityScope>(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address(), scope));
+                new Pair<ObjectAddress, UnicityScope>(FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address(), scope));
 
         return this;
     }
@@ -234,7 +237,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.unicities.add(new Pair<ObjectAddress, UnicityScope>(
-                FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address(), scope));
+                FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), scope));
 
         return this;
     }
@@ -244,7 +247,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.updates.add(new Pair<ObjectAddress, String>(
-                FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address(), null));
+                FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address(), null));
 
         return this;
     }
@@ -253,7 +256,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     public IEntityBuilder<E> update(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
 
-        this.updates.add(new Pair<ObjectAddress, String>(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address(), null));
+        this.updates.add(new Pair<ObjectAddress, String>(FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address(), null));
 
         return this;
     }
@@ -263,7 +266,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.updates.add(new Pair<ObjectAddress, String>(
-                FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address(), null));
+                FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), null));
 
         return this;
     }
@@ -273,7 +276,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldName, "Field name cannot be null");
 
         this.updates.add(new Pair<ObjectAddress, String>(
-                FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address(), authority));
+                FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address(), authority));
 
         return this;
     }
@@ -283,7 +286,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(field, "Field cannot be null");
 
         this.updates
-                .add(new Pair<ObjectAddress, String>(FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address(), authority));
+                .add(new Pair<ObjectAddress, String>(FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address(), authority));
 
         return this;
     }
@@ -293,7 +296,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
 
         this.updates.add(new Pair<ObjectAddress, String>(
-                FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address(), authority));
+                FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), authority));
 
         return this;
     }
@@ -317,7 +320,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         Objects.requireNonNull(field, "Field cannot be null");
         Objects.requireNonNull(annotation, "Annotation cannot be null");
 
-        ObjectAddress address = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address();
+        ObjectAddress address = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address();
 
         Pair<ObjectAddress, IClass<? extends Annotation>> candidate = new Pair<>(address, annotation);
 
@@ -553,12 +556,23 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
 
     private void throwExceptionIfNoUuid() throws ApiException {
         if (this.uuid == null)
-            throw new ApiException("No uuid defined for entity " + this.entityClass.getSimpleName());
+            throw new ApiException("No uuid field declared on entity " + this.entityClass.getSimpleName()
+                    + ". Add .uuid(\"uuid\") (or the matching field name) on the entity builder:\n"
+                    + "\n"
+                    + "    .domain(" + this.entityClass.getSimpleName() + ".class)\n"
+                    + "        .entity()\n"
+                    + "            .id(\"id\")\n"
+                    + "            .uuid(\"uuid\")                          // <- missing\n"
+                    + "            .tenantId(\"tenantId\")\n"
+                    + "        .up()");
     }
 
     private void throwExceptionIfNoTenantId() throws ApiException {
         if (this.tenantId == null && isMultiTenantEnabled() && !isTenantDomain()) {
-            throw new ApiException("No tenant id defined for entity " + this.entityClass.getSimpleName());
+            throw new ApiException("No tenantId field declared on entity " + this.entityClass.getSimpleName()
+                    + ". Multi-tenancy is enabled and this domain is not the tenant domain — every entity needs a tenantId. "
+                    + "Either add .tenantId(\"tenantId\") on the entity builder, mark this domain as the tenant via .tenant(true), "
+                    + "or disable multi-tenancy globally via apiBuilder.multiTenant(false).");
         }
     }
 
@@ -585,7 +599,14 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
 
     private void throwExceptionIfNoId() throws ApiException {
         if (this.id == null)
-            throw new ApiException("No id defined for entity " + this.entityClass.getSimpleName());
+            throw new ApiException("No id field declared on entity " + this.entityClass.getSimpleName()
+                    + ". Add .id(\"id\") (or the matching field name) on the entity builder:\n"
+                    + "\n"
+                    + "    .domain(" + this.entityClass.getSimpleName() + ".class)\n"
+                    + "        .entity()\n"
+                    + "            .id(\"id\")                              // <- missing\n"
+                    + "            .uuid(\"uuid\").tenantId(\"tenantId\")\n"
+                    + "        .up()");
     }
 
     @Override

@@ -31,6 +31,10 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-bootstrap</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-execution</artifactId>
 		</dependency>
 		<dependency>
@@ -47,10 +51,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-runtime-reflection</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-crypto</artifactId>
 		</dependency>
 
@@ -60,7 +60,12 @@
 			<artifactId>json-path</artifactId>
 		</dependency>
 
-		<!-- Test dependencies -->
+		<!-- Test dependencies — providers/scanners the framework does not impose at compile time -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-runtime-reflection</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-reflections</artifactId>

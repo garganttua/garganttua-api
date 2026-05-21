@@ -14,7 +14,6 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 /**
  * DSL impl that records the key-entity field layout (realmName,
@@ -30,7 +29,11 @@ public class DomainKeyBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainBuilder<E>, IDomainKeyContext>
         implements IDomainKeyBuilder<E> {
 
-    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+    // Reflection provider is whatever the user installed via IClass.setReflection().
+    // Resolved lazily per call so the framework never picks an implementation.
+    private static IReflectionProvider provider() {
+        return IClass.getReflection();
+    }
 
     private final IClass<?> entityClass;
     private ObjectAddress realmName;
@@ -211,19 +214,19 @@ public class DomainKeyBuilder<E>
 
     private ObjectAddress resolve(String fieldName, Class<?> expectedType) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        return FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName,
+        return FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName,
                 expectedType == null ? null : IClass.getClass(expectedType)).address();
     }
 
     private ObjectAddress resolve(IField field, Class<?> expectedType) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        return FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(),
+        return FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(),
                 expectedType == null ? null : IClass.getClass(expectedType)).address();
     }
 
     private ObjectAddress resolve(ObjectAddress fieldAddress, Class<?> expectedType) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        return FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress,
+        return FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress,
                 expectedType == null ? null : IClass.getClass(expectedType)).address();
     }
 }

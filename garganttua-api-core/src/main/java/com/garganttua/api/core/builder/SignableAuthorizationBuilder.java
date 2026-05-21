@@ -12,11 +12,14 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
-import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 
 public class SignableAuthorizationBuilder<E> extends AbstractAutomaticLinkedBuilder<ISignableAuthorizationBuilder<E>, IAuthorizationBuilder<E>, Object> implements ISignableAuthorizationBuilder<E> {
 
-    private static final IReflectionProvider PROVIDER = new RuntimeReflectionProvider();
+    // Reflection provider is whatever the user installed via IClass.setReflection().
+    // Resolved lazily per call so the framework never picks an implementation.
+    private static IReflectionProvider provider() {
+        return IClass.getReflection();
+    }
 
     private final IClass<?> entityClass;
     private ObjectAddress signatureField;
@@ -35,21 +38,21 @@ public class SignableAuthorizationBuilder<E> extends AbstractAutomaticLinkedBuil
     @Override
     public ISignableAuthorizationBuilder<E> signature(String fieldName) throws ApiException {
         Objects.requireNonNull(fieldName, "Field name cannot be null");
-        this.signatureField = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, fieldName, null).address();
+        this.signatureField = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address();
         return this;
     }
 
     @Override
     public ISignableAuthorizationBuilder<E> signature(IField field) throws ApiException {
         Objects.requireNonNull(field, "Field cannot be null");
-        this.signatureField = FieldResolver.fieldByFieldName(this.entityClass, PROVIDER, field.getName(), null).address();
+        this.signatureField = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address();
         return this;
     }
 
     @Override
     public ISignableAuthorizationBuilder<E> signature(ObjectAddress fieldAddress) throws ApiException {
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
-        this.signatureField = FieldResolver.fieldByAddress(this.entityClass, PROVIDER, fieldAddress, null).address();
+        this.signatureField = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address();
         return this;
     }
 

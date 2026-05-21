@@ -377,4 +377,110 @@ class ApiBuilderTest {
             assertNotNull(context);
         }
     }
+
+    @Nested
+    @DisplayName("Framework package auto-inclusion")
+    class FrameworkPackageAutoInclusion {
+
+        @BeforeEach
+        @SuppressWarnings("unchecked")
+        void setUpDependencies() throws ApiException {
+            com.garganttua.core.reflection.dsl.IReflectionBuilder reflectionBuilder = ReflectionBuilder.builder()
+                    .withProvider(new RuntimeReflectionProvider())
+                    .withScanner(new ReflectionsAnnotationScanner());
+            reflectionBuilder.build();
+            IClass.setReflection(reflectionBuilder.build());
+
+            IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
+                    .childContextFactory(new RuntimeContextFactory());
+            IExpressionContextBuilder expressionContextBuilder = ExpressionContextBuilder.builder();
+
+            ((IDependentBuilder<IInjectionContextBuilder, ?>) injectionContextBuilder).provide(reflectionBuilder);
+            injectionContextBuilder.build();
+
+            ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(reflectionBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(injectionContextBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(expressionContextBuilder);
+        }
+
+        /**
+         * The framework injection only affects the *asset* scan surface
+         * (@Serializer, @Protocol, @AuthorizationProtocol). The user-declared
+         * package set returned by getPackages() stays clean. We assert
+         * directly on the internal computed surface to avoid running the
+         * full build cycle (which would also pick up the framework's own
+         * test fixtures and clash with our minimal wiring).
+         */
+        @SuppressWarnings("unchecked")
+        private java.util.Set<String> resolveAssetScanSurface() throws Exception {
+            java.lang.reflect.Method m = ApiBuilder.class.getDeclaredMethod("assetScanSurface");
+            m.setAccessible(true);
+            return (java.util.Set<String>) m.invoke(builder);
+        }
+
+        @Test
+        @DisplayName("default asset scan surface includes com.garganttua.api and com.garganttua.core")
+        void defaultIncludesFrameworkPackages() throws Exception {
+            java.util.Set<String> surface = resolveAssetScanSurface();
+            assertTrue(surface.contains("com.garganttua.api"),
+                    "com.garganttua.api should be auto-injected, got: " + surface);
+            assertTrue(surface.contains("com.garganttua.core"),
+                    "com.garganttua.core should be auto-injected, got: " + surface);
+        }
+
+        @Test
+        @DisplayName("includeFrameworkPackages(false) keeps both framework packages out of the asset scan surface")
+        void optOutExcludesFrameworkPackages() throws Exception {
+            builder.includeFrameworkPackages(false);
+            java.util.Set<String> surface = resolveAssetScanSurface();
+            assertFalse(surface.contains("com.garganttua.api"),
+                    "com.garganttua.api must be absent after opt-out, got: " + surface);
+            assertFalse(surface.contains("com.garganttua.core"),
+                    "com.garganttua.core must be absent after opt-out, got: " + surface);
+        }
+
+        @Test
+        @DisplayName("user packages and framework packages coexist on the asset surface; getPackages() stays user-only")
+        void userPackagesCoexist() throws Exception {
+            builder.packages("com.myapp.entities");
+            java.util.Set<String> surface = resolveAssetScanSurface();
+            assertTrue(surface.contains("com.myapp.entities"),
+                    "user package must be in the scan surface, got: " + surface);
+            assertTrue(surface.contains("com.garganttua.api"),
+                    "framework package must be present alongside user packages, got: " + surface);
+            assertTrue(surface.contains("com.garganttua.core"),
+                    "framework package must be present alongside user packages, got: " + surface);
+
+            // getPackages() reports the *user-declared* surface — the framework
+            // injection is an internal detail of the asset scanners, not a
+            // mutation of the user's view.
+            ApiBuilder concrete = (ApiBuilder) builder;
+            List<String> userPackages = List.of(concrete.getPackages());
+            assertEquals(List.of("com.myapp.entities"), userPackages,
+                    "getPackages() must reflect only what the user declared, got: " + userPackages);
+        }
+
+        @Test
+        @DisplayName("auto-injection is idempotent — explicitly declaring com.garganttua.api does not cause a duplicate")
+        void noDuplicateOnExplicitDeclaration() throws Exception {
+            builder.packages("com.garganttua.api");
+            java.util.Set<String> surface = resolveAssetScanSurface();
+            long count = surface.stream().filter("com.garganttua.api"::equals).count();
+            assertEquals(1L, count,
+                    "com.garganttua.api should appear exactly once on the asset surface, got "
+                            + count + " in " + surface);
+        }
+
+        @Test
+        @DisplayName("framework packages do NOT leak into entity/security scans — getPackages() (used by those scanners) stays user-only even when nothing was declared")
+        void entityScanStaysUserOnly() {
+            // No user package, default includeFrameworkPackages(true).
+            ApiBuilder concrete = (ApiBuilder) builder;
+            List<String> userPackages = List.of(concrete.getPackages());
+            assertFalse(userPackages.contains("com.garganttua.api"),
+                    "framework package must NOT pollute getPackages() — entity / security "
+                            + "scanners look at it and would pick up framework test fixtures, got: "
+                            + userPackages);
+        }
+    }
 }

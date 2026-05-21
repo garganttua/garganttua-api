@@ -30,6 +30,8 @@ import com.garganttua.api.commons.security.context.IAuthenticationContext;
 import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.api.commons.serialization.Serializer;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
+import com.garganttua.core.bootstrap.dsl.IBoostrap;
+import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
@@ -65,6 +67,17 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 	private final Set<String> packages = ConcurrentHashMap.newKeySet();
 
+	/**
+	 * Framework packages that {@code doAutoDetection()} auto-injects into the
+	 * scan surface so built-in assets (protocols, serializers, security
+	 * primitives shipped with the framework) are discoverable without the
+	 * user repeating these names in every {@code ApiBuilder.builder()} call.
+	 * Opt-out via {@link #includeFrameworkPackages(boolean)}.
+	 */
+	static final String[] FRAMEWORK_PACKAGES = {"com.garganttua.api", "com.garganttua.core"};
+
+	private volatile boolean includeFrameworkPackages = true;
+
 	private volatile String superTenantId;
 
 	private volatile boolean superTenantAutoCreate = false;
@@ -87,15 +100,91 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private volatile IInjectionContext injectionContext;
 	private volatile AuthoritiesEndpointBuilder authoritiesEndpointBuilder;
 
+	// Owns its bootstrap by default; flipped to false on intoBootstrap(external).
+	// We still keep a reference to the external bootstrap so .bootstrap() works
+	// in both cases. owns=true means build() drives the bootstrap; owns=false
+	// means the caller is expected to drive it (or another registered builder
+	// will, transparently via Bootstrap's built-result caching).
+	private volatile IBoostrap bootstrap;
+	private volatile boolean ownsBootstrap = true;
+	// Re-entry guard: bootstrap.build() iterates registered builders and calls
+	// .build() on each — including this one. Without the flag, our override
+	// would call bootstrap.build() again from inside bootstrap.build(), and so on.
+	private volatile boolean inBootstrapDriven = false;
+
+	/**
+	 * Default entry point — creates a private {@link IBoostrap} with
+	 * auto-detection enabled and registers this {@code ApiBuilder} as the
+	 * primary builder. The caller is responsible for wiring whatever
+	 * reflection, injection and expression stack they want via the returned
+	 * builder's {@link IApiBuilder#bootstrap()} accessor (or by switching to a
+	 * shared bootstrap via {@link IApiBuilder#intoBootstrap(IBoostrap)}).
+	 *
+	 * <p>The framework deliberately does <em>not</em> pick an implementation —
+	 * choosing between AOT or runtime reflection, the injection context
+	 * factory, expression sources, etc. is the user's call. Auto-detection on
+	 * the bootstrap discovers any {@code @Bootstrap}-annotated builder
+	 * reachable on the classpath under the packages declared via
+	 * {@link IApiBuilder#packages(String...)}.
+	 *
+	 * <p>The companion ticket
+	 * {@code docs/CORE_EVOLUTION_bootstrap_reflection_defaults.md} proposes
+	 * shipping sensible defaults inside {@code ReflectionBuilder} itself so
+	 * that auto-detection produces a working reflection out of the box.
+	 */
 	public static IApiBuilder builder() {
-		return new ApiBuilder();
-				
+		// Both Bootstrap.builder() and the ApiBuilder constructor call
+		// IClass.getClass(...) eagerly to declare their dependencies — which
+		// requires a registered IReflection. If the user has not installed one
+		// yet, surface concrete guidance instead of bubbling the raw
+		// IllegalStateException from core.
+		try {
+			IBoostrap bootstrap = com.garganttua.core.bootstrap.dsl.Bootstrap.builder().autoDetect(true);
+			ApiBuilder ab = new ApiBuilder();
+			bootstrap.withBuilder(ab);
+			ab.bootstrap = bootstrap;
+			ab.ownsBootstrap = true;
+			return ab;
+		} catch (IllegalStateException e) {
+			if (e.getMessage() != null && e.getMessage().contains("No IReflection")) {
+				throw new ApiException(NO_REFLECTION_GUIDANCE, e);
+			}
+			throw e;
+		}
 	}
+
+	private static final String NO_REFLECTION_GUIDANCE =
+			"No IReflection installed — ApiBuilder needs one to declare its dependencies. "
+			+ "Install a reflection stack ONCE in your app's main() before calling ApiBuilder.builder(), e.g.:\n"
+			+ "\n"
+			+ "    IClass.setReflection(ReflectionBuilder.builder()\n"
+			+ "        .withProvider(new RuntimeReflectionProvider())     // garganttua-runtime-reflection\n"
+			+ "        .withScanner(new ReflectionsAnnotationScanner())   // garganttua-reflections\n"
+			+ "        .build());\n"
+			+ "\n"
+			+ "For AOT or custom stacks, see docs/CORE_EVOLUTION_bootstrap_reflection_defaults.md "
+			+ "(once that change lands in core, Bootstrap.autoDetect(true) will pick the providers "
+			+ "from the classpath automatically and this manual step disappears).";
+
+	private static final String BOOTSTRAP_BUILD_GUIDANCE =
+			"\n\nThe internal Bootstrap could not resolve its required builders. "
+			+ "Register the reflection / injection / expression trio before calling build():\n"
+			+ "\n"
+			+ "    apiBuilder.bootstrap()\n"
+			+ "        .provide(reflectionBuilder)              // satisfies Bootstrap require(IReflectionBuilder)\n"
+			+ "        .withBuilder(reflectionBuilder)\n"
+			+ "        .withBuilder(injectionContextBuilder)\n"
+			+ "        .withBuilder(expressionContextBuilder);\n"
+			+ "\n"
+			+ "If you prefer to share a Bootstrap across frameworks (api + events + …), use "
+			+ "apiBuilder.intoBootstrap(sharedBootstrap) and drive sharedBootstrap.build() yourself.";
 
 	@Override
 	public IApiBuilder superTenantId(String superTenantId) {
 		if (!this.multiTenant) {
-			throw new ApiException("Cannot set superTenantId when multi-tenancy is disabled");
+			throw new ApiException("Cannot set superTenantId — multi-tenancy is disabled (.multiTenant(false) was called or set as default). "
+					+ "Either keep multi-tenancy enabled (do not call .multiTenant(false)) if you need a super-tenant, "
+					+ "or drop the .superTenantId(...) call for a single-tenant app.");
 		}
 		this.superTenantId = Objects.requireNonNull(superTenantId, "Super tenant ID cannot be null");
 		return this;
@@ -128,7 +217,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	@Override
 	public IApiBuilder superTenantAutoCreate(boolean b) throws ApiException {
 		if (!this.multiTenant) {
-			throw new ApiException("Cannot set superTenantAutoCreate when multi-tenancy is disabled");
+			throw new ApiException("Cannot set superTenantAutoCreate — multi-tenancy is disabled. "
+					+ "Drop the .superTenantAutoCreate(...) call for single-tenant apps, or keep .multiTenant(true).");
 		}
 		this.superTenantAutoCreate = b;
 		return this;
@@ -137,10 +227,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	@Override
 	public IApiBuilder multiTenant(boolean enabled) throws ApiException {
 		if (!enabled && this.superTenantId != null) {
-			throw new ApiException("Cannot disable multi-tenancy when superTenantId is already set");
+			throw new ApiException("Cannot call .multiTenant(false) after .superTenantId(...) has been set. "
+					+ "A super-tenant only makes sense in multi-tenant mode — either remove the .superTenantId(...) call "
+					+ "or keep multi-tenancy enabled. (DSL is order-sensitive: set .multiTenant(false) first if that is what you want.)");
 		}
 		if (!enabled && this.superTenantAutoCreate) {
-			throw new ApiException("Cannot disable multi-tenancy when superTenantAutoCreate is already enabled");
+			throw new ApiException("Cannot call .multiTenant(false) after .superTenantAutoCreate(true) has been set. "
+					+ "Same reason as .superTenantId — remove the .superTenantAutoCreate(...) call or keep multi-tenancy enabled.");
 		}
 		this.multiTenant = enabled;
 		return this;
@@ -227,6 +320,12 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		for (String pkg : packageNames) {
 			this.withPackage(pkg);
 		}
+		return this;
+	}
+
+	@Override
+	public IApiBuilder includeFrameworkPackages(boolean include) {
+		this.includeFrameworkPackages = include;
 		return this;
 	}
 
@@ -341,9 +440,23 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		log.atTrace().log("Entering doBuild() method");
 
 		try {
-			// Ensure we have an injection context
+			// Ensure we have an injection context. Two paths:
+			//  - auto-bootstrap path: apiBuilder.bootstrap().withBuilder(injectionContextBuilder)
+			//    then bootstrap.build() provides it through provide()
+			//  - manual path: apiBuilder.provide(injectionContextBuilder).build()
 			if (this.injectionContext == null) {
-				throw new ApiException("InjectionContext is required but not provided");
+				throw new ApiException(
+						"InjectionContext is required but no IInjectionContextBuilder was provided.\n"
+						+ "\n"
+						+ "Auto-bootstrap path (default ApiBuilder.builder()):\n"
+						+ "    apiBuilder.bootstrap()\n"
+						+ "        .provide(reflectionBuilder)\n"
+						+ "        .withBuilder(reflectionBuilder)\n"
+						+ "        .withBuilder(injectionContextBuilder)\n"
+						+ "        .withBuilder(expressionContextBuilder);\n"
+						+ "\n"
+						+ "Manual path:\n"
+						+ "    ((IDependentBuilder) apiBuilder).provide(injectionContextBuilder);\n");
 			}
 
 			// Register default mapper as bean
@@ -444,12 +557,36 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	@Override
 	protected void doAutoDetection() throws ApiException {
 		log.atTrace().log("Entering doAutoDetection() method");
-		autoDetectSerializers();
-		autoDetectProtocols();
-		autoDetectAuthorizationProtocols();
+		// Framework packages contribute their built-in *assets* (serializers,
+		// protocols, authorization protocols) — never user-domain entities or
+		// user security configs, which live exclusively in user-declared
+		// packages. The split avoids dragging in @Entity*-annotated test
+		// fixtures of the framework's own test classpath when scanning
+		// com.garganttua.api / com.garganttua.core.
+		Set<String> assetScanPackages = assetScanSurface();
+		autoDetectSerializers(assetScanPackages);
+		autoDetectProtocols(assetScanPackages);
+		autoDetectAuthorizationProtocols(assetScanPackages);
 		new com.garganttua.api.core.builder.scan.EntityAnnotationScanner(this, this.packages).scan();
 		new com.garganttua.api.core.builder.scan.SecurityAnnotationScanner(this, this.packages).scan();
 		log.atTrace().log("Exiting doAutoDetection() method");
+	}
+
+	/**
+	 * Union of user-declared packages and the framework's own packages (when
+	 * {@link #includeFrameworkPackages(boolean)} is on — the default). Used
+	 * only by asset auto-detection ({@code @Serializer}, {@code @Protocol},
+	 * {@code @AuthorizationProtocol}) so the framework can ship built-in
+	 * implementations and have them picked up out of the box.
+	 */
+	private Set<String> assetScanSurface() {
+		Set<String> surface = new java.util.HashSet<>(this.packages);
+		if (this.includeFrameworkPackages) {
+			for (String pkg : FRAMEWORK_PACKAGES) {
+				surface.add(pkg);
+			}
+		}
+		return surface;
 	}
 
 	/**
@@ -550,8 +687,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	 * no-ops when no packages are configured or when no reflection scanner is
 	 * available (e.g. native image without pre-computed metadata).
 	 */
-	private void autoDetectSerializers() {
-		if (this.packages.isEmpty()) {
+	private void autoDetectSerializers(Set<String> scanSurface) {
+		if (scanSurface.isEmpty()) {
 			return;
 		}
 		com.garganttua.core.reflection.IReflection reflection;
@@ -569,7 +706,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 
 		int discovered = 0;
-		for (String pkg : this.packages) {
+		for (String pkg : scanSurface) {
 			List<IClass<?>> found = reflection.getClassesWithAnnotation(pkg, annotation);
 			for (IClass<?> clazz : found) {
 				ISerializer instance = instantiateSerializer(clazz);
@@ -582,7 +719,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 		if (discovered > 0) {
 			log.atDebug().log("Auto-detected {} @Serializer class(es) across {} package(s)",
-					discovered, this.packages.size());
+					discovered, scanSurface.size());
 		}
 	}
 
@@ -592,8 +729,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	 * {@link #autoDetectSerializers()}: no-op without packages or without a
 	 * reflection scanner; dedup by class against manually-registered protocols.
 	 */
-	private void autoDetectProtocols() {
-		if (this.packages.isEmpty()) {
+	private void autoDetectProtocols(Set<String> scanSurface) {
+		if (scanSurface.isEmpty()) {
 			return;
 		}
 		com.garganttua.core.reflection.IReflection reflection;
@@ -611,7 +748,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 
 		int discovered = 0;
-		for (String pkg : this.packages) {
+		for (String pkg : scanSurface) {
 			List<IClass<?>> found = reflection.getClassesWithAnnotation(pkg, annotation);
 			for (IClass<?> clazz : found) {
 				IProtocol<?, ?> instance = instantiateProtocol(clazz);
@@ -624,7 +761,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 		if (discovered > 0) {
 			log.atDebug().log("Auto-detected {} @Protocol class(es) across {} package(s)",
-					discovered, this.packages.size());
+					discovered, scanSurface.size());
 		}
 	}
 
@@ -633,8 +770,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	 * and registers their instances on the global authorization-protocol pool.
 	 * Mirrors {@link #autoDetectSerializers()} / {@link #autoDetectProtocols()}.
 	 */
-	private void autoDetectAuthorizationProtocols() {
-		if (this.packages.isEmpty()) {
+	private void autoDetectAuthorizationProtocols(Set<String> scanSurface) {
+		if (scanSurface.isEmpty()) {
 			return;
 		}
 		com.garganttua.core.reflection.IReflection reflection;
@@ -652,7 +789,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 
 		int discovered = 0;
-		for (String pkg : this.packages) {
+		for (String pkg : scanSurface) {
 			List<IClass<?>> found = reflection.getClassesWithAnnotation(pkg, annotation);
 			for (IClass<?> clazz : found) {
 				IAuthorizationProtocol instance = instantiateAuthorizationProtocol(clazz);
@@ -665,7 +802,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 		if (discovered > 0) {
 			log.atDebug().log("Auto-detected {} @AuthorizationProtocol class(es) across {} package(s)",
-					discovered, this.packages.size());
+					discovered, scanSurface.size());
 		}
 	}
 
@@ -751,6 +888,81 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 	boolean isMultiTenant() {
 		return this.multiTenant;
+	}
+
+	@Override
+	public IApiBuilder packages(String... packageNames) throws ApiException {
+		Objects.requireNonNull(packageNames, "packageNames cannot be null");
+		// Propagate through the bootstrap so reflection / injection / expression
+		// builders also see the user's packages, then mirror locally so our own
+		// scanners (EntityAnnotationScanner, SecurityAnnotationScanner) pick them up.
+		if (this.bootstrap != null) {
+			for (String pkg : packageNames) {
+				this.bootstrap.withPackage(Objects.requireNonNull(pkg, "package name cannot be null"));
+			}
+		}
+		for (String pkg : packageNames) {
+			this.withPackage(pkg);
+		}
+		return this;
+	}
+
+	@Override
+	public IBoostrap bootstrap() {
+		return this.bootstrap;
+	}
+
+	@Override
+	public IApiBuilder intoBootstrap(IBoostrap external) throws ApiException {
+		Objects.requireNonNull(external, "external bootstrap cannot be null");
+		if (this.bootstrap == external) {
+			return this;
+		}
+		// Re-attach to the external orchestrator. We can't un-register from the
+		// owned bootstrap (no removeBuilder API), but since we drop the reference
+		// here and never call .build() on it, it becomes garbage.
+		external.withBuilder(this);
+		this.bootstrap = external;
+		this.ownsBootstrap = false;
+		return this;
+	}
+
+	@Override
+	public IApi build() throws ApiException {
+		// Re-entry: Bootstrap.doBuild() is calling us during its own
+		// orchestration. Just defer to super so our doBuild() runs and caches `built`.
+		if (this.inBootstrapDriven || this.bootstrap == null) {
+			return super.build();
+		}
+		// Legacy/explicit path: the caller hand-wired dependencies via .provide(...).
+		// In that case our context-builder fields are already populated, and the
+		// caller controls the lifecycle (typically context.onInit() + .onStart()
+		// after build()). Driving bootstrap here would auto-init the IApi and
+		// then throw "Lifecycle already initialized" on the caller's onInit().
+		// So when the user took the manual route, we honour it.
+		if (this.injectionContextBuilder != null && this.expressionContextBuilder != null) {
+			return super.build();
+		}
+		try {
+			this.inBootstrapDriven = true;
+			if (this.ownsBootstrap) {
+				// Drive the owned orchestrator. Bootstrap auto-inits and auto-starts
+				// the IApi, so the returned object is ready to serve requests — the
+				// caller does NOT need to call onInit()/onStart() afterwards.
+				this.bootstrap.build();
+			}
+			return super.build();
+		} catch (DslException e) {
+			String msg = "Failed to build Api via bootstrap: " + e.getMessage();
+			// Specifically guide users when the cause is a missing required builder
+			// — the most common stumbling block when wiring a new app.
+			if (e.getMessage() != null && e.getMessage().contains("Required dependency")) {
+				msg = msg + BOOTSTRAP_BUILD_GUIDANCE;
+			}
+			throw new ApiException(msg, e);
+		} finally {
+			this.inBootstrapDriven = false;
+		}
 	}
 
 }
