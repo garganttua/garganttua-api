@@ -54,8 +54,11 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private String realmName;
         private String algorithm;
         private String signatureAlgorithm;
-        private byte[] publicMaterial;
-        private byte[] privateMaterial;
+        // IKey-typed key-material fields — the entity acts as an IKeyRealm
+        // shape, not a raw byte container. Stockage côté DTO assure le
+        // mapping IKey ↔ bytes pour les couches qui en ont besoin.
+        private com.garganttua.core.crypto.IKey publicMaterial;
+        private com.garganttua.core.crypto.IKey privateMaterial;
         private Instant expiration;
         private boolean revoked;
 
@@ -74,10 +77,10 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setAlgorithm(String algorithm) { this.algorithm = algorithm; }
         public String getSignatureAlgorithm() { return signatureAlgorithm; }
         public void setSignatureAlgorithm(String signatureAlgorithm) { this.signatureAlgorithm = signatureAlgorithm; }
-        public byte[] getPublicMaterial() { return publicMaterial; }
-        public void setPublicMaterial(byte[] publicMaterial) { this.publicMaterial = publicMaterial; }
-        public byte[] getPrivateMaterial() { return privateMaterial; }
-        public void setPrivateMaterial(byte[] privateMaterial) { this.privateMaterial = privateMaterial; }
+        public com.garganttua.core.crypto.IKey getPublicMaterial() { return publicMaterial; }
+        public void setPublicMaterial(com.garganttua.core.crypto.IKey publicMaterial) { this.publicMaterial = publicMaterial; }
+        public com.garganttua.core.crypto.IKey getPrivateMaterial() { return privateMaterial; }
+        public void setPrivateMaterial(com.garganttua.core.crypto.IKey privateMaterial) { this.privateMaterial = privateMaterial; }
         public Instant getExpiration() { return expiration; }
         public void setExpiration(Instant expiration) { this.expiration = expiration; }
         public boolean isRevoked() { return revoked; }
@@ -98,8 +101,11 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private String realmName;
         private String algorithm;
         private String signatureAlgorithm;
-        private byte[] publicMaterial;
-        private byte[] privateMaterial;
+        // IKey-typed: the in-memory test mapper copies the IKey reference
+        // through the entity ↔ DTO conversion. Production DBs would store
+        // the JDK-encoded bytes via a custom DTO/(de)serializer.
+        private com.garganttua.core.crypto.IKey publicMaterial;
+        private com.garganttua.core.crypto.IKey privateMaterial;
         private Instant expiration;
         private boolean revoked;
 
@@ -118,10 +124,10 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setAlgorithm(String algorithm) { this.algorithm = algorithm; }
         public String getSignatureAlgorithm() { return signatureAlgorithm; }
         public void setSignatureAlgorithm(String signatureAlgorithm) { this.signatureAlgorithm = signatureAlgorithm; }
-        public byte[] getPublicMaterial() { return publicMaterial; }
-        public void setPublicMaterial(byte[] publicMaterial) { this.publicMaterial = publicMaterial; }
-        public byte[] getPrivateMaterial() { return privateMaterial; }
-        public void setPrivateMaterial(byte[] privateMaterial) { this.privateMaterial = privateMaterial; }
+        public com.garganttua.core.crypto.IKey getPublicMaterial() { return publicMaterial; }
+        public void setPublicMaterial(com.garganttua.core.crypto.IKey publicMaterial) { this.publicMaterial = publicMaterial; }
+        public com.garganttua.core.crypto.IKey getPrivateMaterial() { return privateMaterial; }
+        public void setPrivateMaterial(com.garganttua.core.crypto.IKey privateMaterial) { this.privateMaterial = privateMaterial; }
         public Instant getExpiration() { return expiration; }
         public void setExpiration(Instant expiration) { this.expiration = expiration; }
         public boolean isRevoked() { return revoked; }
@@ -252,11 +258,11 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     .db(w.keyDao)
                 .up();
         keyBuilder.key()
-                .realmName("realmName")
-                .algorithm("algorithm")
+                .name("realmName")
+                .keyAlgorithm("algorithm")
                 .signatureAlgorithm("signatureAlgorithm")
-                .publicMaterial("publicMaterial")
-                .privateMaterial("privateMaterial")
+                .keyForSignatureVerification("publicMaterial")
+                .keyForSigning("privateMaterial")
                 .expiration("expiration")
                 .revoked("revoked")
                 .up();
@@ -398,10 +404,12 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             assertNotNull(token.getSignature(), "signature must be populated");
             assertTrue(token.getSignature().length > 0);
 
-            // Independently verify via JDK Signature, reusing the materialized public key bytes.
+            // Independently verify via JDK Signature, reusing the materialized public key bytes
+            // pulled out of the persisted IKey via its underlying JDK key encoding.
             CryptoKeyDto storedKey = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            byte[] publicBytes = storedKey.getPublicMaterial().getKey().getEncoded();
             java.security.PublicKey publicKey = java.security.KeyFactory.getInstance("EC")
-                    .generatePublic(new java.security.spec.X509EncodedKeySpec(storedKey.getPublicMaterial()));
+                    .generatePublic(new java.security.spec.X509EncodedKeySpec(publicBytes));
             java.security.Signature verifier = java.security.Signature.getInstance("SHA256withECDSA");
             verifier.initVerify(publicKey);
             verifier.update(token.getDataToSign());
@@ -436,8 +444,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     "both realm names must follow the per-tenant convention");
             assertNotEquals(k0.getRealmName(), k1.getRealmName(),
                     "the two tenant keys must have distinct realmNames");
-            assertFalse(java.util.Arrays.equals(k0.getPrivateMaterial(), k1.getPrivateMaterial()),
-                    "per-tenant keys must have distinct private material");
+            assertNotEquals(k0.getPrivateMaterial(), k1.getPrivateMaterial(),
+                    "per-tenant keys must have distinct private material (IKey.equals compares raw key bytes)");
         }
 
         @Test
@@ -494,8 +502,11 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     authenticateRequest("alice@example.com", "SUPER_TENANT"));
             assertEquals(0, first.code());
             CryptoKeyDto persisted = (CryptoKeyDto) w.keyDao.getStorage().get(0);
-            byte[] originalPrivate = persisted.getPrivateMaterial().clone();
-            byte[] originalPublic = persisted.getPublicMaterial().clone();
+            // Snapshot the underlying JDK-encoded bytes (the IKey itself is
+            // mutable-shaped via lazy JDK key reconstruction; we want a
+            // byte-level identity check).
+            byte[] originalPrivate = persisted.getPrivateMaterial().getKey().getEncoded();
+            byte[] originalPublic = persisted.getPublicMaterial().getKey().getEncoded();
 
             // Second call hits the lookup branch — the persisted bytes must remain identical
             WorkflowResult second = executeScript(w.userCtx,
@@ -503,9 +514,10 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             assertEquals(0, second.code());
             assertEquals(1, w.keyDao.getStorage().size());
             CryptoKeyDto afterLookup = (CryptoKeyDto) w.keyDao.getStorage().get(0);
-            assertArrayEquals(originalPrivate, afterLookup.getPrivateMaterial(),
-                    "lookup must not rewrite persisted bytes");
-            assertArrayEquals(originalPublic, afterLookup.getPublicMaterial());
+            assertArrayEquals(originalPrivate, afterLookup.getPrivateMaterial().getKey().getEncoded(),
+                    "lookup must not rewrite persisted private material");
+            assertArrayEquals(originalPublic, afterLookup.getPublicMaterial().getKey().getEncoded(),
+                    "lookup must not rewrite persisted public material");
         }
     }
 
@@ -586,7 +598,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                             w.userCtx, callerRequest("TENANT_A", null));
             assertEquals(1, w.keyDao.getStorage().size());
             CryptoKeyDto stored = (CryptoKeyDto) w.keyDao.getStorage().get(0);
-            byte[] originalPrivate = stored.getPrivateMaterial().clone();
+            byte[] originalPrivate = stored.getPrivateMaterial().getKey().getEncoded();
 
             // Force the persisted key to be in the past — emulates the key
             // outliving its configured lifeTime.
@@ -603,7 +615,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             assertEquals(2, w.keyDao.getStorage().size(),
                     "an expired key in storage must not be reused — the resolver must materialize a fresh key");
             CryptoKeyDto fresh = (CryptoKeyDto) w.keyDao.getStorage().get(1);
-            assertFalse(java.util.Arrays.equals(originalPrivate, fresh.getPrivateMaterial()),
+            assertFalse(java.util.Arrays.equals(originalPrivate, fresh.getPrivateMaterial().getKey().getEncoded()),
                     "the freshly generated key must have distinct private material from the expired one");
             assertTrue(fresh.getExpiration().isAfter(Instant.now()),
                     "the freshly generated key must have a future expiration");
@@ -668,8 +680,16 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             seed.setRealmName("cryptokeys:global");
             seed.setAlgorithm("EC-256");
             seed.setSignatureAlgorithm("SHA256");
-            seed.setPublicMaterial(pair.getPublic().getEncoded());
-            seed.setPrivateMaterial(pair.getPrivate().getEncoded());
+            seed.setPublicMaterial(com.garganttua.core.crypto.Key.fromSigningMaterial(
+                    com.garganttua.core.crypto.KeyType.PUBLIC,
+                    com.garganttua.core.crypto.KeyAlgorithm.EC_256,
+                    com.garganttua.core.crypto.SignatureAlgorithm.SHA256,
+                    pair.getPublic().getEncoded()));
+            seed.setPrivateMaterial(com.garganttua.core.crypto.Key.fromSigningMaterial(
+                    com.garganttua.core.crypto.KeyType.PRIVATE,
+                    com.garganttua.core.crypto.KeyAlgorithm.EC_256,
+                    com.garganttua.core.crypto.SignatureAlgorithm.SHA256,
+                    pair.getPrivate().getEncoded()));
             seed.setExpiration(Instant.now().plusSeconds(3600));
             seed.setRevoked(false);
             w.keyDao.save(seed);

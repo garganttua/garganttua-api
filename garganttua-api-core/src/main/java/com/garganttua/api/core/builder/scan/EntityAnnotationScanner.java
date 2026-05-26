@@ -41,9 +41,13 @@ import com.garganttua.api.commons.entity.annotations.EntityUuid;
 import com.garganttua.api.commons.security.annotations.Key;
 import com.garganttua.api.commons.security.annotations.KeyAlgorithm;
 import com.garganttua.api.commons.security.annotations.KeyExpiration;
-import com.garganttua.api.commons.security.annotations.KeyPrivateMaterial;
-import com.garganttua.api.commons.security.annotations.KeyPublicMaterial;
-import com.garganttua.api.commons.security.annotations.KeyRealmName;
+import com.garganttua.api.commons.security.annotations.KeyForDecryption;
+import com.garganttua.api.commons.security.annotations.KeyForEncryption;
+import com.garganttua.api.commons.security.annotations.KeyForSignatureVerification;
+import com.garganttua.api.commons.security.annotations.KeyForSigning;
+import com.garganttua.api.commons.security.annotations.KeyName;
+import com.garganttua.api.commons.security.annotations.KeyRotate;
+import com.garganttua.api.commons.security.annotations.KeyVersion;
 import com.garganttua.api.commons.security.annotations.KeyRevoked;
 import com.garganttua.api.commons.security.annotations.KeySignatureAlgorithm;
 import com.garganttua.api.commons.context.dsl.IDomainKeyBuilder;
@@ -161,10 +165,12 @@ public final class EntityAnnotationScanner {
 
     /**
      * If the entity carries {@link Key}, materialize the key sub-builder
-     * via {@code domain.key()} and wire each
-     * {@link KeyRealmName}/{@link KeyAlgorithm}/{@link KeySignatureAlgorithm}/
-     * {@link KeyPublicMaterial}/{@link KeyPrivateMaterial}/{@link KeyExpiration}/
-     * {@link KeyRevoked} field via the matching setter on the sub-builder.
+     * via {@code domain.key()} and wire each field-level marker to the
+     * matching DSL setter. The marker set mirrors {@code IKeyRealm}'s
+     * public surface — {@link KeyName}/{@link KeyAlgorithm}/{@link KeySignatureAlgorithm}/
+     * {@link KeyForSigning}/{@link KeyForSignatureVerification}/{@link KeyForEncryption}/
+     * {@link KeyForDecryption}/{@link KeyExpiration}/{@link KeyRevoked}/
+     * {@link KeyVersion}/{@link KeyRotate}.
      */
     private void applyKeyRole(IReflection reflection, IDomainBuilder<Object> domain, IClass<?> entityClass)
             throws ApiException {
@@ -173,20 +179,28 @@ public final class EntityAnnotationScanner {
         }
         IDomainKeyBuilder<Object> keyBuilder = domain.key();
 
-        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyRealmName.class))
-                .ifPresent(f -> apply(() -> keyBuilder.realmName(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyName.class))
+                .ifPresent(f -> apply(() -> keyBuilder.name(f.getName())));
         reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyAlgorithm.class))
-                .ifPresent(f -> apply(() -> keyBuilder.algorithm(f.getName())));
+                .ifPresent(f -> apply(() -> keyBuilder.keyAlgorithm(f.getName())));
         reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeySignatureAlgorithm.class))
                 .ifPresent(f -> apply(() -> keyBuilder.signatureAlgorithm(f.getName())));
-        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyPublicMaterial.class))
-                .ifPresent(f -> apply(() -> keyBuilder.publicMaterial(f.getName())));
-        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyPrivateMaterial.class))
-                .ifPresent(f -> apply(() -> keyBuilder.privateMaterial(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyForSigning.class))
+                .ifPresent(f -> apply(() -> keyBuilder.keyForSigning(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyForSignatureVerification.class))
+                .ifPresent(f -> apply(() -> keyBuilder.keyForSignatureVerification(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyForEncryption.class))
+                .ifPresent(f -> apply(() -> keyBuilder.keyForEncryption(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyForDecryption.class))
+                .ifPresent(f -> apply(() -> keyBuilder.keyForDecryption(f.getName())));
         reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyExpiration.class))
                 .ifPresent(f -> apply(() -> keyBuilder.expiration(f.getName())));
         reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyRevoked.class))
                 .ifPresent(f -> apply(() -> keyBuilder.revoked(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyVersion.class))
+                .ifPresent(f -> apply(() -> keyBuilder.version(f.getName())));
+        reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyRotate.class))
+                .ifPresent(f -> apply(() -> keyBuilder.rotate(f.getName())));
     }
 
     @FunctionalInterface

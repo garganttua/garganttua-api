@@ -718,8 +718,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 					throw new ApiException("Domain '" + domain.getDomainName()
 							+ "' references key domain '" + keyDomain.getDomainName()
 							+ "' which is not marked as a @Key domain. Annotate the entity with @Key "
-							+ "and its fields with @KeyRealmName / @KeyAlgorithm / @KeySignatureAlgorithm / "
-							+ "@KeyPublicMaterial / @KeyPrivateMaterial, or call .key().realmName(...)... "
+							+ "and its fields with @KeyName / @KeyAlgorithm / @KeySignatureAlgorithm / "
+							+ "@KeyForSigning / @KeyForSignatureVerification, or call .key().name(...)... "
 							+ "on its domain builder.");
 				}
 

@@ -1,10 +1,14 @@
 #!/usr/bin/env gs
 
 #@workflow
-#  Creates an authorization token after successful authentication.
+#  Creates (or reuses) an authorization token after successful authentication.
 #
 #  Receives the authentication result from the authenticate stage via the
-#  workflow output variable. Creates a new authorization entity with the
+#  workflow output variable. When the authorization is storable, first looks
+#  up an existing non-expired authorization for this principal and reuses it
+#  (no new entity is created, no second persist hits the DB, no re-sign is
+#  applied — the stored bytes are already cryptographically valid). When the
+#  stored authorization is expired or none exists, mints a fresh one with the
 #  principal's uuid, tenantId, authorities, and configured expiration.
 #
 #  @in  operationRequest: IOperationRequest
@@ -19,6 +23,22 @@
 // Skip if no auth result (authentication failed)
 requirePresent(if(notNull(@3), 1))
 ! -> 0
+
+// If the authorization is storable, look up an existing non-expired
+// authorization for this principal in the linked authorization domain.
+// Returns null when not storable or none reusable.
+output <- findReusableAuthorization(@2, @3)
+! => recordCaughtException(@0, @exception) -> 500
+
+// Branch: when @output is set (reuse path), `if(isNull(@output),1)` returns
+// empty, requirePresent throws, and the catch handler publishes the encoded
+// wire form on the request, then terminates the script with code 0. When
+// @output is null (no reuse), `if(isNull(@output),1)` returns 1, requirePresent
+// passes, and the script falls through to the fresh-create block below.
+requirePresent(if(isNull(@output), 1))
+! => publishReusedAuthorization(@output, @2, @0) -> 0
+
+// ===== fresh-create branch =====
 
 // Create authorization entity from the auth result and domain context
 output <- createAuthorizationEntity2(@3, @2)

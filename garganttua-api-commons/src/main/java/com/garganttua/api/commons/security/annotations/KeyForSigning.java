@@ -6,12 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Field-level marker for the encoded public key material of a
- * {@link Key}-marked entity. Type: {@code byte[]}. Typically the
- * X.509-encoded form returned by {@code PublicKey.getEncoded()}.
+ * Field-level marker for the bytes returned by
+ * {@code IKeyRealm.getKeyForSigning().getKey().getEncoded()} — i.e.
+ * the JDK PKCS#8 form of the private/secret key used to produce
+ * signatures. Type: {@code byte[]}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface KeyPublicMaterial {
+public @interface KeyForSigning {
 
 }

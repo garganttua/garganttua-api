@@ -19,10 +19,12 @@ import java.lang.annotation.Target;
  * oneForEach).
  *
  * <p>An entity marked {@code @Key} is expected to also declare the
- * matching field-level annotations: {@link KeyRealmName},
- * {@link KeyAlgorithm}, {@link KeySignatureAlgorithm},
- * {@link KeyPublicMaterial}, {@link KeyPrivateMaterial},
- * {@link KeyExpiration}, {@link KeyRevoked}.
+ * field-level annotations that mirror {@code IKeyRealm}'s public
+ * surface: {@link KeyName}, {@link KeyAlgorithm},
+ * {@link KeySignatureAlgorithm}, {@link KeyForSigning},
+ * {@link KeyForSignatureVerification}, {@link KeyForEncryption},
+ * {@link KeyForDecryption}, {@link KeyExpiration}, {@link KeyRevoked},
+ * {@link KeyVersion}, {@link KeyRotate}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

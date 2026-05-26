@@ -275,8 +275,7 @@ public abstract class AbstractCrudIntegrationTest {
                     List<Object> result = new ArrayList<>();
                     for (Object obj : list) {
                         try {
-                            java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
-                            field.setAccessible(true);
+                            java.lang.reflect.Field field = readField(obj, fieldName);
                             Object actual = field.get(obj);
                             if (expected != null && expected.equals(actual)) {
                                 result.add(obj);
@@ -285,8 +284,37 @@ public abstract class AbstractCrudIntegrationTest {
                     }
                     return result;
                 }
+                if ("$gt".equals(operator.getName())) {
+                    Object threshold = operator.getValue();
+                    if (threshold == null) return list;
+                    List<Object> result = new ArrayList<>();
+                    for (Object obj : list) {
+                        try {
+                            java.lang.reflect.Field field = readField(obj, fieldName);
+                            Object actual = field.get(obj);
+                            if (actual instanceof Comparable<?> && compareSafely(actual, threshold) > 0) {
+                                result.add(obj);
+                            }
+                        } catch (Exception e) { /* skip */ }
+                    }
+                    return result;
+                }
             }
             return list;
+        }
+
+        private static java.lang.reflect.Field readField(Object obj, String fieldName) throws NoSuchFieldException {
+            java.lang.reflect.Field field = obj.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field;
+        }
+
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        private static int compareSafely(Object actual, Object threshold) {
+            // Comparable contract: both operands must be of the same (or compatible)
+            // type. The framework filters built by lookupValidAuthorization use the
+            // same Instant type as the stored entity field, so this is safe here.
+            return ((Comparable) actual).compareTo(threshold);
         }
 
         @Override

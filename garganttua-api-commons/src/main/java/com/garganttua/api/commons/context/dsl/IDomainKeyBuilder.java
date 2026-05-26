@@ -7,35 +7,40 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.ObjectAddress;
 
 /**
- * Sub-builder declaring a domain as a key domain — i.e. the entity holds
- * cryptographic key material that the framework can persist and look up
- * via the auto-create path driven by
- * {@code AuthenticatorKeyUsage} (oneForAll / oneForTenant / oneForEach).
+ * Sub-builder declaring a domain as a key domain. The method surface is
+ * derived from {@code com.garganttua.core.crypto.IKeyRealm} so that the
+ * user can pick any entity class — {@code KeyRealm} (core's reference
+ * implementation, ready to use as-is) or a custom POJO — and bind its
+ * fields to the corresponding {@code IKeyRealm} members.
  *
  * <p>Each setter binds the address of the entity field that holds the
- * matching piece of material or metadata. The field-level
- * {@code @KeyRealmName}, {@code @KeyAlgorithm}, {@code @KeySignatureAlgorithm},
- * {@code @KeyPublicMaterial}, {@code @KeyPrivateMaterial},
- * {@code @KeyExpiration}, {@code @KeyRevoked} annotations are read by
- * the entity-role scanner and call these setters automatically when an
- * entity is marked with {@code @Key}.
+ * matching piece of material or metadata. The field-level annotations
+ * ({@code @KeyName}, {@code @KeyAlgorithm}, {@code @KeySigningMaterial}…)
+ * are read by the entity-role scanner and call these setters automatically
+ * when an entity is marked with {@code @Key}.
  *
  * @param <E> the key entity type
  */
 public interface IDomainKeyBuilder<E> extends
         IAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainBuilder<E>, IDomainKeyContext> {
 
-    IDomainKeyBuilder<E> realmName(String fieldName) throws ApiException;
+    // ───── IKeyRealm.getName() ─────
 
-    IDomainKeyBuilder<E> realmName(IField field) throws ApiException;
+    IDomainKeyBuilder<E> name(String fieldName) throws ApiException;
 
-    IDomainKeyBuilder<E> realmName(ObjectAddress fieldAddress) throws ApiException;
+    IDomainKeyBuilder<E> name(IField field) throws ApiException;
 
-    IDomainKeyBuilder<E> algorithm(String fieldName) throws ApiException;
+    IDomainKeyBuilder<E> name(ObjectAddress fieldAddress) throws ApiException;
 
-    IDomainKeyBuilder<E> algorithm(IField field) throws ApiException;
+    // ───── IKeyRealm.getKeyAlgorithm() ─────
 
-    IDomainKeyBuilder<E> algorithm(ObjectAddress fieldAddress) throws ApiException;
+    IDomainKeyBuilder<E> keyAlgorithm(String fieldName) throws ApiException;
+
+    IDomainKeyBuilder<E> keyAlgorithm(IField field) throws ApiException;
+
+    IDomainKeyBuilder<E> keyAlgorithm(ObjectAddress fieldAddress) throws ApiException;
+
+    // ───── IKey.getSignatureAlgorithm() (carried on the signing/verification IKey) ─────
 
     IDomainKeyBuilder<E> signatureAlgorithm(String fieldName) throws ApiException;
 
@@ -43,17 +48,39 @@ public interface IDomainKeyBuilder<E> extends
 
     IDomainKeyBuilder<E> signatureAlgorithm(ObjectAddress fieldAddress) throws ApiException;
 
-    IDomainKeyBuilder<E> publicMaterial(String fieldName) throws ApiException;
+    // ───── IKeyRealm.getKeyForSigning() — PKCS#8 bytes ─────
 
-    IDomainKeyBuilder<E> publicMaterial(IField field) throws ApiException;
+    IDomainKeyBuilder<E> keyForSigning(String fieldName) throws ApiException;
 
-    IDomainKeyBuilder<E> publicMaterial(ObjectAddress fieldAddress) throws ApiException;
+    IDomainKeyBuilder<E> keyForSigning(IField field) throws ApiException;
 
-    IDomainKeyBuilder<E> privateMaterial(String fieldName) throws ApiException;
+    IDomainKeyBuilder<E> keyForSigning(ObjectAddress fieldAddress) throws ApiException;
 
-    IDomainKeyBuilder<E> privateMaterial(IField field) throws ApiException;
+    // ───── IKeyRealm.getKeyForSignatureVerification() — X.509 bytes ─────
 
-    IDomainKeyBuilder<E> privateMaterial(ObjectAddress fieldAddress) throws ApiException;
+    IDomainKeyBuilder<E> keyForSignatureVerification(String fieldName) throws ApiException;
+
+    IDomainKeyBuilder<E> keyForSignatureVerification(IField field) throws ApiException;
+
+    IDomainKeyBuilder<E> keyForSignatureVerification(ObjectAddress fieldAddress) throws ApiException;
+
+    // ───── IKeyRealm.getKeyForEncryption() — JDK-encoded bytes ─────
+
+    IDomainKeyBuilder<E> keyForEncryption(String fieldName) throws ApiException;
+
+    IDomainKeyBuilder<E> keyForEncryption(IField field) throws ApiException;
+
+    IDomainKeyBuilder<E> keyForEncryption(ObjectAddress fieldAddress) throws ApiException;
+
+    // ───── IKeyRealm.getKeyForDecryption() — JDK-encoded bytes ─────
+
+    IDomainKeyBuilder<E> keyForDecryption(String fieldName) throws ApiException;
+
+    IDomainKeyBuilder<E> keyForDecryption(IField field) throws ApiException;
+
+    IDomainKeyBuilder<E> keyForDecryption(ObjectAddress fieldAddress) throws ApiException;
+
+    // ───── IKeyRealm.getExpiration() / isExpired() ─────
 
     IDomainKeyBuilder<E> expiration(String fieldName) throws ApiException;
 
@@ -61,9 +88,27 @@ public interface IDomainKeyBuilder<E> extends
 
     IDomainKeyBuilder<E> expiration(ObjectAddress fieldAddress) throws ApiException;
 
+    // ───── IKeyRealm.isRevoked() / revoke() ─────
+
     IDomainKeyBuilder<E> revoked(String fieldName) throws ApiException;
 
     IDomainKeyBuilder<E> revoked(IField field) throws ApiException;
 
     IDomainKeyBuilder<E> revoked(ObjectAddress fieldAddress) throws ApiException;
+
+    // ───── IKeyRealm.getVersion() ─────
+
+    IDomainKeyBuilder<E> version(String fieldName) throws ApiException;
+
+    IDomainKeyBuilder<E> version(IField field) throws ApiException;
+
+    IDomainKeyBuilder<E> version(ObjectAddress fieldAddress) throws ApiException;
+
+    // ───── IKeyRealm.rotate() — last-rotation timestamp ─────
+
+    IDomainKeyBuilder<E> rotate(String fieldName) throws ApiException;
+
+    IDomainKeyBuilder<E> rotate(IField field) throws ApiException;
+
+    IDomainKeyBuilder<E> rotate(ObjectAddress fieldAddress) throws ApiException;
 }

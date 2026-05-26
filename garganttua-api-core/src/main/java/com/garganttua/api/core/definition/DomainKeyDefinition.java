@@ -4,12 +4,16 @@ import com.garganttua.api.commons.definition.IDomainKeyDefinition;
 import com.garganttua.core.reflection.ObjectAddress;
 
 public record DomainKeyDefinition(
-		ObjectAddress realmName,
-		ObjectAddress algorithm,
+		ObjectAddress name,
+		ObjectAddress keyAlgorithm,
 		ObjectAddress signatureAlgorithm,
-		ObjectAddress publicMaterial,
-		ObjectAddress privateMaterial,
+		ObjectAddress keyForSigning,
+		ObjectAddress keyForSignatureVerification,
+		ObjectAddress keyForEncryption,
+		ObjectAddress keyForDecryption,
 		ObjectAddress expiration,
-		ObjectAddress revoked) implements IDomainKeyDefinition {
+		ObjectAddress revoked,
+		ObjectAddress version,
+		ObjectAddress rotate) implements IDomainKeyDefinition {
 
 }

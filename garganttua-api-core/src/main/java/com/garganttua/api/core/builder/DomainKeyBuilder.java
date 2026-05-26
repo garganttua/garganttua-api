@@ -16,14 +16,12 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
 
 /**
- * DSL impl that records the key-entity field layout (realmName,
- * algorithm, signatureAlgorithm, publicMaterial, privateMaterial,
- * expiration, revoked) and produces a {@link DomainKeyDefinition}
- * consumed by the runtime auto-create / lookup path.
- *
- * <p>Each setter resolves the supplied String / IField / ObjectAddress
- * against the parent domain's entity class — exactly the pattern used
- * by {@link EntityBuilder}.
+ * DSL impl that records the key-entity field layout — eleven addresses
+ * mirroring {@code com.garganttua.core.crypto.IKeyRealm}'s public surface —
+ * and produces a {@link DomainKeyDefinition} consumed by the runtime
+ * auto-create / lookup path. Each setter resolves the supplied
+ * String / IField / ObjectAddress against the parent domain's entity
+ * class — exactly the pattern used by {@link EntityBuilder}.
  */
 public class DomainKeyBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainBuilder<E>, IDomainKeyContext>
@@ -36,56 +34,60 @@ public class DomainKeyBuilder<E>
     }
 
     private final IClass<?> entityClass;
-    private ObjectAddress realmName;
-    private ObjectAddress algorithm;
+    private ObjectAddress name;
+    private ObjectAddress keyAlgorithm;
     private ObjectAddress signatureAlgorithm;
-    private ObjectAddress publicMaterial;
-    private ObjectAddress privateMaterial;
+    private ObjectAddress keyForSigning;
+    private ObjectAddress keyForSignatureVerification;
+    private ObjectAddress keyForEncryption;
+    private ObjectAddress keyForDecryption;
     private ObjectAddress expiration;
     private ObjectAddress revoked;
+    private ObjectAddress version;
+    private ObjectAddress rotate;
 
     public DomainKeyBuilder(IDomainBuilder<E> domainBuilder, IClass<?> entityClass) {
         super(domainBuilder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
-    // ───── realmName ─────
+    // ───── name ─────
 
     @Override
-    public IDomainKeyBuilder<E> realmName(String fieldName) throws ApiException {
-        this.realmName = resolve(fieldName, String.class);
+    public IDomainKeyBuilder<E> name(String fieldName) throws ApiException {
+        this.name = resolve(fieldName, String.class);
         return this;
     }
 
     @Override
-    public IDomainKeyBuilder<E> realmName(IField field) throws ApiException {
-        this.realmName = resolve(field, String.class);
+    public IDomainKeyBuilder<E> name(IField field) throws ApiException {
+        this.name = resolve(field, String.class);
         return this;
     }
 
     @Override
-    public IDomainKeyBuilder<E> realmName(ObjectAddress fieldAddress) throws ApiException {
-        this.realmName = resolve(fieldAddress, String.class);
+    public IDomainKeyBuilder<E> name(ObjectAddress fieldAddress) throws ApiException {
+        this.name = resolve(fieldAddress, String.class);
         return this;
     }
 
-    // ───── algorithm ─────
+    // ───── keyAlgorithm ─────
 
     @Override
-    public IDomainKeyBuilder<E> algorithm(String fieldName) throws ApiException {
-        this.algorithm = resolve(fieldName, String.class);
-        return this;
-    }
-
-    @Override
-    public IDomainKeyBuilder<E> algorithm(IField field) throws ApiException {
-        this.algorithm = resolve(field, String.class);
+    public IDomainKeyBuilder<E> keyAlgorithm(String fieldName) throws ApiException {
+        this.keyAlgorithm = resolve(fieldName, String.class);
         return this;
     }
 
     @Override
-    public IDomainKeyBuilder<E> algorithm(ObjectAddress fieldAddress) throws ApiException {
-        this.algorithm = resolve(fieldAddress, String.class);
+    public IDomainKeyBuilder<E> keyAlgorithm(IField field) throws ApiException {
+        this.keyAlgorithm = resolve(field, String.class);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> keyAlgorithm(ObjectAddress fieldAddress) throws ApiException {
+        this.keyAlgorithm = resolve(fieldAddress, String.class);
         return this;
     }
 
@@ -109,43 +111,83 @@ public class DomainKeyBuilder<E>
         return this;
     }
 
-    // ───── publicMaterial ─────
+    // ───── keyForSigning ─────
 
     @Override
-    public IDomainKeyBuilder<E> publicMaterial(String fieldName) throws ApiException {
-        this.publicMaterial = resolve(fieldName, byte[].class);
+    public IDomainKeyBuilder<E> keyForSigning(String fieldName) throws ApiException {
+        this.keyForSigning = resolve(fieldName, com.garganttua.core.crypto.IKey.class);
         return this;
     }
 
     @Override
-    public IDomainKeyBuilder<E> publicMaterial(IField field) throws ApiException {
-        this.publicMaterial = resolve(field, byte[].class);
+    public IDomainKeyBuilder<E> keyForSigning(IField field) throws ApiException {
+        this.keyForSigning = resolve(field, com.garganttua.core.crypto.IKey.class);
         return this;
     }
 
     @Override
-    public IDomainKeyBuilder<E> publicMaterial(ObjectAddress fieldAddress) throws ApiException {
-        this.publicMaterial = resolve(fieldAddress, byte[].class);
+    public IDomainKeyBuilder<E> keyForSigning(ObjectAddress fieldAddress) throws ApiException {
+        this.keyForSigning = resolve(fieldAddress, com.garganttua.core.crypto.IKey.class);
         return this;
     }
 
-    // ───── privateMaterial ─────
+    // ───── keyForSignatureVerification ─────
 
     @Override
-    public IDomainKeyBuilder<E> privateMaterial(String fieldName) throws ApiException {
-        this.privateMaterial = resolve(fieldName, byte[].class);
-        return this;
-    }
-
-    @Override
-    public IDomainKeyBuilder<E> privateMaterial(IField field) throws ApiException {
-        this.privateMaterial = resolve(field, byte[].class);
+    public IDomainKeyBuilder<E> keyForSignatureVerification(String fieldName) throws ApiException {
+        this.keyForSignatureVerification = resolve(fieldName, com.garganttua.core.crypto.IKey.class);
         return this;
     }
 
     @Override
-    public IDomainKeyBuilder<E> privateMaterial(ObjectAddress fieldAddress) throws ApiException {
-        this.privateMaterial = resolve(fieldAddress, byte[].class);
+    public IDomainKeyBuilder<E> keyForSignatureVerification(IField field) throws ApiException {
+        this.keyForSignatureVerification = resolve(field, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> keyForSignatureVerification(ObjectAddress fieldAddress) throws ApiException {
+        this.keyForSignatureVerification = resolve(fieldAddress, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    // ───── keyForEncryption ─────
+
+    @Override
+    public IDomainKeyBuilder<E> keyForEncryption(String fieldName) throws ApiException {
+        this.keyForEncryption = resolve(fieldName, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> keyForEncryption(IField field) throws ApiException {
+        this.keyForEncryption = resolve(field, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> keyForEncryption(ObjectAddress fieldAddress) throws ApiException {
+        this.keyForEncryption = resolve(fieldAddress, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    // ───── keyForDecryption ─────
+
+    @Override
+    public IDomainKeyBuilder<E> keyForDecryption(String fieldName) throws ApiException {
+        this.keyForDecryption = resolve(fieldName, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> keyForDecryption(IField field) throws ApiException {
+        this.keyForDecryption = resolve(field, com.garganttua.core.crypto.IKey.class);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> keyForDecryption(ObjectAddress fieldAddress) throws ApiException {
+        this.keyForDecryption = resolve(fieldAddress, com.garganttua.core.crypto.IKey.class);
         return this;
     }
 
@@ -191,18 +233,64 @@ public class DomainKeyBuilder<E>
         return this;
     }
 
+    // ───── version ─────
+
+    @Override
+    public IDomainKeyBuilder<E> version(String fieldName) throws ApiException {
+        // int | Integer both accepted.
+        this.version = resolve(fieldName, null);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> version(IField field) throws ApiException {
+        this.version = resolve(field, null);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> version(ObjectAddress fieldAddress) throws ApiException {
+        this.version = resolve(fieldAddress, null);
+        return this;
+    }
+
+    // ───── rotate ─────
+
+    @Override
+    public IDomainKeyBuilder<E> rotate(String fieldName) throws ApiException {
+        // Date / Instant / Long all accepted — same shape as expiration.
+        this.rotate = resolve(fieldName, null);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> rotate(IField field) throws ApiException {
+        this.rotate = resolve(field, null);
+        return this;
+    }
+
+    @Override
+    public IDomainKeyBuilder<E> rotate(ObjectAddress fieldAddress) throws ApiException {
+        this.rotate = resolve(fieldAddress, null);
+        return this;
+    }
+
     // ───── build / auto-detect ─────
 
     @Override
     protected synchronized IDomainKeyContext doBuild() throws ApiException {
         return new DomainKeyContext(new DomainKeyDefinition(
-                this.realmName,
-                this.algorithm,
+                this.name,
+                this.keyAlgorithm,
                 this.signatureAlgorithm,
-                this.publicMaterial,
-                this.privateMaterial,
+                this.keyForSigning,
+                this.keyForSignatureVerification,
+                this.keyForEncryption,
+                this.keyForDecryption,
                 this.expiration,
-                this.revoked));
+                this.revoked,
+                this.version,
+                this.rotate));
     }
 
     @Override

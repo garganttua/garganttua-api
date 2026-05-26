@@ -28,9 +28,9 @@ import com.garganttua.api.commons.entity.annotations.EntityUuid;
 import com.garganttua.api.commons.security.annotations.Key;
 import com.garganttua.api.commons.security.annotations.KeyAlgorithm;
 import com.garganttua.api.commons.security.annotations.KeyExpiration;
-import com.garganttua.api.commons.security.annotations.KeyPrivateMaterial;
-import com.garganttua.api.commons.security.annotations.KeyPublicMaterial;
-import com.garganttua.api.commons.security.annotations.KeyRealmName;
+import com.garganttua.api.commons.security.annotations.KeyForSignatureVerification;
+import com.garganttua.api.commons.security.annotations.KeyForSigning;
+import com.garganttua.api.commons.security.annotations.KeyName;
 import com.garganttua.api.commons.security.annotations.KeyRevoked;
 import com.garganttua.api.commons.security.annotations.KeySignatureAlgorithm;
 import com.garganttua.api.core.context.Api;
@@ -57,11 +57,11 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         @EntityUuid private String uuid;
         @EntityTenantId private String tenantId;
 
-        @KeyRealmName private String realmName;
+        @KeyName private String name;
         @KeyAlgorithm private String algorithm;
         @KeySignatureAlgorithm private String signatureAlgorithm;
-        @KeyPublicMaterial private byte[] publicMaterial;
-        @KeyPrivateMaterial private byte[] privateMaterial;
+        @KeyForSignatureVerification private com.garganttua.core.crypto.IKey publicMaterial;
+        @KeyForSigning private com.garganttua.core.crypto.IKey privateMaterial;
         @KeyExpiration private Instant expiration;
         @KeyRevoked private boolean revoked;
 
@@ -71,16 +71,16 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
-        public String getRealmName() { return realmName; }
-        public void setRealmName(String realmName) { this.realmName = realmName; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
         public String getAlgorithm() { return algorithm; }
         public void setAlgorithm(String algorithm) { this.algorithm = algorithm; }
         public String getSignatureAlgorithm() { return signatureAlgorithm; }
         public void setSignatureAlgorithm(String signatureAlgorithm) { this.signatureAlgorithm = signatureAlgorithm; }
-        public byte[] getPublicMaterial() { return publicMaterial; }
-        public void setPublicMaterial(byte[] publicMaterial) { this.publicMaterial = publicMaterial; }
-        public byte[] getPrivateMaterial() { return privateMaterial; }
-        public void setPrivateMaterial(byte[] privateMaterial) { this.privateMaterial = privateMaterial; }
+        public com.garganttua.core.crypto.IKey getPublicMaterial() { return publicMaterial; }
+        public void setPublicMaterial(com.garganttua.core.crypto.IKey publicMaterial) { this.publicMaterial = publicMaterial; }
+        public com.garganttua.core.crypto.IKey getPrivateMaterial() { return privateMaterial; }
+        public void setPrivateMaterial(com.garganttua.core.crypto.IKey privateMaterial) { this.privateMaterial = privateMaterial; }
         public Instant getExpiration() { return expiration; }
         public void setExpiration(Instant expiration) { this.expiration = expiration; }
         public boolean isRevoked() { return revoked; }
@@ -178,26 +178,34 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         // Every field annotation has produced a non-null ObjectAddress pointing
         // at the right entity field. The address last element matches the field
         // name (the only path component for a flat entity).
-        assertNotNull(keyDef.realmName(), "@KeyRealmName must populate realmName()");
-        assertEquals("realmName", keyDef.realmName().getElement(0));
+        assertNotNull(keyDef.name(), "@KeyName must populate name()");
+        assertEquals("name", keyDef.name().getElement(0));
 
-        assertNotNull(keyDef.algorithm(), "@KeyAlgorithm must populate algorithm()");
-        assertEquals("algorithm", keyDef.algorithm().getElement(0));
+        assertNotNull(keyDef.keyAlgorithm(), "@KeyAlgorithm must populate keyAlgorithm()");
+        assertEquals("algorithm", keyDef.keyAlgorithm().getElement(0));
 
         assertNotNull(keyDef.signatureAlgorithm(), "@KeySignatureAlgorithm must populate signatureAlgorithm()");
         assertEquals("signatureAlgorithm", keyDef.signatureAlgorithm().getElement(0));
 
-        assertNotNull(keyDef.publicMaterial(), "@KeyPublicMaterial must populate publicMaterial()");
-        assertEquals("publicMaterial", keyDef.publicMaterial().getElement(0));
+        assertNotNull(keyDef.keyForSignatureVerification(),
+                "@KeyForSignatureVerification must populate keyForSignatureVerification()");
+        assertEquals("publicMaterial", keyDef.keyForSignatureVerification().getElement(0));
 
-        assertNotNull(keyDef.privateMaterial(), "@KeyPrivateMaterial must populate privateMaterial()");
-        assertEquals("privateMaterial", keyDef.privateMaterial().getElement(0));
+        assertNotNull(keyDef.keyForSigning(), "@KeyForSigning must populate keyForSigning()");
+        assertEquals("privateMaterial", keyDef.keyForSigning().getElement(0));
 
         assertNotNull(keyDef.expiration(), "@KeyExpiration must populate expiration()");
         assertEquals("expiration", keyDef.expiration().getElement(0));
 
         assertNotNull(keyDef.revoked(), "@KeyRevoked must populate revoked()");
         assertEquals("revoked", keyDef.revoked().getElement(0));
+
+        // The new optional IKeyRealm-mirroring addresses are null because the
+        // AutoKey test fixture only declares the legacy 7-field set.
+        assertNull(keyDef.keyForEncryption(), "AutoKey has no @KeyForEncryption → null keyForEncryption()");
+        assertNull(keyDef.keyForDecryption(), "AutoKey has no @KeyForDecryption → null keyForDecryption()");
+        assertNull(keyDef.version(), "AutoKey has no @KeyVersion → null version()");
+        assertNull(keyDef.rotate(), "AutoKey has no @KeyRotate → null rotate()");
     }
 
     @Test
@@ -233,13 +241,18 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         // No field annotations → every address is null. The resolver will
         // throw a parlant error at runtime if anyone tries to materialize a
         // realm against this incomplete definition.
-        assertNull(keyDef.realmName(), "no @KeyRealmName → null realmName()");
-        assertNull(keyDef.algorithm(), "no @KeyAlgorithm → null algorithm()");
+        assertNull(keyDef.name(), "no @KeyName → null name()");
+        assertNull(keyDef.keyAlgorithm(), "no @KeyAlgorithm → null keyAlgorithm()");
         assertNull(keyDef.signatureAlgorithm(), "no @KeySignatureAlgorithm → null signatureAlgorithm()");
-        assertNull(keyDef.publicMaterial(), "no @KeyPublicMaterial → null publicMaterial()");
-        assertNull(keyDef.privateMaterial(), "no @KeyPrivateMaterial → null privateMaterial()");
+        assertNull(keyDef.keyForSigning(), "no @KeyForSigning → null keyForSigning()");
+        assertNull(keyDef.keyForSignatureVerification(),
+                "no @KeyForSignatureVerification → null keyForSignatureVerification()");
+        assertNull(keyDef.keyForEncryption(), "no @KeyForEncryption → null keyForEncryption()");
+        assertNull(keyDef.keyForDecryption(), "no @KeyForDecryption → null keyForDecryption()");
         assertNull(keyDef.expiration(), "no @KeyExpiration → null expiration()");
         assertNull(keyDef.revoked(), "no @KeyRevoked → null revoked()");
+        assertNull(keyDef.version(), "no @KeyVersion → null version()");
+        assertNull(keyDef.rotate(), "no @KeyRotate → null rotate()");
     }
 
     @Test
@@ -316,18 +329,46 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
 
         // The scanner-built definition has every address populated — confirm
         // the runtime can read/write through it. We do not invoke
-        // resolveKeyRealm directly (it requires an authenticator wiring), we
-        // just exercise the factory layer that resolveKeyRealm delegates to.
+        // resolveKeyRealm directly (it requires an authenticator wiring); we
+        // stamp the seven mapped fields manually via the scanner-built
+        // addresses, then round-trip sign/verify via core's KeyRealm to
+        // prove the addresses point to writable fields of the expected types.
         IDomainKeyDefinition keyDef = autoKeyDomain.getDomainDefinition().keyDefinition();
-        Object freshEntity = com.garganttua.api.core.security.key.KeyRealmFactory.generateAndStamp(
-                autoKeyDomain.getEntityClass(), keyDef,
+        assertNotNull(keyDef.name());
+        assertNotNull(keyDef.keyAlgorithm());
+        assertNotNull(keyDef.signatureAlgorithm());
+        assertNotNull(keyDef.keyForSignatureVerification());
+        assertNotNull(keyDef.keyForSigning());
+        assertNotNull(keyDef.expiration());
+        assertNotNull(keyDef.revoked());
+
+        com.garganttua.core.reflection.IReflection reflection =
+                com.garganttua.api.core.mapper.DefaultMapper.reflection();
+        AutoKey concrete = new AutoKey();
+        java.security.KeyPair pair =
+                com.garganttua.core.crypto.KeyAlgorithm.EC_256.generateAsymmetricKey();
+        reflection.setFieldValue(concrete, keyDef.name(), "scanner-realm");
+        reflection.setFieldValue(concrete, keyDef.keyAlgorithm(), "EC-256");
+        reflection.setFieldValue(concrete, keyDef.signatureAlgorithm(), "SHA256");
+        // keyForSigning/keyForSignatureVerification fields are IKey-typed:
+        // wrap the JDK bytes with core's Key.fromSigningMaterial factory.
+        com.garganttua.core.crypto.IKey signingKey = com.garganttua.core.crypto.Key.fromSigningMaterial(
+                com.garganttua.core.crypto.KeyType.PRIVATE,
                 com.garganttua.core.crypto.KeyAlgorithm.EC_256,
                 com.garganttua.core.crypto.SignatureAlgorithm.SHA256,
-                "scanner-realm", 1, java.util.concurrent.TimeUnit.HOURS,
-                com.garganttua.api.core.mapper.DefaultMapper.reflection());
-        assertNotNull(freshEntity);
-        AutoKey concrete = (AutoKey) freshEntity;
-        assertEquals("scanner-realm", concrete.getRealmName());
+                pair.getPrivate().getEncoded());
+        com.garganttua.core.crypto.IKey verificationKey = com.garganttua.core.crypto.Key.fromSigningMaterial(
+                com.garganttua.core.crypto.KeyType.PUBLIC,
+                com.garganttua.core.crypto.KeyAlgorithm.EC_256,
+                com.garganttua.core.crypto.SignatureAlgorithm.SHA256,
+                pair.getPublic().getEncoded());
+        reflection.setFieldValue(concrete, keyDef.keyForSignatureVerification(), verificationKey);
+        reflection.setFieldValue(concrete, keyDef.keyForSigning(), signingKey);
+        java.time.Instant expiresAt = Instant.now().plusSeconds(3600);
+        reflection.setFieldValue(concrete, keyDef.expiration(), expiresAt);
+        reflection.setFieldValue(concrete, keyDef.revoked(), false);
+
+        assertEquals("scanner-realm", concrete.getName());
         assertEquals("EC-256", concrete.getAlgorithm());
         assertEquals("SHA256", concrete.getSignatureAlgorithm());
         assertNotNull(concrete.getPublicMaterial());
@@ -335,9 +376,16 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         assertNotNull(concrete.getExpiration());
         assertTrue(concrete.getExpiration().isAfter(Instant.now().minusSeconds(5)));
 
-        // And the materialized realm round-trips sign/verify against the same bytes.
-        var realm = com.garganttua.api.core.security.key.KeyRealmFactory.materialize(
-                freshEntity, keyDef, com.garganttua.api.core.mapper.DefaultMapper.reflection());
+        // Round-trip sign/verify through core's KeyRealm.fromSignatureMaterial
+        // with the bytes we just stamped on the scanner-built entity.
+        com.garganttua.core.crypto.IKeyRealm realm = com.garganttua.core.crypto.KeyRealm.fromSignatureMaterial(
+                "scanner-realm",
+                com.garganttua.core.crypto.KeyAlgorithm.EC_256,
+                com.garganttua.core.crypto.SignatureAlgorithm.SHA256,
+                java.util.Date.from(expiresAt),
+                false,
+                pair.getPrivate().getEncoded(),
+                pair.getPublic().getEncoded());
         byte[] sig = realm.getKeyForSigning().sign("payload".getBytes());
         assertTrue(realm.getKeyForSignatureVerification().verifySignature(sig, "payload".getBytes()),
                 "scanner-built key domain must produce a sign/verify-functional IKeyRealm");

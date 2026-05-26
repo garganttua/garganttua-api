@@ -67,6 +67,13 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private String id;
         private String uuid;
         private String tenantId;
+        // Mirror the entity-side fields the storable-authz lookup filters
+        // on (ownerId, expiresAt, revoked). Without these the repository's
+        // filter mapper would drop the predicates that scope the lookup
+        // and the reuse-path tests would never match.
+        private String ownerId;
+        private Instant expiresAt;
+        private Boolean revoked;
 
         public TokenDto() {}
         public String getId() { return id; }
@@ -75,6 +82,12 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getOwnerId() { return ownerId; }
+        public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
+        public Instant getExpiresAt() { return expiresAt; }
+        public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
+        public Boolean getRevoked() { return revoked; }
+        public void setRevoked(Boolean revoked) { this.revoked = revoked; }
     }
 
 
@@ -417,6 +430,120 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
                 buildAndStart(bldr);
             }, "Should throw because authenticator domain is not owner");
+        }
+    }
+
+    @Nested
+    @DisplayName("Token reuse — when the authorization is storable, an existing non-expired non-revoked token is reused")
+    class TokenReuse {
+
+        @Test
+        @DisplayName("two authentications in a row return the SAME token uuid (reuse path short-circuits create + persist)")
+        void twoAuthsReuseSameToken() throws ApiException {
+            // First auth: creates & persists a fresh token.
+            OperationRequest first = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult firstResult = executeScript(userCtx, first);
+            assertEquals(0, firstResult.code());
+            TokenEntity firstToken = (TokenEntity) firstResult.output();
+            String firstUuid = firstToken.getUuid();
+            assertNotNull(firstUuid);
+            assertEquals(1, tokenDao.getStorage().size(),
+                    "first authentication must persist exactly one authorization in the token domain");
+
+            // Second auth, same caller: storable + non-expired non-revoked authz exists
+            // → reuse path returns the existing token entity unchanged, no second persist.
+            OperationRequest second = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult secondResult = executeScript(userCtx, second);
+            assertEquals(0, secondResult.code());
+            TokenEntity secondToken = (TokenEntity) secondResult.output();
+            assertEquals(firstUuid, secondToken.getUuid(),
+                    "reuse path must return the same token entity (same uuid), not mint a new one");
+            assertEquals(firstToken.getOwnerId(), secondToken.getOwnerId(),
+                    "the reused token must carry the same ownerId — the repository round-tripped it through the DTO");
+            assertEquals(firstToken.getTenantId(), secondToken.getTenantId(),
+                    "the reused token must carry the same tenantId");
+            assertEquals(1, tokenDao.getStorage().size(),
+                    "reuse must not persist a second entity — the storable lookup short-circuited create + sign + persist");
+        }
+
+        @Test
+        @DisplayName("an expired authorization in the DB is ignored → a fresh token is minted and persisted")
+        void expiredTokenForcesFreshCreate() throws ApiException {
+            // Seed: a token-DTO that EXPIRED a minute ago, owned by the future authenticator.
+            // We seed at the DAO level — the storage is the DTO row that the
+            // repository would have produced via the normal persist path.
+            TokenDto expired = new TokenDto();
+            expired.setId("expired-token-id");
+            expired.setUuid("expired-token-uuid");
+            expired.setOwnerId("user-uuid-1");
+            expired.setTenantId("SUPER_TENANT");
+            expired.setRevoked(false);
+            expired.setExpiresAt(Instant.now().minusSeconds(60));
+            tokenDao.save(expired);
+            assertEquals(1, tokenDao.getStorage().size(), "seeded the expired token");
+
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+            assertEquals(0, result.code());
+            TokenEntity fresh = (TokenEntity) result.output();
+            assertNotEquals("expired-token-uuid", fresh.getUuid(),
+                    "must NOT reuse an expired authorization");
+            assertNotNull(fresh.getExpiresAt());
+            assertTrue(fresh.getExpiresAt().isAfter(Instant.now()),
+                    "the freshly-minted token must have a non-expired expiration");
+            assertEquals(2, tokenDao.getStorage().size(),
+                    "expired entity is left in place; a NEW entity is persisted alongside it");
+        }
+
+        @Test
+        @DisplayName("a revoked authorization in the DB is ignored → a fresh token is minted and persisted")
+        void revokedTokenForcesFreshCreate() throws ApiException {
+            // Seed: a still-unexpired token-DTO but REVOKED.
+            TokenDto revoked = new TokenDto();
+            revoked.setId("revoked-token-id");
+            revoked.setUuid("revoked-token-uuid");
+            revoked.setOwnerId("user-uuid-1");
+            revoked.setTenantId("SUPER_TENANT");
+            revoked.setRevoked(true);
+            revoked.setExpiresAt(Instant.now().plusSeconds(3600));
+            tokenDao.save(revoked);
+            assertEquals(1, tokenDao.getStorage().size(), "seeded the revoked token");
+
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+            assertEquals(0, result.code());
+            TokenEntity fresh = (TokenEntity) result.output();
+            assertNotEquals("revoked-token-uuid", fresh.getUuid(),
+                    "must NOT reuse a revoked authorization, even if not yet expired");
+            assertEquals(Boolean.FALSE, fresh.getRevoked(),
+                    "the freshly-minted token starts un-revoked");
+            assertEquals(2, tokenDao.getStorage().size(),
+                    "revoked entity is left in place; a NEW entity is persisted alongside it");
+        }
+
+        @Test
+        @DisplayName("an authorization for a DIFFERENT owner is ignored → a fresh token is minted for the caller")
+        void differentOwnerTokenForcesFreshCreate() throws ApiException {
+            // Seed: a valid token-DTO for a DIFFERENT user (not user-uuid-1).
+            TokenDto other = new TokenDto();
+            other.setId("other-token-id");
+            other.setUuid("other-owner-token");
+            other.setOwnerId("other-user-uuid");
+            other.setTenantId("SUPER_TENANT");
+            other.setRevoked(false);
+            other.setExpiresAt(Instant.now().plusSeconds(3600));
+            tokenDao.save(other);
+
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+            assertEquals(0, result.code());
+            TokenEntity fresh = (TokenEntity) result.output();
+            assertNotEquals("other-owner-token", fresh.getUuid(),
+                    "must NOT reuse a token owned by a different principal");
+            assertEquals("user-uuid-1", fresh.getOwnerId(),
+                    "the fresh token is owned by the authenticated principal");
+            assertEquals(2, tokenDao.getStorage().size(),
+                    "other-owner entity is left in place; a NEW entity is persisted for the caller");
         }
     }
 }

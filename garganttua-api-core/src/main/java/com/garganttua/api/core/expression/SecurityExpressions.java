@@ -1,8 +1,12 @@
 package com.garganttua.api.core.expression;
 
+import java.security.KeyPair;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.context.Domain;
@@ -16,6 +20,7 @@ import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticationDefinition;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.definition.IDomainKeyDefinition;
 import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.OperationDefinition;
@@ -27,8 +32,15 @@ import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
+import com.garganttua.core.crypto.CryptoException;
 import com.garganttua.core.crypto.IKey;
+import com.garganttua.core.crypto.IKeyAlgorithm;
 import com.garganttua.core.crypto.IKeyRealm;
+import com.garganttua.core.crypto.Key;
+import com.garganttua.core.crypto.KeyAlgorithm;
+import com.garganttua.core.crypto.KeyRealm;
+import com.garganttua.core.crypto.KeyType;
+import com.garganttua.core.crypto.SignatureAlgorithm;
 import com.garganttua.core.expression.annotations.Expression;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -406,37 +418,92 @@ public class SecurityExpressions {
 
 		IAuthentication authResult = (IAuthentication) authResultObj;
 		IDomain<?> authenticatorDomain = toDomain(domainContextObj);
-
-		String principalUuid = null;
-		Object principal = authResult.principal();
-		if (principal != null && authenticatorDomain.getEntityDefinition() != null) {
-			ObjectAddress uuidAddr = authenticatorDomain.getEntityDefinition().uuid();
-			if (uuidAddr != null) {
-				try {
-					Object val = DefaultMapper.reflection().getFieldValue(principal, uuidAddr.toString());
-					principalUuid = val != null ? val.toString() : null;
-				} catch (Exception e) {
-					// ignore
-				}
-			}
-		}
-
-		String tenantId = null;
-		if (principal != null) {
-			ObjectAddress tenantAddr = authenticatorDomain.getTenantIdFieldAddress();
-			if (tenantAddr != null) {
-				try {
-					Object val = DefaultMapper.reflection().getFieldValue(principal, tenantAddr.toString());
-					tenantId = val != null ? val.toString() : null;
-				} catch (Exception e) {
-					// ignore
-				}
-			}
-		}
+		String principalUuid = readPrincipalUuid(authResult, authenticatorDomain);
+		String tenantId = readPrincipalTenantId(authResult, authenticatorDomain);
 
 		IDomainAuthorizationDefinition authzDef = (IDomainAuthorizationDefinition) authorizationDefinition(authenticatorDomain);
 
 		return createAuthorizationEntity(authzDef, authResult, authenticatorDomain, principalUuid, tenantId);
+	}
+
+	/**
+	 * Returns the storable authorization currently valid for this principal in
+	 * the linked authorization domain, or {@code null} when the token is not
+	 * storable or no reusable entry exists. CREATE_AUTHORIZATION.gs branches on
+	 * the result to skip the sign + persist round when reuse is possible.
+	 *
+	 * <p>The lookup filter (built by {@link #lookupValidAuthorization}) matches
+	 * the authzDef's ownerId + tenantId + revoked=false + expiration&gt;NOW. An
+	 * expired token is treated as absent — the script then mints a fresh one.
+	 */
+	@Expression(name = "findReusableAuthorization",
+			description = "Looks up an existing valid (non-expired, non-revoked) authorization owned by the "
+					+ "principal in the linked authorization domain when the authorization is storable. "
+					+ "Returns the entity if found, or null when not storable / none reusable. Used by "
+					+ "CREATE_AUTHORIZATION to skip create + sign + persist on the reuse path.")
+	public static @Nullable Object findReusableAuthorization(@Nullable Object domainContextObj,
+			@Nullable Object authResultObj) {
+		if (domainContextObj == null || authResultObj == null) return null;
+		if (!(authResultObj instanceof IAuthentication authResult)) return null;
+		IDomain<?> authenticatorDomain = toDomain(domainContextObj);
+		Object defObj = authorizationDefinition(authenticatorDomain);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.storable()) {
+			return null;
+		}
+		String principalUuid = readPrincipalUuid(authResult, authenticatorDomain);
+		if (principalUuid == null) return null;
+		String tenantId = readPrincipalTenantId(authResult, authenticatorDomain);
+		return lookupValidAuthorization(authzDef, authenticatorDomain, principalUuid, tenantId);
+	}
+
+	/**
+	 * Catch-handler companion in CREATE_AUTHORIZATION.gs that fires on the reuse
+	 * path (when {@link #findReusableAuthorization} returned a non-null entity
+	 * and the {@code requirePresent(if(isNull(@output),1))} guard throws to
+	 * short-circuit the fresh-create block). Encodes the reused authorization
+	 * to its transport form (if an encode method is configured) and publishes
+	 * it on the request as {@code encodedAuthorization}, so downstream stages
+	 * see the same wire shape they get on a fresh token.
+	 */
+	@Expression(name = "publishReusedAuthorization",
+			description = "Catch-handler companion in CREATE_AUTHORIZATION. Runs when findReusableAuthorization "
+					+ "returned a non-null entity. Encodes the reused authorization to its transport form "
+					+ "(if an encode method is configured) and publishes it on the request as "
+					+ "'encodedAuthorization' so downstream stages see the same wire shape as a fresh token.")
+	public static boolean publishReusedAuthorization(@Nullable Object authzEntity,
+			@Nullable Object domainContextObj, @Nullable Object request) {
+		if (authzEntity == null || domainContextObj == null) return false;
+		Object encoded = encodeIfPossible(authzEntity, domainContextObj);
+		if (request instanceof IOperationRequest opReq && encoded != null) {
+			opReq.arg("encodedAuthorization", encoded);
+		}
+		return true;
+	}
+
+	private static @Nullable String readPrincipalUuid(IAuthentication authResult, IDomain<?> authenticatorDomain) {
+		Object principal = authResult.principal();
+		if (principal == null || authenticatorDomain.getEntityDefinition() == null) return null;
+		ObjectAddress uuidAddr = authenticatorDomain.getEntityDefinition().uuid();
+		if (uuidAddr == null) return null;
+		try {
+			Object val = DefaultMapper.reflection().getFieldValue(principal, uuidAddr.toString());
+			return val != null ? val.toString() : null;
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	private static @Nullable String readPrincipalTenantId(IAuthentication authResult, IDomain<?> authenticatorDomain) {
+		Object principal = authResult.principal();
+		if (principal == null) return null;
+		ObjectAddress tenantAddr = authenticatorDomain.getTenantIdFieldAddress();
+		if (tenantAddr == null) return null;
+		try {
+			Object val = DefaultMapper.reflection().getFieldValue(principal, tenantAddr.toString());
+			return val != null ? val.toString() : null;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	@Expression(name = "authRequestTenantId", description = "Extracts the tenantId from an IAuthenticationRequest")
@@ -582,13 +649,13 @@ public class SecurityExpressions {
 				keyDomain.getDomainDefinition().keyDefinition();
 		if (keyEntDef == null) {
 			throw new ApiException("resolveKeyRealm: key domain '" + keyDomain.getDomainName()
-					+ "' is not marked as a @Key domain — declare .key().realmName(...).publicMaterial(...)... on it");
+					+ "' is not marked as a @Key domain — declare .key().name(...).keyForSignatureVerification(...)... on it");
 		}
 
 		ICaller caller = extractCaller(operationRequest);
 		String realmName = buildRealmName(keyConfig.usage(), caller, keyDomain.getDomainName());
 
-		IFilter filter = Filter.eq(keyEntDef.realmName().toString(), realmName);
+		IFilter filter = Filter.eq(keyEntDef.name().toString(), realmName);
 		List<Object> existing;
 		try {
 			existing = keyDomain.getRepository().getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
@@ -601,7 +668,7 @@ public class SecurityExpressions {
 		if (existing != null && !existing.isEmpty()) {
 			Object entity = pickUsable(existing, keyEntDef, reflection);
 			if (entity != null) {
-				return com.garganttua.api.core.security.key.KeyRealmFactory.materialize(entity, keyEntDef, reflection);
+				return materializeKeyRealm(entity, keyEntDef, reflection);
 			}
 			// All matching keys are expired or revoked — the caller's policy
 			// flags decide whether the framework rotates silently or refuses.
@@ -624,7 +691,7 @@ public class SecurityExpressions {
 					+ ".key(...) DSL.");
 		}
 
-		Object newEntity = com.garganttua.api.core.security.key.KeyRealmFactory.generateAndStamp(
+		Object newEntity = generateAndStampKeyEntity(
 				keyDomain.getEntityClass(), keyEntDef,
 				keyConfig.algorithm(), keyConfig.signatureAlgorithm(),
 				realmName, keyConfig.duration(), keyConfig.unit(), reflection);
@@ -636,7 +703,7 @@ public class SecurityExpressions {
 			throw new ApiException("resolveKeyRealm: failed to persist freshly-generated key on domain '"
 					+ keyDomain.getDomainName() + "' for realmName '" + realmName + "': " + e.getMessage(), e);
 		}
-		return com.garganttua.api.core.security.key.KeyRealmFactory.materialize(newEntity, keyEntDef, reflection);
+		return materializeKeyRealm(newEntity, keyEntDef, reflection);
 	}
 
 	private static IDomain<?> resolveKeyDomain(IDomain<?> authenticatorDomain,
@@ -1354,5 +1421,215 @@ public class SecurityExpressions {
 		throw new ApiException("Authenticate invocation on domain '" + domain.getDomainName()
 				+ "' did not return an IAuthentication — got: "
 				+ (body == null ? "null" : body.getClass().getName()));
+	}
+
+	// ─────────────────────────────────────────────────────────────
+	// Persisted @Key entity ↔ IKeyRealm bridge.
+	//
+	// Two operations:
+	//   - materializeKeyRealm: reads the 7 fields described by an
+	//     IDomainKeyDefinition and rebuilds an IKeyRealm via core's
+	//     KeyRealm.fromSignatureMaterial (which caches the JDK key).
+	//   - generateAndStampKeyEntity: generates a fresh JDK KeyPair,
+	//     instantiates the entity class, and stamps realmName /
+	//     algorithm / signatureAlgorithm / publicMaterial /
+	//     privateMaterial / expiration / revoked onto it.
+	//
+	// Both used exclusively by resolvePersistedKeyRealm. Tenancy
+	// stamping (uuid / tenantId / ownerId) is a concern of the resolve
+	// path and is performed separately by stampIdentityAndTenancy.
+	// ─────────────────────────────────────────────────────────────
+
+	private static IKeyRealm materializeKeyRealm(Object entity, IDomainKeyDefinition keyDef, IReflection reflection) {
+		Objects.requireNonNull(entity, "entity");
+		Objects.requireNonNull(keyDef, "keyDef");
+		Objects.requireNonNull(reflection, "reflection");
+
+		String name = readKeyString(entity, keyDef.name(), reflection, "name");
+		String algorithmRaw = readKeyString(entity, keyDef.keyAlgorithm(), reflection, "keyAlgorithm");
+		String signatureRaw = readKeyString(entity, keyDef.signatureAlgorithm(), reflection, "signatureAlgorithm");
+		IKey signingKey = readKeyIKey(entity, keyDef.keyForSigning(), reflection, "keyForSigning");
+		IKey verificationKey = readKeyIKey(entity, keyDef.keyForSignatureVerification(), reflection,
+				"keyForSignatureVerification");
+		Date expiration = readKeyExpiration(entity, keyDef.expiration(), reflection);
+		boolean revoked = readKeyBoolean(entity, keyDef.revoked(), reflection);
+
+		IKeyAlgorithm algorithm = parseKeyAlgorithm(algorithmRaw);
+		SignatureAlgorithm sigAlgo = parseKeySignature(signatureRaw);
+
+		// Extract JDK-encoded bytes from the IKey objects carried on the entity
+		// and rebuild a fully-stitched IKeyRealm via core's factory. We do not
+		// pass the IKey instances directly: KeyRealm.fromSignatureMaterial owns
+		// the Key construction (handles caching, type checks, algorithm wiring)
+		// so we feed it the bytes and let it reconstruct.
+		byte[] privateBytes;
+		byte[] publicBytes;
+		try {
+			privateBytes = signingKey.getKey().getEncoded();
+			publicBytes = verificationKey.getKey().getEncoded();
+		} catch (CryptoException e) {
+			throw new ApiException("materializeKeyRealm: failed to extract JDK-encoded bytes from "
+					+ "the entity's IKey fields: " + e.getMessage(), e);
+		}
+
+		return KeyRealm.fromSignatureMaterial(name, algorithm, sigAlgo,
+				expiration, revoked, privateBytes, publicBytes);
+	}
+
+	private static Object generateAndStampKeyEntity(IClass<?> entityClass, IDomainKeyDefinition keyDef,
+			IKeyAlgorithm algorithm, SignatureAlgorithm signatureAlgorithm,
+			String realmName, int duration, TimeUnit unit, IReflection reflection) {
+		Objects.requireNonNull(entityClass, "entityClass");
+		Objects.requireNonNull(keyDef, "keyDef");
+		Objects.requireNonNull(algorithm, "algorithm");
+		Objects.requireNonNull(signatureAlgorithm, "signatureAlgorithm");
+		Objects.requireNonNull(realmName, "realmName");
+		Objects.requireNonNull(reflection, "reflection");
+
+		if (!(algorithm instanceof KeyAlgorithm concreteAlgo)) {
+			throw new ApiException("generateAndStampKeyEntity: algorithm must be a "
+					+ KeyAlgorithm.class.getName() + " — got " + algorithm.getClass().getName());
+		}
+
+		KeyPair pair;
+		try {
+			pair = concreteAlgo.generateAsymmetricKey();
+		} catch (Exception e) {
+			throw new ApiException("generateAndStampKeyEntity: keypair generation failed for "
+					+ concreteAlgo + ": " + e.getMessage(), e);
+		}
+
+		Object entity;
+		try {
+			entity = entityClass.getConstructor().newInstance();
+		} catch (Exception e) {
+			throw new ApiException("generateAndStampKeyEntity: cannot instantiate "
+					+ entityClass.getName() + " — a no-arg constructor is required: " + e.getMessage(), e);
+		}
+
+		writeIfMapped(entity, keyDef.name(), realmName, reflection);
+		// Store the algorithm in the canonical 'NAME-SIZE' form that
+		// KeyAlgorithm.validateKeyAlgorithm consumes during materialize.
+		// KeyAlgorithm.toString uses underscores ("EC_256"), which the
+		// parser would reject — so we serialize explicitly.
+		writeIfMapped(entity, keyDef.keyAlgorithm(),
+				concreteAlgo.getName() + "-" + concreteAlgo.getKeySize(), reflection);
+		writeIfMapped(entity, keyDef.signatureAlgorithm(), signatureAlgorithm.name(), reflection);
+
+		// Build IKey objects up front: the entity's key-material fields are
+		// typed IKey (so a @Key entity is a drop-in IKeyRealm shape), not
+		// raw byte[]. We construct the IKeys via core's Key.fromSigningMaterial
+		// factory and stamp the instances onto the entity. Persistence-side
+		// translation to byte[] (for DB storage) is the DTO mapping's concern.
+		IKey signingKey = Key.fromSigningMaterial(KeyType.PRIVATE, algorithm, signatureAlgorithm,
+				pair.getPrivate().getEncoded());
+		IKey verificationKey = Key.fromSigningMaterial(KeyType.PUBLIC, algorithm, signatureAlgorithm,
+				pair.getPublic().getEncoded());
+		writeIfMapped(entity, keyDef.keyForSigning(), signingKey, reflection);
+		writeIfMapped(entity, keyDef.keyForSignatureVerification(), verificationKey, reflection);
+		// For asymmetric algorithms, encryption uses the same private key as
+		// signing and decryption uses the same public key as verification —
+		// so the encryption-side IKey fields, when mapped, receive the same
+		// instances. The framework leaves them empty when the user does not
+		// map them (typical for signing-only setups).
+		writeIfMapped(entity, keyDef.keyForEncryption(), signingKey, reflection);
+		writeIfMapped(entity, keyDef.keyForDecryption(), verificationKey, reflection);
+
+		ObjectAddress expirationAddr = keyDef.expiration();
+		if (expirationAddr != null) {
+			Instant exp = Instant.now().plusMillis(unit == null || duration <= 0 ? 0L : unit.toMillis(duration));
+			Object value = adaptKeyExpiration(entityClass, expirationAddr, exp, reflection);
+			reflection.setFieldValue(entity, expirationAddr, value);
+		}
+
+		writeIfMapped(entity, keyDef.revoked(), Boolean.FALSE, reflection);
+
+		// Initial version is 1 — matches IKeyRealm's default. The framework
+		// increments this on rotate(). When the field is not mapped the stamp
+		// is a no-op.
+		writeIfMapped(entity, keyDef.version(), Integer.valueOf(1), reflection);
+		// rotate() field is the last-rotation timestamp; on a freshly minted
+		// key there is no prior rotation — leave it null. The framework writes
+		// it later when IKeyRealm.rotate() is invoked.
+
+		return entity;
+	}
+
+	private static String readKeyString(Object entity, ObjectAddress addr, IReflection reflection, String label) {
+		if (addr == null) {
+			throw new ApiException("materializeKeyRealm: '" + label
+					+ "' field is not configured on the key entity definition");
+		}
+		Object value = reflection.getFieldValue(entity, addr.toString());
+		if (value == null) {
+			throw new ApiException("materializeKeyRealm: '" + label + "' field at " + addr + " is null");
+		}
+		return value.toString();
+	}
+
+	private static IKey readKeyIKey(Object entity, ObjectAddress addr, IReflection reflection, String label) {
+		if (addr == null) {
+			throw new ApiException("materializeKeyRealm: '" + label
+					+ "' field is not configured on the key entity definition");
+		}
+		Object value = reflection.getFieldValue(entity, addr.toString());
+		if (!(value instanceof IKey key)) {
+			throw new ApiException("materializeKeyRealm: '" + label + "' at " + addr
+					+ " must be an IKey — got " + (value == null ? "null" : value.getClass().getName()));
+		}
+		return key;
+	}
+
+	private static Date readKeyExpiration(Object entity, ObjectAddress addr, IReflection reflection) {
+		if (addr == null) return null;
+		Object value = reflection.getFieldValue(entity, addr.toString());
+		if (value == null) return null;
+		if (value instanceof Date date) return (Date) date.clone();
+		if (value instanceof Instant instant) return Date.from(instant);
+		if (value instanceof Long millis) return new Date(millis);
+		throw new ApiException("materializeKeyRealm: expiration at " + addr
+				+ " must be Date / Instant / Long — got " + value.getClass().getName());
+	}
+
+	private static boolean readKeyBoolean(Object entity, ObjectAddress addr, IReflection reflection) {
+		if (addr == null) return false;
+		Object value = reflection.getFieldValue(entity, addr.toString());
+		return Boolean.TRUE.equals(value);
+	}
+
+	private static void writeIfMapped(Object entity, ObjectAddress addr, Object value, IReflection reflection) {
+		if (addr != null) {
+			reflection.setFieldValue(entity, addr, value);
+		}
+	}
+
+	private static Object adaptKeyExpiration(IClass<?> entityClass, ObjectAddress addr, Instant exp, IReflection reflection) {
+		var fieldOpt = reflection.findField(entityClass, addr.toString());
+		if (fieldOpt.isEmpty()) return exp;
+		java.lang.reflect.Type rawType = fieldOpt.get().getType().getType();
+		if (!(rawType instanceof Class<?> targetType)) return exp;
+		if (Instant.class.isAssignableFrom(targetType)) return exp;
+		if (Date.class.isAssignableFrom(targetType)) return Date.from(exp);
+		if (Long.class.isAssignableFrom(targetType) || targetType == long.class) return exp.toEpochMilli();
+		throw new ApiException("generateAndStampKeyEntity: cannot adapt expiration to "
+				+ targetType.getName() + " — supported: Date, Instant, Long");
+	}
+
+	private static IKeyAlgorithm parseKeyAlgorithm(String raw) {
+		try {
+			return KeyAlgorithm.validateKeyAlgorithm(raw);
+		} catch (IllegalArgumentException e) {
+			throw new ApiException("materializeKeyRealm: invalid algorithm '" + raw
+					+ "' — expected format 'NAME-SIZE' (e.g. RSA-2048, EC-256): " + e.getMessage(), e);
+		}
+	}
+
+	private static SignatureAlgorithm parseKeySignature(String raw) {
+		try {
+			return SignatureAlgorithm.valueOf(raw);
+		} catch (IllegalArgumentException e) {
+			throw new ApiException("materializeKeyRealm: invalid signatureAlgorithm '" + raw
+					+ "' — must be a SignatureAlgorithm enum name (e.g. SHA256, SHA512): " + e.getMessage(), e);
+		}
 	}
 }

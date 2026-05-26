@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Field-level marker for the realm name of a {@link Key}-marked entity.
- * The realm name is the logical identifier the framework uses to find
- * the matching key when signing or verifying (e.g. {@code "auth-key"}).
- * Type: {@code String}.
+ * Field-level marker for the bytes returned by
+ * {@code IKeyRealm.getKeyForSignatureVerification().getKey().getEncoded()} —
+ * i.e. the JDK X.509 form of the public/secret key used to verify
+ * signatures. Type: {@code byte[]}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface KeyRealmName {
+public @interface KeyForSignatureVerification {
 
 }
