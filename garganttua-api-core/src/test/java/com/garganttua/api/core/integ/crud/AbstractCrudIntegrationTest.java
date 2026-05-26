@@ -353,6 +353,10 @@ public abstract class AbstractCrudIntegrationTest {
         expressionContextBuilder.autoDetect(true);
         expressionContextBuilder.withPackage("com.garganttua.core.expression.functions");
         expressionContextBuilder.withPackage("com.garganttua.core.script.functions");
+        // Required for script-side observe("start"|"end", source) markers
+        // emitted by ScriptGenerator when workflowTiming is enabled — those
+        // calls resolve against ObservabilityExpressions in this package.
+        expressionContextBuilder.withPackage("com.garganttua.core.observability");
         expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
         ((IDependentBuilder<IExpressionContextBuilder, ?>) expressionContextBuilder).provide(injectionContextBuilder);
         expressionContextBuilder.build();

@@ -55,7 +55,13 @@ class WorkflowObserverIntegrationTest extends AbstractCrudIntegrationTest {
 	}
 
 	private IApi buildApi(IObserver<ObservableEvent>... observers) throws ApiException {
+		return buildApi(null, observers);
+	}
+
+	private IApi buildApi(com.garganttua.core.workflow.WorkflowTimingConfig timing,
+			IObserver<ObservableEvent>... observers) throws ApiException {
 		IApiBuilder builder = newBuilder();
+		if (timing != null) builder.workflowTiming(timing);
 		for (IObserver<ObservableEvent> o : observers) builder.workflowObserver(o);
 		builder.domain(IClass.getClass(User.class))
 				.tenant(true)
@@ -182,6 +188,89 @@ class WorkflowObserverIntegrationTest extends AbstractCrudIntegrationTest {
 			IDomain<?> domain = api.getDomain("users").orElseThrow();
 			IOperationResponse resp = domain.invoke(readAllRequest(domain));
 			assertEquals(OperationResponseCode.OK, resp.getResponseCode());
+		}
+	}
+
+	@Nested
+	@DisplayName("workflowTiming — per-stage / per-script markers via WorkflowTimingConfig")
+	class WorkflowTiming {
+
+		@Test
+		@DisplayName("without timing, observers see engine events but no stage:/script: sources")
+		void withoutTimingNoStageSources() throws ApiException {
+			RecordingObserver observer = new RecordingObserver();
+			IApi api = buildApi(observer);
+			IDomain<?> domain = api.getDomain("users").orElseThrow();
+
+			domain.invoke(readAllRequest(domain));
+
+			assertFalse(observer.events.isEmpty(),
+					"observer must still receive engine events (mapper / runtime / scriptcontext / …) when timing is off");
+			boolean anyStage = observer.events.stream()
+					.anyMatch(e -> e.source() != null && e.source().startsWith("stage:"));
+			boolean anyScript = observer.events.stream()
+					.anyMatch(e -> e.source() != null && e.source().startsWith("script:"));
+			assertFalse(anyStage,
+					"stage:<name> events must NOT appear when workflowTiming is disabled (default); got: "
+							+ observer.events.stream().map(ObservableEvent::source).toList());
+			assertFalse(anyScript,
+					"script:<stage>.<name> events must NOT appear when workflowTiming is disabled (default)");
+		}
+
+		@Test
+		@DisplayName("with timing enabled (stages + scripts), observers see stage:<name> AND script:<stage>.<name> events")
+		void withTimingStageAndScriptSourcesFire() throws ApiException {
+			RecordingObserver observer = new RecordingObserver();
+			IApi api = buildApi(
+					com.garganttua.core.workflow.WorkflowTimingConfig.of().stages(true).scripts(true),
+					observer);
+			IDomain<?> domain = api.getDomain("users").orElseThrow();
+
+			// Sanity: the generated script must contain the observe() calls
+			// the ScriptGenerator emits when timing is on.
+			String script = domain.getWorkflow().getGeneratedScript();
+			assertTrue(script != null && script.contains("observe(\"start\", \"stage:"),
+					"timing-enabled script must contain observe(\"start\", \"stage:...\") markers");
+
+			// Dump the first few stage: observe lines so the failure msg shows
+			// the exact syntax in case dispatch breaks.
+			String head = script.lines()
+					.filter(l -> l.contains("observe(") && l.contains("stage:"))
+					.limit(4)
+					.reduce("", (a, b) -> a + b + " | ");
+
+			domain.invoke(readAllRequest(domain));
+
+			List<String> sources = observer.events.stream()
+					.map(ObservableEvent::source)
+					.filter(java.util.Objects::nonNull)
+					.toList();
+			boolean anyStage = sources.stream().anyMatch(s -> s.startsWith("stage:"));
+			boolean anyScript = sources.stream().anyMatch(s -> s.startsWith("script:"));
+			assertTrue(anyStage,
+					"at least one stage:<name> event must fire when workflowTiming.stages(true) is set; "
+							+ "sources seen: " + sources + "; observe() lines in script: " + head);
+			assertTrue(anyScript,
+					"at least one script:<stage>.<name> event must fire when workflowTiming.scripts(true) is set; sources seen: " + sources);
+		}
+
+		@Test
+		@DisplayName("stage and script events share the same executionId as the surrounding engine events")
+		void timingEventsShareExecutionId() throws ApiException {
+			RecordingObserver observer = new RecordingObserver();
+			IApi api = buildApi(
+					com.garganttua.core.workflow.WorkflowTimingConfig.of().stages(true).scripts(true),
+					observer);
+			IDomain<?> domain = api.getDomain("users").orElseThrow();
+
+			domain.invoke(readAllRequest(domain));
+
+			java.util.UUID first = observer.events.get(0).executionId();
+			for (ObservableEvent e : observer.events) {
+				assertEquals(first, e.executionId(),
+						"every event of a single Domain.invoke (engine AND stage/script) must share an executionId; "
+								+ "saw " + e.executionId() + " for source " + e.source());
+			}
 		}
 	}
 }

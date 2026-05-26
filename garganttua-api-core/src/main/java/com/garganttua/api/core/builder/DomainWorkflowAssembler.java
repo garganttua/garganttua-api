@@ -48,6 +48,7 @@ class DomainWorkflowAssembler<E> {
 	private final boolean isOwnerOrOwned;
 	private final IInjectionContextBuilder injectionContextBuilder;
 	private final IExpressionContextBuilder expressionContextBuilder;
+	private final com.garganttua.core.workflow.WorkflowTimingConfig workflowTiming;
 
 	DomainWorkflowAssembler(String domainName,
 			Map<String, DomainWorkflowBuilder<E>> workflows,
@@ -56,7 +57,8 @@ class DomainWorkflowAssembler<E> {
 			boolean multiTenancyEnabled,
 			boolean isOwnerOrOwned,
 			IInjectionContextBuilder injectionContextBuilder,
-			IExpressionContextBuilder expressionContextBuilder) {
+			IExpressionContextBuilder expressionContextBuilder,
+			com.garganttua.core.workflow.WorkflowTimingConfig workflowTiming) {
 		this.domainName = domainName;
 		this.workflows = workflows;
 		this.securityEnabled = securityEnabled;
@@ -65,10 +67,17 @@ class DomainWorkflowAssembler<E> {
 		this.isOwnerOrOwned = isOwnerOrOwned;
 		this.injectionContextBuilder = injectionContextBuilder;
 		this.expressionContextBuilder = expressionContextBuilder;
+		this.workflowTiming = workflowTiming != null ? workflowTiming
+				: com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
 	}
 
 	IWorkflow assemble() {
 		IWorkflowBuilder builder = WorkflowBuilder.create().name(this.domainName);
+		// Apply the api-level timing config: when fully disabled (default),
+		// IWorkflowBuilder.timing() is still called with disabled() so the
+		// behaviour stays explicit, and ScriptGenerator's fully-disabled
+		// short-circuit produces a byte-identical script.
+		builder.timing(this.workflowTiming);
 		if (this.injectionContextBuilder != null) {
 			builder.provide(this.injectionContextBuilder);
 		}
