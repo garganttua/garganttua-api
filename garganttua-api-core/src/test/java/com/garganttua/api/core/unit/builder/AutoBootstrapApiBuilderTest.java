@@ -1,5 +1,6 @@
 package com.garganttua.api.core.unit.builder;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -232,12 +233,22 @@ class AutoBootstrapApiBuilderTest {
     class ErrorGuidance {
 
         @Test
-        @DisplayName("builder() without prior IClass.setReflection() reports concrete next steps")
-        void builder_without_reflection_includes_guidance() throws Exception {
-            // Force the "no reflection installed" state by nulling out the
-            // global holder reflectively, then restore it for the rest of the
-            // suite. Hacky but the only way to exercise this path in a shared
-            // Surefire JVM where @BeforeAll already installed one.
+        @DisplayName("builder() without prior IClass.setReflection() but with reflection providers on the classpath: SPI cold-start succeeds, no exception")
+        void builder_with_spi_providers_succeeds_without_manual_setup() throws Exception {
+            // garganttua-core c19c7d66 made Bootstrap discover IReflectionProvider
+            // / IAnnotationScanner via ServiceLoader at cold start. Our test
+            // classpath transitively includes garganttua-runtime-reflection and
+            // garganttua-reflections, which both publish their META-INF/services
+            // descriptor — so even when we nullify the global holder, calling
+            // ApiBuilder.builder() now repopulates IReflection via SPI rather
+            // than throwing.
+            //
+            // The "no reflection at all" guidance path (manual setup absent AND
+            // SPI providers absent) is still wired in ApiBuilder.builder() — it
+            // catches the underlying "No IReflection ..." IllegalStateException
+            // and surfaces NO_REFLECTION_GUIDANCE — but exercising it would
+            // require running Surefire without any provider jar on the
+            // classpath, which is not feasible from within this test suite.
             IReflection saved = IClass.getReflection();
             java.lang.reflect.Field f =
                     Class.forName("com.garganttua.core.reflection.IClass$ReflectionHolder")
@@ -245,38 +256,26 @@ class AutoBootstrapApiBuilderTest {
             f.setAccessible(true);
             try {
                 f.set(null, null);
-
-                ApiException e = assertThrows(ApiException.class, ApiBuilder::builder,
-                        "ApiBuilder.builder() must fail loudly when no IReflection is installed");
-                String msg = e.getMessage();
-                assertNotNull(msg);
-                // Must point the user at IClass.setReflection — the actual fix
-                assertTrue(msg.contains("IClass.setReflection"),
-                        "guidance must name IClass.setReflection, got: <" + msg + ">");
-                // Must include a concrete recipe, not just say "fix it"
-                assertTrue(msg.contains("ReflectionBuilder.builder()"),
-                        "guidance must include the ReflectionBuilder snippet, got: <" + msg + ">");
-                // Must mention the package(s) the user has to pull in
-                assertTrue(msg.contains("garganttua-runtime-reflection"),
-                        "guidance must mention the example Maven artifact so a fresh user can pull it in, got: <" + msg + ">");
-                // Must mention where to go for the full story (AOT, custom, …)
-                assertTrue(msg.contains("CORE_EVOLUTION_bootstrap_reflection_defaults"),
-                        "guidance must point at the doc for the full story, got: <" + msg + ">");
-                // Cause chain must preserve the underlying core diagnostic
-                assertNotNull(e.getCause(), "wrapped exception must keep the original cause");
-                assertTrue(e.getCause().getMessage().contains("No IReflection"),
-                        "cause should be the original IllegalStateException");
+                assertDoesNotThrow(ApiBuilder::builder,
+                        "ApiBuilder.builder() must succeed via SPI cold-start when reflection providers are on the classpath");
+                assertNotNull(IClass.getReflection(),
+                        "SPI cold-start must have repopulated IClass.getReflection()");
             } finally {
                 f.set(null, saved);
             }
         }
 
         @Test
-        @DisplayName("build() without wiring reports concrete next steps")
+        @DisplayName("build() without wiring reports concrete next steps (SPI fallback disabled, simulates a deps-less env)")
         void build_without_wiring_includes_guidance() {
-            // Fresh ApiBuilder, owned bootstrap, NO reflection/injection/expression
-            // registered on the bootstrap → bootstrap.build() fails.
+            // garganttua-core's SPI fallback would normally auto-load reflection,
+            // injection and expression builders from META-INF/services on the
+            // classpath — turning this "nothing wired" scenario into a successful
+            // build. To still exercise the guidance text under regression, we
+            // explicitly disable the SPI fallback on the private bootstrap so
+            // the require()'d core builders end up unresolved.
             IApiBuilder ab = ApiBuilder.builder();
+            ((com.garganttua.core.bootstrap.dsl.Bootstrap) ab.bootstrap()).disableSpiFallback();
             ab.multiTenant(false)
                     .domain(IClass.getClass(TestEntity.class))
                         .entity().id("id").uuid("uuid").tenantId("tenantId").up()
@@ -286,7 +285,7 @@ class AutoBootstrapApiBuilderTest {
                     .up();
 
             ApiException e = assertThrows(ApiException.class, ab::build,
-                    "build() with an unwired bootstrap must fail loudly");
+                    "build() with an unwired bootstrap and SPI disabled must fail loudly");
             String msg = e.getMessage();
             assertNotNull(msg);
             // The message must surface the underlying core error AND add the

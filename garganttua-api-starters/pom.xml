@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api</artifactId>
+		<version>3.0.0-ALPHA01</version>
+	</parent>
+	<artifactId>garganttua-api-starters</artifactId>
+	<packaging>pom</packaging>
+
+	<!--
+	  Starter modules are pure aggregator poms: each one declares the set of
+	  modules + core dependencies you need for a given stack (reflection
+	  strategy, persistence, transport). They never ship Java code, so the
+	  framework keeps the "let the user choose" property — the starter just
+	  spares you from typing the same five <dependency> blocks every project.
+
+	  Consuming a starter:
+
+	      <dependency>
+	          <groupId>com.garganttua</groupId>
+	          <artifactId>garganttua-api-starter-jvm-mongo-javalin</artifactId>
+	          <version>3.0.0-ALPHA01</version>
+	      </dependency>
+	-->
+
+	<modules>
+		<module>garganttua-api-starter-quickstart</module>
+		<module>garganttua-api-starter-jvm-mongo-javalin</module>
+		<module>garganttua-api-starter-aot-mongo-javalin</module>
+	</modules>
+</project>

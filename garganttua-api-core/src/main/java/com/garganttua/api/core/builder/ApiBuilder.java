@@ -94,6 +94,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<IAuthorizationProtocol> authorizationProtocols = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> authorizationProtocolBuilders = new CopyOnWriteArrayList<>();
 	private final List<com.garganttua.api.commons.observability.IApiObserver> observers = new CopyOnWriteArrayList<>();
+	private final List<com.garganttua.core.observability.IObserver<com.garganttua.core.observability.ObservableEvent>> workflowObservers = new CopyOnWriteArrayList<>();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
@@ -133,13 +134,28 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	 * that auto-detection produces a working reflection out of the box.
 	 */
 	public static IApiBuilder builder() {
-		// Both Bootstrap.builder() and the ApiBuilder constructor call
-		// IClass.getClass(...) eagerly to declare their dependencies — which
-		// requires a registered IReflection. If the user has not installed one
-		// yet, surface concrete guidance instead of bubbling the raw
-		// IllegalStateException from core.
+		// Bootstrap.builder() triggers garganttua-core's ServiceLoader-based
+		// cold-start discovery (core commit c19c7d66): it loads any
+		// IReflectionProvider / IAnnotationScanner published via
+		// META-INF/services on the classpath and installs the resulting
+		// IReflection on the global holder. Reflection-runtime + reflections
+		// (or AOT variants) on the user's deps are therefore enough — no
+		// manual IClass.setReflection(...) needed in the common case.
+		//
+		// If neither manual setup nor SPI populated IReflection (no provider
+		// jars at all), the core throws an IllegalStateException with
+		// "No IReflection ..." — we wrap it in an ApiException with concrete
+		// guidance instead of letting the raw core message bubble.
 		try {
 			IBoostrap bootstrap = com.garganttua.core.bootstrap.dsl.Bootstrap.builder().autoDetect(true);
+			// Brand the private bootstrap as the API layer (banner + name +
+			// version) instead of inheriting the generic "Garganttua Core"
+			// defaults. The user can still override via
+			// apiBuilder.bootstrap().withBanner(...) /
+			// .withBannerMode(BannerMode.OFF) before build().
+			bootstrap.withApplicationName(com.garganttua.api.core.GarganttuaApiVersion.getName())
+					.withApplicationVersion(com.garganttua.api.core.GarganttuaApiVersion.getVersion())
+					.withBanner(new com.garganttua.api.core.GarganttuaApiBanner());
 			ApiBuilder ab = new ApiBuilder();
 			bootstrap.withBuilder(ab);
 			ab.bootstrap = bootstrap;
@@ -293,6 +309,15 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	public IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException {
 		Objects.requireNonNull(observer, "Observer cannot be null");
 		this.observers.add(observer);
+		return this;
+	}
+
+	@Override
+	public IApiBuilder workflowObserver(
+			com.garganttua.core.observability.IObserver<com.garganttua.core.observability.ObservableEvent> observer)
+			throws ApiException {
+		Objects.requireNonNull(observer, "Workflow observer cannot be null");
+		this.workflowObservers.add(observer);
 		return this;
 	}
 
@@ -469,6 +494,28 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				IDomain<?> domainContext = domainBuilder.build();
 				domainContexts.put(domainContext.getDomain(), domainContext);
 				log.atDebug().log("Built domain context: {}", domainContext.getDomain());
+			}
+
+			// Propagate workflow-level observers (core ObservableEvent stream) to
+			// every domain's IWorkflow. Each IWorkflow is an IObservable<ObservableEvent>
+			// so adding an observer here gives the caller a live stream of
+			// stage/script/mapper/injection start-end-error events for every
+			// operation that runs through any domain. No-op when no observer was
+			// registered via .workflowObserver(...).
+			if (!this.workflowObservers.isEmpty()) {
+				for (IDomain<?> domain : domainContexts.values()) {
+					com.garganttua.core.workflow.IWorkflow wf = domain.getWorkflow();
+					if (wf instanceof com.garganttua.core.observability.IObservable<?>) {
+						@SuppressWarnings("unchecked")
+						com.garganttua.core.observability.IObservable<com.garganttua.core.observability.ObservableEvent> observable =
+								(com.garganttua.core.observability.IObservable<com.garganttua.core.observability.ObservableEvent>) wf;
+						for (var observer : this.workflowObservers) {
+							observable.addObserver(observer);
+						}
+					}
+				}
+				log.atDebug().log("Wired {} workflow observer(s) onto {} domain workflow(s)",
+						this.workflowObservers.size(), domainContexts.size());
 			}
 
 			// Validate tenant domain presence when multi-tenancy is enabled

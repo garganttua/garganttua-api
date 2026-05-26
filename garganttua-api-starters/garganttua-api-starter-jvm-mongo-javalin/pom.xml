@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api-starters</artifactId>
+		<version>3.0.0-ALPHA01</version>
+	</parent>
+	<artifactId>garganttua-api-starter-jvm-mongo-javalin</artifactId>
+	<packaging>jar</packaging>
+
+	<!--
+	  jvm-mongo-javalin — the recommended "web app" stack:
+
+	    * garganttua-api-core               — the framework
+	    * runtime reflection + reflections  — IReflection picked at startup
+	                                          (no AOT step required)
+	    * garganttua-api-dao-mongodb        — MongoDB IDao implementation
+	    * garganttua-api-javalin            — Javalin-based HTTP interface
+	                                          (TODO: pending 3.0 port —
+	                                          see modules commented out at
+	                                          the parent pom)
+	    * garganttua-api-interface-rest     — REST interface wiring
+	                                          (TODO: pending 3.0 port)
+	    * garganttua-api-security           — auth modules
+	                                          (TODO: pending 3.0 port)
+
+	  Once those three modules are ported to 3.0, uncomment the matching
+	  <dependency> blocks below — no other change required for consumers.
+
+	  Wiring:
+
+	      IApi api = ApiBuilder.builder()
+	          .packages("com.myapp")
+	          .domain(IClass.getClass(User.class))
+	              .entity().id("id").uuid("uuid").tenantId("tenantId").up()
+	              .dto(IClass.getClass(UserDto.class))
+	                  .id("id").uuid("uuid").tenantId("tenantId")
+	                  .db(new MongoDao(mongoClient, "myapp"))
+	              .up()
+	          .up()
+	          .build();
+	-->
+
+	<dependencies>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-core</artifactId>
+		</dependency>
+
+		<!-- Reflection: runtime stack. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-runtime-reflection</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-reflections</artifactId>
+		</dependency>
+
+		<!-- Persistence: MongoDB. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-dao-mongodb</artifactId>
+		</dependency>
+
+		<!--
+		  TODO: enable once the modules are ported to 3.0.
+		  <dependency>
+		      <groupId>com.garganttua</groupId>
+		      <artifactId>garganttua-api-javalin</artifactId>
+		  </dependency>
+		  <dependency>
+		      <groupId>com.garganttua</groupId>
+		      <artifactId>garganttua-api-interface-rest</artifactId>
+		  </dependency>
+		  <dependency>
+		      <groupId>com.garganttua</groupId>
+		      <artifactId>garganttua-api-security</artifactId>
+		  </dependency>
+		-->
+	</dependencies>
+</project>

@@ -198,8 +198,11 @@ class TryAuthenticateTest {
         @Test
         @DisplayName("succeeds with IRuntimeContext-compatible owner type")
         void succeedsWithRuntimeContext() {
-            RuntimeExpressionContext.set(mock(IRuntimeContext.class));
-            try {
+            // Migrated from the dropped set/clear pair to the ScopedValue-based
+            // runIn binding (garganttua-core 2.0.0-ALPHA02 turned the runtime
+            // context holder into a structured scope). Outer binding is
+            // unbound automatically when the lambda returns.
+            RuntimeExpressionContext.runIn(mock(IRuntimeContext.class), () -> {
                 Authentication auth = successAuth();
                 IContextualMethodBinder<?, Object> binder = contextualBinderReturning(auth);
                 IAuthenticationDefinition authDef = authDefWithBinder(binder);
@@ -209,32 +212,26 @@ class TryAuthenticateTest {
 
                 assertInstanceOf(IAuthentication.class, result);
                 assertTrue(((IAuthentication) result).authenticated());
-            } finally {
-                RuntimeExpressionContext.clear();
-            }
+            });
         }
 
         @Test
         @DisplayName("throws when contextual binder returns empty")
         void throwsWhenContextualBinderEmpty() {
-            RuntimeExpressionContext.set(mock(IRuntimeContext.class));
-            try {
+            RuntimeExpressionContext.runIn(mock(IRuntimeContext.class), () -> {
                 IContextualMethodBinder<?, Object> binder = contextualBinderReturningEmpty();
                 IAuthenticationDefinition authDef = authDefWithBinder(binder);
                 IAuthenticatorDefinition def = authenticatorWith(List.of(authDef));
 
                 assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
-            } finally {
-                RuntimeExpressionContext.clear();
-            }
+            });
         }
 
         @Test
         @DisplayName("rejects binder with incompatible owner context type")
         @SuppressWarnings("unchecked")
         void rejectsIncompatibleOwnerContextType() {
-            RuntimeExpressionContext.set(mock(IRuntimeContext.class));
-            try {
+            RuntimeExpressionContext.runIn(mock(IRuntimeContext.class), () -> {
                 IContextualMethodBinder<Object, Object> binder = mock(IContextualMethodBinder.class);
                 when(binder.getOwnerContextType()).thenReturn((IClass) IClass.getClass(String.class));
                 when(binder.getParametersContextTypes()).thenReturn(new IClass<?>[0]);
@@ -244,9 +241,7 @@ class TryAuthenticateTest {
 
                 // Should fail because String is not IRuntimeContext — caught and treated as failed attempt
                 assertThrows(ApiException.class, () -> SecurityExpressions.tryAuthenticate(def));
-            } finally {
-                RuntimeExpressionContext.clear();
-            }
+            });
         }
     }
 

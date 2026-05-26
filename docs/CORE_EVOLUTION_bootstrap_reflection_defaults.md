@@ -43,15 +43,52 @@ Real-world evidence from the `garganttua-api` integration tests (`AbstractCrudIn
 | Indexed scanner | `garganttua-aot-annotation-scanner`   | `IndexedAnnotationScanner`                   | 20               |
 | Reflections scanner | `garganttua-reflections`          | `ReflectionsAnnotationScanner`               | 10               |
 
+### The circular dependency that forces the choice
+
+`Bootstrap.autoDetect(true)` discovers `@Bootstrap`-annotated builders by **scanning the classpath via `IReflection`**. But `IReflection` itself is one of those builders — until it is built, the scan has nothing to delegate to. The naïve "let the bootstrap scan for IReflection" path is therefore a chicken-and-egg:
+
+```
+   Bootstrap.autoDetect
+        │
+        ▼
+  scan classpath  ──── needs ───▶  IReflection
+        ▲                                 │
+        │                                 ▼
+        └──── produces ──── ReflectionBuilder
+```
+
+Whatever mechanism we pick has to be able to find the reflection provider **without using reflection** for that very first hop.
+
 ### Discovery mechanism
 
 Two viable options — recommend **A**:
 
-**A. `ServiceLoader<IReflectionProvider>` + `ServiceLoader<IAnnotationScanner>`**
-Each module ships a `META-INF/services/com.garganttua.core.reflection.IReflectionProvider` (resp. scanner) descriptor. `ReflectionBuilder.doAutoDetection()` calls `ServiceLoader.load(...)` and registers what it finds at the documented default priority. Pure Java, no extra dependency. Tradeoff: priorities have to live somewhere — annotation on the provider class (`@Priority(20)`) or constant on the class.
+**A. `ServiceLoader<IReflectionProvider>` + `ServiceLoader<IAnnotationScanner>` (recommended)**
 
-**B. Classpath scan via the bootstrap packages**
-Use the packages passed to `Bootstrap.withPackage(...)` to find implementations of `IReflectionProvider` / `IAnnotationScanner` via reflection. Tradeoff: chicken-and-egg (reflection scanner needed to discover the reflection scanner).
+The JDK's `ServiceLoader` reads `META-INF/services/<interface-fqcn>` descriptors directly off the classloader — **no reflection involved**. That's exactly the chicken-and-egg breaker we need.
+
+Each provider module ships its own descriptor:
+
+```
+# garganttua-runtime-reflection.jar / META-INF/services/com.garganttua.core.reflection.IReflectionProvider
+com.garganttua.core.reflection.runtime.RuntimeReflectionProvider
+```
+
+`Bootstrap.build()` bootstraps itself in two phases:
+
+1. **Phase 1 — pre-reflection bootstrap (SPI)**. `Bootstrap.build()` opens with `ServiceLoader.load(IReflectionProvider.class)` and `ServiceLoader.load(IAnnotationScanner.class)`, registers what it finds on a fresh `ReflectionBuilder`, builds it, and publishes the resulting `IReflection` via `IClass.setReflection(...)`. No reflection scanner is needed — the classloader walks the JARs by itself.
+2. **Phase 2 — full auto-detection**. With `IReflection` now available, `autoDetect(true)` performs its usual classpath scan against `@Bootstrap`-annotated builders for everything else (`InjectionContextBuilder`, `ExpressionContextBuilder`, user builders, …).
+
+This is precisely how `java.sql.DriverManager` boots JDBC drivers, how `javax.xml.parsers.SAXParserFactory` finds parsers, how `org.slf4j.LoggerFactory` finds bindings — a battle-tested JDK pattern, GraalVM-native-image friendly (the AOT compiler natively understands `META-INF/services`), and works with Jigsaw modules (`provides … with …` directive).
+
+Tradeoffs:
+- Each provider module owns its descriptor — small boilerplate (one text file).
+- Priority encoding has to live somewhere — recommended: an annotation `@Priority(int)` on the provider class, read via `Class.getAnnotation(...)` once the class is loaded (no scanner needed for that). Falls back to a sane default if absent.
+- The `META-INF/services` files become part of the public contract — renaming a provider's FQCN becomes a breaking change.
+
+**B. Classpath scan via the bootstrap packages (not recommended)**
+
+Use the packages passed to `Bootstrap.withPackage(...)` to find implementations of `IReflectionProvider` / `IAnnotationScanner` via reflection. Restates the chicken-and-egg as "the user must declare the package the reflection provider lives in, before reflection works". Defeats the goal of zero-config.
 
 ### Override semantics
 

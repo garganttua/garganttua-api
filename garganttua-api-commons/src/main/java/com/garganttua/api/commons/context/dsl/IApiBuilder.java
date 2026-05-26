@@ -58,6 +58,37 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException;
 
 	/**
+	 * Registers an observer that the framework wires onto every domain's
+	 * underlying {@code IWorkflow} so it receives the
+	 * {@link com.garganttua.core.observability.ObservableEvent} stream emitted
+	 * by garganttua-core (stage start/end/error, script start/end, mapper,
+	 * injection, mutex — every engine instrumented with
+	 * {@code ObservabilityEmitter}). Multiple calls add multiple observers.
+	 *
+	 * <p>This is the deeper, fine-grained counterpart of
+	 * {@link #observer(com.garganttua.api.commons.observability.IApiObserver)}:
+	 * {@code IApiObserver} fires at operation boundaries (one event per
+	 * {@code Domain.invoke}), {@code workflowObserver} fires at every internal
+	 * step of the pipeline. Use it to drill down into "where did the time go
+	 * inside this request" or to bridge to a tracing/metrics backend that
+	 * wants per-stage spans.
+	 *
+	 * <p>Events share a single {@code executionId} per logical execution thanks
+	 * to {@code ObservableContextHolder.Session} propagation — so a workflow
+	 * that invokes a sub-workflow (e.g. {@code invokeAuthenticate}) yields a
+	 * correlated event tree the observer can group on.
+	 *
+	 * <p>Opt-in: when no observer is registered, the framework does not touch
+	 * the workflows' registries — zero overhead beyond the
+	 * {@code hasObservers()} short-circuit core already does.
+	 *
+	 * @since 3.0.0-ALPHA01
+	 */
+	IApiBuilder workflowObserver(
+			com.garganttua.core.observability.IObserver<com.garganttua.core.observability.ObservableEvent> observer)
+			throws ApiException;
+
+	/**
 	 * Opt-in: exposes the framework-provided endpoint that lists every
 	 * authority enforced anywhere on the API (one entry per distinct
 	 * {@link com.garganttua.api.commons.operation.OperationDefinition#effectiveAuthorityName()}

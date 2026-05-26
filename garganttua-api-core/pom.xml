@@ -84,6 +84,25 @@
 	</dependencies>
 
 	<build>
+		<resources>
+			<!-- Filter only the version properties file. Keeping .gs scripts and
+				 other resources unfiltered avoids accidental ${...} substitution
+				 inside script bodies. -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<excludes>
+					<exclude>garganttua-api-version.properties</exclude>
+				</excludes>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>garganttua-api-version.properties</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
