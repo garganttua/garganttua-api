@@ -340,6 +340,6 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
                 freshEntity, keyDef, com.garganttua.api.core.mapper.DefaultMapper.reflection());
         byte[] sig = realm.getKeyForSigning().sign("payload".getBytes());
         assertTrue(realm.getKeyForSignatureVerification().verifySignature(sig, "payload".getBytes()),
-                "scanner-built key domain must produce a sign/verify-functional MaterializedKeyRealm");
+                "scanner-built key domain must produce a sign/verify-functional IKeyRealm");
     }
 }

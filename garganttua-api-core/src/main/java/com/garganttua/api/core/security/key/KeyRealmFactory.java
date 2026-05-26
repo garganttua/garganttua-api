@@ -9,8 +9,9 @@ import java.util.concurrent.TimeUnit;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.definition.IDomainKeyDefinition;
 import com.garganttua.core.crypto.IKeyAlgorithm;
+import com.garganttua.core.crypto.IKeyRealm;
 import com.garganttua.core.crypto.KeyAlgorithm;
-import com.garganttua.core.crypto.KeyType;
+import com.garganttua.core.crypto.KeyRealm;
 import com.garganttua.core.crypto.SignatureAlgorithm;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -18,13 +19,14 @@ import com.garganttua.core.reflection.ObjectAddress;
 
 /**
  * Bridge between persisted {@code @Key} entities and the runtime
- * {@link MaterializedKeyRealm}. Two operations:
+ * {@link IKeyRealm}. Two operations:
  *
  * <ul>
  *   <li>{@link #materialize(Object, IDomainKeyDefinition, IReflection)} —
  *       reads the entity fields described by an {@link IDomainKeyDefinition}
- *       and rebuilds an {@link com.garganttua.core.crypto.IKeyRealm}
- *       ready for sign / verify.</li>
+ *       and rebuilds an {@link IKeyRealm} ready for sign / verify by
+ *       delegating to {@link KeyRealm#fromSignatureMaterial}
+ *       (garganttua-core 2.0.0-ALPHA02 factory).</li>
  *   <li>{@link #generateAndStamp} — generates a fresh JDK
  *       {@link KeyPair}, instantiates the entity class and writes
  *       realmName / algorithm / signatureAlgorithm / publicMaterial /
@@ -43,10 +45,11 @@ public final class KeyRealmFactory {
 	}
 
 	/**
-	 * Rebuilds an {@link com.garganttua.core.crypto.IKeyRealm} from a
-	 * persisted key entity.
+	 * Rebuilds an {@link IKeyRealm} from a persisted key entity, delegating
+	 * the JDK-key reconstruction (PKCS8/X509 decoding, cached JDK Key) to
+	 * {@link KeyRealm#fromSignatureMaterial}.
 	 */
-	public static MaterializedKeyRealm materialize(Object entity, IDomainKeyDefinition keyDef, IReflection reflection)
+	public static IKeyRealm materialize(Object entity, IDomainKeyDefinition keyDef, IReflection reflection)
 			throws ApiException {
 		Objects.requireNonNull(entity, "entity");
 		Objects.requireNonNull(keyDef, "keyDef");
@@ -63,10 +66,8 @@ public final class KeyRealmFactory {
 		IKeyAlgorithm algorithm = parseAlgorithm(algorithmRaw);
 		SignatureAlgorithm sigAlgo = parseSignature(signatureRaw);
 
-		MaterializedKey privateKey = new MaterializedKey(KeyType.PRIVATE, algorithm, sigAlgo, privateBytes);
-		MaterializedKey publicKey = new MaterializedKey(KeyType.PUBLIC, algorithm, sigAlgo, publicBytes);
-
-		return new MaterializedKeyRealm(realmName, algorithm, expiration, revoked, privateKey, publicKey);
+		return KeyRealm.fromSignatureMaterial(realmName, algorithm, sigAlgo,
+				expiration, revoked, privateBytes, publicBytes);
 	}
 
 	/**
