@@ -163,6 +163,29 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			bootstrap.withApplicationName(com.garganttua.api.core.GarganttuaApiVersion.getName())
 					.withApplicationVersion(com.garganttua.api.core.GarganttuaApiVersion.getVersion())
 					.withBanner(new com.garganttua.api.core.GarganttuaApiBanner());
+
+			// Garganttua-core 2.0.0-ALPHA02 ships an SPI factory
+			// (com.garganttua.core.workflow.dsl.WorkflowBuilderFactory) that
+			// registers a standalone WorkflowBuilder via Bootstrap.autoDetect.
+			// That builder has no stages configured at construction and its
+			// build() throws "Workflow must have at least one stage".
+			//
+			// In garganttua-api, workflows are per-domain — assembled by
+			// DomainWorkflowAssembler — not application-level singletons. The
+			// SPI WorkflowBuilder would dangle here. We pre-register a stub
+			// instance of the same concrete class so the bootstrap's class-
+			// name dedup skips the SPI one (see
+			// Bootstrap.loadBootstrapBuildersFromSpi). The stub carries a
+			// single no-op stage so its own build() succeeds — the resulting
+			// IWorkflow is never referenced, only its presence in the registry
+			// matters. Track this with the core team — file an evolution to
+			// either drop WorkflowBuilder from META-INF/services or allow
+			// stages.isEmpty() builds to produce an empty workflow.
+			com.garganttua.core.workflow.dsl.IWorkflowBuilder workflowStub =
+					com.garganttua.core.workflow.dsl.WorkflowBuilder.create().name("api-noop-workflow");
+			workflowStub.stage("noop").script("0").name("noop").inline().up().up();
+			bootstrap.withBuilder(workflowStub);
+
 			ApiBuilder ab = new ApiBuilder();
 			bootstrap.withBuilder(ab);
 			ab.bootstrap = bootstrap;
