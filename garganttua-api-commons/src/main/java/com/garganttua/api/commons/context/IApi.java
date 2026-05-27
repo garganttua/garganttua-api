@@ -31,29 +31,6 @@ public interface IApi extends ILifecycle {
 
     List<IAuthorizationProtocol> getAuthorizationProtocols();
 
-    // --- Observability ---
-
-    /**
-     * Returns the observers registered via
-     * {@link com.garganttua.api.commons.context.dsl.IApiBuilder#observer(com.garganttua.api.commons.observability.IApiObserver)}.
-     * Empty list when none — observability is opt-in and adds no cost
-     * to the hot path until the first observer is registered.
-     */
-    List<com.garganttua.api.commons.observability.IApiObserver> getObservers();
-
-    /**
-     * Convenience accessor for the in-memory
-     * {@link com.garganttua.api.commons.observability.OperationStats}
-     * aggregates maintained by a registered
-     * {@code com.garganttua.api.core.observability.StatsObserver}.
-     * Returns an empty map when no such observer is wired — the user
-     * may register multiple {@code StatsObserver}s, this method
-     * returns the snapshot of the <em>first</em> one found (mostly
-     * convenience for tests and admin endpoints; multi-tenant
-     * observability typically uses a metrics-library observer).
-     */
-    java.util.Map<String, com.garganttua.api.commons.observability.OperationStats> getOperationStats();
-
     // --- Authorities endpoint ---
 
     /**

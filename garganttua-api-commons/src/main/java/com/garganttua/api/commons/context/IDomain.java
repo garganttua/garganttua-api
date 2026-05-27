@@ -22,12 +22,20 @@ import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.IRequestBuilder;
 import com.garganttua.api.commons.sort.ISort;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.observability.IObservable;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
 
-public interface IDomain<E> extends ILifecycle {
+/**
+ * A registered domain on the api. Each domain is also an {@link IObservable}
+ * that fires {@code api:operation:<domainName>:<op>} Start/End/Error events
+ * at {@link #invoke(IOperationRequest)} boundaries — picked up by core's
+ * {@code @Observer} scan via the bootstrap-wired
+ * {@code ObservabilityBuilder}.
+ */
+public interface IDomain<E> extends ILifecycle, IObservable {
 
 	IDomainDefinition<E> getDomainDefinition();
 

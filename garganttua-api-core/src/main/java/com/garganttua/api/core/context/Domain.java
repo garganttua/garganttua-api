@@ -29,6 +29,10 @@ import com.garganttua.api.commons.service.IRequestBuilder;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservabilityEmitter;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.observability.ObservableRegistry;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ReflectionException;
 import com.garganttua.core.reflection.binders.IMethodBinder;
@@ -69,8 +73,27 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     private IApi apiContext;
 
+    /**
+     * Local registry for {@code api:operation:*} ObservableEvents emitted by
+     * {@link #invoke(IOperationRequest)}. The bootstrap-wired
+     * {@code ObservabilityBuilder} subscribes every {@code @Observer}-scanned
+     * observer onto this registry at api build time via
+     * {@code ObservabilityBinding.attachSource(this)}.
+     */
+    private final ObservableRegistry observableRegistry = new ObservableRegistry();
+
     public void setApi(IApi apiContext) {
         this.apiContext = apiContext;
+    }
+
+    @Override
+    public void addObserver(IObserver<ObservableEvent> observer) {
+        this.observableRegistry.addObserver(observer);
+    }
+
+    @Override
+    public void removeObserver(IObserver<ObservableEvent> observer) {
+        this.observableRegistry.removeObserver(observer);
     }
 
     public IApi getApiContext() {
@@ -373,98 +396,47 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) {
         ensureStarted();
-        // Observability: skip every allocation when no observer is wired —
-        // the typical case for production traffic where the user opted out.
-        java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers = activeObservers();
         long startNanos = System.nanoTime();
-        if (observers.isEmpty()) {
+
+        // Fast path: when nothing subscribed to our registry, skip the emit
+        // scope entirely and call doInvoke directly. Production traffic that
+        // opted out of @Observer pays no overhead beyond the hasObservers()
+        // short-circuit on the registry.
+        if (!this.observableRegistry.hasObservers()) {
             OperationResponse response = doInvoke(request, options);
             return response.withProcessingTime(java.time.Duration.ofNanos(System.nanoTime() - startNanos));
         }
-        return invokeWithObservability(request, options, observers, startNanos);
-    }
 
-    @SuppressWarnings("unchecked")
-    private IOperationResponse invokeWithObservability(IOperationRequest request,
-            WorkflowExecutionOptions options,
-            java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers,
-            long startNanos) {
-        // Pin the executionUuid before doInvoke so both events carry it; the
-        // tweak in doInvoke preserves a pre-set EXECUTION_UUID rather than
-        // overwriting it.
+        // Slow path: emit api:operation:<domain>:<op> Start/End/Error onto
+        // the local registry via ObservabilityEmitter, so the bootstrap-wired
+        // ObservabilityBinding's observers all see correlated events. The
+        // executionId pinned here is also bound on the request so doInvoke
+        // and the nested workflow share it.
         java.util.UUID executionUuid = UuidCreator.getTimeOrderedEpoch();
         request.arg(IOperationRequest.EXECUTION_UUID, executionUuid);
 
-        java.time.Instant startedAt = java.time.Instant.now();
         com.garganttua.api.commons.operation.OperationDefinition operation =
                 ((java.util.Optional<com.garganttua.api.commons.operation.OperationDefinition>)
                         request.arg(IOperationRequest.OPERATION)).orElse(null);
-        ICaller startCaller = request.caller();
+        String source = "api:operation:" + this.domainDefinition.domainName()
+                + ":" + (operation != null ? operation.toString() : "<no-op>");
 
-        fireOnStart(observers, new com.garganttua.api.commons.observability.OperationEvent(
-                executionUuid,
-                this.domainDefinition.domainName(),
-                operation, startCaller,
-                startedAt, null, null, null, null));
-
-        OperationResponse response = null;
-        Throwable failure = null;
-        try {
-            response = doInvoke(request, options);
-            return response.withProcessingTime(java.time.Duration.ofNanos(System.nanoTime() - startNanos));
-        } catch (RuntimeException e) {
-            failure = e;
-            throw e;
-        } finally {
-            java.time.Duration duration = java.time.Duration.ofNanos(System.nanoTime() - startNanos);
-            java.time.Instant endedAt = startedAt.plus(duration);
-            // Re-read caller in case doInvoke materialized an anonymous one.
-            ICaller endCaller = request.caller();
-            com.garganttua.api.commons.service.OperationResponseCode code =
-                    response != null ? response.getResponseCode() : null;
-            fireOnEnd(observers, new com.garganttua.api.commons.observability.OperationEvent(
-                    executionUuid,
-                    this.domainDefinition.domainName(),
-                    operation,
-                    endCaller != null ? endCaller : startCaller,
-                    startedAt,
-                    endedAt,
-                    duration,
-                    code,
-                    failure));
-        }
-    }
-
-    private java.util.List<com.garganttua.api.commons.observability.IApiObserver> activeObservers() {
-        if (this.apiContext == null) return java.util.List.of();
-        java.util.List<com.garganttua.api.commons.observability.IApiObserver> obs = this.apiContext.getObservers();
-        return obs == null ? java.util.List.of() : obs;
-    }
-
-    private void fireOnStart(
-            java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers,
-            com.garganttua.api.commons.observability.OperationEvent event) {
-        for (com.garganttua.api.commons.observability.IApiObserver o : observers) {
+        try (var scope = ObservabilityEmitter.open(this.observableRegistry, executionUuid)) {
+            scope.fireStart(source);
             try {
-                o.onOperationStart(event);
+                OperationResponse response = doInvoke(request, options);
+                java.time.Duration duration =
+                        java.time.Duration.ofNanos(System.nanoTime() - startNanos);
+                Integer code = response.getResponseCode() != null
+                        ? response.getResponseCode().ordinal() : null;
+                scope.fireEnd(source, code);
+                return response.withProcessingTime(duration);
             } catch (RuntimeException e) {
-                log.warn("Observer {} threw on operation start — ignored to protect the pipeline",
-                        o.getClass().getName(), e);
-            }
-        }
-    }
-
-    private void fireOnEnd(
-            java.util.List<com.garganttua.api.commons.observability.IApiObserver> observers,
-            com.garganttua.api.commons.observability.OperationEvent event) {
-        for (com.garganttua.api.commons.observability.IApiObserver o : observers) {
-            try {
-                o.onOperationEnd(event);
-            } catch (RuntimeException e) {
-                log.warn("Observer {} threw on operation end — ignored to protect the pipeline",
-                        o.getClass().getName(), e);
+                scope.fireError(source, e);
+                throw e;
             }
         }
     }

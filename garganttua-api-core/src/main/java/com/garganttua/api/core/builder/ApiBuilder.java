@@ -62,7 +62,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		super(Set.of(
 						DependencySpec.require(IClass.getClass(IInjectionContextBuilder.class), DependencyPhase.BUILD),
 						DependencySpec.require(IClass.getClass(IExpressionContextBuilder.class), DependencyPhase.BUILD),
-						DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD)));
+						DependencySpec.require(IClass.getClass(IReflectionBuilder.class), DependencyPhase.BUILD),
+						// Optional: when present (bootstrap-discovered), each Domain
+						// is attached to the binding so @Observer scans flow through.
+						// When absent, observability is just disabled.
+						DependencySpec.use(IClass.getClass(
+								com.garganttua.core.observability.dsl.IObservabilityBuilder.class),
+								DependencyPhase.BUILD)));
 	}
 
 	private final Set<String> packages = ConcurrentHashMap.newKeySet();
@@ -93,12 +99,12 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> protocolBuilders = new CopyOnWriteArrayList<>();
 	private final List<IAuthorizationProtocol> authorizationProtocols = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> authorizationProtocolBuilders = new CopyOnWriteArrayList<>();
-	private final List<com.garganttua.api.commons.observability.IApiObserver> observers = new CopyOnWriteArrayList<>();
 	private volatile com.garganttua.core.workflow.WorkflowTimingConfig workflowTiming =
 			com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
+	private volatile com.garganttua.core.observability.dsl.IObservabilityBuilder observabilityBuilder;
 	private volatile IInjectionContext injectionContext;
 	private volatile AuthoritiesEndpointBuilder authoritiesEndpointBuilder;
 
@@ -303,13 +309,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	public IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException {
 		Objects.requireNonNull(bean, "Authorization protocol supplier builder cannot be null");
 		this.authorizationProtocolBuilders.add(bean);
-		return this;
-	}
-
-	@Override
-	public IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException {
-		Objects.requireNonNull(observer, "Observer cannot be null");
-		this.observers.add(observer);
 		return this;
 	}
 
@@ -581,7 +580,23 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
 					startupBinders, builtSerializers, builtProtocols, builtAuthzProtocols,
-					authoritiesEndpoint, new ArrayList<>(this.observers));
+					authoritiesEndpoint);
+
+			// Attach each Domain to the bootstrap-wired ObservabilityBinding so
+			// every @Observer scanned by core's ObservabilityBuilder sees
+			// api:operation:<domain>:<op> Start/End/Error events. No-op when
+			// no observability builder was provided (manual setups).
+			if (this.observabilityBuilder != null) {
+				com.garganttua.core.observability.ObservabilityBinding binding =
+						this.observabilityBuilder.getBinding();
+				if (binding != null) {
+					for (IDomain<?> domain : domainContexts.values()) {
+						binding.attachSource(domain);
+					}
+					log.atDebug().log("Attached {} domain(s) to the ObservabilityBinding",
+							domainContexts.size());
+				}
+			}
 
 			log.atDebug().log("Built Api with {} domains", domainContexts.size());
 			log.atTrace().log("Exiting doBuild() method");
@@ -919,6 +934,9 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			this.expressionContextBuilder.withPackage("com.garganttua.core.observability");
 			this.expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
 			log.atDebug().log("IExpressionContextBuilder captured via provide()");
+		} else if (dependency instanceof com.garganttua.core.observability.dsl.IObservabilityBuilder builder) {
+			this.observabilityBuilder = builder;
+			log.atDebug().log("IObservabilityBuilder captured via provide()");
 		}
 		return super.provide(dependency);
 	}

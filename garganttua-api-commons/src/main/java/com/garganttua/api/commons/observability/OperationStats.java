@@ -4,18 +4,19 @@ import java.time.Duration;
 
 /**
  * Snapshot of timing aggregates for a single operation. Returned by
- * {@code IApi.getOperationStats()} when a built-in
- * {@link com.garganttua.api.commons.observability.IApiObserver
- * StatsObserver} is registered.
+ * {@code StatsObserver.snapshot()} — a built-in
+ * {@code IObserver<ObservableEvent>} aggregator the user holds and
+ * registers either via core's {@code ObservabilityBuilder.subscribe(...)}
+ * or by annotating their subclass with {@code @Observer}.
  *
  * <p>All fields are immutable values — the snapshot is a point-in-time
  * copy of the live aggregator state.
  *
- * @param operationKey  {@code OperationDefinition.toString()} — e.g.
- *                      {@code "users-create-one-user"}
+ * @param operationKey  source string of the form
+ *                      {@code "api:operation:<domain>:<op>"}
  * @param count         total number of completed invocations
- * @param successCount  invocations that ended with an OK / CREATED /
- *                      UPDATED / DELETED code
+ * @param successCount  invocations that ended with an {@code EndEvent}
+ *                      (errors are counted as failures)
  * @param failureCount  count minus successCount
  * @param totalDuration sum of all durations
  * @param minDuration   smallest observed duration; {@code null} when

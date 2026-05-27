@@ -42,22 +42,6 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
 	/**
-	 * Registers an observer that the framework calls at operation
-	 * boundaries on every {@code Domain.invoke} (start + end). Multiple
-	 * calls add multiple observers — the framework fires them in
-	 * registration order.
-	 *
-	 * <p>Opt-in: when no observer is registered, the framework skips
-	 * event construction entirely — zero overhead on the hot path
-	 * beyond an {@code isEmpty()} check.
-	 *
-	 * <p>Observer exceptions are caught and logged by the framework;
-	 * a broken observer must never turn a successful business
-	 * operation into a 500.
-	 */
-	IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException;
-
-	/**
 	 * Enables per-stage / per-script observability timing markers on every
 	 * workflow the framework compiles. When set to anything other than
 	 * {@link com.garganttua.core.workflow.WorkflowTimingConfig#disabled()},

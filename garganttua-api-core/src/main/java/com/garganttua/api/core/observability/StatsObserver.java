@@ -7,48 +7,66 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.garganttua.api.commons.observability.IApiObserver;
-import com.garganttua.api.commons.observability.OperationEvent;
 import com.garganttua.api.commons.observability.OperationStats;
+import com.garganttua.core.observability.EndEvent;
+import com.garganttua.core.observability.ErrorEvent;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservableEvent;
 
 /**
- * In-memory aggregator suitable for "what's slow on average" overviews.
- * Maintains per-operation totals — count, success/failure breakdown,
- * sum / min / max of durations — keyed by
- * {@code OperationDefinition.toString()}.
+ * In-memory aggregator that subscribes to core's {@link ObservableEvent}
+ * stream and tallies per-operation totals — count, success/failure breakdown,
+ * sum / min / max of durations — keyed by the event's {@code source}.
  *
- * <p>Lock-free: a {@link ConcurrentHashMap} of {@code Bucket}s where
- * each bucket uses atomic counters and CAS loops on the min/max. Safe
- * under heavy concurrent traffic, no synchronization on the hot path.
+ * <p>{@link EndEvent}s count as successes; {@link ErrorEvent}s count as
+ * failures. {@code StartEvent}s are ignored — durations come straight off
+ * the End/Error event payload.
  *
- * <p>For percentiles or distribution histograms, pair the framework
- * with a real metrics library (Micrometer, OpenTelemetry) via a thin
- * adapter observer — this class deliberately keeps to averages so it
- * carries no dependency.
+ * <p>Lock-free: a {@link ConcurrentHashMap} of {@code Bucket}s where each
+ * bucket uses atomic counters and CAS loops on min/max. Safe under heavy
+ * concurrent traffic, no synchronization on the hot path.
+ *
+ * <p>Filter the api-operation slice from a wider observability feed via
+ * the source prefix: register with
+ * {@code observability.subscribe(stats).matchingAnySource("api:operation:*")}
+ * or with {@code @Observer(sources = "api:operation:*")} when discovery
+ * is annotation-driven.
+ *
+ * <p>For percentiles or distribution histograms, pair the framework with a
+ * real metrics library (Micrometer, OpenTelemetry) via a thin adapter
+ * observer — this class deliberately keeps to averages so it carries no
+ * dependency.
  */
-public final class StatsObserver implements IApiObserver {
+public final class StatsObserver implements IObserver<ObservableEvent> {
 
 	private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
 	@Override
-	public void onOperationEnd(OperationEvent event) {
-		if (event.operation() == null || event.duration() == null) return;
-		String key = event.operation().toString();
-		Bucket bucket = buckets.computeIfAbsent(key, k -> new Bucket());
-		bucket.record(event.duration(), event.isSuccess());
+	public void onEvent(ObservableEvent event) {
+		switch (event) {
+			case EndEvent end -> record(end.source(), end.duration(), true);
+			case ErrorEvent err -> record(err.source(), err.duration(), false);
+			default -> { /* StartEvent and any future variant: nothing to tally */ }
+		}
+	}
+
+	private void record(String source, Duration duration, boolean success) {
+		if (source == null || duration == null) return;
+		Bucket bucket = buckets.computeIfAbsent(source, k -> new Bucket());
+		bucket.record(duration, success);
 	}
 
 	/**
-	 * Returns an immutable snapshot of every observed operation's
-	 * stats. The snapshot is consistent <em>per bucket</em> (each
-	 * bucket is read atomically) but not globally — concurrent
-	 * recordings may produce a snapshot where some buckets advanced
-	 * past others. Good enough for monitoring overviews; not suitable
-	 * for invariants that must hold across operations.
+	 * Returns an immutable snapshot of every observed source's stats. The
+	 * snapshot is consistent <em>per bucket</em> (each bucket is read
+	 * atomically) but not globally — concurrent recordings may produce a
+	 * snapshot where some buckets advanced past others. Good enough for
+	 * monitoring overviews; not suitable for invariants that must hold
+	 * across sources.
 	 */
 	public Map<String, OperationStats> snapshot() {
 		Map<String, OperationStats> result = new java.util.HashMap<>();
-		buckets.forEach((key, bucket) -> result.put(key, bucket.snapshot(key)));
+		buckets.forEach((source, bucket) -> result.put(source, bucket.snapshot(source)));
 		return Collections.unmodifiableMap(result);
 	}
 
@@ -85,11 +103,11 @@ public final class StatsObserver implements IApiObserver {
 					current == null || candidate.compareTo(current) > 0 ? candidate : current);
 		}
 
-		OperationStats snapshot(String key) {
+		OperationStats snapshot(String source) {
 			long c = count.get();
 			long s = successCount.get();
 			return new OperationStats(
-					key,
+					source,
 					c,
 					s,
 					c - s,
