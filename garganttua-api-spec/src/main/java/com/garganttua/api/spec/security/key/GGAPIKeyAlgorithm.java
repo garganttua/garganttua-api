@@ -313,7 +313,18 @@ public enum GGAPIKeyAlgorithm implements IGGAPIKeyAlgorithm {
 		if (signatureAlgorithm == null) {
             throw new IllegalArgumentException("Signture algorithm cannot be null");
         }
-        
+
+        // HMAC keys: JCE's Mac.getInstance() expects the bare HMAC name (e.g.
+        // "HmacSHA512") and rejects any "<digest>with<algo>" composition. So
+        // when the underlying key algorithm is an HMAC variant, the signature
+        // name IS the key algorithm name regardless of the requested
+        // signatureAlgorithm. Pre-2.0.10 this branch was missing and an HMAC
+        // key paired with e.g. GGAPISignatureAlgorithm.SHA512 produced the
+        // invalid "SHA512withHmacSHA512", failing every sign call at runtime.
+        if (this.algorithm.startsWith("Hmac")) {
+            return this.algorithm;
+        }
+
         String algorithmName = this.algorithm;
         if( this.algorithm.equals("EC") )
         	algorithmName = "ECDSA";
@@ -327,7 +338,7 @@ public enum GGAPIKeyAlgorithm implements IGGAPIKeyAlgorithm {
             return GGAPISignatureAlgorithm.HMAC_SHA384.getName();
         if( signatureAlgorithm == GGAPISignatureAlgorithm.HMAC_SHA512)
             return GGAPISignatureAlgorithm.HMAC_SHA512.getName();
-        
+
 		return signatureAlgorithm.getName()+"with"+algorithmName;
 	}
 }
