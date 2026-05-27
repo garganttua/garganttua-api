@@ -30,8 +30,6 @@ import com.garganttua.api.commons.security.context.IAuthenticationContext;
 import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.api.commons.serialization.Serializer;
 import com.garganttua.core.bootstrap.annotations.Bootstrap;
-import com.garganttua.core.bootstrap.dsl.IBoostrap;
-import com.garganttua.core.dsl.DslException;
 import com.garganttua.core.dsl.IObservableBuilder;
 import com.garganttua.core.dsl.annotations.Scan;
 import com.garganttua.core.dsl.dependency.AbstractAutomaticDependentBuilder;
@@ -106,89 +104,28 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private volatile IInjectionContext injectionContext;
 	private volatile AuthoritiesEndpointBuilder authoritiesEndpointBuilder;
 
-	// Owns its bootstrap by default; flipped to false on intoBootstrap(external).
-	// We still keep a reference to the external bootstrap so .bootstrap() works
-	// in both cases. owns=true means build() drives the bootstrap; owns=false
-	// means the caller is expected to drive it (or another registered builder
-	// will, transparently via Bootstrap's built-result caching).
-	private volatile IBoostrap bootstrap;
-	private volatile boolean ownsBootstrap = true;
-	// Re-entry guard: bootstrap.build() iterates registered builders and calls
-	// .build() on each — including this one. Without the flag, our override
-	// would call bootstrap.build() again from inside bootstrap.build(), and so on.
-	private volatile boolean inBootstrapDriven = false;
-
 	/**
-	 * Default entry point — creates a private {@link IBoostrap} with
-	 * auto-detection enabled and registers this {@code ApiBuilder} as the
-	 * primary builder. The caller is responsible for wiring whatever
-	 * reflection, injection and expression stack they want via the returned
-	 * builder's {@link IApiBuilder#bootstrap()} accessor (or by switching to a
-	 * shared bootstrap via {@link IApiBuilder#intoBootstrap(IBoostrap)}).
+	 * Default entry point — returns a fresh {@code ApiBuilder}. The caller is
+	 * responsible for wiring the reflection / injection / expression stack and
+	 * orchestrating the build (typically through a
+	 * {@code com.garganttua.core.bootstrap.dsl.IBoostrap} driven from the
+	 * application's {@code main()}). The {@code @Bootstrap} annotation on this
+	 * class makes it auto-discoverable when the user registers an external
+	 * {@code Bootstrap.autoDetect(true)}.
 	 *
-	 * <p>The framework deliberately does <em>not</em> pick an implementation —
-	 * choosing between AOT or runtime reflection, the injection context
-	 * factory, expression sources, etc. is the user's call. Auto-detection on
-	 * the bootstrap discovers any {@code @Bootstrap}-annotated builder
-	 * reachable on the classpath under the packages declared via
-	 * {@link IApiBuilder#packages(String...)}.
+	 * <p>The framework deliberately does <em>not</em> instantiate a Bootstrap
+	 * of its own, nor pick an implementation for reflection, injection or
+	 * expression — those are the user's calls.
 	 *
-	 * <p>The companion ticket
-	 * {@code docs/CORE_EVOLUTION_bootstrap_reflection_defaults.md} proposes
-	 * shipping sensible defaults inside {@code ReflectionBuilder} itself so
-	 * that auto-detection produces a working reflection out of the box.
+	 * <p>If the user has not installed an {@code IReflection} before calling
+	 * this factory, the {@code ApiBuilder} constructor — which uses
+	 * {@code IClass.getClass(...)} to declare its dependencies — throws an
+	 * {@code IllegalStateException} from core. We re-throw it as an
+	 * {@link ApiException} with concrete guidance.
 	 */
 	public static IApiBuilder builder() {
-		// Bootstrap.builder() triggers garganttua-core's ServiceLoader-based
-		// cold-start discovery (core commit c19c7d66): it loads any
-		// IReflectionProvider / IAnnotationScanner published via
-		// META-INF/services on the classpath and installs the resulting
-		// IReflection on the global holder. Reflection-runtime + reflections
-		// (or AOT variants) on the user's deps are therefore enough — no
-		// manual IClass.setReflection(...) needed in the common case.
-		//
-		// If neither manual setup nor SPI populated IReflection (no provider
-		// jars at all), the core throws an IllegalStateException with
-		// "No IReflection ..." — we wrap it in an ApiException with concrete
-		// guidance instead of letting the raw core message bubble.
 		try {
-			IBoostrap bootstrap = com.garganttua.core.bootstrap.dsl.Bootstrap.builder().autoDetect(true);
-			// Brand the private bootstrap as the API layer (banner + name +
-			// version) instead of inheriting the generic "Garganttua Core"
-			// defaults. The user can still override via
-			// apiBuilder.bootstrap().withBanner(...) /
-			// .withBannerMode(BannerMode.OFF) before build().
-			bootstrap.withApplicationName(com.garganttua.api.core.GarganttuaApiVersion.getName())
-					.withApplicationVersion(com.garganttua.api.core.GarganttuaApiVersion.getVersion())
-					.withBanner(new com.garganttua.api.core.GarganttuaApiBanner());
-
-			// Garganttua-core 2.0.0-ALPHA02 ships an SPI factory
-			// (com.garganttua.core.workflow.dsl.WorkflowBuilderFactory) that
-			// registers a standalone WorkflowBuilder via Bootstrap.autoDetect.
-			// That builder has no stages configured at construction and its
-			// build() throws "Workflow must have at least one stage".
-			//
-			// In garganttua-api, workflows are per-domain — assembled by
-			// DomainWorkflowAssembler — not application-level singletons. The
-			// SPI WorkflowBuilder would dangle here. We pre-register a stub
-			// instance of the same concrete class so the bootstrap's class-
-			// name dedup skips the SPI one (see
-			// Bootstrap.loadBootstrapBuildersFromSpi). The stub carries a
-			// single no-op stage so its own build() succeeds — the resulting
-			// IWorkflow is never referenced, only its presence in the registry
-			// matters. Track this with the core team — file an evolution to
-			// either drop WorkflowBuilder from META-INF/services or allow
-			// stages.isEmpty() builds to produce an empty workflow.
-			com.garganttua.core.workflow.dsl.IWorkflowBuilder workflowStub =
-					com.garganttua.core.workflow.dsl.WorkflowBuilder.create().name("api-noop-workflow");
-			workflowStub.stage("noop").script("0").name("noop").inline().up().up();
-			bootstrap.withBuilder(workflowStub);
-
-			ApiBuilder ab = new ApiBuilder();
-			bootstrap.withBuilder(ab);
-			ab.bootstrap = bootstrap;
-			ab.ownsBootstrap = true;
-			return ab;
+			return new ApiBuilder();
 		} catch (IllegalStateException e) {
 			if (e.getMessage() != null && e.getMessage().contains("No IReflection")) {
 				throw new ApiException(NO_REFLECTION_GUIDANCE, e);
@@ -206,22 +143,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			+ "        .withScanner(new ReflectionsAnnotationScanner())   // garganttua-reflections\n"
 			+ "        .build());\n"
 			+ "\n"
-			+ "For AOT or custom stacks, see docs/CORE_EVOLUTION_bootstrap_reflection_defaults.md "
-			+ "(once that change lands in core, Bootstrap.autoDetect(true) will pick the providers "
-			+ "from the classpath automatically and this manual step disappears).";
-
-	private static final String BOOTSTRAP_BUILD_GUIDANCE =
-			"\n\nThe internal Bootstrap could not resolve its required builders. "
-			+ "Register the reflection / injection / expression trio before calling build():\n"
-			+ "\n"
-			+ "    apiBuilder.bootstrap()\n"
-			+ "        .provide(reflectionBuilder)              // satisfies Bootstrap require(IReflectionBuilder)\n"
-			+ "        .withBuilder(reflectionBuilder)\n"
-			+ "        .withBuilder(injectionContextBuilder)\n"
-			+ "        .withBuilder(expressionContextBuilder);\n"
-			+ "\n"
-			+ "If you prefer to share a Bootstrap across frameworks (api + events + …), use "
-			+ "apiBuilder.intoBootstrap(sharedBootstrap) and drive sharedBootstrap.build() yourself.";
+			+ "Or rely on garganttua-core's ServiceLoader cold-start: put the provider/scanner jars on\n"
+			+ "the classpath and a Bootstrap.builder() call anywhere in your bootstrap setup picks them up.";
 
 	@Override
 	public IApiBuilder superTenantId(String superTenantId) {
@@ -477,22 +400,18 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		log.atTrace().log("Entering doBuild() method");
 
 		try {
-			// Ensure we have an injection context. Two paths:
-			//  - auto-bootstrap path: apiBuilder.bootstrap().withBuilder(injectionContextBuilder)
-			//    then bootstrap.build() provides it through provide()
-			//  - manual path: apiBuilder.provide(injectionContextBuilder).build()
+			// Ensure we have an injection context. The caller is responsible for wiring it,
+			// either by registering an IInjectionContextBuilder into the Bootstrap that
+			// drives this ApiBuilder, or by calling
+			// ((IDependentBuilder) apiBuilder).provide(builder) before .build().
 			if (this.injectionContext == null) {
 				throw new ApiException(
 						"InjectionContext is required but no IInjectionContextBuilder was provided.\n"
 						+ "\n"
-						+ "Auto-bootstrap path (default ApiBuilder.builder()):\n"
-						+ "    apiBuilder.bootstrap()\n"
-						+ "        .provide(reflectionBuilder)\n"
-						+ "        .withBuilder(reflectionBuilder)\n"
-						+ "        .withBuilder(injectionContextBuilder)\n"
-						+ "        .withBuilder(expressionContextBuilder);\n"
+						+ "Register one on the Bootstrap that drives ApiBuilder:\n"
+						+ "    bootstrap.withBuilder(injectionContextBuilder);\n"
 						+ "\n"
-						+ "Manual path:\n"
+						+ "Or wire it directly on the ApiBuilder:\n"
 						+ "    ((IDependentBuilder) apiBuilder).provide(injectionContextBuilder);\n");
 			}
 
@@ -961,76 +880,10 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	@Override
 	public IApiBuilder packages(String... packageNames) throws ApiException {
 		Objects.requireNonNull(packageNames, "packageNames cannot be null");
-		// Propagate through the bootstrap so reflection / injection / expression
-		// builders also see the user's packages, then mirror locally so our own
-		// scanners (EntityAnnotationScanner, SecurityAnnotationScanner) pick them up.
-		if (this.bootstrap != null) {
-			for (String pkg : packageNames) {
-				this.bootstrap.withPackage(Objects.requireNonNull(pkg, "package name cannot be null"));
-			}
-		}
 		for (String pkg : packageNames) {
-			this.withPackage(pkg);
+			this.withPackage(Objects.requireNonNull(pkg, "package name cannot be null"));
 		}
 		return this;
-	}
-
-	@Override
-	public IBoostrap bootstrap() {
-		return this.bootstrap;
-	}
-
-	@Override
-	public IApiBuilder intoBootstrap(IBoostrap external) throws ApiException {
-		Objects.requireNonNull(external, "external bootstrap cannot be null");
-		if (this.bootstrap == external) {
-			return this;
-		}
-		// Re-attach to the external orchestrator. We can't un-register from the
-		// owned bootstrap (no removeBuilder API), but since we drop the reference
-		// here and never call .build() on it, it becomes garbage.
-		external.withBuilder(this);
-		this.bootstrap = external;
-		this.ownsBootstrap = false;
-		return this;
-	}
-
-	@Override
-	public IApi build() throws ApiException {
-		// Re-entry: Bootstrap.doBuild() is calling us during its own
-		// orchestration. Just defer to super so our doBuild() runs and caches `built`.
-		if (this.inBootstrapDriven || this.bootstrap == null) {
-			return super.build();
-		}
-		// Legacy/explicit path: the caller hand-wired dependencies via .provide(...).
-		// In that case our context-builder fields are already populated, and the
-		// caller controls the lifecycle (typically context.onInit() + .onStart()
-		// after build()). Driving bootstrap here would auto-init the IApi and
-		// then throw "Lifecycle already initialized" on the caller's onInit().
-		// So when the user took the manual route, we honour it.
-		if (this.injectionContextBuilder != null && this.expressionContextBuilder != null) {
-			return super.build();
-		}
-		try {
-			this.inBootstrapDriven = true;
-			if (this.ownsBootstrap) {
-				// Drive the owned orchestrator. Bootstrap auto-inits and auto-starts
-				// the IApi, so the returned object is ready to serve requests — the
-				// caller does NOT need to call onInit()/onStart() afterwards.
-				this.bootstrap.build();
-			}
-			return super.build();
-		} catch (DslException e) {
-			String msg = "Failed to build Api via bootstrap: " + e.getMessage();
-			// Specifically guide users when the cause is a missing required builder
-			// — the most common stumbling block when wiring a new app.
-			if (e.getMessage() != null && e.getMessage().contains("Required dependency")) {
-				msg = msg + BOOTSTRAP_BUILD_GUIDANCE;
-			}
-			throw new ApiException(msg, e);
-		} finally {
-			this.inBootstrapDriven = false;
-		}
 	}
 
 }

@@ -21,10 +21,6 @@
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-bootstrap</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-injection</artifactId>
 		</dependency>
 		<dependency>
