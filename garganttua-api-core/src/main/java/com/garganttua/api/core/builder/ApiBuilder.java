@@ -94,7 +94,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<IAuthorizationProtocol> authorizationProtocols = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> authorizationProtocolBuilders = new CopyOnWriteArrayList<>();
 	private final List<com.garganttua.api.commons.observability.IApiObserver> observers = new CopyOnWriteArrayList<>();
-	private final List<com.garganttua.core.observability.IObserver<com.garganttua.core.observability.ObservableEvent>> workflowObservers = new CopyOnWriteArrayList<>();
 	private volatile com.garganttua.core.workflow.WorkflowTimingConfig workflowTiming =
 			com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
 
@@ -315,15 +314,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	}
 
 	@Override
-	public IApiBuilder workflowObserver(
-			com.garganttua.core.observability.IObserver<com.garganttua.core.observability.ObservableEvent> observer)
-			throws ApiException {
-		Objects.requireNonNull(observer, "Workflow observer cannot be null");
-		this.workflowObservers.add(observer);
-		return this;
-	}
-
-	@Override
 	public IApiBuilder workflowTiming(com.garganttua.core.workflow.WorkflowTimingConfig config) throws ApiException {
 		this.workflowTiming = config != null ? config
 				: com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
@@ -514,28 +504,11 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				log.atDebug().log("Built domain context: {}", domainContext.getDomain());
 			}
 
-			// Propagate workflow-level observers (core ObservableEvent stream) to
-			// every domain's IWorkflow. Each IWorkflow is an IObservable<ObservableEvent>
-			// so adding an observer here gives the caller a live stream of
-			// stage/script/mapper/injection start-end-error events for every
-			// operation that runs through any domain. No-op when no observer was
-			// registered via .workflowObserver(...).
-			if (!this.workflowObservers.isEmpty()) {
-				for (IDomain<?> domain : domainContexts.values()) {
-					com.garganttua.core.workflow.IWorkflow wf = domain.getWorkflow();
-					// IObservable is non-parametric since core 2.0.0-ALPHA02
-					// (dbd5253d): every emitter publishes the same sealed
-					// ObservableEvent hierarchy. We only need the cast to
-					// route addObserver onto the workflow.
-					if (wf instanceof com.garganttua.core.observability.IObservable observable) {
-						for (var observer : this.workflowObservers) {
-							observable.addObserver(observer);
-						}
-					}
-				}
-				log.atDebug().log("Wired {} workflow observer(s) onto {} domain workflow(s)",
-						this.workflowObservers.size(), domainContexts.size());
-			}
+			// Workflow-level ObservableEvent observers are wired by core's
+			// ObservabilityBuilder via @Observer scan (bootstrap-discovered).
+			// We do not duplicate that wiring here — the api just produces
+			// domain workflows; they self-register as emitters at build time
+			// (cf. core 2.0.0-ALPHA02 commit 43a2d1dc).
 
 			// Validate tenant domain presence when multi-tenancy is enabled
 			if (this.multiTenant) {

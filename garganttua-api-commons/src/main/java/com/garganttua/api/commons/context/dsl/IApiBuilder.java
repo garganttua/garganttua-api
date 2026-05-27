@@ -58,56 +58,26 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder observer(com.garganttua.api.commons.observability.IApiObserver observer) throws ApiException;
 
 	/**
-	 * Registers an observer that the framework wires onto every domain's
-	 * underlying {@code IWorkflow} so it receives the
-	 * {@link com.garganttua.core.observability.ObservableEvent} stream emitted
-	 * by garganttua-core (stage start/end/error, script start/end, mapper,
-	 * injection, mutex — every engine instrumented with
-	 * {@code ObservabilityEmitter}). Multiple calls add multiple observers.
-	 *
-	 * <p>This is the deeper, fine-grained counterpart of
-	 * {@link #observer(com.garganttua.api.commons.observability.IApiObserver)}:
-	 * {@code IApiObserver} fires at operation boundaries (one event per
-	 * {@code Domain.invoke}), {@code workflowObserver} fires at every internal
-	 * step of the pipeline. Use it to drill down into "where did the time go
-	 * inside this request" or to bridge to a tracing/metrics backend that
-	 * wants per-stage spans.
-	 *
-	 * <p>Events share a single {@code executionId} per logical execution thanks
-	 * to {@code ObservableContextHolder.Session} propagation — so a workflow
-	 * that invokes a sub-workflow (e.g. {@code invokeAuthenticate}) yields a
-	 * correlated event tree the observer can group on.
-	 *
-	 * <p>Opt-in: when no observer is registered, the framework does not touch
-	 * the workflows' registries — zero overhead beyond the
-	 * {@code hasObservers()} short-circuit core already does.
-	 *
-	 * @since 3.0.0-ALPHA01
-	 */
-	IApiBuilder workflowObserver(
-			com.garganttua.core.observability.IObserver<com.garganttua.core.observability.ObservableEvent> observer)
-			throws ApiException;
-
-	/**
 	 * Enables per-stage / per-script observability timing markers on every
 	 * workflow the framework compiles. When set to anything other than
 	 * {@link com.garganttua.core.workflow.WorkflowTimingConfig#disabled()},
 	 * {@code ScriptGenerator} injects {@code :observe("start"|"end", source)}
-	 * calls around stages and scripts; observers registered via
-	 * {@link #workflowObserver(com.garganttua.core.observability.IObserver)}
-	 * then receive {@code stage:<name>} and {@code script:<stage>.<name>}
-	 * events in addition to the engine events (mapper, runtime, scriptcontext,
+	 * calls around stages and scripts; any
+	 * {@link com.garganttua.core.observability.IObserver} registered via
+	 * core's {@code @Observer} scan (auto-discovered by the bootstrap) then
+	 * receives {@code stage:<name>} and {@code script:<stage>.<name>} events
+	 * in addition to the engine events (mapper, runtime, scriptcontext,
 	 * mutex, injection, bootstrap).
 	 *
 	 * <p>Default: {@link com.garganttua.core.workflow.WorkflowTimingConfig#disabled()}
 	 * — no markers emitted, the generated script is byte-identical to a build
 	 * without this call.
 	 *
-	 * <p>Pairing with {@link #workflowObserver(com.garganttua.core.observability.IObserver)}:
-	 * the two settings are independent. Timing markers without an observer is
-	 * cheap (the registry's {@code hasObservers()} short-circuit prevents
-	 * payload construction). An observer without timing markers still receives
-	 * the engine events but no stage/script breakdown of the workflow itself.
+	 * <p>Pairing with {@code @Observer}: the two settings are independent.
+	 * Timing markers without an observer are cheap (the registry's
+	 * {@code hasObservers()} short-circuit prevents payload construction).
+	 * An observer without timing markers still receives the engine events
+	 * but no stage/script breakdown of the workflow itself.
 	 *
 	 * @since 3.0.0-ALPHA01
 	 */
