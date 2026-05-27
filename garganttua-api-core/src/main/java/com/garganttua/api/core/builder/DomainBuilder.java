@@ -677,19 +677,14 @@ public class DomainBuilder<E>
         boolean multiTenancyEnabled = this.up() instanceof ApiBuilder acb && acb.isMultiTenant();
         boolean isOwnerOrOwned = this.owner != null || this.owned != null;
 
-        // Read the api-level WorkflowTimingConfig (defaults to disabled when
-        // the parent isn't an ApiBuilder — single-tenant unit-test rigs).
-        com.garganttua.core.workflow.WorkflowTimingConfig workflowTiming =
-                this.up() instanceof ApiBuilder acb2
-                        ? acb2.getWorkflowTiming()
-                        : com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
-
-        // Assemble workflow stages via dedicated assembler
+        // Assemble workflow stages via dedicated assembler.
+        // Workflow timing is now configured globally on core's WorkflowBuilder
+        // (cf. CORE_EVOLUTION_workflow_timing_in_workflow_builder.md) — the
+        // api no longer routes a per-Api WorkflowTimingConfig through here.
         IWorkflow builtWorkflow = new DomainWorkflowAssembler<E>(
                 this.domainName, this.workflows, securityEnabled, hasAuthorization,
                 multiTenancyEnabled, isOwnerOrOwned,
-                this.injectionContextBuilder, this.expressionContextBuilder,
-                workflowTiming).assemble();
+                this.injectionContextBuilder, this.expressionContextBuilder).assemble();
 
         // Cast entities for create/upsert lists
         List<E> createEntitiesCast = this.createEntities.stream()

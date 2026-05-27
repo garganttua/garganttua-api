@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -18,13 +17,11 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
-import com.garganttua.api.commons.observability.OperationStats;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
-import com.garganttua.api.core.observability.StatsObserver;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.core.observability.EndEvent;
 import com.garganttua.core.observability.IObserver;
@@ -42,8 +39,7 @@ import com.garganttua.core.reflection.IClass;
  * <p>The {@code @Observer} scan + {@code ObservabilityBuilder.attachSource}
  * wiring is exercised end-to-end by the framework's bootstrap tests; here we
  * focus on the api-level contract: events flow, executionId correlates,
- * EndEvent vs ErrorEvent semantics are right, {@link StatsObserver}
- * aggregates as advertised.
+ * EndEvent vs ErrorEvent semantics are right.
  */
 @DisplayName("Domain IObservable — api:operation:* event emission per Domain.invoke")
 class DomainObservableIntegrationTest extends AbstractCrudIntegrationTest {
@@ -184,54 +180,6 @@ class DomainObservableIntegrationTest extends AbstractCrudIntegrationTest {
 			IOperationResponse resp = domain.invoke(readAllRequest(domain));
 			assertEquals(OperationResponseCode.OK, resp.getResponseCode(),
 					"zero-observer setup must still complete the operation normally");
-		}
-	}
-
-	@Nested
-	@DisplayName("StatsObserver — IObserver<ObservableEvent> aggregator")
-	class StatsAggregation {
-
-		@Test
-		@DisplayName("aggregates one success per Domain.invoke that ends with an EndEvent")
-		void countsSuccesses() throws ApiException {
-			IApi api = buildApi();
-			IDomain<?> domain = api.getDomain("users").orElseThrow();
-			StatsObserver stats = new StatsObserver();
-			domain.addObserver(stats);
-
-			domain.invoke(readAllRequest(domain));
-			domain.invoke(readAllRequest(domain));
-			domain.invoke(readAllRequest(domain));
-
-			// Snapshot is keyed by source, so we look up the api:operation:users:*
-			// entry — there's exactly one, since all three invocations target the
-			// same readAll operation.
-			java.util.Map<String, OperationStats> snap = stats.snapshot();
-			OperationStats entry = snap.values().stream()
-					.filter(s -> s.operationKey().startsWith("api:operation:users:"))
-					.findFirst()
-					.orElseThrow(() -> new AssertionError(
-							"expected a stats bucket for api:operation:users:*; got: " + snap.keySet()));
-			assertEquals(3, entry.count(), "three successful invocations must produce count=3");
-			assertEquals(3, entry.successCount(), "all three must be counted as successes");
-			assertEquals(0, entry.failureCount());
-			assertNotNull(entry.totalDuration());
-			assertTrue(entry.totalDuration().compareTo(Duration.ZERO) > 0,
-					"totalDuration must be > 0 after three real invocations");
-		}
-
-		@Test
-		@DisplayName("reset() clears every aggregated bucket")
-		void resetClearsBuckets() throws ApiException {
-			IApi api = buildApi();
-			IDomain<?> domain = api.getDomain("users").orElseThrow();
-			StatsObserver stats = new StatsObserver();
-			domain.addObserver(stats);
-
-			domain.invoke(readAllRequest(domain));
-			assertFalse(stats.snapshot().isEmpty());
-			stats.reset();
-			assertTrue(stats.snapshot().isEmpty(), "snapshot must be empty after reset()");
 		}
 	}
 

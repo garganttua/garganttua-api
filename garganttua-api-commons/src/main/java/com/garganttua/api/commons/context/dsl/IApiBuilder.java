@@ -42,32 +42,6 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	IApiBuilder authorizationProtocol(ISupplierBuilder<?, ? extends ISupplier<?>> bean) throws ApiException;
 
 	/**
-	 * Enables per-stage / per-script observability timing markers on every
-	 * workflow the framework compiles. When set to anything other than
-	 * {@link com.garganttua.core.workflow.WorkflowTimingConfig#disabled()},
-	 * {@code ScriptGenerator} injects {@code :observe("start"|"end", source)}
-	 * calls around stages and scripts; any
-	 * {@link com.garganttua.core.observability.IObserver} registered via
-	 * core's {@code @Observer} scan (auto-discovered by the bootstrap) then
-	 * receives {@code stage:<name>} and {@code script:<stage>.<name>} events
-	 * in addition to the engine events (mapper, runtime, scriptcontext,
-	 * mutex, injection, bootstrap).
-	 *
-	 * <p>Default: {@link com.garganttua.core.workflow.WorkflowTimingConfig#disabled()}
-	 * — no markers emitted, the generated script is byte-identical to a build
-	 * without this call.
-	 *
-	 * <p>Pairing with {@code @Observer}: the two settings are independent.
-	 * Timing markers without an observer are cheap (the registry's
-	 * {@code hasObservers()} short-circuit prevents payload construction).
-	 * An observer without timing markers still receives the engine events
-	 * but no stage/script breakdown of the workflow itself.
-	 *
-	 * @since 3.0.0-ALPHA01
-	 */
-	IApiBuilder workflowTiming(com.garganttua.core.workflow.WorkflowTimingConfig config) throws ApiException;
-
-	/**
 	 * Opt-in: exposes the framework-provided endpoint that lists every
 	 * authority enforced anywhere on the API (one entry per distinct
 	 * {@link com.garganttua.api.commons.operation.OperationDefinition#effectiveAuthorityName()}

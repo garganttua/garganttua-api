@@ -99,8 +99,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> protocolBuilders = new CopyOnWriteArrayList<>();
 	private final List<IAuthorizationProtocol> authorizationProtocols = new CopyOnWriteArrayList<>();
 	private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> authorizationProtocolBuilders = new CopyOnWriteArrayList<>();
-	private volatile com.garganttua.core.workflow.WorkflowTimingConfig workflowTiming =
-			com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
 
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
@@ -333,22 +331,6 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		Objects.requireNonNull(bean, "Authorization protocol supplier builder cannot be null");
 		this.authorizationProtocolBuilders.add(bean);
 		return this;
-	}
-
-	@Override
-	public IApiBuilder workflowTiming(com.garganttua.core.workflow.WorkflowTimingConfig config) throws ApiException {
-		this.workflowTiming = config != null ? config
-				: com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
-		return this;
-	}
-
-	/**
-	 * @return the workflow timing config to apply on every domain workflow at
-	 *         build time. Defaults to {@link com.garganttua.core.workflow.WorkflowTimingConfig#disabled()}.
-	 *         Consumed by {@link DomainBuilder} via {@code this.up()} cast.
-	 */
-	com.garganttua.core.workflow.WorkflowTimingConfig getWorkflowTiming() {
-		return this.workflowTiming;
 	}
 
 	@Override
