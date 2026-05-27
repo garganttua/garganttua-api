@@ -523,10 +523,11 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			if (!this.workflowObservers.isEmpty()) {
 				for (IDomain<?> domain : domainContexts.values()) {
 					com.garganttua.core.workflow.IWorkflow wf = domain.getWorkflow();
-					if (wf instanceof com.garganttua.core.observability.IObservable<?>) {
-						@SuppressWarnings("unchecked")
-						com.garganttua.core.observability.IObservable<com.garganttua.core.observability.ObservableEvent> observable =
-								(com.garganttua.core.observability.IObservable<com.garganttua.core.observability.ObservableEvent>) wf;
+					// IObservable is non-parametric since core 2.0.0-ALPHA02
+					// (dbd5253d): every emitter publishes the same sealed
+					// ObservableEvent hierarchy. We only need the cast to
+					// route addObserver onto the workflow.
+					if (wf instanceof com.garganttua.core.observability.IObservable observable) {
 						for (var observer : this.workflowObservers) {
 							observable.addObserver(observer);
 						}
