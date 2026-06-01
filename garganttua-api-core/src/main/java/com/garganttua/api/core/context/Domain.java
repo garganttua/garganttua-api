@@ -493,7 +493,23 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             workflowParams.put("$2", this);
             workflowParams.put("$3", this.apiContext);
             WorkflowInput input = WorkflowInput.of(request, workflowParams);
-            WorkflowResult result = this.workflow.execute(input, options);
+
+            // Correlate observability: run the workflow under the same
+            // EXECUTION_UUID already pinned on the request (bound at l.422 on the
+            // observed path, l.460-461 otherwise) and used for the api:operation:*
+            // events, so the workflow's stage:*/script:* events share it. Carry
+            // over any existing filtering — executionId is independent of it and
+            // does NOT engage hasFiltering(), so the precompiled cache stays hot.
+            java.util.UUID execId = (java.util.UUID) request.arg(IOperationRequest.EXECUTION_UUID).orElse(null);
+            WorkflowExecutionOptions effectiveOptions = (execId == null)
+                    ? options
+                    : WorkflowExecutionOptions.builder()
+                            .startFrom(options.startFrom().orElse(null))
+                            .stopAfter(options.stopAfter().orElse(null))
+                            .skipStages(options.skipStages())
+                            .executionId(execId)
+                            .build();
+            WorkflowResult result = this.workflow.execute(input, effectiveOptions);
 
             String opLabel = resolveOperationLabel(request);
             String domainName = this.domainDefinition.domainName();
