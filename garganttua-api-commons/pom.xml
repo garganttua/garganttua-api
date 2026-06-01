@@ -37,6 +37,16 @@
 			<artifactId>garganttua-aot-commons</artifactId>
 		</dependency>
 
+		<!-- AOT direct-binder support. @Reflected types in this module (e.g. the
+		     Authentication result record) make the annotation processor emit
+		     AOTClass_*/AOTMethod_*/AOTField_*/AOTConstructor_* descriptors that
+		     reference com.garganttua.core.aot.reflection — required on the
+		     compile + runtime classpath. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-reflection</artifactId>
+		</dependency>
+
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
