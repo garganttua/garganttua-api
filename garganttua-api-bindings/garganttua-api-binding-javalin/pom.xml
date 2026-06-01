@@ -1,0 +1,23 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api-bindings</artifactId>
+		<version>3.0.0-ALPHA01</version>
+	</parent>
+	<artifactId>garganttua-api-binding-javalin</artifactId>
+
+	<description>Binding for Javalin (lightweight HTTP server) — pulled
+		in by the garganttua-api-javalin transport module so the actual
+		Javalin coordinates stay concentrated in this binding.</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.javalin</groupId>
+			<artifactId>javalin</artifactId>
+			<version>${javalin.version}</version>
+		</dependency>
+	</dependencies>
+</project>

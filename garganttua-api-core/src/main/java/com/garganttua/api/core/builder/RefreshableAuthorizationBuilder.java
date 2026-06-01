@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
@@ -14,6 +15,7 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
 
+@Reflected
 public class RefreshableAuthorizationBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IRefreshableAuthorizationBuilder<E>, IAuthorizationBuilder<E>, E>
         implements IRefreshableAuthorizationBuilder<E> {

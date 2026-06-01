@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder.binder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.IDomainStartupBinderBuilder;
@@ -10,6 +11,7 @@ import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class DomainStartupBinderBuilder<E> extends AbstractMethodBinderBuilder<Void, IDomainStartupBinderBuilder<E>, IDomainBuilder<E>, IMethodBinder<Void>> implements IDomainStartupBinderBuilder<E> {
 
     public DomainStartupBinderBuilder(IDomainBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {

@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder.binder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Objects;
 import java.util.Set;
@@ -12,6 +13,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class ApiStartupBinderBuilder
         extends AbstractMethodBinderBuilder<Void, IApiStartupBinderBuilder, IApiBuilder, IMethodBinder<Void>>
         implements IApiStartupBinderBuilder {

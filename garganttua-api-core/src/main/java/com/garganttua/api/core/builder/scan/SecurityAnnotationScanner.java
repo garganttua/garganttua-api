@@ -40,7 +40,8 @@ import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
 /**
  * Scans configured packages for security-related annotations and applies them
@@ -66,8 +67,9 @@ import lombok.extern.slf4j.Slf4j;
  * Silently no-ops when no packages are configured or when no
  * {@link IReflection} is available (e.g. native image without metadata).
  */
-@Slf4j
 public final class SecurityAnnotationScanner {
+	private static final IDiagnostic log = Diagnostics.of(SecurityAnnotationScanner.class);
+
 
     private final IApiBuilder apiBuilder;
     private final Set<String> packages;
@@ -85,7 +87,7 @@ public final class SecurityAnnotationScanner {
         try {
             reflection = IClass.getReflection();
         } catch (Exception e) {
-            log.atWarn().log("No IReflection available for security auto-detection: {}", e.getMessage());
+            log.warn("No IReflection available for security auto-detection: {}", e.getMessage());
             return;
         }
 
@@ -116,7 +118,7 @@ public final class SecurityAnnotationScanner {
             }
         }
         if (registered > 0) {
-            log.atDebug().log("Auto-detected {} @Authentication class(es)", registered);
+            log.debug("Auto-detected {} @Authentication class(es)", registered);
         }
     }
 
@@ -125,7 +127,7 @@ public final class SecurityAnnotationScanner {
         Optional<IMethod> method = reflection.findMethodAnnotatedWith(authClass,
                 IClass.getClass(AuthenticationAuthenticate.class));
         if (method.isEmpty()) {
-            log.atWarn().log("@Authentication on {} has no @AuthenticationAuthenticate method; skipping authenticate binding",
+            log.warn("@Authentication on {} has no @AuthenticationAuthenticate method; skipping authenticate binding",
                     authClass.getSimpleName());
             return;
         }
@@ -181,7 +183,7 @@ public final class SecurityAnnotationScanner {
             }
         }
         if (registered > 0) {
-            log.atDebug().log("Auto-detected {} @Authorization class(es)", registered);
+            log.debug("Auto-detected {} @Authorization class(es)", registered);
         }
     }
 
@@ -249,7 +251,7 @@ public final class SecurityAnnotationScanner {
                     IClass<?> authIClass = IClass.getClass(auth);
                     Optional<IAuthenticationBuilder> linked = apiSec.isAuthenticationAvailable(authIClass);
                     if (linked.isEmpty()) {
-                        log.atWarn().log(
+                        log.warn(
                                 "@Authenticator on {} references @Authentication {} but it was not registered; ignoring linkage",
                                 authrClass.getSimpleName(), authIClass.getSimpleName());
                         continue;
@@ -279,7 +281,7 @@ public final class SecurityAnnotationScanner {
             }
         }
         if (registered > 0) {
-            log.atDebug().log("Auto-detected {} @Authenticator class(es)", registered);
+            log.debug("Auto-detected {} @Authenticator class(es)", registered);
         }
     }
 
@@ -309,7 +311,7 @@ public final class SecurityAnnotationScanner {
             // No key domain declared — skip the whole key sub-builder so users
             // who don't enable signing/crypto see no key context wired.
             if (!a.authorizationKeyAlgorithm().isBlank()) {
-                log.atWarn().log(
+                log.warn(
                         "@Authenticator on {} declares authorizationKeyAlgorithm=\"{}\" but no authorizationKey "
                                 + "class — algorithm resolution is skipped (use the fluent DSL to wire an IKeyAlgorithm)",
                         authrClass.getSimpleName(), a.authorizationKeyAlgorithm());
@@ -323,7 +325,7 @@ public final class SecurityAnnotationScanner {
         keyBuilder.signatureAlgorithm(a.authorizationSignatureAlgorithm());
         keyBuilder.lifeTime(a.authorizationKeyLifeTime(), a.authorizationKeyLifeTimeUnit());
         if (!a.authorizationKeyAlgorithm().isBlank()) {
-            log.atWarn().log(
+            log.warn(
                     "@Authenticator on {} declares authorizationKeyAlgorithm=\"{}\" — ignored at scan time "
                             + "(no name-to-IKeyAlgorithm registry); wire it manually via .algorithm(...) if needed",
                     authrClass.getSimpleName(), a.authorizationKeyAlgorithm());

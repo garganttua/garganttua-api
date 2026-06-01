@@ -50,17 +50,19 @@
 		<!-- Garganttua Core -->
 		<garganttua.core.version>2.0.0-ALPHA02</garganttua.core.version>
 
-		<!-- Third-party dependencies -->
-		<lombok.version>1.18.30</lombok.version>
-		<slf4j.version>2.0.13</slf4j.version>
-		<reflections.version>0.10.2</reflections.version>
-		<javatuples.version>1.2</javatuples.version>
-		<geojson-jackson.version>1.14</geojson-jackson.version>
-		<javax.inject.version>1</javax.inject.version>
-		<json-path.version>2.9.0</json-path.version>
+		<!-- Binding library versions — each binding sub-module wraps
+		     ONE external library, and these properties pin its version
+		     here so a single edit propagates everywhere. -->
 		<jackson.version>2.18.6</jackson.version>
+		<geojson-jackson.version>1.14</geojson-jackson.version>
+		<slf4j.version>2.0.13</slf4j.version>
+		<json-path.version>2.9.0</json-path.version>
+		<mongodb-driver.version>5.1.1</mongodb-driver.version>
+		<javalin.version>6.6.0</javalin.version>
 
-		<!-- Test dependencies -->
+		<!-- Standalone deps reintroduced directly (no binding wrapper). -->
+		<javatuples.version>1.2</javatuples.version>
+		<jakarta-inject.version>2.0.1</jakarta-inject.version>
 		<junit.version>5.11.4</junit.version>
 		<mockito.version>5.14.2</mockito.version>
 
@@ -157,6 +159,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-aot-commons</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
 				<artifactId>garganttua-aot-reflection</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
@@ -171,65 +178,45 @@
 				<version>${garganttua.core.version}</version>
 			</dependency>
 
-			<!-- Third-party dependencies -->
+			<!-- Garganttua API bindings — each wraps one external lib. -->
 			<dependency>
-				<groupId>org.projectlombok</groupId>
-				<artifactId>lombok</artifactId>
-				<version>${lombok.version}</version>
-				<scope>provided</scope>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-binding-jackson</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>${slf4j.version}</version>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-binding-slf4j</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-simple</artifactId>
-				<version>${slf4j.version}</version>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-binding-jsonpath</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.reflections</groupId>
-				<artifactId>reflections</artifactId>
-				<version>${reflections.version}</version>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-binding-mongodb</artifactId>
+				<version>${project.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-binding-javalin</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<!-- Standalone third-party deps reintroduced directly (kept
+			     outside bindings on user's instruction). -->
 			<dependency>
 				<groupId>org.javatuples</groupId>
 				<artifactId>javatuples</artifactId>
 				<version>${javatuples.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>de.grundid.opendatalab</groupId>
-				<artifactId>geojson-jackson</artifactId>
-				<version>${geojson-jackson.version}</version>
+				<groupId>jakarta.inject</groupId>
+				<artifactId>jakarta.inject-api</artifactId>
+				<version>${jakarta-inject.version}</version>
 			</dependency>
-			<dependency>
-				<groupId>javax.inject</groupId>
-				<artifactId>javax.inject</artifactId>
-				<version>${javax.inject.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.jayway.jsonpath</groupId>
-				<artifactId>json-path</artifactId>
-				<version>${json-path.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-annotations</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-core</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-databind</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
-
-			<!-- Test dependencies -->
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>
 				<artifactId>junit-jupiter-engine</artifactId>
@@ -248,38 +235,18 @@
 				<version>${mockito.version}</version>
 				<scope>test</scope>
 			</dependency>
+
+			<!-- Third-party dependencies intentionally absent.
+			     The api restricts itself to the garganttua ecosystem
+			     (com.garganttua / com.garganttua.core). Every external
+			     binding — lombok, slf4j-*, jackson-*, json-path,
+			     javatuples, reflections, geojson, javax.inject, junit,
+			     mockito, etc. — is delegated to dedicated binding
+			     sub-modules to be introduced later. Until those bindings
+			     land, downstream consumers must declare third-party deps
+			     themselves. -->
 		</dependencies>
 	</dependencyManagement>
-
-	<!-- Common dependencies inherited by all modules -->
-	<dependencies>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-simple</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-junit-jupiter</artifactId>
-		</dependency>
-	</dependencies>
 
 	<build>
 		<pluginManagement>
@@ -297,12 +264,27 @@
 								 2.0.0-ALPHA02 uses it for RuntimeExpressionContext. Mirrors
 								 the core pom config so api code can load those class files. -->
 							<arg>--enable-preview</arg>
+							<!-- Level 2 AOT: instructs garganttua-aot-annotation-processor's
+								 DirectBinderGenerator to emit AOTClass_*/AOTField_*/AOTMethod_*
+								 source files for every @Reflected type, registered into
+								 AOTRegistry via static initialisers. Pairs with the
+								 Level 1 @Indexed APT below — both processors live in the
+								 same jar, but DirectBinderGenerator is gated by this
+								 option whereas IndexedAnnotationProcessor always runs. -->
+							<arg>-Agarganttua.direct.binders=true</arg>
 						</compilerArgs>
 						<annotationProcessorPaths>
+							<!-- Lombok APT path removed alongside the rest of the
+							     third-party purge — to be reintroduced as part of a
+							     lombok binding sub-module. -->
+
+							<!-- Level 1: @Indexed annotation index generation.
+								 Level 2: @Reflected direct binder generation
+								 (gated by -Agarganttua.direct.binders=true above). -->
 							<path>
-								<groupId>org.projectlombok</groupId>
-								<artifactId>lombok</artifactId>
-								<version>${lombok.version}</version>
+								<groupId>com.garganttua.core</groupId>
+								<artifactId>garganttua-aot-annotation-processor</artifactId>
+								<version>${garganttua.core.version}</version>
 							</path>
 						</annotationProcessorPaths>
 					</configuration>
@@ -345,6 +327,7 @@
 	</build>
 
 	<modules>
+		<module>garganttua-api-bindings</module>
 		<module>garganttua-api-commons</module>
 		<module>garganttua-api-core</module>
 		<module>garganttua-api-dao</module>

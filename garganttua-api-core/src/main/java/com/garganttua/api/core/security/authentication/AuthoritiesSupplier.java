@@ -10,11 +10,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class AuthoritiesSupplier implements IContextualSupplier<List, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(AuthoritiesSupplier.class);
+
 
     private static final IClass<List> SUPPLIED_CLASS = IClass.getClass(List.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -36,7 +38,7 @@ public class AuthoritiesSupplier implements IContextualSupplier<List, IRuntimeCo
 
     @Override
     public Optional<List> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering AuthoritiesSupplier.supply");
+        log.trace("Entering AuthoritiesSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -49,7 +51,7 @@ public class AuthoritiesSupplier implements IContextualSupplier<List, IRuntimeCo
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
         List authorities = request.caller() != null ? request.caller().authorities() : null;
-        log.atDebug().log("AuthoritiesSupplier resolved authorities (present={})", authorities != null);
+        log.debug("AuthoritiesSupplier resolved authorities (present={})", authorities != null);
         return Optional.ofNullable(authorities);
     }
 

@@ -3,9 +3,6 @@ package com.garganttua.api.commons;
 import java.util.Locale;
 import java.util.Optional;
 
-import lombok.Getter;
-
-@Getter
 public enum MimeType {
 
 	// Wildcard
@@ -68,6 +65,10 @@ public enum MimeType {
 
 	MimeType(String value) {
 		this.value = value;
+	}
+
+	public String getValue() {
+		return this.value;
 	}
 
 	public static MimeType fromValue(String value) {

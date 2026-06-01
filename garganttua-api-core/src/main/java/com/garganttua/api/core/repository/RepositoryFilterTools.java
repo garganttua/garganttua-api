@@ -10,7 +10,8 @@ import com.garganttua.api.commons.definition.IDomainDefinition;
 import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.core.reflection.ObjectAddress;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
 /**
  * Utility class for building repository filters based on caller permissions and domain definition.
@@ -22,8 +23,9 @@ import lombok.extern.slf4j.Slf4j;
  * - Hidden/visible entities
  * - Public entities
  */
-@Slf4j
 public class RepositoryFilterTools {
+	private static final IDiagnostic log = Diagnostics.of(RepositoryFilterTools.class);
+
 
     private RepositoryFilterTools() {
         // Utility class - no instantiation
@@ -45,10 +47,8 @@ public class RepositoryFilterTools {
         if (caller == null) {
             return baseFilter;
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Building filter for domain {} with caller tenantId={}, ownerId={}, multiTenant={}",
+        log.debug("Building filter for domain {} with caller tenantId={}, ownerId={}, multiTenant={}",
                     domainDefinition.domainName(), caller.requestedTenantId(), caller.ownerId(), multiTenant);
-        }
 
         FilterContext filterContext = new FilterContext(caller, domainDefinition, multiTenant);
 

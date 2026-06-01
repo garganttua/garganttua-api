@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +17,7 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class SecurityBuilder
         extends
         AbstractAutomaticLinkedBuilder<IApiSecurityBuilder, IApiBuilder, IApiSecurityContext>

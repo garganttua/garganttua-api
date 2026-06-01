@@ -1,8 +1,5 @@
 package com.garganttua.api.commons.operation;
 
-import lombok.Getter;
-
-@Getter
 public enum BusinessOperation {
 
     create("create"),
@@ -16,10 +13,13 @@ public enum BusinessOperation {
     useCase("useCase"),
     workflow("workflow");
 
-    @Getter
     private final String label;
 
     BusinessOperation(String label) {
         this.label = label;
+    }
+
+    public String getLabel() {
+        return this.label;
     }
 }

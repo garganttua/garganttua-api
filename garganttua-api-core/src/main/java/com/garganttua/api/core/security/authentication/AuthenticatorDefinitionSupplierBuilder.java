@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class AuthenticatorDefinitionSupplierBuilder implements ISupplierBuilder<IAuthenticatorDefinition, IContextualSupplier<IAuthenticatorDefinition, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(AuthenticatorDefinitionSupplierBuilder.class);
+
 
     private static final IClass<IAuthenticatorDefinition> SUPPLIED_CLASS = IClass.getClass(IAuthenticatorDefinition.class);
 
@@ -34,7 +36,7 @@ public class AuthenticatorDefinitionSupplierBuilder implements ISupplierBuilder<
 
     @Override
     public IContextualSupplier<IAuthenticatorDefinition, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building AuthenticatorDefinitionSupplier");
+        log.debug("Building AuthenticatorDefinitionSupplier");
         return new AuthenticatorDefinitionSupplier();
     }
 

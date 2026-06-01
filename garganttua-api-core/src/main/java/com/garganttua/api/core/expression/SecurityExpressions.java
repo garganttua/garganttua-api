@@ -1,4 +1,5 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.security.KeyPair;
 import java.time.Instant;
@@ -59,6 +60,7 @@ import static com.garganttua.api.core.expression.ExpressionUtils.*;
 /**
  * Expressions for security: access control, authentication, and authorization.
  */
+@Reflected(queryAllPublicMethods = true)
 public class SecurityExpressions {
 
 	@Expression(name = "operationAccess", description = "Returns the Access level string from an OperationDefinition")

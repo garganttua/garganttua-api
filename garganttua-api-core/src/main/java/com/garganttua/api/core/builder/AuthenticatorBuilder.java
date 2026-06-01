@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
 
+@Reflected
 public class AuthenticatorBuilder<E> extends
         AbstractAutomaticLinkedBuilder<IAuthenticatorBuilder<E>, IDomainSecurityBuilder<E>, IAuthenticatorContext>
         implements IAuthenticatorBuilder<E> {

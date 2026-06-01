@@ -4,11 +4,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import com.garganttua.core.reflection.annotations.Indexed;
 import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.crypto.SignatureAlgorithm;
 
+@Indexed
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Authenticator {

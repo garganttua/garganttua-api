@@ -11,6 +11,7 @@ import com.garganttua.core.dsl.dependency.IDependentBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.workflow.WorkflowTimingConfig;
 
 public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 
@@ -90,5 +91,35 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	 * before {@code build()} still excludes them.
 	 */
 	IApiBuilder includeFrameworkPackages(boolean include) throws ApiException;
+
+	/**
+	 * Enables workflow execution timing for every domain workflow assembled by
+	 * the API. The supplied {@link WorkflowTimingConfig} is forwarded to each
+	 * per-domain {@code IWorkflowBuilder.timing(...)} at assembly time, so the
+	 * generated workflow scripts emit {@code observe("start"|"end", ...)}
+	 * markers for the stages and/or scripts the config enables.
+	 *
+	 * <p>Those markers fire {@code StartEvent}/{@code EndEvent} on the workflow's
+	 * own observable registry with {@code source="stage:<name>"} (when
+	 * {@link WorkflowTimingConfig#stages(boolean) stages(true)}) and
+	 * {@code source="script:<stage>.<name>"} (when
+	 * {@link WorkflowTimingConfig#scripts(boolean) scripts(true)}). For a scanned
+	 * {@code @Observer} to receive them, the API also attaches every domain's
+	 * workflow as an observability source at {@code build()} time.
+	 *
+	 * <p>Default: {@link WorkflowTimingConfig#disabled()} — no markers are
+	 * generated and the produced script is byte-identical to a build that never
+	 * calls this method, so timing has zero overhead until opted into.
+	 *
+	 * <pre>{@code
+	 * ApiBuilder.builder()
+	 *     .workflowTiming(WorkflowTimingConfig.of().stages(true).scripts(true))
+	 *     ...
+	 * }</pre>
+	 *
+	 * @param config the timing configuration to forward to every domain
+	 *               workflow; never {@code null}
+	 */
+	IApiBuilder workflowTiming(WorkflowTimingConfig config) throws ApiException;
 
 }

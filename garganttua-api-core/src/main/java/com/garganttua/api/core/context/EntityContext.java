@@ -6,12 +6,11 @@ import com.garganttua.api.core.definition.EntityDefinition;
 import com.garganttua.api.commons.context.IEntityContext;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.Getter;
-
 public class EntityContext<E> implements IEntityContext<E> {
 
-    @Getter
     private EntityDefinition<E> entityDefinition;
+
+    public EntityDefinition<E> getEntityDefinition() { return this.entityDefinition; }
 
     public EntityContext(
             EntityDefinition<E> entityDefinition) {

@@ -1,12 +1,9 @@
 package com.garganttua.api.commons.service.pipeline;
 
-import lombok.Getter;
-
 /**
  * Predefined phase types for the service pipeline.
  * Each phase has a default order that determines execution sequence.
  */
-@Getter
 public enum PhaseType {
 
     /**
@@ -43,5 +40,9 @@ public enum PhaseType {
 
     PhaseType(int defaultOrder) {
         this.defaultOrder = defaultOrder;
+    }
+
+    public int getDefaultOrder() {
+        return this.defaultOrder;
     }
 }

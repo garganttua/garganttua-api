@@ -6,9 +6,6 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
 
-import lombok.Getter;
-
-@Getter
 public class OperationResponse implements IOperationResponse {
 
     private final OperationResponseCode responseCode;
@@ -24,6 +21,10 @@ public class OperationResponse implements IOperationResponse {
         this.response = response;
         this.processingTime = processingTime;
     }
+
+    public OperationResponseCode getResponseCode() { return this.responseCode; }
+    public Object getResponse() { return this.response; }
+    public Duration getProcessingTime() { return this.processingTime; }
 
     /**
      * Returns a copy of this response stamped with the given processing time.

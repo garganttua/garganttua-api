@@ -14,9 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.filter.IFilter;
 
-import lombok.Getter;
-import lombok.Setter;
-
 public class Filter implements IFilter {
 
 	public static final String OPERATOR_PREFIX = "$";
@@ -61,17 +58,18 @@ public class Filter implements IFilter {
 		finalOperators.add(OPERATOR_GEOLOC_SPHERE);
 	}
 
-	@Getter
 	@JsonProperty
 	private String name;
 
-	@Getter
-	@Setter
 	@JsonProperty
 	private Object value;
 
 	@JsonProperty
 	private List<Filter> literals;
+
+	public String getName() { return this.name; }
+	public Object getValue() { return this.value; }
+	public void setValue(Object value) { this.value = value; }
 
 	private Filter() {
 

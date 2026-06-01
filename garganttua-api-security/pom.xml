@@ -15,18 +15,18 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-core</artifactId>
 		</dependency>
+
 		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-jackson</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.jayway.jsonpath</groupId>
-			<artifactId>json-path</artifactId>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-jsonpath</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.9.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

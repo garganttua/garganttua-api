@@ -10,11 +10,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class ApiSupplier implements IContextualSupplier<IApi, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(ApiSupplier.class);
+
 
     private static final IClass<IApi> SUPPLIED_CLASS = IClass.getClass(IApi.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -36,7 +38,7 @@ public class ApiSupplier implements IContextualSupplier<IApi, IRuntimeContext> {
 
     @Override
     public Optional<IApi> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering ApiSupplier.supply");
+        log.trace("Entering ApiSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -53,7 +55,7 @@ public class ApiSupplier implements IContextualSupplier<IApi, IRuntimeContext> {
             throw new SupplyException("API context not found in operation request");
         }
 
-        log.atDebug().log("ApiSupplier resolved apiContext");
+        log.debug("ApiSupplier resolved apiContext");
         return apiContextOpt;
     }
 

@@ -1,4 +1,5 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Locale;
 import java.util.Optional;
@@ -25,6 +26,7 @@ import static com.garganttua.api.core.expression.ExpressionUtils.unwrapOptional;
  * Serializers are looked up on the API-level pool configured via
  * {@code IApiBuilder.serializer(...)}.
  */
+@Reflected(queryAllPublicMethods = true)
 public class SerializationExpressions {
 
 	@Expression(name = "operationExpectsBody",

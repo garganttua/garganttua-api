@@ -43,11 +43,12 @@ import com.garganttua.core.workflow.WorkflowInput;
 import com.garganttua.core.workflow.WorkflowResult;
 import com.github.f4b6a3.uuid.UuidCreator;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
+	private static final IDiagnostic log = Diagnostics.of(Domain.class);
+
 
     private final DomainDefinition<E> domainDefinition;
     private final List<ISupplier<IEndpoint>> interfaces;
@@ -56,8 +57,9 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     private final IEntityContext<E> entityContext;
     private final List<IDtoContext<?>> dtoContexts;
-    @Getter
     private final IRepository repository;
+
+    public IRepository getRepository() { return this.repository; }
 
     // Single workflow handling the full pipeline (business → security → execution)
     private IWorkflow workflow;
@@ -66,10 +68,11 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     public List<ISupplier<IEventPublisher>> getEvents() { return events; }
 
     // Bean definition for runtime DI injection on entities
-    @Getter
     private BeanDefinition<?> entityBeanDefinition;
-    @Getter
     private boolean doInjection;
+
+    public BeanDefinition<?> getEntityBeanDefinition() { return this.entityBeanDefinition; }
+    public boolean isDoInjection() { return this.doInjection; }
 
     private IApi apiContext;
 

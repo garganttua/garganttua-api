@@ -32,10 +32,12 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 public class Repository implements IRepository {
+	private static final IDiagnostic log = Diagnostics.of(Repository.class);
+
 
     private final List<IDtoContext<?>> dtoContexts;
     private final IClass<?> entityClass;

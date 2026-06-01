@@ -8,11 +8,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class AuthorizationSupplierBuilder implements ISupplierBuilder<Object, IContextualSupplier<Object, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(AuthorizationSupplierBuilder.class);
+
 
     private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);
 
@@ -33,7 +35,7 @@ public class AuthorizationSupplierBuilder implements ISupplierBuilder<Object, IC
 
     @Override
     public IContextualSupplier<Object, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building AuthorizationSupplier");
+        log.debug("Building AuthorizationSupplier");
         return new AuthorizationSupplier();
     }
 

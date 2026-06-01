@@ -12,7 +12,8 @@ import com.garganttua.api.commons.filter.IFilterMapper;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
 /**
  * Maps filters from entity field names to DTO field names.
@@ -21,14 +22,13 @@ import lombok.extern.slf4j.Slf4j;
  * field name mapping. A full implementation would map entity field addresses
  * to corresponding DTO field addresses based on mapping configuration.
  */
-@Slf4j
 public class FilterMapper implements IFilterMapper {
+	private static final IDiagnostic log = Diagnostics.of(FilterMapper.class);
+
 
     @Override
     public List<Pair<IClass<?>, IFilter>> map(IDomainDefinition<?> domainDefinition, IFilter filter) throws ApiException {
-        if (log.isDebugEnabled()) {
-            log.debug("Mapping Filter {} for domain {}", filter, domainDefinition.domainName());
-        }
+        log.debug("Mapping Filter {} for domain {}", filter, domainDefinition.domainName());
 
         List<Pair<IClass<?>, IFilter>> filters = new ArrayList<>();
 

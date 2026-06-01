@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Objects;
 
@@ -23,6 +24,7 @@ import com.garganttua.core.reflection.fields.FieldResolver;
  * String / IField / ObjectAddress against the parent domain's entity
  * class — exactly the pattern used by {@link EntityBuilder}.
  */
+@Reflected
 public class DomainKeyBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainBuilder<E>, IDomainKeyContext>
         implements IDomainKeyBuilder<E> {

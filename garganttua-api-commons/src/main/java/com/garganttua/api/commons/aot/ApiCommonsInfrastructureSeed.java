@@ -1,0 +1,82 @@
+package com.garganttua.api.commons.aot;
+
+import com.garganttua.core.aot.commons.IAOTInfrastructureSeed;
+import com.garganttua.core.aot.commons.IAOTSeedContext;
+
+import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.context.IEntityContext;
+import com.garganttua.api.commons.context.IDtoContext;
+import com.garganttua.api.commons.context.IUseCase;
+import com.garganttua.api.commons.context.IAuthoritiesEndpoint;
+import com.garganttua.api.commons.context.IDomainKeyContext;
+import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IEntityBuilder;
+import com.garganttua.api.commons.context.dsl.IDtoBuilder;
+import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
+import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
+import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.event.IEvent;
+import com.garganttua.api.commons.event.IEventPublisher;
+import com.garganttua.api.commons.filter.IFilter;
+import com.garganttua.api.commons.pageable.IPageable;
+import com.garganttua.api.commons.protocol.IProtocol;
+import com.garganttua.api.commons.serialization.ISerializer;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.IRequest;
+import com.garganttua.api.commons.sort.ISort;
+
+/**
+ * Pre-registers every framework-public interface of {@code garganttua-api-commons}
+ * in the {@code AOTRegistry} on cold-start, so user-side {@code @Reflected}
+ * classes that reference these interfaces (in field types, method signatures,
+ * etc.) can still be resolved at runtime in pure-AOT mode — i.e. when
+ * {@code garganttua-runtime-reflection} is absent from the classpath and
+ * {@code AOTReflectionProvider} is the only provider.
+ *
+ * <p>Discovered via {@link java.util.ServiceLoader} from
+ * {@code META-INF/services/com.garganttua.core.aot.commons.IAOTInfrastructureSeed}.
+ *
+ * @since 3.0.0-ALPHA01
+ */
+public class ApiCommonsInfrastructureSeed implements IAOTInfrastructureSeed {
+
+    @Override
+    public void seed(IAOTSeedContext context) {
+        // Context types — referenced by domain / entity / DTO builders.
+        context.registerInterface(IApi.class);
+        context.registerInterface(IDomain.class);
+        context.registerInterface(IEntityContext.class);
+        context.registerInterface(IDtoContext.class);
+        context.registerInterface(IUseCase.class);
+        context.registerInterface(IAuthoritiesEndpoint.class);
+        context.registerInterface(IDomainKeyContext.class);
+
+        // DSL builders — referenced by user wiring.
+        context.registerInterface(IDomainBuilder.class);
+        context.registerInterface(IEntityBuilder.class);
+        context.registerInterface(IDtoBuilder.class);
+        context.registerInterface(IUseCaseBuilder.class);
+
+        // Security definition — direct cause of the original crash
+        // (Cannot resolve class: IAuthenticatorDefinition) when api-security
+        // is in user code but not aot-seeded.
+        context.registerInterface(IAuthenticatorDefinition.class);
+
+        // Service / endpoint / event / protocol / serialisation layer.
+        context.registerInterface(IDao.class);
+        context.registerInterface(IEndpoint.class);
+        context.registerInterface(IEvent.class);
+        context.registerInterface(IEventPublisher.class);
+        context.registerInterface(IFilter.class);
+        context.registerInterface(IPageable.class);
+        context.registerInterface(IProtocol.class);
+        context.registerInterface(ISerializer.class);
+        context.registerInterface(IOperationRequest.class);
+        context.registerInterface(IOperationResponse.class);
+        context.registerInterface(IRequest.class);
+        context.registerInterface(ISort.class);
+    }
+}

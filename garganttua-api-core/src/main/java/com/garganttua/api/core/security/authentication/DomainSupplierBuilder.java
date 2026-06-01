@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class DomainSupplierBuilder implements ISupplierBuilder<IDomain, IContextualSupplier<IDomain, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(DomainSupplierBuilder.class);
+
 
     private static final IClass<IDomain> SUPPLIED_CLASS = IClass.getClass(IDomain.class);
 
@@ -34,7 +36,7 @@ public class DomainSupplierBuilder implements ISupplierBuilder<IDomain, IContext
 
     @Override
     public IContextualSupplier<IDomain, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building DomainSupplier");
+        log.debug("Building DomainSupplier");
         return new DomainSupplier();
     }
 

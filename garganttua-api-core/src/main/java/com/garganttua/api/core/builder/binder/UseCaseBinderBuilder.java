@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder.binder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.api.commons.context.IUseCase;
 import com.garganttua.api.commons.context.dsl.IUseCaseBinderBuilder;
@@ -10,6 +11,7 @@ import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class UseCaseBinderBuilder<I, O, E>
         extends
         AbstractMethodBinderBuilder<O, IUseCaseBinderBuilder<I, O, E>, IUseCaseBuilder<I, O, E>, IUseCase<I,O>>

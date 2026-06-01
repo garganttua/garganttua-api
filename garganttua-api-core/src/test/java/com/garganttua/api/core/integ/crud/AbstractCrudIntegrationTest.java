@@ -28,6 +28,12 @@ import com.garganttua.core.reflection.dsl.ReflectionBuilder;
 import com.garganttua.core.reflection.runtime.RuntimeReflectionProvider;
 import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.RuntimeContextFactory;
+import com.garganttua.core.runtime.dsl.IRuntimesBuilder;
+import com.garganttua.core.runtime.dsl.RuntimesBuilder;
+import com.garganttua.core.script.dsl.IScriptsBuilder;
+import com.garganttua.core.script.dsl.ScriptsBuilder;
+import com.garganttua.core.workflow.dsl.IWorkflowsBuilder;
+import com.garganttua.core.workflow.dsl.WorkflowsBuilder;
 
 public abstract class AbstractCrudIntegrationTest {
 
@@ -392,6 +398,20 @@ public abstract class AbstractCrudIntegrationTest {
         ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(reflectionBuilder);
         ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(injectionContextBuilder);
         ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(expressionContextBuilder);
+
+        // ApiBuilder now requires an IWorkflowsBuilder (core 2.0.0-ALPHA02
+        // dropped the public WorkflowBuilder.create() factory). Stand up the
+        // chain Runtimes → Scripts → Workflows and provide() the leaf.
+        IRuntimesBuilder runtimesBuilder = RuntimesBuilder.builder();
+        ((IDependentBuilder<IRuntimesBuilder, ?>) runtimesBuilder).provide(injectionContextBuilder);
+        IScriptsBuilder scriptsBuilder = ScriptsBuilder.builder();
+        ((IDependentBuilder<IScriptsBuilder, ?>) scriptsBuilder).provide(injectionContextBuilder);
+        ((IDependentBuilder<IScriptsBuilder, ?>) scriptsBuilder).provide(expressionContextBuilder);
+        ((IDependentBuilder<IScriptsBuilder, ?>) scriptsBuilder).provide(runtimesBuilder);
+        IWorkflowsBuilder workflowsBuilder = WorkflowsBuilder.builder();
+        ((IDependentBuilder<IWorkflowsBuilder, ?>) workflowsBuilder).provide(injectionContextBuilder);
+        ((IDependentBuilder<IWorkflowsBuilder, ?>) workflowsBuilder).provide(scriptsBuilder);
+        ((IDependentBuilder<IApiBuilder, IApi>) builder).provide(workflowsBuilder);
 
         return builder;
     }

@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Field-level marker for the bytes returned by
@@ -14,6 +15,7 @@ import java.lang.annotation.Target;
  * {@code @KeyForSignatureVerification}; for symmetric algorithms it is
  * the secret key shared with {@code @KeyForEncryption}.
  */
+@Indexed
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface KeyForDecryption {

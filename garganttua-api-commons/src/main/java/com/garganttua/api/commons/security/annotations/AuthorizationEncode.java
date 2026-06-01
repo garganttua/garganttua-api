@@ -4,11 +4,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Marks the method that encodes a refreshable authorization to its serialized form.
  * Maps to {@code IRefreshableAuthorizationBuilder.encode(method)}.
  */
+@Indexed
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface AuthorizationEncode {

@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class DomainSupplier implements IContextualSupplier<IDomain, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(DomainSupplier.class);
+
 
     private static final IClass<IDomain> SUPPLIED_CLASS = IClass.getClass(IDomain.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -35,7 +37,7 @@ public class DomainSupplier implements IContextualSupplier<IDomain, IRuntimeCont
 
     @Override
     public Optional<IDomain> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering DomainSupplier.supply");
+        log.trace("Entering DomainSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -47,7 +49,7 @@ public class DomainSupplier implements IContextualSupplier<IDomain, IRuntimeCont
         }
 
         IDomain domainContext = (IDomain) domainContextOpt.get();
-        log.atDebug().log("DomainSupplier resolved domain={}", domainContext.getDomainName());
+        log.debug("DomainSupplier resolved domain={}", domainContext.getDomainName());
         return Optional.of(domainContext);
     }
 

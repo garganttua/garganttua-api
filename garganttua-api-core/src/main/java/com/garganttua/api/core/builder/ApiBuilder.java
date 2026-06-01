@@ -43,18 +43,23 @@ import com.garganttua.core.injection.Predefined;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.dsl.IReflectionBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.core.workflow.dsl.IWorkflowsBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @Bootstrap
+@Reflected
 @Scan(scan = "com.garganttua.api.core")
 public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, IApi>
 		implements IApiBuilder {
+	private static final IDiagnostic log = Diagnostics.of(ApiBuilder.class);
+
 
 	private ApiBuilder() {
 		super(Set.of(
@@ -66,7 +71,20 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 						// When absent, observability is just disabled.
 						DependencySpec.use(IClass.getClass(
 								com.garganttua.core.observability.dsl.IObservabilityBuilder.class),
-								DependencyPhase.BUILD)));
+								DependencyPhase.BUILD),
+						// requireConfigure: receive the IWorkflowsBuilder reference
+						// at CONFIGURATION stage (which runs BEFORE topo-sorted
+						// BUILD stage). The api opens per-domain workflow slots
+						// and pushes all stages into them at CONFIG, so when
+						// WorkflowsBuilder.doBuild() runs at BUILD, the registry
+						// is already populated. Topo still orders WorkflowsBuilder
+						// → ApiBuilder, but ApiBuilder.doBuild() then just
+						// retrieves the BUILT workflows from
+						// workflowsBuilder.build() (idempotent — returns cached
+						// result). Without CONFIG-stage population the registry
+						// would freeze empty and the api workflows would never
+						// land as IInjectionContext beans nor in the banner.
+						DependencySpec.requireConfigure(IClass.getClass(IWorkflowsBuilder.class))));
 	}
 
 	private final Set<String> packages = ConcurrentHashMap.newKeySet();
@@ -101,8 +119,12 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private volatile IInjectionContextBuilder injectionContextBuilder;
 	private volatile IExpressionContextBuilder expressionContextBuilder;
 	private volatile com.garganttua.core.observability.dsl.IObservabilityBuilder observabilityBuilder;
+	private volatile IWorkflowsBuilder workflowsBuilder;
+	private volatile java.util.Map<String, com.garganttua.core.workflow.IWorkflow> builtWorkflows;
 	private volatile IInjectionContext injectionContext;
 	private volatile AuthoritiesEndpointBuilder authoritiesEndpointBuilder;
+	private volatile com.garganttua.core.workflow.WorkflowTimingConfig workflowTimingConfig =
+			com.garganttua.core.workflow.WorkflowTimingConfig.disabled();
 
 	/**
 	 * Default entry point — returns a fresh {@code ApiBuilder}. The caller is
@@ -207,6 +229,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	}
 
 	@Override
+	public IApiBuilder workflowTiming(com.garganttua.core.workflow.WorkflowTimingConfig config) throws ApiException {
+		Objects.requireNonNull(config, "WorkflowTimingConfig cannot be null");
+		this.workflowTimingConfig = config;
+		return this;
+	}
+
+	@Override
 	public synchronized IApiSecurityBuilder security() {
 		if (this.securityBuilder == null) {
 			this.securityBuilder = new SecurityBuilder(this.packages, this);
@@ -269,13 +298,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	}
 
 	public IApiBuilder withPackage(String packageName) {
-		log.atDebug().log("Adding package: {}", packageName);
+		log.debug("Adding package: {}", packageName);
 		this.packages.add(Objects.requireNonNull(packageName, "Package name cannot be null"));
 		return this;
 	}
 
 	public IApiBuilder withPackages(String[] packageNames) {
-		log.atDebug().log("Adding {} packages", packageNames.length);
+		log.debug("Adding {} packages", packageNames.length);
 		Objects.requireNonNull(packageNames, "Package names cannot be null");
 		for (String pkg : packageNames) {
 			this.withPackage(pkg);
@@ -291,43 +320,43 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 	@Override
 	protected void doAutoDetectionWithDependency(Object dependency) throws ApiException {
-		log.atTrace().log("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
+		log.trace("Entering doAutoDetectionWithDependency() with dependency: {}", dependency);
 
 		if (dependency instanceof IInjectionContext context) {
 			// Auto-detect entities and domains from injection context
 			// This could scan for @Entity annotated classes
-			log.atDebug().log("Auto-detecting domains from InjectionContext");
+			log.debug("Auto-detecting domains from InjectionContext");
 			// TODO: Implement entity/domain auto-detection from injection context
 		}
 
-		log.atTrace().log("Exiting doAutoDetectionWithDependency() method");
+		log.trace("Exiting doAutoDetectionWithDependency() method");
 	}
 
 	@Override
 	protected void doPreBuildWithDependency(Object dependency) {
-		log.atTrace().log("Entering doPreBuildWithDependency() with dependency: {}", dependency);
+		log.trace("Entering doPreBuildWithDependency() with dependency: {}", dependency);
 
 		if (dependency instanceof IInjectionContext context) {
 			this.injectionContext = context;
-			log.atDebug().log("InjectionContext captured in pre-build phase");
+			log.debug("InjectionContext captured in pre-build phase");
 		}
 
-		log.atTrace().log("Exiting doPreBuildWithDependency() method");
+		log.trace("Exiting doPreBuildWithDependency() method");
 	}
 
 	@Override
 	protected void doPostBuildWithDependency(Object dependency) {
-		log.atTrace().log("Entering doPostBuildWithDependency() with dependency: {}", dependency);
+		log.trace("Entering doPostBuildWithDependency() with dependency: {}", dependency);
 
 		if (dependency instanceof IInjectionContext context) {
 			registerBuiltObjectInContext(context, this.built);
 		}
 
-		log.atTrace().log("Exiting doPostBuildWithDependency() method");
+		log.trace("Exiting doPostBuildWithDependency() method");
 	}
 
 	private void registerBuiltObjectInContext(IInjectionContext context, IApi apiContext) {
-		log.atDebug().log("Registering IApi as bean in InjectionContext");
+		log.debug("Registering IApi as bean in InjectionContext");
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
 		BeanReference<IApi> beanRef = new BeanReference<>(
@@ -336,7 +365,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				Optional.of("Api"),
 				Set.of());
 		context.addBean(providerName, beanRef, apiContext);
-		log.atDebug().log("IApi successfully registered as bean with 'Api' name");
+		log.debug("IApi successfully registered as bean with 'Api' name");
 
 		// Register each domain context
 		for (Map.Entry<String, IDomain<?>> entry : ((Api) apiContext).getDomains().entrySet()) {
@@ -349,7 +378,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 					Optional.of("domain." + domainName),
 					Set.of());
 			context.addBean(providerName, domainBeanRef, domainContext);
-			log.atDebug().log("IDomain successfully registered as bean with 'domain.{}' name", domainName);
+			log.debug("IDomain successfully registered as bean with 'domain.{}' name", domainName);
 
 			// Register the tenant domain context with a well-known bean name
 			if (domainContext.isTenantEntity()) {
@@ -359,7 +388,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 						Optional.of("tenantDomain"),
 						Set.of());
 				context.addBean(providerName, tenantBeanRef, domainContext);
-				log.atInfo().log("Tenant domain context registered as bean 'tenantDomain' (domain: {})", domainName);
+				log.info("Tenant domain context registered as bean 'tenantDomain' (domain: {})", domainName);
 			}
 		}
 
@@ -377,13 +406,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 						Optional.of(beanName),
 						Set.of());
 				context.addBean(providerName, authBeanRef, authContext);
-				log.atDebug().log("IAuthenticationContext registered as bean '{}'", beanName);
+				log.debug("IAuthenticationContext registered as bean '{}'", beanName);
 			}
 		}
 	}
 
 	private void registerMapperBean() {
-		log.atDebug().log("Registering IMapper as bean in InjectionContext");
+		log.debug("Registering IMapper as bean in InjectionContext");
 		String providerName = Predefined.BeanProviders.garganttua.toString();
 
 		BeanReference<IMapper> beanRef = new BeanReference<>(
@@ -392,12 +421,35 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				Optional.of("mapper"),
 				Set.of());
 		this.injectionContext.addBean(providerName, beanRef, DefaultMapper.mapper());
-		log.atDebug().log("IMapper successfully registered as bean with 'mapper' name");
+		log.debug("IMapper successfully registered as bean with 'mapper' name");
+	}
+
+	/**
+	 * Overrides {@code build()} to fire the CONFIGURATION stage before
+	 * delegating to the framework. Bootstrap normally runs the
+	 * CONFIGURATION phase globally (cf. {@code Bootstrap.doBuild#runGlobalConfigurationPhase}),
+	 * but when a caller drives ApiBuilder directly — typical of
+	 * integration tests and library users that bypass Bootstrap — that hook
+	 * is never fired and our {@code doConfigureWithDependencyBuilder} that
+	 * populates per-domain workflow stages into the IWorkflowsBuilder
+	 * never runs. Calling {@code runConfigurationStage()} here covers the
+	 * direct path; it is idempotent (each (consumer, dep, CONFIG) tuple
+	 * fires at most once), so it is a no-op when Bootstrap already drove
+	 * the configuration phase.
+	 */
+	@Override
+	public IApi build() throws ApiException {
+		try {
+			this.runConfigurationStage();
+		} catch (com.garganttua.core.dsl.DslException e) {
+			throw new ApiException("Failed during CONFIGURATION stage: " + e.getMessage(), e);
+		}
+		return super.build();
 	}
 
 	@Override
 	protected synchronized IApi doBuild() throws ApiException {
-		log.atTrace().log("Entering doBuild() method");
+		log.trace("Entering doBuild() method");
 
 		try {
 			// Ensure we have an injection context. The caller is responsible for wiring it,
@@ -424,7 +476,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				domainBuilder.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
 				IDomain<?> domainContext = domainBuilder.build();
 				domainContexts.put(domainContext.getDomain(), domainContext);
-				log.atDebug().log("Built domain context: {}", domainContext.getDomain());
+				log.debug("Built domain context: {}", domainContext.getDomain());
 			}
 
 			// Workflow-level ObservableEvent observers are wired by core's
@@ -454,7 +506,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			// Build security context if configured
 			if (this.securityBuilder != null) {
 				this.securityBuilder.build();
-				log.atDebug().log("Built security context");
+				log.debug("Built security context");
 			}
 
 			// Build startup binders
@@ -462,7 +514,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			for (ApiStartupBinderBuilder binder : this.startupBinderBuilders) {
 				startupBinders.add(binder.build());
 			}
-			log.atDebug().log("Built {} startup binders", startupBinders.size());
+			log.debug("Built {} startup binders", startupBinders.size());
 
 			// Build serializers
 			List<ISerializer> builtSerializers = new ArrayList<>(this.serializers);
@@ -471,7 +523,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				Object serializer = supplier.supply();
 				builtSerializers.add((ISerializer) serializer);
 			}
-			log.atDebug().log("Built {} serializers", builtSerializers.size());
+			log.debug("Built {} serializers", builtSerializers.size());
 
 			// Build protocols
 			List<IProtocol<?, ?>> builtProtocols = new ArrayList<>(this.protocols);
@@ -480,7 +532,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				Object protocol = supplier.supply();
 				builtProtocols.add((IProtocol<?, ?>) protocol);
 			}
-			log.atDebug().log("Built {} protocols", builtProtocols.size());
+			log.debug("Built {} protocols", builtProtocols.size());
 
 			// Build authorization protocols
 			List<IAuthorizationProtocol> builtAuthzProtocols = new ArrayList<>(this.authorizationProtocols);
@@ -489,7 +541,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 				Object authzProtocol = supplier.supply();
 				builtAuthzProtocols.add((IAuthorizationProtocol) authzProtocol);
 			}
-			log.atDebug().log("Built {} authorization protocols", builtAuthzProtocols.size());
+			log.debug("Built {} authorization protocols", builtAuthzProtocols.size());
 
 			// Build the authorities-endpoint descriptor when opted-in. Null when
 			// the user did not call .exposeAuthorities() — the Api context
@@ -510,20 +562,33 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			// every @Observer scanned by core's ObservabilityBuilder sees
 			// api:operation:<domain>:<op> Start/End/Error events. No-op when
 			// no observability builder was provided (manual setups).
+			//
+			// Mirror the attach onto each domain's IWorkflow when it is an
+			// IObservable: the Workflow pushes its own ObservableRegistry during
+			// execute() (ObservableContextHolder.push), so the timing markers
+			// (stage:<name>, script:<stage>.<name>) emitted by an opted-in
+			// workflowTiming(...) only reach scanned observers if the workflow
+			// itself is registered as a source. No-op when timing is disabled —
+			// core's hasObservers() short-circuit means an attached-but-quiet
+			// workflow emits nothing.
 			if (this.observabilityBuilder != null) {
 				com.garganttua.core.observability.ObservabilityBinding binding =
 						this.observabilityBuilder.getBinding();
 				if (binding != null) {
 					for (IDomain<?> domain : domainContexts.values()) {
 						binding.attachSource(domain);
+						com.garganttua.core.workflow.IWorkflow wf = domain.getWorkflow();
+						if (wf instanceof com.garganttua.core.observability.IObservable wfObs) {
+							binding.attachSource(wfObs);
+						}
 					}
-					log.atDebug().log("Attached {} domain(s) to the ObservabilityBinding",
+					log.debug("Attached {} domain(s) and their workflows to the ObservabilityBinding",
 							domainContexts.size());
 				}
 			}
 
-			log.atDebug().log("Built Api with {} domains", domainContexts.size());
-			log.atTrace().log("Exiting doBuild() method");
+			log.debug("Built Api with {} domains", domainContexts.size());
+			log.trace("Exiting doBuild() method");
 
 			return apiContext;
 
@@ -532,9 +597,22 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		}
 	}
 
+	private volatile boolean autoDetectionRan = false;
+
 	@Override
 	protected void doAutoDetection() throws ApiException {
-		log.atTrace().log("Entering doAutoDetection() method");
+		log.trace("Entering doAutoDetection() method");
+		// Idempotent: doAutoDetection is invoked once from the CONFIGURATION
+		// hook (so the api's domain + security state is final BEFORE workflow
+		// stages are assembled into the shared IWorkflowsBuilder) and a second
+		// time by AbstractAutomaticDependentBuilder.build()'s automatic
+		// auto-detection sweep. The second call must not re-run the scanners
+		// — they would re-trigger DSL side-effects on the (now finalised)
+		// domain builders.
+		if (this.autoDetectionRan) {
+			log.debug("doAutoDetection skipped — already ran at CONFIGURATION stage");
+			return;
+		}
 		// Framework packages contribute their built-in *assets* (serializers,
 		// protocols, authorization protocols) — never user-domain entities or
 		// user security configs, which live exclusively in user-declared
@@ -547,7 +625,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		autoDetectAuthorizationProtocols(assetScanPackages);
 		new com.garganttua.api.core.builder.scan.EntityAnnotationScanner(this, this.packages).scan();
 		new com.garganttua.api.core.builder.scan.SecurityAnnotationScanner(this, this.packages).scan();
-		log.atTrace().log("Exiting doAutoDetection() method");
+		this.autoDetectionRan = true;
+		log.trace("Exiting doAutoDetection() method");
 	}
 
 	/**
@@ -673,7 +752,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		try {
 			reflection = IClass.getReflection();
 		} catch (Exception e) {
-			log.atWarn().log("No IReflection available for @Serializer auto-detection: {}", e.getMessage());
+			log.warn("No IReflection available for @Serializer auto-detection: {}", e.getMessage());
 			return;
 		}
 
@@ -696,7 +775,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 		}
 		if (discovered > 0) {
-			log.atDebug().log("Auto-detected {} @Serializer class(es) across {} package(s)",
+			log.debug("Auto-detected {} @Serializer class(es) across {} package(s)",
 					discovered, scanSurface.size());
 		}
 	}
@@ -715,7 +794,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		try {
 			reflection = IClass.getReflection();
 		} catch (Exception e) {
-			log.atWarn().log("No IReflection available for @Protocol auto-detection: {}", e.getMessage());
+			log.warn("No IReflection available for @Protocol auto-detection: {}", e.getMessage());
 			return;
 		}
 
@@ -738,7 +817,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 		}
 		if (discovered > 0) {
-			log.atDebug().log("Auto-detected {} @Protocol class(es) across {} package(s)",
+			log.debug("Auto-detected {} @Protocol class(es) across {} package(s)",
 					discovered, scanSurface.size());
 		}
 	}
@@ -756,7 +835,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 		try {
 			reflection = IClass.getReflection();
 		} catch (Exception e) {
-			log.atWarn().log("No IReflection available for @AuthorizationProtocol auto-detection: {}", e.getMessage());
+			log.warn("No IReflection available for @AuthorizationProtocol auto-detection: {}", e.getMessage());
 			return;
 		}
 
@@ -779,7 +858,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			}
 		}
 		if (discovered > 0) {
-			log.atDebug().log("Auto-detected {} @AuthorizationProtocol class(es) across {} package(s)",
+			log.debug("Auto-detected {} @AuthorizationProtocol class(es) across {} package(s)",
 					discovered, scanSurface.size());
 		}
 	}
@@ -842,7 +921,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	public IApiBuilder provide(IObservableBuilder<?, ?> dependency) throws ApiException {
 		if (dependency instanceof IInjectionContextBuilder builder) {
 			this.injectionContextBuilder = builder;
-			log.atDebug().log("IInjectionContextBuilder captured via provide()");
+			log.debug("IInjectionContextBuilder captured via provide()");
 		} else if (dependency instanceof IExpressionContextBuilder builder) {
 			this.expressionContextBuilder = builder;
 			if (!this.expressionContextBuilder.isAutoDetected()) {
@@ -857,13 +936,99 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			// stage:/script: events never reach observers.
 			this.expressionContextBuilder.withPackage("com.garganttua.core.observability");
 			this.expressionContextBuilder.withPackage("com.garganttua.api.core.expression");
-			log.atDebug().log("IExpressionContextBuilder captured via provide()");
+			log.debug("IExpressionContextBuilder captured via provide()");
 		} else if (dependency instanceof com.garganttua.core.observability.dsl.IObservabilityBuilder builder) {
 			this.observabilityBuilder = builder;
-			log.atDebug().log("IObservabilityBuilder captured via provide()");
+			log.debug("IObservabilityBuilder captured via provide()");
+		} else if (dependency instanceof IWorkflowsBuilder builder) {
+			this.workflowsBuilder = builder;
+			log.debug("IWorkflowsBuilder captured via provide()");
 		}
 		return super.provide(dependency);
 	}
+
+	IWorkflowsBuilder getWorkflowsBuilder() {
+		return this.workflowsBuilder;
+	}
+
+	com.garganttua.core.workflow.WorkflowTimingConfig getWorkflowTimingConfig() {
+		return this.workflowTimingConfig;
+	}
+
+	/**
+	 * Returns the per-domain {@link com.garganttua.core.workflow.IWorkflow}
+	 * map produced by {@link IWorkflowsBuilder#build()}. Populated lazily on
+	 * first call (the WorkflowsBuilder is built before us per topo, so this
+	 * is just a cached lookup). Each domain's name maps to the corresponding
+	 * built workflow.
+	 *
+	 * @throws ApiException when the WorkflowsBuilder couldn't build
+	 */
+	java.util.Map<String, com.garganttua.core.workflow.IWorkflow> getBuiltWorkflows() throws ApiException {
+		if (this.builtWorkflows == null) {
+			if (this.workflowsBuilder == null) {
+				throw new ApiException("IWorkflowsBuilder not provided to ApiBuilder — "
+						+ "Bootstrap should auto-discover it via WorkflowsBuilderFactory or "
+						+ "the caller should provide() one explicitly before build().");
+			}
+			try {
+				this.builtWorkflows = this.workflowsBuilder.build();
+			} catch (com.garganttua.core.dsl.DslException e) {
+				throw new ApiException("Failed to build IWorkflowsBuilder: " + e.getMessage(), e);
+			}
+		}
+		return this.builtWorkflows;
+	}
+
+	@Override
+	protected void doConfigureWithDependencyBuilder(
+			com.garganttua.core.dsl.IObservableBuilder<?, ?> dependencyBuilder)
+			throws com.garganttua.core.dsl.DslException {
+		if (dependencyBuilder instanceof IWorkflowsBuilder builder) {
+			this.workflowsBuilder = builder;
+			log.debug("IWorkflowsBuilder captured at CONFIGURATION stage");
+
+			// Contribution to WorkflowsBuilder's pre-build registry.
+			// Topo orders WorkflowsBuilder before ApiBuilder (we require it),
+			// so any work that needs WorkflowsBuilder's workflowBuilders map
+			// to be already populated has to land at CONFIGURATION stage —
+			// before Phase 3 (build) sweeps through.
+			//
+			// Three steps:
+			//   1. Run the api's own auto-detection (scanners) HERE so
+			//      annotation-driven domains and their security configs are
+			//      registered before stage assembly. Without this, the
+			//      scanners would run later (inside ApiBuilder.doBuild's
+			//      AUTO_DETECT phase, well past WorkflowsBuilder.build).
+			//   2. Iterate every DomainBuilder (DSL + scanned) and ask each
+			//      to assemble its workflow stages into the shared
+			//      WorkflowsBuilder.
+			//   3. ApiBuilder.doBuild() later retrieves each built workflow
+			//      from WorkflowsBuilder.build() (cached Map<String,IWorkflow>)
+			//      and sets it on the corresponding Domain context.
+			try {
+				if (this.isAutoDetected()) {
+					this.doAutoDetection();
+				}
+				for (DomainBuilder<?> domainBuilder : this.domainBuilders.values()) {
+					domainBuilder.populateWorkflowStages(
+							builder,
+							this.injectionContextBuilder,
+							this.expressionContextBuilder,
+							this.multiTenant,
+							this.workflowTimingConfig);
+				}
+				this.contributionsDone = true;
+			} catch (ApiException e) {
+				throw new com.garganttua.core.dsl.DslException(
+						"Failed to contribute workflows to IWorkflowsBuilder at CONFIGURATION: "
+								+ e.getMessage(),
+						e);
+			}
+		}
+	}
+
+	private volatile boolean contributionsDone = false;
 
 	IInjectionContextBuilder getInjectionContextBuilder() {
 		return this.injectionContextBuilder;

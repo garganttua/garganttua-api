@@ -8,11 +8,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class PrincipalSupplierBuilder implements ISupplierBuilder<Object, IContextualSupplier<Object, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(PrincipalSupplierBuilder.class);
+
 
     private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);
 
@@ -33,7 +35,7 @@ public class PrincipalSupplierBuilder implements ISupplierBuilder<Object, IConte
 
     @Override
     public IContextualSupplier<Object, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building PrincipalSupplier");
+        log.debug("Building PrincipalSupplier");
         return new PrincipalSupplier();
     }
 

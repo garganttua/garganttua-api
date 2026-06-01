@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.lang.annotation.Annotation;
 import com.garganttua.core.reflection.IMethod;
@@ -28,6 +29,7 @@ import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiSecurityBuilder, IAuthenticationContext> implements IAuthenticationBuilder {
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;

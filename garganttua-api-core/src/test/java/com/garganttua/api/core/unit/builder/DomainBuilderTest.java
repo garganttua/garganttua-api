@@ -237,6 +237,27 @@ class DomainBuilderTest {
             ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(reflectionBuilder);
             ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(injectionContextBuilder);
             ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(expressionContextBuilder);
+
+            // ApiBuilder requires IWorkflowsBuilder since core 2.0.0-ALPHA02.
+            com.garganttua.core.runtime.dsl.IRuntimesBuilder runtimesBuilder =
+                    com.garganttua.core.runtime.dsl.RuntimesBuilder.builder();
+            ((IDependentBuilder<com.garganttua.core.runtime.dsl.IRuntimesBuilder, ?>) runtimesBuilder)
+                    .provide(injectionContextBuilder);
+            com.garganttua.core.script.dsl.IScriptsBuilder scriptsBuilder =
+                    com.garganttua.core.script.dsl.ScriptsBuilder.builder();
+            ((IDependentBuilder<com.garganttua.core.script.dsl.IScriptsBuilder, ?>) scriptsBuilder)
+                    .provide(injectionContextBuilder);
+            ((IDependentBuilder<com.garganttua.core.script.dsl.IScriptsBuilder, ?>) scriptsBuilder)
+                    .provide(expressionContextBuilder);
+            ((IDependentBuilder<com.garganttua.core.script.dsl.IScriptsBuilder, ?>) scriptsBuilder)
+                    .provide(runtimesBuilder);
+            com.garganttua.core.workflow.dsl.IWorkflowsBuilder workflowsBuilder =
+                    com.garganttua.core.workflow.dsl.WorkflowsBuilder.builder();
+            ((IDependentBuilder<com.garganttua.core.workflow.dsl.IWorkflowsBuilder, ?>) workflowsBuilder)
+                    .provide(injectionContextBuilder);
+            ((IDependentBuilder<com.garganttua.core.workflow.dsl.IWorkflowsBuilder, ?>) workflowsBuilder)
+                    .provide(scriptsBuilder);
+            ((IDependentBuilder<IApiBuilder, IApi>) contextBuilder).provide(workflowsBuilder);
         }
 
         @Test

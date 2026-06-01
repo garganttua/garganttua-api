@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 
+@Reflected
 public class DomainBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainBuilder<E>, IApiBuilder, IDomain<E>>
         implements IDomainBuilder<E> {
@@ -646,25 +648,9 @@ public class DomainBuilder<E>
                     wb.isCustom()));
         }
 
-        // Auto-register authenticate workflow when domain has an authenticator
-        if (this.securityBuilder != null
-                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
-                && !this.workflows.containsKey(BusinessOperation.authenticate.getLabel())) {
-            registerCrudMetadata(BusinessOperation.authenticate.getLabel(),
-                    TechnicalOperation.create, Scope.oneEntity);
-        }
-
-        // Auto-register refreshAuthorization workflow when the authenticator has
-        // an authorization config and the linked authorization is refreshable.
-        // The runtime guard inside REFRESH_AUTHORIZATION.gs additionally checks
-        // isAuthorizationRefreshable so a misconfiguration just rejects requests.
-        if (this.securityBuilder != null
-                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
-                && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig()
-                && !this.workflows.containsKey(BusinessOperation.refreshAuthorization.getLabel())) {
-            registerCrudMetadata(BusinessOperation.refreshAuthorization.getLabel(),
-                    TechnicalOperation.create, Scope.oneEntity);
-        }
+        // Auto-registration of authenticate/refreshAuthorization workflows
+        // moved to autoRegisterSecurityWorkflows() — invoked from
+        // populateWorkflowStages() so they're present before stage assembly.
 
         // Compute configuration flags
         boolean securityEnabled = this.securityBuilder != null
@@ -677,14 +663,41 @@ public class DomainBuilder<E>
         boolean multiTenancyEnabled = this.up() instanceof ApiBuilder acb && acb.isMultiTenant();
         boolean isOwnerOrOwned = this.owner != null || this.owned != null;
 
-        // Assemble workflow stages via dedicated assembler.
-        // Workflow timing is now configured globally on core's WorkflowBuilder
-        // (cf. CORE_EVOLUTION_workflow_timing_in_workflow_builder.md) — the
-        // api no longer routes a per-Api WorkflowTimingConfig through here.
-        IWorkflow builtWorkflow = new DomainWorkflowAssembler<E>(
-                this.domainName, this.workflows, securityEnabled, hasAuthorization,
-                multiTenancyEnabled, isOwnerOrOwned,
-                this.injectionContextBuilder, this.expressionContextBuilder).assemble();
+        // Workflow stages were normally populated into the shared
+        // IWorkflowsBuilder at CONFIGURATION stage (see
+        // ApiBuilder.doConfigureWithDependencyBuilder). If we're called as
+        // a fallback (DomainBuilder.build() invoked directly, or auto-
+        // detected domains registered AFTER the CONFIG hook ran),
+        // populate them now — populateWorkflowStages() is idempotent.
+        //
+        // For the workflow lookup we go through the per-name child builder
+        // (workflowsBuilder.workflow(name).build()) rather than the shared
+        // map: WorkflowsBuilder.build() is memoised, so the shared map is
+        // frozen at the moment of the first lookup and won't include
+        // workflows registered later (e.g. auto-detected domains). The
+        // per-child build() side-steps that cache while still benefiting
+        // from WorkflowBuilder.build()'s own idempotency.
+        IWorkflow builtWorkflow;
+        if (this.up() instanceof ApiBuilder ab) {
+            com.garganttua.core.workflow.dsl.IWorkflowsBuilder wb = ab.getWorkflowsBuilder();
+            if (wb == null) {
+                throw new ApiException("IWorkflowsBuilder not provided to ApiBuilder — "
+                        + "Bootstrap should auto-discover it via WorkflowsBuilderFactory, or "
+                        + "the caller should provide() one explicitly before build().");
+            }
+            this.populateWorkflowStages(wb, this.injectionContextBuilder,
+                    this.expressionContextBuilder, multiTenancyEnabled,
+                    ab.getWorkflowTimingConfig());
+            try {
+                builtWorkflow = wb.workflow(this.domainName).build();
+            } catch (com.garganttua.core.dsl.DslException e) {
+                throw new ApiException("Failed to build workflow for domain '"
+                        + this.domainName + "': " + e.getMessage(), e);
+            }
+        } else {
+            throw new ApiException("DomainBuilder's parent is not an ApiBuilder — "
+                    + "cannot retrieve the built workflow for domain '" + this.domainName + "'.");
+        }
 
         // Cast entities for create/upsert lists
         List<E> createEntitiesCast = this.createEntities.stream()
@@ -766,6 +779,81 @@ public class DomainBuilder<E>
         DomainWorkflowBuilder<E> wb = new DomainWorkflowBuilder<>(name, this);
         wb.setCustom(false);
         this.workflows.put(name, wb);
+    }
+
+    String getDomainName() {
+        return this.domainName;
+    }
+
+    private volatile boolean workflowStagesPopulated = false;
+
+    /**
+     * Populates this domain's workflow stages into the shared
+     * {@link com.garganttua.core.workflow.dsl.IWorkflowsBuilder}. Called from
+     * {@link ApiBuilder#doConfigureWithDependencyBuilder} at the Bootstrap
+     * CONFIGURATION stage so that {@code WorkflowsBuilder.doBuild()} at
+     * BUILD stage sees a filled registry (topo orders WorkflowsBuilder before
+     * ApiBuilder, so anything we'd push at BUILD time arrives too late). Also
+     * called as a fallback from {@link #build()} when a caller drives
+     * DomainBuilder directly (typical of unit tests), bypassing both
+     * Bootstrap and ApiBuilder.build()'s configuration-stage trigger.
+     *
+     * <p>Idempotent — subsequent calls are no-ops so the
+     * {@code workflowsBuilder.workflow(name)} child doesn't accumulate
+     * duplicated stages.
+     */
+    void populateWorkflowStages(
+            com.garganttua.core.workflow.dsl.IWorkflowsBuilder workflowsBuilder,
+            com.garganttua.core.injection.context.dsl.IInjectionContextBuilder injectionContextBuilder,
+            com.garganttua.core.expression.dsl.IExpressionContextBuilder expressionContextBuilder,
+            boolean multiTenancyEnabled,
+            com.garganttua.core.workflow.WorkflowTimingConfig workflowTimingConfig) throws ApiException {
+        if (this.workflowStagesPopulated) {
+            return;
+        }
+        // Auto-register security-driven workflows BEFORE assembling stages —
+        // these used to live inside build() but stage assembly now happens at
+        // CONFIGURATION (well before build()). Without this prelude, the
+        // assembler iterates an incomplete workflows map and the authenticate
+        // operation's request returns 405.
+        autoRegisterSecurityWorkflows();
+
+        boolean securityEnabled = this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
+        boolean hasAuthorization = this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig();
+        boolean isOwnerOrOwned = this.owner != null || this.owned != null;
+
+        new DomainWorkflowAssembler<E>(
+                this.domainName, this.workflows, securityEnabled, hasAuthorization,
+                multiTenancyEnabled, isOwnerOrOwned,
+                injectionContextBuilder, expressionContextBuilder,
+                workflowsBuilder, workflowTimingConfig).populateStages();
+        this.workflowStagesPopulated = true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void autoRegisterSecurityWorkflows() {
+        // Auto-register authenticate workflow when domain has an authenticator
+        if (this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && !this.workflows.containsKey(BusinessOperation.authenticate.getLabel())) {
+            registerCrudMetadata(BusinessOperation.authenticate.getLabel(),
+                    TechnicalOperation.create, Scope.oneEntity);
+        }
+
+        // Auto-register refreshAuthorization workflow when the authenticator has
+        // an authorization config and the linked authorization is refreshable.
+        // The runtime guard inside REFRESH_AUTHORIZATION.gs additionally checks
+        // isAuthorizationRefreshable so a misconfiguration just rejects requests.
+        if (this.securityBuilder != null
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
+                && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig()
+                && !this.workflows.containsKey(BusinessOperation.refreshAuthorization.getLabel())) {
+            registerCrudMetadata(BusinessOperation.refreshAuthorization.getLabel(),
+                    TechnicalOperation.create, Scope.oneEntity);
+        }
     }
 
 

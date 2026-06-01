@@ -1,4 +1,5 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Map;
 
@@ -18,6 +19,7 @@ import static com.garganttua.api.core.expression.ExpressionUtils.unwrapOptional;
  * Protocols are looked up on the API-level pool configured via
  * {@code IApiBuilder.protocol(...)} or auto-detected via {@code @Protocol}.
  */
+@Reflected(queryAllPublicMethods = true)
 public class ProtocolExpressions {
 
 	@Expression(name = "resolveProtocol",

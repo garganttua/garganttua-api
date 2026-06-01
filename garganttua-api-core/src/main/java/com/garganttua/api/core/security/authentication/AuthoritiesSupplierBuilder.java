@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class AuthoritiesSupplierBuilder implements ISupplierBuilder<List, IContextualSupplier<List, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(AuthoritiesSupplierBuilder.class);
+
 
     private static final IClass<List> SUPPLIED_CLASS = IClass.getClass(List.class);
 
@@ -34,7 +36,7 @@ public class AuthoritiesSupplierBuilder implements ISupplierBuilder<List, IConte
 
     @Override
     public IContextualSupplier<List, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building AuthoritiesSupplier");
+        log.debug("Building AuthoritiesSupplier");
         return new AuthoritiesSupplier();
     }
 

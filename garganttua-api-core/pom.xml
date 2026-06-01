@@ -54,10 +54,36 @@
 			<artifactId>garganttua-crypto</artifactId>
 		</dependency>
 
-		<!-- Third-party -->
+		<!-- AOT — the @Reflected DSL builders here generate AOTClass_*
+		     source files into target/generated-sources/annotations at
+		     compile time; those generated classes reference types from
+		     com.garganttua.core.aot.commons / com.garganttua.core.aot.reflection,
+		     so we need the artefact on the compile + runtime classpath. -->
 		<dependency>
-			<groupId>com.jayway.jsonpath</groupId>
-			<artifactId>json-path</artifactId>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-reflection</artifactId>
+		</dependency>
+
+		<!-- AOT infrastructure seed SPI — used by ApiCoreInfrastructureSeed
+		     to pre-register every framework-public concrete type of api-core
+		     (contexts, definitions, services, filter, repository, caller,
+		     default mapper) in the AOTRegistry on cold-start. Required in
+		     pure-AOT mode (no garganttua-runtime-reflection on the classpath). -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-commons</artifactId>
+		</dependency>
+
+		<!-- Standalone third-party deps reintroduced directly. -->
+		<dependency>
+			<groupId>org.javatuples</groupId>
+			<artifactId>javatuples</artifactId>
+		</dependency>
+
+		<!-- Binding for Jackson — Filter.java uses ObjectMapper. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-jackson</artifactId>
 		</dependency>
 
 		<!-- Test dependencies — providers/scanners the framework does not impose at compile time -->
@@ -74,6 +100,11 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

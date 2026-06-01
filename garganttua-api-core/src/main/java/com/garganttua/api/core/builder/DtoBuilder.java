@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
 import java.util.ArrayList;
@@ -24,11 +25,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
+@Reflected
 public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder<E, D>, IDomainBuilder<E>, IDtoContext<D>>
         implements IDtoBuilder<E, D> {
+	private static final IDiagnostic log = Diagnostics.of(DtoBuilder.class);
+
 
     // Reflection provider is whatever the user installed via IClass.setReflection().
     // Resolved lazily per call so the framework never picks an implementation.
@@ -168,7 +172,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
                     + "    .up()");
         }
         if (this.daos.size() > 1) {
-            log.atWarn().log(
+            log.warn(
                     "Multiple Daos set for dto {}. This feature is not yet supported, the first Dao will be used",
                     this.dtoClass.getSimpleName());
         }

@@ -1,4 +1,5 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -20,6 +21,7 @@ import static com.garganttua.api.core.expression.ExpressionUtils.unwrapOptional;
  * The protocol pool is held on {@link IApi}; protocols are routed by the scheme
  * token (first whitespace-delimited word of the {@code Authorization} header).
  */
+@Reflected(queryAllPublicMethods = true)
 public class AuthorizationProtocolExpressions {
 
 	@Expression(name = "rawAuthorizationAsString",

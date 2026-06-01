@@ -1,4 +1,5 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,7 @@ import static com.garganttua.api.core.expression.ExpressionUtils.*;
 /**
  * Expressions for entity lifecycle: field management, validation, lifecycle hooks, and DI injection.
  */
+@Reflected(queryAllPublicMethods = true)
 public class EntityLifecycleExpressions {
 
 	@Expression(name = "doInjection", description = "Injects @Inject and @Property fields into entities using BeanFactory (no @PostConstruct)")

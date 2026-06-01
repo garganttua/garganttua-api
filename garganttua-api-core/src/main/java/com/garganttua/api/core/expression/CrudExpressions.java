@@ -1,4 +1,5 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,7 @@ import static com.garganttua.api.core.expression.ExpressionUtils.*;
 /**
  * Expressions for CRUD operations: repository access, filter building, and data transformations.
  */
+@Reflected(queryAllPublicMethods = true)
 public class CrudExpressions {
 
 	@Expression(name = "businessOperation", description = "Extracts the business operation label from an IOperationRequest")

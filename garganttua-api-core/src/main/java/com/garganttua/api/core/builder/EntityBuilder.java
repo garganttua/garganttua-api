@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.lang.annotation.Annotation;
 import com.garganttua.core.reflection.IField;
@@ -31,12 +32,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
+@Reflected
 public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuilder<E>, IDomainBuilder<E>, IEntityContext<E>>
         implements IEntityBuilder<E> {
+	private static final IDiagnostic log = Diagnostics.of(EntityBuilder.class);
+
 
     // Reflection provider is whatever the user installed via IClass.setReflection().
     // Resolved lazily per call so the framework never picks an implementation.
@@ -44,8 +47,9 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         return IClass.getReflection();
     }
 
-    @Getter
     private IClass<?> entityClass;
+
+    public IClass<?> getEntityClass() { return this.entityClass; }
     private IObjectQuery objectQuery;
     private ObjectAddress id;
     private ObjectAddress uuid;

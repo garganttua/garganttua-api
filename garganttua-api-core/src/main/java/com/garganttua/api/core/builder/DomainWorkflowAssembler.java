@@ -9,7 +9,7 @@ import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.dsl.IWorkflowBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.IWorkflowsBuilder;
 
 /**
  * Assembles the merged workflow for a domain from its business rules, security, CRUD
@@ -48,6 +48,8 @@ class DomainWorkflowAssembler<E> {
 	private final boolean isOwnerOrOwned;
 	private final IInjectionContextBuilder injectionContextBuilder;
 	private final IExpressionContextBuilder expressionContextBuilder;
+	private final IWorkflowsBuilder workflowsBuilder;
+	private final com.garganttua.core.workflow.WorkflowTimingConfig workflowTimingConfig;
 
 	DomainWorkflowAssembler(String domainName,
 			Map<String, DomainWorkflowBuilder<E>> workflows,
@@ -56,7 +58,9 @@ class DomainWorkflowAssembler<E> {
 			boolean multiTenancyEnabled,
 			boolean isOwnerOrOwned,
 			IInjectionContextBuilder injectionContextBuilder,
-			IExpressionContextBuilder expressionContextBuilder) {
+			IExpressionContextBuilder expressionContextBuilder,
+			IWorkflowsBuilder workflowsBuilder,
+			com.garganttua.core.workflow.WorkflowTimingConfig workflowTimingConfig) {
 		this.domainName = domainName;
 		this.workflows = workflows;
 		this.securityEnabled = securityEnabled;
@@ -65,19 +69,54 @@ class DomainWorkflowAssembler<E> {
 		this.isOwnerOrOwned = isOwnerOrOwned;
 		this.injectionContextBuilder = injectionContextBuilder;
 		this.expressionContextBuilder = expressionContextBuilder;
+		this.workflowsBuilder = workflowsBuilder;
+		this.workflowTimingConfig = workflowTimingConfig;
 	}
 
-	IWorkflow assemble() {
-		IWorkflowBuilder builder = WorkflowBuilder.create().name(this.domainName);
-		// Timing is owned by core's WorkflowBuilder configuration path now
-		// (cf. CORE_EVOLUTION_workflow_timing_in_workflow_builder.md). The
-		// api no longer forwards a per-Api WorkflowTimingConfig — users
-		// configure it directly on core's side when they need it.
-		if (this.injectionContextBuilder != null) {
-			builder.provide(this.injectionContextBuilder);
+	/**
+	 * Opens this domain's child workflow on the shared {@link IWorkflowsBuilder}
+	 * and populates every stage. Does NOT call {@code .build()} — that is the
+	 * responsibility of {@code WorkflowsBuilder.doBuild()} at the BUILD stage.
+	 *
+	 * <p>Called from {@code ApiBuilder.doConfigureWithDependencyBuilder} at the
+	 * CONFIGURATION stage so the topo-ordered WorkflowsBuilder finds a fully-
+	 * filled registry when its own {@code doBuild()} runs.
+	 */
+	void populateStages() {
+		IWorkflowBuilder builder = this.workflowsBuilder.workflow(this.domainName).name(this.domainName);
+		// Pre-compile the workflow script (core 2.0.0-ALPHA02 / feat
+		// ab2bb982): every api request to this domain runs through this
+		// workflow's execute(), so reusing a single parsed/compiled handle
+		// is a major win over re-parsing the ANTLR source per invocation.
+		// Safe because the api never invokes workflows with
+		// WorkflowExecutionOptions filtering (cf. Domain.invoke — always
+		// passes WorkflowExecutionOptions.none()), which is the only
+		// scenario where precompile is silently bypassed.
+		builder.precompile(true);
+		// Forward the API-level WorkflowTimingConfig (set via
+		// IApiBuilder.workflowTiming(...), default disabled()) onto core's
+		// WorkflowBuilder. This is the only consumer-reachable path to enable
+		// the observe("start"|"end", "stage:<name>") / "script:<stage>.<name>"
+		// markers that ScriptGenerator injects when timing.isStageEnabled /
+		// isScriptEnabled is true. With the default disabled() config the
+		// generated script is byte-identical to a build that never sets timing,
+		// so there is zero overhead until the API opts in.
+		if (this.workflowTimingConfig != null) {
+			builder.timing(this.workflowTimingConfig);
 		}
-		if (this.expressionContextBuilder != null) {
-			builder.provide(this.expressionContextBuilder);
+		// Core 2.0.0-ALPHA02 reduced WorkflowBuilder's accepted dependencies
+		// to IInjectionContextBuilder + IObservabilityBuilder — the expression
+		// context now flows via the IScriptingEnvironment that the parent
+		// WorkflowsBuilder materializes from its IScriptsBuilder. Do not
+		// forward IExpressionContextBuilder to the workflow anymore.
+		if (this.injectionContextBuilder != null) {
+			try {
+				builder.provide(this.injectionContextBuilder);
+			} catch (com.garganttua.core.dsl.DslException e) {
+				throw new IllegalStateException(
+						"Failed to wire IInjectionContextBuilder into workflow '"
+								+ this.domainName + "': " + e.getMessage(), e);
+			}
 		}
 
 		List<String> allCodeVars = collectCodeVars();
@@ -117,8 +156,6 @@ class DomainWorkflowAssembler<E> {
 		buildResponseProtocolStage(builder);
 
 		buildExitCodeStage(builder, allCodeVars, operationCodeVars);
-
-		return builder.build();
 	}
 
 	private List<String> collectCodeVars() {

@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class ExecutionUuidSupplierBuilder implements ISupplierBuilder<UUID, IContextualSupplier<UUID, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(ExecutionUuidSupplierBuilder.class);
+
 
     private static final IClass<UUID> SUPPLIED_CLASS = IClass.getClass(UUID.class);
 
@@ -34,7 +36,7 @@ public class ExecutionUuidSupplierBuilder implements ISupplierBuilder<UUID, ICon
 
     @Override
     public IContextualSupplier<UUID, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building ExecutionUuidSupplier");
+        log.debug("Building ExecutionUuidSupplier");
         return new ExecutionUuidSupplier();
     }
 

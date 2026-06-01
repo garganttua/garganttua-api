@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class RawAuthorizationSupplier implements IContextualSupplier<byte[], IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(RawAuthorizationSupplier.class);
+
 
     private static final IClass<byte[]> SUPPLIED_CLASS = IClass.getClass(byte[].class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -35,7 +37,7 @@ public class RawAuthorizationSupplier implements IContextualSupplier<byte[], IRu
 
     @Override
     public Optional<byte[]> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering RawAuthorizationSupplier.supply");
+        log.trace("Entering RawAuthorizationSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -49,7 +51,7 @@ public class RawAuthorizationSupplier implements IContextualSupplier<byte[], IRu
 
         Optional<Byte[]> rawOpt = request.arg(IOperationRequest.RAW_AUTHORIZATION);
         if (rawOpt.isEmpty()) {
-            log.atDebug().log("No RAW_AUTHORIZATION in request");
+            log.debug("No RAW_AUTHORIZATION in request");
             return Optional.empty();
         }
 
@@ -59,7 +61,7 @@ public class RawAuthorizationSupplier implements IContextualSupplier<byte[], IRu
             raw[i] = boxed[i];
         }
 
-        log.atDebug().log("RawAuthorizationSupplier resolved raw authorization ({} bytes)", raw.length);
+        log.debug("RawAuthorizationSupplier resolved raw authorization ({} bytes)", raw.length);
         return Optional.of(raw);
     }
 

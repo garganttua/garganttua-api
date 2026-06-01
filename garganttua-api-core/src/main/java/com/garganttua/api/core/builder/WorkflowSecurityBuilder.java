@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Objects;
 
@@ -9,6 +10,7 @@ import com.garganttua.api.commons.security.IWorkflowSecurity;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.commons.ApiException;
 
+@Reflected
 public class WorkflowSecurityBuilder<E>
 		extends AbstractAutomaticLinkedBuilder<IWorkflowSecurityBuilder<E>, IDomainWorkflowBuilder<E>, IWorkflowSecurity>
 		implements IWorkflowSecurityBuilder<E> {

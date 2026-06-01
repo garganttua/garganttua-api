@@ -17,13 +17,12 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.Getter;
-
 public class DtoContext<D> implements IDtoContext<D> {
 
-    @Getter
     private DtoDefinition<D> dtoDefinition;
     private ISupplierBuilder<? extends IDao, ISupplier<? extends IDao>> dao;
+
+    public DtoDefinition<D> getDtoDefinition() { return this.dtoDefinition; }
 
     public DtoContext(DtoDefinition<D> dtoDefinition, ISupplierBuilder<? extends IDao, ISupplier<? extends IDao>> dao) {
         this.dtoDefinition = Objects.requireNonNull(dtoDefinition, "Dto definition cannot be null");

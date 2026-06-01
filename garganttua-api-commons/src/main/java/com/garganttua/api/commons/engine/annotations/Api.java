@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * API-level configuration annotation. Place on any class within a scanned package
@@ -23,6 +24,7 @@ import java.lang.annotation.Target;
  * public class MyApiConfig {}
  * </pre>
  */
+@Indexed
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Api {

@@ -12,11 +12,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class AuthenticatorDefinitionSupplier implements IContextualSupplier<IAuthenticatorDefinition, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(AuthenticatorDefinitionSupplier.class);
+
 
     private static final IClass<IAuthenticatorDefinition> SUPPLIED_CLASS = IClass.getClass(IAuthenticatorDefinition.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -38,7 +40,7 @@ public class AuthenticatorDefinitionSupplier implements IContextualSupplier<IAut
 
     @Override
     public Optional<IAuthenticatorDefinition> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering AuthenticatorDefinitionSupplier.supply");
+        log.trace("Entering AuthenticatorDefinitionSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -58,7 +60,7 @@ public class AuthenticatorDefinitionSupplier implements IContextualSupplier<IAut
             }
         }
 
-        log.atDebug().log("No authenticator definition found in domain context");
+        log.debug("No authenticator definition found in domain context");
         return Optional.empty();
     }
 

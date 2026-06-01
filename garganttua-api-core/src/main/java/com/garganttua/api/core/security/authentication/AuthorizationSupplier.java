@@ -9,7 +9,8 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
 /**
  * Supplies the decoded authorization entity from {@code request.arg("authorization")}.
@@ -19,9 +20,10 @@ import lombok.extern.slf4j.Slf4j;
  * expiration, and revocation checks. Authentication strategies pattern-match
  * on the runtime class to decide whether they handle this shape.
  */
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class AuthorizationSupplier implements IContextualSupplier<Object, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(AuthorizationSupplier.class);
+
 
     private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -43,7 +45,7 @@ public class AuthorizationSupplier implements IContextualSupplier<Object, IRunti
 
     @Override
     public Optional<Object> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering AuthorizationSupplier.supply");
+        log.trace("Entering AuthorizationSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -56,7 +58,7 @@ public class AuthorizationSupplier implements IContextualSupplier<Object, IRunti
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
         Optional<Object> authorizationOpt = request.arg(IOperationRequest.AUTHORIZATION);
-        log.atDebug().log("AuthorizationSupplier resolved authorization (present={})", authorizationOpt.isPresent());
+        log.debug("AuthorizationSupplier resolved authorization (present={})", authorizationOpt.isPresent());
         return authorizationOpt;
     }
 

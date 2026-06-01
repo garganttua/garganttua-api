@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder.binder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.api.commons.context.dsl.security.IRefreshableAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IRefreshableAuthorizationMethodBinderBuilder;
@@ -10,6 +11,7 @@ import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class RefreshableAuthorizationMethodBinderBuilder<E> extends AbstractMethodBinderBuilder<E, IRefreshableAuthorizationMethodBinderBuilder<E>, IRefreshableAuthorizationBuilder<E>, IMethodBinder<E>> implements IRefreshableAuthorizationMethodBinderBuilder<E>{
 
     public RefreshableAuthorizationMethodBinderBuilder(IRefreshableAuthorizationBuilder<E> up,

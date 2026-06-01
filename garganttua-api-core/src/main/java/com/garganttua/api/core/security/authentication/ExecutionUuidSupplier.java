@@ -10,11 +10,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class ExecutionUuidSupplier implements IContextualSupplier<UUID, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(ExecutionUuidSupplier.class);
+
 
     private static final IClass<UUID> SUPPLIED_CLASS = IClass.getClass(UUID.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -36,7 +38,7 @@ public class ExecutionUuidSupplier implements IContextualSupplier<UUID, IRuntime
 
     @Override
     public Optional<UUID> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering ExecutionUuidSupplier.supply");
+        log.trace("Entering ExecutionUuidSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -49,7 +51,7 @@ public class ExecutionUuidSupplier implements IContextualSupplier<UUID, IRuntime
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
         UUID executionUuid = request.executionUuid();
-        log.atDebug().log("ExecutionUuidSupplier resolved executionUuid={}", executionUuid);
+        log.debug("ExecutionUuidSupplier resolved executionUuid={}", executionUuid);
         return Optional.ofNullable(executionUuid);
     }
 

@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +15,7 @@ import com.garganttua.core.crypto.SignatureAlgorithm;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 
+@Reflected
 public class AuthenticatorAuthorizationKeyBuilder<E> extends
         AbstractAutomaticLinkedBuilder<IAuthenticatorAuthorizationKeyBuilder<E>, IAuthenticatorAuthorizationBuilder<E>, IAuthenticatorAuthorizationKeyContext>
         implements IAuthenticatorAuthorizationKeyBuilder<E> {

@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class TenantSupplier implements IContextualSupplier<String, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(TenantSupplier.class);
+
 
     private static final IClass<String> SUPPLIED_CLASS = IClass.getClass(String.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -35,7 +37,7 @@ public class TenantSupplier implements IContextualSupplier<String, IRuntimeConte
 
     @Override
     public Optional<String> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering TenantSupplier.supply");
+        log.trace("Entering TenantSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -48,7 +50,7 @@ public class TenantSupplier implements IContextualSupplier<String, IRuntimeConte
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
         String tenantId = request.caller() != null ? request.caller().tenantId() : null;
-        log.atDebug().log("TenantSupplier resolved tenantId={}", tenantId);
+        log.debug("TenantSupplier resolved tenantId={}", tenantId);
         return Optional.ofNullable(tenantId);
     }
 

@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class CredentialsSupplier implements IContextualSupplier<byte[], IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(CredentialsSupplier.class);
+
 
     private static final IClass<byte[]> SUPPLIED_CLASS = IClass.getClass(byte[].class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -35,7 +37,7 @@ public class CredentialsSupplier implements IContextualSupplier<byte[], IRuntime
 
     @Override
     public Optional<byte[]> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering CredentialsSupplier.supply");
+        log.trace("Entering CredentialsSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -49,7 +51,7 @@ public class CredentialsSupplier implements IContextualSupplier<byte[], IRuntime
 
         Optional<Byte[]> rawBodyOpt = request.arg(IOperationRequest.RAW_BODY);
         if (rawBodyOpt.isEmpty()) {
-            log.atDebug().log("No RAW_BODY in request, no credentials available");
+            log.debug("No RAW_BODY in request, no credentials available");
             return Optional.empty();
         }
 
@@ -59,7 +61,7 @@ public class CredentialsSupplier implements IContextualSupplier<byte[], IRuntime
             credentials[i] = boxed[i];
         }
 
-        log.atDebug().log("CredentialsSupplier resolved credentials ({} bytes)", credentials.length);
+        log.debug("CredentialsSupplier resolved credentials ({} bytes)", credentials.length);
         return Optional.of(credentials);
     }
 

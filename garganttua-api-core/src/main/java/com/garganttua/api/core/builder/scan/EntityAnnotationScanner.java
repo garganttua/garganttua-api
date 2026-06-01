@@ -56,7 +56,8 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
 /**
  * Scans configured packages for {@link Entity}-annotated classes and wires them
@@ -82,8 +83,9 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Silently no-ops when no packages are configured or when no
  * {@link IReflection} is available (e.g. native image without metadata).
  */
-@Slf4j
 public final class EntityAnnotationScanner {
+	private static final IDiagnostic log = Diagnostics.of(EntityAnnotationScanner.class);
+
 
     private final IApiBuilder apiBuilder;
     private final Set<String> packages;
@@ -106,7 +108,7 @@ public final class EntityAnnotationScanner {
         try {
             reflection = IClass.getReflection();
         } catch (Exception e) {
-            log.atWarn().log("No IReflection available for @Entity auto-detection: {}", e.getMessage());
+            log.warn("No IReflection available for @Entity auto-detection: {}", e.getMessage());
             return;
         }
 
@@ -118,7 +120,7 @@ public final class EntityAnnotationScanner {
         for (Map.Entry<IClass<?>, IClass<?>> entry : entityToDto.entrySet()) {
             wireDomain(reflection, entry.getKey(), entry.getValue());
         }
-        log.atDebug().log("Auto-detected {} @Entity class(es)", entityToDto.size());
+        log.debug("Auto-detected {} @Entity class(es)", entityToDto.size());
     }
 
     private Map<IClass<?>, IClass<?>> pairEntitiesWithDtos(IReflection reflection) {
@@ -144,7 +146,7 @@ public final class EntityAnnotationScanner {
                 }
             }
             if (matchingDto == null) {
-                log.atWarn().log("No @Dto found for @Entity {}; skipping", entity.getSimpleName());
+                log.warn("No @Dto found for @Entity {}; skipping", entity.getSimpleName());
                 continue;
             }
             result.put(entity, matchingDto);

@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
 /**
  * Provides version information for Garganttua API.
@@ -16,8 +17,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  * @since 3.0.0-ALPHA01
  */
-@Slf4j
 public final class GarganttuaApiVersion {
+	private static final IDiagnostic log = Diagnostics.of(GarganttuaApiVersion.class);
+
 
 	private static final String PROPERTIES_FILE = "garganttua-api-version.properties";
 	private static final String UNKNOWN = "UNKNOWN";
@@ -39,12 +41,12 @@ public final class GarganttuaApiVersion {
 		try (InputStream is = GarganttuaApiVersion.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
 			if (is != null) {
 				PROPERTIES.load(is);
-				log.atDebug().log("Loaded Garganttua API version properties: {}", PROPERTIES);
+				log.debug("Loaded Garganttua API version properties: {}", PROPERTIES);
 			} else {
-				log.atWarn().log("Garganttua API version properties file not found: {}", PROPERTIES_FILE);
+				log.warn("Garganttua API version properties file not found: {}", PROPERTIES_FILE);
 			}
 		} catch (IOException e) {
-			log.atWarn().log("Failed to load Garganttua API version properties", e);
+			log.warn("Failed to load Garganttua API version properties", e);
 		}
 		loaded = true;
 	}

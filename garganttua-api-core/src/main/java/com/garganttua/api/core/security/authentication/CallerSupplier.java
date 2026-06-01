@@ -10,11 +10,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class CallerSupplier implements IContextualSupplier<ICaller, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(CallerSupplier.class);
+
 
     private static final IClass<ICaller> SUPPLIED_CLASS = IClass.getClass(ICaller.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -36,7 +38,7 @@ public class CallerSupplier implements IContextualSupplier<ICaller, IRuntimeCont
 
     @Override
     public Optional<ICaller> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering CallerSupplier.supply");
+        log.trace("Entering CallerSupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -49,7 +51,7 @@ public class CallerSupplier implements IContextualSupplier<ICaller, IRuntimeCont
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
         ICaller caller = request.caller();
-        log.atDebug().log("CallerSupplier resolved caller (present={})", caller != null);
+        log.debug("CallerSupplier resolved caller (present={})", caller != null);
         return Optional.ofNullable(caller);
     }
 

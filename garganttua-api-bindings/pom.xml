@@ -1,0 +1,28 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api</artifactId>
+		<version>3.0.0-ALPHA01</version>
+	</parent>
+	<artifactId>garganttua-api-bindings</artifactId>
+	<packaging>pom</packaging>
+
+	<description>
+		Aggregator for third-party bindings. Each sub-module wraps one
+		external library (jackson, slf4j, json-path, mongodb-driver, javalin)
+		and isolates the api from its compile/runtime contract. Consumers
+		that want a binding declare the binding artifact instead of the
+		raw library, so swapping implementations stays a pom-level edit.
+	</description>
+
+	<modules>
+		<module>garganttua-api-binding-jackson</module>
+		<module>garganttua-api-binding-slf4j</module>
+		<module>garganttua-api-binding-jsonpath</module>
+		<module>garganttua-api-binding-mongodb</module>
+		<module>garganttua-api-binding-javalin</module>
+	</modules>
+</project>

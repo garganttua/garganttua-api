@@ -9,10 +9,6 @@
 	</parent>
 	<artifactId>garganttua-api-dao-mongodb</artifactId>
 
-	<properties>
-		<mongodb-driver.version>5.1.1</mongodb-driver.version>
-	</properties>
-
 	<dependencies>
 		<!-- Garganttua API -->
 		<dependency>
@@ -20,12 +16,9 @@
 			<artifactId>garganttua-api-commons</artifactId>
 		</dependency>
 
-		<!-- MongoDB Driver -->
 		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongodb-driver-sync</artifactId>
-			<version>${mongodb-driver.version}</version>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-mongodb</artifactId>
 		</dependency>
-
 	</dependencies>
 </project>

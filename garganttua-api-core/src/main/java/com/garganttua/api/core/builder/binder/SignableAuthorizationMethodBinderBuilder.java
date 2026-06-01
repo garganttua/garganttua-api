@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder.binder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.api.commons.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.ISignableAuthorizationMethodBinderBuilder;
@@ -10,6 +11,7 @@ import com.garganttua.core.reflection.binders.dsl.AbstractMethodBinderBuilder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
+@Reflected
 public class SignableAuthorizationMethodBinderBuilder<E> extends AbstractMethodBinderBuilder<E, ISignableAuthorizationMethodBinderBuilder<E>, ISignableAuthorizationBuilder<E>, IMethodBinder<E>> implements ISignableAuthorizationMethodBinderBuilder<E>{
 
     public SignableAuthorizationMethodBinderBuilder(ISignableAuthorizationBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier)

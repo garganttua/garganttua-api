@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
  * Type-level marker for an entity that represents a cryptographic key
@@ -26,6 +27,7 @@ import java.lang.annotation.Target;
  * {@link KeyForDecryption}, {@link KeyExpiration}, {@link KeyRevoked},
  * {@link KeyVersion}, {@link KeyRotate}.
  */
+@Indexed
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Key {

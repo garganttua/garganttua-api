@@ -10,11 +10,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class RepositorySupplier implements IContextualSupplier<IRepository, IRuntimeContext> {
+	private static final IDiagnostic log = Diagnostics.of(RepositorySupplier.class);
+
 
     private static final IClass<IRepository> SUPPLIED_CLASS = IClass.getClass(IRepository.class);
     private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
@@ -36,7 +38,7 @@ public class RepositorySupplier implements IContextualSupplier<IRepository, IRun
 
     @Override
     public Optional<IRepository> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-        log.atTrace().log("Entering RepositorySupplier.supply");
+        log.trace("Entering RepositorySupplier.supply");
 
         if (context == null) {
             throw new SupplyException("IRuntimeContext cannot be null");
@@ -49,7 +51,7 @@ public class RepositorySupplier implements IContextualSupplier<IRepository, IRun
         IOperationRequest request = (IOperationRequest) requestOpt.get();
 
         Optional<IRepository> repositoryOpt = request.arg(IOperationRequest.REPOSITORY);
-        log.atDebug().log("RepositorySupplier resolved repository (present={})", repositoryOpt.isPresent());
+        log.debug("RepositorySupplier resolved repository (present={})", repositoryOpt.isPresent());
         return repositoryOpt;
     }
 

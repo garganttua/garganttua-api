@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Objects;
 
@@ -14,14 +15,15 @@ import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.dsl.IWorkflowBuilder;
-import com.garganttua.core.workflow.dsl.WorkflowBuilder;
+import com.garganttua.core.workflow.dsl.IWorkflowsBuilder;
 
+@Reflected
 public class DomainWorkflowBuilder<E>
 		extends AbstractAutomaticLinkedBuilder<IDomainWorkflowBuilder<E>, IDomainBuilder<E>, IWorkflow>
 		implements IDomainWorkflowBuilder<E> {
 
 	private final String workflowName;
-	private final IWorkflowBuilder internalBuilder;
+	private IWorkflowBuilder internalBuilder; // lazy, opened on first touch
 	private WorkflowSecurityBuilder<E> securityBuilder;
 
 	private String pathSuffix;
@@ -36,7 +38,35 @@ public class DomainWorkflowBuilder<E>
 	public DomainWorkflowBuilder(String workflowName, IDomainBuilder<E> up) {
 		super(up);
 		this.workflowName = Objects.requireNonNull(workflowName, "Workflow name cannot be null");
-		this.internalBuilder = WorkflowBuilder.create().name(workflowName);
+		// internalBuilder is opened lazily via ensureInternalBuilder() — the
+		// IWorkflowsBuilder may not be available yet when DomainBuilder
+		// instantiates the default CRUD placeholders (initDefaultCrudWorkflows
+		// runs at domain() time, well before apiBuilder.provide(workflowsBuilder)).
+		// For default CRUD workflows, the assembler builds the workflow itself
+		// and this internalBuilder is never opened.
+	}
+
+	private synchronized IWorkflowBuilder ensureInternalBuilder() {
+		if (this.internalBuilder == null) {
+			IWorkflowsBuilder wb = resolveWorkflowsBuilder();
+			this.internalBuilder = wb.workflow(this.workflowName).name(this.workflowName);
+		}
+		return this.internalBuilder;
+	}
+
+	private IWorkflowsBuilder resolveWorkflowsBuilder() {
+		Object api = this.up() != null ? this.up().up() : null;
+		if (api instanceof ApiBuilder ab) {
+			IWorkflowsBuilder wb = ab.getWorkflowsBuilder();
+			if (wb != null) {
+				return wb;
+			}
+		}
+		throw new IllegalStateException(
+				"IWorkflowsBuilder not provided to ApiBuilder — call "
+				+ "apiBuilder.provide(workflowsBuilder) before configuring workflow '"
+				+ this.workflowName + "' (core 2.0.0-ALPHA02 dropped the public "
+				+ "WorkflowBuilder.create() factory, so the api has no fallback).");
 	}
 
 	@Override
@@ -77,19 +107,19 @@ public class DomainWorkflowBuilder<E>
 
 	@Override
 	public IDomainWorkflowBuilder<E> variable(String name, Object value) {
-		this.internalBuilder.variable(name, value);
+		ensureInternalBuilder().variable(name, value);
 		return this;
 	}
 
 	@Override
 	public IDomainWorkflowBuilder<E> inlineAll() {
-		this.internalBuilder.inlineAll();
+		ensureInternalBuilder().inlineAll();
 		return this;
 	}
 
 	@Override
 	public IWorkflowBuilder stages() {
-		return this.internalBuilder;
+		return ensureInternalBuilder();
 	}
 
 	void setDependencyBuilders(IInjectionContextBuilder injectionContextBuilder,
@@ -100,13 +130,26 @@ public class DomainWorkflowBuilder<E>
 
 	@Override
 	protected synchronized IWorkflow doBuild() throws ApiException {
+		IWorkflowBuilder ib = ensureInternalBuilder();
+		// Core 2.0.0-ALPHA02 reduced WorkflowBuilder's accepted dependencies
+		// to IInjectionContextBuilder + IObservabilityBuilder — expression
+		// context is now resolved via the IScriptingEnvironment that the
+		// parent WorkflowsBuilder materializes from its IScriptsBuilder, not
+		// fed in directly here.
 		if (this.injectionContextBuilder != null) {
-			this.internalBuilder.provide(this.injectionContextBuilder);
+			try {
+				ib.provide(this.injectionContextBuilder);
+			} catch (com.garganttua.core.dsl.DslException e) {
+				throw new ApiException("Failed to wire IInjectionContextBuilder into workflow '"
+						+ this.workflowName + "': " + e.getMessage(), e);
+			}
 		}
-		if (this.expressionContextBuilder != null) {
-			this.internalBuilder.provide(this.expressionContextBuilder);
+		try {
+			return ib.build();
+		} catch (com.garganttua.core.dsl.DslException e) {
+			throw new ApiException("Failed to build workflow '" + this.workflowName
+					+ "': " + e.getMessage(), e);
 		}
-		return this.internalBuilder.build();
 	}
 
 	@Override
@@ -158,6 +201,6 @@ public class DomainWorkflowBuilder<E>
 	}
 
 	IWorkflowBuilder getInternalBuilder() {
-		return this.internalBuilder;
+		return ensureInternalBuilder();
 	}
 }

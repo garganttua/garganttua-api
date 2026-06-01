@@ -1,4 +1,5 @@
 package com.garganttua.api.core.builder;
+import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Objects;
 
@@ -20,6 +21,7 @@ import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
  * gate. This matches the typical "let any authenticated user introspect"
  * stance while keeping anonymous lookups out.
  */
+@Reflected
 public class AuthoritiesEndpointBuilder
         extends AbstractAutomaticLinkedBuilder<IAuthoritiesEndpointBuilder, IApiBuilder, IAuthoritiesEndpoint>
         implements IAuthoritiesEndpointBuilder {

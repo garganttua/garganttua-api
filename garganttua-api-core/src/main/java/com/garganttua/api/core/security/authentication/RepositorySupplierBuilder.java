@@ -9,11 +9,13 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import lombok.extern.slf4j.Slf4j;
+import com.garganttua.core.diagnostic.Diagnostics;
+import com.garganttua.core.diagnostic.IDiagnostic;
 
-@Slf4j
 @SuppressWarnings("rawtypes")
 public class RepositorySupplierBuilder implements ISupplierBuilder<IRepository, IContextualSupplier<IRepository, IRuntimeContext>> {
+	private static final IDiagnostic log = Diagnostics.of(RepositorySupplierBuilder.class);
+
 
     private static final IClass<IRepository> SUPPLIED_CLASS = IClass.getClass(IRepository.class);
 
@@ -34,7 +36,7 @@ public class RepositorySupplierBuilder implements ISupplierBuilder<IRepository, 
 
     @Override
     public IContextualSupplier<IRepository, IRuntimeContext> build() throws DslException {
-        log.atDebug().log("Building RepositorySupplier");
+        log.debug("Building RepositorySupplier");
         return new RepositorySupplier();
     }
 

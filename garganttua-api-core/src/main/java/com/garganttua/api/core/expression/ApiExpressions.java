@@ -1,6 +1,6 @@
 package com.garganttua.api.core.expression;
+import com.garganttua.core.reflection.annotations.Reflected;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import com.garganttua.core.expression.annotations.Expression;
@@ -14,10 +14,14 @@ import jakarta.annotation.Nullable;
  * entity lifecycle in {@link EntityLifecycleExpressions},
  * and security in {@link SecurityExpressions}.
  */
+@Reflected(queryAllPublicMethods = true)
 public class ApiExpressions {
 
-	@Expression(name = "notNull", description = "Returns true if the value is not null and not an empty Optional")
-	public static boolean notNull(@Nullable Object value) {
+	// Internal helper backing isNull only. The `notNull` / `equals` / `and` names
+	// now resolve to core's Optional-aware condition primitives (NotNullCondition,
+	// EqualsCondition, AndCondition in garganttua-condition), so those expressions
+	// are no longer registered here — kept private as isNull still calls it.
+	private static boolean notNull(@Nullable Object value) {
 		if (value == null) return false;
 		if (value instanceof Optional<?> opt) return opt.isPresent();
 		return true;
@@ -35,21 +39,6 @@ public class ApiExpressions {
 			return opt.orElseThrow(() -> new com.garganttua.api.commons.ApiException("Required value is empty"));
 		}
 		return value;
-	}
-
-	@Expression(name = "and", description = "Logical AND of two boolean values")
-	public static boolean andExpr(boolean a, boolean b) {
-		return a && b;
-	}
-
-	@Expression(name = "equals", description = "Returns true when both arguments are equal")
-	public static boolean equalsExpr(@Nullable Object a, @Nullable Object b) {
-		return Objects.equals(ExpressionUtils.unwrapOptional(a), ExpressionUtils.unwrapOptional(b));
-	}
-
-	@Expression(name = "equals", description = "Returns true when both arguments are equal (boolean variant)")
-	public static boolean equalsExprBool(@Nullable Object a, boolean b) {
-		return Objects.equals(ExpressionUtils.unwrapOptional(a), b);
 	}
 
 	@Expression(name = "optionalGet", description = "Unwraps an Optional, throwing NoSuchElementException if empty")
