@@ -20,5 +20,19 @@
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-binding-mongodb</artifactId>
 		</dependency>
+
+		<!-- AOT support. The @Reflected annotation processor emits AOTClass_*
+		     descriptors into target/generated-sources/annotations referencing
+		     com.garganttua.core.aot.reflection, so that artefact is needed on the
+		     compile + runtime classpath. aot-commons carries the
+		     IAOTInfrastructureSeed SPI implemented by MongoDaoInfrastructureSeed. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-reflection</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-aot-commons</artifactId>
+		</dependency>
 	</dependencies>
 </project>

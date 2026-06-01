@@ -19,6 +19,7 @@ import com.garganttua.api.commons.sort.ISort;
 import com.garganttua.api.commons.sort.SortDirection;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.annotations.Reflected;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -27,6 +28,7 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.DeleteResult;
 
+@Reflected
 public class MongoDao implements IDao {
 
 	private static final String MONGO_ID = "_id";
