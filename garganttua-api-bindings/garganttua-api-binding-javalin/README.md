@@ -93,4 +93,4 @@ To upgrade Javalin across the entire framework, change `javalin.version` in the 
 - **Logging** — Javalin uses SLF4J. Make sure your application module includes an SLF4J binding (Logback, Log4j 2, etc.); otherwise Javalin emits a `SLF4J: No SLF4J providers were found` warning at startup.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

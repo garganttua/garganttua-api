@@ -68,4 +68,4 @@ A binding submodule must wrap **one** external library or one tightly coupled fa
 - **Check the root POM before upgrading.** All version properties are co-located in `<properties>` in the root `garganttua-api` POM. A single diff there is the complete record of a library upgrade.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

@@ -180,4 +180,4 @@ The signature in segment 2 is extracted by `getSignatureFromRaw()` and stored fo
 
 ## License
 
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

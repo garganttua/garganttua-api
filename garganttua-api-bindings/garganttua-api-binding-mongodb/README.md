@@ -97,4 +97,4 @@ If you need to add a second consumer (for example, a migration tool or a custom 
 
 ## License
 
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

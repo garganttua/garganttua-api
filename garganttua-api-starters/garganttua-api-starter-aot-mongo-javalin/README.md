@@ -166,4 +166,4 @@ required for framework types.
 
 ## License
 
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

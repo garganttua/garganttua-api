@@ -400,4 +400,4 @@ request.arg(IOperationRequest.EXECUTION_UUID, UUID.randomUUID());
 - Call `IApi.getAuthoritiesEndpoint()` before exposing the authorities route in a transport module — the result is `null` when `.exposeAuthorities()` was never called on the builder, meaning the route must not be registered.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

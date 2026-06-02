@@ -148,4 +148,4 @@ Each package is scanned independently; results are merged into the same pair of 
 - **Idempotency** — the merge strategy means it is safe to run the builder in CI on every commit. Entries are only added, never removed; if you rename or delete a class, remove its entry from `reflect-config.json` manually or regenerate from scratch by deleting the file first.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

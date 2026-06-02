@@ -129,4 +129,4 @@ A single `MongoDao` instance handles one collection. To back multiple domains, c
 - `MongoFilterConverter.convert()` throws `ApiException` on unsupported operators. Extend it by adding cases to the `switch` expression in `convertField` if your domain requires additional MongoDB operators.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

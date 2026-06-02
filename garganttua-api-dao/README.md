@@ -91,4 +91,4 @@ For unit testing or lightweight prototypes, `IDao` can be implemented as a simpl
 - Use the `ISupplierBuilder` overload of `.db(...)` when the DAO instance must be sourced from a dependency-injection container; the `FixedSupplierBuilder` wrapping a pre-built instance is the simplest alternative for tests and standalone use.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

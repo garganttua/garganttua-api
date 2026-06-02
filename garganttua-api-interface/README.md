@@ -70,4 +70,4 @@ All sub-modules inherit the version from this aggregator, which in turn inherits
 - **Await reactivation before integrating.** Until this module is re-enabled in the root reactor and published to GitHub Packages, depend on the `garganttua-api-spring` stack for REST exposure instead.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

@@ -151,4 +151,4 @@ No server is started. Every call is synchronous and returns immediately. This is
 
 ## License
 
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

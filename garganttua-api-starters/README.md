@@ -70,4 +70,4 @@ A starter bundles the following layers for a given stack:
 - Domain names are auto-generated as the plural lowercase of the entity class name (`User` → `users`). Confirm the names match your URL expectations before going to production.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

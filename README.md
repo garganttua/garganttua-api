@@ -272,7 +272,7 @@ graph TD
 
 ## 📜 License
 
-This project is distributed under the **Apache License 2.0**.
+This project is distributed under the **MIT License**. See [LICENSE](./LICENSE).
 
 ---
 

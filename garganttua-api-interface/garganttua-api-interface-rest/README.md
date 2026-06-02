@@ -241,4 +241,4 @@ The pipeline resolves the protocol automatically, extracts caller/body/headers, 
 - **One protocol per transport type** — do not combine Servlet and Javalin `Context` logic in a single `IProtocol`. Keep them in separate classes and register both; the discriminator handles routing transparently.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

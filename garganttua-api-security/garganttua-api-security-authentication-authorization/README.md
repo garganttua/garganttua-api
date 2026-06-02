@@ -168,4 +168,4 @@ Authorization: Bearer <base64-refresh-token>
 - **Key realm alignment** — the signing key realm used during issuance and during verification must share the same `AuthenticationService.AUTHORIZATION_SIGNING_KEY_REALM_NAME`. Do not mix key realms between the issuing authenticator and this verification strategy.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

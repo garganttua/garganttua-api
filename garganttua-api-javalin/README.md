@@ -146,4 +146,4 @@ server.stop(); // drains in-flight requests before closing the Javalin instance
 - **Watch the Javalin transitive closure on upgrade** — Javalin 6.x depends on Jetty 12 and Kotlin stdlib. Run `mvn dependency:tree -pl garganttua-api-binding-javalin` before bumping `javalin.version` in the root POM.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

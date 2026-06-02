@@ -81,4 +81,4 @@ List<String> authorities = ctx.read("$['authorities'][*]");
 - Type coercion is inferred by the generic return type; be explicit with casts (e.g. `ctx.<Integer>read("$['exp']")`) to avoid `ClassCastException` at runtime when the JSON value is a numeric type narrower than `Long`.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

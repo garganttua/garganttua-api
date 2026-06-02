@@ -174,4 +174,4 @@ ApiBuilder.builder()
 - Do not expose `IKeyRealm` through the public DTO; the key realm is an infrastructure field and should be excluded from serialization.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

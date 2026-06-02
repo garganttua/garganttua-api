@@ -319,4 +319,4 @@ When timing is enabled, each domain's workflow emits `stage:<name>` and `script:
 - In AOT / native-image builds ensure that `garganttua-aot-reflection` and `garganttua-aot-commons` are on the runtime classpath; `ApiCoreInfrastructureSeed` seeds the `AOTRegistry` at startup via the `IAOTInfrastructureSeed` SPI.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

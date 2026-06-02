@@ -200,4 +200,4 @@ On success the framework returns the configured authorization token. On failure 
 - **Dormant module — plan the migration.** Before activating this module in a 3.0.0 project, verify that the legacy `AbstractAuthentication`, `EntityAuthenticatorHelper`, and `InfosHelper` APIs still match the current `garganttua-api-core` contracts and update the implementation accordingly.
 
 ## License
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.

@@ -96,4 +96,4 @@ Modules that already pull in `garganttua-api-core` or `garganttua-api-security` 
 
 ## License
 
-This module is distributed under the Apache License, Version 2.0.
+This module is distributed under the MIT License.
