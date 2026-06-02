@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-security</artifactId>
 	<packaging>pom</packaging>
+	<description>Security implementations: authentication strategies and authorization protocols (parent module).</description>
 	
 	<dependencies>
 		<dependency>

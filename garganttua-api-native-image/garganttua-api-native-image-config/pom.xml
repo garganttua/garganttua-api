@@ -6,4 +6,5 @@
     <version>3.0.0</version>
   </parent>
   <artifactId>garganttua-api-native-image-config</artifactId>
+  <description>Generates native-image reflection/resource configuration for API modules.</description>
 </project>

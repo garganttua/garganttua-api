@@ -8,6 +8,7 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-interface-rest</artifactId>
+	<description>REST interface binding — maps domain CRUD operations to HTTP/REST endpoints.</description>
 
 	<dependencies>
 		<!-- Garganttua API -->

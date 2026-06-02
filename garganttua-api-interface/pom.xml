@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-interface</artifactId>
 	<packaging>pom</packaging>
+	<description>Interface-layer abstractions for exposing domains over transport protocols (parent module).</description>
 
 	<modules>
 		<module>garganttua-api-interface-rest</module>

@@ -8,6 +8,7 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-dao-mongodb</artifactId>
+	<description>MongoDB DAO implementation — native-ready repository backed by the MongoDB driver.</description>
 
 	<dependencies>
 		<!-- Garganttua API -->

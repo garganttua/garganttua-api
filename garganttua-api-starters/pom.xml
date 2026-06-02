@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-starters</artifactId>
 	<packaging>pom</packaging>
+	<description>Opinionated Spring Boot / Javalin starters bundling a ready-to-run API stack (parent module).</description>
 
 	<!--
 	  Starter modules are pure aggregator poms: each one declares the set of

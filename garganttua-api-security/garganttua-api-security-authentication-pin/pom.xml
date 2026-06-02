@@ -6,4 +6,5 @@
     <version>3.0.0-ALPHA01</version>
   </parent>
   <artifactId>garganttua-api-security-authentication-pin</artifactId>
+  <description>PIN-code authentication strategy with error-counter lockout.</description>
 </project>

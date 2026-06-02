@@ -9,9 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-binding-mongodb</artifactId>
 
-	<description>Binding for the MongoDB sync driver. Pulled in by
-		garganttua-api-dao-mongodb so the actual driver coordinates stay
-		concentrated in this binding.</description>
+	<description>Binding wrapping the MongoDB sync driver — consumed by garganttua-api-dao-mongodb.</description>
 
 	<dependencies>
 		<dependency>

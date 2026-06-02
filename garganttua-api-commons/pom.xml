@@ -8,6 +8,7 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-commons</artifactId>
+	<description>Pure contract layer: interfaces, annotations, enums and definition records shared by every API module. Zero business logic.</description>
 
 	<dependencies>
 		<!-- Garganttua Core -->

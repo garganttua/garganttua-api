@@ -9,11 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-binding-jackson</artifactId>
 
-	<description>Binding for Jackson — annotations, core, databind +
-		geojson-jackson. Pulled in by any api module that needs JSON
-		serialisation. The api source code itself imports
-		com.fasterxml.jackson.* and org.geojson.* directly; this binding
-		just guarantees those packages resolve at compile/runtime.</description>
+	<description>Binding wrapping Jackson (annotations, core, databind + geojson-jackson) — pins the JSON (de)serialization library used across the API.</description>
 
 	<dependencies>
 		<dependency>

@@ -8,4 +8,5 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-security-authentication-login-password</artifactId>
+	<description>Login + password (bcrypt) authentication strategy with account-status checks.</description>
 </project>

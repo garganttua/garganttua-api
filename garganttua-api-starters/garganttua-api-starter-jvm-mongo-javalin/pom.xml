@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-starter-jvm-mongo-javalin</artifactId>
 	<packaging>jar</packaging>
+	<description>JVM starter: MongoDB + Javalin.</description>
 
 	<!--
 	  jvm-mongo-javalin — the recommended "web app" stack:

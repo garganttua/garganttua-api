@@ -8,6 +8,7 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-security-authorization-jwt</artifactId>
+	<description>JWT authorization: signable/refreshable JWT tokens (pending migration to the 3.0.0 core).</description>
 
 	<build>
 		<plugins>

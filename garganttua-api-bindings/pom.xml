@@ -10,13 +10,7 @@
 	<artifactId>garganttua-api-bindings</artifactId>
 	<packaging>pom</packaging>
 
-	<description>
-		Aggregator for third-party bindings. Each sub-module wraps one
-		external library (jackson, slf4j, json-path, mongodb-driver, javalin)
-		and isolates the api from its compile/runtime contract. Consumers
-		that want a binding declare the binding artifact instead of the
-		raw library, so swapping implementations stays a pom-level edit.
-	</description>
+	<description>Aggregator for third-party bindings — each submodule wraps one external library (Jackson, SLF4J, JsonPath, MongoDB driver, Javalin) so consumers depend on a binding artifact, keeping library swaps a pom-level edit.</description>
 
 	<modules>
 		<module>garganttua-api-binding-jackson</module>

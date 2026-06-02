@@ -8,4 +8,5 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-security-authentication-authorization</artifactId>
+	<description>Authorization-token authentication: authenticate a caller from an existing authorization (refresh flow).</description>
 </project>

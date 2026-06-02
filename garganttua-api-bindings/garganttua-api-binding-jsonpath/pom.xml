@@ -9,10 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-binding-jsonpath</artifactId>
 
-	<description>Binding for Jayway JsonPath. The api migrates every
-		class that imports com.jayway.jsonpath.* into this module so
-		api-commons / api-core stay free of the dependency. Originally
-		only the JWT security module used it (claims extraction).</description>
+	<description>Binding wrapping Jayway JsonPath — isolates the json-path dependency (used by the JWT security module for claims extraction).</description>
 
 	<dependencies>
 		<dependency>

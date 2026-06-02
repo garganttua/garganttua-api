@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-dao</artifactId>
 	<packaging>pom</packaging>
+	<description>Data-access abstractions for entity persistence (parent module).</description>
 
 	<modules>
 		<module>garganttua-api-dao-mongodb</module>

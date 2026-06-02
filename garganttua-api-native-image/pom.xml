@@ -9,6 +9,7 @@
 	</parent>
 	<packaging>pom</packaging>
 	<artifactId>garganttua-api-native-image</artifactId>
+	<description>GraalVM native-image support (parent module).</description>
 
 	<dependencies>
 		<dependency>

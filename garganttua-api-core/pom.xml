@@ -8,6 +8,7 @@
 		<version>3.0.0-ALPHA01</version>
 	</parent>
 	<artifactId>garganttua-api-core</artifactId>
+	<description>Core engine: DSL builders, definition/context model, request pipeline and workflow assembly, repository filters and security expressions.</description>
 
 	<dependencies>
 		<!-- Garganttua API -->

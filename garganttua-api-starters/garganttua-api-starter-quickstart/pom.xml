@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-starter-quickstart</artifactId>
 	<packaging>jar</packaging>
+	<description>Quickstart starter: minimal in-memory setup to bootstrap an API in minutes.</description>
 
 	<!--
 	  Quickstart — the minimal set of dependencies to get an IApi up and

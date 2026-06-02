@@ -9,6 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-starter-aot-mongo-javalin</artifactId>
 	<packaging>jar</packaging>
+	<description>AOT/native starter: MongoDB + Javalin, GraalVM-ready.</description>
 
 	<!--
 	  aot-mongo-javalin — same stack as jvm-mongo-javalin but with the AOT

@@ -2,357 +2,278 @@
 
 # Garganttua API
 
-## Repository Filter Business Rules
+**Garganttua API** generates declarative, annotation-driven REST APIs from your domain entities. Mark a class with `@Entity` and a few role/characteristic annotations, point it at a DTO and a DAO, and the framework wires up CRUD operations, multi-tenant isolation, ownership rules, pluggable security (JWT, bcrypt, PIN), and a request/response pipeline — with AOT/GraalVM-native readiness baked in. It is built on [garganttua-core](https://github.com/garganttua/garganttua-core).
 
-The `RepositoryFilterTools` class in `garganttua-api-core` implements complex filtering logic for multi-tenant data access. This section documents the business rules that determine which entities are visible to callers.
+## ⚠️ Disclaimer
 
-### Caller Privileges
+This project is in **alpha** and under active development on the `DEV-3.0.0` branch (version `3.0.0-ALPHA01`). APIs, module layout, and DSL surface may change without notice.
 
-| Privilege | Description |
-|-----------|-------------|
-| **Super Tenant** | Can access entities across all tenants. If no specific tenant is requested, bypasses all tenant filtering. |
-| **Super Owner** | Can access entities regardless of ownership. Bypasses owner-based filtering. |
-| **Regular Caller** | Subject to tenant isolation and ownership rules. |
+This documentation is partially generated and may not always reflect the exact implementation. If you find anything incorrect or unclear, please reach out at [jeremy.colombet@garganttua.com](mailto:jeremy.colombet@garganttua.com).
 
-### Entity Configuration Flags
+## 🎯 Key Features
 
-| Flag | Description |
-|------|-------------|
-| **public** | Entity is publicly accessible (no tenant restriction for visibility) |
-| **hiddenable** | Entity has a `hidden` field that can hide it from non-super-owners |
-| **shared** | Entity can be shared with specific tenants via a `shareWith` field |
-| **owned** | Entity belongs to a specific owner (user) via an `ownerId` field |
-| **tenant** | Entity belongs to a specific tenant via a `tenantId` field |
+- **Declarative, annotation-driven REST** — Describe entities with `@Entity*` annotations (or the fluent DSL) and get CRUD endpoints generated for you.
+- **Multi-tenancy with roles & characteristics** — Tenant / Owner / Owned roles and Public / Geolocalized / Hiddenable / Shared characteristics combine into a repository access-filter matrix.
+- **Pluggable security** — Authentication strategies (login-password, PIN, challenge), JWT authorizations, bcrypt hashing, and per-domain authenticator/authorization/key configuration.
+- **Fluent DSL builders** — Hierarchical `ApiBuilder` fluent API for context construction, with `up()` navigation back to parent builders.
+- **Pipeline & workflow engine** — Request execution flows through an 8-stage pipeline compiled to garganttua-core Workflows (`.gs` scripts), with per-stage timing.
+- **AOT / native readiness** — `@Reflected` coverage and AOT reflection seeds across active modules for GraalVM native-image compilation.
+- **MongoDB DAO** — Out-of-the-box MongoDB data-access implementation alongside the in-memory DAO.
+- **Opinionated starters** — One-coordinate starters bundling DAO + transport + reflection mode for quickstart, JVM/Mongo/Javalin, and AOT/Mongo/Javalin setups.
 
-### Access Filter Matrix
+## 💡 Philosophy
 
-The access filter determines which entities are visible based on entity configuration:
+Describe *what* your domain is, not *how* to serve it. Roles and characteristics declared once on an entity drive tenancy, ownership, visibility, and security uniformly across every operation — so the boilerplate of a multi-tenant secured REST API disappears into a declarative configuration, and the runtime path stays fast and native-friendly.
 
-| Public | Hiddenable | Shared | Filter Logic |
-|:------:|:----------:|:------:|--------------|
-| ✓ | ✓ | - | `tenantId = callerTenant` **OR** `hidden = false` |
-| ✓ | ✗ | - | No filter (all entities visible) |
-| ✗ | ✓ | ✓ | (`hidden = false` **AND** `shareWith = callerTenant`) **OR** `tenantId = callerTenant` |
-| ✗ | ✓ | ✗ | `tenantId = callerTenant` |
-| ✗ | ✗ | ✓ | `shareWith = callerTenant` **OR** `tenantId = callerTenant` |
-| ✗ | ✗ | ✗ | `tenantId = callerTenant` |
+## Installation
+<!-- AUTO-GENERATED-START -->
+### Installation with Maven
+```xml
+<dependency>
+    <groupId>com.garganttua</groupId>
+    <artifactId>garganttua-api</artifactId>
+    <version>3.0.0-ALPHA01</version>
+</dependency>
+```
 
-### Owner Filter Rules
+### Actual version
+3.0.0-ALPHA01
 
-| Condition | Filter Applied |
-|-----------|----------------|
-| Entity is **owned** AND caller is **not super owner** | `ownerId = callerOwnerId` |
-| Entity is **not owned** OR caller is **super owner** | No owner filter |
+### Dependencies
 
-### Multi-Tenancy Toggle
+<!-- AUTO-GENERATED-END -->
 
-Multi-tenancy can be disabled globally via the builder DSL:
+## 🧠 Architecture Overview
+
+Garganttua API is organized into independent modules, each focusing on a specific concern of API generation, data access, transport, and security:
+
+<!-- AUTO-GENERATED-ARCHITECTURE-START -->
+| Module | Description |
+|:--|:--|
+| [**garganttua-api**](././README.md) | Declarative, annotation-driven REST API framework — multi-tenancy, pluggable security, AOT/native-ready — built on garganttua-core. |
+| \|- [**garganttua-api-bindings**](./garganttua-api-bindings/README.md) | Aggregator for third-party bindings — each submodule wraps one external library (Jackson, SLF4J, JsonPath, MongoDB driver, Javalin) so consumers depend on a binding artifact, keeping library swaps a pom-level edit. |
+| \|    \|- [**garganttua-api-binding-jackson**](./garganttua-api-bindings/garganttua-api-binding-jackson/README.md) | Binding wrapping Jackson (annotations, core, databind + geojson-jackson) — pins the JSON (de)serialization library used across the API. |
+| \|    \|- [**garganttua-api-binding-javalin**](./garganttua-api-bindings/garganttua-api-binding-javalin/README.md) | Binding wrapping Javalin (lightweight HTTP server) — consumed by the garganttua-api-javalin transport module. |
+| \|    \|- [**garganttua-api-binding-jsonpath**](./garganttua-api-bindings/garganttua-api-binding-jsonpath/README.md) | Binding wrapping Jayway JsonPath — isolates the json-path dependency (used by the JWT security module for claims extraction). |
+| \|    \|- [**garganttua-api-binding-mongodb**](./garganttua-api-bindings/garganttua-api-binding-mongodb/README.md) | Binding wrapping the MongoDB sync driver — consumed by garganttua-api-dao-mongodb. |
+| \|    \|- [**garganttua-api-binding-slf4j**](./garganttua-api-bindings/garganttua-api-binding-slf4j/README.md) | Binding wrapping SLF4J (façade + simple impl) — opt-in classic SLF4J logging for downstream apps and bridging into the framework's observability logger. |
+| \|- [**garganttua-api-commons**](./garganttua-api-commons/README.md) | Pure contract layer: interfaces, annotations, enums and definition records shared by every API module. Zero business logic. |
+| \|- [**garganttua-api-core**](./garganttua-api-core/README.md) | Core engine: DSL builders, definition/context model, request pipeline and workflow assembly, repository filters and security expressions. |
+| \|- [**garganttua-api-dao**](./garganttua-api-dao/README.md) | Data-access abstractions for entity persistence (parent module). |
+| \|    \|- [**garganttua-api-dao-mongodb**](./garganttua-api-dao/garganttua-api-dao-mongodb/README.md) | MongoDB DAO implementation — native-ready repository backed by the MongoDB driver. |
+| \|- [**garganttua-api-interface**](./garganttua-api-interface/README.md) | Interface-layer abstractions for exposing domains over transport protocols (parent module). |
+| \|    \|- [**garganttua-api-interface-rest**](./garganttua-api-interface/garganttua-api-interface-rest/README.md) | REST interface binding — maps domain CRUD operations to HTTP/REST endpoints. |
+| \|- [**garganttua-api-javalin**](./garganttua-api-javalin/README.md) | Javalin HTTP integration — serves API domains over a lightweight Javalin web layer. |
+| \|- [**garganttua-api-native-image**](./garganttua-api-native-image/README.md) | GraalVM native-image support (parent module). |
+| \|    \|- [**garganttua-api-native-image-config**](./garganttua-api-native-image/garganttua-api-native-image-config/README.md) | Generates native-image reflection/resource configuration for API modules. |
+| \|- [**garganttua-api-security**](./garganttua-api-security/README.md) | Security implementations: authentication strategies and authorization protocols (parent module). |
+| \|    \|- [**garganttua-api-security-authentication-authorization**](./garganttua-api-security/garganttua-api-security-authentication-authorization/README.md) | Authorization-token authentication: authenticate a caller from an existing authorization (refresh flow). |
+| \|    \|- [**garganttua-api-security-authentication-challenge**](./garganttua-api-security/garganttua-api-security-authentication-challenge/README.md) | Challenge-response authentication strategy. |
+| \|    \|- [**garganttua-api-security-authentication-login-password**](./garganttua-api-security/garganttua-api-security-authentication-login-password/README.md) | Login + password (bcrypt) authentication strategy with account-status checks. |
+| \|    \|- [**garganttua-api-security-authentication-pin**](./garganttua-api-security/garganttua-api-security-authentication-pin/README.md) | PIN-code authentication strategy with error-counter lockout. |
+| \|    \|- [**garganttua-api-security-authorization-jwt**](./garganttua-api-security/garganttua-api-security-authorization-jwt/README.md) | JWT authorization: signable/refreshable JWT tokens (pending migration to the 3.0.0 core). |
+| \|- [**garganttua-api-starters**](./garganttua-api-starters/README.md) | Opinionated Spring Boot / Javalin starters bundling a ready-to-run API stack (parent module). |
+| \|    \|- [**garganttua-api-starter-aot-mongo-javalin**](./garganttua-api-starters/garganttua-api-starter-aot-mongo-javalin/README.md) | AOT/native starter: MongoDB + Javalin, GraalVM-ready. |
+| \|    \|- [**garganttua-api-starter-jvm-mongo-javalin**](./garganttua-api-starters/garganttua-api-starter-jvm-mongo-javalin/README.md) | JVM starter: MongoDB + Javalin. |
+| \|    \|- [**garganttua-api-starter-quickstart**](./garganttua-api-starters/garganttua-api-starter-quickstart/README.md) | Quickstart starter: minimal in-memory setup to bootstrap an API in minutes. |
+
+
+<!-- AUTO-GENERATED-ARCHITECTURE-STOP -->
+
+## 📚 Module Categories
+
+### Foundation
+
+- **[garganttua-api-commons](./garganttua-api-commons/README.md)** — Pure contract layer: interfaces, annotations (`@Entity*`, `@Authentication*`, `@Authorization*`), enums, and definition interfaces. Zero business logic; everything else depends on it.
+
+### Core Engine
+
+- **[garganttua-api-core](./garganttua-api-core/README.md)** — The core engine implementation: definitions/contexts, DSL builder implementations, method binders, the request pipeline, and the `.gs` workflow scripts.
+
+### Data Access
+
+- **[garganttua-api-dao](./garganttua-api-dao/README.md)** — DAO abstractions and the in-memory implementation.
+- **[garganttua-api-dao-mongodb](./garganttua-api-dao/garganttua-api-dao-mongodb/README.md)** — MongoDB DAO implementation.
+
+### Bindings
+
+Adapters that bind the framework to external libraries.
+
+- **[garganttua-api-binding-jackson](./garganttua-api-bindings/garganttua-api-binding-jackson/README.md)** — Jackson JSON (de)serialization binding.
+- **[garganttua-api-binding-slf4j](./garganttua-api-bindings/garganttua-api-binding-slf4j/README.md)** — SLF4J logging binding.
+- **[garganttua-api-binding-jsonpath](./garganttua-api-bindings/garganttua-api-binding-jsonpath/README.md)** — json-path binding for JSON traversal.
+- **[garganttua-api-binding-mongodb](./garganttua-api-bindings/garganttua-api-binding-mongodb/README.md)** — MongoDB driver binding.
+- **[garganttua-api-binding-javalin](./garganttua-api-bindings/garganttua-api-binding-javalin/README.md)** — Javalin HTTP transport binding.
+
+### Starters
+
+One-coordinate aggregators that bundle the DAO, transport, and reflection mode a downstream application needs.
+
+- **[garganttua-api-starter-quickstart](./garganttua-api-starters/garganttua-api-starter-quickstart/README.md)** — Minimal in-memory starter for getting an API running fast.
+- **[garganttua-api-starter-jvm-mongo-javalin](./garganttua-api-starters/garganttua-api-starter-jvm-mongo-javalin/README.md)** — JVM starter: MongoDB DAO + Javalin transport.
+- **[garganttua-api-starter-aot-mongo-javalin](./garganttua-api-starters/garganttua-api-starter-aot-mongo-javalin/README.md)** — AOT / native-ready starter: MongoDB DAO + Javalin transport.
+
+### Transport — dormant
+
+> Commented out of the reactor, pending reactivation.
+
+- **[garganttua-api-interface](./garganttua-api-interface/README.md)** — Interface/transport layer abstractions.
+- **[garganttua-api-interface-rest](./garganttua-api-interface/garganttua-api-interface-rest/README.md)** — REST transport abstractions.
+- **[garganttua-api-javalin](./garganttua-api-javalin/README.md)** — Javalin-based HTTP server module.
+
+### Security — dormant
+
+> Commented out of the reactor, pending reactivation.
+
+- **[garganttua-api-security](./garganttua-api-security/README.md)** — Security parent module: authentication strategies, authorizations, and key management.
+- **[garganttua-api-security-authentication-login-password](./garganttua-api-security/garganttua-api-security-authentication-login-password/README.md)** — Login/password authentication (bcrypt).
+- **[garganttua-api-security-authentication-pin](./garganttua-api-security/garganttua-api-security-authentication-pin/README.md)** — PIN authentication.
+- **[garganttua-api-security-authentication-challenge](./garganttua-api-security/garganttua-api-security-authentication-challenge/README.md)** — Challenge-based authentication.
+- **[garganttua-api-security-authentication-authorization](./garganttua-api-security/garganttua-api-security-authentication-authorization/README.md)** — Authentication-to-authorization bridge.
+- **[garganttua-api-security-authorization-jwt](./garganttua-api-security/garganttua-api-security-authorization-jwt/README.md)** — JWT authorization tokens.
+
+### Native Image — dormant
+
+> Commented out of the reactor, pending reactivation.
+
+- **[garganttua-api-native-image](./garganttua-api-native-image/README.md)** — GraalVM native-image support parent module.
+- **[garganttua-api-native-image-config](./garganttua-api-native-image/garganttua-api-native-image-config/README.md)** — Native-image reflection/resource configuration.
+
+## 🚀 Quick Start
+
+The fastest path is the [quickstart starter](./garganttua-api-starters/garganttua-api-starter-quickstart/README.md) — a single Maven coordinate that bundles an in-memory DAO and the essentials.
+
+The canonical in-memory API, built with the fluent `ApiBuilder`:
 
 ```java
-ApiContextBuilder.builder()
-    .multiTenant(false)   // disables all tenant-related behavior
-    .domain(Product.class)
-        ...
+ApiBuilder.builder()
+    .superTenantId("SUPER_TENANT")
+    .domain(User.class)
+        .entity().id("id").uuid("uuid").tenantId("tenantId").up()
+        .dto(UserDto.class).id("id").uuid("uuid").tenantId("tenantId").db(new InMemoryDao()).up()
+        .creation(true).readAll(true).readOne(true)
     .up()
     .build();
 ```
 
-When `multiTenant(false)`:
-- `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` (strict mode)
-- Tenant and share filters are skipped in `RepositoryFilterTools`
-- Owner and visibility filters remain active
-- `@EntityUnicity(scope=TENANT)` behaves as `GLOBAL`
+Domain names are auto-generated as the plural lowercase of the entity class name (e.g. `User` → `users`). Each domain requires at least one DTO. Navigate back to a parent builder with `up()`.
 
-### Super Tenant Bypass
+## 📖 Feature Guides
 
-| Condition | Behavior |
-|-----------|----------|
-| Caller is **super tenant** AND no specific tenant requested | All tenant/access filtering bypassed |
-| Caller is **super tenant** AND specific tenant requested | Filters applied for requested tenant |
-| Caller is **not super tenant** | Standard filtering applied |
+- **[Repository Filter Business Rules](./docs/repository-filters.md)** — The multi-tenant access-filter matrix: caller privileges, entity flags, owner/visibility/share filters, and worked examples.
+- **[Fluent Request Builder](./docs/request-builder.md)** — Building and executing CRUD requests with `.caller()`, `.filter()`, `.page()`, `.sort()` and one- or two-step execution.
+- **[Cryptographic Keys — `@Key` Entity Role](./docs/keys.md)** — Declaring key-material entities, wiring them to authorizations, lifecycle toggles, and direct HSM/Vault supplier mode.
+- **[Authority Introspection — `.exposeAuthorities()`](./docs/authorities.md)** — The opt-in endpoint listing every authority enforced across the API.
+- **[Observability — `IApiObserver`](./docs/observability.md)** — Opt-in operation-boundary events, the built-in `StatsObserver`, and Micrometer/OpenTelemetry wiring.
+- **[Field-Level Update Authority](./docs/field-update-authority.md)** — Guarding mutation of individual fields independently of operation-level authority.
 
-### Filter Combination
+## 🧭 Internal Dependencies
 
-All applicable filters are combined using **AND** logic:
+The module dependency structure is strictly layered on top of garganttua-core, with `garganttua-api-commons` as the shared contract dependency for all other modules:
 
+<!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-START -->
+```mermaid
+graph TD
+    garganttua-api["garganttua-api"]
+    garganttua-api-binding-jackson["garganttua-api-binding-jackson"]
+    garganttua-api-binding-javalin["garganttua-api-binding-javalin"]
+    garganttua-api-binding-jsonpath["garganttua-api-binding-jsonpath"]
+    garganttua-api-binding-mongodb["garganttua-api-binding-mongodb"]
+    garganttua-api-binding-slf4j["garganttua-api-binding-slf4j"]
+    garganttua-api-bindings["garganttua-api-bindings"]
+    garganttua-api-commons["garganttua-api-commons"]
+    garganttua-api-core["garganttua-api-core"]
+    garganttua-api-dao["garganttua-api-dao"]
+    garganttua-api-dao-mongodb["garganttua-api-dao-mongodb"]
+    garganttua-api-interface["garganttua-api-interface"]
+    garganttua-api-interface-rest["garganttua-api-interface-rest"]
+    garganttua-api-javalin["garganttua-api-javalin"]
+    garganttua-api-native-image["garganttua-api-native-image"]
+    garganttua-api-native-image-config["garganttua-api-native-image-config"]
+    garganttua-api-security["garganttua-api-security"]
+    garganttua-api-security-authentication-authorization["garganttua-api-security-authentication-authorization"]
+    garganttua-api-security-authentication-challenge["garganttua-api-security-authentication-challenge"]
+    garganttua-api-security-authentication-login-password["garganttua-api-security-authentication-login-password"]
+    garganttua-api-security-authentication-pin["garganttua-api-security-authentication-pin"]
+    garganttua-api-security-authorization-jwt["garganttua-api-security-authorization-jwt"]
+    garganttua-api-starter-aot-mongo-javalin["garganttua-api-starter-aot-mongo-javalin"]
+    garganttua-api-starter-jvm-mongo-javalin["garganttua-api-starter-jvm-mongo-javalin"]
+    garganttua-api-starter-quickstart["garganttua-api-starter-quickstart"]
+    garganttua-api-starters["garganttua-api-starters"]
+
+    garganttua-api-starter-quickstart --> garganttua-api-core
+    garganttua-api-starter-quickstart --> garganttua-runtime-reflection
+    garganttua-api-starter-quickstart --> garganttua-reflections
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-core
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-runtime-reflection
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-reflections
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-dao-mongodb
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-core
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-aot-reflection
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-aot-annotation-scanner
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-runtime-reflection
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-reflections
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-dao-mongodb
+    garganttua-api-native-image --> garganttua-reflection
+    garganttua-api-native-image --> garganttua-native-image-utils
+    garganttua-api-native-image --> garganttua-api-commons
+    garganttua-api-native-image --> garganttua-objects-mapper
+    garganttua-api-dao-mongodb --> garganttua-api-commons
+    garganttua-api-dao-mongodb --> garganttua-api-binding-mongodb
+    garganttua-api-dao-mongodb --> garganttua-aot-reflection
+    garganttua-api-dao-mongodb --> garganttua-aot-commons
+    garganttua-api-binding-jsonpath --> garganttua-api-commons
+    garganttua-api-interface-rest --> garganttua-api-commons
+    garganttua-api-core --> garganttua-api-commons
+    garganttua-api-core --> garganttua-script
+    garganttua-api-core --> garganttua-mapper
+    garganttua-api-core --> garganttua-reflection
+    garganttua-api-core --> garganttua-bootstrap
+    garganttua-api-core --> garganttua-execution
+    garganttua-api-core --> garganttua-injection
+    garganttua-api-core --> garganttua-workflow
+    garganttua-api-core --> garganttua-commons
+    garganttua-api-core --> garganttua-crypto
+    garganttua-api-core --> garganttua-aot-reflection
+    garganttua-api-core --> garganttua-aot-commons
+    garganttua-api-core --> garganttua-api-binding-jackson
+    garganttua-api-core --> garganttua-runtime-reflection
+    garganttua-api-core --> garganttua-reflections
+    garganttua-api-commons --> garganttua-execution
+    garganttua-api-commons --> garganttua-reflection
+    garganttua-api-commons --> garganttua-injection
+    garganttua-api-commons --> garganttua-workflow
+    garganttua-api-commons --> garganttua-aot-commons
+    garganttua-api-commons --> garganttua-aot-reflection
+    garganttua-api-commons --> garganttua-runtime-reflection
+    garganttua-api-security --> garganttua-api-core
+    garganttua-api-security --> garganttua-api-binding-jackson
+    garganttua-api-security --> garganttua-api-binding-jsonpath
+    garganttua-api-javalin --> garganttua-api-commons
+    garganttua-api-javalin --> garganttua-api-core
+    garganttua-api-javalin --> garganttua-api-binding-javalin
+    garganttua-api-javalin --> garganttua-api-binding-jackson
 ```
-Final Filter = baseFilter AND accessFilter AND ownerFilter
-```
+<!-- AUTO-GENERATED-DEPENDENCIES-GRAPH-STOP -->
 
-### Examples
+## 🔧 Technology Stack
 
-#### Example 1: Private Shared Entity
-Configuration: `public=false`, `hiddenable=true`, `shared=true`
+| Technology | Version | Description |
+|:--|:--|:--|
+| **Java 21** | 21 | Modern Java with records, pattern matching, and sealed types |
+| **Maven** | 3.8+ | Build automation, dependency management, and multi-module reactor |
+| **[garganttua-core](https://github.com/garganttua/garganttua-core)** | 2.0.0-ALPHA02 | Foundation: DI, reflection abstraction, expression/scripting, workflow engine, AOT |
+| **[Jackson](https://github.com/FasterXML/jackson-databind)** | 2.17 | JSON (de)serialization |
+| **[json-path](https://github.com/json-path/JsonPath)** | 2.9.0 | JSON traversal and extraction |
+| **[MongoDB Java Driver](https://www.mongodb.com/docs/drivers/java/sync/current/)** | - | MongoDB DAO implementation |
+| **[Javalin](https://javalin.io/)** | - | Lightweight HTTP transport |
+| **[Lombok](https://projectlombok.org/)** | 1.18.x | Annotation-based boilerplate reduction (`-parameters` enabled) |
+| **[JUnit 5](https://junit.org/junit5/)** + **[Mockito](https://site.mockito.org/)** | 5.x / 5.14 | Testing |
 
-A caller from tenant "T1" will see:
-- Entities where `hidden=false` AND `shareWith=T1`
-- OR entities where `tenantId=T1`
+## 📜 License
 
-#### Example 2: Public Hiddenable Entity
-Configuration: `public=true`, `hiddenable=true`
+This project is distributed under the **Apache License 2.0**.
 
-A caller will see:
-- Their own tenant's entities (`tenantId=callerTenant`)
-- OR any visible entities (`hidden=false`)
+---
 
-#### Example 3: Super Tenant Access
-A super tenant caller without a specific tenant request bypasses all tenant filtering and sees all entities (subject to owner filtering if applicable)
-
-## Fluent Request Builder
-
-The framework provides a fluent API for building and executing requests, available on both `IDomainContext` and `IApiContext`.
-
-### CRUD Shortcuts
-
-```java
-IDomainContext<?> products = context.getDomainContext("products").orElseThrow();
-
-// Create
-products.request()
-    .createOne(myProduct)
-    .caller(caller)
-    .execute();
-
-// Read
-products.request()
-    .readOne("uuid-123")
-    .caller(caller)
-    .execute();
-
-products.request()
-    .readAll()
-    .filter(myFilter).page(pageable).sort(sort)
-    .caller(caller)
-    .execute();
-
-// Update
-products.request()
-    .updateOne("uuid-123", updatedProduct)
-    .caller(caller)
-    .execute();
-
-// Delete
-products.request()
-    .deleteOne("uuid-123")
-    .caller(caller)
-    .execute();
-
-products.request()
-    .deleteAll()
-    .caller(caller)
-    .execute();
-```
-
-### Shortcut from IApiContext
-
-```java
-context.request("products")
-    .createOne(myProduct)
-    .caller(caller)
-    .execute();
-```
-
-### Two-Step Build
-
-```java
-IRequest request = products.request()
-    .createOne(myProduct)
-    .caller(caller)
-    .build();
-
-// Inspect before executing
-IOperationRequest opRequest = request.operationRequest();
-
-// Execute later
-IOperationResponse response = request.execute();
-```
-
-## Cryptographic Keys — `@Key` Entity Role
-
-The `@Key` role lets you declare an entity that stores cryptographic key
-material on disk. The framework can then lookup-or-create a key at sign
-time, scoped to a usage level you choose.
-
-### Declaring a `@Key` entity
-
-```java
-@Entity @EntityTenant @Key
-public class CryptoKey {
-    @EntityId           String id;
-    @EntityUuid         String uuid;
-    @EntityTenantId     String tenantId;
-
-    @KeyRealmName          String realmName;
-    @KeyAlgorithm          String algorithm;          // "EC-256", "RSA-2048", ...
-    @KeySignatureAlgorithm String signatureAlgorithm; // "SHA256", "SHA512", ...
-    @KeyPublicMaterial     byte[] publicMaterial;     // X509-encoded
-    @KeyPrivateMaterial    byte[] privateMaterial;    // PKCS8-encoded
-    @KeyExpiration         Instant expiration;
-    @KeyRevoked            boolean revoked;
-    // ... getters / setters
-}
-```
-
-Equivalent DSL when annotations aren't possible:
-
-```java
-builder.domain(CryptoKey.class)
-    .entity().id("id").uuid("uuid").tenantId("tenantId").up()
-    .dto(CryptoKeyDto.class).id("id").uuid("uuid").tenantId("tenantId").db(dao).up()
-    .key()
-        .realmName("realmName")
-        .algorithm("algorithm")
-        .signatureAlgorithm("signatureAlgorithm")
-        .publicMaterial("publicMaterial")
-        .privateMaterial("privateMaterial")
-        .expiration("expiration")
-        .revoked("revoked")
-    .up();
-```
-
-### Wiring an authenticator's authorization to a key domain
-
-```java
-builder.domain(User.class)
-    .security().authenticator()
-        .authorization(tokenDomain)
-            .key(cryptoKeyDomain)
-                .usage(AuthenticatorKeyUsage.oneForTenant) // .oneForAll | .oneForEach
-                .algorithm(KeyAlgorithm.EC_256)
-                .signatureAlgorithm(SignatureAlgorithm.SHA256)
-                .lifeTime(1, TimeUnit.HOURS)
-                .autoGenerate(true)    // default true — auto-create when missing
-                .autoRotate(false)     // default false — opt-in to silent rotation
-            .up();
-```
-
-### Lifecycle toggles — `.autoGenerate(...)` / `.autoRotate(...)`
-
-| Flag | Default | Effect when `false` |
-|---|---|---|
-| `.autoGenerate(boolean)` | `true` | Missing key in storage surfaces an `ApiException`. Keys must be seeded out of band (admin import, HSM operator). |
-| `.autoRotate(boolean)`   | `false` | Expired or revoked key in storage surfaces an `ApiException`. Caller must rotate out of band. When `true`, an unusable match is skipped and a fresh key is generated; the old entity stays in place so its public material remains usable for verifying tokens signed before rotation. |
-
-`autoRotate(true)` with `autoGenerate(false)` is refused at build time —
-rotation creates new keys, which is a generation.
-
-### Direct supplier mode
-
-For HSM / Vault setups, use the supplier overload instead of a key
-domain:
-
-```java
-.key(new VaultKeyRealmSupplierBuilder(vaultClient))
-```
-
-The supplier takes full responsibility for materializing the `IKeyRealm`
-— the framework does not look at `usage()` in this mode.
-
-## Authority Introspection — `.exposeAuthorities()`
-
-Opt-in endpoint that lists every authority enforced anywhere on the API.
-
-```java
-ApiBuilder.builder()
-    .exposeAuthorities()
-        .access(Access.authenticated)             // default
-        .authority("ops:authorities:read")        // optional gate
-        .up()
-    .build();
-```
-
-At runtime:
-
-```java
-List<String> names = api.getAuthoritiesForCaller(caller);
-// e.g. ["create-one-user", "delete-all-users", "user-update-name", ...]
-```
-
-The list aggregates two sources:
-
-1. **Operation-level** — `OperationDefinition.effectiveAuthorityName()` for
-   every operation. Either an explicit `.authority("name")` or the
-   auto-generated `<technicalOp>-<scope>-<entity>` default.
-2. **Field-level** — every non-null authority declared via
-   `entity().update(field, "auth-name")`.
-
-Defaults are conservative: `access=authenticated` (not anonymous —
-exposing the matrix to the public would help an attacker map the
-surface), no authority gate. Super-tenant / super-owner bypass the
-authority gate but still must meet the access level.
-
-Transport modules read `api.getAuthoritiesEndpoint()` to decide whether
-to publish the route — `null` when not opted in, populated descriptor
-otherwise.
-
-## Observability — `IApiObserver`
-
-Opt-in observability fired by `Domain.invoke` at operation boundaries.
-
-### Registering an observer
-
-```java
-ApiBuilder.builder()
-    .observer(new StatsObserver())          // built-in in-memory aggregator
-    .observer(new MyMicrometerObserver(registry))
-    .build();
-```
-
-Multiple `.observer(...)` calls add multiple observers — they fire in
-registration order. **Without any `.observer(...)` call the framework
-skips event construction entirely** — zero overhead on the hot path
-beyond an `isEmpty()` check.
-
-### Writing an observer
-
-```java
-public class MyObserver implements IApiObserver {
-    @Override public void onOperationStart(OperationEvent e) {
-        // e.executionUuid is shared with onOperationEnd → use it
-        // to pair start/end (e.g. open a span for OpenTelemetry).
-    }
-    @Override public void onOperationEnd(OperationEvent e) {
-        // e.duration / e.code / e.failure populated here.
-        // e.isSuccess() returns true on OK/CREATED/UPDATED/DELETED.
-    }
-}
-```
-
-Observer exceptions are caught and logged by the framework — a broken
-observer never turns a successful business operation into a 500.
-
-### Built-in `StatsObserver`
-
-In-memory aggregator suitable for "what's slow on average" overviews —
-count, success/failure breakdown, sum / min / max / average per
-operation key. Lock-free, safe under heavy concurrent traffic.
-
-```java
-StatsObserver stats = new StatsObserver();
-ApiBuilder.builder().observer(stats).build();
-
-// ... traffic flows ...
-
-Map<String, OperationStats> snapshot = api.getOperationStats();
-// keys are OperationDefinition.toString() — e.g. "users-create-one-user"
-```
-
-For percentiles, distribution histograms or distributed tracing, wire
-a Micrometer / OpenTelemetry adapter observer alongside —
-`StatsObserver` carries no external dependency by design.
-
-## Field-Level Update Authority
-
-`entity().update(field, "auth-name")` guards mutation of a specific
-field on an update operation, independent of the operation-level
-authority. The rules in `EntityUpdater`:
-
-- No authority required (`update(field)` or empty string) → field
-  always updated.
-- `superTenant` or `superOwner` caller → bypass.
-- `caller.authorities()` is `null` or empty → field skipped.
-- Otherwise → `authorities.contains(required)` decides.
-
-The unauthorized update is **silently skipped**, not failed with 403 —
-the operation continues and other fields update normally. 403 stays a
-workflow-level concern via `VERIFY_AUTHORITY`.
+**Built with ❤️ by the Garganttua team**

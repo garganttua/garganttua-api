@@ -9,9 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-binding-javalin</artifactId>
 
-	<description>Binding for Javalin (lightweight HTTP server) — pulled
-		in by the garganttua-api-javalin transport module so the actual
-		Javalin coordinates stay concentrated in this binding.</description>
+	<description>Binding wrapping Javalin (lightweight HTTP server) — consumed by the garganttua-api-javalin transport module.</description>
 
 	<dependencies>
 		<dependency>
