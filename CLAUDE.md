@@ -18,22 +18,26 @@ Version bumping scripts (preserve suffixes like -ALPHA01): `./new-major.sh`, `./
 
 **Java 21 Maven multimodule project** — a custom API framework with multi-tenancy, pluggable security, and Spring Boot integration. Version 3.0.0-ALPHA01 in active development on `DEV-3.0.0`.
 
-### Active Modules
+### Active Modules (root POM reactor)
 
-- **garganttua-api-spec** — Pure contract layer: interfaces, annotations (`@Entity*`, `@Authentication*`, `@Authorization*`), enums, and definition interfaces. Zero business logic. Everything else depends on this.
+- **garganttua-api-bindings** — Binding wrappers around external libraries (one sub-module per lib), so a single version edit propagates everywhere.
+- **garganttua-api-commons** — Pure contract layer (formerly `garganttua-api-spec`, renamed `a593a7dc`): interfaces, annotations (`@Entity*`, `@Authentication*`, `@Authorization*`), enums, and definition interfaces. Zero business logic. Everything else depends on this.
 - **garganttua-api-core** — Core engine implementation. Legacy code under `old/` and `legacy/` directories is **excluded from compilation** via maven-compiler-plugin.
-- **garganttua-api-dao** — DAO abstractions and implementations.
-- **garganttua-api-security** — Auth implementations (login-password, PIN, challenge, JWT).
-- **garganttua-api-interface** — Interface layer abstractions.
+- **garganttua-api-dao** — DAO abstractions and implementations (incl. `garganttua-api-dao-mongodb`).
+- **garganttua-api-starters** — Opinionated Spring Boot / Javalin starters (`-starter-jvm-mongo-javalin`, `-starter-aot-mongo-javalin`, `-starter-quickstart`).
 
-### Inactive Modules (commented out in root POM)
+### Inactive Modules (commented out in root POM — source kept, pending migration)
 
-- **garganttua-api-spring/** — Spring Boot 3.3.3 integration (REST, security, MongoDB DAO, Swagger)
+- **garganttua-api-security/** — Auth implementations (login-password, PIN, challenge, JWT)
+- **garganttua-api-interface/** — Interface layer abstractions
+- **garganttua-api-javalin/** — Javalin HTTP integration
 - **garganttua-api-native-image/** — GraalVM native image support
+
+> The old **garganttua-api-spring** module was removed (`c7621832`), superseded by `garganttua-api-starters`. Its leftover build directory and the renamed `garganttua-api-spec` husk were deleted from the working tree on 2026-06-02.
 
 ### Key Patterns
 
-**DSL Builder pattern** — Hierarchical fluent API for context construction. Builder interfaces live in `garganttua-api-spec/context/dsl/`, implementations in `garganttua-api-core/builder/`. Navigation uses `up()` to return to parent builder. Example:
+**DSL Builder pattern** — Hierarchical fluent API for context construction. Builder interfaces live in `garganttua-api-commons/context/dsl/`, implementations in `garganttua-api-core/builder/`. Navigation uses `up()` to return to parent builder. Example:
 ```java
 ApiBuilder.builder()
     .superTenantId("SUPER_TENANT")
@@ -84,7 +88,7 @@ Security at the API level (`.security()`) registers authentication strategies (`
 
 The security pipeline for CRUD operations uses VERIFY_AUTHORIZATION.gs which checks the operation's access level (anonymous/authenticated/tenant/owner) and validates the authorization token and caller permissions before the business stage runs.
 
-### Annotation Categories (garganttua-api-spec)
+### Annotation Categories (garganttua-api-commons)
 
 - **Entity identity**: `@EntityId`, `@EntityUuid`, `@EntityTenantId`, `@EntityOwnerId`
 - **Entity visibility**: `@EntityPublic`, `@EntityTenant`, `@EntityOwned`, `@EntityShared`, `@EntityHiddenable`
@@ -109,5 +113,5 @@ JUnit 5 + Mockito 5.14. Tests use `@Nested` classes with `@DisplayName` for grou
 - Uses Lombok throughout — ensure annotation processing is enabled.
 - Domain names are auto-generated as plural lowercase of entity class name (e.g., `User` → `users`).
 - Each domain requires at least one DTO (builder throws `DslException` otherwise).
-- Reference configuration in `garganttua-api-spring/garganttua-api-spring-core/src/main/resources/application.properties`: `com.garganttua.api.engine.*` (scanning, tenancy), `com.garganttua.api.security.*` (auth, JWT, key management).
+- Configuration is code-first via the fluent `ApiBuilder` DSL / annotations — the old Spring `application.properties` (`com.garganttua.api.engine.*`, `com.garganttua.api.security.*`) lived in the removed `garganttua-api-spring` module and no longer exists. Spring Boot / Javalin wiring now lives in `garganttua-api-starters`.
 - Authentication suppliers documentation in `docs/suppliers-documentation.md`.
