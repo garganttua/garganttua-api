@@ -31,11 +31,10 @@ import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.bootstrap.banner.IBootstrapSummaryContributor {
-	private static final IDiagnostic log = Diagnostics.of(Api.class);
+	private static final Logger log = Logger.getLogger(Api.class);
 
 
     private final IInjectionContext injectionContext;

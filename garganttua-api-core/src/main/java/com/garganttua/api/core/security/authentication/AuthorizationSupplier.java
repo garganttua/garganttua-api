@@ -9,8 +9,7 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Supplies the decoded authorization entity from {@code request.arg("authorization")}.
@@ -22,7 +21,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  */
 @SuppressWarnings("rawtypes")
 public class AuthorizationSupplier implements IContextualSupplier<Object, IRuntimeContext> {
-	private static final IDiagnostic log = Diagnostics.of(AuthorizationSupplier.class);
+	private static final Logger log = Logger.getLogger(AuthorizationSupplier.class);
 
 
     private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);

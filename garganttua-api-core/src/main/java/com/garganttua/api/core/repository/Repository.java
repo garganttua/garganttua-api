@@ -32,11 +32,10 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 public class Repository implements IRepository {
-	private static final IDiagnostic log = Diagnostics.of(Repository.class);
+	private static final Logger log = Logger.getLogger(Repository.class);
 
 
     private final List<IDtoContext<?>> dtoContexts;

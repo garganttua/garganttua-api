@@ -9,12 +9,11 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @SuppressWarnings("rawtypes")
 public class ApiSupplierBuilder implements ISupplierBuilder<IApi, IContextualSupplier<IApi, IRuntimeContext>> {
-	private static final IDiagnostic log = Diagnostics.of(ApiSupplierBuilder.class);
+	private static final Logger log = Logger.getLogger(ApiSupplierBuilder.class);
 
 
     private static final IClass<IApi> SUPPLIED_CLASS = IClass.getClass(IApi.class);

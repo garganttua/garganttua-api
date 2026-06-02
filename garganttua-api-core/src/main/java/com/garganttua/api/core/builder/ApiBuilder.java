@@ -50,15 +50,14 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.workflow.dsl.IWorkflowsBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @Bootstrap
 @Reflected
 @Scan(scan = "com.garganttua.api.core")
 public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, IApi>
 		implements IApiBuilder {
-	private static final IDiagnostic log = Diagnostics.of(ApiBuilder.class);
+	private static final Logger log = Logger.getLogger(ApiBuilder.class);
 
 
 	private ApiBuilder() {

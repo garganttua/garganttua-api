@@ -32,13 +32,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @Reflected
 public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuilder<E>, IDomainBuilder<E>, IEntityContext<E>>
         implements IEntityBuilder<E> {
-	private static final IDiagnostic log = Diagnostics.of(EntityBuilder.class);
+	private static final Logger log = Logger.getLogger(EntityBuilder.class);
 
 
     // Reflection provider is whatever the user installed via IClass.setReflection().

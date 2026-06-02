@@ -43,11 +43,10 @@ import com.garganttua.core.workflow.WorkflowInput;
 import com.garganttua.core.workflow.WorkflowResult;
 import com.github.f4b6a3.uuid.UuidCreator;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
-	private static final IDiagnostic log = Diagnostics.of(Domain.class);
+	private static final Logger log = Logger.getLogger(Domain.class);
 
 
     private final DomainDefinition<E> domainDefinition;

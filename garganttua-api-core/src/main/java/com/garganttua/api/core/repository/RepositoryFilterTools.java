@@ -10,8 +10,7 @@ import com.garganttua.api.commons.definition.IDomainDefinition;
 import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.core.reflection.ObjectAddress;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Utility class for building repository filters based on caller permissions and domain definition.
@@ -24,7 +23,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * - Public entities
  */
 public class RepositoryFilterTools {
-	private static final IDiagnostic log = Diagnostics.of(RepositoryFilterTools.class);
+	private static final Logger log = Logger.getLogger(RepositoryFilterTools.class);
 
 
     private RepositoryFilterTools() {

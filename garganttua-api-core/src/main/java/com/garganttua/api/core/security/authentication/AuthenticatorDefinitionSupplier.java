@@ -12,12 +12,11 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @SuppressWarnings("rawtypes")
 public class AuthenticatorDefinitionSupplier implements IContextualSupplier<IAuthenticatorDefinition, IRuntimeContext> {
-	private static final IDiagnostic log = Diagnostics.of(AuthenticatorDefinitionSupplier.class);
+	private static final Logger log = Logger.getLogger(AuthenticatorDefinitionSupplier.class);
 
 
     private static final IClass<IAuthenticatorDefinition> SUPPLIED_CLASS = IClass.getClass(IAuthenticatorDefinition.class);

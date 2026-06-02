@@ -10,12 +10,11 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @SuppressWarnings("rawtypes")
 public class ExecutionUuidSupplier implements IContextualSupplier<UUID, IRuntimeContext> {
-	private static final IDiagnostic log = Diagnostics.of(ExecutionUuidSupplier.class);
+	private static final Logger log = Logger.getLogger(ExecutionUuidSupplier.class);
 
 
     private static final IClass<UUID> SUPPLIED_CLASS = IClass.getClass(UUID.class);

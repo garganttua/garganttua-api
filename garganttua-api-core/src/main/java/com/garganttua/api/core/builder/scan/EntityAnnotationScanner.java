@@ -56,8 +56,7 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Scans configured packages for {@link Entity}-annotated classes and wires them
@@ -84,7 +83,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * {@link IReflection} is available (e.g. native image without metadata).
  */
 public final class EntityAnnotationScanner {
-	private static final IDiagnostic log = Diagnostics.of(EntityAnnotationScanner.class);
+	private static final Logger log = Logger.getLogger(EntityAnnotationScanner.class);
 
 
     private final IApiBuilder apiBuilder;

@@ -40,8 +40,7 @@ import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Scans configured packages for security-related annotations and applies them
@@ -68,7 +67,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * {@link IReflection} is available (e.g. native image without metadata).
  */
 public final class SecurityAnnotationScanner {
-	private static final IDiagnostic log = Diagnostics.of(SecurityAnnotationScanner.class);
+	private static final Logger log = Logger.getLogger(SecurityAnnotationScanner.class);
 
 
     private final IApiBuilder apiBuilder;

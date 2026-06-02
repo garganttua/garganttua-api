@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Provides version information for Garganttua API.
@@ -18,7 +17,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * @since 3.0.0-ALPHA01
  */
 public final class GarganttuaApiVersion {
-	private static final IDiagnostic log = Diagnostics.of(GarganttuaApiVersion.class);
+	private static final Logger log = Logger.getLogger(GarganttuaApiVersion.class);
 
 
 	private static final String PROPERTIES_FILE = "garganttua-api-version.properties";

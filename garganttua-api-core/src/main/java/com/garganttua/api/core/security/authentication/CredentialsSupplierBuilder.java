@@ -8,12 +8,11 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @SuppressWarnings("rawtypes")
 public class CredentialsSupplierBuilder implements ISupplierBuilder<byte[], IContextualSupplier<byte[], IRuntimeContext>> {
-	private static final IDiagnostic log = Diagnostics.of(CredentialsSupplierBuilder.class);
+	private static final Logger log = Logger.getLogger(CredentialsSupplierBuilder.class);
 
 
     private static final IClass<byte[]> SUPPLIED_CLASS = IClass.getClass(byte[].class);

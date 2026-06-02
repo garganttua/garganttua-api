@@ -12,8 +12,7 @@ import com.garganttua.api.commons.filter.IFilterMapper;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 /**
  * Maps filters from entity field names to DTO field names.
@@ -23,7 +22,7 @@ import com.garganttua.core.diagnostic.IDiagnostic;
  * to corresponding DTO field addresses based on mapping configuration.
  */
 public class FilterMapper implements IFilterMapper {
-	private static final IDiagnostic log = Diagnostics.of(FilterMapper.class);
+	private static final Logger log = Logger.getLogger(FilterMapper.class);
 
 
     @Override

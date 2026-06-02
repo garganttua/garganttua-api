@@ -25,13 +25,12 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @Reflected
 public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder<E, D>, IDomainBuilder<E>, IDtoContext<D>>
         implements IDtoBuilder<E, D> {
-	private static final IDiagnostic log = Diagnostics.of(DtoBuilder.class);
+	private static final Logger log = Logger.getLogger(DtoBuilder.class);
 
 
     // Reflection provider is whatever the user installed via IClass.setReflection().

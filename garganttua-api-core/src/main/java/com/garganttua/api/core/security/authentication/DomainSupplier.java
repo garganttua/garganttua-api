@@ -9,12 +9,11 @@ import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.SupplyException;
 
-import com.garganttua.core.diagnostic.Diagnostics;
-import com.garganttua.core.diagnostic.IDiagnostic;
+import com.garganttua.core.observability.Logger;
 
 @SuppressWarnings("rawtypes")
 public class DomainSupplier implements IContextualSupplier<IDomain, IRuntimeContext> {
-	private static final IDiagnostic log = Diagnostics.of(DomainSupplier.class);
+	private static final Logger log = Logger.getLogger(DomainSupplier.class);
 
 
     private static final IClass<IDomain> SUPPLIED_CLASS = IClass.getClass(IDomain.class);
