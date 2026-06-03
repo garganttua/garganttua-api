@@ -4,6 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build Commands
 
+> **Requires JDK 25.** The project targets Java 25 to match garganttua-core's AOT
+> annotation processor (compiled at class-file v69). Building on an older JDK fails
+> with `invalid target release: 25`. A `.sdkmanrc` pins `java=25.0.1-tem` (`sdk env`
+> to apply); otherwise `export JAVA_HOME=<jdk25>`. CI uses Temurin 25.
+
 ```bash
 mvn clean install                        # Full build with tests
 mvn -B package                           # Package without interactive prompts

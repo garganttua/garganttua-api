@@ -1,0 +1,7 @@
+# This project targets Java 25 (matches garganttua-core's AOT annotation
+# processor, which is compiled at class-file v69). Building on an older JDK
+# fails with "invalid target release: 25".
+#
+# With sdkman auto-env enabled, `cd` into this directory (or run `sdk env`)
+# switches the JDK automatically. Otherwise: `sdk use java 25.0.1-tem`.
+java=25.0.1-tem
