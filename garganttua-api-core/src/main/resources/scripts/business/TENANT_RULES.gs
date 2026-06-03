@@ -25,8 +25,11 @@ requirePresent(@operation)
 // Check if tenantId is mandatory for this operation
 tenantMandatory <- isTenantIdMandatory(@operation, @2)
 
-// If mandatory, validate tenantId is present
-if(equals(true, @tenantMandatory), requireTenantId(@caller))
+// If mandatory, validate tenantId is present. callerHasTenantId is safe (returns
+// false instead of throwing); gating it behind tenantMandatory means the check
+// is NOT eagerly evaluated for non-tenant operations (mirrors VERIFY_TENANT).
+_hasTenantId <- if(@tenantMandatory, callerHasTenantId(@caller), true)
+requirePresent(if(@_hasTenantId, true))
 ! => recordCaughtException(@0, @exception) -> 400
 
 output <- 0 -> 0

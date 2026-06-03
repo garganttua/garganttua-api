@@ -298,8 +298,10 @@
 						<!-- Mockito's ByteBuddy doesn't yet officially recognise the
 						     Java 25 (class file v69) runtime the project now builds on;
 						     enable ByteBuddy's experimental mode so mock generation works.
-						     Follow-up: bump Mockito + ByteBuddy to JDK-25-native versions
-						     and drop this flag. -->
+						     NOTE: Mockito 5.14.2 / ByteBuddy still flake intermittently on
+						     full runs under JDK 25 (inline mock-maker self-attach). Durable
+						     fix = bump Mockito + ByteBuddy to JDK-25-native versions (needs
+						     online resolution); then this flag can be dropped. -->
 						<argLine>-Dnet.bytebuddy.experimental=true</argLine>
 					</configuration>
 				</plugin>

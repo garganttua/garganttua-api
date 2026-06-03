@@ -64,6 +64,96 @@ import static com.garganttua.api.core.expression.ExpressionUtils.*;
 @Reflected(queryAllPublicMethods = true)
 public class SecurityExpressions {
 
+	// ── Framework-internal pipeline invocations on the key/authorization domains ──
+	// These run DURING authentication, before any caller token exists. They use
+	// access=anonymous + authority=false operations so the security stages
+	// short-circuit (no token/tenant/owner/authority enforcement) while the full
+	// business pipeline runs (validation, persistence, lifecycle hooks). No
+	// skipStages filtering → the domain's precompiled workflow is reused (no
+	// per-invocation recompile on the auth hot path). The CALLER is chosen to make
+	// the pipeline behave correctly: a create mirrors the entity's own tenant/owner
+	// (so ensureTenantId/ensureOwnerId are idempotent), a lookup is a super caller
+	// with NO requested tenant (RepositoryFilterTools returns the explicit filter
+	// unchanged → that filter is the sole scope).
+
+	private static IApi apiOf(IDomain<?> domain) {
+		return (domain instanceof Domain<?> d) ? d.getApiContext() : null;
+	}
+
+	private static String readField(Object entity, ObjectAddress addr) {
+		if (addr == null) {
+			return null;
+		}
+		Object v = DefaultMapper.reflection().getFieldValue(entity, addr.toString());
+		return v != null ? v.toString() : null;
+	}
+
+	/** Caller for an internal CREATE: mirrors the entity's own tenant + owner so CREATE_ONE's ensure-stamping is idempotent. */
+	private static ICaller callerFromEntity(IDomain<?> target, Object entity) {
+		String tenantId = readField(entity, target.getTenantIdFieldAddress());
+		ObjectAddress ownedAddr = target.getDomainDefinition().owned();
+		String ownerId = ownedAddr != null ? readField(entity, ownedAddr) : null;
+		if (tenantId == null) {
+			return Caller.createAnonymousCaller();
+		}
+		return Caller.createTenantCallerWithOwnerId(tenantId, ownerId);
+	}
+
+	/** Caller for an internal lookup (readAll): super + NO requested tenant → RepositoryFilterTools returns the supplied filter unchanged (the explicit filter is the sole scope). */
+	private static ICaller lookupCaller(IDomain<?> target) {
+		IApi api = apiOf(target);
+		String superTenantId = api != null ? api.getSuperTenantId() : null;
+		if (superTenantId == null || superTenantId.isBlank()) {
+			return Caller.createAnonymousCaller();
+		}
+		return new Caller(superTenantId, null, null, null, true, true, null);
+	}
+
+	private static Object invokeInternal(IDomain<?> target, OperationDefinition op, ICaller caller,
+			java.util.function.Consumer<com.garganttua.api.core.service.OperationRequest> setup) {
+		com.garganttua.api.core.service.OperationRequest req =
+				new com.garganttua.api.core.service.OperationRequest(new java.util.HashMap<>());
+		req.arg(IOperationRequest.OPERATION, op);
+		req.arg(IOperationRequest.TENANT_ID, caller.tenantId());
+		req.arg(IOperationRequest.REQUESTED_TENANT_ID, caller.requestedTenantId());
+		req.arg(IOperationRequest.CALLER_ID, caller.callerId());
+		req.arg(IOperationRequest.OWNER_ID, caller.ownerId());
+		req.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
+		req.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
+		setup.accept(req);
+		IOperationResponse response = target.invoke(req);
+		OperationResponseCode code = response.getResponseCode();
+		if (code != OperationResponseCode.OK && code != OperationResponseCode.CREATED
+				&& code != OperationResponseCode.UPDATED && code != OperationResponseCode.DELETED) {
+			Throwable cause = response.getException().orElse(null);
+			throw new ApiException("Internal pipeline invocation (" + op.technicalOperation()
+					+ ") on domain '" + target.getDomainName() + "' returned " + code, cause);
+		}
+		return response.getResponse();
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static Object invokeCreate(IDomain<?> target, Object entity) {
+		OperationDefinition op = OperationDefinition.createOne(target.getDomainName(),
+				((IDomain) target).getEntityClass(), false, null, Access.anonymous);
+		return invokeInternal(target, op, callerFromEntity(target, entity), req -> req.arg("entity", entity));
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static List<Object> invokeReadAll(IDomain<?> target, @Nullable IFilter filter) {
+		OperationDefinition op = OperationDefinition.readAll(target.getDomainName(),
+				((IDomain) target).getEntityClass(), false, null, Access.anonymous);
+		Object body = invokeInternal(target, op, lookupCaller(target), req -> {
+			if (filter != null) {
+				req.arg(IOperationRequest.FILTER, filter);
+			}
+		});
+		if (body instanceof List<?> list) {
+			return (List<Object>) list;
+		}
+		return body == null ? List.of() : List.of(body);
+	}
+
 	@Expression(name = "operationAccess", description = "Returns the Access level string from an OperationDefinition")
 	public static String operationAccess(@Nullable Object operation) {
 		if (operation == null) return "anonymous";
@@ -386,13 +476,9 @@ public class SecurityExpressions {
 					: filters.size() == 1 ? filters.get(0)
 					: Filter.and(filters.toArray(new Filter[0]));
 
-			// Direct repository query — bypasses VERIFY_AUTHORIZATION (which would
-			// reject an internal lookup that has no caller-supplied token) and
-			// VERIFY_TENANT (irrelevant here: the principal/tenant scoping is
-			// already encoded in the filters above). This is a framework-internal
-			// read, not a user-triggered request.
-			java.util.List<Object> results = authzDomain.getRepository().getEntities(
-					Optional.empty(), Optional.ofNullable(combinedFilter), Optional.empty());
+			// Run the authorization domain's readAll pipeline (security neutralised
+			// via anonymous access; the explicit filter above is the sole scope).
+			List<Object> results = invokeReadAll(authzDomain, combinedFilter);
 			return (results != null && !results.isEmpty()) ? results.get(0) : null;
 		} catch (Exception e) {
 			return null;
@@ -585,7 +671,7 @@ public class SecurityExpressions {
 			throw new ApiException("persistIfStorable: storable authorization but no authorization domain linked");
 		}
 		try {
-			authzDomain.getRepository().save(authzEntity);
+			invokeCreate(authzDomain, authzEntity);
 			return true;
 		} catch (ApiException e) {
 			throw e;
@@ -705,7 +791,7 @@ public class SecurityExpressions {
 		IFilter filter = Filter.eq(keyEntDef.name().toString(), realmName);
 		List<Object> existing;
 		try {
-			existing = keyDomain.getRepository().getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+			existing = invokeReadAll(keyDomain, filter);
 		} catch (Exception e) {
 			throw new ApiException("resolveKeyRealm: failed to query key domain '" + keyDomain.getDomainName()
 					+ "' for realmName '" + realmName + "': " + e.getMessage(), e);
@@ -746,7 +832,7 @@ public class SecurityExpressions {
 		stampIdentityAndTenancy(newEntity, keyDomain, keyConfig.usage(), caller, reflection);
 
 		try {
-			keyDomain.getRepository().save(newEntity);
+			invokeCreate(keyDomain, newEntity);
 		} catch (Exception e) {
 			throw new ApiException("resolveKeyRealm: failed to persist freshly-generated key on domain '"
 					+ keyDomain.getDomainName() + "' for realmName '" + realmName + "': " + e.getMessage(), e);
@@ -1131,6 +1217,9 @@ public class SecurityExpressions {
 		// domain prefix so the principal is looked up by its bare uuid.
 		String principalUuid = OwnerIds.idOf(ownerUuid.toString());
 		IFilter filter = Filter.eq(uuidField.toString(), principalUuid);
+		// Direct repository read: the principal is an authenticator entity, not a
+		// key/authorization — outside the "route key/authz ops through the pipeline"
+		// scope (same as findByLogin on the login side).
 		List<Object> results = repo.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
 		if (results == null || results.isEmpty()) {
 			throw new ApiException("Principal not found for ownerId: " + ownerUuid);
