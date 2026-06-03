@@ -16,6 +16,7 @@ import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.caller.OwnerIds;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticationDefinition;
@@ -275,9 +276,16 @@ public class SecurityExpressions {
 						com.github.f4b6a3.uuid.UuidCreator.getTimeOrderedEpoch().toString());
 			}
 
+			// The authorization is owned by the authenticated principal. Store the
+			// owner id qualified with the principal's domain (${domainName}:${uuid})
+			// so the value is self-describing and consistent with every other
+			// ownerId in the framework. The Caller derived from this token (via
+			// IProtocol.getCaller reading this field) and the repository owner
+			// filter both carry the qualified form, so ownership comparisons match.
 			ObjectAddress ownedField = authzDomain.getDomainDefinition().owned();
 			if (ownedField != null && principalUuid != null) {
-				reflection.setFieldValue(entity, ownedField, principalUuid);
+				reflection.setFieldValue(entity, ownedField,
+						OwnerIds.qualify(authenticatorDomain.getDomainName(), principalUuid.toString()));
 			}
 
 			ObjectAddress tenantField = authzDomain.getTenantIdFieldAddress();
@@ -350,9 +358,13 @@ public class SecurityExpressions {
 
 			java.util.ArrayList<IFilter> filters = new java.util.ArrayList<>();
 
+			// The owned field is stored qualified (${domainName}:${uuid}); query by
+			// the same qualified form so the reuse lookup matches what
+			// createAuthorizationEntity wrote.
 			ObjectAddress ownedField = authzDomain.getDomainDefinition().owned();
 			if (ownedField != null) {
-				filters.add(Filter.eq(ownedField.toString(), principalUuid));
+				filters.add(Filter.eq(ownedField.toString(),
+						OwnerIds.qualify(authenticatorDomain.getDomainName(), principalUuid.toString())));
 			}
 
 			if (tenantId != null) {
@@ -592,6 +604,20 @@ public class SecurityExpressions {
 	@Expression(name = "resolveKeyRealm",
 			description = "Resolves an IKeyRealm for sign/verify. Two modes: (1) supplier — uses the user-provided ISupplierBuilder<IKeyRealm> declared via .key(supplier); (2) persisted — looks up or auto-creates a key entity on the domain declared via .key(domain), scoped by AuthenticatorKeyUsage (oneForAll / oneForTenant / oneForEach). The optional operationRequest argument carries the caller used to scope the realmName in persisted mode.")
 	public static IKeyRealm resolveKeyRealm(@Nullable Object domainContext, @Nullable Object operationRequest) {
+		return resolveKeyRealmAndSigner(domainContext, operationRequest).realm();
+	}
+
+	/**
+	 * A resolved key realm together with the qualified id of its signer, used to
+	 * stamp an authorization's {@code signedBy} field. In persisted-key mode the
+	 * signer id is {@code ${keyDomainName}:${keyUuid}} (the @Key entity backing
+	 * the realm); in supplier mode there is no key entity, so the realm name is
+	 * used instead.
+	 */
+	private record ResolvedKeyRealm(IKeyRealm realm, String signerId) {
+	}
+
+	private static ResolvedKeyRealm resolveKeyRealmAndSigner(@Nullable Object domainContext, @Nullable Object operationRequest) {
 		IDomain<?> domain = toDomain(domainContext);
 		DomainDefinition<?> domDef = toDomainDefinition(domain);
 		if (domDef == null) {
@@ -614,9 +640,11 @@ public class SecurityExpressions {
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				ISupplier<? extends IKeyRealm> supplier = (ISupplier) supplierBuilder.build();
 				Optional<? extends IKeyRealm> realmOpt = supplier.supply();
-				return realmOpt.orElseThrow(
+				IKeyRealm realm = realmOpt.orElseThrow(
 						() -> new ApiException("resolveKeyRealm: key supplier returned empty for domain '"
 								+ domain.getDomainName() + "'"));
+				// Supplier mode has no @Key entity uuid; the realm name is the signer id.
+				return new ResolvedKeyRealm(realm, realm.getName());
 			} catch (ApiException e) {
 				throw e;
 			} catch (Exception e) {
@@ -638,7 +666,24 @@ public class SecurityExpressions {
 				+ "was configured on its authenticator's authorization DSL");
 	}
 
-	private static IKeyRealm resolvePersistedKeyRealm(IDomain<?> authenticatorDomain,
+	/**
+	 * Builds the qualified signer id ({@code ${keyDomainName}:${keyUuid}}) for a
+	 * persisted key entity, falling back to the bare key domain name when the
+	 * entity carries no uuid.
+	 */
+	private static String keySignerId(IDomain<?> keyDomain, Object keyEntity, IReflection reflection) {
+		ObjectAddress uuidAddr = keyDomain.getEntityDefinition() != null
+				? keyDomain.getEntityDefinition().uuid() : null;
+		if (uuidAddr != null) {
+			Object v = reflection.getFieldValue(keyEntity, uuidAddr.toString());
+			if (v != null) {
+				return OwnerIds.qualify(keyDomain.getDomainName(), v.toString());
+			}
+		}
+		return keyDomain.getDomainName();
+	}
+
+	private static ResolvedKeyRealm resolvePersistedKeyRealm(IDomain<?> authenticatorDomain,
 			com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition keyConfig,
 			@Nullable Object operationRequest) {
 		IDomain<?> keyDomain = resolveKeyDomain(authenticatorDomain, keyConfig);
@@ -670,7 +715,8 @@ public class SecurityExpressions {
 		if (existing != null && !existing.isEmpty()) {
 			Object entity = pickUsable(existing, keyEntDef, reflection);
 			if (entity != null) {
-				return materializeKeyRealm(entity, keyEntDef, reflection);
+				return new ResolvedKeyRealm(materializeKeyRealm(entity, keyEntDef, reflection),
+						keySignerId(keyDomain, entity, reflection));
 			}
 			// All matching keys are expired or revoked — the caller's policy
 			// flags decide whether the framework rotates silently or refuses.
@@ -705,7 +751,8 @@ public class SecurityExpressions {
 			throw new ApiException("resolveKeyRealm: failed to persist freshly-generated key on domain '"
 					+ keyDomain.getDomainName() + "' for realmName '" + realmName + "': " + e.getMessage(), e);
 		}
-		return materializeKeyRealm(newEntity, keyEntDef, reflection);
+		return new ResolvedKeyRealm(materializeKeyRealm(newEntity, keyEntDef, reflection),
+				keySignerId(keyDomain, newEntity, reflection));
 	}
 
 	private static IDomain<?> resolveKeyDomain(IDomain<?> authenticatorDomain,
@@ -851,8 +898,26 @@ public class SecurityExpressions {
 		if (!isAuthorizationSignable(domainContext)) {
 			return true;
 		}
-		IKeyRealm realm = resolveKeyRealm(domainContext, operationRequest);
-		return signAuthorization(authzEntity, domainContext, realm);
+		ResolvedKeyRealm resolved = resolveKeyRealmAndSigner(domainContext, operationRequest);
+		boolean signed = signAuthorization(authzEntity, domainContext, resolved.realm());
+		stampSignedBy(authzEntity, domainContext, resolved.signerId());
+		return signed;
+	}
+
+	/**
+	 * Records who signed an authorization in its configured {@code signedBy}
+	 * field (no-op when no such field is configured). The signer id follows the
+	 * {@code ${domainName}:${id}} rule — see {@link #keySignerId}.
+	 */
+	private static void stampSignedBy(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable String signerId) {
+		if (authzEntity == null || signerId == null) {
+			return;
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || authzDef.signedBy() == null) {
+			return;
+		}
+		DefaultMapper.reflection().setFieldValue(authzEntity, authzDef.signedBy(), signerId);
 	}
 
 	@Expression(name = "verifyIfSignable",
@@ -1062,7 +1127,10 @@ public class SecurityExpressions {
 			throw new ApiException("findPrincipalByOwnerUuid: authenticator domain '"
 					+ domain.getDomainName() + "' has no uuid field");
 		}
-		IFilter filter = Filter.eq(uuidField.toString(), ownerUuid);
+		// The owned field stores a qualified id (${domainName}:${uuid}); strip the
+		// domain prefix so the principal is looked up by its bare uuid.
+		String principalUuid = OwnerIds.idOf(ownerUuid.toString());
+		IFilter filter = Filter.eq(uuidField.toString(), principalUuid);
 		List<Object> results = repo.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
 		if (results == null || results.isEmpty()) {
 			throw new ApiException("Principal not found for ownerId: " + ownerUuid);

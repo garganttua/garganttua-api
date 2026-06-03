@@ -28,6 +28,18 @@ public interface IAuthorizationBuilder<E>
 
     IAuthorizationBuilder<E> expirable(String fieldName) throws ApiException;
 
+    IAuthorizationBuilder<E> creation(ObjectAddress fieldAddress) throws ApiException;
+
+    IAuthorizationBuilder<E> creation(IField field) throws ApiException;
+
+    IAuthorizationBuilder<E> creation(String fieldName) throws ApiException;
+
+    IAuthorizationBuilder<E> signedBy(ObjectAddress fieldAddress) throws ApiException;
+
+    IAuthorizationBuilder<E> signedBy(IField field) throws ApiException;
+
+    IAuthorizationBuilder<E> signedBy(String fieldName) throws ApiException;
+
     IAuthorizationBuilder<E> revokable(String fieldName) throws ApiException;
 
     IAuthorizationBuilder<E> revokable(IField field) throws ApiException;

@@ -59,6 +59,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private Instant expiresAt;
         private Boolean revoked;
         private byte[] signature;
+        private String signedBy;
 
         public SignedTokenEntity() {}
 
@@ -82,6 +83,8 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setRevoked(Boolean revoked) { this.revoked = revoked; }
         public byte[] getSignature() { return signature; }
         public void setSignature(byte[] signature) { this.signature = signature; }
+        public String getSignedBy() { return signedBy; }
+        public void setSignedBy(String signedBy) { this.signedBy = signedBy; }
 
         /**
          * Stable byte payload representing the token's identity. Same fields
@@ -197,6 +200,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .authorities("authorities")
                         .expirable("expiresAt")
                         .revokable("revoked")
+                        .signedBy("signedBy")
                         .signable()
                             .signature("signature")
                             .getDataToSign("getDataToSign")
@@ -265,6 +269,18 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             SignedTokenEntity token = (SignedTokenEntity) result.output();
             assertNotNull(token.getSignature(), "signature must be populated by signIfSignable");
             assertTrue(token.getSignature().length > 0, "signature must be non-empty");
+        }
+
+        @Test
+        @DisplayName("signing stamps signedBy with the key realm id (supplier mode → realm name)")
+        void signingStampsSignedBy() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            SignedTokenEntity token = (SignedTokenEntity) result.output();
+            assertEquals("test-key-realm", token.getSignedBy(),
+                    "signedBy must carry the signing realm's id — the supplier realm's name");
         }
 
         @Test

@@ -98,6 +98,15 @@
 			<artifactId>garganttua-reflections</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Concrete observability DSL (ObservabilityBuilder) lives in garganttua-observability
+		     since the core split it out of garganttua-commons; main code only needs the
+		     IObservabilityBuilder interface (in commons), the observability integration tests
+		     exercise the concrete builder. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-observability</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

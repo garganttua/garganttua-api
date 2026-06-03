@@ -42,4 +42,11 @@ public interface IDomainAuthorizationDefinition {
 	 */
 	ObjectAddress decodeMethod();
 
+	/**
+	 * Field on the authorization entity recording who signed it, stamped at
+	 * signing time with the qualified key-realm id ({@code ${domainName}:${id}}).
+	 * {@code null} when not configured.
+	 */
+	ObjectAddress signedBy();
+
 }

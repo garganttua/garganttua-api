@@ -130,6 +130,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .type("tokenType")
                         .authorities("authorities")
                         .expirable("expiresAt")
+                        .creation("createdAt")
                         .revokable("revoked")
                     .up()
                 .up();
@@ -216,8 +217,23 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
             assertEquals(0, result.code());
             TokenEntity token = (TokenEntity) result.output();
-            assertEquals("user-uuid-1", token.getOwnerId(),
-                    "ownerId should be the uuid of the authenticated principal");
+            assertEquals("users:user-uuid-1", token.getOwnerId(),
+                    "ownerId should be the qualified principal id (${domainName}:${uuid})");
+        }
+
+        @Test
+        @DisplayName("authorization entity has createdAt stamped (~now)")
+        void authorizationEntityHasCreatedAt() throws ApiException {
+            Instant before = Instant.now().minusSeconds(5);
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertNotNull(token.getCreatedAt(),
+                    "createdAt must be stamped by createAuthorizationEntity now that .creation(...) wires the field");
+            assertFalse(token.getCreatedAt().isBefore(before), "createdAt should be ~now, not in the past");
+            assertFalse(token.getCreatedAt().isAfter(Instant.now().plusSeconds(5)), "createdAt should be ~now, not in the future");
         }
 
         @Test
@@ -475,7 +491,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             TokenDto expired = new TokenDto();
             expired.setId("expired-token-id");
             expired.setUuid("expired-token-uuid");
-            expired.setOwnerId("user-uuid-1");
+            expired.setOwnerId("users:user-uuid-1");
             expired.setTenantId("SUPER_TENANT");
             expired.setRevoked(false);
             expired.setExpiresAt(Instant.now().minusSeconds(60));
@@ -502,7 +518,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             TokenDto revoked = new TokenDto();
             revoked.setId("revoked-token-id");
             revoked.setUuid("revoked-token-uuid");
-            revoked.setOwnerId("user-uuid-1");
+            revoked.setOwnerId("users:user-uuid-1");
             revoked.setTenantId("SUPER_TENANT");
             revoked.setRevoked(true);
             revoked.setExpiresAt(Instant.now().plusSeconds(3600));
@@ -528,7 +544,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             TokenDto other = new TokenDto();
             other.setId("other-token-id");
             other.setUuid("other-owner-token");
-            other.setOwnerId("other-user-uuid");
+            other.setOwnerId("users:other-user-uuid");
             other.setTenantId("SUPER_TENANT");
             other.setRevoked(false);
             other.setExpiresAt(Instant.now().plusSeconds(3600));
@@ -540,8 +556,8 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             TokenEntity fresh = (TokenEntity) result.output();
             assertNotEquals("other-owner-token", fresh.getUuid(),
                     "must NOT reuse a token owned by a different principal");
-            assertEquals("user-uuid-1", fresh.getOwnerId(),
-                    "the fresh token is owned by the authenticated principal");
+            assertEquals("users:user-uuid-1", fresh.getOwnerId(),
+                    "the fresh token is owned by the authenticated principal (qualified id)");
             assertEquals(2, tokenDao.getStorage().size(),
                     "other-owner entity is left in place; a NEW entity is persisted for the caller");
         }

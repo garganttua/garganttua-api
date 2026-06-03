@@ -26,6 +26,8 @@ import com.garganttua.api.commons.security.annotations.AuthenticatorEnabled;
 import com.garganttua.api.commons.security.annotations.AuthenticatorLogin;
 import com.garganttua.api.commons.security.annotations.Authorization;
 import com.garganttua.api.commons.security.annotations.AuthorizationAuthorities;
+import com.garganttua.api.commons.security.annotations.AuthorizationCreation;
+import com.garganttua.api.commons.security.annotations.AuthorizationSignedBy;
 import com.garganttua.api.commons.security.annotations.AuthorizationDecode;
 import com.garganttua.api.commons.security.annotations.AuthorizationEncode;
 import com.garganttua.api.commons.security.annotations.AuthorizationExpiration;
@@ -199,6 +201,12 @@ public final class SecurityAnnotationScanner {
 
         Optional<IField> revokedF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationRevoked.class));
         if (revokedF.isPresent()) authzBuilder.revokable(revokedF.get().getName());
+
+        Optional<IField> creationF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationCreation.class));
+        if (creationF.isPresent()) authzBuilder.creation(creationF.get().getName());
+
+        Optional<IField> signedByF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationSignedBy.class));
+        if (signedByF.isPresent()) authzBuilder.signedBy(signedByF.get().getName());
     }
 
     private void applySignable(IReflection reflection, IAuthorizationBuilder<Object> authzBuilder, IClass<?> authzClass)

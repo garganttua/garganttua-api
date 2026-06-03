@@ -123,6 +123,32 @@ public class EntityLifecycleExpressions {
 		}
 	}
 
+	@Expression(name = "ensureOwnerId",
+			description = "On an owned domain, sets the owned/ownerId field from the caller's ownerId when not already set. No-op for non-owned domains, super-owner/anonymous callers (no ownerId), or a field the caller already populated. The caller's ownerId already carries the qualified ${domainName}:${id} form, so the stored value stays consistent with the repository owner filter.")
+	public static Object ensureOwnerId(Object entity, Object caller, Object context) {
+		try {
+			IDomain<?> dc = toDomain(context);
+			ObjectAddress ownedAddress = dc.getDomainDefinition().owned();
+			if (ownedAddress == null) {
+				return entity;
+			}
+			ICaller c = (ICaller) unwrapOptional(caller);
+			if (c == null || c.ownerId() == null) {
+				return entity;
+			}
+			String fieldName = ownedAddress.toString();
+			Object currentOwnerId = REFLECTION.getFieldValue(entity, fieldName);
+			if (currentOwnerId == null) {
+				REFLECTION.setFieldValue(entity, fieldName, c.ownerId());
+			}
+			return entity;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("Failed to ensure ownerId on entity", e);
+		}
+	}
+
 	@Expression(name = "validateMandatories", description = "Validates that all @EntityMandatory fields are non-null")
 	public static void validateMandatories(Object entity, Object context) {
 		try {

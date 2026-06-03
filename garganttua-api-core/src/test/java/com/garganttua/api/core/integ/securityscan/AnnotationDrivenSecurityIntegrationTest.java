@@ -278,7 +278,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
             assertInstanceOf(AnnoToken.class, result.output());
             AnnoToken token = (AnnoToken) result.output();
             assertNotNull(token.getUuid(), "token uuid was populated by createAuthorizationEntity2");
-            assertEquals("alice-uuid", token.getOwnerId(), "ownerId set from principal uuid");
+            assertEquals("annousers:alice-uuid", token.getOwnerId(), "ownerId set from principal uuid (qualified ${domainName}:${uuid})");
             assertEquals("SUPER_TENANT", token.getTenantId(), "tenantId propagated");
             assertEquals("anno-token", token.getTokenType(), "tokenType from authentication.authorization");
             assertEquals(List.of("ROLE_USER"), token.getAuthorities());

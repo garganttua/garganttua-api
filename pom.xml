@@ -46,7 +46,7 @@
 	<properties>
 		<!-- Encoding -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 
 		<!-- Garganttua Core -->
 		<garganttua.core.version>2.0.0-ALPHA02</garganttua.core.version>
@@ -131,6 +131,11 @@
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
 				<artifactId>garganttua-commons</artifactId>
+				<version>${garganttua.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-observability</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
 			<dependency>
@@ -261,10 +266,6 @@
 						<target>${java.version}</target>
 						<compilerArgs>
 							<arg>-parameters</arg>
-							<!-- ScopedValue is a preview feature in Java 21; garganttua-core
-								 2.0.0-ALPHA02 uses it for RuntimeExpressionContext. Mirrors
-								 the core pom config so api code can load those class files. -->
-							<arg>--enable-preview</arg>
 							<!-- Level 2 AOT: instructs garganttua-aot-annotation-processor's
 								 DirectBinderGenerator to emit AOTClass_*/AOTField_*/AOTMethod_*
 								 source files for every @Reflected type, registered into
@@ -294,7 +295,12 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>${maven-surefire-plugin.version}</version>
 					<configuration>
-						<argLine>--enable-preview</argLine>
+						<!-- Mockito's ByteBuddy doesn't yet officially recognise the
+						     Java 25 (class file v69) runtime the project now builds on;
+						     enable ByteBuddy's experimental mode so mock generation works.
+						     Follow-up: bump Mockito + ByteBuddy to JDK-25-native versions
+						     and drop this flag. -->
+						<argLine>-Dnet.bytebuddy.experimental=true</argLine>
 					</configuration>
 				</plugin>
 				<plugin>

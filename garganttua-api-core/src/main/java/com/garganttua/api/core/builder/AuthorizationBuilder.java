@@ -38,6 +38,7 @@ public class AuthorizationBuilder<E>
     private ObjectAddress creation;
     private ObjectAddress expiration;
     private ObjectAddress authorities;
+    private ObjectAddress signedBy;
     private IAuthorizationMethodBinderBuilder<E> toByteArray;
     private IAuthorizationMethodBinderBuilder<E> validate;
     private IAuthorizationMethodBinderBuilder<E> validateAgainst;
@@ -163,6 +164,60 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
+    public IAuthorizationBuilder<E> creation(ObjectAddress fieldAddress) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address cannot be null");
+
+        this.creation = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Instant.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> creation(IField field) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+
+        this.creation = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Instant.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> creation(String fieldName) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+
+        this.creation = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Instant.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> signedBy(ObjectAddress fieldAddress) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address cannot be null");
+
+        this.signedBy = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> signedBy(IField field) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+
+        this.signedBy = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(String.class)).address();
+
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> signedBy(String fieldName) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+
+        this.signedBy = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(String.class)).address();
+
+        return this;
+    }
+
+    @Override
     public ISignableAuthorizationBuilder<E> signable() {
         if (this.signable == null) {
             this.signable = new SignableAuthorizationBuilder<>(this, this.entityClass);
@@ -228,7 +283,7 @@ public class AuthorizationBuilder<E>
                 this.storable, this.signable != null, this.refreshable != null,
                 signatureField, getDataToSignMethod,
                 refreshExpiration, refreshRevoked,
-                encodeMethod, decodeMethod);
+                encodeMethod, decodeMethod, this.signedBy);
     }
 
     @Override

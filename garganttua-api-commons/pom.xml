@@ -11,7 +11,14 @@
 	<description>Pure contract layer: interfaces, annotations, enums and definition records shared by every API module. Zero business logic.</description>
 
 	<dependencies>
-		<!-- Garganttua Core -->
+		<!-- Garganttua Core — the core consolidated its public API (reflection,
+		     crypto, workflow, dsl, observability interfaces + the @Indexed/@Reflected
+		     annotations) into garganttua-commons; depend on it explicitly rather than
+		     relying on the granular jars' transitivity. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-commons</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-execution</artifactId>

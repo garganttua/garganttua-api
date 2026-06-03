@@ -14,13 +14,14 @@ public class AuthorizationContext implements IAuthorizationContext {
             boolean storable, boolean signable, boolean refreshable,
             ObjectAddress signatureField, ObjectAddress getDataToSignMethod,
             ObjectAddress refreshExpiration, ObjectAddress refreshRevoked,
-            ObjectAddress encodeMethod, ObjectAddress decodeMethod) {
+            ObjectAddress encodeMethod, ObjectAddress decodeMethod,
+            ObjectAddress signedBy) {
         this.authorizationDefinition = new DomainAuthorizationDefinition(
                 type, authorities, expiration, creation, revoked,
                 storable, signable, refreshable,
                 signatureField, getDataToSignMethod,
                 refreshExpiration, refreshRevoked,
-                encodeMethod, decodeMethod);
+                encodeMethod, decodeMethod, signedBy);
     }
 
     @Override
