@@ -67,6 +67,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         // Register domain with authenticator referencing the authentication method
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

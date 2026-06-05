@@ -33,6 +33,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
         IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -106,6 +107,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
 
         failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

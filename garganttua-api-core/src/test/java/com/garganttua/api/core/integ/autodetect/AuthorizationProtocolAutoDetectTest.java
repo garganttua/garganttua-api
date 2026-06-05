@@ -50,6 +50,7 @@ class AuthorizationProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 			builder.includeFrameworkPackages(false); // test asserts "no user packages → 0 discovered" — opt out of the framework asset scan
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)
+					.superTenant("superTenant")
 					.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 					.dto(IClass.getClass(UserDto.class))
 						.id("id").uuid("uuid").tenantId("tenantId")
@@ -77,6 +78,7 @@ class AuthorizationProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 			((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.autodetect");
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)
+					.superTenant("superTenant")
 					.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 					.dto(IClass.getClass(UserDto.class))
 						.id("id").uuid("uuid").tenantId("tenantId")
@@ -96,6 +98,7 @@ class AuthorizationProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 			builder.includeFrameworkPackages(false); // test asserts "no user packages → 0 discovered" — opt out of the framework asset scan
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)
+					.superTenant("superTenant")
 					.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 					.dto(IClass.getClass(UserDto.class))
 						.id("id").uuid("uuid").tenantId("tenantId")

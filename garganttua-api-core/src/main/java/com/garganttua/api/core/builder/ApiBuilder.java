@@ -105,6 +105,14 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 	private volatile boolean multiTenant = true;
 
+	// Locked by default: super-tenants / super-owners may only be seeded by the
+	// startup scan and the auto-created master tenant. Promoting one at runtime
+	// (create/update with the flag set, for an id not already registered) is
+	// rejected unless the corresponding lock is opened here.
+	private volatile boolean lockSuperTenantCreation = true;
+
+	private volatile boolean lockSuperOwnerCreation = true;
+
 	private final Map<IClass<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
 	private volatile SecurityBuilder securityBuilder;
 	private final List<ApiStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
@@ -209,6 +217,18 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 					+ "Drop the .superTenantAutoCreate(...) call for single-tenant apps, or keep .multiTenant(true).");
 		}
 		this.superTenantAutoCreate = b;
+		return this;
+	}
+
+	@Override
+	public IApiBuilder lockSuperTenantCreation(boolean lock) {
+		this.lockSuperTenantCreation = lock;
+		return this;
+	}
+
+	@Override
+	public IApiBuilder lockSuperOwnerCreation(boolean lock) {
+		this.lockSuperOwnerCreation = lock;
 		return this;
 	}
 
@@ -554,6 +574,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			// Create and return API context
 			IApi apiContext = new Api(this.injectionContext, domainContexts,
 					this.superTenantId, this.superTenantAutoCreate, this.multiTenant,
+					this.lockSuperTenantCreation, this.lockSuperOwnerCreation,
 					startupBinders, builtSerializers, builtProtocols, builtAuthzProtocols,
 					authoritiesEndpoint);
 

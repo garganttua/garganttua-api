@@ -42,6 +42,14 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
     private final String superTenantId;
     private final boolean superTenantAutoCreate;
     private final boolean multiTenant;
+    private final boolean lockSuperTenantCreation;
+    private final boolean lockSuperOwnerCreation;
+    // Server-side registries of super-tenant / super-owner ids. Populated at
+    // onStart (scan), seeded by the auto-created master tenant, and maintained
+    // on create/update of the tenant/owner domains. Concurrent: the scan runs
+    // on the start thread; maintenance runs on request threads.
+    private final java.util.Set<String> superTenantIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    private final java.util.Set<String> superOwnerIds = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final List<IMethodBinder<Void>> startupBinders;
     private final List<ISerializer> serializers;
     private final List<IProtocol<?, ?>> protocols;
@@ -50,6 +58,7 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
 
     public Api(IInjectionContext injectionContext, Map<String, IDomain<?>> domainContexts,
             String superTenantId, boolean superTenantAutoCreate, boolean multiTenant,
+            boolean lockSuperTenantCreation, boolean lockSuperOwnerCreation,
             List<IMethodBinder<Void>> startupBinders, List<ISerializer> serializers,
             List<IProtocol<?, ?>> protocols,
             List<IAuthorizationProtocol> authorizationProtocols,
@@ -60,6 +69,8 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
         this.superTenantId = superTenantId;
         this.superTenantAutoCreate = superTenantAutoCreate;
         this.multiTenant = multiTenant;
+        this.lockSuperTenantCreation = lockSuperTenantCreation;
+        this.lockSuperOwnerCreation = lockSuperOwnerCreation;
         this.startupBinders = Collections.unmodifiableList(new ArrayList<>(
                 Objects.requireNonNull(startupBinders, "Startup binders cannot be null")));
         this.serializers = Collections.unmodifiableList(new ArrayList<>(
@@ -213,6 +224,66 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
         return this.multiTenant;
     }
 
+    // --- Super-tenant / super-owner registries ---
+
+    @Override
+    public boolean isSuperTenant(String tenantId) {
+        return tenantId != null && this.superTenantIds.contains(tenantId);
+    }
+
+    @Override
+    public boolean isSuperOwner(String ownerId) {
+        return ownerId != null && this.superOwnerIds.contains(ownerId);
+    }
+
+    @Override
+    public java.util.Set<String> getSuperTenantIds() {
+        return Collections.unmodifiableSet(this.superTenantIds);
+    }
+
+    @Override
+    public java.util.Set<String> getSuperOwnerIds() {
+        return Collections.unmodifiableSet(this.superOwnerIds);
+    }
+
+    @Override
+    public void registerSuperTenant(String id) {
+        if (id != null && !id.isBlank()) {
+            this.superTenantIds.add(id);
+        }
+    }
+
+    @Override
+    public void unregisterSuperTenant(String id) {
+        if (id != null) {
+            this.superTenantIds.remove(id);
+        }
+    }
+
+    @Override
+    public void registerSuperOwner(String id) {
+        if (id != null && !id.isBlank()) {
+            this.superOwnerIds.add(id);
+        }
+    }
+
+    @Override
+    public void unregisterSuperOwner(String id) {
+        if (id != null) {
+            this.superOwnerIds.remove(id);
+        }
+    }
+
+    @Override
+    public boolean isSuperTenantCreationLocked() {
+        return this.lockSuperTenantCreation;
+    }
+
+    @Override
+    public boolean isSuperOwnerCreationLocked() {
+        return this.lockSuperOwnerCreation;
+    }
+
     public Map<String, IDomain<?>> getDomains() {
         return this.domainContexts;
     }
@@ -293,7 +364,76 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
             log.info("Started domain '{}'", domainName);
         }
 
+        // 6. Populate the super-tenant / super-owner registries by scanning the
+        //    tenant/owner domains for entities whose superTenant/superOwner flag
+        //    is set. Runs after every domain (and the master auto-create) is
+        //    started, so already-persisted supers (incl. the stamped master) are
+        //    discovered. Exempt from the creation lock — this is the trusted
+        //    bootstrap snapshot of what is super.
+        scanSuperRegistries();
+
         return this;
+    }
+
+    /**
+     * Scans the tenant and owner domains and registers every entity whose
+     * {@code superTenant} / {@code superOwner} field is {@code true}. The id
+     * registered is the entity's own uuid (a tenant member carries that uuid as
+     * its {@code tenantId}; an owned entity carries its owner's uuid as its
+     * {@code ownerId} — so registry membership is checked against the caller's
+     * tenantId / ownerId at request time, see {@code SecurityExpressions}).
+     */
+    private void scanSuperRegistries() {
+        IReflection reflection = reflection();
+        for (IDomain<?> domain : this.domainContexts.values()) {
+            var def = domain.getDomainDefinition();
+            if (def == null) {
+                continue;
+            }
+            boolean isTenant = domain.isTenantEntity() && def.superTenant() != null;
+            boolean isOwner = def.owner() != null && def.superOwner() != null;
+            if (!isTenant && !isOwner) {
+                continue;
+            }
+            ObjectAddress uuidAddress = domain.getEntityDefinition().uuid();
+            List<Object> entities;
+            try {
+                entities = domain.getRepository().getEntities(Optional.empty(), Optional.empty(), Optional.empty());
+            } catch (Exception e) {
+                log.warn("Could not scan domain '{}' for super-status: {}", domain.getDomainName(), e.getMessage());
+                continue;
+            }
+            for (Object entity : entities) {
+                String uuid = readStringField(reflection, entity, uuidAddress);
+                if (uuid == null) {
+                    continue;
+                }
+                if (isTenant && readBooleanField(reflection, entity, def.superTenant())) {
+                    registerSuperTenant(uuid);
+                    log.info("Registered super-tenant '{}' (scanned from domain '{}')", uuid, domain.getDomainName());
+                }
+                if (isOwner && readBooleanField(reflection, entity, def.superOwner())) {
+                    registerSuperOwner(uuid);
+                    log.info("Registered super-owner '{}' (scanned from domain '{}')", uuid, domain.getDomainName());
+                }
+            }
+        }
+    }
+
+    private static String readStringField(IReflection reflection, Object entity, ObjectAddress addr) {
+        if (addr == null) {
+            return null;
+        }
+        Object v = reflection.getFieldValue(entity, addr.toString());
+        return v != null ? v.toString() : null;
+    }
+
+    private static boolean readBooleanField(IReflection reflection, Object entity, ObjectAddress addr) {
+        if (addr == null) {
+            return false;
+        }
+        Object v = reflection.getFieldValue(entity, addr.toString());
+        return Boolean.TRUE.equals(v);
     }
 
     private void executeStartupBinders() {
@@ -372,6 +512,17 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
             if (tenantIdAddress != null) {
                 reflection.setFieldValue(tenantEntity, tenantIdAddress, this.superTenantId);
             }
+
+            // Estampillage: the master tenant IS a super-tenant. Stamp its
+            // superTenant field true so the row is self-describing (a later
+            // startup scan re-discovers it) and register its id now, exempt
+            // from the creation lock — this is framework bootstrap, not a
+            // runtime promotion.
+            ObjectAddress superTenantAddress = tenantDomain.getDomainDefinition().superTenant();
+            if (superTenantAddress != null) {
+                reflection.setFieldValue(tenantEntity, superTenantAddress, Boolean.TRUE);
+            }
+            registerSuperTenant(this.superTenantId);
 
             // Direct repository write — no workflow, no security pipeline, no
             // lifecycle hooks. The repository handles the entity → DTO mapping

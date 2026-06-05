@@ -40,6 +40,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private Instant createdAt;
         private Instant expiresAt;
         private Boolean revoked;
+        private Boolean superTenant = false;
 
         public TokenEntity() {}
 
@@ -61,6 +62,8 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
         public Boolean getRevoked() { return revoked; }
         public void setRevoked(Boolean revoked) { this.revoked = revoked; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     public static class TokenDto {
@@ -74,6 +77,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private String ownerId;
         private Instant expiresAt;
         private Boolean revoked;
+        private Boolean superTenant;
 
         public TokenDto() {}
         public String getId() { return id; }
@@ -88,6 +92,8 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setExpiresAt(Instant expiresAt) { this.expiresAt = expiresAt; }
         public Boolean getRevoked() { return revoked; }
         public void setRevoked(Boolean revoked) { this.revoked = revoked; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
 
@@ -117,6 +123,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         // Register Token domain (authorization entity) — must be owned
         var tokenDomainBuilder = builder.domain(IClass.getClass(TokenEntity.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owned("ownerId")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -135,11 +142,31 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .up()
                 .up();
 
+        // A token verifies itself: its domain is also an authenticator (login =
+        // token uuid). Register the token authentication strategy and wire it.
+        StubTokenAuthentication stubTokenAuth = new StubTokenAuthentication();
+        var tokenAuthBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(stubTokenAuth, IClass.getClass(StubTokenAuthentication.class)));
+        tokenAuthBuilder.authenticate("authenticate")
+                .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+        tokenAuthBuilder.up();
+
+        tokenDomainBuilder.security()
+                .authenticator()
+                    .login("uuid")
+                    .scope(AuthenticatorScope.tenant)
+                    .alwaysEnabled(true)
+                    .authentication(tokenAuthBuilder);
+
         // Register User domain (authenticator entity) with authorization link
         @SuppressWarnings("rawtypes")
         var userDomainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owner("uuid")  // User is owner of authorizations
+                .superOwner("superOwner")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -358,6 +385,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                 // Token domain WITHOUT owned
                 var tb = bldr.domain(IClass.getClass(TokenEntity.class))
                         .tenant(true)
+                        .superTenant("superTenant")
                         .entity()
                             .id("id").uuid("uuid").tenantId("tenantId")
                         .up()
@@ -373,6 +401,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
                 var ub = bldr.domain(IClass.getClass(User.class))
                         .tenant(true)
+                        .superTenant("superTenant")
                         .entity()
                             .id("id").uuid("uuid").tenantId("tenantId")
                         .up()
@@ -396,7 +425,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("authenticator with authorization must be owner — build throws if not")
         void authenticatorWithAuthorizationMustBeOwner() {
-            assertThrows(ApiException.class, () -> {
+            ApiException ex = assertThrows(ApiException.class, () -> {
                 CapturingDao dao1 = new CapturingDao();
                 CapturingDao dao2 = new CapturingDao();
 
@@ -407,9 +436,20 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                 ab.authenticate("authenticate");
                 ab.up();
 
-                // Token domain WITH owned (correct)
+                // Token auth strategy so the token can be a self-verifying authenticator.
+                var tokenAb = bldr.security()
+                        .authentication(new FixedSupplierBuilder<>(new StubTokenAuthentication(), IClass.getClass(StubTokenAuthentication.class)));
+                tokenAb.authenticate("authenticate")
+                        .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                        .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                        .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+                tokenAb.up();
+
+                // Token domain WITH owned + authenticator (both correct) so the
+                // ONLY remaining error is the User missing its owner role.
                 var tb = bldr.domain(IClass.getClass(TokenEntity.class))
                         .tenant(true)
+                        .superTenant("superTenant")
                         .owned("ownerId")
                         .entity()
                             .id("id").uuid("uuid").tenantId("tenantId")
@@ -423,10 +463,17 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                                 .type("tokenType")
                             .up()
                         .up();
+                tb.security()
+                        .authenticator()
+                            .login("uuid")
+                            .scope(AuthenticatorScope.tenant)
+                            .alwaysEnabled(true)
+                            .authentication(tokenAb);
 
                 // User domain WITHOUT owner — should fail
                 var ub = bldr.domain(IClass.getClass(User.class))
                         .tenant(true)
+                        .superTenant("superTenant")
                         // NO .owner("uuid") — this should cause the error
                         .entity()
                             .id("id").uuid("uuid").tenantId("tenantId")
@@ -446,6 +493,71 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
                 buildAndStart(bldr);
             }, "Should throw because authenticator domain is not owner");
+            assertTrue(ex.getMessage().contains("is not an owner"),
+                    "rejection must name the missing owner role (not the token authenticator rule); got: "
+                            + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("authorization domain must ALSO be an authenticator — build throws if not")
+        void authorizationDomainMustBeAuthenticator() {
+            ApiException ex = assertThrows(ApiException.class, () -> {
+                CapturingDao dao1 = new CapturingDao();
+                CapturingDao dao2 = new CapturingDao();
+
+                IApiBuilder bldr = newBuilder();
+
+                var ab = bldr.security()
+                        .authentication(new FixedSupplierBuilder<>(new StubAuthentication(), IClass.getClass(StubAuthentication.class)));
+                ab.authenticate("authenticate")
+                        .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                        .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                        .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+                ab.up();
+
+                // Token domain: owned + authorization but NOT an authenticator → must fail.
+                bldr.domain(IClass.getClass(TokenEntity.class))
+                        .tenant(true)
+                        .superTenant("superTenant")
+                        .owned("ownerId")
+                        .entity()
+                            .id("id").uuid("uuid").tenantId("tenantId")
+                        .up()
+                        .dto(IClass.getClass(TokenDto.class))
+                            .id("id").uuid("uuid").tenantId("tenantId")
+                            .db(dao1)
+                        .up()
+                        .security()
+                            .authorization()
+                                .type("tokenType")
+                            .up()
+                        .up();
+
+                // A fully-valid User authenticator (owner) so only the token can fail.
+                var ub = bldr.domain(IClass.getClass(User.class))
+                        .tenant(true)
+                        .superTenant("superTenant")
+                        .owner("uuid")
+                        .superOwner("superOwner")
+                        .entity()
+                            .id("id").uuid("uuid").tenantId("tenantId")
+                        .up()
+                        .dto(IClass.getClass(UserDto.class))
+                            .id("id").uuid("uuid").tenantId("tenantId")
+                            .db(dao2)
+                        .up();
+                ub.security()
+                        .authenticator()
+                            .login("id")
+                            .scope(AuthenticatorScope.tenant)
+                            .alwaysEnabled(true)
+                            .authentication(ab);
+                ub.up();
+
+                buildAndStart(bldr);
+            }, "Should throw because the authorization domain is not an authenticator");
+            assertTrue(ex.getMessage().contains("not an authenticator"),
+                    "rejection must name the missing authenticator role; got: " + ex.getMessage());
         }
     }
 

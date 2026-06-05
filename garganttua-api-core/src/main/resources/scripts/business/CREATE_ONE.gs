@@ -47,8 +47,19 @@ validateUnicity(@entity, @1, @2)
 entity <- runBeforeCreate(@entity, @0)
 ! => recordCaughtException(@0, @exception) -> 500
 
+// Enforce the super-tenant/owner creation lock (no-op unless this domain is a
+// tenant/owner whose superTenant/superOwner flag is set on the entity). Rejects
+// a locked promotion with 403 before anything is persisted.
+guardSuperStatusOnWrite(@entity, @2)
+! => recordCaughtException(@0, @exception) -> 403
+
 // Persist entity
 saveEntity(@1, @entity)
+! => recordCaughtException(@0, @exception) -> 500
+
+// Maintain the super registries from the persisted flag (add on super, remove
+// on demotion). No-op for non-tenant/owner domains.
+syncSuperStatusRegistry(@entity, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 
 // Run @AfterCreate lifecycle hooks

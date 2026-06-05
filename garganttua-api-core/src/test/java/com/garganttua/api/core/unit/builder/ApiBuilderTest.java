@@ -44,6 +44,7 @@ class ApiBuilderTest {
         private String uuid;
         private String tenantId;
         private String name;
+        private Boolean superTenant = false;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -53,6 +54,8 @@ class ApiBuilderTest {
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     // Test DTO class
@@ -65,6 +68,8 @@ class ApiBuilderTest {
         private String tenantId;
         @FieldMappingRule(sourceFieldAddress = "name")
         private String name;
+        @FieldMappingRule(sourceFieldAddress = "superTenant")
+        private Boolean superTenant;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -74,6 +79,8 @@ class ApiBuilderTest {
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     // Simple in-memory DAO for testing
@@ -263,6 +270,7 @@ class ApiBuilderTest {
                    .superTenantAutoCreate(true)
                    .domain(IClass.getClass(TestEntity.class))
                        .tenant(true)
+                       .superTenant("superTenant")
                        .entity()
                            .id("id")
                            .uuid("uuid")
@@ -382,6 +390,7 @@ class ApiBuilderTest {
             builder.superTenantId("SUPER")
                    .domain(IClass.getClass(TestEntity.class))
                        .tenant(true)
+                       .superTenant("superTenant")
                        .entity()
                            .id("id")
                            .uuid("uuid")

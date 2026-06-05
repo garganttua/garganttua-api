@@ -45,6 +45,8 @@ class DomainBuilderTest {
         private String uuid;
         private String tenantId;
         private String ownerId;
+        private Boolean superTenant = false;
+        private Boolean superOwner = false;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -54,6 +56,10 @@ class DomainBuilderTest {
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
         public String getOwnerId() { return ownerId; }
         public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     // Test DTO class
@@ -64,6 +70,10 @@ class DomainBuilderTest {
         private String uuid;
         @FieldMappingRule(sourceFieldAddress = "tenantId")
         private String tenantId;
+        @FieldMappingRule(sourceFieldAddress = "superTenant")
+        private Boolean superTenant;
+        @FieldMappingRule(sourceFieldAddress = "superOwner")
+        private Boolean superOwner;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -71,6 +81,10 @@ class DomainBuilderTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     // Simple test DAO
@@ -294,6 +308,85 @@ class DomainBuilderTest {
             assertNotNull(context);
             assertEquals("testentities", context.getDomain());
             assertEquals(IClass.getClass(TestEntity.class), context.getEntityClass());
+        }
+
+        private void wireEntityAndDto() throws ApiException {
+            domainBuilder.entity()
+                    .id("id")
+                    .uuid("uuid")
+                    .tenantId("tenantId")
+                .up()
+                .dto(IClass.getClass(TestDto.class))
+                    .id("id")
+                    .uuid("uuid")
+                    .tenantId("tenantId")
+                    .db(new TestDao())
+                .up();
+            ((DomainBuilder<TestEntity>) domainBuilder).setDependencyBuilders(
+                    injectionContextBuilder, expressionContextBuilder);
+        }
+
+        @Test
+        @DisplayName("build() refuses a tenant domain that declares no superTenant field")
+        void buildFailsWhenTenantWithoutSuperTenant() throws ApiException {
+            domainBuilder.tenant(true);
+            wireEntityAndDto();
+
+            ApiException ex = assertThrows(ApiException.class, () -> domainBuilder.build(),
+                    "a tenant domain without a superTenant field must be rejected at build time");
+            String msg = rootMessage(ex);
+            assertTrue(msg.contains("superTenant field"),
+                    "rejection must name the missing superTenant field; got: " + msg);
+            assertTrue(msg.contains(".superTenant(") || msg.contains("@EntitySuperTenant"),
+                    "rejection must point at the way to declare it; got: " + msg);
+        }
+
+        @Test
+        @DisplayName("build() refuses an owner domain that declares no superOwner field")
+        void buildFailsWhenOwnerWithoutSuperOwner() throws ApiException {
+            domainBuilder.owner("ownerId");
+            wireEntityAndDto();
+
+            ApiException ex = assertThrows(ApiException.class, () -> domainBuilder.build(),
+                    "an owner domain without a superOwner field must be rejected at build time");
+            String msg = rootMessage(ex);
+            assertTrue(msg.contains("superOwner field"),
+                    "rejection must name the missing superOwner field; got: " + msg);
+            assertTrue(msg.contains(".superOwner(") || msg.contains("@EntitySuperOwner"),
+                    "rejection must point at the way to declare it; got: " + msg);
+        }
+
+        @Test
+        @DisplayName("build() succeeds when a tenant domain declares its superTenant field")
+        void buildSucceedsWhenTenantDeclaresSuperTenant() throws ApiException {
+            domainBuilder.tenant(true).superTenant("superTenant");
+            wireEntityAndDto();
+
+            IDomain<TestEntity> context = domainBuilder.build();
+            assertNotNull(context, "a conformant tenant domain must build");
+            assertTrue(context.isTenantEntity(), "the built domain must carry the tenant role");
+        }
+
+        @Test
+        @DisplayName("build() succeeds when an owner domain declares its superOwner field")
+        void buildSucceedsWhenOwnerDeclaresSuperOwner() throws ApiException {
+            domainBuilder.owner("ownerId").superOwner("superOwner");
+            wireEntityAndDto();
+
+            IDomain<TestEntity> context = domainBuilder.build();
+            assertNotNull(context, "a conformant owner domain must build");
+            assertEquals(IClass.getClass(TestEntity.class), context.getEntityClass());
+        }
+
+        /** Unwraps the ApiException chain to the deepest message (the validation throws the parlant cause). */
+        private String rootMessage(Throwable t) {
+            Throwable cur = t;
+            StringBuilder all = new StringBuilder();
+            while (cur != null) {
+                if (cur.getMessage() != null) all.append(cur.getMessage()).append('\n');
+                cur = cur.getCause();
+            }
+            return all.toString();
         }
     }
 }

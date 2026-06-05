@@ -51,6 +51,7 @@ class AnonymousCallerAutoCreatedTest extends AbstractCrudIntegrationTest {
         IApiBuilder builder = newBuilder();  // multi-tenant + superTenantId="SUPER_TENANT"
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity().id("id").uuid("uuid").tenantId("tenantId").up()
                 .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")

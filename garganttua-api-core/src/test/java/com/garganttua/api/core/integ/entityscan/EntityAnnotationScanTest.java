@@ -22,6 +22,7 @@ import com.garganttua.api.commons.entity.annotations.Entity;
 import com.garganttua.api.commons.entity.annotations.EntityHiddenable;
 import com.garganttua.api.commons.entity.annotations.EntityId;
 import com.garganttua.api.commons.entity.annotations.EntityPublic;
+import com.garganttua.api.commons.entity.annotations.EntitySuperTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenantId;
 import com.garganttua.api.commons.entity.annotations.EntityUuid;
@@ -40,12 +41,15 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
         @EntityId private String id;
         @EntityUuid private String uuid;
         @EntityTenantId private String tenantId;
+        @EntitySuperTenant private Boolean superTenant;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     @Dto(entityClass = AutoTenant.class)
@@ -53,12 +57,15 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
         @DtoId private String id;
         @DtoUuid private String uuid;
         @DtoTenantId private String tenantId;
+        private Boolean superTenant;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     // ── Public hiddenable entity (auto-detected, with type-level marker) ──
@@ -186,6 +193,7 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
             ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
             builder.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .entity().id("id").uuid("uuid").tenantId("tenantId").up()
                     .dto(IClass.getClass(UserDto.class))
                         .id("id").uuid("uuid").tenantId("tenantId")
@@ -205,6 +213,7 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
             ((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
             builder.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .entity().id("id").uuid("uuid").tenantId("tenantId").up()
                     .dto(IClass.getClass(UserDto.class))
                         .id("id").uuid("uuid").tenantId("tenantId")

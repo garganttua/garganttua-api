@@ -38,7 +38,9 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
 
         var users = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owner("uuid")
+                .superOwner("superOwner")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                     // Field-level update authority — guards mutation of 'name'
@@ -61,6 +63,7 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
         // domains and sorted alphabetically.
         var projects = builder.domain(IClass.getClass(Project.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -86,24 +89,30 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
         private String id;
         private String uuid;
         private String tenantId;
+        private Boolean superTenant = false;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     public static class ProjectDto {
         private String id;
         private String uuid;
         private String tenantId;
+        private Boolean superTenant;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     @Nested
@@ -175,6 +184,7 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
             IApiBuilder builder = newBuilder();
             var users = builder.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
                         .update("email", "user-update-email-only")
@@ -207,6 +217,7 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
             IApiBuilder builder = newBuilder();
             var users = builder.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
                         .update("email") // no authority — just marked updatable

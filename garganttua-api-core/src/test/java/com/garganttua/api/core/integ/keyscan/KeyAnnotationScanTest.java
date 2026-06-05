@@ -22,6 +22,7 @@ import com.garganttua.api.commons.dto.annotations.DtoTenantId;
 import com.garganttua.api.commons.dto.annotations.DtoUuid;
 import com.garganttua.api.commons.entity.annotations.Entity;
 import com.garganttua.api.commons.entity.annotations.EntityId;
+import com.garganttua.api.commons.entity.annotations.EntitySuperTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenantId;
 import com.garganttua.api.commons.entity.annotations.EntityUuid;
@@ -56,6 +57,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         @EntityId private String id;
         @EntityUuid private String uuid;
         @EntityTenantId private String tenantId;
+        @EntitySuperTenant private Boolean superTenant;
 
         @KeyName private String name;
         @KeyAlgorithm private String algorithm;
@@ -71,6 +73,8 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public String getAlgorithm() { return algorithm; }
@@ -92,6 +96,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         @DtoId private String id;
         @DtoUuid private String uuid;
         @DtoTenantId private String tenantId;
+        private Boolean superTenant;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -99,6 +104,8 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     /**
@@ -114,6 +121,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         @EntityId private String id;
         @EntityUuid private String uuid;
         @EntityTenantId private String tenantId;
+        @EntitySuperTenant private Boolean superTenant;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -121,6 +129,8 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     @Dto(entityClass = BareKey.class)
@@ -128,6 +138,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         @DtoId private String id;
         @DtoUuid private String uuid;
         @DtoTenantId private String tenantId;
+        private Boolean superTenant;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -135,6 +146,8 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -276,6 +289,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         // Explicitly register a third domain that does NOT carry @Key.
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

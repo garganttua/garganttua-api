@@ -24,6 +24,7 @@ import com.garganttua.api.commons.entity.annotations.Entity;
 import com.garganttua.api.commons.entity.annotations.EntityId;
 import com.garganttua.api.commons.entity.annotations.EntityOwned;
 import com.garganttua.api.commons.entity.annotations.EntityOwner;
+import com.garganttua.api.commons.entity.annotations.EntitySuperOwner;
 import com.garganttua.api.commons.entity.annotations.EntityUuid;
 import com.garganttua.api.commons.security.annotations.Authentication;
 import com.garganttua.api.commons.security.annotations.AuthenticationAuthenticate;
@@ -54,9 +55,10 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
     @Entity
     @EntityOwned(ownerId = "ownerId")
     @Authorization
+    @Authenticator(authentications = CryptoAuth.class, scope = AuthenticatorScope.tenant)
     public static class CryptoToken {
         @EntityId private String id;
-        @EntityUuid private String uuid;
+        @EntityUuid @AuthenticatorLogin private String uuid;
         private String ownerId;
         @AuthorizationType private String tokenType;
         @AuthorizationExpiration private java.time.Instant expiresAt;
@@ -123,22 +125,28 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
     public static class CryptoUser {
         @EntityId @AuthenticatorLogin private String id;
         @EntityUuid private String uuid;
+        @EntitySuperOwner private Boolean superOwner;
         public CryptoUser() {}
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     @Dto(entityClass = CryptoUser.class)
     public static class CryptoUserDto {
         @DtoId private String id;
         @DtoUuid private String uuid;
+        private Boolean superOwner;
         public CryptoUserDto() {}
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     /**
@@ -301,9 +309,10 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
     @Entity
     @EntityOwned(ownerId = "ownerId")
     @Authorization
+    @Authenticator(authentications = PlainAuth.class, scope = AuthenticatorScope.tenant)
     public static class PlainToken {
         @EntityId private String id;
-        @EntityUuid private String uuid;
+        @EntityUuid @AuthenticatorLogin private String uuid;
         private String ownerId;
         @AuthorizationType private String tokenType;
         public PlainToken() {}
@@ -338,22 +347,28 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
     public static class PlainUser {
         @EntityId @AuthenticatorLogin private String id;
         @EntityUuid private String uuid;
+        @EntitySuperOwner private Boolean superOwner;
         public PlainUser() {}
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     @Dto(entityClass = PlainUser.class)
     public static class PlainUserDto {
         @DtoId private String id;
         @DtoUuid private String uuid;
+        private Boolean superOwner;
         public PlainUserDto() {}
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     @Nested

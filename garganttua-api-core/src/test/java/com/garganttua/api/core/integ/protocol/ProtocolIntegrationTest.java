@@ -114,6 +114,7 @@ class ProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 		builder.protocol(protocol);
 		builder.domain(IClass.getClass(User.class))
 				.tenant(true)
+				.superTenant("superTenant")
 				.entity()
 					.id("id").uuid("uuid").tenantId("tenantId")
 					.mandatory("name")

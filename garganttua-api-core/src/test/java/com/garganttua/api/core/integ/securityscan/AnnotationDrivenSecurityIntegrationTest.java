@@ -29,6 +29,8 @@ import com.garganttua.api.commons.entity.annotations.Entity;
 import com.garganttua.api.commons.entity.annotations.EntityId;
 import com.garganttua.api.commons.entity.annotations.EntityOwned;
 import com.garganttua.api.commons.entity.annotations.EntityOwner;
+import com.garganttua.api.commons.entity.annotations.EntitySuperOwner;
+import com.garganttua.api.commons.entity.annotations.EntitySuperTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenantId;
 import com.garganttua.api.commons.entity.annotations.EntityUuid;
@@ -72,16 +74,31 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         }
     }
 
-    // ───── @Authorization linked to AnnoUser ─────
+    // ───── Token self-verification authentication (token IS an authenticator) ─────
+
+    @Authentication
+    public static class AnnoTokenAuth {
+        @AuthenticationAuthenticate
+        public IAuthentication authenticate(Object principal, Object credentials, IAuthenticatorDefinition definition) {
+            // Token self-validation hook (signature/custom). Expiration + revocation
+            // are enforced by the framework before this runs; here we accept.
+            return new com.garganttua.api.commons.security.authentication.Authentication(
+                    true, principal, credentials, "anno-token", List.of(), true, true, true, true);
+        }
+    }
+
+    // ───── @Authorization linked to AnnoUser; AnnoToken is also its own @Authenticator ─────
 
     @Entity
     @EntityTenant
     @EntityOwned(ownerId = "ownerId")
     @Authorization
+    @Authenticator(authentications = AnnoTokenAuth.class, scope = AuthenticatorScope.tenant)
     public static class AnnoToken {
         @EntityId private String id;
-        @EntityUuid private String uuid;
+        @EntityUuid @AuthenticatorLogin private String uuid;
         @EntityTenantId private String tenantId;
+        @EntitySuperTenant private Boolean superTenant;
         private String ownerId;
         @AuthorizationType private String tokenType;
         @AuthorizationAuthorities private List<String> authorities;
@@ -97,6 +114,8 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String v) { this.tenantId = v; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean v) { this.superTenant = v; }
         public String getOwnerId() { return ownerId; }
         public void setOwnerId(String v) { this.ownerId = v; }
         public String getTokenType() { return tokenType; }
@@ -116,6 +135,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @DtoId private String id;
         @DtoUuid private String uuid;
         @DtoTenantId private String tenantId;
+        private Boolean superTenant;
         public AnnoTokenDto() {}
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -123,6 +143,8 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String v) { this.tenantId = v; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean v) { this.superTenant = v; }
     }
 
     // ───── @Authenticator linked to AnnoToken authorization + AnnoLoginPasswordAuth ─────
@@ -140,6 +162,8 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @EntityId @AuthenticatorLogin private String id;
         @EntityUuid private String uuid;
         @EntityTenantId private String tenantId;
+        @EntitySuperTenant private Boolean superTenant;
+        @EntitySuperOwner private Boolean superOwner;
         @AuthenticatorEnabled private Boolean enabled = true;
         private String name;
 
@@ -151,6 +175,10 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String v) { this.tenantId = v; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean v) { this.superTenant = v; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean v) { this.superOwner = v; }
         public Boolean getEnabled() { return enabled; }
         public void setEnabled(Boolean v) { this.enabled = v; }
         public String getName() { return name; }
@@ -162,6 +190,8 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @DtoId private String id;
         @DtoUuid private String uuid;
         @DtoTenantId private String tenantId;
+        private Boolean superTenant;
+        private Boolean superOwner;
         private String name;
         public AnnoUserDto() {}
         public String getId() { return id; }
@@ -170,6 +200,10 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String v) { this.tenantId = v; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean v) { this.superTenant = v; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean v) { this.superOwner = v; }
         public String getName() { return name; }
         public void setName(String v) { this.name = v; }
     }

@@ -49,8 +49,20 @@ validateUnicity(@storedEntity, @1, @2)
 storedEntity <- runBeforeUpdate(@storedEntity, @0)
 ! => recordCaughtException(@0, @exception) -> 500
 
+// Enforce the super-tenant/owner creation lock (no-op unless this domain is a
+// tenant/owner whose superTenant/superOwner flag is set on the merged entity).
+// Rejects a locked promotion (was-normal → now-super) with 403 before persist;
+// a demotion or an already-super entity passes through.
+guardSuperStatusOnWrite(@storedEntity, @2)
+! => recordCaughtException(@0, @exception) -> 403
+
 // Persist
 saveEntity(@1, @storedEntity)
+! => recordCaughtException(@0, @exception) -> 500
+
+// Maintain the super registries from the persisted flag (add on super, remove
+// on demotion). No-op for non-tenant/owner domains.
+syncSuperStatusRegistry(@storedEntity, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 
 // Run @AfterUpdate lifecycle hooks

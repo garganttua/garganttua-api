@@ -60,6 +60,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private Boolean revoked;
         private byte[] signature;
         private String signedBy;
+        private Boolean superTenant = false;
 
         public SignedTokenEntity() {}
 
@@ -85,6 +86,8 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setSignature(byte[] signature) { this.signature = signature; }
         public String getSignedBy() { return signedBy; }
         public void setSignedBy(String signedBy) { this.signedBy = signedBy; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
 
         /**
          * Stable byte payload representing the token's identity. Same fields
@@ -104,6 +107,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private String id;
         private String uuid;
         private String tenantId;
+        private Boolean superTenant;
 
         public SignedTokenDto() {}
         public String getId() { return id; }
@@ -112,6 +116,8 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     /**
@@ -186,6 +192,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         // and getDataToSign method.
         var tokenDomainBuilder = builder.domain(IClass.getClass(SignedTokenEntity.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owned("ownerId")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -208,10 +215,30 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .up()
                 .up();
 
+        // Every authorization (token) domain must also be an authenticator: a
+        // token verifies itself (login = token uuid).
+        StubTokenAuthentication stubTokenAuth = new StubTokenAuthentication();
+        var tokenAuthBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(stubTokenAuth, IClass.getClass(StubTokenAuthentication.class)));
+        tokenAuthBuilder.authenticate("authenticate")
+                .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+        tokenAuthBuilder.up();
+
+        tokenDomainBuilder.security()
+                .authenticator()
+                    .login("uuid")
+                    .scope(AuthenticatorScope.tenant)
+                    .alwaysEnabled(true)
+                    .authentication(tokenAuthBuilder);
+
         @SuppressWarnings("rawtypes")
         var userDomainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owner("uuid")
+                .superOwner("superOwner")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -399,6 +426,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
             var tb = builder.domain(IClass.getClass(SignedTokenEntity.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .owned("ownerId")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
@@ -420,10 +448,29 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .up()
                     .up();
 
+            // Token domain must also be an authenticator (login = token uuid).
+            StubTokenAuthentication stubTokenAuthNoKey = new StubTokenAuthentication();
+            var tokenAuthBuilderNoKey = builder.security()
+                    .authentication(new FixedSupplierBuilder<>(stubTokenAuthNoKey, IClass.getClass(StubTokenAuthentication.class)));
+            tokenAuthBuilderNoKey.authenticate("authenticate")
+                    .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                    .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                    .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+            tokenAuthBuilderNoKey.up();
+
+            tb.security()
+                    .authenticator()
+                        .login("uuid")
+                        .scope(AuthenticatorScope.tenant)
+                        .alwaysEnabled(true)
+                        .authentication(tokenAuthBuilderNoKey);
+
             @SuppressWarnings("rawtypes")
             var ub = builder.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .owner("uuid")
+                    .superOwner("superOwner")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
                     .up()
@@ -484,6 +531,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             // Token domain WITHOUT .signable(...)
             var tb = builder.domain(IClass.getClass(SignedTokenEntity.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .owned("ownerId")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
@@ -501,10 +549,29 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .up()
                     .up();
 
+            // Token domain must also be an authenticator (login = token uuid).
+            StubTokenAuthentication stubTokenAuthNonSignable = new StubTokenAuthentication();
+            var tokenAuthBuilderNonSignable = builder.security()
+                    .authentication(new FixedSupplierBuilder<>(stubTokenAuthNonSignable, IClass.getClass(StubTokenAuthentication.class)));
+            tokenAuthBuilderNonSignable.authenticate("authenticate")
+                    .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                    .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                    .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+            tokenAuthBuilderNonSignable.up();
+
+            tb.security()
+                    .authenticator()
+                        .login("uuid")
+                        .scope(AuthenticatorScope.tenant)
+                        .alwaysEnabled(true)
+                        .authentication(tokenAuthBuilderNonSignable);
+
             @SuppressWarnings("rawtypes")
             var ub = builder.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .owner("uuid")
+                    .superOwner("superOwner")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
                     .up()

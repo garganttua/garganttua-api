@@ -139,6 +139,7 @@ class WorkflowObserverAttachIntegrationTest extends AbstractCrudIntegrationTest 
 	private static void declareUsersDomain(IApiBuilder builder) throws ApiException {
 		builder.domain(IClass.getClass(User.class))
 				.tenant(true)
+				.superTenant("superTenant")
 				.entity()
 					.id("id").uuid("uuid").tenantId("tenantId")
 				.up()

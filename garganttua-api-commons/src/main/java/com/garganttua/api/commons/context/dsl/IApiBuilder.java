@@ -25,6 +25,18 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 
 	IApiBuilder superTenantAutoCreate(boolean b) throws ApiException;
 
+	/**
+	 * Locks (default) or unlocks runtime promotion of a tenant to super-tenant.
+	 * When locked, a create/update that sets {@code superTenant=true} for a
+	 * tenant id not already registered is rejected; the super-tenant registry
+	 * may then only be seeded by the startup scan and the auto-created master
+	 * tenant. Demotion (super→normal) is always allowed regardless of this lock.
+	 */
+	IApiBuilder lockSuperTenantCreation(boolean lock);
+
+	/** Owner-side counterpart of {@link #lockSuperTenantCreation(boolean)}. Locked by default. */
+	IApiBuilder lockSuperOwnerCreation(boolean lock);
+
 	IApiBuilder multiTenant(boolean enabled) throws ApiException;
 
 	IApiSecurityBuilder security();

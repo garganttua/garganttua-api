@@ -64,4 +64,13 @@ _authResult <- verifyAuthorization(@3, @authz, @0)
 
 setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
 
+// Server-authoritative super-status. The caller's superTenant/superOwner flags
+// arrived from the protocol (the decoded token) and must NOT be trusted. Recompute
+// them from the server-side registries — membership of the caller's tenantId /
+// ownerId — and overwrite the 'caller' arg so every downstream stage (VERIFY_AUTHORITY,
+// repository filtering, field-level update rights) reads the registry's verdict, not
+// the token's claim. No-op when the registries already agree with the caller.
+_caller <- applyServerAuthoritativeSuperStatus(:arg(@0, "caller"), @3)
+setRequestArg(@0, "caller", @_caller)
+
 output <- 0 -> 0

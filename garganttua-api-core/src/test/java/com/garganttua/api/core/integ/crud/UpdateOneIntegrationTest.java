@@ -32,6 +32,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .mandatory("name")
@@ -177,6 +178,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
 
         failingBuilder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .update("name")
@@ -257,6 +259,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
             IApiBuilder b = newBuilder();
             b.domain(IClass.getClass(User.class))
                     .tenant(true)
+                    .superTenant("superTenant")
                     .entity()
                         .id("id").uuid("uuid").tenantId("tenantId")
                         // 'name' requires the "user-update-name" authority

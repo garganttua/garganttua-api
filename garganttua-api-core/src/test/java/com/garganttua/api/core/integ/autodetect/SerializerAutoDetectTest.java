@@ -51,6 +51,7 @@ class SerializerAutoDetectTest extends AbstractCrudIntegrationTest {
 			builder.includeFrameworkPackages(false); // test asserts "no user packages → 0 discovered" — opt out of the framework asset scan
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)
+					.superTenant("superTenant")
 					.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 					.dto(IClass.getClass(UserDto.class))
 						.id("id").uuid("uuid").tenantId("tenantId")
@@ -78,6 +79,7 @@ class SerializerAutoDetectTest extends AbstractCrudIntegrationTest {
 			// autoDetect NOT enabled
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)
+					.superTenant("superTenant")
 					.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 					.dto(IClass.getClass(UserDto.class))
 						.id("id").uuid("uuid").tenantId("tenantId")
@@ -97,6 +99,7 @@ class SerializerAutoDetectTest extends AbstractCrudIntegrationTest {
 			builder.includeFrameworkPackages(false); // test asserts "no user packages → 0 discovered" — opt out of the framework asset scan
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)
+					.superTenant("superTenant")
 					.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 					.dto(IClass.getClass(UserDto.class))
 						.id("id").uuid("uuid").tenantId("tenantId")

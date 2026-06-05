@@ -22,6 +22,7 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
         IApiBuilder builder = newBuilder();
         var domainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

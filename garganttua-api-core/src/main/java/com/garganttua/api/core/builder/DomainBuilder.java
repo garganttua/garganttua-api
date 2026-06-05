@@ -574,6 +574,7 @@ public class DomainBuilder<E>
 
         this.throwExceptionIfNoDto();
         this.validateSecurityRoles();
+        this.validateSuperFields();
 
         // Build DTO contexts and extract definitions
         List<IDtoContext<?>> dtoContexts = new ArrayList<>();
@@ -885,6 +886,19 @@ public class DomainBuilder<E>
                     + "An authorization entity always belongs to a principal — use .owned(field) on the domain builder.");
         }
 
+        // Rule 1b: An authorization domain MUST also be an authenticator. Token
+        // verification routes through the authenticate pipeline: the decoded
+        // authorization verifies ITSELF (login = its uuid, credentials = the
+        // decoded token), so the domain needs a user-declared
+        // @AuthenticationAuthenticate method to enforce signature / expiration /
+        // revocation. See SecurityExpressions.verifyAuthorization.
+        if (secBuilder.hasAuthorization() && !secBuilder.hasAuthenticator()) {
+            throw new ApiException("Domain '" + this.domainName
+                    + "' has an authorization configuration but is not an authenticator. "
+                    + "A token verifies itself through the authenticate pipeline — add .security().authenticator() "
+                    + "with an authenticate method that validates the token (signature / expiration / revocation).");
+        }
+
         // Rule 2: An authenticator domain that produces an authorization MUST be owner
         if (secBuilder.hasAuthenticator()) {
             var authenticatorBuilder = (AuthenticatorBuilder<E>) secBuilder.getAuthenticator();
@@ -893,6 +907,32 @@ public class DomainBuilder<E>
                         + "' is an authenticator that produces authorizations but is not an owner. "
                         + "The authenticator entity must own the authorization entities — use .owner(field) on the domain builder.");
             }
+        }
+    }
+
+    /**
+     * Enforces that the structural super-status fields are declared whenever the
+     * domain carries the role that needs them. A tenant entity must carry a
+     * boolean {@code superTenant} field and an owner entity a boolean
+     * {@code superOwner} field, so the framework can identify super-tenants /
+     * super-owners server-side (the field feeds the {@code Api} super-registries
+     * scanned at startup and maintained on create/update). The {@code Boolean}
+     * type is already enforced by {@link FieldResolver} in the
+     * {@code superTenant()} / {@code superOwner()} setters; here we only enforce
+     * presence.
+     */
+    private void validateSuperFields() throws ApiException {
+        if (this.tenant && this.superTenant == null) {
+            throw new ApiException("Domain '" + this.domainName + "' is the tenant (.tenant(true) / @EntityTenant) "
+                    + "but declares no superTenant field. A tenant entity must carry a boolean superTenant field so "
+                    + "the framework can identify super-tenants server-side — declare it via .superTenant(field) on the "
+                    + "domain builder, or annotate the boolean field with @EntitySuperTenant.");
+        }
+        if (this.owner != null && this.superOwner == null) {
+            throw new ApiException("Domain '" + this.domainName + "' is an owner (.owner(field) / @EntityOwner) "
+                    + "but declares no superOwner field. An owner entity must carry a boolean superOwner field so "
+                    + "the framework can identify super-owners server-side — declare it via .superOwner(field) on the "
+                    + "domain builder, or annotate the boolean field with @EntitySuperOwner.");
         }
     }
 

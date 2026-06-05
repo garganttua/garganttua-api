@@ -88,6 +88,14 @@ public class SecurityExpressions {
 		return v != null ? v.toString() : null;
 	}
 
+	private static boolean readBoolean(Object entity, ObjectAddress addr) {
+		if (addr == null) {
+			return false;
+		}
+		Object v = DefaultMapper.reflection().getFieldValue(entity, addr.toString());
+		return Boolean.TRUE.equals(v);
+	}
+
 	/** Caller for an internal CREATE: mirrors the entity's own tenant + owner so CREATE_ONE's ensure-stamping is idempotent. */
 	private static ICaller callerFromEntity(IDomain<?> target, Object entity) {
 		String tenantId = readField(entity, target.getTenantIdFieldAddress());
@@ -193,6 +201,80 @@ public class SecurityExpressions {
 		if (!(name instanceof String authority) || authority.isBlank()) return false;
 		java.util.List<String> authorities = c.authorities();
 		return authorities != null && authorities.contains(authority);
+	}
+
+	@Expression(name = "guardSuperStatusOnWrite",
+			description = "Before persisting a tenant/owner entity, rejects a LOCKED promotion to super-tenant / "
+					+ "super-owner. No-op unless: the domain is a tenant (resp. owner) carrying a superTenant "
+					+ "(resp. superOwner) field, that flag is true on the entity, the entity's uuid is NOT already "
+					+ "registered as super, and the matching creation lock is on. Returns the entity unchanged.")
+	public static Object guardSuperStatusOnWrite(@Nullable Object entity, @Nullable Object domainContext) {
+		IDomain<?> domain = toDomain(domainContext);
+		Object e = unwrapOptional(entity);
+		if (domain == null || e == null) return entity;
+		IApi api = apiOf(domain);
+		if (api == null) return entity;
+		var def = domain.getDomainDefinition();
+		if (def == null) return entity;
+		String uuid = readField(e, domain.getEntityDefinition().uuid());
+		if (domain.isTenantEntity() && def.superTenant() != null
+				&& readBoolean(e, def.superTenant())
+				&& !api.isSuperTenant(uuid) && api.isSuperTenantCreationLocked()) {
+			throw new ApiException("Super-tenant creation is locked: cannot promote tenant '" + uuid
+					+ "' to super-tenant at runtime. Only the startup scan and the auto-created master tenant may "
+					+ "seed super-tenants. Call .lockSuperTenantCreation(false) on the ApiBuilder to allow runtime promotion.");
+		}
+		if (def.owner() != null && def.superOwner() != null
+				&& readBoolean(e, def.superOwner())
+				&& !api.isSuperOwner(uuid) && api.isSuperOwnerCreationLocked()) {
+			throw new ApiException("Super-owner creation is locked: cannot promote owner '" + uuid
+					+ "' to super-owner at runtime. Call .lockSuperOwnerCreation(false) on the ApiBuilder to allow it.");
+		}
+		return entity;
+	}
+
+	@Expression(name = "syncSuperStatusRegistry",
+			description = "After persisting a tenant/owner entity, maintains the server-side super registries: "
+					+ "registers the entity's uuid when its superTenant/superOwner flag is true, unregisters it "
+					+ "(demotion) when false. No-op for non-tenant/owner domains. Returns the entity unchanged.")
+	public static Object syncSuperStatusRegistry(@Nullable Object entity, @Nullable Object domainContext) {
+		IDomain<?> domain = toDomain(domainContext);
+		Object e = unwrapOptional(entity);
+		if (domain == null || e == null) return entity;
+		IApi api = apiOf(domain);
+		if (api == null) return entity;
+		var def = domain.getDomainDefinition();
+		if (def == null) return entity;
+		String uuid = readField(e, domain.getEntityDefinition().uuid());
+		if (uuid == null) return entity;
+		if (domain.isTenantEntity() && def.superTenant() != null) {
+			if (readBoolean(e, def.superTenant())) api.registerSuperTenant(uuid);
+			else api.unregisterSuperTenant(uuid);
+		}
+		if (def.owner() != null && def.superOwner() != null) {
+			if (readBoolean(e, def.superOwner())) api.registerSuperOwner(uuid);
+			else api.unregisterSuperOwner(uuid);
+		}
+		return entity;
+	}
+
+	@Expression(name = "applyServerAuthoritativeSuperStatus",
+			description = "Recomputes the caller's superTenant/superOwner flags from the server-side registries "
+					+ "(membership of the caller's tenantId / ownerId), OVERRIDING whatever the protocol claimed, and "
+					+ "returns a corrected ICaller. The verify script stores it back as the request's 'caller' arg so "
+					+ "all downstream stages (filtering, authority, update) trust the registry, not the token.")
+	public static ICaller applyServerAuthoritativeSuperStatus(@Nullable Object caller, @Nullable Object apiContext) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		if (c == null) return null;
+		Object ctx = unwrapOptional(apiContext);
+		if (!(ctx instanceof IApi api)) return c;
+		boolean superTenant = api.isSuperTenant(c.tenantId());
+		boolean superOwner = api.isSuperOwner(c.ownerId());
+		if (superTenant == c.superTenant() && superOwner == c.superOwner()) {
+			return c;
+		}
+		return new Caller(c.tenantId(), c.requestedTenantId(), c.callerId(), c.ownerId(),
+				superTenant, superOwner, c.authorities());
 	}
 
 	@Expression(name = "isSecurityDisabled", description = "Returns true if the domain has security disabled")
@@ -1451,7 +1533,7 @@ public class SecurityExpressions {
 	}
 
 	@Expression(name = "verifyAuthorization",
-			description = "Single server-side verification step used by VERIFY_AUTHORIZATION.gs. Resolves the authenticator domain (Mode A: from the protocol stashed on the request; Mode B: from the authz entity's runtime class). When the resolved domain has an authorization definition: verifies the signature (when signable), then either invokes the authenticate pipeline (when an authenticator is wired) or runs field-based validation from the DSL (`revoked` + `expiration` ObjectAddresses on IDomainAuthorizationDefinition). When Mode B has no matching registered domain (untracked token from a trusted in-process caller) the framework has no DSL to enforce against and accepts the pre-decoded entity as-is. Throws ApiException (→ 401) on signature mismatch or validation rejection.")
+			description = "Single server-side verification step used by VERIFY_AUTHORIZATION.gs. The decoded authorization (token) verifies ITSELF: it must be a registered, authenticator-enabled domain. Resolves the token's own domain from the entity class, forges an AuthenticationRequest (login = token uuid, credentials = decoded token, tenantId = token's tenant) and runs that domain's authenticate pipeline — the user-declared @AuthenticationAuthenticate method enforces signature / expiration / revocation / custom rules. On success the framework resolves the OWNER from the token's qualified ownerId and returns it as the principal (carrying the token's type + authorities). Throws ApiException (→ 401) when the token is not a verifiable authenticator domain, fails its authenticate method, or its owner cannot be resolved.")
 	public static IAuthentication verifyAuthorization(@Nullable Object apiContext,
 			@Nullable Object authorization, @Nullable Object operationRequest) {
 		IApi api = (IApi) unwrapOptional(apiContext);
@@ -1460,42 +1542,105 @@ public class SecurityExpressions {
 			throw new ApiException("verifyAuthorization: apiContext and authorization are required");
 		}
 
-		// Resolve the target authenticator domain. Null is tolerated: that's the
-		// Mode B path where the caller's authorization entity has no matching
-		// registered domain (e.g. a stateless self-validating token).
-		IDomain<?> targetDomain = resolveOptionalAuthenticatorDomain(api, operationRequest, authz);
-
-		if (targetDomain != null) {
-			boolean sigOk = verifyIfSignable(authz, targetDomain, operationRequest);
-			if (!sigOk) {
-				throw new ApiException("Authorization signature verification failed");
-			}
-
-			DomainDefinition<?> domDef = toDomainDefinition(targetDomain);
-			boolean hasAuthenticator = domDef != null
-					&& domDef.domainSecurityDefinition() != null
-					&& domDef.domainSecurityDefinition().authenticatorDefinition() != null;
-			if (hasAuthenticator) {
-				Object tenantId = operationRequest == null ? null
-						: ((IOperationRequest) unwrapOptional(operationRequest))
-								.arg("tenantId").orElse(null);
-				IAuthenticationRequest authRequest = buildAuthRequestFromAuthorization(authz, tenantId);
-				return invokeAuthenticate(api, targetDomain, authRequest);
-			}
-
-			// Target domain resolved but no authenticator — run DSL-driven
-			// intrinsic checks (revoked flag, expiration timestamp) derived
-			// from the field declarations on IDomainAuthorizationDefinition.
-			// Custom validation rules belong on a future lifecycle hook on
-			// the authz domain.
-			validateAuthorizationFromDefinition(authz, targetDomain);
+		// 1. Resolve the token's OWN domain from the decoded entity's class.
+		IDomain<?> authzDomain = domainOfEntity(api, authz);
+		if (authzDomain == null) {
+			// No registered domain for this token class. This is the trusted
+			// in-process Mode-B path: the caller built and pre-decoded a token
+			// the framework has no DSL to enforce against (no authenticator, no
+			// owner link). Trust it as-is — an external protocol always decodes
+			// to a REGISTERED token class (which takes the authenticate path
+			// below); only an in-process caller can present an unregistered one.
+			return new com.garganttua.api.commons.security.authentication.Authentication(
+					true, authz, null, authz, java.util.List.of(), true, true, true, true);
 		}
 
-		// No target domain (Mode B untracked token): trust the in-process
-		// caller. Signature was already checked above when a target resolved;
-		// without one, there's no DSL to derive intrinsic checks from.
-		return new com.garganttua.api.commons.security.authentication.Authentication(
-				true, authz, null, authz, java.util.List.of(), true, true, true, true);
+		// 2. Require it to be an authenticator (enforced at build time too).
+		DomainDefinition<?> domDef = toDomainDefinition(authzDomain);
+		boolean hasAuthenticator = domDef != null
+				&& domDef.domainSecurityDefinition() != null
+				&& domDef.domainSecurityDefinition().authenticatorDefinition() != null;
+		if (!hasAuthenticator) {
+			throw new ApiException("verifyAuthorization: authorization domain '" + authzDomain.getDomainName()
+					+ "' is not an authenticator. An authorization entity must also be an authenticator "
+					+ "(.security().authenticator()) so it can verify itself.");
+		}
+
+		// 3. Framework-owned intrinsic checks: expiration + revocation, read from
+		//    the `expiration` / `revoked` field addresses declared on the
+		//    authorization DSL. Run before the user's method so an expired/revoked
+		//    token is rejected fast (→ 401). The SIGNATURE and any custom rules
+		//    are the user's responsibility, enforced in the authenticate method.
+		validateAuthorizationFromDefinition(authz, authzDomain);
+
+		// 4. Forge the authentication request from the token's own fields:
+		//    login = token uuid, credentials = the decoded token, tenantId = token's tenant.
+		String login = readField(authz, authzDomain.getEntityDefinition().uuid());
+		ObjectAddress tenantAddr = authzDomain.getEntityDefinition().tenantId();
+		String tenantId = tenantAddr != null ? readField(authz, tenantAddr) : null;
+		IAuthenticationRequest authRequest =
+				new com.garganttua.api.core.security.authentication.AuthenticationRequest(login, authz, tenantId);
+
+		// 5. Run the token domain's authenticate pipeline. The user-declared
+		//    authenticate method enforces the signature + any custom rules and
+		//    throws on rejection (→ mapped to 401 by the caller).
+		invokeAuthenticate(api, authzDomain, authRequest);
+
+		// 6. Server resolves the OWNER as the final principal, then wraps it with
+		//    the token's authorities + type (synthAuthFromPrincipal).
+		Object owner = resolveOwnerPrincipal(api, authzDomain, authz);
+		return synthAuthFromPrincipal(owner, authz, authzDomain);
+	}
+
+	/** Resolves the registered domain whose entity class matches the runtime class of {@code entity}. Null when none. */
+	private static IDomain<?> domainOfEntity(IApi api, Object entity) {
+		if (entity == null || !(api instanceof com.garganttua.api.core.context.Api concrete)) {
+			return null;
+		}
+		IClass<?> cls = IClass.getClass(entity.getClass());
+		for (IDomain<?> d : concrete.getDomains().values()) {
+			if (cls.equals(d.getEntityClass())) {
+				return d;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Resolves the owner principal for a verified token. The token's {@code owned}
+	 * field carries a qualified id {@code ${ownerDomain}:${uuid}}; we split it to
+	 * find the owner domain and look the principal up by its bare uuid.
+	 */
+	private static Object resolveOwnerPrincipal(IApi api, IDomain<?> authzDomain, Object authz) {
+		ObjectAddress ownedAddr = authzDomain.getDomainDefinition().owned();
+		if (ownedAddr == null) {
+			throw new ApiException("verifyAuthorization: authorization domain '" + authzDomain.getDomainName()
+					+ "' is not owned — cannot resolve the owner principal. Declare .owned(field).");
+		}
+		String qualified = readField(authz, ownedAddr);
+		if (qualified == null) {
+			throw new ApiException("verifyAuthorization: authorization has no ownerId set");
+		}
+		String ownerDomainName = OwnerIds.domainOf(qualified);
+		String ownerUuid = OwnerIds.idOf(qualified);
+		IDomain<?> ownerDomain = ownerDomainName != null ? api.getDomain(ownerDomainName).orElse(null) : null;
+		if (ownerDomain == null) {
+			throw new ApiException("verifyAuthorization: owner domain '" + ownerDomainName
+					+ "' (from ownerId '" + qualified + "') is not registered");
+		}
+		ObjectAddress uuidField = ownerDomain.getEntityDefinition() != null
+				? ownerDomain.getEntityDefinition().uuid() : null;
+		if (uuidField == null) {
+			throw new ApiException("verifyAuthorization: owner domain '" + ownerDomain.getDomainName()
+					+ "' has no uuid field");
+		}
+		IFilter filter = Filter.eq(uuidField.toString(), ownerUuid);
+		List<Object> results = ownerDomain.getRepository()
+				.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+		if (results == null || results.isEmpty()) {
+			throw new ApiException("verifyAuthorization: owner not found for ownerId '" + qualified + "'");
+		}
+		return results.get(0);
 	}
 
 	/**

@@ -25,6 +25,52 @@ public interface IApi extends ILifecycle {
 
     boolean isMultiTenant();
 
+    // --- Super-tenant / super-owner registries ---
+    //
+    // The framework keeps a server-side registry of which tenant ids are
+    // super-tenants and which owner ids are super-owners. It is the single
+    // source of truth for super-status: it is populated at startup by scanning
+    // the tenant/owner domains for entities whose boolean superTenant/superOwner
+    // field is true, maintained on create/update of those domains, and consulted
+    // (never the protocol-provided flag) when the framework decides whether a
+    // caller is a super-tenant / super-owner. See the @EntitySuperTenant /
+    // @EntitySuperOwner fields and DomainBuilder.validateSuperFields.
+
+    /** True when {@code tenantId} is a registered super-tenant. Null-safe (false). */
+    boolean isSuperTenant(String tenantId);
+
+    /** True when {@code ownerId} is a registered super-owner. Null-safe (false). */
+    boolean isSuperOwner(String ownerId);
+
+    /** An unmodifiable snapshot of the registered super-tenant ids. */
+    java.util.Set<String> getSuperTenantIds();
+
+    /** An unmodifiable snapshot of the registered super-owner ids. */
+    java.util.Set<String> getSuperOwnerIds();
+
+    /** Adds {@code id} to the super-tenant registry. No-op on null/blank. */
+    void registerSuperTenant(String id);
+
+    /** Removes {@code id} from the super-tenant registry. */
+    void unregisterSuperTenant(String id);
+
+    /** Adds {@code id} to the super-owner registry. No-op on null/blank. */
+    void registerSuperOwner(String id);
+
+    /** Removes {@code id} from the super-owner registry. */
+    void unregisterSuperOwner(String id);
+
+    /**
+     * When true, promoting a tenant to super-tenant at runtime (create/update
+     * with {@code superTenant=true} for an id not already registered) is
+     * rejected. Locked by default; only the startup scan and the auto-created
+     * master tenant may seed super-tenants. Demotion is always allowed.
+     */
+    boolean isSuperTenantCreationLocked();
+
+    /** Owner-side counterpart of {@link #isSuperTenantCreationLocked()}. */
+    boolean isSuperOwnerCreationLocked();
+
     List<ISerializer> getSerializers();
 
     List<IProtocol<?, ?>> getProtocols();

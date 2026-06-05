@@ -102,6 +102,7 @@ class ApiTest extends AbstractCrudIntegrationTest {
         // Domain 1: User (tenant entity with interface)
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .interfasse(FixedSupplierBuilder.of(userInterface))
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")

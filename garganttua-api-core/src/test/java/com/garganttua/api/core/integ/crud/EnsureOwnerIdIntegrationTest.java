@@ -35,6 +35,7 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 		private String tenantId;
 		private String ownerId;
 		private String title;
+		private Boolean superTenant = false;
 
 		public Doc() {}
 		public String getId() { return id; }
@@ -47,6 +48,8 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 		public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
 		public String getTitle() { return title; }
 		public void setTitle(String title) { this.title = title; }
+		public Boolean getSuperTenant() { return superTenant; }
+		public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
 	}
 
 	public static class DocDto {
@@ -55,6 +58,7 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 		private String tenantId;
 		private String ownerId;
 		private String title;
+		private Boolean superTenant;
 
 		public DocDto() {}
 		public String getId() { return id; }
@@ -67,6 +71,8 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 		public void setOwnerId(String ownerId) { this.ownerId = ownerId; }
 		public String getTitle() { return title; }
 		public void setTitle(String title) { this.title = title; }
+		public Boolean getSuperTenant() { return superTenant; }
+		public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
 	}
 
 	private IApi context;
@@ -77,6 +83,7 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 		IApiBuilder builder = newBuilder();
 		builder.domain(IClass.getClass(Doc.class))
 				.tenant(true)
+				.superTenant("superTenant")
 				.owned("ownerId")
 				.entity()
 					.id("id").uuid("uuid").tenantId("tenantId")
@@ -139,6 +146,7 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 		IApiBuilder builder = newBuilder();
 		builder.domain(IClass.getClass(Doc.class))
 				.tenant(true)
+				.superTenant("superTenant")
 				.entity().id("id").uuid("uuid").tenantId("tenantId").up()
 				.dto(IClass.getClass(DocDto.class)).id("id").uuid("uuid").tenantId("tenantId").db(new CapturingDao()).up()
 			.up();

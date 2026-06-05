@@ -42,6 +42,7 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
         private String id;
         private String uuid;
         private String name;
+        private Boolean superTenant = false;
 
         public TenantEntity() {}
 
@@ -51,6 +52,8 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     public static class TenantEntityDto {
@@ -60,6 +63,8 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
         private String uuid;
         @FieldMappingRule(sourceFieldAddress = "name")
         private String name;
+        @FieldMappingRule(sourceFieldAddress = "superTenant")
+        private Boolean superTenant;
 
         public TenantEntityDto() {}
 
@@ -69,6 +74,8 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     private static final String MASTER = "MASTER";
@@ -82,6 +89,7 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
 
         builder.domain(IClass.getClass(TenantEntity.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid")            // <-- no .tenantId(...)
                 .up()

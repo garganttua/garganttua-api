@@ -49,6 +49,8 @@ public abstract class AbstractCrudIntegrationTest {
         private Boolean accountNonLocked = true;
         private Boolean accountNonExpired = true;
         private Boolean credentialsNonExpired = true;
+        private Boolean superTenant = false;
+        private Boolean superOwner = false;
 
         public User() {}
 
@@ -62,6 +64,10 @@ public abstract class AbstractCrudIntegrationTest {
         public void setName(String name) { this.name = name; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
         public Boolean getEnabled() { return enabled; }
         public void setEnabled(Boolean enabled) { this.enabled = enabled; }
         public Boolean getAccountNonLocked() { return accountNonLocked; }
@@ -83,6 +89,10 @@ public abstract class AbstractCrudIntegrationTest {
         private String name;
         @FieldMappingRule(sourceFieldAddress = "email")
         private String email;
+        @FieldMappingRule(sourceFieldAddress = "superTenant")
+        private Boolean superTenant;
+        @FieldMappingRule(sourceFieldAddress = "superOwner")
+        private Boolean superOwner;
 
         public UserDto() {}
 
@@ -96,6 +106,10 @@ public abstract class AbstractCrudIntegrationTest {
         public void setName(String name) { this.name = name; }
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
+        public Boolean getSuperOwner() { return superOwner; }
+        public void setSuperOwner(Boolean superOwner) { this.superOwner = superOwner; }
     }
 
     // ───── Non-tenant entity: Product ─────
@@ -106,6 +120,7 @@ public abstract class AbstractCrudIntegrationTest {
         private String tenantId;
         private String label;
         private double price;
+        private Boolean superTenant = false;
 
         public Product() {}
 
@@ -119,6 +134,8 @@ public abstract class AbstractCrudIntegrationTest {
         public void setLabel(String label) { this.label = label; }
         public double getPrice() { return price; }
         public void setPrice(double price) { this.price = price; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     public static class ProductDto {
@@ -132,6 +149,8 @@ public abstract class AbstractCrudIntegrationTest {
         private String label;
         @FieldMappingRule(sourceFieldAddress = "price")
         private double price;
+        @FieldMappingRule(sourceFieldAddress = "superTenant")
+        private Boolean superTenant;
 
         public ProductDto() {}
 
@@ -145,6 +164,8 @@ public abstract class AbstractCrudIntegrationTest {
         public void setLabel(String label) { this.label = label; }
         public double getPrice() { return price; }
         public void setPrice(double price) { this.price = price; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     // ───── Stub DAO ─────

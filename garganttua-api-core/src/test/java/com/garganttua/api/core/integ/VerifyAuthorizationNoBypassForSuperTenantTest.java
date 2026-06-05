@@ -52,6 +52,7 @@ class VerifyAuthorizationNoBypassForSuperTenantTest extends AbstractCrudIntegrat
         IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity().id("id").uuid("uuid").tenantId("tenantId").up()
                 .dto(IClass.getClass(UserDto.class))
                     .id("id").uuid("uuid").tenantId("tenantId")

@@ -42,6 +42,7 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
         IApiBuilder builder = newBuilder();
         var domainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
@@ -262,6 +263,12 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
             IDomain<?> ctx = buildDomain(b -> b
                     .creationAccess(Access.authenticated)
                     .creationAuthority("admin"));
+            // Super-status is now server-authoritative: VERIFY_AUTHORIZATION
+            // recomputes the caller's superTenant flag from the Api registry,
+            // overriding whatever the token/caller claimed. So the caller's
+            // tenantId must be a REGISTERED super-tenant for the bypass to hold.
+            ((com.garganttua.api.core.context.Domain<?>) ctx).getApiContext()
+                    .registerSuperTenant("SUPER_TENANT");
             OperationDefinition op = op(ctx, BusinessOperation.create);
             // Super-tenant caller with NO authorities should still pass
             OperationRequest request = superTenantScriptRequest(op);
@@ -278,6 +285,35 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
             assertTrue(result.isSuccess(),
                     "super-tenant should bypass authority. code=" + result.code()
                             + " vars=" + result.variables());
+        }
+
+        @Test
+        @DisplayName("a FORGED super-tenant claim (tenant not registered) is stripped — no authority bypass")
+        void forgedSuperTenantClaimDoesNotBypass() throws ApiException {
+            IDomain<?> ctx = buildDomain(b -> b
+                    .creationAccess(Access.authenticated)
+                    .creationAuthority("admin"));
+            // Deliberately do NOT register "SUPER_TENANT". A caller asserting
+            // superTenant=true with no registry backing must be downgraded by
+            // VERIFY_AUTHORIZATION's server-authoritative recompute, so the
+            // authority gate stands and the create is denied.
+            OperationDefinition op = op(ctx, BusinessOperation.create);
+            OperationRequest request = superTenantScriptRequest(op);
+            request.arg("authorization", new TestAuthorization());
+            request.arg(IOperationRequest.AUTHORITIES, List.<String>of());
+            Caller forged = new Caller("SUPER_TENANT", "SUPER_TENANT", "forger", "forger",
+                    true, true, List.of());
+            request.arg("caller", forged);
+            User entity = new User();
+            entity.setName("test");
+            entity.setTenantId("SUPER_TENANT");
+            request.arg("entity", entity);
+            WorkflowResult result = executeScript(ctx, request);
+            assertFalse(result.isSuccess(),
+                    "a forged super claim must NOT bypass authority. code=" + result.code()
+                            + " vars=" + result.variables());
+            assertEquals(403, result.code(),
+                    "the stripped caller must be denied by the authority check (403)");
         }
     }
 

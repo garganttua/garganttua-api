@@ -58,6 +58,7 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         // Refresh-specific fields
         private Instant refreshExpiresAt;
         private Boolean refreshRevoked = false;
+        private Boolean superTenant = false;
 
         public RefreshableTokenEntity() {}
 
@@ -85,6 +86,8 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setRefreshExpiresAt(Instant v) { this.refreshExpiresAt = v; }
         public Boolean getRefreshRevoked() { return refreshRevoked; }
         public void setRefreshRevoked(Boolean v) { this.refreshRevoked = v; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
 
         public byte[] getDataToSign() {
             return (String.valueOf(uuid)
@@ -98,6 +101,7 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         private String id;
         private String uuid;
         private String tenantId;
+        private Boolean superTenant;
         public RefreshableTokenDto() {}
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -105,6 +109,8 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     static class FixedKeyRealmSupplierBuilder implements ISupplierBuilder<IKeyRealm, ISupplier<IKeyRealm>> {
@@ -155,6 +161,7 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         // Token domain — signable + refreshable.
         var tokenDomainBuilder = builder.domain(IClass.getClass(RefreshableTokenEntity.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owned("ownerId")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -180,10 +187,30 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .up()
                 .up();
 
+        // A token verifies itself: its domain is also an authenticator (login =
+        // token uuid). Register the token authentication strategy and wire it.
+        StubTokenAuthentication stubTokenAuth = new StubTokenAuthentication();
+        var tokenAuthBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(stubTokenAuth, IClass.getClass(StubTokenAuthentication.class)));
+        tokenAuthBuilder.authenticate("authenticate")
+                .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+        tokenAuthBuilder.up();
+
+        tokenDomainBuilder.security()
+                .authenticator()
+                    .login("uuid")
+                    .scope(AuthenticatorScope.tenant)
+                    .alwaysEnabled(true)
+                    .authentication(tokenAuthBuilder);
+
         @SuppressWarnings("rawtypes")
         var userDomainBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owner("uuid")
+                .superOwner("superOwner")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

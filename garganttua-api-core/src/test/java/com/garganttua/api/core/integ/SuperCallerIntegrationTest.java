@@ -44,6 +44,7 @@ class SuperCallerIntegrationTest extends AbstractCrudIntegrationTest {
 
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

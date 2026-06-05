@@ -32,6 +32,7 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
         IApiBuilder builder = newBuilder();
         builder.domain(IClass.getClass(Product.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()

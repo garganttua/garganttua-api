@@ -61,6 +61,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private com.garganttua.core.crypto.IKey privateMaterial;
         private Instant expiration;
         private boolean revoked;
+        private Boolean superTenant = false;
 
         public CryptoKey() {}
         public String getId() { return id; }
@@ -85,6 +86,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setExpiration(Instant expiration) { this.expiration = expiration; }
         public boolean isRevoked() { return revoked; }
         public void setRevoked(boolean revoked) { this.revoked = revoked; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     /**
@@ -108,6 +111,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private com.garganttua.core.crypto.IKey privateMaterial;
         private Instant expiration;
         private boolean revoked;
+        private Boolean superTenant;
 
         public CryptoKeyDto() {}
         public String getId() { return id; }
@@ -132,6 +136,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setExpiration(Instant expiration) { this.expiration = expiration; }
         public boolean isRevoked() { return revoked; }
         public void setRevoked(boolean revoked) { this.revoked = revoked; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     /** Signable token entity (reused from the sign integration test pattern). */
@@ -146,6 +152,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private Instant expiresAt;
         private Boolean revoked;
         private byte[] signature;
+        private Boolean superTenant = false;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -167,6 +174,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setRevoked(Boolean revoked) { this.revoked = revoked; }
         public byte[] getSignature() { return signature; }
         public void setSignature(byte[] signature) { this.signature = signature; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
 
         public byte[] getDataToSign() {
             String payload = String.valueOf(uuid)
@@ -181,12 +190,15 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private String id;
         private String uuid;
         private String tenantId;
+        private Boolean superTenant;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
         public String getUuid() { return uuid; }
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public Boolean getSuperTenant() { return superTenant; }
+        public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
 
     /** Wires an API for a given AuthenticatorKeyUsage and returns its handles. */
@@ -223,6 +235,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         // ─── Token domain — signable authorization ───
         var tokenBuilder = builder.domain(IClass.getClass(TokenEntity.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owned("ownerId")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -244,11 +257,30 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     .up()
                 .up();
 
+        // Every authorization (token) domain must also be an authenticator: a
+        // token verifies itself (login = token uuid).
+        StubTokenAuthentication stubTokenAuth = new StubTokenAuthentication();
+        var tokenAuthBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(stubTokenAuth, IClass.getClass(StubTokenAuthentication.class)));
+        tokenAuthBuilder.authenticate("authenticate")
+                .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+        tokenAuthBuilder.up();
+
+        tokenBuilder.security()
+                .authenticator()
+                    .login("uuid")
+                    .scope(AuthenticatorScope.tenant)
+                    .alwaysEnabled(true)
+                    .authentication(tokenAuthBuilder);
+
         // ─── @Key entity domain — declared via the .key() sub-builder ───
         // Marked owned("ownerId") because oneForEach keys are scoped per
         // caller — the framework stamps caller.ownerId() onto this field.
         var keyBuilder = builder.domain(IClass.getClass(CryptoKey.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owned("ownerId")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
@@ -271,7 +303,9 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         // ─── Authenticator (User) wires authorization → token + key → CryptoKey ───
         var userBuilder = builder.domain(IClass.getClass(User.class))
                 .tenant(true)
+                .superTenant("superTenant")
                 .owner("uuid")
+                .superOwner("superOwner")
                 .entity()
                     .id("id").uuid("uuid").tenantId("tenantId")
                 .up()
