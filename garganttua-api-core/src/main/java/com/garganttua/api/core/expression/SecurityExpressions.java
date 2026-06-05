@@ -608,6 +608,64 @@ public class SecurityExpressions {
 		return createAuthorizationEntity(authzDef, authResult, authenticatorDomain, principalUuid, tenantId);
 	}
 
+	@Expression(name = "issueAuthorization",
+			description = "Produces the authorization (token) after a successful authentication — the mint-side "
+					+ "entry point used by CREATE_AUTHORIZATION. When a custom issuer method is declared via "
+					+ ".authorization().issuer(supplier, \"method\").withParam(...), delegates token production (shape + "
+					+ "signature) to that bound method — enabling custom tokens or delegation to an external "
+					+ "authorization server (Keycloak/OAuth2). The method's params are resolved from the runtime context "
+					+ "(authentication result, domainContext, request) by the same supplier mechanism as the verify-side "
+					+ "authenticate method. Otherwise runs the framework's standard minting: build the entity from the "
+					+ "auth result, then sign it. Persistence + transport encoding still run AROUND this in the script.")
+	public static Object issueAuthorization(@Nullable Object authResultObj, @Nullable Object domainContextObj,
+			@Nullable Object request) {
+		Object authResultUnwrapped = unwrapOptional(authResultObj);
+		if (!(authResultUnwrapped instanceof IAuthentication authResult)) {
+			throw new ApiException("issueAuthorization: a successful IAuthentication result is required");
+		}
+		IDomain<?> authenticatorDomain = toDomain(domainContextObj);
+		if (authenticatorDomain == null) {
+			throw new ApiException("issueAuthorization: domain context is required");
+		}
+
+		Object defObj = authorizationDefinition(authenticatorDomain);
+		IMethodBinder<Object> issuerBinder =
+				(defObj instanceof IDomainAuthorizationDefinition authzDef) ? authzDef.issuerMethodBinder() : null;
+
+		// Custom issuer method: the user owns token production (shape + signing).
+		// Symmetric to the verify-side authenticate method — the bound method's
+		// params are resolved from the runtime context by their suppliers, so we
+		// publish authentication / domainContext / request before executing.
+		if (issuerBinder != null) {
+			Object req = unwrapOptional(request);
+			IOperationRequest opReq = (req instanceof IOperationRequest r) ? r : null;
+			IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
+			if (runtimeCtx != null) {
+				runtimeCtx.setVariable("authentication", authResult);
+				runtimeCtx.setVariable("domainContext", authenticatorDomain);
+				if (opReq != null) {
+					runtimeCtx.setVariable("request", opReq);
+				}
+			}
+			Optional<? extends IMethodReturn<?>> result;
+			if (issuerBinder instanceof IContextualMethodBinder<?, ?> contextualBinder) {
+				result = ((IContextualMethodBinder<?, Object>) contextualBinder).execute(runtimeCtx);
+			} else {
+				result = issuerBinder.execute();
+			}
+			Object token = result.isPresent() ? result.get().single() : null;
+			if (token == null) {
+				throw new ApiException("issueAuthorization: the custom issuer method returned no authorization");
+			}
+			return token;
+		}
+
+		// Default: the framework is the authorization server — build + sign.
+		Object entity = createAuthorizationEntity2(authResultObj, domainContextObj);
+		signIfSignable(entity, domainContextObj, request);
+		return entity;
+	}
+
 	/**
 	 * Returns the storable authorization currently valid for this principal in
 	 * the linked authorization domain, or {@code null} when the token is not
@@ -773,6 +831,61 @@ public class SecurityExpressions {
 			description = "Resolves an IKeyRealm for sign/verify. Two modes: (1) supplier — uses the user-provided ISupplierBuilder<IKeyRealm> declared via .key(supplier); (2) persisted — looks up or auto-creates a key entity on the domain declared via .key(domain), scoped by AuthenticatorKeyUsage (oneForAll / oneForTenant / oneForEach). The optional operationRequest argument carries the caller used to scope the realmName in persisted mode.")
 	public static IKeyRealm resolveKeyRealm(@Nullable Object domainContext, @Nullable Object operationRequest) {
 		return resolveKeyRealmAndSigner(domainContext, operationRequest).realm();
+	}
+
+	@Expression(name = "resolveSigningKey",
+			description = "Resolves the KEY OBJECT that SIGNED a given authorization, by reading its signedBy field. "
+					+ "Returns Object, not IKeyRealm: the framework does NOT impose its IKeyRealm shape — the key is "
+					+ "whatever the user declared. Persisted-key mode (signedBy = ${keyDomain}:${uuid}): returns that "
+					+ "EXACT @Key entity (robust to key rotation: the token verifies against the key that actually "
+					+ "signed it). Supplier mode (signedBy = realm name, or no signedBy stamped): returns the object the "
+					+ "configured .key(supplier) provides. Powers SigningKeySupplier; the user's verify method casts it "
+					+ "to their own key type and extracts the verification material however they defined it.")
+	public static Object resolveSigningKey(@Nullable Object authzEntity, @Nullable Object domainContext,
+			@Nullable Object operationRequest) {
+		Object authz = unwrapOptional(authzEntity);
+		IDomain<?> authzDomain = toDomain(domainContext);
+		if (authz == null || authzDomain == null) {
+			throw new ApiException("resolveSigningKey: authorization entity and domain context are required");
+		}
+		Object defObj = authorizationDefinition(authzDomain);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
+			throw new ApiException("resolveSigningKey: no authorization definition on domain '"
+					+ authzDomain.getDomainName() + "'");
+		}
+		ObjectAddress signedByAddr = authzDef.signedBy();
+		String signedBy = signedByAddr != null ? readField(authz, signedByAddr) : null;
+
+		// Persisted-key mode: signedBy carries ${keyDomain}:${uuid} → return that
+		// EXACT @Key entity (the user's own key object), unwrapped of any framework
+		// abstraction. Correct even after the signing key has rotated.
+		if (signedBy != null && OwnerIds.isQualified(signedBy)) {
+			IApi api = apiOf(authzDomain);
+			String keyDomainName = OwnerIds.domainOf(signedBy);
+			String keyUuid = OwnerIds.idOf(signedBy);
+			IDomain<?> keyDomain = (api != null && keyDomainName != null)
+					? api.getDomain(keyDomainName).orElse(null) : null;
+			if (keyDomain == null) {
+				throw new ApiException("resolveSigningKey: key domain '" + keyDomainName
+						+ "' (from signedBy '" + signedBy + "') is not registered");
+			}
+			ObjectAddress uuidField = keyDomain.getEntityDefinition() != null
+					? keyDomain.getEntityDefinition().uuid() : null;
+			if (uuidField == null) {
+				throw new ApiException("resolveSigningKey: key domain '" + keyDomain.getDomainName()
+						+ "' has no uuid field");
+			}
+			IFilter filter = Filter.eq(uuidField.toString(), keyUuid);
+			List<Object> results = keyDomain.getRepository()
+					.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+			if (results == null || results.isEmpty()) {
+				throw new ApiException("resolveSigningKey: signing key not found for signedBy '" + signedBy + "'");
+			}
+			return results.get(0);
+		}
+
+		// Supplier mode (or unstamped): the object the configured .key(supplier) provides.
+		return resolveKeyRealm(domainContext, operationRequest);
 	}
 
 	/**
@@ -1555,38 +1668,41 @@ public class SecurityExpressions {
 					true, authz, null, authz, java.util.List.of(), true, true, true, true);
 		}
 
-		// 2. Require it to be an authenticator (enforced at build time too).
+		// 2. Framework-owned intrinsic checks: expiration + revocation, read from
+		//    the `expiration` / `revoked` field addresses declared on the
+		//    authorization DSL. Run first so an expired/revoked token is rejected
+		//    fast (→ 401), whichever verification path follows.
+		validateAuthorizationFromDefinition(authz, authzDomain);
+
+		// 3. Verify the token — custom OR default, symmetric to the mint side:
+		//    - the token domain declares an authenticator (a user
+		//      @AuthenticationAuthenticate method) → CUSTOM: forge an
+		//      AuthenticationRequest (login = token uuid, credentials = decoded
+		//      token, tenantId = token tenant) and run that authenticate pipeline,
+		//      where the user enforces the signature + any custom rules;
+		//    - otherwise → DEFAULT: the framework verifies the signature itself
+		//      (no-op when the authorization is not signable).
 		DomainDefinition<?> domDef = toDomainDefinition(authzDomain);
 		boolean hasAuthenticator = domDef != null
 				&& domDef.domainSecurityDefinition() != null
 				&& domDef.domainSecurityDefinition().authenticatorDefinition() != null;
-		if (!hasAuthenticator) {
-			throw new ApiException("verifyAuthorization: authorization domain '" + authzDomain.getDomainName()
-					+ "' is not an authenticator. An authorization entity must also be an authenticator "
-					+ "(.security().authenticator()) so it can verify itself.");
+
+		if (hasAuthenticator) {
+			String login = readField(authz, authzDomain.getEntityDefinition().uuid());
+			ObjectAddress tenantAddr = authzDomain.getEntityDefinition().tenantId();
+			String tenantId = tenantAddr != null ? readField(authz, tenantAddr) : null;
+			IAuthenticationRequest authRequest =
+					new com.garganttua.api.core.security.authentication.AuthenticationRequest(login, authz, tenantId);
+			// Throws on rejection (→ mapped to 401 by the caller).
+			invokeAuthenticate(api, authzDomain, authRequest);
+		} else {
+			boolean sigOk = verifyIfSignable(authz, authzDomain, operationRequest);
+			if (!sigOk) {
+				throw new ApiException("Authorization signature verification failed");
+			}
 		}
 
-		// 3. Framework-owned intrinsic checks: expiration + revocation, read from
-		//    the `expiration` / `revoked` field addresses declared on the
-		//    authorization DSL. Run before the user's method so an expired/revoked
-		//    token is rejected fast (→ 401). The SIGNATURE and any custom rules
-		//    are the user's responsibility, enforced in the authenticate method.
-		validateAuthorizationFromDefinition(authz, authzDomain);
-
-		// 4. Forge the authentication request from the token's own fields:
-		//    login = token uuid, credentials = the decoded token, tenantId = token's tenant.
-		String login = readField(authz, authzDomain.getEntityDefinition().uuid());
-		ObjectAddress tenantAddr = authzDomain.getEntityDefinition().tenantId();
-		String tenantId = tenantAddr != null ? readField(authz, tenantAddr) : null;
-		IAuthenticationRequest authRequest =
-				new com.garganttua.api.core.security.authentication.AuthenticationRequest(login, authz, tenantId);
-
-		// 5. Run the token domain's authenticate pipeline. The user-declared
-		//    authenticate method enforces the signature + any custom rules and
-		//    throws on rejection (→ mapped to 401 by the caller).
-		invokeAuthenticate(api, authzDomain, authRequest);
-
-		// 6. Server resolves the OWNER as the final principal, then wraps it with
+		// 4. Server resolves the OWNER as the final principal, then wraps it with
 		//    the token's authorities + type (synthAuthFromPrincipal).
 		Object owner = resolveOwnerPrincipal(api, authzDomain, authz);
 		return synthAuthFromPrincipal(owner, authz, authzDomain);

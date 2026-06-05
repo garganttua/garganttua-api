@@ -886,18 +886,12 @@ public class DomainBuilder<E>
                     + "An authorization entity always belongs to a principal — use .owned(field) on the domain builder.");
         }
 
-        // Rule 1b: An authorization domain MUST also be an authenticator. Token
-        // verification routes through the authenticate pipeline: the decoded
-        // authorization verifies ITSELF (login = its uuid, credentials = the
-        // decoded token), so the domain needs a user-declared
-        // @AuthenticationAuthenticate method to enforce signature / expiration /
-        // revocation. See SecurityExpressions.verifyAuthorization.
-        if (secBuilder.hasAuthorization() && !secBuilder.hasAuthenticator()) {
-            throw new ApiException("Domain '" + this.domainName
-                    + "' has an authorization configuration but is not an authenticator. "
-                    + "A token verifies itself through the authenticate pipeline — add .security().authenticator() "
-                    + "with an authenticate method that validates the token (signature / expiration / revocation).");
-        }
+        // NB: an authorization domain MAY also be an authenticator (declare a
+        // @AuthenticationAuthenticate method on the token to verify it with
+        // custom logic / external signature), but it is NOT required. When the
+        // token domain has no authenticator, verifyAuthorization falls back to
+        // the framework's standard verification (signature + expiration +
+        // revocation). Custom-or-default, symmetric with the mint-side issuer.
 
         // Rule 2: An authenticator domain that produces an authorization MUST be owner
         if (secBuilder.hasAuthenticator()) {

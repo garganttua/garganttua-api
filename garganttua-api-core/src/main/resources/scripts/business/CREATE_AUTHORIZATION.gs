@@ -40,18 +40,14 @@ requirePresent(if(isNull(@output), 1))
 
 // ===== fresh-create branch =====
 
-// Create authorization entity from the auth result and domain context
-output <- createAuthorizationEntity2(@3, @2)
-! => recordCaughtException(@0, @exception) -> 500
-
-// If the authorization is signable, sign it now. The user must either wire an
-// ISupplierBuilder<IKeyRealm> via .key(supplier) or declare a @Key entity
-// domain via .key(domain) on the authenticator's authorization DSL.
-// signIfSignable throws ApiException (mapped to 500) when signable but no
-// key is configured. The operationRequest (@0) is forwarded so the
-// persisted-mode lookup can scope the realm by caller. No-op when not
-// signable.
-signIfSignable(@output, @2, @0)
+// Produce the authorization (token). Default path: the framework is the
+// authorization server — it builds the entity from the auth result and signs it
+// with the configured key (.key(supplier) / .key(domain)). When a custom
+// .authorization().issuer(...) is declared, token production (shape + signature)
+// is delegated to it — a bespoke token, or an external authorization server
+// (Keycloak / OAuth2). Persistence + transport encoding still run below.
+// Mapped to 500 on failure.
+output <- issueAuthorization(@3, @2, @0)
 ! => recordCaughtException(@0, @exception) -> 500
 
 // If the authorization declares a transport encode method (.refreshable().encode(...)),

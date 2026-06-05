@@ -152,6 +152,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private Instant expiresAt;
         private Boolean revoked;
         private byte[] signature;
+        private String signedBy;
         private Boolean superTenant = false;
 
         public String getId() { return id; }
@@ -174,6 +175,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setRevoked(Boolean revoked) { this.revoked = revoked; }
         public byte[] getSignature() { return signature; }
         public void setSignature(byte[] signature) { this.signature = signature; }
+        public String getSignedBy() { return signedBy; }
+        public void setSignedBy(String signedBy) { this.signedBy = signedBy; }
         public Boolean getSuperTenant() { return superTenant; }
         public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
 
@@ -190,6 +193,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private String id;
         private String uuid;
         private String tenantId;
+        private String signedBy;
         private Boolean superTenant;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -197,8 +201,37 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setUuid(String uuid) { this.uuid = uuid; }
         public String getTenantId() { return tenantId; }
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+        public String getSignedBy() { return signedBy; }
+        public void setSignedBy(String signedBy) { this.signedBy = signedBy; }
         public Boolean getSuperTenant() { return superTenant; }
         public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
+    }
+
+    /**
+     * A REAL token verification method: it receives the decoded token (via
+     * DecodedAuthorizationSupplier) and the key that signed it (via
+     * SigningKeySupplier) and checks the signature by hand — the verdict
+     * (authenticated) drives accept/reject; the framework resolves the owner
+     * afterwards.
+     */
+    public static class RealTokenVerifier {
+        // signingKey is supplied as Object — the framework does not impose IKeyRealm;
+        // here it is the user's own @Key entity (CryptoKey), from which we extract
+        // the verification material however WE defined it.
+        public com.garganttua.api.commons.security.authentication.IAuthentication authenticate(
+                Object token, Object signingKey,
+                com.garganttua.api.commons.definition.IAuthenticatorDefinition def) {
+            TokenEntity t = (TokenEntity) token;
+            CryptoKey key = (CryptoKey) signingKey;
+            boolean ok;
+            try {
+                ok = key.getPublicMaterial().verifySignature(t.getSignature(), t.getDataToSign());
+            } catch (Exception e) {
+                ok = false;
+            }
+            return new com.garganttua.api.commons.security.authentication.Authentication(
+                    ok, ok ? t : null, t, "verified", null, true, true, true, true);
+        }
     }
 
     /** Wires an API for a given AuthenticatorKeyUsage and returns its handles. */
@@ -250,6 +283,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                         .authorities("authorities")
                         .expirable("expiresAt")
                         .revokable("revoked")
+                        .signedBy("signedBy")
                         .signable()
                             .signature("signature")
                             .getDataToSign("getDataToSign")
@@ -257,14 +291,15 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     .up()
                 .up();
 
-        // Every authorization (token) domain must also be an authenticator: a
-        // token verifies itself (login = token uuid).
-        StubTokenAuthentication stubTokenAuth = new StubTokenAuthentication();
+        // The token verifies ITSELF with a REAL custom method: it receives the
+        // decoded token (DecodedAuthorizationSupplier) and the key that signed it
+        // (SigningKeySupplier) and checks the signature by hand.
+        RealTokenVerifier realVerifier = new RealTokenVerifier();
         var tokenAuthBuilder = builder.security()
-                .authentication(new FixedSupplierBuilder<>(stubTokenAuth, IClass.getClass(StubTokenAuthentication.class)));
+                .authentication(new FixedSupplierBuilder<>(realVerifier, IClass.getClass(RealTokenVerifier.class)));
         tokenAuthBuilder.authenticate("authenticate")
-                .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
-                .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                .withParam(0, new com.garganttua.api.core.security.authentication.DecodedAuthorizationSupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.SigningKeySupplierBuilder())
                 .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
         tokenAuthBuilder.up();
 
@@ -449,6 +484,84 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             verifier.update(token.getDataToSign());
             assertTrue(verifier.verify(token.getSignature()),
                     "the persisted public material must verify the signature stamped onto the token");
+        }
+
+        @Test
+        @DisplayName("SigningKeySupplier resolves (via signedBy) the EXACT key that verifies the token's signature")
+        void signingKeySupplierResolvesVerifyingKey() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+
+            WorkflowResult result = executeScript(w.userCtx,
+                    authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, result.code());
+            TokenEntity token = (TokenEntity) result.output();
+            assertNotNull(token.getSignature(), "signature must be populated");
+            assertNotNull(token.getSignedBy(), "signedBy must be stamped onto a signed token");
+            assertTrue(com.garganttua.api.commons.caller.OwnerIds.isQualified(token.getSignedBy()),
+                    "persisted-key mode must stamp a qualified ${keyDomain}:${uuid} signedBy; got: " + token.getSignedBy());
+
+            // Resolve the signing KEY OBJECT exactly as SigningKeySupplier does
+            // internally — it returns the user's own @Key entity, not an IKeyRealm.
+            IDomain<?> tokenDomain = w.api.getDomain("tokenentities").orElseThrow();
+            Object keyObj =
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveSigningKey(token, tokenDomain, null);
+            assertNotNull(keyObj, "the supplier must resolve a key object from signedBy");
+            assertInstanceOf(CryptoKey.class, keyObj, "persisted mode must return the user's @Key entity");
+            CryptoKey key = (CryptoKey) keyObj;
+
+            // The resolved key's verification material must validate the REAL signature...
+            assertTrue(key.getPublicMaterial().verifySignature(token.getSignature(), token.getDataToSign()),
+                    "the key resolved from signedBy must verify the token's actual signature");
+
+            // ...and reject a tampered one (false or a thrown crypto error both count as rejection).
+            byte[] tampered = token.getSignature().clone();
+            tampered[tampered.length - 1] ^= 0x01;
+            boolean tamperedVerifies;
+            try {
+                tamperedVerifies = key.getPublicMaterial().verifySignature(tampered, token.getDataToSign());
+            } catch (Exception e) {
+                tamperedVerifies = false;
+            }
+            org.junit.jupiter.api.Assertions.assertFalse(tamperedVerifies,
+                    "a tampered signature must NOT verify against the resolved signing key");
+        }
+
+        @Test
+        @DisplayName("custom verify method receives the token + signing key and validates the signature end-to-end")
+        void customVerifyMethodValidatesSignatureEndToEnd() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+
+            // Mint a real signed token.
+            WorkflowResult mint = executeScript(w.userCtx,
+                    authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, mint.code());
+            TokenEntity token = (TokenEntity) mint.output();
+            assertNotNull(token.getSignature(), "minted token must be signed");
+            assertNotNull(token.getSignedBy(), "minted token must record its signer");
+
+            OperationRequest verifyReq = new OperationRequest(new java.util.HashMap<>());
+
+            // VALID token → RealTokenVerifier receives the token (DecodedAuthorizationSupplier)
+            // + the signing key (SigningKeySupplier), verifies the signature, accepts;
+            // the framework then resolves the owner as the principal.
+            com.garganttua.api.commons.security.authentication.IAuthentication authResult =
+                    com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(w.api, token, verifyReq);
+            assertNotNull(authResult, "a valid signed token must verify");
+            assertTrue(authResult.authenticated(), "the custom method must ACCEPT the valid token");
+            assertNotNull(authResult.principal(), "the framework must resolve the owner as principal");
+
+            // TAMPERED signature → the custom method recomputes verifySignature=false,
+            // the authenticate cascade yields, and verifyAuthorization throws (→ 401).
+            byte[] original = token.getSignature().clone();
+            byte[] tampered = token.getSignature().clone();
+            tampered[tampered.length - 1] ^= 0x01;
+            token.setSignature(tampered);
+            assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(w.api, token, verifyReq),
+                    "a tampered token must be REJECTED by the custom verify method");
+            token.setSignature(original);
         }
     }
 

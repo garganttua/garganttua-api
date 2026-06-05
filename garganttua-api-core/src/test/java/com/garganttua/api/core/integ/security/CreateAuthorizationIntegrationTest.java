@@ -499,9 +499,13 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
-        @DisplayName("authorization domain must ALSO be an authenticator — build throws if not")
-        void authorizationDomainMustBeAuthenticator() {
-            ApiException ex = assertThrows(ApiException.class, () -> {
+        @DisplayName("authorization domain need NOT be an authenticator — verification falls back to the framework standard")
+        void authorizationDomainNeedNotBeAuthenticator() {
+            // Custom-or-default verify (symmetric with the mint-side issuer): a
+            // token domain with NO authenticate method must still build — at
+            // verify time the framework runs its standard checks. So this build
+            // must succeed.
+            assertDoesNotThrow(() -> {
                 CapturingDao dao1 = new CapturingDao();
                 CapturingDao dao2 = new CapturingDao();
 
@@ -515,7 +519,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
                 ab.up();
 
-                // Token domain: owned + authorization but NOT an authenticator → must fail.
+                // Token domain: owned + authorization, NO authenticator — allowed.
                 bldr.domain(IClass.getClass(TokenEntity.class))
                         .tenant(true)
                         .superTenant("superTenant")
@@ -533,7 +537,6 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                             .up()
                         .up();
 
-                // A fully-valid User authenticator (owner) so only the token can fail.
                 var ub = bldr.domain(IClass.getClass(User.class))
                         .tenant(true)
                         .superTenant("superTenant")
@@ -555,9 +558,95 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                 ub.up();
 
                 buildAndStart(bldr);
-            }, "Should throw because the authorization domain is not an authenticator");
-            assertTrue(ex.getMessage().contains("not an authenticator"),
-                    "rejection must name the missing authenticator role; got: " + ex.getMessage());
+            }, "a token domain without an authenticate method must build (default verification applies)");
+        }
+    }
+
+    @Nested
+    @DisplayName("Custom issuer — token production delegated to .authorization().issuer(...)")
+    class CustomIssuer {
+
+        @Test
+        @DisplayName("a custom issuer produces the token; the framework delegates to it instead of its built-in minting")
+        void customIssuerProducesTheToken() throws ApiException {
+            CapturingDao userDao2 = new CapturingDao();
+            CapturingDao tokenDao2 = new CapturingDao();
+
+            // Custom issuer: a declared method (mint-side dual of authenticate)
+            // returns a recognizable token (marker), proving the framework
+            // delegated production rather than running its default minting (which
+            // would generate a uuid and stamp the configured type). The method's
+            // IAuthentication param is injected by AuthenticationSupplierBuilder.
+            IApiBuilder bldr = newBuilder();
+            var ab = bldr.security()
+                    .authentication(new FixedSupplierBuilder<>(new StubAuthentication(), IClass.getClass(StubAuthentication.class)));
+            ab.authenticate("authenticate")
+                    .withParam(0, new com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder())
+                    .withParam(1, new com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder())
+                    .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
+            ab.up();
+
+            // Token domain: owned + authorization with a CUSTOM ISSUER. No
+            // authenticator needed (verification is out of scope here), not
+            // storable/signable so the issued token flows straight to output.
+            var tb = bldr.domain(IClass.getClass(TokenEntity.class))
+                    .tenant(true).superTenant("superTenant").owned("ownerId")
+                    .entity().id("id").uuid("uuid").tenantId("tenantId").up()
+                    .dto(IClass.getClass(TokenDto.class)).id("id").uuid("uuid").tenantId("tenantId").db(tokenDao2).up()
+                    .security()
+                        .authorization()
+                            .type("tokenType")
+                            .issuer(new FixedSupplierBuilder<>(new CustomTokenIssuer(), IClass.getClass(CustomTokenIssuer.class)), "issue")
+                                .withParam(0, new com.garganttua.api.core.security.authorization.AuthenticationSupplierBuilder())
+                                .up()
+                        .up()
+                    .up();
+
+            var ub = bldr.domain(IClass.getClass(User.class))
+                    .tenant(true).superTenant("superTenant").owner("uuid").superOwner("superOwner")
+                    .entity().id("id").uuid("uuid").tenantId("tenantId").up()
+                    .dto(IClass.getClass(UserDto.class)).id("id").uuid("uuid").tenantId("tenantId").db(userDao2).up();
+            ub.security()
+                    .authenticator()
+                        .login("id").scope(AuthenticatorScope.tenant).alwaysEnabled(true)
+                        .authentication(ab)
+                        .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tb)
+                            .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES);
+            ub.up();
+
+            IApi api = buildAndStart(bldr);
+            IDomain<?> userCtx2 = api.getDomain("users").orElseThrow();
+
+            UserDto existing = new UserDto();
+            existing.setId("jane@example.com");
+            existing.setUuid("user-uuid-jane");
+            existing.setTenantId("SUPER_TENANT");
+            userDao2.save(existing);
+
+            WorkflowResult result = executeScript(userCtx2,
+                    authenticateRequest("jane@example.com", "valid-password", "SUPER_TENANT"));
+
+            assertEquals(0, result.code(), "authenticate + custom issue must succeed; vars=" + result.variables());
+            assertInstanceOf(TokenEntity.class, result.output());
+            TokenEntity issued = (TokenEntity) result.output();
+            assertEquals("CUSTOM-ISSUER-UUID", issued.getUuid(),
+                    "the minted token must be the one PRODUCED BY THE CUSTOM ISSUER (delegation), not a framework-minted one");
+            assertEquals("ISSUED-BY-CUSTOM", issued.getTokenType(),
+                    "the custom issuer's marker must survive to the minted output");
+        }
+
+        /**
+         * Method-bound custom issuer: declared via
+         * {@code .issuer(supplier, "issue").withParam(0, AuthenticationSupplierBuilder)}.
+         * Produces a recognizable token from the authentication result.
+         */
+        public static class CustomTokenIssuer {
+            public Object issue(com.garganttua.api.commons.security.authentication.IAuthentication auth) {
+                TokenEntity t = new TokenEntity();
+                t.setUuid("CUSTOM-ISSUER-UUID");
+                t.setTokenType("ISSUED-BY-CUSTOM");
+                return t;
+            }
         }
     }
 

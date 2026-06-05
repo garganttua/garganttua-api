@@ -18,6 +18,11 @@ public class AuthorizationMethodBinderBuilder<E> extends AbstractMethodBinderBui
         super(up, supplier, Set.of());
     }
 
+    public AuthorizationMethodBinderBuilder(IAuthorizationBuilder<E> up, ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName) {
+        super(up, supplier, Set.of());
+        this.method(methodName, null);
+    }
+
     @Override
     protected void doAutoDetection() throws ApiException {
         // No auto-detection for authorization method binders - all configuration is explicit
