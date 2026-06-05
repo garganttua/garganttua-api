@@ -1,99 +1,110 @@
 package com.garganttua.api.core.security.authentication;
 
-import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Optional;
 
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.OwnerIds;
+import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
+import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.core.expression.SecurityExpressions;
+import com.garganttua.api.core.filter.Filter;
 import com.garganttua.core.observability.Logger;
-import com.garganttua.core.reflection.IClass;
-import com.garganttua.core.runtime.IRuntimeContext;
-import com.garganttua.core.supply.IContextualSupplier;
-import com.garganttua.core.supply.SupplyException;
+import com.garganttua.core.reflection.ObjectAddress;
 
 /**
- * Supplies the KEY OBJECT that SIGNED the authorization currently being
- * verified, so a token's {@code @AuthenticationAuthenticate} method can verify
- * its own signature by hand.
+ * Specialisation of {@link KeySupplier} for the VERIFY side: instead of the
+ * current key for the scope, it resolves the EXACT key that SIGNED the token
+ * being verified — read from the token's {@code signedBy} field. So a token's
+ * {@code @AuthenticationAuthenticate} method verifies the signature against the
+ * key that actually produced it, even after that key has rotated.
  *
- * <p>Returns {@code Object}, not a framework {@code IKeyRealm}: the framework
- * does not impose how a key is represented — it is whatever the user declared
- * (typically a {@code @Key} entity). The verify method casts the supplied object
- * to its own key type and extracts the verification material however it sees fit.
+ * <p>Inherits the key business rules (scope / autocreate / rotation) from
+ * {@link KeySupplier} as the fallback when the token carries no qualified
+ * {@code signedBy} (e.g. a stateless self-describing token). Supplies the user's
+ * own key object (the {@code @Key} entity), never a framework {@code IKeyRealm}.
  *
- * <p>Since {@code verifyAuthorization} was unified with the authenticate
- * pipeline, a token verifies itself: the decoded token is the authenticate
- * request's {@code credentials}. This supplier reads that token, looks up the
- * key it was signed with (via its {@code signedBy} field — the EXACT persisted
- * {@code @Key} entity in {@code .key(domain)} mode, robust to key rotation; the
- * object the configured {@code .key(supplier)} provides otherwise) and hands it
- * to the method.
- *
- * <p>Wire it into the token authenticator method with
- * {@code .withParam(i, new SigningKeySupplierBuilder())} (DSL).
+ * <p>Wire it into a token verify method with
+ * {@code .withParam(i, new SigningKeySupplierBuilder())}.
  */
 @SuppressWarnings("rawtypes")
-public class SigningKeySupplier implements IContextualSupplier<Object, IRuntimeContext> {
+public class SigningKeySupplier extends KeySupplier {
 	private static final Logger log = Logger.getLogger(SigningKeySupplier.class);
 
-	private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);
-	private static final IClass<IRuntimeContext> CONTEXT_CLASS = IClass.getClass(IRuntimeContext.class);
-
 	@Override
-	public Type getSuppliedType() {
-		return SUPPLIED_CLASS.getType();
+	public Object resolveKey(IDomain<?> authzDomain, IOperationRequest request) {
+		return resolveKeyForToken(authzDomain, tokenFrom(request), request);
 	}
 
-	@Override
-	public IClass<Object> getSuppliedClass() {
-		return SUPPLIED_CLASS;
+	/**
+	 * Resolves the key for an explicitly supplied token: the EXACT key it was
+	 * signed with ({@code signedBy}), or — when the token carries no qualified
+	 * signedBy — the base "current key for the scope". Lets callers that already
+	 * hold the decoded token (rather than a request) reuse the same logic.
+	 */
+	public Object resolveKeyForToken(IDomain<?> authzDomain, Object token, IOperationRequest request) {
+		if (token != null) {
+			Object exact = resolveBySignedBy(authzDomain, token);
+			if (exact != null) {
+				log.debug("SigningKeySupplier resolved the exact signing key from signedBy");
+				return exact;
+			}
+		}
+		// No qualified signedBy → fall back to the current key for the scope.
+		return super.resolveKey(authzDomain, request);
 	}
 
-	@Override
-	public IClass<IRuntimeContext> getOwnerContextType() {
-		return CONTEXT_CLASS;
-	}
-
-	@Override
-	public Optional<Object> supply(IRuntimeContext context, Object... otherContexts) throws SupplyException {
-		log.trace("Entering SigningKeySupplier.supply");
-
-		if (context == null) {
-			throw new SupplyException("IRuntimeContext cannot be null");
+	/** The decoded token travels as the authenticate request's credentials. */
+	private static Object tokenFrom(IOperationRequest request) {
+		if (request == null) {
+			return null;
 		}
-
-		Optional<?> requestOpt = context.getVariable("request", IClass.getClass(IOperationRequest.class));
-		if (requestOpt.isEmpty()) {
-			throw new SupplyException("Variable 'request' not found in runtime context");
-		}
-		IOperationRequest request = (IOperationRequest) requestOpt.get();
-
-		Optional<?> domainOpt = context.getVariable("domainContext", IClass.getClass(IDomain.class));
-		if (domainOpt.isEmpty()) {
-			throw new SupplyException("Variable 'domainContext' not found in runtime context");
-		}
-		IDomain<?> authzDomain = (IDomain<?>) domainOpt.get();
-
-		// The authorization being verified is the authenticate request's credentials.
 		Object entity = request.arg("entity").orElse(null);
-		if (!(entity instanceof IAuthenticationRequest authReq)) {
-			throw new SupplyException("Variable 'entity' is not an IAuthenticationRequest");
-		}
-		Object authz = authReq.credentials();
-		if (authz == null) {
-			log.debug("SigningKeySupplier: no credentials (authorization) on the request — supplying empty");
-			return Optional.empty();
-		}
+		return (entity instanceof IAuthenticationRequest authReq) ? authReq.credentials() : null;
+	}
 
-		try {
-			Object key = SecurityExpressions.resolveSigningKey(authz, authzDomain, request);
-			log.debug("SigningKeySupplier resolved signing key of type {}", key != null ? key.getClass().getName() : null);
-			return Optional.ofNullable(key);
-		} catch (Exception e) {
-			throw new SupplyException("SigningKeySupplier: failed to resolve the signing key: " + e.getMessage(), e);
+	/**
+	 * Resolves the EXACT persisted {@code @Key} entity named by the token's
+	 * qualified {@code signedBy} ({@code ${keyDomain}:${uuid}}). Returns null when
+	 * the token carries no qualified signedBy (the caller then falls back to the
+	 * base "current key" rules).
+	 */
+	private Object resolveBySignedBy(IDomain<?> authzDomain, Object token) {
+		Object defObj = SecurityExpressions.authorizationDefinition(authzDomain);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
+			return null;
 		}
+		ObjectAddress signedByAddr = authzDef.signedBy();
+		String signedBy = signedByAddr != null ? SecurityExpressions.readField(token, signedByAddr) : null;
+		if (signedBy == null || !OwnerIds.isQualified(signedBy)) {
+			return null;
+		}
+		IApi api = SecurityExpressions.apiOf(authzDomain);
+		String keyDomainName = OwnerIds.domainOf(signedBy);
+		String keyUuid = OwnerIds.idOf(signedBy);
+		IDomain<?> keyDomain = (api != null && keyDomainName != null)
+				? api.getDomain(keyDomainName).orElse(null) : null;
+		if (keyDomain == null) {
+			throw new ApiException("SigningKeySupplier: key domain '" + keyDomainName
+					+ "' (from signedBy '" + signedBy + "') is not registered");
+		}
+		ObjectAddress uuidField = keyDomain.getEntityDefinition() != null
+				? keyDomain.getEntityDefinition().uuid() : null;
+		if (uuidField == null) {
+			throw new ApiException("SigningKeySupplier: key domain '" + keyDomain.getDomainName()
+					+ "' has no uuid field");
+		}
+		IFilter filter = Filter.eq(uuidField.toString(), keyUuid);
+		List<Object> results = keyDomain.getRepository()
+				.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+		if (results == null || results.isEmpty()) {
+			throw new ApiException("SigningKeySupplier: signing key not found for signedBy '" + signedBy + "'");
+		}
+		return results.get(0);
 	}
 
 }

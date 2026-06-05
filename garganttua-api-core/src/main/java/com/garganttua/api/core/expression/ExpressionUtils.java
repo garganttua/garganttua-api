@@ -11,11 +11,11 @@ import com.garganttua.core.reflection.IReflection;
 /**
  * Shared utility methods used by expression classes.
  */
-class ExpressionUtils {
+public class ExpressionUtils {
 
 	static final IReflection REFLECTION = DefaultMapper.reflection();
 
-	static Object unwrapOptional(Object value) {
+	public static Object unwrapOptional(Object value) {
 		if (value instanceof Optional<?> opt) {
 			return opt.orElse(null);
 		}
@@ -34,13 +34,13 @@ class ExpressionUtils {
 		return Optional.ofNullable(type.isInstance(unwrapped) ? type.cast(unwrapped) : null);
 	}
 
-	static IDomain<?> toDomain(Object context) {
+	public static IDomain<?> toDomain(Object context) {
 		return context instanceof Optional<?> opt
 				? (IDomain<?>) opt.get()
 				: (IDomain<?>) context;
 	}
 
-	static DomainDefinition<?> toDomainDefinition(IDomain<?> dc) {
+	public static DomainDefinition<?> toDomainDefinition(IDomain<?> dc) {
 		if (dc instanceof Domain<?> domCtx) {
 			return (DomainDefinition<?>) domCtx.getDomainDefinition();
 		}
