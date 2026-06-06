@@ -95,9 +95,17 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 	public Signing resolveSigning(IDomain<?> authzDomain, IOperationRequest request) {
 		requireAuthzAuthDef(authzDomain);
 		Object supplied = trySupplierMode(authzDomain);
-		if (supplied instanceof IKeyRealm realm) {
-			// Supplier mode has no @Key entity uuid; the realm name is the signer id.
-			return new Signing(realm, realm.getName());
+		if (supplied != null) {
+			if (supplied instanceof IKeyRealm realm) {
+				// Supplier mode has no @Key entity uuid; the realm name is the signer id.
+				return new Signing(realm, realm.getName());
+			}
+			// A .key(supplier) that yields a non-IKeyRealm object: the framework has
+			// no way to sign with it (signing needs IKeyRealm.getKeyForSigning()).
+			throw new ApiException("KeySupplier: the .key(supplier) on domain '" + domainName(authzDomain)
+					+ "' provides a " + supplied.getClass().getName() + ", which is not an IKeyRealm — the framework "
+					+ "cannot sign with it. Supply an IKeyRealm for framework signing, or take over token production "
+					+ "(shape + signature) with a custom .authorization().issuer(...).");
 		}
 		IDomainAuthenticatorAuthorizationKeyDefinition keyConfig = keyConfig(authzDomain);
 		if (keyConfig != null && keyConfig.keyDomain() != null) {
@@ -176,10 +184,12 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 		return new Persisted(newEntity, keyDomain, keyEntDef);
 	}
 
-	/** Mode A: a user {@code .key(supplier)} — returns its object, or null when not configured. */
+	/**
+	 * Mode A: a user {@code .key(supplier)} — returns the supplier's key object
+	 * (ANY shape, not necessarily an IKeyRealm), or null when no supplier is
+	 * configured. The framework does not impose its IKeyRealm shape here.
+	 */
 	protected final Object trySupplierMode(IDomain<?> authzDomain) {
-		IDomainAuthenticatorAuthorizationKeyDefinition keyConfig = keyConfig(authzDomain);
-		// keyConfig holds the persisted-key config; the supplier lives on the authz def.
 		var authzAuthDef = authzAuthDef(authzDomain);
 		if (authzAuthDef == null) {
 			return null;
@@ -189,10 +199,9 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 			return null;
 		}
 		try {
-			@SuppressWarnings({ "unchecked" })
-			ISupplier<? extends IKeyRealm> supplier = (ISupplier) supplierBuilder.build();
-			Optional<? extends IKeyRealm> realmOpt = supplier.supply();
-			return realmOpt.orElseThrow(() -> new ApiException("KeySupplier: key supplier returned empty for domain '"
+			ISupplier<?> supplier = supplierBuilder.build();
+			Optional<?> keyOpt = supplier.supply();
+			return keyOpt.orElseThrow(() -> new ApiException("KeySupplier: key supplier returned empty for domain '"
 					+ domainName(authzDomain) + "'"));
 		} catch (ApiException e) {
 			throw e;

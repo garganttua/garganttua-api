@@ -18,7 +18,7 @@ public class AuthenticatorAuthorizationContext implements IAuthenticatorAuthoriz
     public AuthenticatorAuthorizationContext(int duration, TimeUnit unit, int refreshDuration,
             TimeUnit refreshUnit, IAuthenticatorAuthorizationKeyContext keyContext,
             IDomainBuilder<?> authorizationDomainBuilder,
-            ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm) {
+            ISupplierBuilder<?, ? extends ISupplier<?>> keyRealm) {
         this.authenticatorAuthorizationDefinition = new DomainAuthenticatorAuthorizationDefinition(
                 duration, unit, refreshDuration, refreshUnit,
                 keyContext != null ? keyContext.getAuthenticatorAuthorizationKeyDefinition() : null,

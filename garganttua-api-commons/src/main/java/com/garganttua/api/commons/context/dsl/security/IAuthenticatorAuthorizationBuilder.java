@@ -37,6 +37,6 @@ public interface IAuthenticatorAuthorizationBuilder<E> extends IAutomaticLinkedB
      * <p>Returns the parent builder: this mode has no sub-configuration —
      * the supplier knows what the key is.
      */
-    IAuthenticatorAuthorizationBuilder<E> key(ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealmSupplier);
+    IAuthenticatorAuthorizationBuilder<E> key(ISupplierBuilder<?, ? extends ISupplier<?>> keyRealmSupplier);
 
 }

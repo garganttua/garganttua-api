@@ -26,6 +26,6 @@ public interface IDomainAuthenticatorAuthorizationDefinition {
 	 * runtime for sign/verify operations. {@code null} when no {@code .keyRealm(...)}
 	 * was wired on the authenticator's authorization DSL.
 	 */
-	ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm();
+	ISupplierBuilder<?, ? extends ISupplier<?>> keyRealm();
 
 }

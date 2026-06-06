@@ -27,7 +27,7 @@ public class AuthenticatorAuthorizationBuilder<E> extends
     private TimeUnit refreshUnit;
     private IDomainBuilder keyDomain;
     private AuthenticatorAuthorizationKeyBuilder authenticatorAuthorizationKey;
-    private ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm;
+    private ISupplierBuilder<?, ? extends ISupplier<?>> keyRealm;
     private final IDomainBuilder authorizationDomainBuilder;
 
     public AuthenticatorAuthorizationBuilder(IAuthenticatorBuilder<E> authenticatorBuilder, IDomainBuilder authorizationDomainBuilder) {
@@ -63,7 +63,7 @@ public class AuthenticatorAuthorizationBuilder<E> extends
 
     @Override
     public IAuthenticatorAuthorizationBuilder<E> key(
-            ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealmSupplier) {
+            ISupplierBuilder<?, ? extends ISupplier<?>> keyRealmSupplier) {
         Objects.requireNonNull(keyRealmSupplier, "Key realm supplier cannot be null");
         if (this.keyDomain != null) {
             throw new IllegalStateException(

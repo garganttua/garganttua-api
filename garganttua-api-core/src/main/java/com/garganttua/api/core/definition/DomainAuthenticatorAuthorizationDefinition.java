@@ -16,6 +16,6 @@ public record DomainAuthenticatorAuthorizationDefinition(
 		TimeUnit refreshUnit,
 		IDomainAuthenticatorAuthorizationKeyDefinition keyDefinition,
 		IDomainBuilder<?> authorizationDomainBuilder,
-		ISupplierBuilder<? extends IKeyRealm, ? extends ISupplier<? extends IKeyRealm>> keyRealm) implements IDomainAuthenticatorAuthorizationDefinition {
+		ISupplierBuilder<?, ? extends ISupplier<?>> keyRealm) implements IDomainAuthenticatorAuthorizationDefinition {
 
 }
