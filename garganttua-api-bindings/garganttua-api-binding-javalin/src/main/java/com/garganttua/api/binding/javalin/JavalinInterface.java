@@ -1,16 +1,19 @@
 package com.garganttua.api.binding.javalin;
 
+import java.util.List;
+
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.endpoint.Interface;
+import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
-import com.garganttua.core.reflection.IClass;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.http.Handler;
 
 /**
  * A Javalin-backed {@link IInterface} — the HTTP transport entry point for a domain.
@@ -87,24 +90,59 @@ public class JavalinInterface implements IInterface {
 
 	@Override
 	public void handle(IDomain<?> domain) {
-		String name = domain.getDomainName();
-		IClass<?> entity = domain.getEntityClass();
-		String base = "/" + name;
+		String base = "/" + domain.getDomainName();
 		String one = base + "/{uuid}";
 		Javalin server = app();
 
-		server.post(base, ctx ->
-				dispatch(domain, OperationDefinition.createOneWithStandardSecurity(name, entity), ctx, null));
-		server.get(base, ctx ->
-				dispatch(domain, OperationDefinition.readAllWithStandardSecurity(name, entity), ctx, null));
-		server.get(one, ctx ->
-				dispatch(domain, OperationDefinition.readOneWithStandardSecurity(name, entity), ctx, ctx.pathParam("uuid")));
-		server.put(one, ctx ->
-				dispatch(domain, OperationDefinition.updateOneWithStandardSecurity(name, entity), ctx, ctx.pathParam("uuid")));
-		server.delete(one, ctx ->
-				dispatch(domain, OperationDefinition.deleteOneWithStandardSecurity(name, entity), ctx, ctx.pathParam("uuid")));
-		server.delete(base, ctx ->
-				dispatch(domain, OperationDefinition.deleteAllWithStandardSecurity(name, entity), ctx, null));
+		// Resolve each route's operation from the domain's CONFIGURED operations so the
+		// access/authority the request carries matches what the domain declared (e.g.
+		// readAllAccess(anonymous)). Hardcoding *WithStandardSecurity would send
+		// Access.tenant/authority=true regardless, and the verify stages would reject an
+		// anonymous HTTP caller — silently skipping the business stage. A route is
+		// registered only when its operation is actually enabled on the domain.
+		List<OperationDefinition> configured = domain.getDomainDefinition().operations();
+
+		route(server, HttpVerb.POST,   base, domain, configured, BusinessOperation.create,    false);
+		route(server, HttpVerb.GET,    base, domain, configured, BusinessOperation.readAll,   false);
+		route(server, HttpVerb.GET,    one,  domain, configured, BusinessOperation.readOne,   true);
+		route(server, HttpVerb.PUT,    one,  domain, configured, BusinessOperation.update,    true);
+		route(server, HttpVerb.DELETE, one,  domain, configured, BusinessOperation.deleteOne, true);
+		route(server, HttpVerb.DELETE, base, domain, configured, BusinessOperation.deleteAll, false);
+	}
+
+	private enum HttpVerb { GET, POST, PUT, DELETE }
+
+	/**
+	 * Registers one route, but only when the domain actually exposes {@code bo} (the
+	 * matching {@link OperationDefinition} is present in its configured operations).
+	 * The dispatched operation is the domain's own — carrying its declared
+	 * access/authority — never a synthesized standard-security one.
+	 */
+	private void route(Javalin server, HttpVerb verb, String path, IDomain<?> domain,
+			List<OperationDefinition> configured, BusinessOperation bo, boolean hasUuid) {
+		OperationDefinition operation = findOperation(configured, bo);
+		if (operation == null) {
+			return; // operation not enabled on this domain — no route
+		}
+		Handler handler = ctx -> dispatch(domain, operation, ctx, hasUuid ? ctx.pathParam("uuid") : null);
+		switch (verb) {
+			case GET -> server.get(path, handler);
+			case POST -> server.post(path, handler);
+			case PUT -> server.put(path, handler);
+			case DELETE -> server.delete(path, handler);
+		}
+	}
+
+	private static OperationDefinition findOperation(List<OperationDefinition> operations, BusinessOperation bo) {
+		if (operations == null) {
+			return null;
+		}
+		for (OperationDefinition op : operations) {
+			if (op.getBusinessOperation() == bo) {
+				return op;
+			}
+		}
+		return null;
 	}
 
 	/**

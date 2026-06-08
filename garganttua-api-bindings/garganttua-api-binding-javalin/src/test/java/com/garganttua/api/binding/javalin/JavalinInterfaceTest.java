@@ -1,6 +1,8 @@
 package com.garganttua.api.binding.javalin;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -21,6 +24,7 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.repository.IRepository;
@@ -58,8 +62,25 @@ class JavalinInterfaceTest {
 	 * Records the dispatched request and answers via the protocol. Every method not
 	 * exercised by the interface is a harmless stub.
 	 */
+	static IClass<?> fakeEntityClass() {
+		return IClass.getClass(FakeEntity.class);
+	}
+
+	/** The full standard CRUD operation set a domain would expose by default. */
+	static List<OperationDefinition> standardOperations() {
+		IClass<?> e = fakeEntityClass();
+		return List.of(
+				OperationDefinition.createOneWithStandardSecurity("users", e),
+				OperationDefinition.readAllWithStandardSecurity("users", e),
+				OperationDefinition.readOneWithStandardSecurity("users", e),
+				OperationDefinition.updateOneWithStandardSecurity("users", e),
+				OperationDefinition.deleteOneWithStandardSecurity("users", e),
+				OperationDefinition.deleteAllWithStandardSecurity("users", e));
+	}
+
 	static class CapturingDomain implements IDomain<Object> {
 		final JavalinProtocol protocol = new JavalinProtocol();
+		final IDomainDefinition<Object> definition;
 		volatile OperationDefinition lastOperation;
 		volatile String lastUuid;
 		volatile Object lastRawRequest;
@@ -68,6 +89,12 @@ class JavalinInterfaceTest {
 		volatile byte[] lastBody;
 		volatile ICaller lastCaller;
 		volatile int invokeCount;
+
+		@SuppressWarnings("unchecked")
+		CapturingDomain(List<OperationDefinition> operations) {
+			this.definition = mock(IDomainDefinition.class);
+			when(this.definition.operations()).thenReturn(operations);
+		}
 
 		@Override public String getDomainName() { return "users"; }
 		@Override @SuppressWarnings("unchecked")
@@ -97,8 +124,9 @@ class JavalinInterfaceTest {
 
 		@Override public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) { return invoke(request); }
 
+		@Override public IDomainDefinition<Object> getDomainDefinition() { return this.definition; }
+
 		// --- unused stubs ---
-		@Override public IDomainDefinition<Object> getDomainDefinition() { return null; }
 		@Override public IRepository getRepository() { return null; }
 		@Override public IWorkflow getWorkflow() { return null; }
 		@Override public IRequestBuilder request() { return null; }
@@ -134,8 +162,16 @@ class JavalinInterfaceTest {
 
 	@BeforeEach
 	void setUp() {
+		startWith(standardOperations());
+	}
+
+	/** (Re)starts the interface attached to a domain exposing the given configured operations. */
+	private void startWith(List<OperationDefinition> operations) {
+		if (iface != null && iface.isStarted()) {
+			iface.onStop();
+		}
 		port = freePort();
-		domain = new CapturingDomain();
+		domain = new CapturingDomain(operations);
 		iface = new JavalinInterface(port);
 		iface.handle(domain);
 		iface.onInit();
@@ -293,6 +329,53 @@ class JavalinInterfaceTest {
 			assertEquals("T-42", domain.lastCaller.tenantId());
 			assertEquals("C-7", domain.lastCaller.callerId());
 			assertFalse(domain.lastCaller.superTenant(), "transport must never assert superTenant");
+		}
+	}
+
+	@Nested
+	@DisplayName("Configured operations (regression: HTTP reads must use the domain's own op)")
+	class ConfiguredOperations {
+
+		@Test
+		@DisplayName("dispatches the domain's CONFIGURED operation — its access, not a hardcoded standard one")
+		void dispatchesConfiguredOperation() throws Exception {
+			IClass<?> e = fakeEntityClass();
+			// readAll configured as ANONYMOUS (as garganttua-api-example does); everything
+			// else standard. The interface must dispatch THIS op, not readAllWithStandardSecurity.
+			OperationDefinition anonymousReadAll =
+					OperationDefinition.readAll("users", e, false, null, Access.anonymous);
+			startWith(List.of(
+					OperationDefinition.createOneWithStandardSecurity("users", e),
+					anonymousReadAll));
+
+			send("GET", "/users", null);
+
+			assertNotNull(domain.lastOperation, "the read must reach the domain");
+			assertEquals(BusinessOperation.readAll, domain.lastOperation.getBusinessOperation());
+			assertEquals(Access.anonymous, domain.lastOperation.access(),
+					"the dispatched op must carry the domain's configured access, not Access.tenant");
+			assertFalse(domain.lastOperation.authority(),
+					"the dispatched op must carry the domain's configured authority flag");
+			assertSame(anonymousReadAll, domain.lastOperation,
+					"the interface must hand through the very configured OperationDefinition");
+		}
+
+		@Test
+		@DisplayName("a CRUD operation the domain does not expose gets no route (404)")
+		void unconfiguredOperationHasNoRoute() throws Exception {
+			IClass<?> e = fakeEntityClass();
+			// Only readAll is enabled — readOne / create / … are not configured.
+			startWith(List.of(OperationDefinition.readAllWithStandardSecurity("users", e)));
+
+			assertEquals(200, send("GET", "/users", null).statusCode(),
+					"the enabled readAll route must exist");
+
+			HttpResponse<String> readOne = send("GET", "/users/x-1", null);
+			assertEquals(404, readOne.statusCode(),
+					"an unconfigured readOne must have no route at all");
+			HttpResponse<String> create = send("POST", "/users", "body");
+			assertEquals(404, create.statusCode(),
+					"an unconfigured create must have no route at all");
 		}
 	}
 }
