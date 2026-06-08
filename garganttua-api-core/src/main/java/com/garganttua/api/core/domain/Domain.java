@@ -19,14 +19,19 @@ import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.IDtoContext;
 import com.garganttua.api.commons.context.IEntityContext;
 import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.event.IEvent;
 import com.garganttua.api.commons.event.IEventPublisher;
 import com.garganttua.api.commons.endpoint.IInterface;
+import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.repository.IRepository;
+import com.garganttua.api.commons.service.ArgKey;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IRequestBuilder;
+import com.garganttua.api.core.event.Event;
+import com.garganttua.api.core.event.EventPublisherObserver;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.core.lifecycle.AbstractLifecycle;
 import com.garganttua.core.lifecycle.ILifecycle;
@@ -159,6 +164,10 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         // 3. Build interfaces, pass domain context (with access rules), and init them
         initializeInterfaces();
 
+        // 4. Bridge each .events(...) publisher onto the observable registry so
+        //    business IEvents flow out through the same fan-out as telemetry.
+        initializeEvents();
+
         return this;
     }
 
@@ -168,6 +177,30 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         doForAllInterfaces(IInterface::onInit);
 
         log.debug("Initialized {} interfaces for domain {}", this.interfaces.size(),
+                this.domainDefinition.domainName());
+    }
+
+    /**
+     * Subscribes one {@link EventPublisherObserver} per {@code .events(...)}
+     * registration onto this domain's observable registry. Each resolved
+     * {@link IEventPublisher} then receives the {@link IEvent} that
+     * {@link #invoke(IOperationRequest, WorkflowExecutionOptions)} attaches to the
+     * End/Error observable event. Registering a publisher is what flips the domain
+     * onto the observability slow path (via {@code hasObservers()}), so a domain
+     * with no events and no {@code @Observer} pays nothing.
+     */
+    private void initializeEvents() {
+        for (ISupplier<IEventPublisher> supplier : this.events) {
+            try {
+                IEventPublisher publisher = supplier.supply()
+                        .orElseThrow(() -> new ApiException("Event publisher supplier returned empty Optional"));
+                this.observableRegistry.addObserver(new EventPublisherObserver(publisher));
+            } catch (Exception e) {
+                throw new ApiException("Failed to initialize event publisher for domain "
+                        + this.domainDefinition.domainName(), e);
+            }
+        }
+        log.debug("Registered {} event publisher(s) as observers for domain {}", this.events.size(),
                 this.domainDefinition.domainName());
     }
 
@@ -421,12 +454,13 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         java.util.UUID executionUuid = UuidCreator.getTimeOrderedEpoch();
         request.arg(IOperationRequest.EXECUTION_UUID, executionUuid);
 
-        com.garganttua.api.commons.operation.OperationDefinition operation =
-                ((java.util.Optional<com.garganttua.api.commons.operation.OperationDefinition>)
+        OperationDefinition operation =
+                ((java.util.Optional<OperationDefinition>)
                         request.arg(IOperationRequest.OPERATION)).orElse(null);
         String source = "api:operation:" + this.domainDefinition.domainName()
                 + ":" + (operation != null ? operation.toString() : "<no-op>");
 
+        java.util.Date inDate = new java.util.Date();
         try (var scope = ObservabilityEmitter.open(this.observableRegistry, executionUuid)) {
             scope.fireStart(source);
             try {
@@ -435,13 +469,61 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                         java.time.Duration.ofNanos(System.nanoTime() - startNanos);
                 Integer code = response.getResponseCode() != null
                         ? response.getResponseCode().ordinal() : null;
-                scope.fireEnd(source, code);
+                // Carry the rich business IEvent as the End-event payload so the
+                // .events(...) publishers (bridged as observers) receive it.
+                scope.fireEnd(source, code, buildEvent(request, operation, inDate, response, null));
                 return response.withProcessingTime(duration);
             } catch (RuntimeException e) {
-                scope.fireError(source, e);
+                scope.fireError(source, e, buildEvent(request, operation, inDate, null, e));
                 throw e;
             }
         }
+    }
+
+    /** Arg under which the pipeline stashes the resolved {@link ICaller}. */
+    private static final ArgKey<ICaller> CALLER_ARG =
+            ArgKey.of("caller", com.garganttua.core.reflection.IClass.getClass(ICaller.class));
+
+    /** Arg under which the operation's input entity is carried (the business stages read "entity"). */
+    private static final ArgKey<Object> ENTITY_ARG =
+            ArgKey.of("entity", com.garganttua.core.reflection.IClass.getClass(Object.class));
+
+    /**
+     * Assembles the business {@link IEvent} for one invocation from the request
+     * args (body, caller, tenant/owner) and the outcome (a returned
+     * {@link OperationResponse}, or a thrown {@link Throwable}). Built only on the
+     * observability slow path — callers that registered neither {@code .events(...)}
+     * nor an {@code @Observer} never reach here.
+     */
+    private IEvent buildEvent(IOperationRequest request, OperationDefinition operation,
+            java.util.Date inDate, OperationResponse response, Throwable thrown) {
+        Event event = new Event();
+        event.setOperation(operation);
+        event.setInDate(inDate);
+        event.setOutDate(new java.util.Date());
+        event.setIn(request.arg(ENTITY_ARG).orElse(request.arg(IOperationRequest.BODY).orElse(null)));
+        event.setTenantId(request.arg(IOperationRequest.TENANT_ID).orElse(null));
+        event.setOwnerId(request.arg(IOperationRequest.OWNER_ID).orElse(null));
+        event.setUserId(request.arg(IOperationRequest.CALLER_ID).orElse(null));
+        event.setCaller(request.arg(CALLER_ARG).orElse(null));
+
+        if (response != null) {
+            event.setCode(response.getResponseCode());
+            Object out = response.getResponse();
+            if (out instanceof Throwable t) {
+                // Handled failure: the response carries the throwable, not a payload.
+                event.setExceptionMessage(t.getMessage());
+                event.setExceptionCode(response.getResponseCode() != null
+                        ? response.getResponseCode().ordinal() : -1);
+            } else {
+                event.setOut(out);
+            }
+        }
+        if (thrown != null) {
+            event.setExceptionMessage(thrown.getMessage());
+            event.setExceptionCode(-1);
+        }
+        return event;
     }
 
     private OperationResponse doInvoke(IOperationRequest request, WorkflowExecutionOptions options) {
