@@ -3,8 +3,8 @@ package com.garganttua.api.core.security.authentication;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
-import com.garganttua.api.core.context.Domain;
-import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.core.reflection.IClass;

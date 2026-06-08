@@ -27,7 +27,7 @@ import com.garganttua.api.commons.entity.annotations.EntityTenant;
 import com.garganttua.api.commons.entity.annotations.EntityTenantId;
 import com.garganttua.api.commons.entity.annotations.EntityUuid;
 import com.garganttua.api.commons.operation.BusinessOperation;
-import com.garganttua.api.core.context.Api;
+import com.garganttua.api.core.api.Api;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.core.reflection.IClass;
 
@@ -119,7 +119,7 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
         @DisplayName("scanner registers both auto-detected entities as domains with the correct DTOs")
         void registersDomains() throws ApiException {
             IApiBuilder builder = newBuilder();
-            ((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
+            ((com.garganttua.api.core.api.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
             ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 
             // The scanner builds the domain shape but doesn't supply a DAO; we
@@ -165,7 +165,7 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
         @DisplayName("hiddenable field address is captured from @EntityHiddenable(hidden=...)")
         void hiddenableWired() throws ApiException {
             IApiBuilder builder = newBuilder();
-            ((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
+            ((com.garganttua.api.core.api.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
             ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
             builder.domain(IClass.getClass(AutoTenant.class))
                     .dto(IClass.getClass(AutoTenantDto.class)).db(new CapturingDao()).up().up();
@@ -210,7 +210,7 @@ class EntityAnnotationScanTest extends AbstractCrudIntegrationTest {
         @DisplayName("withPackage but no autoDetect: scanner is not invoked")
         void noAutoDetectIsNoOp() throws ApiException {
             IApiBuilder builder = newBuilder();
-            ((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
+            ((com.garganttua.api.core.api.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.entityscan");
             builder.domain(IClass.getClass(User.class))
                     .tenant(true)
                     .superTenant("superTenant")

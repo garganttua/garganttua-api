@@ -23,8 +23,8 @@ import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDe
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationKeyDefinition;
 import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
 import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
-import com.garganttua.api.core.context.Domain;
-import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.core.crypto.IKey;
 import com.garganttua.core.crypto.IKeyRealm;

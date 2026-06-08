@@ -97,7 +97,7 @@ class WorkflowObserverAttachIntegrationTest extends AbstractCrudIntegrationTest 
 				.withScanner(new ReflectionsAnnotationScanner());
 		IClass.setReflection(reflectionBuilder.build());
 
-		IApiBuilder builder = com.garganttua.api.core.builder.ApiBuilder.builder();
+		IApiBuilder builder = com.garganttua.api.core.api.ApiBuilder.builder();
 
 		IInjectionContextBuilder injectionContextBuilder = InjectionContextBuilder.builder()
 				.childContextFactory(new RuntimeContextFactory());

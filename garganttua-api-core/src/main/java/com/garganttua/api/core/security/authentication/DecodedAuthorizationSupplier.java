@@ -1,4 +1,5 @@
 package com.garganttua.api.core.security.authentication;
+import com.garganttua.api.core.security.key.DomainKeySupplier;
 
 import java.lang.reflect.Type;
 import java.util.Optional;

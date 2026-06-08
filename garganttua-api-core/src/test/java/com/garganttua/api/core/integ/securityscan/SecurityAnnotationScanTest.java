@@ -10,7 +10,7 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.security.annotations.Authentication;
 import com.garganttua.api.commons.security.annotations.AuthenticationAuthenticate;
-import com.garganttua.api.core.builder.scan.SecurityAnnotationScanner;
+import com.garganttua.api.core.security.SecurityAnnotationScanner;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.core.reflection.IClass;
 

@@ -11,8 +11,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.builder.ApiBuilder;
-import com.garganttua.api.core.builder.DomainBuilder;
+import com.garganttua.api.core.api.ApiBuilder;
+import com.garganttua.api.core.domain.DomainBuilder;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;

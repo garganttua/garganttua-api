@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.api.core.builder.ApiBuilder;
+import com.garganttua.api.core.api.ApiBuilder;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;

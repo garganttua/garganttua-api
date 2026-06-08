@@ -34,7 +34,7 @@ import com.garganttua.api.commons.security.annotations.KeyForSigning;
 import com.garganttua.api.commons.security.annotations.KeyName;
 import com.garganttua.api.commons.security.annotations.KeyRevoked;
 import com.garganttua.api.commons.security.annotations.KeySignatureAlgorithm;
-import com.garganttua.api.core.context.Api;
+import com.garganttua.api.core.api.Api;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.core.reflection.IClass;
 
@@ -162,7 +162,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
     @DisplayName("@Key on the class + 7 field annotations populate every address on IDomainKeyDefinition")
     void allFieldsWiredFromAnnotations() throws ApiException {
         IApiBuilder builder = newBuilder();
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.keyscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 
@@ -225,7 +225,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
     @DisplayName("@Key without field annotations materializes a keyDefinition with all-null addresses")
     void typeMarkerWithoutFieldMarkers() throws ApiException {
         IApiBuilder builder = newBuilder();
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.keyscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 
@@ -272,7 +272,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
     @DisplayName("entity without @Key produces keyDefinition() == null — non-key domains are unchanged")
     void entityWithoutKeyAnnotationIsNotAKeyDomain() throws ApiException {
         IApiBuilder builder = newBuilder();
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.keyscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 
@@ -321,7 +321,7 @@ class KeyAnnotationScanTest extends AbstractCrudIntegrationTest {
         // SignAuthorizationIntegrationTest scaffolding minimally — just enough
         // to drive resolveKeyRealm.
         IApiBuilder builder = newBuilder();
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.keyscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 

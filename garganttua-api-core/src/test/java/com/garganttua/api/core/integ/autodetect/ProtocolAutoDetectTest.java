@@ -63,7 +63,7 @@ class ProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 		@DisplayName("autoDetect + withPackage picks up @Protocol classes")
 		void picksUpAnnotated() throws ApiException {
 			IApiBuilder builder = newBuilder();
-			((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.autodetect");
+			((com.garganttua.api.core.api.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.autodetect");
 			((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 			builder.includeFrameworkPackages(false); // test asserts "no user packages → 0 discovered" — opt out of the framework asset scan
 			builder.domain(IClass.getClass(User.class))
@@ -93,7 +93,7 @@ class ProtocolAutoDetectTest extends AbstractCrudIntegrationTest {
 		@DisplayName("without autoDetect, no protocol is registered even when packages are configured")
 		void noAutoDetectNoRegistration() throws ApiException {
 			IApiBuilder builder = newBuilder();
-			((com.garganttua.api.core.builder.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.autodetect");
+			((com.garganttua.api.core.api.ApiBuilder) builder).withPackage("com.garganttua.api.core.integ.autodetect");
 			// autoDetect NOT enabled
 			builder.domain(IClass.getClass(User.class))
 					.tenant(true)

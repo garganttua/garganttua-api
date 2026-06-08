@@ -57,6 +57,6 @@ public interface IAuthenticatorBuilder<E> extends IAutomaticLinkedBuilder<IAuthe
      * mint-side {@code .authorization(issuer, "method")}. Call {@code .up()} on the
      * returned sub-builders to come back to this authenticator.
      */
-    IAuthenticatorAuthentication<E> authentication(IAuthenticationBuilder authentication) throws ApiException;
+    IAuthenticatorAuthenticationBuilder<E> authentication(IAuthenticationBuilder authentication) throws ApiException;
 
 }

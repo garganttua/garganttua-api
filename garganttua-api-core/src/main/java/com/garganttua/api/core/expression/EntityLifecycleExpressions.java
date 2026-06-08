@@ -7,9 +7,9 @@ import java.util.Set;
 
 import org.javatuples.Pair;
 
-import com.garganttua.api.core.context.Domain;
-import com.garganttua.api.core.context.EntityUpdater;
-import com.garganttua.api.core.definition.EntityDefinition;
+import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.entity.EntityUpdater;
+import com.garganttua.api.core.entity.EntityDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;

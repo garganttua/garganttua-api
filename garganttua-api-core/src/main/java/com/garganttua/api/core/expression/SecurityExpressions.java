@@ -10,8 +10,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.garganttua.api.core.caller.Caller;
-import com.garganttua.api.core.context.Domain;
-import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.commons.ApiException;
@@ -861,7 +861,7 @@ public class SecurityExpressions {
 		IOperationRequest req = (unwrapOptional(operationRequest) instanceof IOperationRequest r) ? r : null;
 		// Single source of truth: DomainKeySupplier (extends KeySupplier) resolves
 		// the EXACT key from signedBy, falling back to KeySupplier's current-key rules.
-		return new com.garganttua.api.core.security.authentication.DomainKeySupplier()
+		return new com.garganttua.api.core.security.key.DomainKeySupplier()
 				.resolveKeyForToken(authzDomain, token, req);
 	}
 
@@ -881,8 +881,8 @@ public class SecurityExpressions {
 	private static ResolvedKeyRealm resolveKeyRealmAndSigner(@Nullable Object domainContext, @Nullable Object operationRequest) {
 		IDomain<?> authzDomain = toDomain(domainContext);
 		IOperationRequest req = (unwrapOptional(operationRequest) instanceof IOperationRequest r) ? r : null;
-		com.garganttua.api.core.security.authentication.KeySupplier.Signing s =
-				new com.garganttua.api.core.security.authentication.KeySupplier().resolveSigning(authzDomain, req);
+		com.garganttua.api.core.security.key.KeySupplier.Signing s =
+				new com.garganttua.api.core.security.key.KeySupplier().resolveSigning(authzDomain, req);
 		return new ResolvedKeyRealm(s.realm(), s.signerId());
 	}
 
@@ -1456,7 +1456,7 @@ public class SecurityExpressions {
 		if (target == null) {
 			throw new ApiException("Target entity class is null");
 		}
-		if (api instanceof com.garganttua.api.core.context.Api concrete) {
+		if (api instanceof com.garganttua.api.core.api.Api concrete) {
 			for (IDomain<?> domain : concrete.getDomains().values()) {
 				IClass<?> domainEntity = domain.getEntityClass();
 				if (domainEntity != null && domainEntity.equals(target)) {
@@ -1545,7 +1545,7 @@ public class SecurityExpressions {
 
 	/** Resolves the registered domain whose entity class matches the runtime class of {@code entity}. Null when none. */
 	private static IDomain<?> domainOfEntity(IApi api, Object entity) {
-		if (entity == null || !(api instanceof com.garganttua.api.core.context.Api concrete)) {
+		if (entity == null || !(api instanceof com.garganttua.api.core.api.Api concrete)) {
 			return null;
 		}
 		IClass<?> cls = IClass.getClass(entity.getClass());
@@ -1630,7 +1630,7 @@ public class SecurityExpressions {
 		IClass<?> targetClass = AuthorizationProtocolExpressions
 				.resolveAuthorizationTargetClass(operationRequest, authz);
 		if (targetClass == null || api == null) return null;
-		if (api instanceof com.garganttua.api.core.context.Api concrete) {
+		if (api instanceof com.garganttua.api.core.api.Api concrete) {
 			for (IDomain<?> domain : concrete.getDomains().values()) {
 				IClass<?> domainEntity = domain.getEntityClass();
 				if (domainEntity != null && domainEntity.equals(targetClass)) {

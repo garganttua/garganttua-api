@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.garganttua.api.core.context.Api;
+import com.garganttua.api.core.api.Api;
 import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.api.core.security.authentication.AuthenticationRequest;
 import com.garganttua.api.commons.security.authentication.Authentication;

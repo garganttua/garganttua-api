@@ -168,7 +168,7 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
     static void warmUpReflectionsScanner() throws Exception {
         IApiBuilder warmup = newBaseBuilder();
         warmup.multiTenant(false);
-        ((com.garganttua.api.core.builder.ApiBuilder) warmup)
+        ((com.garganttua.api.core.api.ApiBuilder) warmup)
                 .withPackage("com.garganttua.api.core.integ.cryptoscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) warmup).autoDetect(true);
         warmup.domain(IClass.getClass(CryptoUser.class))
@@ -202,7 +202,7 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
     private IApi buildApi() throws ApiException {
         IApiBuilder builder = newBaseBuilder();
         builder.multiTenant(false);
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.cryptoscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 
@@ -236,7 +236,7 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
 
     private IDomainAuthenticatorAuthorizationKeyDefinition keyDef(IApi api) {
         IDomain<?> userDomain = api.getDomain("cryptousers").orElseThrow();
-        var secDef = ((com.garganttua.api.core.definition.DomainDefinition<?>) userDomain.getDomainDefinition())
+        var secDef = ((com.garganttua.api.core.domain.DomainDefinition<?>) userDomain.getDomainDefinition())
                 .domainSecurityDefinition();
         assertNotNull(secDef, "user domain should have a security definition");
         assertNotNull(secDef.authenticatorDefinition(), "scanner should produce an authenticator definition");
@@ -293,7 +293,7 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
         void alwaysEnabledMarkerIsPropagated() throws ApiException {
             IApi api = buildApi();
             IDomain<?> userDomain = api.getDomain("cryptousers").orElseThrow();
-            var secDef = ((com.garganttua.api.core.definition.DomainDefinition<?>) userDomain.getDomainDefinition())
+            var secDef = ((com.garganttua.api.core.domain.DomainDefinition<?>) userDomain.getDomainDefinition())
                     .domainSecurityDefinition();
             assertEquals(true, secDef.authenticatorDefinition().alwaysEnabled(),
                     "@AuthenticatorAlwaysEnabled on the type should flip alwaysEnabled to true");
@@ -383,7 +383,7 @@ class SecurityAnnotationScanCryptoTest extends AbstractCrudIntegrationTest {
             // we only inspect the PlainUser one here.
             IApi api = buildApi();
             IDomain<?> userDomain = api.getDomain("plainusers").orElseThrow();
-            var secDef = ((com.garganttua.api.core.definition.DomainDefinition<?>) userDomain.getDomainDefinition())
+            var secDef = ((com.garganttua.api.core.domain.DomainDefinition<?>) userDomain.getDomainDefinition())
                     .domainSecurityDefinition();
             assertNull(secDef.authenticatorDefinition().authorizationDefinition().keyDefinition(),
                     "without authorizationKey, the key sub-builder should not be created");

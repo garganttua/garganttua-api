@@ -9,7 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.context.Api;
+import com.garganttua.api.core.api.Api;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;

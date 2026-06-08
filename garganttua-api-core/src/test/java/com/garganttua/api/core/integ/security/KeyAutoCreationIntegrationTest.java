@@ -299,7 +299,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                 .authentication(new FixedSupplierBuilder<>(realVerifier, IClass.getClass(RealTokenVerifier.class)));
         tokenAuthBuilder.authenticate("authenticate")
                 .withParam(0, new com.garganttua.api.core.security.authentication.DecodedAuthorizationSupplierBuilder())
-                .withParam(1, new com.garganttua.api.core.security.authentication.DomainKeySupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.key.DomainKeySupplierBuilder())
                 .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
         tokenAuthBuilder.up();
 

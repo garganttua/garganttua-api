@@ -12,8 +12,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.definition.DomainDefinition;
-import com.garganttua.api.core.definition.DomainSecurityDefinition;
+import com.garganttua.api.core.domain.DomainDefinition;
+import com.garganttua.api.core.security.DomainSecurityDefinition;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;

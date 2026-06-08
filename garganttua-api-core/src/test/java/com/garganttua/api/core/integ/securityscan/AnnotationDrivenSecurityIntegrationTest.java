@@ -218,7 +218,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         CapturingDao tokenDao = new CapturingDao();
 
         IApiBuilder builder = newBuilder();
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.securityscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 
@@ -252,7 +252,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @DisplayName("AnnoUser domain has an authenticator definition with scope=tenant and login field set")
         void authenticatorDefRegistered() {
             IDomainSecurityDefinition secDef = userDomain.getDomainDefinition() instanceof
-                    com.garganttua.api.core.definition.DomainDefinition<?> d
+                    com.garganttua.api.core.domain.DomainDefinition<?> d
                     ? d.domainSecurityDefinition() : null;
             assertNotNull(secDef);
             IAuthenticatorDefinition authDef = secDef.authenticatorDefinition();
@@ -266,7 +266,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         void authorizationDefRegistered() {
             IDomain<?> tokenDomain = api.getDomain("annotokens").orElseThrow();
             IDomainSecurityDefinition secDef = tokenDomain.getDomainDefinition() instanceof
-                    com.garganttua.api.core.definition.DomainDefinition<?> d
+                    com.garganttua.api.core.domain.DomainDefinition<?> d
                     ? d.domainSecurityDefinition() : null;
             assertNotNull(secDef);
             IDomainAuthorizationDefinition authzDef = secDef.authorizationDefinition();
@@ -280,7 +280,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("Authenticator is linked to its Authentication strategy and to the Authorization domain")
         void linkagesEstablished() {
-            IDomainSecurityDefinition secDef = ((com.garganttua.api.core.definition.DomainDefinition<?>)
+            IDomainSecurityDefinition secDef = ((com.garganttua.api.core.domain.DomainDefinition<?>)
                     userDomain.getDomainDefinition()).domainSecurityDefinition();
             IAuthenticatorDefinition authDef = secDef.authenticatorDefinition();
             assertNotNull(authDef.authenticationDefinitions());

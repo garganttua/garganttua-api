@@ -1,6 +1,6 @@
 package com.garganttua.api.core.unit.builder;
 
-import com.garganttua.api.core.builder.ApiBuilder;
+import com.garganttua.api.core.api.ApiBuilder;
 
 import static org.junit.jupiter.api.Assertions.*;
 

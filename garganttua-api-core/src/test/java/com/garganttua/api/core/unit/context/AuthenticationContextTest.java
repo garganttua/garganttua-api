@@ -8,8 +8,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.context.security.AuthenticationContext;
-import com.garganttua.api.core.definition.AuthenticationDefinition;
+import com.garganttua.api.core.security.authentication.AuthenticationContext;
+import com.garganttua.api.core.security.authentication.AuthenticationDefinition;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticationDefinition;
 

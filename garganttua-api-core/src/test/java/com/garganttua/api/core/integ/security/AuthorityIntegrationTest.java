@@ -267,7 +267,7 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
             // recomputes the caller's superTenant flag from the Api registry,
             // overriding whatever the token/caller claimed. So the caller's
             // tenantId must be a REGISTERED super-tenant for the bypass to hold.
-            ((com.garganttua.api.core.context.Domain<?>) ctx).getApiContext()
+            ((com.garganttua.api.core.domain.Domain<?>) ctx).getApiContext()
                     .registerSuperTenant("SUPER_TENANT");
             OperationDefinition op = op(ctx, BusinessOperation.create);
             // Super-tenant caller with NO authorities should still pass

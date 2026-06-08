@@ -6,7 +6,7 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
-import com.garganttua.api.core.context.Api;
+import com.garganttua.api.core.api.Api;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.core.reflection.IClass;
 
@@ -15,7 +15,7 @@ class AutoDetectDemoTest extends AbstractCrudIntegrationTest {
     @Test
     void runDemo() throws ApiException, java.io.IOException {
         IApiBuilder builder = newBuilder();
-        ((com.garganttua.api.core.builder.ApiBuilder) builder)
+        ((com.garganttua.api.core.api.ApiBuilder) builder)
                 .withPackage("com.garganttua.api.core.integ.entityscan");
         ((com.garganttua.core.dsl.IAutomaticBuilder<?, ?>) builder).autoDetect(true);
 

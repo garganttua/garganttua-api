@@ -13,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.core.security.authentication.PrincipalSupplier;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.repository.Repository;
-import com.garganttua.api.core.definition.DtoDefinition;
+import com.garganttua.api.core.dto.DtoDefinition;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.IDtoContext;

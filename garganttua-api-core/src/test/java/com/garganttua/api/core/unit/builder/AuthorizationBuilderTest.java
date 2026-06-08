@@ -12,7 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import com.garganttua.api.core.builder.AuthorizationBuilder;
+import com.garganttua.api.core.security.authorization.AuthorizationBuilder;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;

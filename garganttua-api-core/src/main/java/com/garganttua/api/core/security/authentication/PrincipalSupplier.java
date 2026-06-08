@@ -4,7 +4,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
-import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.commons.context.IDomain;

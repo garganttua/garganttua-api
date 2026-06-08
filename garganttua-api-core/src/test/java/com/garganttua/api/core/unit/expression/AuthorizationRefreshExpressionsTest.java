@@ -28,8 +28,8 @@ import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
 import com.garganttua.api.commons.definition.IEntityDefinition;
 import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authentication.IAuthentication;
-import com.garganttua.api.core.context.Domain;
-import com.garganttua.api.core.definition.DomainDefinition;
+import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.core.reflection.ObjectAddress;
 
