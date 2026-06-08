@@ -31,6 +31,8 @@ import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.IRequestBuilder;
+import com.garganttua.api.commons.service.OperationResponseCode;
+import com.garganttua.api.core.service.OperationResponse;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.observability.IObserver;
@@ -89,6 +91,8 @@ class JavalinInterfaceTest {
 		volatile byte[] lastBody;
 		volatile ICaller lastCaller;
 		volatile int invokeCount;
+		/** When set, invoke() returns this (so applyOutcome reconciles the response). */
+		volatile IOperationResponse responseOverride;
 
 		@SuppressWarnings("unchecked")
 		CapturingDomain(List<OperationDefinition> operations) {
@@ -119,7 +123,7 @@ class JavalinInterfaceTest {
 			} catch (ApiException e) {
 				throw new RuntimeException(e);
 			}
-			return null;
+			return this.responseOverride;
 		}
 
 		@Override public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) { return invoke(request); }
@@ -299,6 +303,50 @@ class JavalinInterfaceTest {
 			assertEquals("ok:deleteAll", resp.body());
 			assertEquals(BusinessOperation.deleteAll, domain.lastOperation.getBusinessOperation());
 			assertNull(domain.lastUuid);
+		}
+	}
+
+	@Nested
+	@DisplayName("Outcome reconciliation (response matches the pipeline, not always 200)")
+	class OutcomeReconciliation {
+
+		@Test
+		@DisplayName("a failure response sets the error status and the message body")
+		void failureSurfacesStatusAndMessage() throws Exception {
+			domain.responseOverride = new OperationResponse(
+					OperationResponseCode.NOT_FOUND, new ApiException("entity not found: u-404"));
+
+			HttpResponse<String> resp = send("GET", "/users/u-404", null);
+
+			assertEquals(404, resp.statusCode(),
+					"the HTTP status must follow the pipeline's response code, not default to 200");
+			assertEquals("entity not found: u-404", resp.body(),
+					"the body must be the error message, not the stale pipeline output");
+		}
+
+		@Test
+		@DisplayName("UNAUTHORIZED → 401 with the message")
+		void unauthorizedMaps401() throws Exception {
+			domain.responseOverride = new OperationResponse(
+					OperationResponseCode.UNAUTHORIZED, new ApiException("missing authorization"));
+
+			HttpResponse<String> resp = send("GET", "/users", null);
+
+			assertEquals(401, resp.statusCode());
+			assertEquals("missing authorization", resp.body());
+		}
+
+		@Test
+		@DisplayName("CREATED → 201 (status corrected, serialized body kept)")
+		void createdMaps201() throws Exception {
+			domain.responseOverride = new OperationResponse(OperationResponseCode.CREATED, "ignored-non-throwable");
+
+			HttpResponse<String> resp = send("POST", "/users", "body");
+
+			assertEquals(201, resp.statusCode(),
+					"a CREATED outcome must surface as 201, not the always-200 default");
+			assertEquals("ok:create", resp.body(),
+					"on success the serialized body from the pipeline is kept");
 		}
 	}
 

@@ -8,6 +8,8 @@ import com.garganttua.api.commons.endpoint.Interface;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 
@@ -153,9 +155,15 @@ public class JavalinInterface implements IInterface {
 
 	/**
 	 * Builds the operation request, hands the {@link Context} to the pipeline as
-	 * {@code rawRequest}, and invokes the domain. The pipeline's RESPONSE stage drives
-	 * {@link JavalinProtocol#buildResponse} which writes status + body onto the very
-	 * {@code Context} — so there is nothing to write back here on the happy path.
+	 * {@code rawRequest}, invokes the domain, and reconciles the HTTP response with
+	 * the operation's outcome.
+	 * <p>
+	 * The Mode-A RESPONSE stage serializes the body onto the {@code Context}, but it
+	 * cannot set the status (the pipeline does not yet write an {@code exitCode}) and
+	 * leaves a stale/empty body on failures — so the wire response would otherwise
+	 * always read 200 regardless of the pipeline outcome. We therefore make the
+	 * transport authoritative: the status follows {@link IOperationResponse#getResponseCode()},
+	 * and on failure the carried {@link Throwable}'s message becomes the body.
 	 */
 	private void dispatch(IDomain<?> domain, OperationDefinition operation, Context ctx, String uuid) {
 		try {
@@ -165,12 +173,51 @@ public class JavalinInterface implements IInterface {
 			if (uuid != null) {
 				request.arg(IOperationRequest.ENTITY_UUID, uuid);
 			}
-			domain.invoke(request);
+			applyOutcome(ctx, domain.invoke(request));
 		} catch (RuntimeException e) {
 			// Defensive: the pipeline returns error codes rather than throwing, but a
 			// transport-level failure (e.g. no protocol resolved) must still answer.
 			ctx.status(500).result("Internal error: " + e.getMessage());
 		}
+	}
+
+	/**
+	 * Reconciles the HTTP response with the pipeline's {@link IOperationResponse} so the
+	 * wire reflects the operation, not the always-200 default. On failure (the response
+	 * carries a {@link Throwable}) the status comes from the response code and the body
+	 * is the error message; on success the RESPONSE stage already serialized the body,
+	 * so only the status is corrected.
+	 */
+	private void applyOutcome(Context ctx, IOperationResponse response) {
+		if (response == null) {
+			return;
+		}
+		int status = httpStatus(response.getResponseCode());
+		Object payload = response.getResponse();
+		if (payload instanceof Throwable t) {
+			String message = (t.getMessage() != null && !t.getMessage().isBlank())
+					? t.getMessage() : t.getClass().getSimpleName();
+			ctx.status(status).result(message);
+		} else {
+			ctx.status(status);
+		}
+	}
+
+	/** Maps the framework's response code to an HTTP status. */
+	private static int httpStatus(OperationResponseCode code) {
+		if (code == null) {
+			return 200;
+		}
+		return switch (code) {
+			case OK, UPDATED, DELETED -> 200;
+			case CREATED -> 201;
+			case CLIENT_ERROR -> 400;
+			case UNAUTHORIZED -> 401;
+			case FORBIDDEN -> 403;
+			case NOT_FOUND -> 404;
+			case NOT_AVAILABLE -> 503;
+			case SERVER_ERROR -> 500;
+		};
 	}
 
 	@Override
