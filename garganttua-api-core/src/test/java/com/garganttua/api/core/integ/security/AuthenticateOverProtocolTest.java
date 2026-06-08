@@ -85,7 +85,10 @@ class AuthenticateOverProtocolTest extends AbstractCrudScriptTest {
 			}
 			String[] parts = new String(data, StandardCharsets.UTF_8).split("\\|", -1);
 			if (parts.length < 3) throw new ApiException("Malformed credentials body");
-			return (T) new AuthenticationRequest(parts[0], parts[1].getBytes(StandardCharsets.UTF_8), parts[2]);
+			// Credentials as a STRING — exactly how a JSON body deserializes the
+			// Object credentials field over HTTP (never a byte[]). The supplier must
+			// accept this and encode it to UTF-8 for the login+password authenticator.
+			return (T) new AuthenticationRequest(parts[0], parts[1], parts[2]);
 		}
 	}
 

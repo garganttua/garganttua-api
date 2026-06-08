@@ -1,6 +1,7 @@
 package com.garganttua.api.core.security.authentication;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
@@ -53,8 +54,13 @@ public class AuthenticateCredentialsSupplier implements IContextualSupplier<byte
             Object creds = authReq.credentials();
             if (creds == null) return Optional.empty();
             if (creds instanceof byte[] bytes) return Optional.of(bytes);
-            // Credentials is a non-byte[] shape (token entity in the verify flow):
-            // this supplier only handles login+password byte arrays. Yield to other
+            // Over HTTP the JSON "credentials" deserializes into the Object field as a
+            // String — encode it as UTF-8, matching how login+password authenticators
+            // read the bytes (new String(credentials, UTF_8)). Without this, an HTTP
+            // login could never satisfy this non-nullable byte[] parameter.
+            if (creds instanceof String s) return Optional.of(s.getBytes(StandardCharsets.UTF_8));
+            // Any other shape (e.g. a decoded token entity in the verify flow): this
+            // supplier only handles login+password credentials. Yield to other
             // suppliers/strategies designed for the runtime shape at hand.
             return Optional.empty();
         }
