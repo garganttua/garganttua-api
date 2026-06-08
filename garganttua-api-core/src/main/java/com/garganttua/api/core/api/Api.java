@@ -493,7 +493,14 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
 
         IRepository repository = tenantDomain.getRepository();
         if (repository.doesExist(this.superTenantId)) {
-            log.info("Master tenant '{}' already exists, skipping auto-creation", this.superTenantId);
+            // Already created on a previous run. Re-register it as super: its status
+            // must not depend on the persisted superTenant boolean surviving the
+            // entity→DTO mapping (a DTO that omits the field drops it, so the startup
+            // scan would not re-discover it and the master would silently lose its
+            // super status on restart). Existence of the master IS the signal.
+            registerSuperTenant(this.superTenantId);
+            log.info("Master tenant '{}' already exists — re-registered as super, skipping auto-creation",
+                    this.superTenantId);
             return;
         }
 
@@ -534,6 +541,7 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
             // "DAO save returned but the row isn't queryable" class of bug.
             if (repository.doesExist(this.superTenantId)) {
                 log.info("Master tenant '{}' auto-created successfully", this.superTenantId);
+                warnIfSuperTenantStampDropped(repository, reflection, uuidAddress, superTenantAddress, tenantDomain);
             } else {
                 log.error("repository.save returned but master tenant '{}' is not present in the "
                         + "repository afterwards. Consider registering the master tenant entity "
@@ -544,6 +552,35 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
             log.warn("Could not auto-create master tenant '{}': {}. "
                     + "Consider registering the master tenant entity via .upsert(...) on the tenant domain builder.",
                     this.superTenantId, e.getMessage());
+        }
+    }
+
+    /**
+     * Best-effort diagnostic: re-reads the just-persisted master tenant and warns
+     * when its {@code superTenant} boolean did not survive the entity→DTO mapping —
+     * the symptom of a DTO that omits the {@code superTenant} field. The configured
+     * super-tenant is registered unconditionally at startup, so it still functions;
+     * but the persisted row is not self-describing (and reads show {@code false}).
+     */
+    private void warnIfSuperTenantStampDropped(IRepository repository, IReflection reflection,
+            ObjectAddress uuidAddress, ObjectAddress superTenantAddress, IDomain<?> tenantDomain) {
+        if (superTenantAddress == null) {
+            return;
+        }
+        try {
+            Object reread = repository.getEntities(Optional.empty(), Optional.empty(), Optional.empty()).stream()
+                    .filter(e -> this.superTenantId.equals(readStringField(reflection, e, uuidAddress)))
+                    .findFirst().orElse(null);
+            if (reread != null && !readBooleanField(reflection, reread, superTenantAddress)) {
+                log.warn("Master tenant '{}' was stamped superTenant=true but the persisted value did not "
+                        + "survive persistence — the DTO for domain '{}' does not carry the superTenant "
+                        + "field. The configured super-tenant is still registered at startup, so it "
+                        + "functions correctly; declare a matching superTenant field on the DTO to make "
+                        + "the persisted row self-describing and visible on reads.",
+                        this.superTenantId, tenantDomain.getDomainName());
+            }
+        } catch (Exception ignore) {
+            // Diagnostic only — never let it disturb startup.
         }
     }
 
