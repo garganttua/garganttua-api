@@ -2,6 +2,7 @@ package com.garganttua.api.commons.context.dsl;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IDomainKeyContext;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -22,7 +23,7 @@ import com.garganttua.core.reflection.ObjectAddress;
  * @param <E> the key entity type
  */
 public interface IDomainKeyBuilder<E> extends
-        IAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainBuilder<E>, IDomainKeyContext> {
+        IAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainSecurityBuilder<E>, IDomainKeyContext> {
 
     // ───── IKeyRealm.getName() ─────
 

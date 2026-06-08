@@ -35,6 +35,7 @@ public class DomainSecurityBuilder<E>
     private IAuthorizationBuilder authorization;
     private IClass<?> entityClass;
     private IAuthenticatorBuilder authenticator;
+    private com.garganttua.api.commons.context.dsl.IDomainKeyBuilder<E> keyBuilder;
 
     public DomainSecurityBuilder(IDomainBuilder<E> domainBuilder,
             List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces,
@@ -100,6 +101,22 @@ public class DomainSecurityBuilder<E>
         if (this.authenticator == null)
             this.authenticator = new AuthenticatorBuilder(this, this.entityClass);
         return this.authenticator;
+    }
+
+    @Override
+    public com.garganttua.api.commons.context.dsl.IDomainKeyBuilder<E> key() throws ApiException {
+        if (this.keyBuilder == null)
+            this.keyBuilder = new DomainKeyBuilder<>(this, this.entityClass);
+        return this.keyBuilder;
+    }
+
+    /**
+     * Builds the @Key domain definition declared via {@code .key()}, or
+     * {@code null} when this domain is not a key domain. Read by the parent
+     * {@link DomainBuilder} to populate {@code DomainDefinition.keyDefinition()}.
+     */
+    com.garganttua.api.commons.definition.IDomainKeyDefinition buildKeyDefinition() {
+        return this.keyBuilder == null ? null : this.keyBuilder.build().getKeyDefinition();
     }
 
     boolean isDisabled() {

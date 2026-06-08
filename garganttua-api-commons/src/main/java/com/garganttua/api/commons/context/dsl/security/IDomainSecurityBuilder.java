@@ -1,6 +1,8 @@
 package com.garganttua.api.commons.context.dsl.security;
 
+import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
+import com.garganttua.api.commons.context.dsl.IDomainKeyBuilder;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
@@ -13,6 +15,14 @@ public interface IDomainSecurityBuilder<E>
 	IDomainSecurityBuilder<E> disable(boolean b);
 
 	IAuthenticatorBuilder<E> authenticator();
+
+	/**
+	 * Marks this domain as a key domain — its entity holds cryptographic key
+	 * material and the framework will use it as the storage backend when an
+	 * authenticator's authorization declares {@code .key(IDomainBuilder)} for
+	 * auto-create / lookup. {@code .up()} returns this security builder.
+	 */
+	IDomainKeyBuilder<E> key() throws ApiException;
 
 	// Per-use-case security is configured via IUseCaseBuilder.security() — see
 	// IUseCaseSecurityBuilder. There is intentionally no useCase(...) method

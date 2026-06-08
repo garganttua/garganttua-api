@@ -101,7 +101,6 @@ public class DomainBuilder<E>
     private volatile ObjectAddress superOwner;
     private volatile ObjectAddress superTenant;
     private volatile IDomainSecurityBuilder<E> securityBuilder;
-    private volatile com.garganttua.api.commons.context.dsl.IDomainKeyBuilder<E> keyBuilder;
     private final Map<IClass<?>, IDtoBuilder> dtos = new ConcurrentHashMap<>();
     private final Map<String, IUseCaseBuilder<?, ?, E>> useCases = new ConcurrentHashMap<>();
     private final Map<String, DomainWorkflowBuilder<E>> workflows = new ConcurrentHashMap<>();
@@ -432,15 +431,6 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public com.garganttua.api.commons.context.dsl.IDomainKeyBuilder<E> key() throws ApiException {
-        requireEntityClassSet("key");
-        if (this.keyBuilder == null) {
-            this.keyBuilder = new DomainKeyBuilder<>(this, this.entityClass);
-        }
-        return this.keyBuilder;
-    }
-
-    @Override
     public <D> IDtoBuilder<E, D> dto(IClass<D> dtoClass) throws ApiException {
         requireEntityClassSet("dto");
 
@@ -752,9 +742,9 @@ public class DomainBuilder<E>
                         useCaseDefinitions,
                         workflowDefinitions,
                         securityDefinition,
-                        this.keyBuilder == null
+                        this.securityBuilder == null
                                 ? null
-                                : this.keyBuilder.build().getKeyDefinition()),
+                                : ((DomainSecurityBuilder<E>) this.securityBuilder).buildKeyDefinition()),
                 entityContext,
                 securityContext,
                 dtoContexts,

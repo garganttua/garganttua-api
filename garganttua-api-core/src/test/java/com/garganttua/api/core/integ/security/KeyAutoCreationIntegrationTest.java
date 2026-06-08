@@ -310,7 +310,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     .alwaysEnabled(true)
                     .authentication(tokenAuthBuilder);
 
-        // ─── @Key entity domain — declared via the .key() sub-builder ───
+        // ─── @Key entity domain — declared via the .security().key() sub-builder ───
         // Marked owned("ownerId") because oneForEach keys are scoped per
         // caller — the framework stamps caller.ownerId() onto this field.
         var keyBuilder = builder.domain(IClass.getClass(CryptoKey.class))
@@ -324,7 +324,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(w.keyDao)
                 .up();
-        keyBuilder.key()
+        keyBuilder.security().key()
                 .name("realmName")
                 .keyAlgorithm("algorithm")
                 .signatureAlgorithm("signatureAlgorithm")

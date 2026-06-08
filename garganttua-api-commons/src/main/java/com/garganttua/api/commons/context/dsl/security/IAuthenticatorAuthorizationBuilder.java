@@ -17,7 +17,7 @@ public interface IAuthenticatorAuthorizationBuilder<E> extends IAutomaticLinkedB
 
     /**
      * Mode <strong>persisté</strong>: declares a key domain (an entity marked
-     * {@code @Key} or built with {@code .key()} on its {@code IDomainBuilder})
+     * {@code @Key} or built with {@code .security().key()} on its domain builder)
      * as the backing store. The framework will auto-create the key on first
      * use and look it up on subsequent calls, scoping the visibility according
      * to {@link com.garganttua.api.commons.security.annotations.AuthenticatorKeyUsage}.

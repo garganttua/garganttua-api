@@ -166,7 +166,7 @@ public final class EntityAnnotationScanner {
 
     /**
      * If the entity carries {@link Key}, materialize the key sub-builder
-     * via {@code domain.key()} and wire each field-level marker to the
+     * via {@code domain.security().key()} and wire each field-level marker to the
      * matching DSL setter. The marker set mirrors {@code IKeyRealm}'s
      * public surface — {@link KeyName}/{@link KeyAlgorithm}/{@link KeySignatureAlgorithm}/
      * {@link KeyForSigning}/{@link KeyForSignatureVerification}/{@link KeyForEncryption}/
@@ -178,7 +178,7 @@ public final class EntityAnnotationScanner {
         if (entityClass.getAnnotation(IClass.getClass(Key.class)) == null) {
             return;
         }
-        IDomainKeyBuilder<Object> keyBuilder = domain.key();
+        IDomainKeyBuilder<Object> keyBuilder = domain.security().key();
 
         reflection.findFieldAnnotatedWith(entityClass, IClass.getClass(KeyName.class))
                 .ifPresent(f -> apply(() -> keyBuilder.name(f.getName())));

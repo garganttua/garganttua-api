@@ -5,8 +5,8 @@ import java.util.Objects;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IDomainKeyContext;
-import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.IDomainKeyBuilder;
+import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.core.context.DomainKeyContext;
 import com.garganttua.api.core.definition.DomainKeyDefinition;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
@@ -26,7 +26,7 @@ import com.garganttua.core.reflection.fields.FieldResolver;
  */
 @Reflected
 public class DomainKeyBuilder<E>
-        extends AbstractAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainBuilder<E>, IDomainKeyContext>
+        extends AbstractAutomaticLinkedBuilder<IDomainKeyBuilder<E>, IDomainSecurityBuilder<E>, IDomainKeyContext>
         implements IDomainKeyBuilder<E> {
 
     // Reflection provider is whatever the user installed via IClass.setReflection().
@@ -48,8 +48,8 @@ public class DomainKeyBuilder<E>
     private ObjectAddress version;
     private ObjectAddress rotate;
 
-    public DomainKeyBuilder(IDomainBuilder<E> domainBuilder, IClass<?> entityClass) {
-        super(domainBuilder);
+    public DomainKeyBuilder(IDomainSecurityBuilder<E> securityBuilder, IClass<?> entityClass) {
+        super(securityBuilder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
     }
 
