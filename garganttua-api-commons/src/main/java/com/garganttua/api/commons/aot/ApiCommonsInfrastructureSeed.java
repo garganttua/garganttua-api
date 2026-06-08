@@ -17,7 +17,7 @@ import com.garganttua.api.commons.context.dsl.IUseCaseBuilder;
 import com.garganttua.api.commons.dao.IDao;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.security.authentication.Authentication;
-import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.event.IEvent;
 import com.garganttua.api.commons.event.IEventPublisher;
 import com.garganttua.api.commons.filter.IFilter;
@@ -74,7 +74,7 @@ public class ApiCommonsInfrastructureSeed implements IAOTInfrastructureSeed {
 
         // Service / endpoint / event / protocol / serialisation layer.
         context.registerInterface(IDao.class);
-        context.registerInterface(IEndpoint.class);
+        context.registerInterface(IInterface.class);
         context.registerInterface(IEvent.class);
         context.registerInterface(IEventPublisher.class);
         context.registerInterface(IFilter.class);

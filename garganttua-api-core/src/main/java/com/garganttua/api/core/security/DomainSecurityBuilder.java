@@ -20,7 +20,7 @@ import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
-import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.security.IDomainSecurityContext;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.commons.ApiException;
@@ -33,7 +33,7 @@ public class DomainSecurityBuilder<E>
         extends AbstractAutomaticLinkedBuilder<IDomainSecurityBuilder<E>, IDomainBuilder<E>, IDomainSecurityContext>
         implements IDomainSecurityBuilder<E> {
 
-    private List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces;
+    private List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces;
     private boolean disabled = false;
     private boolean hasCrudSecurityConfig = false;
     private IAuthorizationBuilder authorization;
@@ -42,7 +42,7 @@ public class DomainSecurityBuilder<E>
     private com.garganttua.api.commons.context.dsl.IDomainKeyBuilder<E> keyBuilder;
 
     public DomainSecurityBuilder(IDomainBuilder<E> domainBuilder,
-            List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces,
+            List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces,
             IClass<?> entityClass) {
         super(domainBuilder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");

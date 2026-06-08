@@ -14,7 +14,7 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
-import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.reflection.IClass;
@@ -24,9 +24,9 @@ import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 @DisplayName("API Integration Tests")
 class ApiTest extends AbstractCrudIntegrationTest {
 
-    // ───── Test IEndpoint ─────
+    // ───── Test IInterface ─────
 
-    public static class TestInterface implements IEndpoint {
+    public static class TestInterface implements IInterface {
         private boolean handleCalled = false;
         private boolean initCalled = false;
         private boolean startCalled = false;

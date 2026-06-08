@@ -20,7 +20,7 @@ import com.garganttua.api.commons.context.IDtoContext;
 import com.garganttua.api.commons.context.IEntityContext;
 import com.garganttua.api.commons.definition.IDomainDefinition;
 import com.garganttua.api.commons.event.IEventPublisher;
-import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.core.injection.BeanDefinition;
@@ -51,7 +51,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
 
     private final DomainDefinition<E> domainDefinition;
-    private final List<ISupplier<IEndpoint>> interfaces;
+    private final List<ISupplier<IInterface>> interfaces;
     private final List<ISupplier<IEventPublisher>> events;
     private final IDomainSecurityContext domainSecurityContext;
 
@@ -64,7 +64,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     // Single workflow handling the full pipeline (business → security → execution)
     private IWorkflow workflow;
 
-    public List<ISupplier<IEndpoint>> getInterfaces() { return interfaces; }
+    public List<ISupplier<IInterface>> getInterfaces() { return interfaces; }
     public List<ISupplier<IEventPublisher>> getEvents() { return events; }
 
     // Bean definition for runtime DI injection on entities
@@ -123,7 +123,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     public Domain(DomainDefinition<E> domainDefinition, IEntityContext<E> entityContext,
             IDomainSecurityContext domainSecurityContext,
             List<IDtoContext<?>> dtoContexts,
-            List<ISupplier<IEndpoint>> interfaces,
+            List<ISupplier<IInterface>> interfaces,
             List<ISupplier<IEventPublisher>> events
             ) {
         this.domainSecurityContext = Objects.requireNonNull(domainSecurityContext,
@@ -164,8 +164,8 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     private void initializeInterfaces() {
 
-        doForAllInterfaces(IEndpoint::handle, this);
-        doForAllInterfaces(IEndpoint::onInit);
+        doForAllInterfaces(IInterface::handle, this);
+        doForAllInterfaces(IInterface::onInit);
 
         log.debug("Initialized {} interfaces for domain {}", this.interfaces.size(),
                 this.domainDefinition.domainName());
@@ -176,7 +176,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
      */
     @FunctionalInterface
     private interface InterfaceAction {
-        void apply(IEndpoint intf) throws Exception;
+        void apply(IInterface intf) throws Exception;
     }
 
     /**
@@ -184,7 +184,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
      */
     @FunctionalInterface
     private interface InterfaceActionWithArg<T> {
-        void apply(IEndpoint intf, T arg) throws Exception;
+        void apply(IInterface intf, T arg) throws Exception;
     }
 
     /**
@@ -193,9 +193,9 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
      * @param action the action to execute on each interface
      */
     private void doForAllInterfaces(InterfaceAction action) {
-        for (ISupplier<IEndpoint> supplier : this.interfaces) {
+        for (ISupplier<IInterface> supplier : this.interfaces) {
             try {
-                IEndpoint intf = supplier.supply()
+                IInterface intf = supplier.supply()
                         .orElseThrow(() -> new ApiException("Interface supplier returned empty Optional"));
                 action.apply(intf);
             } catch (Exception e) {
@@ -212,9 +212,9 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
      * @param arg the argument to pass to the action
      */
     private <T> void doForAllInterfaces(InterfaceActionWithArg<T> action, T arg) {
-        for (ISupplier<IEndpoint> supplier : this.interfaces) {
+        for (ISupplier<IInterface> supplier : this.interfaces) {
             try {
-                IEndpoint intf = supplier.supply()
+                IInterface intf = supplier.supply()
                         .orElseThrow(() -> new ApiException("Interface supplier returned empty Optional"));
                 action.apply(intf, arg);
             } catch (Exception e) {
@@ -238,7 +238,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         upsertStartupEntities();
 
         // 4. Start all interfaces
-        doForAllInterfaces(IEndpoint::onStart);
+        doForAllInterfaces(IInterface::onStart);
 
         log.debug("Started {} interfaces for domain {}", this.interfaces.size(),
                 this.domainDefinition.domainName());
@@ -366,7 +366,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         log.info("Stopping domain context: {}", this.domainDefinition.domainName());
 
         // Stop all interfaces
-        doForAllInterfaces(IEndpoint::onStop);
+        doForAllInterfaces(IInterface::onStop);
         log.debug("Stopped {} interfaces for domain {}", this.interfaces.size(),
                 this.domainDefinition.domainName());
 
@@ -377,7 +377,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     protected ILifecycle doFlush() {
         log.info("Flushing domain context: {}", this.domainDefinition.domainName());
         // Flush all interfaces
-        doForAllInterfaces(IEndpoint::onFlush);
+        doForAllInterfaces(IInterface::onFlush);
         log.debug("Flushed {} interfaces for domain {}", this.interfaces.size(),
                 this.domainDefinition.domainName());
         return this;

@@ -46,7 +46,7 @@ import com.garganttua.api.commons.definition.IDtoDefinition;
 import com.garganttua.api.commons.definition.IUseCaseDefinition;
 import com.garganttua.api.commons.definition.IWorkflowDefinition;
 import com.garganttua.api.commons.event.IEventPublisher;
-import com.garganttua.api.commons.endpoint.IEndpoint;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.expression.dsl.IExpressionContextBuilder;
 import java.util.Set;
@@ -89,7 +89,7 @@ public class DomainBuilder<E>
     private IMapper mapper = DefaultMapper.mapper();
 
     private final List<IDomainStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
-    private final List<ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>>> interfaces = new CopyOnWriteArrayList<>();
+    private final List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces = new CopyOnWriteArrayList<>();
     private final List<ISupplierBuilder<?, ? extends ISupplier<?>>> events = new CopyOnWriteArrayList<>();
 
     private volatile boolean publik = false;
@@ -150,7 +150,7 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>> bean) throws ApiException {
+    public IDomainBuilder<E> interfasse(ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> bean) throws ApiException {
         this.interfaces.add(bean);
         return this;
     }
@@ -715,9 +715,9 @@ public class DomainBuilder<E>
                 : new DomainSecurityBuilder<>(this, this.interfaces, this.entityClass).build();
 
         // Build interface suppliers
-        List<ISupplier<IEndpoint>> builtInterfaces = new ArrayList<>();
-        for (ISupplierBuilder<? extends IEndpoint, ? extends ISupplier<? extends IEndpoint>> interfaceBuilder : this.interfaces) {
-            ISupplier<IEndpoint> supplier = (ISupplier<IEndpoint>) interfaceBuilder.build();
+        List<ISupplier<IInterface>> builtInterfaces = new ArrayList<>();
+        for (ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> interfaceBuilder : this.interfaces) {
+            ISupplier<IInterface> supplier = (ISupplier<IInterface>) interfaceBuilder.build();
             builtInterfaces.add(supplier);
         }
 
@@ -942,10 +942,22 @@ public class DomainBuilder<E>
     }
 
     @Override
-    public IDomainBuilder<E> interfasse(IClass<? extends IEndpoint> interfasse) throws ApiException {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public IDomainBuilder<E> interfasse(IClass<? extends IInterface> interfasse) throws ApiException {
         Objects.requireNonNull(interfasse, "Interface class cannot be null");
-        // TODO: Implement interface instantiation or supplier creation
-        throw new UnsupportedOperationException("Unimplemented method 'interfasse(IClass)'");
+        // Explicit attachment of a (catalogued) @Interface type to this domain:
+        // instantiate it via its no-arg constructor and add it to the domain's
+        // interface suppliers. A pre-built / configured instance goes through the
+        // other overload, interfasse(ISupplierBuilder).
+        IInterface instance;
+        try {
+            instance = (IInterface) interfasse.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new ApiException("Failed to instantiate @Interface class '" + interfasse.getName()
+                    + "'. A public no-arg constructor is required.", e);
+        }
+        this.interfaces.add(new FixedSupplierBuilder(instance, interfasse));
+        return this;
     }
 
     @Override
