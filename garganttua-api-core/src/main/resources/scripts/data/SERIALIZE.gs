@@ -21,6 +21,10 @@ accept <- :arg(@0, "accept")
 serializer <- negotiateSerializer(@1, @accept)
 ! => recordCaughtException(@0, @exception) -> 406
 
+// Record the media type actually chosen so RESPONSE can label the body with it
+// (true content negotiation — the header follows the serializer, not the Accept).
+setRequestArg(@0, "responseContentType", serializerContentType(@serializer))
+
 rawBody <- serialize(@serializer, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 

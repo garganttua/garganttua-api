@@ -114,7 +114,17 @@ public class JavalinProtocol implements IProtocol<Context, Context> {
 
 	@Override
 	public Context buildResponse(Context ctx, Object output, int statusCode) throws ApiException {
+		return buildResponse(ctx, output, statusCode, null);
+	}
+
+	@Override
+	public Context buildResponse(Context ctx, Object output, int statusCode, String contentType) throws ApiException {
 		ctx.status(statusCode);
+		// Label the body with the negotiated media type — Javalin's result(byte[])
+		// otherwise defaults to text/plain, mislabelling a JSON (or XML, …) payload.
+		if (contentType != null && !contentType.isBlank()) {
+			ctx.contentType(contentType);
+		}
 		if (output instanceof byte[] bytes) {
 			ctx.result(bytes);
 		} else if (output != null) {

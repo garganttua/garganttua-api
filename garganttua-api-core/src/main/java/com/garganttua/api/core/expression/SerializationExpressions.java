@@ -140,6 +140,17 @@ public class SerializationExpressions {
 		return ser.serialize(unwrapOptional(object));
 	}
 
+	@Expression(name = "serializerContentType",
+			description = "Returns the wire MIME string of the given serializer (e.g. \"application/json\"), so the response can be labelled with the media type actually used.")
+	public static String serializerContentType(@Nullable Object serializer) throws ApiException {
+		ISerializer ser = (ISerializer) unwrapOptional(serializer);
+		if (ser == null) {
+			throw new ApiException("serializerContentType: serializer is null");
+		}
+		MimeType mime = ser.mimeType();
+		return mime == null ? null : mime.toString();
+	}
+
 	@Expression(name = "setRequestArg",
 			description = "Writes a value into the operation request's arg map and returns the value unchanged")
 	public static Object setRequestArg(@Nullable Object request, @Nullable Object key, @Nullable Object value) {

@@ -90,17 +90,19 @@ public class ProtocolExpressions {
 	}
 
 	@Expression(name = "buildProtocolResponse",
-			description = "Delegates to IProtocol.buildResponse(rawRequest, output, statusCode). Handles both byte[] and raw object outputs.")
+			description = "Delegates to IProtocol.buildResponse(rawRequest, output, statusCode, contentType). Handles byte[] and raw object outputs; contentType is the negotiated serializer's MIME (null when serialization was skipped).")
 	public static Object buildProtocolResponse(@Nullable Object protocol, @Nullable Object rawRequest,
-			@Nullable Object output, @Nullable Object statusCode) {
+			@Nullable Object output, @Nullable Object statusCode, @Nullable Object contentType) {
 		IProtocol<Object, Object> p = cast(unwrapOptional(protocol));
 		Object request = unwrapOptional(rawRequest);
 		Object payload = unwrapOptional(output);
 		int code = toInt(unwrapOptional(statusCode), 200);
+		Object ctRaw = unwrapOptional(contentType);
+		String ct = ctRaw == null ? null : String.valueOf(ctRaw);
 		if (p == null || request == null) {
 			throw new ApiException("buildProtocolResponse: protocol or rawRequest is null");
 		}
-		return p.buildResponse(request, payload, code);
+		return p.buildResponse(request, payload, code, ct);
 	}
 
 	@Expression(name = "setCallerArgs",

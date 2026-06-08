@@ -187,5 +187,39 @@ class JavalinProtocolTest {
 			verify(ctx, never()).result(any(byte[].class));
 			verify(ctx, never()).result(anyString());
 		}
+
+		@Test
+		@DisplayName("the negotiated content type labels the response before the body is written")
+		void labelsContentType() {
+			byte[] body = "[{\"id\":\"acme\"}]".getBytes(StandardCharsets.UTF_8);
+
+			protocol.buildResponse(ctx, body, 200, "application/json");
+
+			verify(ctx).status(200);
+			verify(ctx).contentType("application/json");
+			verify(ctx).result(body);
+		}
+
+		@Test
+		@DisplayName("a null/blank content type leaves Javalin's default — no contentType call")
+		void nullContentTypeNotSet() {
+			protocol.buildResponse(ctx, "x".getBytes(StandardCharsets.UTF_8), 200, null);
+			protocol.buildResponse(ctx, "y".getBytes(StandardCharsets.UTF_8), 200, "  ");
+
+			verify(ctx, never()).contentType(anyString());
+		}
+
+		@Test
+		@DisplayName("the legacy 3-arg overload still works (no content type)")
+		void threeArgStillWorks() {
+			byte[] body = "z".getBytes(StandardCharsets.UTF_8);
+
+			Context returned = protocol.buildResponse(ctx, body, 201);
+
+			assertSame(ctx, returned);
+			verify(ctx).status(201);
+			verify(ctx).result(body);
+			verify(ctx, never()).contentType(anyString());
+		}
 	}
 }

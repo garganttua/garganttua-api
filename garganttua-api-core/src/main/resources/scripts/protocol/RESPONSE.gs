@@ -16,13 +16,14 @@
 #  @return 500: buildResponse failure, or no protocol for rawRequest class
 #@end
 
-rawRequest <- :arg(@0, "rawRequest")
-status     <- :arg(@0, "exitCode")
+rawRequest  <- :arg(@0, "rawRequest")
+status      <- :arg(@0, "exitCode")
+contentType <- :arg(@0, "responseContentType")
 
 protocol <- resolveProtocol(@1, @rawRequest)
 ! => recordCaughtException(@0, @exception) -> 500
 
-response <- buildProtocolResponse(@protocol, @rawRequest, @2, @status)
+response <- buildProtocolResponse(@protocol, @rawRequest, @2, @status, @contentType)
 ! => recordCaughtException(@0, @exception) -> 500
 
 output <- @response -> 0

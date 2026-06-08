@@ -54,6 +54,7 @@ class ProtocolExpressionsTest {
 
 		Object lastBuildOutput;
 		int lastBuildStatusCode;
+		String lastContentType;
 		FakeRequest lastRequest;
 
 		@Override public IClass<FakeRequest> requestType() { return IClass.getClass(FakeRequest.class); }
@@ -68,6 +69,10 @@ class ProtocolExpressionsTest {
 		@Override public String buildResponse(FakeRequest r, Object output, int statusCode) {
 			lastRequest = r; lastBuildOutput = output; lastBuildStatusCode = statusCode;
 			return cannedResponse;
+		}
+		@Override public String buildResponse(FakeRequest r, Object output, int statusCode, String contentType) {
+			lastContentType = contentType;
+			return buildResponse(r, output, statusCode);
 		}
 	}
 
@@ -242,11 +247,23 @@ class ProtocolExpressionsTest {
 			byte[] payload = "body".getBytes(StandardCharsets.UTF_8);
 			FakeRequest req = new FakeRequest();
 
-			Object result = ProtocolExpressions.buildProtocolResponse(p, req, payload, 201);
+			Object result = ProtocolExpressions.buildProtocolResponse(p, req, payload, 201, "application/json");
 			assertEquals("OK", result);
 			assertSame(req, p.lastRequest);
 			assertSame(payload, p.lastBuildOutput);
 			assertEquals(201, p.lastBuildStatusCode);
+			assertEquals("application/json", p.lastContentType,
+					"the negotiated content type must be forwarded to the protocol");
+		}
+
+		@Test
+		@DisplayName("forwards a null content type (serialize skipped) unchanged")
+		void forwardsNullContentType() {
+			StubProtocol p = new StubProtocol();
+			p.cannedResponse = "OK";
+
+			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), null, 200, null);
+			assertNull(p.lastContentType, "a null content type must pass through as null");
 		}
 
 		@Test
@@ -256,7 +273,7 @@ class ProtocolExpressionsTest {
 			p.cannedResponse = "OK";
 			Object dto = new Object();
 
-			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), dto, 200);
+			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), dto, 200, null);
 			assertSame(dto, p.lastBuildOutput);
 		}
 
@@ -266,7 +283,7 @@ class ProtocolExpressionsTest {
 			StubProtocol p = new StubProtocol();
 			p.cannedResponse = "OK";
 
-			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), null, null);
+			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), null, null, null);
 			assertEquals(200, p.lastBuildStatusCode);
 		}
 
@@ -276,7 +293,7 @@ class ProtocolExpressionsTest {
 			StubProtocol p = new StubProtocol();
 			p.cannedResponse = "OK";
 
-			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), null, "404");
+			ProtocolExpressions.buildProtocolResponse(p, new FakeRequest(), null, "404", null);
 			assertEquals(404, p.lastBuildStatusCode);
 		}
 
@@ -285,9 +302,9 @@ class ProtocolExpressionsTest {
 		void rejectsNulls() {
 			StubProtocol p = new StubProtocol();
 			assertThrows(ApiException.class,
-					() -> ProtocolExpressions.buildProtocolResponse(null, new FakeRequest(), null, 200));
+					() -> ProtocolExpressions.buildProtocolResponse(null, new FakeRequest(), null, 200, null));
 			assertThrows(ApiException.class,
-					() -> ProtocolExpressions.buildProtocolResponse(p, null, null, 200));
+					() -> ProtocolExpressions.buildProtocolResponse(p, null, null, 200, null));
 		}
 	}
 

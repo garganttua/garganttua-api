@@ -69,4 +69,21 @@ public interface IProtocol<REQ, RES> {
 	 * is the HTTP-style code resolved by the exit-code stage.
 	 */
 	RES buildResponse(REQ request, Object output, int statusCode) throws ApiException;
+
+	/**
+	 * Build the transport response, labelling it with the negotiated media type.
+	 * {@code contentType} is the wire MIME string of the
+	 * {@link com.garganttua.api.commons.serialization.ISerializer} actually chosen on
+	 * the response side (e.g. {@code "application/json"}), or {@code null} when
+	 * serialization was skipped (no {@code Accept}). Implementations that carry a
+	 * content-type header (HTTP) should set it from this value so the response label
+	 * follows the serializer that produced the body — true content negotiation rather
+	 * than an {@code Accept} heuristic.
+	 * <p>
+	 * Defaults to {@link #buildResponse(Object, Object, int)} for protocols that do
+	 * not model a content type.
+	 */
+	default RES buildResponse(REQ request, Object output, int statusCode, String contentType) throws ApiException {
+		return buildResponse(request, output, statusCode);
+	}
 }
