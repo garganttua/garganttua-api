@@ -41,6 +41,7 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.workflow.IWorkflow;
 import com.garganttua.core.workflow.WorkflowExecutionOptions;
 
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 /**
@@ -347,6 +348,57 @@ class JavalinInterfaceTest {
 					"a CREATED outcome must surface as 201, not the always-200 default");
 			assertEquals("ok:create", resp.body(),
 					"on success the serialized body from the pipeline is kept");
+		}
+	}
+
+	@Nested
+	@DisplayName("External server (Javalin provided from outside)")
+	class ExternalServer {
+
+		@Test
+		@DisplayName("constructed with a Javalin app: does not own the server, no port")
+		void doesNotOwnServer() {
+			JavalinInterface ext = new JavalinInterface(Javalin.create());
+			assertFalse(ext.ownsServer(), "an externally-provided server is not owned");
+			assertEquals(-1, ext.getPort(), "no bound port in external-server mode");
+		}
+
+		@Test
+		@DisplayName("rejects a null external app")
+		void rejectsNull() {
+			assertThrows(NullPointerException.class, () -> new JavalinInterface((Javalin) null));
+		}
+
+		@Test
+		@DisplayName("registers routes on the external app but never starts or stops it")
+		void registersWithoutManagingLifecycle() throws Exception {
+			int p = freePort();
+			Javalin external = Javalin.create();
+			CapturingDomain dom = new CapturingDomain(standardOperations());
+			JavalinInterface ext = new JavalinInterface(external);
+			ext.handle(dom);
+			ext.onInit();
+			ext.onStart();
+			assertFalse(ext.isStarted(), "external-server mode must bind nothing on onStart");
+
+			external.start(p); // the OWNER starts the shared server
+			HttpClient client = HttpClient.newHttpClient();
+			try {
+				HttpResponse<String> served = client.send(
+						HttpRequest.newBuilder().uri(URI.create("http://localhost:" + p + "/users")).GET().build(),
+						HttpResponse.BodyHandlers.ofString());
+				assertEquals(200, served.statusCode(), "routes registered on the external app must serve");
+				assertEquals(BusinessOperation.readAll, dom.lastOperation.getBusinessOperation());
+
+				ext.onStop(); // must NOT stop the externally-owned server
+				HttpResponse<String> stillServing = client.send(
+						HttpRequest.newBuilder().uri(URI.create("http://localhost:" + p + "/users")).GET().build(),
+						HttpResponse.BodyHandlers.ofString());
+				assertEquals(200, stillServing.statusCode(),
+						"onStop() must not stop a server the interface does not own");
+			} finally {
+				external.stop();
+			}
 		}
 	}
 

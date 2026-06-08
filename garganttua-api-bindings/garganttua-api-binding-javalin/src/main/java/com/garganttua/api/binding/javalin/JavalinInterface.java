@@ -1,6 +1,7 @@
 package com.garganttua.api.binding.javalin;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.endpoint.IInterface;
@@ -53,6 +54,11 @@ import io.javalin.http.Handler;
  * The lifecycle guards ({@link #onStart}/{@link #onStop}) are idempotent, so a single
  * instance shared across domains via a supplier starts/stops its server exactly once
  * while registering every domain's routes.
+ * <p>
+ * <b>External server.</b> Pass a {@link Javalin} via {@link #JavalinInterface(Javalin)}
+ * to attach to a caller-provided server (a shared one, or a Spring Boot-managed one):
+ * the interface registers its routes on it but never starts or stops it — the owner
+ * keeps full control of the lifecycle. Several domains can share one server this way.
  */
 @Interface
 public class JavalinInterface implements IInterface {
@@ -61,28 +67,51 @@ public class JavalinInterface implements IInterface {
 	public static final int DEFAULT_PORT = 7000;
 
 	private final int port;
+	/** Whether this interface owns (creates + starts + stops) its Javalin server. */
+	private final boolean ownsServer;
 	private Javalin app;
 	private boolean started;
 	private LifecycleStatus status = LifecycleStatus.NEW;
 
-	/** Binds the server to {@link #DEFAULT_PORT}. Required no-arg form for {@code .interfasse(IClass)}. */
+	/** Binds an owned server to {@link #DEFAULT_PORT}. Required no-arg form for {@code .interfasse(IClass)}. */
 	public JavalinInterface() {
 		this(DEFAULT_PORT);
 	}
 
+	/** Owns a Javalin server bound to {@code port}; this interface starts and stops it. */
 	public JavalinInterface(int port) {
 		this.port = port;
+		this.ownsServer = true;
 	}
 
+	/**
+	 * Attaches to a caller-provided Javalin server (e.g. a shared server or a
+	 * Spring Boot-managed one). The interface registers its routes on it but does
+	 * <strong>not</strong> start or stop it — the owner manages the lifecycle.
+	 * Multiple domains can pass the same instance to share one server.
+	 */
+	public JavalinInterface(Javalin app) {
+		this.app = Objects.requireNonNull(app, "Javalin app cannot be null");
+		this.ownsServer = false;
+		this.port = -1;
+	}
+
+	/** The bound port for an owned server, or {@code -1} when the server is provided externally. */
 	public int getPort() {
 		return this.port;
 	}
 
+	/** {@code true} when this interface owns (and manages the lifecycle of) its Javalin server. */
+	public boolean ownsServer() {
+		return this.ownsServer;
+	}
+
+	/** Whether the owned server is currently bound. Always {@code false} in external-server mode. */
 	public boolean isStarted() {
 		return this.started;
 	}
 
-	/** Lazily materialises the Javalin server (no port binding happens until {@link #onStart}). */
+	/** Returns the Javalin server, lazily creating an owned one (no port binding until {@link #onStart}). */
 	private Javalin app() {
 		if (this.app == null) {
 			this.app = Javalin.create();
@@ -228,7 +257,9 @@ public class JavalinInterface implements IInterface {
 
 	@Override
 	public ILifecycle onStart() {
-		if (!this.started) {
+		// Only an owned server is started here; an externally-provided server is
+		// started by its owner (the interface merely registered its routes on it).
+		if (this.ownsServer && !this.started) {
 			app().start(this.port);
 			this.started = true;
 		}
@@ -238,7 +269,7 @@ public class JavalinInterface implements IInterface {
 
 	@Override
 	public ILifecycle onStop() {
-		if (this.started) {
+		if (this.ownsServer && this.started) {
 			app().stop();
 			this.started = false;
 		}
