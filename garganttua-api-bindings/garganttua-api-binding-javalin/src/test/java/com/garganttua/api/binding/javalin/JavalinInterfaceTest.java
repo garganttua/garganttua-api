@@ -312,7 +312,7 @@ class JavalinInterfaceTest {
 	class OutcomeReconciliation {
 
 		@Test
-		@DisplayName("a failure response sets the error status and the message body")
+		@DisplayName("a failure response sets the error status and a JSON error body")
 		void failureSurfacesStatusAndMessage() throws Exception {
 			domain.responseOverride = new OperationResponse(
 					OperationResponseCode.NOT_FOUND, new ApiException("entity not found: u-404"));
@@ -321,12 +321,14 @@ class JavalinInterfaceTest {
 
 			assertEquals(404, resp.statusCode(),
 					"the HTTP status must follow the pipeline's response code, not default to 200");
-			assertEquals("entity not found: u-404", resp.body(),
-					"the body must be the error message, not the stale pipeline output");
+			assertEquals("{\"error\":\"entity not found: u-404\"}", resp.body(),
+					"the error message must be wrapped in a JSON object, not the stale pipeline output");
+			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/json"),
+					"an error body must be labelled application/json");
 		}
 
 		@Test
-		@DisplayName("UNAUTHORIZED → 401 with the message")
+		@DisplayName("UNAUTHORIZED → 401 with a JSON error body")
 		void unauthorizedMaps401() throws Exception {
 			domain.responseOverride = new OperationResponse(
 					OperationResponseCode.UNAUTHORIZED, new ApiException("missing authorization"));
@@ -334,7 +336,20 @@ class JavalinInterfaceTest {
 			HttpResponse<String> resp = send("GET", "/users", null);
 
 			assertEquals(401, resp.statusCode());
-			assertEquals("missing authorization", resp.body());
+			assertEquals("{\"error\":\"missing authorization\"}", resp.body());
+		}
+
+		@Test
+		@DisplayName("error messages with quotes/backslashes are JSON-escaped")
+		void escapesJsonSpecials() throws Exception {
+			domain.responseOverride = new OperationResponse(
+					OperationResponseCode.CLIENT_ERROR, new ApiException("bad \"value\" \\ here"));
+
+			HttpResponse<String> resp = send("GET", "/users", null);
+
+			assertEquals(400, resp.statusCode());
+			assertEquals("{\"error\":\"bad \\\"value\\\" \\\\ here\"}", resp.body(),
+					"quotes and backslashes in the message must be escaped to keep the JSON valid");
 		}
 
 		@Test

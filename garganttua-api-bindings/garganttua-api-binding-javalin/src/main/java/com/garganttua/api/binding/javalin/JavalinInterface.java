@@ -213,9 +213,9 @@ public class JavalinInterface implements IInterface {
 	/**
 	 * Reconciles the HTTP response with the pipeline's {@link IOperationResponse} so the
 	 * wire reflects the operation, not the always-200 default. On failure (the response
-	 * carries a {@link Throwable}) the status comes from the response code and the body
-	 * is the error message; on success the RESPONSE stage already serialized the body,
-	 * so only the status is corrected.
+	 * carries a {@link Throwable}) the status comes from the response code and the body is
+	 * a JSON error object ({@code {"error":"…"}}, {@code application/json}); on success
+	 * the RESPONSE stage already serialized the body, so only the status is corrected.
 	 */
 	private void applyOutcome(Context ctx, IOperationResponse response) {
 		if (response == null) {
@@ -226,10 +226,40 @@ public class JavalinInterface implements IInterface {
 		if (payload instanceof Throwable t) {
 			String message = (t.getMessage() != null && !t.getMessage().isBlank())
 					? t.getMessage() : t.getClass().getSimpleName();
-			ctx.status(status).result(message);
+			ctx.status(status).contentType("application/json").result(errorJson(message));
 		} else {
 			ctx.status(status);
 		}
+	}
+
+	/** Wraps an error message in a minimal JSON object: {@code {"error":"<escaped>"}}. */
+	private static String errorJson(String message) {
+		return "{\"error\":\"" + jsonEscape(message) + "\"}";
+	}
+
+	/** Escapes a string for embedding in a JSON string literal. */
+	private static String jsonEscape(String s) {
+		StringBuilder out = new StringBuilder(s.length() + 16);
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			switch (c) {
+				case '"' -> out.append("\\\"");
+				case '\\' -> out.append("\\\\");
+				case '\n' -> out.append("\\n");
+				case '\r' -> out.append("\\r");
+				case '\t' -> out.append("\\t");
+				case '\b' -> out.append("\\b");
+				case '\f' -> out.append("\\f");
+				default -> {
+					if (c < 0x20) {
+						out.append(String.format("\\u%04x", (int) c));
+					} else {
+						out.append(c);
+					}
+				}
+			}
+		}
+		return out.toString();
 	}
 
 	/** Maps the framework's response code to an HTTP status. */
