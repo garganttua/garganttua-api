@@ -131,7 +131,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse response = userCtx.invoke(request);
 
-			assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode(),
 					() -> "Got response: " + response.getResponse());
 
 			// The workflow output is the persisted entity (post-CREATE_ONE)
@@ -154,7 +154,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 			OperationRequest request = createRequestWithRawBody(body, "application/json; charset=utf-8");
 
 			IOperationResponse response = userCtx.invoke(request);
-			assertEquals(OperationResponseCode.OK, response.getResponseCode());
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode());
 			User user = (User) response.getResponse();
 			assertEquals("Bob", user.getName());
 		}
@@ -171,8 +171,8 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 			assertFalse(OperationResponseCode.OK.equals(response.getResponseCode())
 					|| OperationResponseCode.CREATED.equals(response.getResponseCode()),
 					"Unsupported Content-Type should not produce a success response");
-			// The code mapping in Domain.invoke turns 415 into OperationResponseCode.ERROR
-			// since there is no dedicated bucket — we just assert the CRUD was not executed
+			// 415 now maps to OperationResponseCode.UNSUPPORTED_MEDIA_TYPE — here we just
+			// assert the CRUD was not executed (not a success)
 			assertTrue(userDao.getLastSaved() == null,
 					"Nothing should be persisted when Content-Type is unsupported");
 		}
@@ -190,7 +190,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse response = userCtx.invoke(request);
 
-			assertEquals(OperationResponseCode.OK, response.getResponseCode());
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode());
 			assertNotNull(userDao.getLastSaved(), "Mode B path must still persist the entity");
 			User created = (User) response.getResponse();
 			assertEquals("Dan", created.getName());
@@ -231,7 +231,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse response = userCtx.invoke(request);
 
-			assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode(),
 					() -> "Got response: " + response.getResponse());
 
 			Object out = response.getResponse();
@@ -252,7 +252,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse response = userCtx.invoke(request);
 
-			assertEquals(OperationResponseCode.OK, response.getResponseCode());
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode());
 			assertTrue(response.getResponse() instanceof byte[]);
 			String decoded = new String((byte[]) response.getResponse(), StandardCharsets.UTF_8);
 			assertTrue(decoded.startsWith("Henry|"));
@@ -267,7 +267,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse response = userCtx.invoke(request);
 
-			assertEquals(OperationResponseCode.OK, response.getResponseCode());
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode());
 			assertFalse(response.getResponse() instanceof byte[],
 					"Serialize stage must be a no-op when Accept is absent");
 		}
@@ -281,7 +281,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse response = userCtx.invoke(request);
 
-			assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode(),
 					"Negotiation should fall through application/xml (not registered) to application/json");
 			assertTrue(response.getResponse() instanceof byte[]);
 			String decoded = new String((byte[]) response.getResponse(), StandardCharsets.UTF_8);
@@ -308,7 +308,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 			request.arg("accept", "application/json");
 
 			IOperationResponse response = userCtx.invoke(request);
-			assertEquals(OperationResponseCode.OK, response.getResponseCode());
+			assertEquals(OperationResponseCode.CREATED, response.getResponseCode());
 
 			assertFalse(jsonSerializer.getSerializeLog().isEmpty(),
 					"Registered serializer instance must have been called for output serialization");

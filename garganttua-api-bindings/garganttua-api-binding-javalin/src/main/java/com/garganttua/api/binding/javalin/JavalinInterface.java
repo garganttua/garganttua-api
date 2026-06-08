@@ -274,6 +274,9 @@ public class JavalinInterface implements IInterface {
 			case UNAUTHORIZED -> 401;
 			case FORBIDDEN -> 403;
 			case NOT_FOUND -> 404;
+			case NOT_ACCEPTABLE -> 406;
+			case CONFLICT -> 409;
+			case UNSUPPORTED_MEDIA_TYPE -> 415;
 			case NOT_AVAILABLE -> 503;
 			case SERVER_ERROR -> 500;
 		};

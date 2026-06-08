@@ -143,10 +143,10 @@ class ApiRequestBuilderTest extends AbstractCrudIntegrationTest {
                     .build()
                     .execute();
 
-            // Domain.invoke maps workflow success to OK regardless of the CRUD verb;
-            // CREATED is reserved for scripts that explicitly return that code.
-            assertEquals(OperationResponseCode.OK, response.getResponseCode(),
-                    "createOne via shortcut must succeed with OK; got " + response);
+            // Domain.invoke maps a successful create to CREATED (mapSuccessCode keys
+            // off the business operation label), not a flat OK.
+            assertEquals(OperationResponseCode.CREATED, response.getResponseCode(),
+                    "createOne via shortcut must succeed with CREATED; got " + response);
             assertEquals(1, dao.getStorage().size(),
                     "exactly one row should have been persisted through the shortcut; got " + dao.getStorage());
         }

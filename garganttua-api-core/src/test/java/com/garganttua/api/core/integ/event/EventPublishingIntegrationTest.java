@@ -106,7 +106,7 @@ class EventPublishingIntegrationTest extends AbstractCrudIntegrationTest {
 			user.setEmail("alice@example.com");
 
 			IOperationResponse resp = userCtx.invoke(superTenantCreate(user));
-			assertEquals(OperationResponseCode.OK, resp.getResponseCode(),
+			assertEquals(OperationResponseCode.CREATED, resp.getResponseCode(),
 					() -> "create should succeed; got " + resp.getResponse());
 
 			assertEquals(1, publisher.events.size(), "exactly one event must be published");
@@ -119,7 +119,7 @@ class EventPublishingIntegrationTest extends AbstractCrudIntegrationTest {
 			assertInstanceOf(User.class, ev.getOut(), "the event 'out' must be the produced entity");
 			assertEquals("Alice", ((User) ev.getOut()).getName());
 
-			assertEquals(OperationResponseCode.OK, ev.getCode(), "the event must carry the outcome code");
+			assertEquals(OperationResponseCode.CREATED, ev.getCode(), "the event must carry the outcome code");
 			assertEquals("SUPER_TENANT", ev.getTenantId(), "the event must carry the caller's tenant");
 			assertNull(ev.getExceptionMessage(), "a success carries no exception message");
 

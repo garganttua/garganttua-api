@@ -597,7 +597,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             String domainName = this.domainDefinition.domainName();
 
             if (result.isSuccess()) {
-                return OperationResponse.ok(result.output());
+                return mapSuccessCode(opLabel, result.output());
             } else if (result.hasAborted()) {
                 // The workflow surfaced a Throwable directly — propagate it.
                 // Fallback synthesizes an ApiException when the engine produced
@@ -916,13 +916,30 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         };
     }
 
+    /**
+     * Maps a successful workflow outcome to the response code that reflects the
+     * operation — create → CREATED, update → UPDATED, delete → DELETED — so the
+     * distinction survives to the transport (e.g. a POST create answers 201, not a
+     * flat 200). Reads / authenticate / use-cases / unknown stay OK.
+     */
+    private OperationResponse mapSuccessCode(String opLabel, Object output) {
+        return switch (opLabel) {
+            case "create" -> OperationResponse.created(output);
+            case "update" -> OperationResponse.updated(output);
+            case "deleteOne", "deleteAll" -> OperationResponse.deleted(output);
+            default -> OperationResponse.ok(output);
+        };
+    }
+
     private OperationResponse mapWorkflowCode(Integer code, Throwable cause) {
         return switch (code) {
             case 400 -> OperationResponse.badRequest(cause);
             case 401 -> OperationResponse.unauthorized(cause);
             case 403 -> OperationResponse.forbidden(cause);
             case 404 -> OperationResponse.notFound(cause);
-            case 409 -> OperationResponse.badRequest(cause);
+            case 406 -> OperationResponse.notAcceptable(cause);
+            case 409 -> OperationResponse.conflict(cause);
+            case 415 -> OperationResponse.unsupportedMediaType(cause);
             default -> OperationResponse.error(cause);
         };
     }

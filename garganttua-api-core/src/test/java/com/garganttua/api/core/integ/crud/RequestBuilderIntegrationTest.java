@@ -55,7 +55,7 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
 
         IOperationResponse response = productCtx.createOne(p, caller);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+        assertEquals(OperationResponseCode.CREATED, response.getResponseCode(),
                 "response: " + response.getResponse());
     }
 
@@ -72,14 +72,14 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
     }
 
     @Test
-    @DisplayName("deleteAll via shortcut returns OK")
+    @DisplayName("deleteAll via shortcut returns DELETED")
     void deleteAllViaShortcut() {
         productCtx.createOne(product("X", 1.0), caller);
         productCtx.createOne(product("Y", 2.0), caller);
 
         IOperationResponse response = productCtx.deleteAll(caller);
 
-        assertEquals(OperationResponseCode.OK, response.getResponseCode(),
+        assertEquals(OperationResponseCode.DELETED, response.getResponseCode(),
                 "response: " + response.getResponse());
         assertEquals(0, productDao.getStorage().size());
     }

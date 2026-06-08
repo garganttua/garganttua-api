@@ -3,7 +3,8 @@ package com.garganttua.api.commons.service;
 import com.garganttua.api.commons.ApiException;
 
 public enum OperationResponseCode {
-	NOT_AVAILABLE, SERVER_ERROR, CLIENT_ERROR, CREATED, NOT_FOUND, OK, UPDATED, DELETED, UNAUTHORIZED, FORBIDDEN;
+	NOT_AVAILABLE, SERVER_ERROR, CLIENT_ERROR, CREATED, NOT_FOUND, OK, UPDATED, DELETED, UNAUTHORIZED, FORBIDDEN,
+	CONFLICT, NOT_ACCEPTABLE, UNSUPPORTED_MEDIA_TYPE;
 
 	public static OperationResponseCode fromExceptionCode(ApiException e) {
 		OperationResponseCode code = SERVER_ERROR;

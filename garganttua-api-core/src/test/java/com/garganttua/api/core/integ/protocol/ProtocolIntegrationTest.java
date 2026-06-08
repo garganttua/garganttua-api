@@ -159,7 +159,7 @@ class ProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse resp = userCtx.invoke(req);
 
-			assertEquals(OperationResponseCode.OK, resp.getResponseCode(),
+			assertEquals(OperationResponseCode.CREATED, resp.getResponseCode(),
 					() -> "Got: " + resp.getResponse());
 			assertTrue(resp.getResponse() instanceof FakeHttpResponse,
 					"Response should be the transport response, got: " + resp.getResponse());
@@ -241,7 +241,7 @@ class ProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 
 			IOperationResponse resp = userCtx.invoke(req);
 
-			assertEquals(OperationResponseCode.OK, resp.getResponseCode());
+			assertEquals(OperationResponseCode.CREATED, resp.getResponseCode());
 			assertTrue(resp.getResponse() instanceof User,
 					"Mode B output should be the DTO, not a transport response; got: "
 							+ (resp.getResponse() == null ? "null" : resp.getResponse().getClass()));

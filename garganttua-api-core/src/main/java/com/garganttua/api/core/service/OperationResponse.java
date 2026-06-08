@@ -100,6 +100,30 @@ public class OperationResponse implements IOperationResponse {
         return notAvailable(new ApiException(message));
     }
 
+    public static OperationResponse conflict(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.CONFLICT, cause);
+    }
+
+    public static OperationResponse conflict(String message) {
+        return conflict(new ApiException(message));
+    }
+
+    public static OperationResponse notAcceptable(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.NOT_ACCEPTABLE, cause);
+    }
+
+    public static OperationResponse notAcceptable(String message) {
+        return notAcceptable(new ApiException(message));
+    }
+
+    public static OperationResponse unsupportedMediaType(Throwable cause) {
+        return new OperationResponse(OperationResponseCode.UNSUPPORTED_MEDIA_TYPE, cause);
+    }
+
+    public static OperationResponse unsupportedMediaType(String message) {
+        return unsupportedMediaType(new ApiException(message));
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("OperationResponse{code=")
