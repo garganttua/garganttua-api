@@ -6,8 +6,6 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.security.context.IAuthorizationContext;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.supply.ISupplier;
-import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public interface IAuthorizationBuilder<E>
         extends IAutomaticLinkedBuilder<IAuthorizationBuilder<E>, IDomainSecurityBuilder<E>, IAuthorizationContext> {
@@ -62,21 +60,9 @@ public interface IAuthorizationBuilder<E>
 
     IAuthorizationBuilder<E> storable(boolean b);
 
-    /**
-     * Declares a custom token-production method — the mint-side dual of the
-     * verify-side {@code .authentication(supplier).authenticate("method")}. The
-     * {@code supplier} provides the instance holding {@code methodName}; the
-     * returned builder binds the method's parameters via {@code .withParam(i,
-     * supplier)} (free signature, resolved from the runtime context exactly like
-     * the authenticate side). The bound method returns the produced authorization
-     * entity. When set, the framework delegates token production (shape +
-     * signature) to it instead of its built-in minting; persistence and
-     * transport encoding still run around it. When left unset, the standard
-     * framework minting runs. Enables custom tokens and delegation to an external
-     * authorization server (Keycloak / OAuth2).
-     */
-    IAuthorizationMethodBinderBuilder<E> issuer(
-            ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName) throws ApiException;
+    // Custom token production (the mint-side issuer) moved to the authentication
+    // builder: .authentication(supplier).authorization(issuer, "method"). See
+    // IAuthenticationBuilder.authorization(...).
 
     IRefreshableAuthorizationBuilder<E> refreshable();
 

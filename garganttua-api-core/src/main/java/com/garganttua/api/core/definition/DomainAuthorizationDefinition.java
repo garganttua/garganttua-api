@@ -2,7 +2,6 @@ package com.garganttua.api.core.definition;
 
 import com.garganttua.api.commons.definition.IDomainAuthorizationDefinition;
 import com.garganttua.core.reflection.ObjectAddress;
-import com.garganttua.core.reflection.binders.IMethodBinder;
 
 public record DomainAuthorizationDefinition(
 		ObjectAddress type,
@@ -19,7 +18,6 @@ public record DomainAuthorizationDefinition(
 		ObjectAddress refreshRevoked,
 		ObjectAddress encodeMethod,
 		ObjectAddress decodeMethod,
-		ObjectAddress signedBy,
-		IMethodBinder<Object> issuerMethodBinder) implements IDomainAuthorizationDefinition {
+		ObjectAddress signedBy) implements IDomainAuthorizationDefinition {
 
 }

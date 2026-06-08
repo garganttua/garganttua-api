@@ -223,9 +223,8 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                 .authenticator()
                     .login("id")
                     .scope(AuthenticatorScope.tenant)
-                    .alwaysEnabled(true)
-                    .authentication(authBuilder);
-        authenticatorBuilder
+                    .alwaysEnabled(true);
+        authenticatorBuilder.authentication(authBuilder)
                     .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tokenDomainBuilder)
                         .lifeTime(60, TimeUnit.MINUTES)
                         .refreshLifeTime(120, TimeUnit.MINUTES)

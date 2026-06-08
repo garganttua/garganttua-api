@@ -2,7 +2,6 @@ package com.garganttua.api.core.builder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
-import com.garganttua.core.reflection.IMethod;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -46,7 +45,6 @@ public class AuthorizationBuilder<E>
     private ISignableAuthorizationBuilder<E> signable;
     private IRefreshableAuthorizationBuilder<E> refreshable;
     private boolean storable = false;
-    private IAuthorizationMethodBinderBuilder<E> issuer;
 
     public AuthorizationBuilder(IDomainSecurityBuilder<E> domainBuilder, IClass<?> entityClass) {
         super(domainBuilder);
@@ -241,16 +239,6 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
-    public IAuthorizationMethodBinderBuilder<E> issuer(
-            com.garganttua.core.supply.dsl.ISupplierBuilder<?, ? extends com.garganttua.core.supply.ISupplier<?>> supplier,
-            String methodName) throws ApiException {
-        Objects.requireNonNull(supplier, "Issuer supplier cannot be null");
-        Objects.requireNonNull(methodName, "Issuer method name cannot be null");
-        this.issuer = new com.garganttua.api.core.builder.binder.AuthorizationMethodBinderBuilder<>(this, supplier, methodName);
-        return this.issuer;
-    }
-
-    @Override
     public Boolean isStorable() {
         return this.storable;
     }
@@ -289,17 +277,12 @@ public class AuthorizationBuilder<E>
             decodeMethod = rb.getDecodeMethod();
         }
 
-        // Build the custom issuer method binder if a method-bound issuer was
-        // declared via .issuer(supplier, "method").withParam(...).
-        com.garganttua.core.reflection.binders.IMethodBinder<Object> issuerMethodBinder =
-                this.issuer != null ? this.issuer.build() : null;
-
         return new AuthorizationContext(
                 this.type, this.authorities, this.expiration, this.creation, this.revoked,
                 this.storable, this.signable != null, this.refreshable != null,
                 signatureField, getDataToSignMethod,
                 refreshExpiration, refreshRevoked,
-                encodeMethod, decodeMethod, this.signedBy, issuerMethodBinder);
+                encodeMethod, decodeMethod, this.signedBy);
     }
 
     @Override

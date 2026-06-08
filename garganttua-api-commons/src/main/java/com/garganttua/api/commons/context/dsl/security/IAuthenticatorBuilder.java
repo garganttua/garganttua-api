@@ -3,7 +3,6 @@ package com.garganttua.api.commons.context.dsl.security;
 import com.garganttua.core.reflection.IField;
 
 import com.garganttua.api.commons.security.context.IAuthenticatorContext;
-import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
@@ -51,8 +50,13 @@ public interface IAuthenticatorBuilder<E> extends IAutomaticLinkedBuilder<IAuthe
 
     IAuthenticatorBuilder<E> scope(AuthenticatorScope scope);
 
-    IAuthenticatorBuilder<E> authentication(IAuthenticationBuilder authentication) throws ApiException;
-
-    IAuthenticatorAuthorizationBuilder<E> authorization(IDomainBuilder<E> authorizationDomain);
+    /**
+     * Links an authentication (the verify cascade) to this authenticator and
+     * returns the per-authentication sub-builder where the authorization is
+     * declared — both the token domain {@code .authorization(domain)} and the
+     * mint-side {@code .authorization(issuer, "method")}. Call {@code .up()} on the
+     * returned sub-builders to come back to this authenticator.
+     */
+    IAuthenticatorAuthentication<E> authentication(IAuthenticationBuilder authentication) throws ApiException;
 
 }

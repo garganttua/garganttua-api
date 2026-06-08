@@ -105,7 +105,7 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 			throw new ApiException("KeySupplier: the .key(supplier) on domain '" + domainName(authzDomain)
 					+ "' provides a " + supplied.getClass().getName() + ", which is not an IKeyRealm — the framework "
 					+ "cannot sign with it. Supply an IKeyRealm for framework signing, or take over token production "
-					+ "(shape + signature) with a custom .authorization().issuer(...).");
+					+ "(shape + signature) with a custom .authenticator().authorization(issuer, \"method\").");
 		}
 		IDomainAuthenticatorAuthorizationKeyDefinition keyConfig = keyConfig(authzDomain);
 		if (keyConfig != null && keyConfig.keyDomain() != null) {

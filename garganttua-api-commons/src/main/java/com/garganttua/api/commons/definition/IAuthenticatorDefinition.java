@@ -31,4 +31,14 @@ public interface IAuthenticatorDefinition {
 
     IDomainAuthenticatorAuthorizationDefinition authorizationDefinition();
 
+    /**
+     * The custom token-production (mint) method binder declared on the
+     * authenticator via {@code .authorization(issuer, "method")}. {@code null}
+     * when none is declared — the framework then runs its standard minting
+     * (build entity + sign).
+     */
+    default com.garganttua.core.reflection.binders.IMethodBinder<?> authorizationMethodBinder() {
+        return null;
+    }
+
 }

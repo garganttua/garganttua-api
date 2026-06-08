@@ -179,9 +179,8 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                 .authenticator()
                     .login("id")
                     .scope(AuthenticatorScope.tenant)
-                    .alwaysEnabled(true)
-                    .authentication(authBuilder);
-        authenticatorBuilder
+                    .alwaysEnabled(true);
+        authenticatorBuilder.authentication(authBuilder)
                     .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tokenDomainBuilder)
                         .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES);
 
@@ -563,7 +562,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Nested
-    @DisplayName("Custom issuer — token production delegated to .authorization().issuer(...)")
+    @DisplayName("Custom issuer — token production delegated to .authenticator().authorization(issuer, ...)")
     class CustomIssuer {
 
         @Test
@@ -586,9 +585,9 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
             ab.up();
 
-            // Token domain: owned + authorization with a CUSTOM ISSUER. No
-            // authenticator needed (verification is out of scope here), not
-            // storable/signable so the issued token flows straight to output.
+            // Token domain: owned. No authenticator needed (verification is out of
+            // scope here), not storable/signable so the issued token flows straight
+            // to output.
             var tb = bldr.domain(IClass.getClass(TokenEntity.class))
                     .tenant(true).superTenant("superTenant").owned("ownerId")
                     .entity().id("id").uuid("uuid").tenantId("tenantId").up()
@@ -596,9 +595,6 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .security()
                         .authorization()
                             .type("tokenType")
-                            .issuer(new FixedSupplierBuilder<>(new CustomTokenIssuer(), IClass.getClass(CustomTokenIssuer.class)), "issue")
-                                .withParam(0, new com.garganttua.api.core.security.authorization.AuthenticationSupplierBuilder())
-                                .up()
                         .up()
                     .up();
 
@@ -606,12 +602,18 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     .tenant(true).superTenant("superTenant").owner("uuid").superOwner("superOwner")
                     .entity().id("id").uuid("uuid").tenantId("tenantId").up()
                     .dto(IClass.getClass(UserDto.class)).id("id").uuid("uuid").tenantId("tenantId").db(userDao2).up();
-            ub.security()
+            var authBuilder = ub.security()
                     .authenticator()
                         .login("id").scope(AuthenticatorScope.tenant).alwaysEnabled(true)
-                        .authentication(ab)
-                        .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tb)
-                            .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES);
+                        .authentication(ab);
+            // The CUSTOM ISSUER sits on the AUTHENTICATOR (mint binder), beside the
+            // authorization(domain) that declares the token entity. The issuer is a
+            // DIFFERENT object than the authenticator (delegation), its IAuthentication
+            // param injected by AuthenticationSupplierBuilder.
+            authBuilder.authorization(new FixedSupplierBuilder<>(new CustomTokenIssuer(), IClass.getClass(CustomTokenIssuer.class)), "issue")
+                    .withParam(0, new com.garganttua.api.core.security.authorization.AuthenticationSupplierBuilder());
+            authBuilder.authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tb)
+                    .lifeTime(60, java.util.concurrent.TimeUnit.MINUTES);
             ub.up();
 
             IApi api = buildAndStart(bldr);
@@ -637,7 +639,7 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
         /**
          * Method-bound custom issuer: declared via
-         * {@code .issuer(supplier, "issue").withParam(0, AuthenticationSupplierBuilder)}.
+         * {@code .authenticator().authorization(issuer, "issue").withParam(0, AuthenticationSupplierBuilder)}.
          * Produces a recognizable token from the authentication result.
          */
         public static class CustomTokenIssuer {

@@ -9,6 +9,7 @@ import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.definition.IDomainAuthenticatorAuthorizationDefinition;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 
 public record AuthenticatorDefintion(
         boolean alwaysEnabled,
@@ -21,6 +22,7 @@ public record AuthenticatorDefintion(
         AuthenticatorScope scope,
         Map<Annotation, ObjectAddress> requiredAuthenticationFields,
         List<IAuthenticationDefinition> authenticationDefinitions,
-        IDomainAuthenticatorAuthorizationDefinition authorizationDefinition) implements IAuthenticatorDefinition {
+        IDomainAuthenticatorAuthorizationDefinition authorizationDefinition,
+        IMethodBinder<?> authorizationMethodBinder) implements IAuthenticatorDefinition {
 
 }

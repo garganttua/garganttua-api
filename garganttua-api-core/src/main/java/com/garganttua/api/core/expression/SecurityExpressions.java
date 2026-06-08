@@ -611,8 +611,8 @@ public class SecurityExpressions {
 	@Expression(name = "issueAuthorization",
 			description = "Produces the authorization (token) after a successful authentication — the mint-side "
 					+ "entry point used by CREATE_AUTHORIZATION. When a custom issuer method is declared via "
-					+ ".authorization().issuer(supplier, \"method\").withParam(...), delegates token production (shape + "
-					+ "signature) to that bound method — enabling custom tokens or delegation to an external "
+					+ ".authenticator().authorization(issuer, \"method\").withParam(...), delegates token production "
+					+ "(shape + signature) to that bound method — enabling custom tokens or delegation to an external "
 					+ "authorization server (Keycloak/OAuth2). The method's params are resolved from the runtime context "
 					+ "(authentication result, domainContext, request) by the same supplier mechanism as the verify-side "
 					+ "authenticate method. Otherwise runs the framework's standard minting: build the entity from the "
@@ -628,14 +628,13 @@ public class SecurityExpressions {
 			throw new ApiException("issueAuthorization: domain context is required");
 		}
 
-		Object defObj = authorizationDefinition(authenticatorDomain);
-		IMethodBinder<Object> issuerBinder =
-				(defObj instanceof IDomainAuthorizationDefinition authzDef) ? authzDef.issuerMethodBinder() : null;
+		IMethodBinder<?> issuerBinder = resolveIssuerBinder(authenticatorDomain);
 
 		// Custom issuer method: the user owns token production (shape + signing).
-		// Symmetric to the verify-side authenticate method — the bound method's
+		// Declared on the authenticator (.authenticator().authorization(issuer, "method")),
+		// the mint-side dual of the verify-side authenticate. The bound method's
 		// params are resolved from the runtime context by their suppliers, so we
-		// publish authentication / domainContext / request before executing.
+		// publish authentication / domainContext / request first.
 		if (issuerBinder != null) {
 			Object req = unwrapOptional(request);
 			IOperationRequest opReq = (req instanceof IOperationRequest r) ? r : null;
@@ -664,6 +663,16 @@ public class SecurityExpressions {
 		Object entity = createAuthorizationEntity2(authResultObj, domainContextObj);
 		signIfSignable(entity, domainContextObj, request);
 		return entity;
+	}
+
+	/**
+	 * The custom token-production (mint) binder declared on the authenticator via
+	 * {@code .authorization(issuer, "method")}. {@code null} when none is declared
+	 * (the framework then mints with its standard build + sign).
+	 */
+	private static IMethodBinder<?> resolveIssuerBinder(IDomain<?> authenticatorDomain) {
+		IAuthenticatorDefinition authDef = authenticatorContext(authenticatorDomain);
+		return authDef != null ? authDef.authorizationMethodBinder() : null;
 	}
 
 	/**

@@ -13,16 +13,21 @@ import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthorizationBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticatorBuilder;
+import com.garganttua.api.commons.context.dsl.security.IAuthenticatorMethodBinderBuilder;
 import com.garganttua.api.commons.context.dsl.security.IDomainSecurityBuilder;
 import com.garganttua.api.commons.definition.IAuthenticationDefinition;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.security.context.IAuthenticatorContext;
+import com.garganttua.api.core.builder.binder.AuthenticatorMethodBinderBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.fields.FieldResolver;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 @Reflected
 public class AuthenticatorBuilder<E> extends
@@ -46,6 +51,7 @@ public class AuthenticatorBuilder<E> extends
     private AuthenticatorScope scope;
     private List<IAuthenticationBuilder> selectedAuthentications = new ArrayList<>();
     private IAuthenticatorAuthorizationBuilder<E> authenticatorAuthorizationBuilder;
+    private IAuthenticatorMethodBinderBuilder<E> authorizationMethodBinderBuilder;
 
     public AuthenticatorBuilder(IDomainSecurityBuilder<E> domainBuilder, IClass<?> entityClass) {
         super(domainBuilder);
@@ -249,14 +255,20 @@ public class AuthenticatorBuilder<E> extends
     }
 
     @Override
-    public IAuthenticatorBuilder authentication(IAuthenticationBuilder authentication) throws ApiException {
+    public com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthentication<E> authentication(
+            IAuthenticationBuilder authentication) throws ApiException {
         Objects.requireNonNull(authentication, "Authentication cannot be null");
         this.selectedAuthentications.add(authentication);
-        return this;
+        return new AuthenticatorAuthentication<>(this);
     }
 
-    @Override
-    public IAuthenticatorAuthorizationBuilder authorization(IDomainBuilder authorization) {
+    /**
+     * Creates and stores the token (authorization) domain sub-builder, parented to
+     * this authenticator (so {@code .up()} returns here). Internal hook shared by
+     * {@link AuthenticatorAuthentication#authorization(IDomainBuilder)} (the DSL
+     * path) and the annotation scanner.
+     */
+    public IAuthenticatorAuthorizationBuilder tokenAuthorization(IDomainBuilder authorization) {
         Objects.requireNonNull(authorization, "Authorization domain cannot be null");
 
         if (this.authenticatorAuthorizationBuilder == null) {
@@ -264,6 +276,20 @@ public class AuthenticatorBuilder<E> extends
         }
 
         return this.authenticatorAuthorizationBuilder;
+    }
+
+    /**
+     * Creates and stores the custom token-production (mint) binder, parented to
+     * this authenticator (so {@code .up()} returns here). Called by
+     * {@link AuthenticatorAuthentication#authorization} — the mint is declared
+     * per-authentication in the DSL but stored once per authenticator.
+     */
+    IAuthenticatorMethodBinderBuilder<E> mintBinder(
+            ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName) throws ApiException {
+        Objects.requireNonNull(supplier, "Issuer supplier cannot be null");
+        Objects.requireNonNull(methodName, "Issuer method name cannot be null");
+        this.authorizationMethodBinderBuilder = new AuthenticatorMethodBinderBuilder<>(this, supplier, methodName);
+        return this.authorizationMethodBinderBuilder;
     }
 
     @Override
@@ -278,6 +304,12 @@ public class AuthenticatorBuilder<E> extends
                 ? this.authenticatorAuthorizationBuilder.build().getAuthenticatorAuthorizationDefinition()
                 : null;
 
+        // The custom token-production (mint) binder, declared via
+        // .authorization(issuer, "method").withParam(...). Null → framework mints.
+        IMethodBinder<?> authorizationMethodBinder = this.authorizationMethodBinderBuilder != null
+                ? this.authorizationMethodBinderBuilder.build()
+                : null;
+
         IAuthenticatorDefinition authenticatorDefinition = new AuthenticatorDefintion(
                 this.alwaysEnabled,
                 this.login,
@@ -289,7 +321,8 @@ public class AuthenticatorBuilder<E> extends
                 this.scope,
                 null,
                 authenticationDefinitions,
-                authorizationDef);
+                authorizationDef,
+                authorizationMethodBinder);
 
         return new AuthenticatorContext(authenticatorDefinition);
     }

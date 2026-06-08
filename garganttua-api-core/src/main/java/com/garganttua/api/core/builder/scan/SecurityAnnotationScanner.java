@@ -271,7 +271,11 @@ public final class SecurityAnnotationScanner {
                     IClass<?> authzClass = IClass.getClass(a.authorization());
                     IDomainBuilder<Object> authzDomain =
                             (IDomainBuilder<Object>) this.apiBuilder.domain((IClass) authzClass);
-                    var authzAuth = authrBuilder.authorization(authzDomain);
+                    // The authorization DSL lives on IAuthenticatorAuthentication, but the
+                    // token domain is authenticator-scoped; the scanner wires it through the
+                    // internal hook so it works whether or not an authentication was linked.
+                    var authzAuth = ((com.garganttua.api.core.builder.AuthenticatorBuilder<Object>) authrBuilder)
+                            .tokenAuthorization(authzDomain);
                     authzAuth.lifeTime(a.authorizationLifeTime(), a.authorizationLifeTimeUnit());
                     authzAuth.refreshLifeTime(a.authorizationRefreshTokenLifeTime(),
                             a.authorizationRefreshTokenLifeTimeUnit());
