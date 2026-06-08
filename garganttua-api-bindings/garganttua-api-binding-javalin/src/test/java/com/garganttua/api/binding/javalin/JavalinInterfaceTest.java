@@ -361,6 +361,33 @@ class JavalinInterfaceTest {
 		}
 
 		@Test
+		@DisplayName("POST /{domain}/authenticate routes to the authenticate op when the domain exposes it")
+		void authenticateRouteExposed() throws Exception {
+			IClass<?> e = fakeEntityClass();
+			startWith(List.of(
+					OperationDefinition.readAllWithStandardSecurity("users", e),
+					OperationDefinition.authenticate("users", e)));
+
+			HttpResponse<String> resp = send("POST", "/users/authenticate", "john|pw|T1");
+
+			assertEquals(200, resp.statusCode());
+			assertEquals(BusinessOperation.authenticate, domain.lastOperation.getBusinessOperation(),
+					"the login route must dispatch the authenticate operation");
+			assertArrayEquals("john|pw|T1".getBytes(StandardCharsets.UTF_8), domain.lastBody,
+					"the credentials body must reach the protocol");
+		}
+
+		@Test
+		@DisplayName("no authenticate route when the domain has no authenticator (404)")
+		void noAuthenticateRouteWhenAbsent() throws Exception {
+			IClass<?> e = fakeEntityClass();
+			startWith(List.of(OperationDefinition.readAllWithStandardSecurity("users", e)));
+
+			assertEquals(404, send("POST", "/users/authenticate", "x").statusCode(),
+					"an authenticator-less domain must expose no login route");
+		}
+
+		@Test
 		@DisplayName("a CRUD operation the domain does not expose gets no route (404)")
 		void unconfiguredOperationHasNoRoute() throws Exception {
 			IClass<?> e = fakeEntityClass();

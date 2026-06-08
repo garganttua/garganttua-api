@@ -48,10 +48,29 @@ public record DomainDefinition<E>(
         IClass<?> entityClass = entityDefinition.entityClass();
 
         collectCrudOperations(ops, entityClass);
+        collectAuthOperations(ops, entityClass);
         collectWorkflowOperations(ops, entityClass);
         collectUseCaseOperations(ops, entityClass);
 
         return ops;
+    }
+
+    /**
+     * Exposes the auto-registered authentication operations (authenticate / refresh)
+     * so transports can route them like any other operation. They live in the
+     * {@code workflows} map under their business-operation labels but are
+     * {@code custom() == false}, so {@link #collectWorkflowOperations} skips them —
+     * hence this dedicated collector. Both are anonymous entry points
+     * ({@code Access.anonymous}, no authority).
+     */
+    private void collectAuthOperations(List<OperationDefinition> ops, IClass<?> entityClass) {
+        if (workflows == null) return;
+        if (workflows.containsKey(BusinessOperation.authenticate.getLabel())) {
+            ops.add(OperationDefinition.authenticate(domainName, entityClass));
+        }
+        if (workflows.containsKey(BusinessOperation.refreshAuthorization.getLabel())) {
+            ops.add(OperationDefinition.refreshAuthorization(domainName, entityClass));
+        }
     }
 
     private void collectCrudOperations(List<OperationDefinition> ops, IClass<?> entityClass) {

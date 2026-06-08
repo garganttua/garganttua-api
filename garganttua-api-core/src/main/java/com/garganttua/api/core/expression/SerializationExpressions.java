@@ -11,6 +11,7 @@ import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IDomainDefinition;
 import com.garganttua.api.commons.definition.IDtoDefinition;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.operation.OperationType;
 import com.garganttua.api.commons.operation.TechnicalOperation;
 import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.api.commons.service.IOperationRequest;
@@ -44,6 +45,13 @@ public class SerializationExpressions {
 		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
 		if (opDef == null) {
 			throw new ApiException("Cannot resolve body type: operation is null");
+		}
+		// Authentication carries credentials, not the authenticator entity: the body is
+		// an AuthenticationRequest(login, credentials, tenantId), the shape AUTHENTICATE.gs
+		// reads under "entity". Without this the body would deserialize to the User entity
+		// and the login would fail over HTTP.
+		if (opDef.type() == OperationType.authentication) {
+			return IClass.getClass(com.garganttua.api.core.security.authentication.AuthenticationRequest.class);
 		}
 		IClass<?> entityClass = opDef.entity();
 		if (entityClass != null) {

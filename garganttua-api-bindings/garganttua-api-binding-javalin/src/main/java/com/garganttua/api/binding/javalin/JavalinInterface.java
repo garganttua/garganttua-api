@@ -108,6 +108,12 @@ public class JavalinInterface implements IInterface {
 		route(server, HttpVerb.PUT,    one,  domain, configured, BusinessOperation.update,    true);
 		route(server, HttpVerb.DELETE, one,  domain, configured, BusinessOperation.deleteOne, true);
 		route(server, HttpVerb.DELETE, base, domain, configured, BusinessOperation.deleteAll, false);
+
+		// Authentication entry point (anonymous): the credentials travel in the body as
+		// an AuthenticationRequest. Registered only when the domain has an authenticator
+		// (its authenticate operation is then present in the configured operations).
+		route(server, HttpVerb.POST, base + "/authenticate", domain, configured,
+				BusinessOperation.authenticate, false);
 	}
 
 	private enum HttpVerb { GET, POST, PUT, DELETE }
