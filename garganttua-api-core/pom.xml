@@ -156,47 +156,6 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<!-- Generate META-INF/native-image/resource-config.json so the .gs
-			     workflow scripts loaded via include("scripts/...") are embedded
-			     in the native image. Reflection is handled programmatically by
-			     GarganttuaAotFeature, not here. -->
-			<plugin>
-				<groupId>com.garganttua.core</groupId>
-				<artifactId>garganttua-native-image-maven-plugin</artifactId>
-				<version>${garganttua.core.version}</version>
-				<executions>
-					<execution>
-						<id>generate-native-resource-config</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>native-config</goal>
-						</goals>
-						<configuration>
-							<resources>
-								<resource>scripts/business/AUTHENTICATE.gs</resource>
-								<resource>scripts/business/CREATE_AUTHORIZATION.gs</resource>
-								<resource>scripts/business/CREATE_ONE.gs</resource>
-								<resource>scripts/business/DELETE_ALL.gs</resource>
-								<resource>scripts/business/DELETE_ONE.gs</resource>
-								<resource>scripts/business/OWNER_RULES.gs</resource>
-								<resource>scripts/business/READ_ALL.gs</resource>
-								<resource>scripts/business/READ_ONE.gs</resource>
-								<resource>scripts/business/REFRESH_AUTHORIZATION.gs</resource>
-								<resource>scripts/business/TENANT_RULES.gs</resource>
-								<resource>scripts/business/UPDATE_ONE.gs</resource>
-								<resource>scripts/data/DESERIALIZE.gs</resource>
-								<resource>scripts/data/SERIALIZE.gs</resource>
-								<resource>scripts/protocol/EXTRACT.gs</resource>
-								<resource>scripts/protocol/RESPONSE.gs</resource>
-								<resource>scripts/security/VERIFY_AUTHORITY.gs</resource>
-								<resource>scripts/security/VERIFY_AUTHORIZATION.gs</resource>
-								<resource>scripts/security/VERIFY_OWNER.gs</resource>
-								<resource>scripts/security/VERIFY_TENANT.gs</resource>
-							</resources>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 </project>
