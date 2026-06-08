@@ -301,7 +301,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @DisplayName("authenticate workflow returns a fully populated AnnoToken (no DSL security wiring used)")
         void authenticateWorks() throws ApiException {
             AuthenticationRequest req = new AuthenticationRequest(
-                    "alice@example.com", "valid-password".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
+                    "alice@example.com", "valid-password".getBytes(StandardCharsets.UTF_8));
             OperationRequest request = superTenantScriptRequest(
                     OperationDefinition.authenticate("annousers", IClass.getClass(AnnoUser.class)));
             request.arg("entity", req);
@@ -324,7 +324,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
         @DisplayName("wrong password is rejected with 401")
         void wrongPasswordRefused() throws ApiException {
             AuthenticationRequest req = new AuthenticationRequest(
-                    "alice@example.com", "bad-password".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
+                    "alice@example.com", "bad-password".getBytes(StandardCharsets.UTF_8));
             OperationRequest request = superTenantScriptRequest(
                     OperationDefinition.authenticate("annousers", IClass.getClass(AnnoUser.class)));
             request.arg("entity", req);

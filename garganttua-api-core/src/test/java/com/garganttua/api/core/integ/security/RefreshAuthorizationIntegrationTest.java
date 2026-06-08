@@ -246,7 +246,7 @@ class RefreshAuthorizationIntegrationTest extends AbstractCrudScriptTest {
     /** Drive a fresh login to obtain a signed authorization the test can replay. */
     private RefreshableTokenEntity loginAndGetToken() throws ApiException {
         AuthenticationRequest req = new AuthenticationRequest(
-                "john@example.com", "valid-password".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
+                "john@example.com", "valid-password".getBytes(StandardCharsets.UTF_8));
         OperationRequest request = superTenantScriptRequest(
                 OperationDefinition.authenticate("users", IClass.getClass(User.class)));
         request.arg("entity", req);

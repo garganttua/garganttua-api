@@ -19,6 +19,7 @@ import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -200,9 +201,17 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
     private OperationRequest authenticateRequest(String login, String password, String tenantId) {
         AuthenticationRequest authReq = new AuthenticationRequest(
-                login, password.getBytes(StandardCharsets.UTF_8), tenantId);
+                login, password.getBytes(StandardCharsets.UTF_8));
         OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantScriptRequest(authOp);
+        OperationRequest request = new OperationRequest(new java.util.HashMap<>());
+        request.arg(IOperationRequest.OPERATION, authOp);
+        // The tenant of a tenant-scoped login rides on the caller (X-Tenant-Id over
+        // HTTP), not in the AuthenticationRequest body. A null tenantId exercises the
+        // tenant-missing path.
+        if (tenantId != null) {
+            request.arg(IOperationRequest.TENANT_ID, tenantId);
+            request.arg(IOperationRequest.REQUESTED_TENANT_ID, tenantId);
+        }
         request.arg("entity", authReq);
         return request;
     }

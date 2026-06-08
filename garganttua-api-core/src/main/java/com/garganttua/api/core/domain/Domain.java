@@ -652,28 +652,13 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
     /**
      * Builds the caller {@code Domain.invoke} will use when the incoming
      * request carries no caller information. The default is anonymous
-     * ({@link Caller#createAnonymousCaller()}), but a few request shapes
-     * leak enough information for us to materialize a tenant-scoped
-     * pre-authentication caller:
-     *
-     * <ul>
-     *   <li>{@link IAuthenticationRequest} body with a non-blank
-     *       {@code tenantId()} → pin that tenantId on the caller so
-     *       AUTHENTICATE.gs (and the user-lookup it performs) scope the
-     *       login + password match to the right tenant. The caller still
-     *       has no callerId / ownerId / authorities — it is not yet
-     *       authenticated; it's a tenant context, not an identity.</li>
-     * </ul>
+     * ({@link Caller#createAnonymousCaller()}). The tenant of a tenant-scoped
+     * authentication is now carried by the caller itself (over HTTP, the
+     * X-Tenant-Id header) — it is no longer read from the request body — so there
+     * is nothing to materialize here beyond the anonymous default. AUTHENTICATE.gs
+     * requires the caller's tenant explicitly for tenant-scoped authenticators.
      */
     static ICaller autoCreateCallerFromBody(IOperationRequest request) {
-        Object body = request == null ? null
-                : request.arg(IOperationRequest.BODY).orElse(null);
-        if (body instanceof com.garganttua.api.commons.security.authentication.IAuthenticationRequest authReq) {
-            String tenantId = authReq.tenantId();
-            if (tenantId != null && !tenantId.isBlank()) {
-                return new Caller(tenantId, tenantId, null, null, false, false, null);
-            }
-        }
         return Caller.createAnonymousCaller();
     }
 

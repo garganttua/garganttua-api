@@ -336,13 +336,20 @@ public class SecurityExpressions {
 		return null;
 	}
 
-	@Expression(name = "authRequestHasTenantId", description = "Returns true if the IAuthenticationRequest has a non-null tenantId (safe, never throws)")
-	public static boolean authRequestHasTenantId(@Nullable Object entity) {
-		Object unwrapped = unwrapOptional(entity);
-		if (unwrapped instanceof IAuthenticationRequest req) {
-			return req.tenantId() != null;
+	@Expression(name = "requireCallerTenantForScope", description = "For a tenant-scoped authenticator, requires the caller to carry a tenantId (taken from the caller — over HTTP, the X-Tenant-Id header — never from the AuthenticationRequest body). Throws a parlant ApiException naming what is missing; no-op for non-tenant scopes.")
+	public static boolean requireCallerTenantForScope(@Nullable Object operationRequest, @Nullable Object scope) {
+		Object scopeUnwrapped = unwrapOptional(scope);
+		String scopeName = scopeUnwrapped == null ? null : scopeUnwrapped.toString();
+		if (!"tenant".equals(scopeName)) {
+			return true;
 		}
-		return false;
+		IOperationRequest req = (IOperationRequest) unwrapOptional(operationRequest);
+		String tenantId = req == null ? null : req.arg(IOperationRequest.TENANT_ID).orElse(null);
+		if (tenantId == null || tenantId.isBlank()) {
+			throw new ApiException("Tenant-scoped authentication requires the caller's tenant. "
+					+ "Provide it on the caller.");
+		}
+		return true;
 	}
 
 	@Expression(name = "isTenantIdMandatory", description = "Returns true if the operation requires a tenantId based on access level")
@@ -755,13 +762,6 @@ public class SecurityExpressions {
 		}
 	}
 
-	@Expression(name = "authRequestTenantId", description = "Extracts the tenantId from an IAuthenticationRequest")
-	public static @Nullable String authRequestTenantId(@Nullable Object request) {
-		if (request instanceof IAuthenticationRequest authReq) {
-			return authReq.tenantId();
-		}
-		return null;
-	}
 
 	@Expression(name = "authResultPrincipal", description = "Extracts the principal from an IAuthentication result")
 	public static Object authResultPrincipal(@Nullable Object authResult) {
@@ -1468,18 +1468,6 @@ public class SecurityExpressions {
 				"No domain registered for entity class: " + target.getName());
 	}
 
-	@Expression(name = "buildAuthRequestFromAuthorization",
-			description = "Wraps a decoded authorization entity into an IAuthenticationRequest (credentials slot) so it can be forwarded to the authenticate pipeline. The credentials slot is an Object — strategies pattern-match on runtime type to decide whether they handle this shape.")
-	public static IAuthenticationRequest buildAuthRequestFromAuthorization(@Nullable Object authorization, @Nullable Object tenantId) {
-		Object authz = unwrapOptional(authorization);
-		if (authz == null) {
-			throw new ApiException("Authorization is null — cannot build authentication request");
-		}
-		String tenant = tenantId == null ? null : String.valueOf(unwrapOptional(tenantId));
-		if (tenant != null && tenant.equals("null")) tenant = null;
-		return new com.garganttua.api.core.security.authentication.AuthenticationRequest(null, authz, tenant);
-	}
-
 	@Expression(name = "verifyAuthorization",
 			description = "Single server-side verification step used by VERIFY_AUTHORIZATION.gs. The decoded authorization (token) verifies ITSELF: it must be a registered, authenticator-enabled domain. Resolves the token's own domain from the entity class, forges an AuthenticationRequest (login = token uuid, credentials = decoded token, tenantId = token's tenant) and runs that domain's authenticate pipeline — the user-declared @AuthenticationAuthenticate method enforces signature / expiration / revocation / custom rules. On success the framework resolves the OWNER from the token's qualified ownerId and returns it as the principal (carrying the token's type + authorities). Throws ApiException (→ 401) when the token is not a verifiable authenticator domain, fails its authenticate method, or its owner cannot be resolved.")
 	public static IAuthentication verifyAuthorization(@Nullable Object apiContext,
@@ -1527,9 +1515,10 @@ public class SecurityExpressions {
 			ObjectAddress tenantAddr = authzDomain.getEntityDefinition().tenantId();
 			String tenantId = tenantAddr != null ? readField(authz, tenantAddr) : null;
 			IAuthenticationRequest authRequest =
-					new com.garganttua.api.core.security.authentication.AuthenticationRequest(login, authz, tenantId);
-			// Throws on rejection (→ mapped to 401 by the caller).
-			invokeAuthenticate(api, authzDomain, authRequest);
+					new com.garganttua.api.core.security.authentication.AuthenticationRequest(login, authz);
+			// The token's own tenant drives the lookup (verify flow); it is NOT carried
+			// in the request body. Throws on rejection (→ mapped to 401 by the caller).
+			invokeAuthenticate(api, authzDomain, authRequest, tenantId);
 		} else {
 			boolean sigOk = verifyIfSignable(authz, authzDomain, operationRequest);
 			if (!sigOk) {
@@ -1643,13 +1632,16 @@ public class SecurityExpressions {
 
 	@Expression(name = "invokeAuthenticate",
 			description = "Synchronously invokes the 'authenticate' operation on the given target domain with the provided IAuthenticationRequest as body. Returns the resulting IAuthentication or throws ApiException on failure (mapped to 401 by the caller).")
-	public static IAuthentication invokeAuthenticate(@Nullable Object apiContext, @Nullable Object targetDomain, @Nullable Object authRequest) {
+	public static IAuthentication invokeAuthenticate(@Nullable Object apiContext, @Nullable Object targetDomain,
+			@Nullable Object authRequest, @Nullable Object tenantId) {
 		IApi api = (IApi) unwrapOptional(apiContext);
 		IDomain<?> domain = (IDomain<?>) unwrapOptional(targetDomain);
 		IAuthenticationRequest req = (IAuthenticationRequest) unwrapOptional(authRequest);
 		if (api == null || domain == null || req == null) {
 			throw new ApiException("invokeAuthenticate: apiContext, targetDomain and authRequest must all be non-null");
 		}
+		Object tenantUnwrapped = unwrapOptional(tenantId);
+		String tenant = tenantUnwrapped == null ? null : tenantUnwrapped.toString();
 
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		IClass<?> entityClass = ((IDomain) domain).getEntityClass();
@@ -1658,9 +1650,11 @@ public class SecurityExpressions {
 		invocation.arg(IOperationRequest.OPERATION,
 				OperationDefinition.authenticate(domain.getDomainName(), entityClass));
 		invocation.arg("entity", req);
-		if (req.tenantId() != null) {
-			invocation.arg(IOperationRequest.TENANT_ID, req.tenantId());
-			invocation.arg(IOperationRequest.REQUESTED_TENANT_ID, req.tenantId());
+		// The tenant is set on the caller of the authenticate invocation (not in the
+		// request body): for the verify flow it is the token's own tenant.
+		if (tenant != null && !tenant.isBlank()) {
+			invocation.arg(IOperationRequest.TENANT_ID, tenant);
+			invocation.arg(IOperationRequest.REQUESTED_TENANT_ID, tenant);
 		}
 
 		IOperationResponse response = domain.invoke(invocation);

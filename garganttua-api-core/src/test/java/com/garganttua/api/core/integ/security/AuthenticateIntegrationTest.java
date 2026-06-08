@@ -117,8 +117,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
 
             AuthenticationRequest authReq = new AuthenticationRequest(
                     "john@example.com",
-                    "valid-password".getBytes(StandardCharsets.UTF_8),
-                    "SUPER_TENANT");
+                    "valid-password".getBytes(StandardCharsets.UTF_8));
 
             OperationRequest request = authenticateRequest();
             request.arg("entity", authReq);
@@ -140,20 +139,23 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
     class RequestValidation {
 
         @Test
-        @DisplayName("does not require caller — authentication is anonymous entry point")
+        @DisplayName("does not require an authenticated caller — only the tenant context for tenant scope")
         void doesNotRequireCaller() throws ApiException {
             AuthenticationRequest authReq = new AuthenticationRequest(
-                    "john@example.com", "valid-password".getBytes(StandardCharsets.UTF_8), "SUPER_TENANT");
+                    "john@example.com", "valid-password".getBytes(StandardCharsets.UTF_8));
 
             OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
             OperationRequest request = new OperationRequest(new HashMap<>());
             request.arg(IOperationRequest.OPERATION, authOp);
+            // No caller IDENTITY (no callerId / authorities) — authentication is the
+            // anonymous entry point — but a tenant-scoped authenticator still needs the
+            // caller's tenant context (over HTTP, the X-Tenant-Id header).
+            request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");
             request.arg("entity", authReq);
 
             WorkflowResult result = executeScript(userCtx, request);
 
-            // Script should not return 400 (missing caller is OK for authenticate)
-            assertNotEquals(400, result.code(), "authenticate should not require caller");
+            assertNotEquals(400, result.code(), "authenticate should not require an identified caller");
             assertNotEquals(-1, result.code(), "script should not abort");
         }
 
@@ -178,8 +180,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         void tenantScopePassesWithTenantId() throws ApiException {
             AuthenticationRequest authReq = new AuthenticationRequest(
                     "john@example.com",
-                    "valid-password".getBytes(StandardCharsets.UTF_8),
-                    "SUPER_TENANT");
+                    "valid-password".getBytes(StandardCharsets.UTF_8));
 
             OperationRequest request = authenticateRequest();
             request.arg("entity", authReq);
@@ -192,19 +193,29 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
-        @DisplayName("tenant-scoped authenticator returns 400 when entity has no tenantId")
+        @DisplayName("tenant-scoped authenticator returns 400 when the caller carries no tenant")
         void tenantScopeFailsWithoutTenantId() throws ApiException {
             AuthenticationRequest authReq = new AuthenticationRequest(
                     "john@example.com",
-                    "valid-password".getBytes(StandardCharsets.UTF_8),
-                    null); // no tenantId
+                    "valid-password".getBytes(StandardCharsets.UTF_8));
 
-            OperationRequest request = authenticateRequest();
+            // No tenant on the caller (no TENANT_ID arg) — tenant-scoped auth must reject.
+            OperationRequest request = new OperationRequest(new HashMap<>());
+            request.arg(IOperationRequest.OPERATION,
+                    OperationDefinition.authenticate("users", IClass.getClass(User.class)));
             request.arg("entity", authReq);
 
             WorkflowResult result = executeScript(userCtx, request);
 
-            assertEquals(400, result.code(), "tenant scope without tenantId should return 400");
+            assertEquals(400, result.code(), "tenant scope without the caller's tenant should return 400");
+            // The parlant message is stashed on the request by recordCaughtException
+            // (the `! -> 400` pattern resets the WorkflowResult's own message).
+            Object recorded = request.arg(com.garganttua.api.commons.service.ArgKey.of(
+                    "_lastException", IClass.getClass(Object.class))).orElse(null);
+            String message = (recorded instanceof Throwable t && t.getMessage() != null) ? t.getMessage() : "";
+            assertTrue(message.contains("caller's tenant"),
+                    "the 400 must name what is required (the caller's tenant), not a generic "
+                            + "'Required value is null'; got: " + message);
         }
     }
 
@@ -220,8 +231,7 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
             // output is the raw IAuthentication result rather than a minted token.
             AuthenticationRequest authReq = new AuthenticationRequest(
                     "john@example.com",
-                    "valid-password".getBytes(StandardCharsets.UTF_8),
-                    "SUPER_TENANT");
+                    "valid-password".getBytes(StandardCharsets.UTF_8));
 
             OperationRequest request = authenticateRequest();
             request.arg("entity", authReq);
@@ -244,24 +254,16 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
         @DisplayName("record accessors return constructor values")
         void recordAccessors() {
             byte[] creds = "pass".getBytes(StandardCharsets.UTF_8);
-            AuthenticationRequest req = new AuthenticationRequest("alice", creds, "T1");
+            AuthenticationRequest req = new AuthenticationRequest("alice", creds);
 
             assertEquals("alice", req.login());
             assertSame(creds, req.credentials());
-            assertEquals("T1", req.tenantId());
-        }
-
-        @Test
-        @DisplayName("tenantId can be null")
-        void tenantIdCanBeNull() {
-            AuthenticationRequest req = new AuthenticationRequest("bob", new byte[]{1, 2}, null);
-            assertNull(req.tenantId());
         }
 
         @Test
         @DisplayName("implements IAuthenticationRequest")
         void implementsInterface() {
-            AuthenticationRequest req = new AuthenticationRequest("x", new byte[0], null);
+            AuthenticationRequest req = new AuthenticationRequest("x", new byte[0]);
             assertInstanceOf(com.garganttua.api.commons.security.authentication.IAuthenticationRequest.class, req);
         }
     }

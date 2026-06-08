@@ -295,62 +295,21 @@ class DomainErrorMessageTest {
         }
 
         @Test
-        @DisplayName("AuthenticationRequest with tenantId -> caller pinned to that tenantId, otherwise empty")
-        void authRequestWithTenantId() {
+        @DisplayName("IAuthenticationRequest body -> anonymous caller (the tenant is on the caller, not the body)")
+        void authRequestBodyYieldsAnonymous() {
             com.garganttua.api.commons.security.authentication.IAuthenticationRequest auth =
                     new com.garganttua.api.core.security.authentication.AuthenticationRequest(
-                            "alice@acme", new byte[]{1, 2, 3}, "acme");
+                            "alice@acme", new byte[]{1, 2, 3});
 
             com.garganttua.api.commons.caller.ICaller caller =
                     Domain.autoCreateCallerFromBody(requestWithBody(auth));
 
-            assertEquals("acme", caller.tenantId(),
-                    "tenantId from AuthenticationRequest must be pinned on the caller; got: "
-                            + caller.tenantId());
-            assertEquals("acme", caller.requestedTenantId(),
-                    "requestedTenantId must mirror tenantId so downstream tenant filtering "
-                            + "scopes to the right tenant; got: " + caller.requestedTenantId());
-            assertEquals(null, caller.callerId(),
-                    "callerId must stay null — the caller is not yet authenticated");
-            assertEquals(null, caller.ownerId(),
-                    "ownerId must stay null — the caller is not yet authenticated");
-            assertFalse(caller.superTenant(),
-                    "auto-created auth caller must NOT carry super flags");
-            assertFalse(caller.superOwner(),
-                    "auto-created auth caller must NOT carry super flags");
-        }
-
-        @Test
-        @DisplayName("AuthenticationRequest with NULL tenantId -> anonymous (totally null caller)")
-        void authRequestWithNullTenantId() {
-            com.garganttua.api.commons.security.authentication.IAuthenticationRequest auth =
-                    new com.garganttua.api.core.security.authentication.AuthenticationRequest(
-                            "alice@acme", new byte[]{1, 2, 3}, null);
-
-            com.garganttua.api.commons.caller.ICaller caller =
-                    Domain.autoCreateCallerFromBody(requestWithBody(auth));
-
-            assertEquals(null, caller.tenantId(),
-                    "null tenantId on the AuthenticationRequest must fall through to anonymous; "
-                            + "got: " + caller.tenantId());
+            // The tenant of a tenant-scoped login is carried by the caller (over HTTP,
+            // the X-Tenant-Id header) — it is no longer read from the request body — so
+            // an AuthenticationRequest body yields the bare anonymous caller.
             assertTrue(Domain.isEmptyCaller(caller),
-                    "with no tenantId in the body, the materialized caller must be the bare anonymous "
-                            + "caller (everything null, no super flags)");
-        }
-
-        @Test
-        @DisplayName("AuthenticationRequest with BLANK tenantId -> anonymous (blank treated like null)")
-        void authRequestWithBlankTenantId() {
-            com.garganttua.api.commons.security.authentication.IAuthenticationRequest auth =
-                    new com.garganttua.api.core.security.authentication.AuthenticationRequest(
-                            "alice@acme", new byte[]{1, 2, 3}, "   ");
-
-            com.garganttua.api.commons.caller.ICaller caller =
-                    Domain.autoCreateCallerFromBody(requestWithBody(auth));
-
-            assertEquals(null, caller.tenantId(),
-                    "blank tenantId must be treated like null — pinning whitespace would propagate "
-                            + "to downstream filters and never match any real row");
+                    "an AuthenticationRequest body must NOT pin a tenant on the caller; got tenantId="
+                            + caller.tenantId());
         }
 
         @Test

@@ -4,7 +4,6 @@ import com.garganttua.api.commons.security.authentication.IAuthenticationRequest
 
 public record AuthenticationRequest(
 	String login,
-	Object credentials,
-	String tenantId) implements IAuthenticationRequest {
+	Object credentials) implements IAuthenticationRequest {
 
 }

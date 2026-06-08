@@ -4,8 +4,9 @@
 #  Processes an authentication request.
 #
 #  Flow:
-#  1. Extract AuthenticationRequest entity (login + credentials + tenantId)
-#  2. Check authenticator scope — if tenant-scoped, tenantId must be present
+#  1. Extract AuthenticationRequest entity (login + credentials)
+#  2. Check authenticator scope — if tenant-scoped, the caller must carry a tenant
+#     (over HTTP, the X-Tenant-Id header); it is NOT part of the request body
 #  3. Prepare runtime context for authentication suppliers
 #  4. Attempt authentication — PrincipalSupplier handles findByLogin + account status checks
 #  5. Store results for downstream stages (CREATE_AUTHORIZATION)
@@ -30,14 +31,13 @@ entity <- optionalGet(@entity)
 // Get the authenticator configuration for this domain
 authContext <- authenticatorContext(@2)
 
-// Check authenticator scope — tenant scope requires tenantId on the request
+// Check authenticator scope — a tenant-scoped authenticator requires the tenant on
+// the CALLER (over HTTP: the X-Tenant-Id header), NOT in the AuthenticationRequest
+// body. The caller's tenantId (already on the request as "tenantId") drives the
+// downstream login lookup. A parlant error names the missing header on failure.
 scope <- authenticatorScope(@authContext)
-_hasTenantId <- if(equals(@scope, "tenant"), authRequestHasTenantId(@entity), true)
-requirePresent(if(@_hasTenantId, true))
+requireCallerTenantForScope(@0, @scope)
 ! => recordCaughtException(@0, @exception) -> 400
-
-// Propagate tenantId from the authentication request for downstream stages
-setRequestArg(@0, "tenantId", authRequestTenantId(@entity))
 
 // Prepare runtime context for authenticate method suppliers
 // PrincipalSupplier will do findByLogin + checkAccountStatus

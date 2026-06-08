@@ -272,7 +272,7 @@ class SignAuthorizationIntegrationTest extends AbstractCrudScriptTest {
 
     private OperationRequest authenticateRequest(String login, String password, String tenantId) {
         AuthenticationRequest authReq = new AuthenticationRequest(
-                login, password.getBytes(StandardCharsets.UTF_8), tenantId);
+                login, password.getBytes(StandardCharsets.UTF_8));
         OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
         OperationRequest request = superTenantScriptRequest(authOp);
         request.arg("entity", authReq);

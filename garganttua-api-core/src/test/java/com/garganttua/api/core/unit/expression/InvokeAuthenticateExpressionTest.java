@@ -134,36 +134,6 @@ class InvokeAuthenticateExpressionTest {
 	}
 
 	@Nested
-	@DisplayName("buildAuthRequestFromAuthorization")
-	class BuildAuthRequestFromAuthorization {
-
-		@Test
-		@DisplayName("wraps the authorization entity into a new AuthenticationRequest with credentials=authz and null login")
-		void happyPath() {
-			FixtureAuth authz = new FixtureAuth();
-			IAuthenticationRequest req = SecurityExpressions.buildAuthRequestFromAuthorization(authz, "tenant-1");
-			assertNotNull(req);
-			assertNull(req.login());
-			assertSame(authz, req.credentials());
-			assertEquals("tenant-1", req.tenantId());
-		}
-
-		@Test
-		@DisplayName("accepts null tenantId")
-		void nullTenantIdAllowed() {
-			IAuthenticationRequest req = SecurityExpressions.buildAuthRequestFromAuthorization(new FixtureAuth(), null);
-			assertNull(req.tenantId());
-		}
-
-		@Test
-		@DisplayName("throws when authorization is null")
-		void rejectsNullAuthorization() {
-			assertThrows(ApiException.class,
-					() -> SecurityExpressions.buildAuthRequestFromAuthorization(null, "tenant-1"));
-		}
-	}
-
-	@Nested
 	@DisplayName("invokeAuthenticate")
 	class InvokeAuthenticate {
 
@@ -184,8 +154,8 @@ class InvokeAuthenticateExpressionTest {
 			IAuthentication expected = new Authentication(true, new Object(), null, "jwt", List.of(), true, true, true, true);
 			when(domain.invoke(any(IOperationRequest.class))).thenReturn(OperationResponse.ok(expected));
 
-			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth(), "tenant-1");
-			IAuthentication result = SecurityExpressions.invokeAuthenticate(api, domain, req);
+			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());
+			IAuthentication result = SecurityExpressions.invokeAuthenticate(api, domain, req, "tenant-1");
 			assertSame(expected, result);
 
 			// The invocation carries the authenticate operation and the entity slot
@@ -206,9 +176,9 @@ class InvokeAuthenticateExpressionTest {
 			when(domain.invoke(any(IOperationRequest.class)))
 					.thenReturn(OperationResponse.unauthorized("invalid signature"));
 
-			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth(), "tenant-1");
+			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());
 			ApiException ex = assertThrows(ApiException.class,
-					() -> SecurityExpressions.invokeAuthenticate(api, domain, req));
+					() -> SecurityExpressions.invokeAuthenticate(api, domain, req, "tenant-1"));
 			assertTrue(ex.getMessage().contains("UNAUTHORIZED"),
 					"Got: " + ex.getMessage());
 		}
@@ -222,9 +192,9 @@ class InvokeAuthenticateExpressionTest {
 			when(domain.invoke(any(IOperationRequest.class)))
 					.thenReturn(OperationResponse.ok("not-an-auth"));
 
-			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth(), "tenant-1");
+			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());
 			ApiException ex = assertThrows(ApiException.class,
-					() -> SecurityExpressions.invokeAuthenticate(api, domain, req));
+					() -> SecurityExpressions.invokeAuthenticate(api, domain, req, "tenant-1"));
 			assertTrue(ex.getMessage().contains("did not return an IAuthentication"),
 					"Got: " + ex.getMessage());
 		}
@@ -235,13 +205,13 @@ class InvokeAuthenticateExpressionTest {
 			IApi api = mock(IApi.class);
 			@SuppressWarnings("unchecked")
 			IDomain<?> domain = mockDomain("jwtTokens", IClass.getClass(FixtureEntity.class));
-			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth(), null);
+			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());
 			assertThrows(ApiException.class,
-					() -> SecurityExpressions.invokeAuthenticate(null, domain, req));
+					() -> SecurityExpressions.invokeAuthenticate(null, domain, req, "t"));
 			assertThrows(ApiException.class,
-					() -> SecurityExpressions.invokeAuthenticate(api, null, req));
+					() -> SecurityExpressions.invokeAuthenticate(api, null, req, "t"));
 			assertThrows(ApiException.class,
-					() -> SecurityExpressions.invokeAuthenticate(api, domain, null));
+					() -> SecurityExpressions.invokeAuthenticate(api, domain, null, "t"));
 		}
 
 		@Test
@@ -253,8 +223,8 @@ class InvokeAuthenticateExpressionTest {
 			IAuthentication expected = new Authentication(true, new Object(), null, "jwt", List.of(), true, true, true, true);
 			when(domain.invoke(any(IOperationRequest.class))).thenReturn(OperationResponse.ok(expected));
 
-			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth(), null);
-			SecurityExpressions.invokeAuthenticate(api, domain, req);
+			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());
+			SecurityExpressions.invokeAuthenticate(api, domain, req, null);
 
 			ArgumentCaptor<IOperationRequest> captor = ArgumentCaptor.forClass(IOperationRequest.class);
 			verify(domain, times(1)).invoke(captor.capture());

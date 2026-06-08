@@ -88,7 +88,7 @@ class AuthenticateOverProtocolTest extends AbstractCrudScriptTest {
 			// Credentials as a STRING — exactly how a JSON body deserializes the
 			// Object credentials field over HTTP (never a byte[]). The supplier must
 			// accept this and encode it to UTF-8 for the login+password authenticator.
-			return (T) new AuthenticationRequest(parts[0], parts[1], parts[2]);
+			return (T) new AuthenticationRequest(parts[0], parts[1]);
 		}
 	}
 

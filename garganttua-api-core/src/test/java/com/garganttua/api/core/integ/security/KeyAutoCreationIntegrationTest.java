@@ -382,9 +382,16 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
 
     private OperationRequest authenticateRequest(String login, String tenantId) {
         AuthenticationRequest authReq = new AuthenticationRequest(
-                login, "valid-password".getBytes(StandardCharsets.UTF_8), tenantId);
+                login, "valid-password".getBytes(StandardCharsets.UTF_8));
         OperationDefinition authOp = OperationDefinition.authenticate("users", IClass.getClass(User.class));
-        OperationRequest request = superTenantScriptRequest(authOp);
+        OperationRequest request = new OperationRequest(new java.util.HashMap<>());
+        request.arg(com.garganttua.api.commons.service.IOperationRequest.OPERATION, authOp);
+        // The tenant rides on the caller (X-Tenant-Id over HTTP), not the body, so
+        // keys split by the caller's tenant.
+        if (tenantId != null) {
+            request.arg(com.garganttua.api.commons.service.IOperationRequest.TENANT_ID, tenantId);
+            request.arg(com.garganttua.api.commons.service.IOperationRequest.REQUESTED_TENANT_ID, tenantId);
+        }
         request.arg("entity", authReq);
         return request;
     }

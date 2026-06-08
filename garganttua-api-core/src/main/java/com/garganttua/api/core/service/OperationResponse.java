@@ -52,16 +52,6 @@ public class OperationResponse implements IOperationResponse {
         return new OperationResponse(OperationResponseCode.DELETED, data);
     }
 
-    // ───── Failure factories ─────
-    //
-    // Per mon général (2026-05-19): failures carry the Throwable, not a bare
-    // string. The String-taking overloads remain for ergonomic call sites
-    // (Domain.invoke, helper code) — they wrap the message into an
-    // ApiException so downstream readers can rely on getException() being
-    // populated in EVERY failure path. This keeps the public contract
-    // uniform: response.getResponse() returns a payload on success, a
-    // Throwable on failure, never a raw String.
-
     public static OperationResponse notFound(Throwable cause) {
         return new OperationResponse(OperationResponseCode.NOT_FOUND, cause);
     }
