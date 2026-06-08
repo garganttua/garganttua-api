@@ -56,4 +56,8 @@ setRequestArg(@0, "rawAuthorization", @auth)
 setRequestArg(@0, "queryParameters", @params)
 setCallerArgs(@0, @caller)
 
-output <- @caller -> 0
+// Do NOT seed the workflow output with the caller: it is consumed downstream via
+// :arg(@0, "caller"), and leaving it as @output would leak the caller as the
+// response body whenever the business stage is guarded out (denied/skipped).
+// Emit a neutral 0 — a successful business op overwrites it with its result.
+output <- 0 -> 0
