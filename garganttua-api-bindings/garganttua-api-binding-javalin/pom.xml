@@ -9,13 +9,37 @@
 	</parent>
 	<artifactId>garganttua-api-binding-javalin</artifactId>
 
-	<description>Binding wrapping Javalin (lightweight HTTP server) — consumed by the garganttua-api-javalin transport module.</description>
+	<description>Binding wrapping Javalin (lightweight HTTP server). Ships a Javalin-backed IInterface (transport entry point) plus its companion IProtocol Context adapter.</description>
 
 	<dependencies>
 		<dependency>
 			<groupId>io.javalin</groupId>
 			<artifactId>javalin</artifactId>
 			<version>${javalin.version}</version>
+		</dependency>
+
+		<!-- Contract layer: IInterface, IProtocol, IDomain, IOperationRequest, ICaller. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-commons</artifactId>
+		</dependency>
+
+		<!-- Engine: the canonical ICaller implementation (Caller) lives here. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

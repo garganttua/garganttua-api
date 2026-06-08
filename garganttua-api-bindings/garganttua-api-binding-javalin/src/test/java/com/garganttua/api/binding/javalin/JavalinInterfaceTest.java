@@ -1,0 +1,298 @@
+package com.garganttua.api.binding.javalin;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import com.garganttua.api.commons.ApiException;
+import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.operation.BusinessOperation;
+import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.repository.IRepository;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.IRequestBuilder;
+import com.garganttua.core.lifecycle.ILifecycle;
+import com.garganttua.core.lifecycle.LifecycleStatus;
+import com.garganttua.core.observability.IObserver;
+import com.garganttua.core.observability.ObservableEvent;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.workflow.IWorkflow;
+import com.garganttua.core.workflow.WorkflowExecutionOptions;
+
+import io.javalin.http.Context;
+
+/**
+ * End-to-end test of {@link JavalinInterface} over a real Javalin server with a real
+ * HTTP client. The interface is attached to a {@link CapturingDomain} stand-in that
+ * records exactly what the route dispatch handed the pipeline, then drives
+ * {@link JavalinProtocol} to write the response back onto the live {@code Context}.
+ * <p>
+ * This proves the interface's own contract — the CRUD route table maps each HTTP
+ * verb+path to the right {@link OperationDefinition}, extracts the {@code uuid} path
+ * parameter, and hands the {@code Context} through as {@code rawRequest} — without
+ * needing the full API engine.
+ */
+@DisplayName("JavalinInterface — HTTP transport entry point")
+class JavalinInterfaceTest {
+
+	/** Entity stand-in — only its class identity matters to the operation definitions. */
+	public static class FakeEntity {}
+
+	/**
+	 * Records the dispatched request and answers via the protocol. Every method not
+	 * exercised by the interface is a harmless stub.
+	 */
+	static class CapturingDomain implements IDomain<Object> {
+		final JavalinProtocol protocol = new JavalinProtocol();
+		volatile OperationDefinition lastOperation;
+		volatile String lastUuid;
+		volatile Object lastRawRequest;
+		volatile String lastMethod;
+		volatile String lastPath;
+		volatile byte[] lastBody;
+		volatile ICaller lastCaller;
+		volatile int invokeCount;
+
+		@Override public String getDomainName() { return "users"; }
+		@Override @SuppressWarnings("unchecked")
+		public IClass<Object> getEntityClass() { return (IClass<Object>) (IClass<?>) IClass.getClass(FakeEntity.class); }
+
+		@Override
+		public IOperationResponse invoke(IOperationRequest request) {
+			this.invokeCount++;
+			this.lastOperation = request.arg(IOperationRequest.OPERATION).orElse(null);
+			this.lastUuid = request.arg(IOperationRequest.ENTITY_UUID).orElse(null);
+			Object raw = request.arg(IOperationRequest.RAW_REQUEST).orElse(null);
+			this.lastRawRequest = raw;
+			try {
+				if (raw instanceof Context ctx) {
+					this.lastMethod = protocol.getMethod(ctx);
+					this.lastPath = protocol.getPath(ctx);
+					this.lastBody = protocol.getRawBody(ctx);
+					this.lastCaller = protocol.getCaller(ctx);
+					protocol.buildResponse(ctx,
+							("ok:" + this.lastOperation.getBusinessOperation()).getBytes(StandardCharsets.UTF_8), 200);
+				}
+			} catch (ApiException e) {
+				throw new RuntimeException(e);
+			}
+			return null;
+		}
+
+		@Override public IOperationResponse invoke(IOperationRequest request, WorkflowExecutionOptions options) { return invoke(request); }
+
+		// --- unused stubs ---
+		@Override public IDomainDefinition<Object> getDomainDefinition() { return null; }
+		@Override public IRepository getRepository() { return null; }
+		@Override public IWorkflow getWorkflow() { return null; }
+		@Override public IRequestBuilder request() { return null; }
+		@Override public void addObserver(IObserver<ObservableEvent> observer) { }
+		@Override public void removeObserver(IObserver<ObservableEvent> observer) { }
+		@Override public ILifecycle onInit() { return this; }
+		@Override public ILifecycle onStart() { return this; }
+		@Override public ILifecycle onStop() { return this; }
+		@Override public ILifecycle onFlush() { return this; }
+		@Override public ILifecycle onReload() { return this; }
+		@Override public LifecycleStatus status() { return LifecycleStatus.NEW; }
+	}
+
+	private static int freePort() {
+		try (ServerSocket s = new ServerSocket(0)) {
+			return s.getLocalPort();
+		} catch (IOException e) {
+			throw new RuntimeException("Could not allocate a free port", e);
+		}
+	}
+
+	@BeforeAll
+	static void installReflection() {
+		// Cold-start garganttua-core's ServiceLoader so IClass.getClass(...) has an
+		// IReflection installed (mirrors core's ReflectionTestBootstrap).
+		com.garganttua.core.bootstrap.dsl.Bootstrap.builder();
+	}
+
+	private int port;
+	private JavalinInterface iface;
+	private CapturingDomain domain;
+	private HttpClient http;
+
+	@BeforeEach
+	void setUp() {
+		port = freePort();
+		domain = new CapturingDomain();
+		iface = new JavalinInterface(port);
+		iface.handle(domain);
+		iface.onInit();
+		iface.onStart();
+		http = HttpClient.newHttpClient();
+	}
+
+	@AfterEach
+	void tearDown() {
+		iface.onStop();
+	}
+
+	private HttpResponse<String> send(String method, String path, String body) throws Exception {
+		HttpRequest.BodyPublisher pub = body == null
+				? HttpRequest.BodyPublishers.noBody()
+				: HttpRequest.BodyPublishers.ofString(body);
+		HttpRequest req = HttpRequest.newBuilder()
+				.uri(URI.create("http://localhost:" + port + path))
+				.method(method, pub)
+				.build();
+		return http.send(req, HttpResponse.BodyHandlers.ofString());
+	}
+
+	@Nested
+	@DisplayName("Lifecycle")
+	class Lifecycle {
+		@Test
+		@DisplayName("onStart binds the port and marks STARTED")
+		void started() {
+			assertTrue(iface.isStarted(), "interface must report started");
+			assertEquals(LifecycleStatus.STARTED, iface.status());
+			assertEquals(port, iface.getPort());
+		}
+
+		@Test
+		@DisplayName("onStop releases the server and marks STOPPED")
+		void stopped() {
+			iface.onStop();
+			assertFalse(iface.isStarted(), "interface must report stopped");
+			assertEquals(LifecycleStatus.STOPPED, iface.status());
+		}
+
+		@Test
+		@DisplayName("onStart is idempotent — a second call does not rebind or throw")
+		void startIdempotent() {
+			assertDoesNotThrow(() -> iface.onStart());
+			assertTrue(iface.isStarted());
+		}
+	}
+
+	@Nested
+	@DisplayName("CRUD route table → OperationDefinition")
+	class RouteTable {
+
+		@Test
+		@DisplayName("POST /users → create, no uuid, Context handed as rawRequest")
+		void postCreate() throws Exception {
+			HttpResponse<String> resp = send("POST", "/users", "Alice|alice@x.io");
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:create", resp.body(), "response must come from the protocol round-trip");
+			assertEquals(1, domain.invokeCount);
+			assertEquals(BusinessOperation.create, domain.lastOperation.getBusinessOperation());
+			assertNull(domain.lastUuid, "collection POST carries no uuid");
+			assertInstanceOf(Context.class, domain.lastRawRequest, "rawRequest must be the live Javalin Context");
+			assertEquals("POST", domain.lastMethod);
+			assertEquals("/users", domain.lastPath);
+			assertArrayEquals("Alice|alice@x.io".getBytes(StandardCharsets.UTF_8), domain.lastBody,
+					"the POST body must reach the protocol verbatim");
+		}
+
+		@Test
+		@DisplayName("GET /users → readAll, no uuid")
+		void getReadAll() throws Exception {
+			HttpResponse<String> resp = send("GET", "/users", null);
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:readAll", resp.body());
+			assertEquals(BusinessOperation.readAll, domain.lastOperation.getBusinessOperation());
+			assertNull(domain.lastUuid);
+			assertNull(domain.lastBody, "a GET has no body");
+		}
+
+		@Test
+		@DisplayName("GET /users/{uuid} → readOne, uuid captured from the path")
+		void getReadOne() throws Exception {
+			HttpResponse<String> resp = send("GET", "/users/abc-123", null);
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:readOne", resp.body());
+			assertEquals(BusinessOperation.readOne, domain.lastOperation.getBusinessOperation());
+			assertEquals("abc-123", domain.lastUuid, "the {uuid} path param must be threaded as ENTITY_UUID");
+			assertEquals("/users/abc-123", domain.lastPath);
+		}
+
+		@Test
+		@DisplayName("PUT /users/{uuid} → update, uuid + body captured")
+		void putUpdate() throws Exception {
+			HttpResponse<String> resp = send("PUT", "/users/u-9", "Bob|bob@x.io");
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:update", resp.body());
+			assertEquals(BusinessOperation.update, domain.lastOperation.getBusinessOperation());
+			assertEquals("u-9", domain.lastUuid);
+			assertArrayEquals("Bob|bob@x.io".getBytes(StandardCharsets.UTF_8), domain.lastBody);
+		}
+
+		@Test
+		@DisplayName("DELETE /users/{uuid} → deleteOne, uuid captured")
+		void deleteOne() throws Exception {
+			HttpResponse<String> resp = send("DELETE", "/users/u-7", null);
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:deleteOne", resp.body());
+			assertEquals(BusinessOperation.deleteOne, domain.lastOperation.getBusinessOperation());
+			assertEquals("u-7", domain.lastUuid);
+		}
+
+		@Test
+		@DisplayName("DELETE /users → deleteAll, no uuid")
+		void deleteAll() throws Exception {
+			HttpResponse<String> resp = send("DELETE", "/users", null);
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:deleteAll", resp.body());
+			assertEquals(BusinessOperation.deleteAll, domain.lastOperation.getBusinessOperation());
+			assertNull(domain.lastUuid);
+		}
+	}
+
+	@Nested
+	@DisplayName("Caller seeding")
+	class CallerSeeding {
+		@Test
+		@DisplayName("no identity header → anonymous caller reaches the pipeline")
+		void anonymous() throws Exception {
+			send("GET", "/users", null);
+			assertNotNull(domain.lastCaller);
+			assertTrue(domain.lastCaller.anonymous(), "header-less request must seed an anonymous caller");
+		}
+
+		@Test
+		@DisplayName("X-Tenant-Id / X-Caller-Id headers are carried into the caller")
+		void withHeaders() throws Exception {
+			HttpRequest req = HttpRequest.newBuilder()
+					.uri(URI.create("http://localhost:" + port + "/users"))
+					.header(JavalinProtocol.TENANT_HEADER, "T-42")
+					.header(JavalinProtocol.CALLER_HEADER, "C-7")
+					.GET()
+					.build();
+			http.send(req, HttpResponse.BodyHandlers.ofString());
+
+			assertNotNull(domain.lastCaller);
+			assertFalse(domain.lastCaller.anonymous());
+			assertEquals("T-42", domain.lastCaller.tenantId());
+			assertEquals("C-7", domain.lastCaller.callerId());
+			assertFalse(domain.lastCaller.superTenant(), "transport must never assert superTenant");
+		}
+	}
+}
