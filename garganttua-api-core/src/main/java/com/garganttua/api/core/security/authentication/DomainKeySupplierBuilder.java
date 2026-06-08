@@ -10,15 +10,16 @@ import com.garganttua.core.supply.IContextualSupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 /**
- * Builder for {@link SigningKeySupplier}. Pass an instance to
- * {@code .withParam(i, new SigningKeySupplierBuilder())} when wiring a token
+ * Builder for {@link DomainKeySupplier}. Pass an instance to
+ * {@code .withParam(i, new DomainKeySupplierBuilder())} when wiring a token
  * authenticator's verification method (DSL), so the framework injects the key
- * object (the user's own key shape) that signed the authorization being verified.
+ * object (the {@code @Key} entity, resolved by the token's {@code signedBy}
+ * domain reference) that signed the authorization being verified.
  */
 @SuppressWarnings("rawtypes")
-public class SigningKeySupplierBuilder
+public class DomainKeySupplierBuilder
 		implements ISupplierBuilder<Object, IContextualSupplier<Object, IRuntimeContext>> {
-	private static final Logger log = Logger.getLogger(SigningKeySupplierBuilder.class);
+	private static final Logger log = Logger.getLogger(DomainKeySupplierBuilder.class);
 
 	private static final IClass<Object> SUPPLIED_CLASS = IClass.getClass(Object.class);
 
@@ -39,8 +40,8 @@ public class SigningKeySupplierBuilder
 
 	@Override
 	public IContextualSupplier<Object, IRuntimeContext> build() throws DslException {
-		log.debug("Building SigningKeySupplier");
-		return new SigningKeySupplier();
+		log.debug("Building DomainKeySupplier");
+		return new DomainKeySupplier();
 	}
 
 }

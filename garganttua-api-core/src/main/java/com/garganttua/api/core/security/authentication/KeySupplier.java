@@ -51,9 +51,9 @@ import com.garganttua.core.supply.SupplyException;
  * materializes it when it needs to sign (see {@link #resolveSigning}).
  *
  * <p>As a supplier it injects the current key into a method via
- * {@code .withParam(i, new KeySupplierBuilder())}. {@link SigningKeySupplier}
- * extends it to resolve, instead, the EXACT key that SIGNED a token being
- * verified.
+ * {@code .withParam(i, new KeySupplierBuilder())}. {@link DomainKeySupplier}
+ * extends it to resolve, instead, the EXACT domain-defined key that SIGNED a
+ * token being verified.
  */
 @SuppressWarnings("rawtypes")
 public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext> {

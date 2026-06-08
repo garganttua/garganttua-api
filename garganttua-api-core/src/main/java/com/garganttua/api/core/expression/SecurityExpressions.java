@@ -838,9 +838,10 @@ public class SecurityExpressions {
 					+ "Returns Object, not IKeyRealm: the framework does NOT impose its IKeyRealm shape — the key is "
 					+ "whatever the user declared. Persisted-key mode (signedBy = ${keyDomain}:${uuid}): returns that "
 					+ "EXACT @Key entity (robust to key rotation: the token verifies against the key that actually "
-					+ "signed it). Supplier mode (signedBy = realm name, or no signedBy stamped): returns the object the "
-					+ "configured .key(supplier) provides. Powers SigningKeySupplier; the user's verify method casts it "
-					+ "to their own key type and extracts the verification material however they defined it.")
+					+ "signed it), and REFUSES it when that key is revoked or expired. Supplier mode (signedBy = realm "
+					+ "name, or no signedBy stamped): returns the object the configured .key(supplier) provides. Powers "
+					+ "DomainKeySupplier; the user's verify method casts it to their own key type and extracts the "
+					+ "verification material however they defined it.")
 	public static Object resolveSigningKey(@Nullable Object authzEntity, @Nullable Object domainContext,
 			@Nullable Object operationRequest) {
 		Object token = unwrapOptional(authzEntity);
@@ -849,9 +850,9 @@ public class SecurityExpressions {
 			throw new ApiException("resolveSigningKey: authorization entity and domain context are required");
 		}
 		IOperationRequest req = (unwrapOptional(operationRequest) instanceof IOperationRequest r) ? r : null;
-		// Single source of truth: SigningKeySupplier (extends KeySupplier) resolves
+		// Single source of truth: DomainKeySupplier (extends KeySupplier) resolves
 		// the EXACT key from signedBy, falling back to KeySupplier's current-key rules.
-		return new com.garganttua.api.core.security.authentication.SigningKeySupplier()
+		return new com.garganttua.api.core.security.authentication.DomainKeySupplier()
 				.resolveKeyForToken(authzDomain, token, req);
 	}
 

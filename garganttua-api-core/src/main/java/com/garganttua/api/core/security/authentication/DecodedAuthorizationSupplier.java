@@ -21,7 +21,7 @@ import com.garganttua.core.supply.SupplyException;
  * {@link AuthenticateCredentialsSupplier} only hands over {@code byte[]}
  * credentials (the login+password flow) and yields for any other shape, so a
  * verification method needs THIS supplier to receive the token itself. It is the
- * token-side companion of {@link SigningKeySupplier} (which supplies the signing
+ * token-side companion of {@link DomainKeySupplier} (which supplies the signing
  * key): together they give a custom verify method everything it needs to check a
  * signature by hand.
  *

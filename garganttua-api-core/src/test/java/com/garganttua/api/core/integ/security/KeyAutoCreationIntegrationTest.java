@@ -210,7 +210,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
     /**
      * A REAL token verification method: it receives the decoded token (via
      * DecodedAuthorizationSupplier) and the key that signed it (via
-     * SigningKeySupplier) and checks the signature by hand — the verdict
+     * DomainKeySupplier) and checks the signature by hand — the verdict
      * (authenticated) drives accept/reject; the framework resolves the owner
      * afterwards.
      */
@@ -293,13 +293,13 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
 
         // The token verifies ITSELF with a REAL custom method: it receives the
         // decoded token (DecodedAuthorizationSupplier) and the key that signed it
-        // (SigningKeySupplier) and checks the signature by hand.
+        // (DomainKeySupplier) and checks the signature by hand.
         RealTokenVerifier realVerifier = new RealTokenVerifier();
         var tokenAuthBuilder = builder.security()
                 .authentication(new FixedSupplierBuilder<>(realVerifier, IClass.getClass(RealTokenVerifier.class)));
         tokenAuthBuilder.authenticate("authenticate")
                 .withParam(0, new com.garganttua.api.core.security.authentication.DecodedAuthorizationSupplierBuilder())
-                .withParam(1, new com.garganttua.api.core.security.authentication.SigningKeySupplierBuilder())
+                .withParam(1, new com.garganttua.api.core.security.authentication.DomainKeySupplierBuilder())
                 .withParam(2, new com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder());
         tokenAuthBuilder.up();
 
@@ -487,8 +487,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
-        @DisplayName("SigningKeySupplier resolves (via signedBy) the EXACT key that verifies the token's signature")
-        void signingKeySupplierResolvesVerifyingKey() throws Exception {
+        @DisplayName("DomainKeySupplier resolves (via signedBy) the EXACT key that verifies the token's signature")
+        void domainKeySupplierResolvesVerifyingKey() throws Exception {
             Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
             seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
 
@@ -501,7 +501,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             assertTrue(com.garganttua.api.commons.caller.OwnerIds.isQualified(token.getSignedBy()),
                     "persisted-key mode must stamp a qualified ${keyDomain}:${uuid} signedBy; got: " + token.getSignedBy());
 
-            // Resolve the signing KEY OBJECT exactly as SigningKeySupplier does
+            // Resolve the signing KEY OBJECT exactly as DomainKeySupplier does
             // internally — it returns the user's own @Key entity, not an IKeyRealm.
             IDomain<?> tokenDomain = w.api.getDomain("tokenentities").orElseThrow();
             Object keyObj =
@@ -528,6 +528,67 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
+        @DisplayName("DomainKeySupplier REFUSES a token whose signedBy key has been REVOKED (explicit message)")
+        void domainKeySupplierRefusesRevokedSigningKey() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+
+            WorkflowResult mint = executeScript(w.userCtx,
+                    authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, mint.code());
+            TokenEntity token = (TokenEntity) mint.output();
+            assertNotNull(token.getSignedBy(), "minted token must record its signer");
+
+            IDomain<?> tokenDomain = w.api.getDomain("tokenentities").orElseThrow();
+
+            // Sanity: while the signing key is healthy, resolution succeeds.
+            assertNotNull(
+                    com.garganttua.api.core.expression.SecurityExpressions.resolveSigningKey(token, tokenDomain, null),
+                    "a healthy signing key must resolve before revocation");
+
+            // Revoke the EXACT key that signed the token (oneForAll → a single key).
+            assertEquals(1, w.keyDao.getStorage().size());
+            CryptoKeyDto signingKey = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            signingKey.setRevoked(true);
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.resolveSigningKey(token, tokenDomain, null),
+                    "a token signed by a revoked key must be refused");
+            assertTrue(ex.getMessage().contains("REVOKED"),
+                    "error must state the signing key was REVOKED — got: " + ex.getMessage());
+            assertTrue(ex.getMessage().contains(token.getSignedBy()),
+                    "error must name the signedBy reference '" + token.getSignedBy() + "' — got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("DomainKeySupplier REFUSES a token whose signedBy key has EXPIRED (explicit message)")
+        void domainKeySupplierRefusesExpiredSigningKey() throws Exception {
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+
+            WorkflowResult mint = executeScript(w.userCtx,
+                    authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, mint.code());
+            TokenEntity token = (TokenEntity) mint.output();
+            assertNotNull(token.getSignedBy(), "minted token must record its signer");
+
+            IDomain<?> tokenDomain = w.api.getDomain("tokenentities").orElseThrow();
+
+            // Expire the EXACT key that signed the token.
+            assertEquals(1, w.keyDao.getStorage().size());
+            CryptoKeyDto signingKey = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            signingKey.setExpiration(Instant.now().minusSeconds(60));
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.resolveSigningKey(token, tokenDomain, null),
+                    "a token signed by an expired key must be refused");
+            assertTrue(ex.getMessage().contains("EXPIRED"),
+                    "error must state the signing key has EXPIRED — got: " + ex.getMessage());
+            assertTrue(ex.getMessage().contains(token.getSignedBy()),
+                    "error must name the signedBy reference '" + token.getSignedBy() + "' — got: " + ex.getMessage());
+        }
+
+        @Test
         @DisplayName("custom verify method receives the token + signing key and validates the signature end-to-end")
         void customVerifyMethodValidatesSignatureEndToEnd() throws Exception {
             Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
@@ -544,7 +605,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
             OperationRequest verifyReq = new OperationRequest(new java.util.HashMap<>());
 
             // VALID token → RealTokenVerifier receives the token (DecodedAuthorizationSupplier)
-            // + the signing key (SigningKeySupplier), verifies the signature, accepts;
+            // + the signing key (DomainKeySupplier), verifies the signature, accepts;
             // the framework then resolves the owner as the principal.
             com.garganttua.api.commons.security.authentication.IAuthentication authResult =
                     com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(w.api, token, verifyReq);
