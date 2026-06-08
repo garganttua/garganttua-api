@@ -19,8 +19,10 @@ import com.garganttua.api.commons.definition.IAuthenticationDefinition;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.security.context.IAuthenticatorContext;
+import com.garganttua.api.core.security.authentication.AuthenticationBuilder;
 import com.garganttua.api.core.security.authenticator.AuthenticatorMethodBinderBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -49,7 +51,7 @@ public class AuthenticatorBuilder<E> extends
     private ObjectAddress accountNonLocked;
     private ObjectAddress accountNonExpired;
     private AuthenticatorScope scope;
-    private List<IAuthenticationBuilder> selectedAuthentications = new ArrayList<>();
+    private List<IAuthenticationBuilder<?>> selectedAuthentications = new ArrayList<>();
     private IAuthenticatorAuthorizationBuilder<E> authenticatorAuthorizationBuilder;
     private IAuthenticatorMethodBinderBuilder<E> authorizationMethodBinderBuilder;
 
@@ -256,10 +258,38 @@ public class AuthenticatorBuilder<E> extends
 
     @Override
     public com.garganttua.api.commons.context.dsl.security.IAuthenticatorAuthenticationBuilder<E> authentication(
-            IAuthenticationBuilder authentication) throws ApiException {
+            IAuthenticationBuilder<?> authentication) throws ApiException {
         Objects.requireNonNull(authentication, "Authentication cannot be null");
         this.selectedAuthentications.add(authentication);
         return new AuthenticatorAuthentication<>(this);
+    }
+
+    @Override
+    public IAuthenticationBuilder<IAuthenticatorBuilder<E>> authentication(
+            ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
+        Objects.requireNonNull(supplier, "Authentication supplier cannot be null");
+        // A fresh authentication owned by — and linked back to — this authenticator
+        // (up() returns the authenticator). Registered for the verify cascade.
+        AuthenticationBuilder<IAuthenticatorBuilder<E>> authentication =
+                new AuthenticationBuilder<>(this, supplier);
+        this.selectedAuthentications.add(authentication);
+        return authentication;
+    }
+
+    @Override
+    public IAuthenticationBuilder<IAuthenticatorBuilder<E>> authentication(IClass<?> authenticationClass)
+            throws ApiException {
+        Objects.requireNonNull(authenticationClass, "Authentication class cannot be null");
+        Object instance;
+        try {
+            instance = authenticationClass.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new ApiException("Failed to instantiate authentication class '"
+                    + authenticationClass.getName() + "'. A public no-arg constructor is required.", e);
+        }
+        @SuppressWarnings({ "unchecked", "rawtypes" })
+        ISupplierBuilder<?, ? extends ISupplier<?>> supplier = new FixedSupplierBuilder(instance, authenticationClass);
+        return authentication(supplier);
     }
 
     /**
@@ -295,7 +325,7 @@ public class AuthenticatorBuilder<E> extends
     @Override
     protected synchronized IAuthenticatorContext doBuild() throws ApiException {
         List<IAuthenticationDefinition> authenticationDefinitions = new ArrayList<>();
-        for (IAuthenticationBuilder builder : this.selectedAuthentications) {
+        for (IAuthenticationBuilder<?> builder : this.selectedAuthentications) {
             authenticationDefinitions.add(builder.build().getAuthenticationDefinition());
         }
 
@@ -327,8 +357,16 @@ public class AuthenticatorBuilder<E> extends
         return new AuthenticatorContext(authenticatorDefinition);
     }
 
+    /**
+     * True when this authenticator has ANY authorization declared — a token domain
+     * ({@code .authorization(domain)}) or a custom mint issuer
+     * ({@code .authorization(issuer, "method")}). Drives whether CREATE_AUTHORIZATION
+     * runs after a successful authentication: with no authorization defined at all,
+     * authentication succeeds but NO token is generated.
+     */
     public boolean hasAuthorizationConfig() {
-        return this.authenticatorAuthorizationBuilder != null;
+        return this.authenticatorAuthorizationBuilder != null
+                || this.authorizationMethodBinderBuilder != null;
     }
 
     @Override

@@ -209,6 +209,34 @@ class AuthenticateIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Nested
+    @DisplayName("Authorization generation gate")
+    class AuthorizationGenerationGate {
+
+        @Test
+        @DisplayName("no authorization defined: authentication succeeds but NO token is generated (output is the auth result)")
+        void noAuthorizationDefinedNoTokenGenerated() throws ApiException {
+            // The authenticator in setUp() declares NO .authorization(...) — so on a
+            // successful authentication CREATE_AUTHORIZATION must not run, and the
+            // output is the raw IAuthentication result rather than a minted token.
+            AuthenticationRequest authReq = new AuthenticationRequest(
+                    "john@example.com",
+                    "valid-password".getBytes(StandardCharsets.UTF_8),
+                    "SUPER_TENANT");
+
+            OperationRequest request = authenticateRequest();
+            request.arg("entity", authReq);
+
+            WorkflowResult result = executeScript(userCtx, request);
+
+            assertEquals(0, result.code(), "authentication must succeed; vars=" + result.variables());
+            assertInstanceOf(IAuthentication.class, result.output(),
+                    "with no authorization defined, the output must be the authentication result, not a token");
+            assertTrue(((IAuthentication) result.output()).authenticated(),
+                    "the authentication result must be successful");
+        }
+    }
+
+    @Nested
     @DisplayName("AuthenticationRequest record")
     class AuthenticationRequestRecord {
 

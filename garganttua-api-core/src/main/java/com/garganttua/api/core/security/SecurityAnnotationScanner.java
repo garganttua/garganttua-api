@@ -257,7 +257,7 @@ public final class SecurityAnnotationScanner {
                 for (Class<?> auth : a.authentications()) {
                     if (auth == null || auth == void.class) continue;
                     IClass<?> authIClass = IClass.getClass(auth);
-                    Optional<IAuthenticationBuilder> linked = apiSec.isAuthenticationAvailable(authIClass);
+                    Optional<IAuthenticationBuilder<IApiSecurityBuilder>> linked = apiSec.isAuthenticationAvailable(authIClass);
                     if (linked.isEmpty()) {
                         log.warn(
                                 "@Authenticator on {} references @Authentication {} but it was not registered; ignoring linkage",

@@ -10,8 +10,8 @@ import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 
-public interface IAuthenticationBuilder
-                extends IAutomaticLinkedBuilder<IAuthenticationBuilder, IApiSecurityBuilder, IAuthenticationContext> {
+public interface IAuthenticationBuilder<E>
+                extends IAutomaticLinkedBuilder<IAuthenticationBuilder<E>, E, IAuthenticationContext> {
 
         IAuthenticationMethodBinderBuilder<?> authenticate(
                         String methodName) throws ApiException;
@@ -22,16 +22,16 @@ public interface IAuthenticationBuilder
         IAuthenticationMethodBinderBuilder<?> authenticate(
                         ObjectAddress methodAddress) throws ApiException;
 
-        IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
+        IAuthenticationBuilder<E> entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
                         IClass<?> fieldType) throws ApiException;
 
-        IAuthenticationBuilder applySecurityOnEntity(
+        IAuthenticationBuilder<E> applySecurityOnEntity(
                         String methodName) throws ApiException;
 
-        IAuthenticationBuilder applySecurityOnEntity(
+        IAuthenticationBuilder<E> applySecurityOnEntity(
                         IMethod method) throws ApiException;
 
-        IAuthenticationBuilder applySecurityOnEntity(
+        IAuthenticationBuilder<E> applySecurityOnEntity(
                         ObjectAddress methodAddress) throws ApiException;
 
         IUseCaseBuilder<?, ?, ?> useCase(String methodName) throws ApiException;

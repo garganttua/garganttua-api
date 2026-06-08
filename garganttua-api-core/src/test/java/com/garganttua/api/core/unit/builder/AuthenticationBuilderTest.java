@@ -31,7 +31,7 @@ class AuthenticationBuilderTest {
     private IApiSecurityBuilder parentLink;
     @SuppressWarnings("rawtypes")
     private ISupplierBuilder supplierBuilder;
-    private AuthenticationBuilder builder;
+    private AuthenticationBuilder<IApiSecurityBuilder> builder;
 
     @Retention(RetentionPolicy.RUNTIME)
     @interface TestAnnotation {}
@@ -48,7 +48,7 @@ class AuthenticationBuilderTest {
         supplierBuilder = mock(ISupplierBuilder.class);
         when(supplierBuilder.getSuppliedClass()).thenReturn(IClass.getClass(TestAuthentication.class));
         when(supplierBuilder.build()).thenReturn(null);
-        builder = new AuthenticationBuilder(parentLink, supplierBuilder);
+        builder = new AuthenticationBuilder<IApiSecurityBuilder>(parentLink, supplierBuilder);
     }
 
     @Nested

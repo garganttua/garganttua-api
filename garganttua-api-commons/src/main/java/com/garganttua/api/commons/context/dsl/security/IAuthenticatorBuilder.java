@@ -1,5 +1,6 @@
 package com.garganttua.api.commons.context.dsl.security;
 
+import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IField;
 
 import com.garganttua.api.commons.security.context.IAuthenticatorContext;
@@ -7,6 +8,8 @@ import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public interface IAuthenticatorBuilder<E> extends IAutomaticLinkedBuilder<IAuthenticatorBuilder<E>, IDomainSecurityBuilder<E>, IAuthenticatorContext> {
 
@@ -57,6 +60,10 @@ public interface IAuthenticatorBuilder<E> extends IAutomaticLinkedBuilder<IAuthe
      * mint-side {@code .authorization(issuer, "method")}. Call {@code .up()} on the
      * returned sub-builders to come back to this authenticator.
      */
-    IAuthenticatorAuthenticationBuilder<E> authentication(IAuthenticationBuilder authentication) throws ApiException;
+    IAuthenticatorAuthenticationBuilder<E> authentication(IAuthenticationBuilder<?> authentication) throws ApiException;
+
+    IAuthenticationBuilder<IAuthenticatorBuilder<E>> authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException;
+
+    IAuthenticationBuilder<IAuthenticatorBuilder<E>> authentication(IClass<?> authenticationClass) throws ApiException;
 
 }

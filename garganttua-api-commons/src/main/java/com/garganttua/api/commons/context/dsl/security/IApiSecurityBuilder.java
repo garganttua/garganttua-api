@@ -14,11 +14,11 @@ import com.garganttua.core.dsl.IPackageableBuilder;
 public interface IApiSecurityBuilder
         extends IAutomaticLinkedBuilder<IApiSecurityBuilder, IApiBuilder, IApiSecurityContext>, IPackageableBuilder<IApiSecurityBuilder, IApiSecurityContext> {
 
-    IAuthenticationBuilder authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException;
+    IAuthenticationBuilder<IApiSecurityBuilder> authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException;
 
-    IAuthenticationBuilder authentication(IClass<?> authenticationClass) throws ApiException;
+    IAuthenticationBuilder<IApiSecurityBuilder> authentication(IClass<?> authenticationClass) throws ApiException;
 
-    Optional<IAuthenticationBuilder> isAuthenticationAvailable(IClass<?> authenticationClass);
+    Optional<IAuthenticationBuilder<IApiSecurityBuilder>> isAuthenticationAvailable(IClass<?> authenticationClass);
 
     IApiSecurityBuilder disable(boolean b);
 

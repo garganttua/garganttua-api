@@ -416,7 +416,7 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 
 		// Register authentication contexts as named beans
 		if (this.securityBuilder != null) {
-			for (Map.Entry<IClass<?>, IAuthenticationBuilder> entry : this.securityBuilder.getAuthenticationBuilders().entrySet()) {
+			for (Map.Entry<IClass<?>, IAuthenticationBuilder<IApiSecurityBuilder>> entry : this.securityBuilder.getAuthenticationBuilders().entrySet()) {
 				IClass<?> authClass = entry.getKey();
 				IAuthenticationContext authContext = entry.getValue().build();
 				String beanName = "authentication." + authClass.getSimpleName();

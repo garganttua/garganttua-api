@@ -25,7 +25,7 @@ public class SecurityBuilder
         implements IApiSecurityBuilder {
 
     private Set<String> packages;
-    private Map<IClass<?>, IAuthenticationBuilder> authentications = new HashMap<>();
+    private Map<IClass<?>, IAuthenticationBuilder<IApiSecurityBuilder>> authentications = new HashMap<>();
     private boolean disabled = false;
 
     public SecurityBuilder(Set<String> packages, IApiBuilder up) {
@@ -34,13 +34,13 @@ public class SecurityBuilder
     }
 
     @Override
-    public IAuthenticationBuilder authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
+    public IAuthenticationBuilder<IApiSecurityBuilder> authentication(ISupplierBuilder<?, ? extends ISupplier<?>> supplier) throws ApiException {
         Objects.requireNonNull(supplier, "Authentication class cannot be null");
         Objects.requireNonNull(supplier.getSuppliedClass(), "Supplier should provide an object class");
 
-        IAuthenticationBuilder builder;
+        IAuthenticationBuilder<IApiSecurityBuilder> builder;
         if (!this.authentications.containsKey(supplier.getSuppliedClass())) {
-            builder = new AuthenticationBuilder(this, supplier);
+            builder = new AuthenticationBuilder<IApiSecurityBuilder>(this, supplier);
             this.authentications.put(supplier.getSuppliedClass(), builder);
         } else {
             builder = this.authentications.get(supplier.getSuppliedClass());
@@ -49,13 +49,13 @@ public class SecurityBuilder
     }
 
     @Override
-    public Optional<IAuthenticationBuilder> isAuthenticationAvailable(IClass<?> authenticationClass) {
-        IAuthenticationBuilder builder = this.authentications.get(authenticationClass);
+    public Optional<IAuthenticationBuilder<IApiSecurityBuilder>> isAuthenticationAvailable(IClass<?> authenticationClass) {
+        IAuthenticationBuilder<IApiSecurityBuilder> builder = this.authentications.get(authenticationClass);
         return Optional.ofNullable(builder);
     }
 
     @Override
-    public IAuthenticationBuilder authentication(IClass<?> authenticationClass) throws ApiException {
+    public IAuthenticationBuilder<IApiSecurityBuilder> authentication(IClass<?> authenticationClass) throws ApiException {
         return isAuthenticationAvailable(authenticationClass)
                 .orElseThrow(() -> new ApiException("No authentication found for class " + authenticationClass.getName()));
     }
@@ -63,7 +63,7 @@ public class SecurityBuilder
     @Override
     protected synchronized IApiSecurityContext doBuild() throws ApiException {
         // Build all authentication contexts
-        for (IAuthenticationBuilder authBuilder : this.authentications.values()) {
+        for (IAuthenticationBuilder<IApiSecurityBuilder> authBuilder : this.authentications.values()) {
             authBuilder.build();
         }
 
@@ -107,7 +107,7 @@ public class SecurityBuilder
      * Returns a map of authentication class → built IAuthenticationContext.
      * Must be called after build().
      */
-    public Map<IClass<?>, IAuthenticationBuilder> getAuthenticationBuilders() {
+    public Map<IClass<?>, IAuthenticationBuilder<IApiSecurityBuilder>> getAuthenticationBuilders() {
         return this.authentications;
     }
 

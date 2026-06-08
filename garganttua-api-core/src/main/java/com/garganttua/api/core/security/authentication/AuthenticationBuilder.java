@@ -31,7 +31,7 @@ import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 @Reflected
-public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder, IApiSecurityBuilder, IAuthenticationContext> implements IAuthenticationBuilder {
+public class AuthenticationBuilder<E> extends AbstractAutomaticLinkedBuilder<IAuthenticationBuilder<E>, E, IAuthenticationContext> implements IAuthenticationBuilder<E> {
 
     private ISupplierBuilder<?, ? extends ISupplier<?>> supplier;
     private IAuthenticationMethodBinderBuilder<?> authenticate;
@@ -39,11 +39,11 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     private IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity;
     private Map<String, IUseCaseBuilder<?, ?, ?>> useCases = new HashMap<>();
 
-    protected AuthenticationBuilder(IApiSecurityBuilder link) {
+    protected AuthenticationBuilder(E link) {
         super(link);
     }
 
-    public AuthenticationBuilder(IApiSecurityBuilder link, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
+    public AuthenticationBuilder(E link, ISupplierBuilder<?, ? extends ISupplier<?>> supplier) {
         super(link);
         this.supplier = Objects.requireNonNull(supplier, "Supplier cannot be null");
     }
@@ -71,7 +71,7 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
+    public IAuthenticationBuilder<E> entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
             IClass<?> fieldType) throws ApiException {
         Objects.requireNonNull(annotation, "Annotation cannot be null");
         Objects.requireNonNull(fieldType, "Field type cannot be null");
@@ -80,21 +80,21 @@ public class AuthenticationBuilder extends AbstractAutomaticLinkedBuilder<IAuthe
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(String methodName) throws ApiException {
+    public IAuthenticationBuilder<E> applySecurityOnEntity(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(IMethod method) throws ApiException {
+    public IAuthenticationBuilder<E> applySecurityOnEntity(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
     }
 
     @Override
-    public IAuthenticationBuilder applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
+    public IAuthenticationBuilder<E> applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
         this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
         return this;
