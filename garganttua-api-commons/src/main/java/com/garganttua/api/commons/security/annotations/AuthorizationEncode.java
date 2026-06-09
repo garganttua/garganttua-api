@@ -7,8 +7,11 @@ import java.lang.annotation.Target;
 import com.garganttua.core.reflection.annotations.Indexed;
 
 /**
- * Marks the method that encodes a refreshable authorization to its serialized form.
- * Maps to {@code IRefreshableAuthorizationBuilder.encode(method)}.
+ * Marks the method that encodes an authorization to its transport/serialized form
+ * (e.g. a JWT {@code header.payload.signature}). The encoded form becomes the output
+ * of {@code authenticate} / {@code refreshAuthorization}. Maps to
+ * {@code IAuthorizationBuilder.encode(method)} — works on any authorization, the token
+ * need NOT be refreshable.
  */
 @Indexed
 @Retention(RetentionPolicy.RUNTIME)

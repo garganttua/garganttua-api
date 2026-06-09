@@ -736,6 +736,24 @@ public class SecurityExpressions {
 		return true;
 	}
 
+	@Expression(name = "encodeReusedIfPresent",
+			description = "Reuse-path companion in CREATE_AUTHORIZATION. When a reusable authorization entity is "
+					+ "present, encodes it to its transport form (if an encode method is configured), publishes that "
+					+ "wire form on the request as 'encodedAuthorization', and RETURNS the encoded form (or the entity "
+					+ "when no encode method) so it becomes the operation output. Returns null untouched when there is "
+					+ "no reusable entity, so the fresh-create branch runs.")
+	public static @Nullable Object encodeReusedIfPresent(@Nullable Object authzEntity,
+			@Nullable Object domainContextObj, @Nullable Object request) {
+		if (authzEntity == null || domainContextObj == null) {
+			return null;
+		}
+		Object encoded = encodeIfPossible(authzEntity, domainContextObj);
+		if (request instanceof IOperationRequest opReq && encoded != null) {
+			opReq.arg("encodedAuthorization", encoded);
+		}
+		return encoded != null ? encoded : authzEntity;
+	}
+
 	private static @Nullable String readPrincipalUuid(IAuthentication authResult, IDomain<?> authenticatorDomain) {
 		Object principal = authResult.principal();
 		if (principal == null || authenticatorDomain.getEntityDefinition() == null) return null;
@@ -1149,6 +1167,61 @@ public class SecurityExpressions {
 			return null;
 		}
 		return encodeAuthorization(authzEntity, domainContext);
+	}
+
+	@Expression(name = "hasDecodeMethod",
+			description = "Returns true when the resolved authorization definition declares a decode method (.authorization().decode(method) or @AuthorizationDecode).")
+	public static boolean hasDecodeMethod(@Nullable Object domainContext) {
+		Object def = authorizationDefinition(domainContext);
+		return def instanceof IDomainAuthorizationDefinition d && d.decodeMethod() != null;
+	}
+
+	@Expression(name = "decodeAuthorizationEntity",
+			description = "Reconstructs an authorization entity from its transport form (e.g. a JWT String / byte[]) "
+					+ "using the configured decode method. Returns the value unchanged when it is already a decoded "
+					+ "entity (not a String/byte[]) or when no decode method is configured. The decode method is "
+					+ "invoked on a fresh entity instance with the raw bytes; it may populate the instance (void/returns "
+					+ "this) or be a factory returning a new entity. Used by refresh/verify to accept an encoded token "
+					+ "where the entity is expected.")
+	public static @Nullable Object decodeAuthorizationEntity(@Nullable Object raw, @Nullable Object domainContext) {
+		if (raw == null || domainContext == null) {
+			return raw;
+		}
+		// Already a decoded entity (not a wire form) → nothing to do (Mode B).
+		if (!(raw instanceof String) && !(raw instanceof byte[])) {
+			return raw;
+		}
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || authzDef.decodeMethod() == null) {
+			return raw; // no decode configured — leave the raw form for the caller to handle
+		}
+		IDomain<?> dc = toDomain(domainContext);
+		IDomain<?> authzDomain = resolveAuthorizationDomain(dc);
+		IClass<?> entityClass = authzDomain != null ? authzDomain.getEntityClass()
+				: (dc != null ? dc.getEntityClass() : null);
+		if (entityClass == null) {
+			throw new ApiException("decodeAuthorizationEntity: cannot resolve the authorization entity class");
+		}
+		byte[] rawBytes = raw instanceof String s
+				? s.getBytes(java.nio.charset.StandardCharsets.UTF_8) : (byte[]) raw;
+		String methodName = authzDef.decodeMethod().toString();
+		try {
+			IReflection reflection = DefaultMapper.reflection();
+			Object entity = entityClass.getConstructor().newInstance();
+			com.garganttua.core.reflection.IMethod method = reflection.resolveMethod(entityClass, methodName)
+					.orElseThrow(() -> new ApiException("decodeAuthorizationEntity: method '" + methodName
+							+ "' not found on " + entityClass.getName()));
+			Object result = method.invoke(entity, rawBytes);
+			// Factory-style decode returns a fresh entity; populate-style returns void/this.
+			if (result != null && entityClass.getType() instanceof Class<?> raw2 && raw2.isInstance(result)) {
+				return result;
+			}
+			return entity;
+		} catch (ApiException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new ApiException("decodeAuthorizationEntity failed: " + e.getMessage(), e);
+		}
 	}
 
 	// ----- Refresh authorization (Phase 2) -----

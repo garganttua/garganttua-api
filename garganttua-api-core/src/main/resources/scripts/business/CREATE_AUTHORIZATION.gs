@@ -30,13 +30,17 @@ requirePresent(if(notNull(@3), 1))
 output <- findReusableAuthorization(@2, @3)
 ! => recordCaughtException(@0, @exception) -> 500
 
-// Branch: when @output is set (reuse path), `if(isNull(@output),1)` returns
-// empty, requirePresent throws, and the catch handler publishes the encoded
-// wire form on the request, then terminates the script with code 0. When
-// @output is null (no reuse), `if(isNull(@output),1)` returns 1, requirePresent
-// passes, and the script falls through to the fresh-create block below.
+// Reuse path: when a reusable authorization exists, encode it to its wire form
+// (publishing it on the request) and make THAT the output, short-circuiting the
+// fresh-create block. encodeReusedIfPresent returns the encoded form (or the entity
+// when no encode method) when something is reusable, else null untouched. So when
+// @output is set, `if(isNull(@output),1)` returns empty, requirePresent throws, and
+// the bare `! -> 0` terminates with the encoded form as output. When @output is null
+// (no reuse), the guard passes and the script falls through to fresh-create.
+output <- encodeReusedIfPresent(@output, @2, @0)
+! => recordCaughtException(@0, @exception) -> 500
 requirePresent(if(isNull(@output), 1))
-! => publishReusedAuthorization(@output, @2, @0) -> 0
+! -> 0
 
 // ===== fresh-create branch =====
 
@@ -50,19 +54,21 @@ requirePresent(if(isNull(@output), 1))
 output <- issueAuthorization(@3, @2, @0)
 ! => recordCaughtException(@0, @exception) -> 500
 
-// If the authorization declares a transport encode method (.refreshable().encode(...)),
-// invoke it post-sign to produce the wire form (e.g. JWT compact serialization).
-// The encoded form is published on the request as `encodedAuthorization` for
-// downstream stages (RESPONSE.gs, custom protocols). No-op when no encode method
-// is configured.
+// If the authorization declares a transport encode method (.authorization().encode(...)
+// or @AuthorizationEncode), invoke it post-sign to produce the wire form (e.g. JWT
+// compact serialization). The encoded form is published on the request as
+// `encodedAuthorization` for custom protocols. No-op when no encode method is configured.
 _encoded <- encodeIfPossible(@output, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 setRequestArg(@0, "encodedAuthorization", @_encoded)
 
 // Persist the freshly-issued authorization to the linked authorization domain
 // when storable (i.e. .revokable(...) was called or .storable(true)). Lets the
-// token be looked up + revoked later. No-op for stateless tokens.
+// token be looked up + revoked later. No-op for stateless tokens. Persistence uses
+// the ENTITY, so it must run before the output is swapped to the encoded form below.
 persistIfStorable(@output, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 
-output <- @output -> 0
+// Emit the encoded transport form (e.g. JWT header.payload.signature) as the
+// operation output when an encode method produced one; otherwise ship the entity.
+output <- coalesce(@_encoded, @output) -> 0

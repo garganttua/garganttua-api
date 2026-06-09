@@ -27,6 +27,13 @@ requirePresent(@entity)
 ! => recordCaughtException(@0, @exception) -> 401
 entity <- optionalGet(@entity)
 
+// The client presents the SAME wire form the issuer returned at login — for an
+// encoded authorization that is the transport form (e.g. a JWT string), not the
+// entity. Decode it back to the entity when a decode method is configured; a
+// pre-decoded entity (Mode B / in-process) passes through unchanged.
+entity <- decodeAuthorizationEntity(@entity, @2)
+! => recordCaughtException(@0, @exception) -> 401
+
 // Reject early when the linked authorization is not refreshable at all
 requirePresent(if(isAuthorizationRefreshable(@2), 1))
 ! => recordCaughtException(@0, @exception) -> 401
@@ -78,4 +85,6 @@ persistIfStorable(@output, @2)
 // Propagate the principal to downstream stages.
 setRequestArg(@0, "principal", @_principal)
 
-output <- @output -> 0
+// Emit the encoded transport form (e.g. JWT) as the output when an encode method
+// produced one; otherwise ship the entity. Symmetric to CREATE_AUTHORIZATION.
+output <- coalesce(@_encoded, @output) -> 0

@@ -2,8 +2,8 @@ package com.garganttua.api.core.integ.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -95,11 +95,43 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                     + "|" + String.valueOf(tokenType)).getBytes(StandardCharsets.UTF_8);
         }
 
-        /** Wire encoding: base64-encoded "scheme.uuid.signature". */
+        /**
+         * Lossless wire encoding, JWT-shaped: {@code tokenType.base64(payload).base64(signature)}.
+         * The payload carries every field needed to reconstruct the entity on the way back
+         * (refresh re-verifies the signature and resolves the principal by ownerId).
+         */
         public String toWire() {
+            String payload = String.join(";",
+                    nz(tokenType), nz(uuid), nz(ownerId), nz(tenantId),
+                    authorities == null ? "" : String.join(",", authorities),
+                    createdAt == null ? "" : Long.toString(createdAt.getEpochSecond()),
+                    expiresAt == null ? "" : Long.toString(expiresAt.getEpochSecond()),
+                    refreshExpiresAt == null ? "" : Long.toString(refreshExpiresAt.getEpochSecond()),
+                    refreshRevoked == null ? "false" : refreshRevoked.toString());
+            String p = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes(StandardCharsets.UTF_8));
             String sig = signature == null ? "" : Base64.getUrlEncoder().withoutPadding().encodeToString(signature);
-            return String.valueOf(tokenType) + "." + String.valueOf(uuid) + "." + sig;
+            return nz(tokenType) + "." + p + "." + sig;
         }
+
+        /** Decode side: populates this entity from {@link #toWire()}'s output. */
+        public void fromWire(byte[] raw) {
+            String[] parts = new String(raw, StandardCharsets.UTF_8).split("\\.", -1);
+            this.tokenType = emptyToNull(parts[0]);
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            String[] f = payload.split(";", -1);
+            this.uuid = emptyToNull(f[1]);
+            this.ownerId = emptyToNull(f[2]);
+            this.tenantId = emptyToNull(f[3]);
+            this.authorities = f[4].isEmpty() ? null : java.util.Arrays.asList(f[4].split(","));
+            this.createdAt = f[5].isEmpty() ? null : Instant.ofEpochSecond(Long.parseLong(f[5]));
+            this.expiresAt = f[6].isEmpty() ? null : Instant.ofEpochSecond(Long.parseLong(f[6]));
+            this.refreshExpiresAt = f[7].isEmpty() ? null : Instant.ofEpochSecond(Long.parseLong(f[7]));
+            this.refreshRevoked = Boolean.parseBoolean(f[8]);
+            this.signature = parts[2].isEmpty() ? null : Base64.getUrlDecoder().decode(parts[2]);
+        }
+
+        private static String nz(String s) { return s == null ? "" : s; }
+        private static String emptyToNull(String s) { return s == null || s.isEmpty() ? null : s; }
     }
 
     public static class WireTokenDto {
@@ -179,6 +211,8 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .authorities("authorities")
                         .expirable("expiresAt")
                         .revokable("revoked")
+                        .encode("toWire")
+                        .decode("fromWire")
                         .signable()
                             .signature("signature")
                             .getDataToSign("getDataToSign")
@@ -186,7 +220,6 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
                         .refreshable()
                             .expirable("refreshExpiresAt")
                             .revokable("refreshRevoked")
-                            .encode("toWire")
                         .up()
                     .up()
                 .up();
@@ -261,58 +294,54 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
     class OnCreate {
 
         @Test
-        @DisplayName("login publishes the encoded form on the request as encodedAuthorization")
-        void publishesEncodedForm() throws ApiException {
+        @DisplayName("login returns the ENCODED transport form (the JWT-like wire string), not the entity")
+        void loginReturnsEncodedForm() throws ApiException {
             OperationRequest request = authenticateRequest();
             WorkflowResult result = executeScript(userCtx, request);
 
-            assertEquals(0, result.code());
-            assertInstanceOf(WireEncodableToken.class, result.output());
-            WireEncodableToken token = (WireEncodableToken) result.output();
+            assertEquals(0, result.code(), () -> "login failed; vars=" + result.variables());
+            // The operation output is now the encoded wire form — the whole point.
+            assertInstanceOf(String.class, result.output());
+            String encoded = (String) result.output();
 
-            // The script should have stashed the encoded form on the request
-            String encoded = (String) request.arg("encodedAuthorization").orElse(null);
-            assertNotNull(encoded, "encodedAuthorization arg must be populated by encodeIfPossible");
-            // Sanity: the encoded form should match what calling toWire() produces
-            assertEquals(token.toWire(), encoded);
-            // And carry the post-sign signature (non-empty Base64 last segment)
+            // The same wire form is also published on the request for custom protocols.
+            assertEquals(encoded, request.arg("encodedAuthorization").orElse(null));
+
             String[] parts = encoded.split("\\.", -1);
-            assertEquals(3, parts.length);
+            assertEquals(3, parts.length, "JWT-shaped tokenType.payload.signature; got: " + encoded);
             assertEquals("auth-token", parts[0]);
-            assertEquals(token.getUuid(), parts[1]);
             assertTrue(parts[2].length() > 0, "encoded form must include the signature segment");
         }
     }
 
     @Nested
-    @DisplayName("Encode on refresh")
+    @DisplayName("Round-trip on refresh (decode → reissue)")
     class OnRefresh {
 
         @Test
-        @DisplayName("refresh also publishes the encoded form for the freshly issued token")
-        void refreshPublishesEncoded() throws ApiException {
-            // First login to obtain a token to replay
+        @DisplayName("refresh DECODES the presented JWT, verifies its signature, and reissues a fresh JWT")
+        void refreshDecodesAndReissues() throws ApiException {
+            // Login → the client now holds the encoded JWT, not the entity.
             OperationRequest loginReq = authenticateRequest();
             WorkflowResult loginResult = executeScript(userCtx, loginReq);
-            assertEquals(0, loginResult.code());
-            WireEncodableToken originalToken = (WireEncodableToken) loginResult.output();
-            assertNotNull(originalToken.getRefreshExpiresAt(),
-                    "refreshable token must have refreshExpiresAt populated at creation");
+            assertEquals(0, loginResult.code(), () -> "login failed; vars=" + loginResult.variables());
+            assertInstanceOf(String.class, loginResult.output());
+            String loginJwt = (String) loginResult.output();
 
-            // Refresh request
+            // The client presents the SAME wire form (the JWT string) to refresh.
             OperationRequest refreshReq = superTenantScriptRequest(
                     OperationDefinition.refreshAuthorization("users", IClass.getClass(User.class)));
-            refreshReq.arg("entity", originalToken);
+            refreshReq.arg("entity", loginJwt);
 
             WorkflowResult refreshResult = executeScript(userCtx, refreshReq);
-            assertEquals(0, refreshResult.code());
+            assertEquals(0, refreshResult.code(),
+                    () -> "refresh must decode the presented JWT (signature verified) and reissue; vars="
+                            + refreshResult.variables());
+            assertInstanceOf(String.class, refreshResult.output());
+            String refreshedJwt = (String) refreshResult.output();
 
-            WireEncodableToken refreshed = (WireEncodableToken) refreshResult.output();
-            String encoded = (String) refreshReq.arg("encodedAuthorization").orElse(null);
-
-            assertNotNull(encoded, "refresh must publish encodedAuthorization");
-            assertEquals(refreshed.toWire(), encoded,
-                    "encoded must reflect the freshly minted entity, not the source");
+            assertEquals(3, refreshedJwt.split("\\.", -1).length, "reissued token is a JWT wire form");
+            assertNotEquals(loginJwt, refreshedJwt, "refresh mints a NEW token (fresh uuid)");
         }
     }
 
@@ -321,28 +350,24 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
     class RoundTrip {
 
         @Test
-        @DisplayName("the encoded form contains the uuid + signature of the entity returned to the caller")
-        void encodedReflectsOutput() throws ApiException {
+        @DisplayName("the encoded output decodes back to an entity that re-encodes identically (lossless round-trip)")
+        void encodedRoundTripsLosslessly() throws ApiException {
             OperationRequest request = authenticateRequest();
             WorkflowResult result = executeScript(userCtx, request);
-            assertEquals(0, result.code());
+            assertEquals(0, result.code(), () -> "login failed; vars=" + result.variables());
 
-            WireEncodableToken token = (WireEncodableToken) result.output();
-            String encoded = (String) request.arg("encodedAuthorization").orElse(null);
-
-            // Parse the encoded form and verify each segment matches the token
+            String encoded = (String) result.output();
             String[] parts = encoded.split("\\.", -1);
             assertEquals(3, parts.length);
-            assertEquals(token.getTokenType(), parts[0]);
-            assertEquals(token.getUuid(), parts[1]);
+            assertEquals("auth-token", parts[0]);
 
-            byte[] decodedSig = Base64.getUrlDecoder().decode(parts[2]);
-            assertNotNull(token.getSignature());
-            assertEquals(token.getSignature().length, decodedSig.length);
-            for (int i = 0; i < decodedSig.length; i++) {
-                assertEquals(token.getSignature()[i], decodedSig[i],
-                        "signature byte mismatch at index " + i);
-            }
+            // Decode back to an entity and re-encode — must reproduce the wire form,
+            // and carry a non-empty post-sign signature.
+            WireEncodableToken decoded = new WireEncodableToken();
+            decoded.fromWire(encoded.getBytes(StandardCharsets.UTF_8));
+            assertNotNull(decoded.getSignature());
+            assertTrue(decoded.getSignature().length > 0);
+            assertEquals(encoded, decoded.toWire(), "decode → re-encode must round-trip identically");
         }
     }
 }

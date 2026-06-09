@@ -16,6 +16,7 @@ import com.garganttua.api.commons.context.dsl.security.IRefreshableAuthorization
 import com.garganttua.api.commons.context.dsl.security.ISignableAuthorizationBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.fields.FieldResolver;
@@ -38,6 +39,8 @@ public class AuthorizationBuilder<E>
     private ObjectAddress expiration;
     private ObjectAddress authorities;
     private ObjectAddress signedBy;
+    private ObjectAddress encodeMethod;
+    private ObjectAddress decodeMethod;
     private IAuthorizationMethodBinderBuilder<E> toByteArray;
     private IAuthorizationMethodBinderBuilder<E> validate;
     private IAuthorizationMethodBinderBuilder<E> validateAgainst;
@@ -217,6 +220,48 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
+    public IAuthorizationBuilder<E> encode(IMethod method) throws ApiException {
+        Objects.requireNonNull(method, "Method cannot be null");
+        this.encodeMethod = new ObjectAddress(method.getName());
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> encode(String methodName) throws ApiException {
+        Objects.requireNonNull(methodName, "Method name cannot be null");
+        this.encodeMethod = new ObjectAddress(methodName);
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> encode(ObjectAddress methodAddress) throws ApiException {
+        Objects.requireNonNull(methodAddress, "Method address cannot be null");
+        this.encodeMethod = methodAddress;
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> decode(IMethod method) throws ApiException {
+        Objects.requireNonNull(method, "Method cannot be null");
+        this.decodeMethod = new ObjectAddress(method.getName());
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> decode(String methodName) throws ApiException {
+        Objects.requireNonNull(methodName, "Method name cannot be null");
+        this.decodeMethod = new ObjectAddress(methodName);
+        return this;
+    }
+
+    @Override
+    public IAuthorizationBuilder<E> decode(ObjectAddress methodAddress) throws ApiException {
+        Objects.requireNonNull(methodAddress, "Method address cannot be null");
+        this.decodeMethod = methodAddress;
+        return this;
+    }
+
+    @Override
     public ISignableAuthorizationBuilder<E> signable() {
         if (this.signable == null) {
             this.signable = new SignableAuthorizationBuilder<>(this, this.entityClass);
@@ -264,17 +309,20 @@ public class AuthorizationBuilder<E>
         // declared inside the refreshable builder but are conceptually for the
         // whole authorization (used to produce a transport-friendly form);
         // we plumb them through so the runtime expressions can invoke them.
+        // Encode/decode declared on the plain authorization take precedence; a
+        // refreshable token may still declare them on its own builder (legacy path),
+        // used only as a fallback. A token need NOT be refreshable to be encoded.
         ObjectAddress refreshExpiration = null;
         ObjectAddress refreshRevoked = null;
-        ObjectAddress encodeMethod = null;
-        ObjectAddress decodeMethod = null;
+        ObjectAddress encodeMethod = this.encodeMethod;
+        ObjectAddress decodeMethod = this.decodeMethod;
         if (this.refreshable != null) {
             RefreshableAuthorizationBuilder<E> rb = (RefreshableAuthorizationBuilder<E>) this.refreshable;
             rb.build();
             refreshExpiration = rb.getExpiration();
             refreshRevoked = rb.getRevoked();
-            encodeMethod = rb.getEncodeMethod();
-            decodeMethod = rb.getDecodeMethod();
+            if (encodeMethod == null) encodeMethod = rb.getEncodeMethod();
+            if (decodeMethod == null) decodeMethod = rb.getDecodeMethod();
         }
 
         return new AuthorizationContext(

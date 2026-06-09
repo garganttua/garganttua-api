@@ -208,6 +208,14 @@ public final class SecurityAnnotationScanner {
 
         Optional<IField> signedByF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationSignedBy.class));
         if (signedByF.isPresent()) authzBuilder.signedBy(signedByF.get().getName());
+
+        // Transport encode/decode are wired on the PLAIN authorization (not gated on
+        // refreshable): a signable, non-refreshable token (e.g. a stateless JWT) can
+        // declare @AuthorizationEncode to have authenticate return its compact form.
+        Optional<IMethod> encM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationEncode.class));
+        if (encM.isPresent()) authzBuilder.encode(encM.get().getName());
+        Optional<IMethod> decM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationDecode.class));
+        if (decM.isPresent()) authzBuilder.decode(decM.get().getName());
     }
 
     private void applySignable(IReflection reflection, IAuthorizationBuilder<Object> authzBuilder, IClass<?> authzClass)
@@ -225,10 +233,8 @@ public final class SecurityAnnotationScanner {
         IRefreshableAuthorizationBuilder<Object> refreshable = authzBuilder.refreshable();
         Optional<IField> refExpF = reflection.findFieldAnnotatedWith(authzClass, IClass.getClass(AuthorizationRefreshTokenExpiration.class));
         if (refExpF.isPresent()) refreshable.expirable(refExpF.get().getName());
-        Optional<IMethod> encM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationEncode.class));
-        if (encM.isPresent()) refreshable.encode(encM.get().getName());
-        Optional<IMethod> decM = reflection.findMethodAnnotatedWith(authzClass, IClass.getClass(AuthorizationDecode.class));
-        if (decM.isPresent()) refreshable.decode(decM.get().getName());
+        // @AuthorizationEncode / @AuthorizationDecode are now wired on the plain
+        // authorization in applyAuthorizationFields (encode works without refreshable).
         refreshable.up();
     }
 

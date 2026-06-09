@@ -48,4 +48,12 @@ public class ApiExpressions {
 		}
 		return value;
 	}
+
+	@Expression(name = "coalesce", description = "Returns the first value when it is non-null (a present Optional is unwrapped), otherwise the second. Used to prefer a transport/encoded form over the raw entity when one was produced.")
+	public static @Nullable Object coalesce(@Nullable Object preferred, @Nullable Object fallback) {
+		if (notNull(preferred)) {
+			return preferred instanceof Optional<?> opt ? opt.get() : preferred;
+		}
+		return fallback;
+	}
 }

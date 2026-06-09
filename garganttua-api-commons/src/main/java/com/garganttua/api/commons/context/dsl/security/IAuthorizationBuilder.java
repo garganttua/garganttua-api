@@ -1,6 +1,7 @@
 package com.garganttua.api.commons.context.dsl.security;
 
 import com.garganttua.core.reflection.IField;
+import com.garganttua.core.reflection.IMethod;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.security.context.IAuthorizationContext;
@@ -46,17 +47,27 @@ public interface IAuthorizationBuilder<E>
 
     IAuthorizationBuilder<E> revokable(ObjectAddress fieldAddress) throws ApiException;
 
-   /*  IAuthorizationMethodBinderBuilder<E> encode(IMethod method) throws ApiException;
+    /**
+     * Declares the method that encodes this authorization to its transport form
+     * (e.g. a JWT {@code header.payload.signature}). Available on the plain
+     * authorization — a token need NOT be refreshable to be encoded. The encoded
+     * form becomes the output of {@code authenticate} / {@code refreshAuthorization}.
+     */
+    IAuthorizationBuilder<E> encode(IMethod method) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> encode(String methodName) throws ApiException;
+    IAuthorizationBuilder<E> encode(String methodName) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> encode(ObjectAddress methodAddress) throws ApiException;
+    IAuthorizationBuilder<E> encode(ObjectAddress methodAddress) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> decode(IMethod method) throws ApiException;
+    /**
+     * Declares the method that decodes this authorization from its transport form.
+     * Symmetric to {@link #encode(String)}; available on the plain authorization.
+     */
+    IAuthorizationBuilder<E> decode(IMethod method) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> decode(String methodName) throws ApiException;
+    IAuthorizationBuilder<E> decode(String methodName) throws ApiException;
 
-    IAuthorizationMethodBinderBuilder<E> decode(ObjectAddress methodAddress) throws ApiException; */
+    IAuthorizationBuilder<E> decode(ObjectAddress methodAddress) throws ApiException;
 
     IAuthorizationBuilder<E> storable(boolean b);
 
