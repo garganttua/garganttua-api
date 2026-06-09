@@ -1067,6 +1067,28 @@ public class SecurityExpressions {
 		return verifyAuthorizationSignature(authzEntity, domainContext, realm);
 	}
 
+	@Expression(name = "verifyTokenSignature",
+			description = "Framework-owned signature verification for a SELF-VERIFYING signable authorization (a token "
+					+ "whose own domain is an authenticator). Resolves the EXACT key the token was signed with — by its "
+					+ "qualified signedBy, via DomainKeySupplier (rotation-robust; refuses a revoked/expired signing key) "
+					+ "— and verifies the entity's signature. Unlike verifyIfSignable (which reads the key config on the "
+					+ "given domain), this works on the TOKEN domain where no key config is declared. Returns true when not "
+					+ "signable; false on signature mismatch; throws (→ 401) when the token cannot be verified (no qualified "
+					+ "signedBy, missing/revoked/expired key).")
+	public static boolean verifyTokenSignature(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable Object operationRequest) {
+		if (authzEntity == null || domainContext == null) {
+			throw new ApiException("verifyTokenSignature: entity and domainContext are required");
+		}
+		if (!isAuthorizationSignable(domainContext)) {
+			return true;
+		}
+		IDomain<?> authzDomain = toDomain(domainContext);
+		IOperationRequest req = (unwrapOptional(operationRequest) instanceof IOperationRequest r) ? r : null;
+		IKeyRealm realm = new com.garganttua.api.core.security.key.DomainKeySupplier()
+				.resolveSignerRealm(authzDomain, authzEntity, req);
+		return verifyAuthorizationSignature(authzEntity, domainContext, realm);
+	}
+
 	@Expression(name = "verifyAuthorizationSignature",
 			description = "Verifies the signature on an authorization entity by invoking getDataToSign, reading the signature field, and calling keyRealm.getKeyForSignatureVerification().verifySignature. Returns true on valid signature, false on mismatch; throws on misconfiguration.")
 	public static boolean verifyAuthorizationSignature(@Nullable Object authzEntity, @Nullable Object domainContext, @Nullable Object keyRealmObj) {
@@ -1622,6 +1644,16 @@ public class SecurityExpressions {
 				&& domDef.domainSecurityDefinition().authenticatorDefinition() != null;
 
 		if (hasAuthenticator) {
+			// FRAMEWORK-OWNED signature verification — the decoded token is NEVER trusted
+			// before its cryptographic signature is checked against the key that signed it
+			// (resolved by the token's qualified signedBy). The user authenticate that
+			// follows carries BUSINESS rules only, not the crypto. A tampered/empty
+			// signature (false) or an unverifiable token (throws) → 401. No-op when the
+			// authorization is not signable.
+			if (isAuthorizationSignable(authzDomain)
+					&& !verifyTokenSignature(authz, authzDomain, operationRequest)) {
+				throw new ApiException("Authorization signature verification failed");
+			}
 			String login = readField(authz, authzDomain.getEntityDefinition().uuid());
 			ObjectAddress tenantAddr = authzDomain.getEntityDefinition().tenantId();
 			String tenantId = tenantAddr != null ? readField(authz, tenantAddr) : null;

@@ -15,6 +15,7 @@ import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
+import com.garganttua.core.crypto.IKeyRealm;
 import com.garganttua.core.observability.Logger;
 import com.garganttua.core.reflection.IReflection;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -67,6 +68,35 @@ public class DomainKeySupplier extends KeySupplier {
 		return super.resolveKey(authzDomain, request);
 	}
 
+	/**
+	 * Resolves the {@link IKeyRealm} to VERIFY a token's signature against: the EXACT
+	 * persisted {@code @Key} named by the token's qualified {@code signedBy}
+	 * ({@code ${keyDomain}:${uuid}}), materialised into a realm. Rotation-robust (the
+	 * token verifies against the key that actually signed it) and enforces the trust
+	 * gate (revoked/expired signing key → refused).
+	 * <p>
+	 * <b>Fail-closed:</b> when the token carries no qualified {@code signedBy} (supplier
+	 * mode, or a stateless token without a stamped key reference), the framework cannot
+	 * resolve a verification key from the token domain alone and therefore <b>refuses</b>
+	 * to verify rather than silently accepting — a self-verifying signable authorization
+	 * MUST be signed by a persisted {@code @Key}.
+	 */
+	public IKeyRealm resolveSignerRealm(IDomain<?> authzDomain, Object token, IOperationRequest request) {
+		SignerKey signer = token != null ? resolveSignerKey(authzDomain, token) : null;
+		if (signer == null) {
+			throw new ApiException("DomainKeySupplier: cannot verify the token signature — it carries no qualified "
+					+ "signedBy (${keyDomain}:${uuid}). A self-verifying signable authorization must be signed by a "
+					+ "persisted @Key whose reference is stamped on the token.");
+		}
+		IDomainKeyDefinition keyDef = signer.keyDomain().getDomainDefinition() != null
+				? signer.keyDomain().getDomainDefinition().keyDefinition() : null;
+		if (keyDef == null) {
+			throw new ApiException("DomainKeySupplier: key domain '" + signer.keyDomain().getDomainName()
+					+ "' has no @Key definition to verify the token signature against");
+		}
+		return SecurityExpressions.materializeKeyRealm(signer.entity(), keyDef, DefaultMapper.reflection());
+	}
+
 	/** The decoded token travels as the authenticate request's credentials. */
 	private static Object tokenFrom(IOperationRequest request) {
 		if (request == null) {
@@ -84,6 +114,20 @@ public class DomainKeySupplier extends KeySupplier {
 	 * expired — a token signed by a key in any of those states is not trusted.
 	 */
 	private Object resolveBySignedBy(IDomain<?> authzDomain, Object token) {
+		SignerKey signer = resolveSignerKey(authzDomain, token);
+		return signer != null ? signer.entity() : null;
+	}
+
+	/** The resolved signing {@code @Key} entity together with its {@code @Key} domain. */
+	private record SignerKey(Object entity, IDomain<?> keyDomain) {
+	}
+
+	/**
+	 * Resolves the EXACT persisted {@code @Key} entity (and its domain) named by the
+	 * token's qualified {@code signedBy}. Returns null when the token carries no
+	 * qualified signedBy. Throws when the named key is missing, revoked or expired.
+	 */
+	private SignerKey resolveSignerKey(IDomain<?> authzDomain, Object token) {
 		Object defObj = SecurityExpressions.authorizationDefinition(authzDomain);
 		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef)) {
 			return null;
@@ -116,7 +160,7 @@ public class DomainKeySupplier extends KeySupplier {
 		}
 		Object keyEntity = results.get(0);
 		assertUsable(keyEntity, keyDomain, signedBy);
-		return keyEntity;
+		return new SignerKey(keyEntity, keyDomain);
 	}
 
 	/**

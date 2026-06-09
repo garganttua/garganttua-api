@@ -234,6 +234,21 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         }
     }
 
+    /**
+     * A PERMISSIVE token verification method: it accepts ANY token without checking the
+     * signature. Used to prove that the FRAMEWORK now enforces the cryptographic
+     * verification itself — a tampered/empty-signature token must still be rejected even
+     * though this user method would happily accept it.
+     */
+    public static class PermissiveTokenVerifier {
+        public com.garganttua.api.commons.security.authentication.IAuthentication authenticate(
+                Object token, Object signingKey,
+                com.garganttua.api.commons.definition.IAuthenticatorDefinition def) {
+            return new com.garganttua.api.commons.security.authentication.Authentication(
+                    true, token, token, "permissive", null, true, true, true, true);
+        }
+    }
+
     /** Wires an API for a given AuthenticatorKeyUsage and returns its handles. */
     static class Wired {
         IApi api;
@@ -244,11 +259,15 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
     }
 
     private Wired buildApi(AuthenticatorKeyUsage usage) throws ApiException {
-        return buildApi(usage, true, false);
+        return buildApi(usage, true, false, new RealTokenVerifier());
+    }
+
+    private Wired buildApi(AuthenticatorKeyUsage usage, boolean autoGenerate, boolean autoRotate) throws ApiException {
+        return buildApi(usage, autoGenerate, autoRotate, new RealTokenVerifier());
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Wired buildApi(AuthenticatorKeyUsage usage, boolean autoGenerate, boolean autoRotate) throws ApiException {
+    private Wired buildApi(AuthenticatorKeyUsage usage, boolean autoGenerate, boolean autoRotate, Object tokenVerifier) throws ApiException {
         Wired w = new Wired();
         w.userDao = new CapturingDao();
         w.tokenDao = new CapturingDao();
@@ -294,9 +313,9 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         // The token verifies ITSELF with a REAL custom method: it receives the
         // decoded token (DecodedAuthorizationSupplier) and the key that signed it
         // (DomainKeySupplier) and checks the signature by hand.
-        RealTokenVerifier realVerifier = new RealTokenVerifier();
         var tokenAuthBuilder = builder.security()
-                .authentication(new FixedSupplierBuilder<>(realVerifier, IClass.getClass(RealTokenVerifier.class)));
+                .authentication(new FixedSupplierBuilder<>(tokenVerifier,
+                        (IClass<Object>) (IClass<?>) IClass.getClass(tokenVerifier.getClass())));
         tokenAuthBuilder.authenticate("authenticate")
                 .withParam(0, new com.garganttua.api.core.security.authentication.DecodedAuthorizationSupplierBuilder())
                 .withParam(1, new com.garganttua.api.core.security.key.DomainKeySupplierBuilder())
@@ -630,6 +649,69 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     () -> com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(w.api, token, verifyReq),
                     "a tampered token must be REJECTED by the custom verify method");
             token.setSignature(original);
+        }
+    }
+
+    @Nested
+    @DisplayName("SECURITY: the framework verifies the signature even when the user authenticate does NOT")
+    class FrameworkOwnedSignatureVerification {
+
+        private Wired wirePermissive() throws Exception {
+            return buildApi(AuthenticatorKeyUsage.oneForAll, true, false, new PermissiveTokenVerifier());
+        }
+
+        private TokenEntity mintToken(Wired w) throws Exception {
+            WorkflowResult mint = executeScript(w.userCtx, authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, mint.code(), () -> "mint failed; vars=" + mint.variables());
+            TokenEntity token = (TokenEntity) mint.output();
+            assertNotNull(token.getSignature(), "minted token must be signed");
+            assertNotNull(token.getSignedBy(), "minted token must carry a qualified signedBy");
+            return token;
+        }
+
+        @Test
+        @DisplayName("a VALID token is accepted (permissive auth + framework signature check both pass)")
+        void validTokenAccepted() throws Exception {
+            Wired w = wirePermissive();
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+            TokenEntity token = mintToken(w);
+
+            var authResult = com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(
+                    w.api, token, new OperationRequest(new java.util.HashMap<>()));
+            assertTrue(authResult.authenticated(), "a valid signed token must verify");
+            assertNotNull(authResult.principal(), "the framework must resolve the owner as principal");
+        }
+
+        @Test
+        @DisplayName("a TAMPERED signature is REJECTED by the FRAMEWORK (the permissive auth would have accepted it)")
+        void tamperedSignatureRejectedByFramework() throws Exception {
+            Wired w = wirePermissive();
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+            TokenEntity token = mintToken(w);
+            byte[] tampered = token.getSignature().clone();
+            tampered[tampered.length - 1] ^= 0x01;
+            token.setSignature(tampered);
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(
+                            w.api, token, new OperationRequest(new java.util.HashMap<>())),
+                    "a tampered token MUST be rejected even though the user method is permissive");
+            assertTrue(ex.getMessage().contains("signature verification failed"),
+                    "the FRAMEWORK (not the permissive user method) must reject it; got: " + ex.getMessage());
+        }
+
+        @Test
+        @DisplayName("an EMPTY signature is REJECTED by the FRAMEWORK")
+        void emptySignatureRejectedByFramework() throws Exception {
+            Wired w = wirePermissive();
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+            TokenEntity token = mintToken(w);
+            token.setSignature(new byte[0]);
+
+            assertThrows(ApiException.class,
+                    () -> com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(
+                            w.api, token, new OperationRequest(new java.util.HashMap<>())),
+                    "an empty signature must be rejected by the framework");
         }
     }
 
