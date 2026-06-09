@@ -42,6 +42,13 @@ _isAnonymous  <- equals(@access, "anonymous")
 requirePresent(if(equals(@_isAnonymous, false), 1))
 ! -> 0
 
+// Mode A with a configured decode method (e.g. a JWT): reconstruct the authorization
+// entity from the raw header value and switch to Mode B before decode. No-op when
+// already pre-decoded, no raw header, or no decode method (the scheme/protocol path
+// then handles it). Decode failure → 401.
+predecodeRawAuthorization(@0, @2)
+! => recordCaughtException(@0, @exception) -> 401
+
 // Mode A or Mode B unified. decodeRequestAuthorization short-circuits Mode B
 // internally; in Mode A it parses + resolves the protocol + decodes, and
 // stashes the protocol on the request for the verify step to find.

@@ -1,6 +1,7 @@
 package com.garganttua.api.core.integ.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,6 +28,8 @@ import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
+import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.core.crypto.IKeyRealm;
 import com.garganttua.core.crypto.KeyAlgorithm;
 import com.garganttua.core.crypto.KeyRealmBuilder;
@@ -368,6 +371,61 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             assertNotNull(decoded.getSignature());
             assertTrue(decoded.getSignature().length > 0);
             assertEquals(encoded, decoded.toWire(), "decode → re-encode must round-trip identically");
+        }
+    }
+
+    @Nested
+    @DisplayName("Verify Mode A (Bearer JWT in the raw Authorization header)")
+    class VerifyModeA {
+
+        private String login() throws ApiException {
+            WorkflowResult login = executeScript(userCtx, authenticateRequest());
+            assertEquals(0, login.code(), () -> "login failed; vars=" + login.variables());
+            return (String) login.output();
+        }
+
+        private OperationRequest bearer(String jwt) {
+            OperationRequest req = superTenantScriptRequest(
+                    OperationDefinition.authenticate("users", IClass.getClass(User.class)));
+            byte[] b = ("Bearer " + jwt).getBytes(StandardCharsets.UTF_8);
+            Byte[] boxed = new Byte[b.length];
+            for (int i = 0; i < b.length; i++) boxed[i] = b[i];
+            req.arg(IOperationRequest.RAW_AUTHORIZATION, boxed);
+            return req;
+        }
+
+        @Test
+        @DisplayName("a Bearer JWT is pre-decoded to the entity and its signature verifies")
+        void bearerJwtDecodesAndVerifies() throws ApiException {
+            String jwt = login();
+            OperationRequest req = bearer(jwt);
+
+            boolean decoded = SecurityExpressions.predecodeRawAuthorization(req, userCtx);
+            assertTrue(decoded, "a Bearer JWT with a configured decode method must be pre-decoded");
+
+            Object authz = req.arg(IOperationRequest.AUTHORIZATION).orElse(null);
+            assertInstanceOf(WireEncodableToken.class, authz, "the raw header must decode to the entity");
+
+            boolean sigOk = (Boolean) SecurityExpressions.verifyIfSignable(authz, userCtx, req);
+            assertTrue(sigOk, "the decoded Bearer JWT's signature must verify against the signing key");
+        }
+
+        @Test
+        @DisplayName("a TAMPERED Bearer JWT decodes but FAILS signature verification")
+        void tamperedJwtRejected() throws ApiException {
+            String jwt = login();
+            String[] parts = jwt.split("\\.", -1);
+            char[] sig = parts[2].toCharArray();
+            sig[sig.length - 1] = sig[sig.length - 1] == 'A' ? 'B' : 'A'; // flip within the base64 alphabet
+            String tampered = parts[0] + "." + parts[1] + "." + new String(sig);
+
+            OperationRequest req = bearer(tampered);
+            SecurityExpressions.predecodeRawAuthorization(req, userCtx);
+            Object authz = req.arg(IOperationRequest.AUTHORIZATION).orElse(null);
+            assertInstanceOf(WireEncodableToken.class, authz);
+
+            boolean sigOk = (Boolean) SecurityExpressions.verifyIfSignable(authz, userCtx, req);
+            assertFalse(sigOk, "a tampered JWT signature must NOT verify");
         }
     }
 }

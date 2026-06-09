@@ -83,6 +83,27 @@ class AuthorizationBuilderTest {
     }
 
     @Nested
+    @DisplayName("Encode/decode on the plain authorization (no refreshable)")
+    class PlainEncodeDecode {
+
+        @Test
+        @DisplayName("encode/decode are set on the plain authorization WITHOUT .refreshable() — a stateless token gets a transport form")
+        void plainEncodeDecodeWithoutRefreshable() throws ApiException {
+            IDomainAuthorizationDefinition def = builder
+                    .encode("toWire")
+                    .decode("fromWire")
+                    .build()
+                    .getAuthorizationDefinition();
+
+            assertNotNull(def.encodeMethod(), "encode method must be set on the plain authorization");
+            assertEquals("toWire", def.encodeMethod().toString());
+            assertNotNull(def.decodeMethod(), "decode method must be set on the plain authorization");
+            assertEquals("fromWire", def.decodeMethod().toString());
+            assertFalse(def.refreshable(), "encode/decode require no .refreshable() — a non-refreshable token is encodable");
+        }
+    }
+
+    @Nested
     @DisplayName("Field configuration")
     class FieldConfig {
 

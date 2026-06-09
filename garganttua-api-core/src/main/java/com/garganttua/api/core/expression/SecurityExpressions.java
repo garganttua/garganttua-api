@@ -1224,6 +1224,44 @@ public class SecurityExpressions {
 		}
 	}
 
+	@Expression(name = "predecodeRawAuthorization",
+			description = "VERIFY_AUTHORIZATION pre-step (Mode A). When a raw Authorization header is present, no "
+					+ "authorization is pre-decoded yet, and the domain declares a decode method, reconstructs the "
+					+ "authorization entity from the header value via that decode method and sets it as the decoded "
+					+ "authorization (so the rest of verify runs Mode B — signature + validation). No-op when already "
+					+ "pre-decoded, no raw header, or no decode method (the scheme/protocol path then handles it).")
+	public static boolean predecodeRawAuthorization(@Nullable Object operationRequest, @Nullable Object domainContext) {
+		IOperationRequest req = (IOperationRequest) unwrapOptional(operationRequest);
+		if (req == null) {
+			return false;
+		}
+		if (req.arg(IOperationRequest.AUTHORIZATION).orElse(null) != null) {
+			return false; // Mode B — caller already decoded
+		}
+		Object rawArg = req.arg(IOperationRequest.RAW_AUTHORIZATION).orElse(null);
+		if (rawArg == null) {
+			return false; // no raw header
+		}
+		if (!hasDecodeMethod(domainContext)) {
+			return false; // no decode method — leave for the scheme/protocol path
+		}
+		String raw = AuthorizationProtocolExpressions.rawAuthorizationAsString(rawArg);
+		String value = stripAuthorizationScheme(raw);
+		Object entity = decodeAuthorizationEntity(value, domainContext);
+		req.arg(IOperationRequest.AUTHORIZATION, entity);
+		return true;
+	}
+
+	/** Strips a leading {@code <scheme> } (e.g. {@code Bearer }) from a raw header, returning the value. */
+	private static @Nullable String stripAuthorizationScheme(@Nullable String raw) {
+		if (raw == null) {
+			return null;
+		}
+		String s = raw.strip();
+		int sp = s.indexOf(' ');
+		return sp > 0 ? s.substring(sp + 1).strip() : s;
+	}
+
 	// ----- Refresh authorization (Phase 2) -----
 
 	@Expression(name = "isAuthorizationRefreshable",
