@@ -1079,14 +1079,39 @@ public class SecurityExpressions {
 		if (authzEntity == null || domainContext == null) {
 			throw new ApiException("verifyTokenSignature: entity and domainContext are required");
 		}
-		if (!isAuthorizationSignable(domainContext)) {
-			return true;
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.signable()) {
+			return true; // not signable → nothing to verify
 		}
 		IDomain<?> authzDomain = toDomain(domainContext);
-		IOperationRequest req = (unwrapOptional(operationRequest) instanceof IOperationRequest r) ? r : null;
-		IKeyRealm realm = new com.garganttua.api.core.security.key.DomainKeySupplier()
-				.resolveSignerRealm(authzDomain, authzEntity, req);
-		return verifyAuthorizationSignature(authzEntity, domainContext, realm);
+
+		// Resolve the EXACT @Key the token was signed with — by its qualified signedBy
+		// (the supplier's job; refuses a revoked/expired signing key). Fail-closed when
+		// there is no qualified signedBy.
+		var signer = new com.garganttua.api.core.security.key.DomainKeySupplier()
+				.resolveSignerKey(authzDomain, authzEntity);
+		if (signer == null) {
+			throw new ApiException("verifyTokenSignature: cannot verify the token signature — it carries no qualified "
+					+ "signedBy (${keyDomain}:${uuid}). A self-verifying signable authorization must be signed by a "
+					+ "persisted @Key whose reference is stamped on the token.");
+		}
+
+		// Read the verification IKey DIRECTLY off the resolved @Key entity — the entity
+		// already exposes it, so there is no realm to materialise. Verification is
+		// read-only: the private signing material is never touched.
+		IDomainKeyDefinition keyDef = signer.keyDomain().getDomainDefinition() != null
+				? signer.keyDomain().getDomainDefinition().keyDefinition() : null;
+		if (keyDef == null || keyDef.keyForSignatureVerification() == null) {
+			throw new ApiException("verifyTokenSignature: key domain '" + signer.keyDomain().getDomainName()
+					+ "' declares no @KeyForSignatureVerification field to verify the token against");
+		}
+		Object keyVal = DefaultMapper.reflection().getFieldValue(
+				signer.entity(), keyDef.keyForSignatureVerification().toString());
+		if (!(keyVal instanceof IKey verificationKey)) {
+			throw new ApiException("verifyTokenSignature: the resolved @Key's verification field is not an IKey — got "
+					+ (keyVal == null ? "null" : keyVal.getClass().getName()));
+		}
+		return verifyEntitySignatureWithKey(authzEntity, authzDef, verificationKey);
 	}
 
 	@Expression(name = "verifyAuthorizationSignature",
@@ -1099,6 +1124,27 @@ public class SecurityExpressions {
 		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.signable()) {
 			throw new ApiException("verifyAuthorizationSignature: authorization is not signable on the resolved domain");
 		}
+		IKeyRealm realm = (IKeyRealm) unwrapOptional(keyRealmObj);
+		if (realm == null) {
+			throw new ApiException("verifyAuthorizationSignature: keyRealm is null");
+		}
+		IKey key;
+		try {
+			key = realm.getKeyForSignatureVerification();
+		} catch (Exception e) {
+			throw new ApiException("verifyAuthorizationSignature failed: " + e.getMessage(), e);
+		}
+		return verifyEntitySignatureWithKey(authzEntity, authzDef, key);
+	}
+
+	/**
+	 * Verifies an authorization entity's signature against a given verification key: invokes
+	 * getDataToSign, reads the signature field, and calls {@code key.verifySignature}. Returns
+	 * false on a signature mismatch or any crypto error (a tampered token is a 401, not a 500);
+	 * throws an ApiException only on misconfiguration (no getDataToSign / no signature field /
+	 * signature field empty or not a byte[]).
+	 */
+	private static boolean verifyEntitySignatureWithKey(Object authzEntity, IDomainAuthorizationDefinition authzDef, IKey verificationKey) {
 		ObjectAddress dataMethod = authzDef.getDataToSignMethod();
 		ObjectAddress sigField = authzDef.signatureField();
 		if (dataMethod == null) {
@@ -1107,19 +1153,11 @@ public class SecurityExpressions {
 		if (sigField == null) {
 			throw new ApiException("verifyAuthorizationSignature: signable authorization has no signature field configured");
 		}
-		IKeyRealm realm = (IKeyRealm) unwrapOptional(keyRealmObj);
-		if (realm == null) {
-			throw new ApiException("verifyAuthorizationSignature: keyRealm is null");
-		}
 		IReflection reflection = DefaultMapper.reflection();
 		byte[] data;
 		byte[] signature;
-		IKey key;
 		try {
-			data = reflection.invokeMethod(
-					authzEntity,
-					dataMethod.toString(),
-					IClass.getClass(byte[].class));
+			data = reflection.invokeMethod(authzEntity, dataMethod.toString(), IClass.getClass(byte[].class));
 			if (data == null) {
 				throw new ApiException("verifyAuthorizationSignature: getDataToSign returned null");
 			}
@@ -1128,18 +1166,15 @@ public class SecurityExpressions {
 				throw new ApiException("verifyAuthorizationSignature: signature field on authorization entity is empty or not a byte[]");
 			}
 			signature = sig;
-			key = realm.getKeyForSignatureVerification();
 		} catch (ApiException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new ApiException("verifyAuthorizationSignature failed: " + e.getMessage(), e);
 		}
-		// Crypto errors during verification (malformed signature bytes, decoding
-		// failure, key/algorithm mismatch) map to "signature invalid" rather than
-		// surfacing as a misconfiguration ApiException. A tampered token must
-		// land as 401, not 500.
+		// Crypto errors during verification (malformed signature bytes, decoding failure,
+		// key/algorithm mismatch) map to "signature invalid" (false), not a 500.
 		try {
-			return key.verifySignature(signature, data);
+			return verificationKey.verifySignature(signature, data);
 		} catch (Exception e) {
 			return false;
 		}
