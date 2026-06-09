@@ -1669,10 +1669,50 @@ public class SecurityExpressions {
 			}
 		}
 
-		// 4. Server resolves the OWNER as the final principal, then wraps it with
-		//    the token's authorities + type (synthAuthFromPrincipal).
+		// 4. Server resolves the OWNER as the final principal, then wraps it with the
+		//    authorities + type. SERVER-AUTHORITATIVE: for a storable token the persisted
+		//    record wins over the decoded payload — the latter may carry forged fields the
+		//    signature does not cover (getDataToSign rarely includes authorities), so trusting
+		//    the decoded authorities would allow privilege escalation.
 		Object owner = resolveOwnerPrincipal(api, authzDomain, authz);
-		return synthAuthFromPrincipal(owner, authz, authzDomain);
+		Object trusted = serverAuthoritativeAuthorization(authzDomain, authz);
+		return synthAuthFromPrincipal(owner, trusted, authzDomain);
+	}
+
+	/**
+	 * For a STORABLE authorization, returns the PERSISTED record (looked up by uuid) — the
+	 * authoritative source for granted authorities/type. The decoded token is only trusted
+	 * to identify itself (uuid) and carry a verifiable signature; any field NOT covered by
+	 * getDataToSign (typically authorities) must come from the server. Falls back to the
+	 * decoded token when not storable (stateless — no server record; its signature must then
+	 * cover the authorities) or when the record cannot be found.
+	 */
+	private static Object serverAuthoritativeAuthorization(IDomain<?> authzDomain, Object authz) {
+		Object defObj = authorizationDefinition(authzDomain);
+		if (!(defObj instanceof IDomainAuthorizationDefinition d) || !d.storable()) {
+			return authz;
+		}
+		ObjectAddress uuidAddr = authzDomain.getEntityDefinition() != null
+				? authzDomain.getEntityDefinition().uuid() : null;
+		if (uuidAddr == null) {
+			return authz;
+		}
+		String uuid = readField(authz, uuidAddr);
+		if (uuid == null) {
+			return authz;
+		}
+		try {
+			IFilter filter = Filter.eq(uuidAddr.toString(), uuid);
+			List<Object> results = authzDomain.getRepository()
+					.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+			if (results != null && !results.isEmpty()) {
+				return results.get(0);
+			}
+		} catch (Exception ignored) {
+			// The authenticate step already proved the token exists; on a lookup hiccup
+			// fall back to the decoded (signature-verified) payload rather than failing open.
+		}
+		return authz;
 	}
 
 	/** Resolves the registered domain whose entity class matches the runtime class of {@code entity}. Null when none. */

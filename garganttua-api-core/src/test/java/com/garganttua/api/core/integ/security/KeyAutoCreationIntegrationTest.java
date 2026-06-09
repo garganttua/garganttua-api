@@ -194,6 +194,7 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         private String uuid;
         private String tenantId;
         private String signedBy;
+        private List<String> authorities;
         private Boolean superTenant;
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -203,6 +204,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         public void setTenantId(String tenantId) { this.tenantId = tenantId; }
         public String getSignedBy() { return signedBy; }
         public void setSignedBy(String signedBy) { this.signedBy = signedBy; }
+        public List<String> getAuthorities() { return authorities; }
+        public void setAuthorities(List<String> authorities) { this.authorities = authorities; }
         public Boolean getSuperTenant() { return superTenant; }
         public void setSuperTenant(Boolean superTenant) { this.superTenant = superTenant; }
     }
@@ -712,6 +715,27 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     () -> com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(
                             w.api, token, new OperationRequest(new java.util.HashMap<>())),
                     "an empty signature must be rejected by the framework");
+        }
+
+        @Test
+        @DisplayName("FORGED authorities (not covered by getDataToSign) are IGNORED — the persisted record is authoritative (volet B)")
+        void forgedAuthoritiesIgnored() throws Exception {
+            Wired w = wirePermissive();
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+            TokenEntity token = mintToken(w);
+            // getDataToSign covers uuid|ownerId|tenantId|tokenType but NOT authorities, so
+            // rewriting the decoded token's authorities keeps the signature valid — volet A
+            // alone would accept it. The persisted record (minted with ROLE_USER) must win.
+            assertTrue(token.getAuthorities().contains("ROLE_USER"), "minted token carries ROLE_USER");
+            token.setAuthorities(java.util.List.of("ROLE_ADMIN"));
+
+            var authResult = com.garganttua.api.core.expression.SecurityExpressions.verifyAuthorization(
+                    w.api, token, new OperationRequest(new java.util.HashMap<>()));
+            assertTrue(authResult.authenticated(), "a valid signature is accepted");
+            java.util.List<String> granted = authResult.authorities();
+            assertNotNull(granted, "authorities must be resolved from the persisted record");
+            assertFalse(granted.contains("ROLE_ADMIN"), "forged ROLE_ADMIN must NOT be granted; got: " + granted);
+            assertTrue(granted.contains("ROLE_USER"), "the persisted ROLE_USER must be granted; got: " + granted);
         }
     }
 
