@@ -12,15 +12,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.core.security.authentication.PrincipalSupplier;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
 import com.garganttua.api.commons.definition.IDomainSecurityDefinition;
-import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
 import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.service.IOperationResponse;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.dsl.ReflectionBuilder;
@@ -29,6 +31,15 @@ import com.garganttua.core.reflections.ReflectionsAnnotationScanner;
 import com.garganttua.core.runtime.IRuntimeContext;
 import com.garganttua.core.supply.SupplyException;
 
+/**
+ * Unit tests for {@link PrincipalSupplier}.
+ *
+ * <p>The supplier resolves the principal by reading the authenticator entity
+ * through the <strong>domain pipeline</strong> ({@code readAll} + login filter),
+ * <em>not</em> by hitting the repository directly. These tests therefore stub
+ * {@link IDomain#invoke(IOperationRequest)} — the bridge that
+ * {@code SecurityExpressions.invokeReadAll} calls — rather than a repository.
+ */
 @DisplayName("PrincipalSupplier Tests")
 class PrincipalSupplierTest {
 
@@ -43,13 +54,14 @@ class PrincipalSupplierTest {
     private PrincipalSupplier supplier;
     @SuppressWarnings("rawtypes")
     private IRuntimeContext runtimeContext;
+    @SuppressWarnings("rawtypes")
     private IDomain domainContext;
+    @SuppressWarnings("rawtypes")
     private DomainDefinition domainDefinition;
     private IDomainSecurityDefinition securityDefinition;
     private IAuthenticatorDefinition authenticatorDefinition;
     private IOperationRequest operationRequest;
     private IAuthenticationRequest authenticationRequest;
-    private IRepository repository;
 
     @SuppressWarnings("unchecked")
     @BeforeEach
@@ -62,14 +74,14 @@ class PrincipalSupplierTest {
         authenticatorDefinition = mock(IAuthenticatorDefinition.class);
         operationRequest = mock(IOperationRequest.class);
         authenticationRequest = mock(IAuthenticationRequest.class);
-        repository = mock(IRepository.class);
 
         when(domainContext.getDomainDefinition()).thenReturn(domainDefinition);
+        when(domainContext.getDomainName()).thenReturn("users");
+        when(domainContext.getEntityClass()).thenReturn(IClass.getClass(Object.class));
         when(domainDefinition.domainSecurityDefinition()).thenReturn(securityDefinition);
         when(securityDefinition.authenticatorDefinition()).thenReturn(authenticatorDefinition);
         when(authenticatorDefinition.login()).thenReturn(new ObjectAddress("id"));
         when(authenticatorDefinition.alwaysEnabled()).thenReturn(true);
-        when(domainContext.getRepository()).thenReturn(repository);
         when(authenticationRequest.login()).thenReturn("john@example.com");
         doReturn(Optional.of(authenticationRequest)).when(operationRequest).arg("entity");
     }
@@ -78,6 +90,20 @@ class PrincipalSupplierTest {
     private void setupRuntimeContext() {
         when(runtimeContext.getVariable(eq("request"), any(IClass.class))).thenReturn(Optional.of(operationRequest));
         when(runtimeContext.getVariable(eq("domainContext"), any(IClass.class))).thenReturn(Optional.of(domainContext));
+    }
+
+    /**
+     * Stubs the domain pipeline's {@code readAll} (reached via
+     * {@code SecurityExpressions.invokeReadAll}) to return {@code body} as the
+     * successful response payload.
+     */
+    @SuppressWarnings("unchecked")
+    private void stubPipelineReadAll(Object body) {
+        IOperationResponse response = mock(IOperationResponse.class);
+        when(response.getResponseCode()).thenReturn(OperationResponseCode.OK);
+        when(response.getException()).thenReturn(Optional.empty());
+        doReturn(body).when(response).getResponse();
+        when(domainContext.invoke(any(IOperationRequest.class))).thenReturn(response);
     }
 
     @Nested
@@ -170,33 +196,46 @@ class PrincipalSupplierTest {
     }
 
     @Nested
-    @DisplayName("findByLogin")
+    @DisplayName("findByLogin (via the domain pipeline)")
     class FindByLogin {
 
         @Test
-        @DisplayName("throws when no entity found for login")
+        @DisplayName("throws when the pipeline returns no entity for the login")
         void throwsWhenUserNotFound() {
             setupRuntimeContext();
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of());
+            stubPipelineReadAll(List.of());
             SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
             assertTrue(ex.getMessage().contains("not found"));
             assertTrue(ex.getMessage().contains("john@example.com"));
         }
 
         @Test
-        @DisplayName("throws when repository returns null")
-        void throwsWhenRepositoryReturnsNull() {
+        @DisplayName("throws when the pipeline returns a null body")
+        void throwsWhenPipelineReturnsNull() {
             setupRuntimeContext();
-            when(repository.getEntities(any(), any(), any())).thenReturn(null);
-            assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
+            stubPipelineReadAll(null);
+            SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
+            assertTrue(ex.getMessage().contains("not found"));
         }
 
         @Test
-        @DisplayName("returns first entity when found by login")
+        @DisplayName("surfaces a pipeline failure as a SupplyException naming the domain and login")
+        void wrapsPipelineFailure() {
+            setupRuntimeContext();
+            when(domainContext.invoke(any(IOperationRequest.class)))
+                    .thenThrow(new RuntimeException("boom from pipeline"));
+            SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
+            assertTrue(ex.getMessage().contains("users"), "message names the domain");
+            assertTrue(ex.getMessage().contains("john@example.com"), "message names the login");
+            assertTrue(ex.getMessage().contains("boom from pipeline"), "message carries the cause text");
+        }
+
+        @Test
+        @DisplayName("returns the first entity when the pipeline finds one")
         void returnsFirstEntity() throws SupplyException {
             setupRuntimeContext();
             Object expectedPrincipal = new Object();
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(expectedPrincipal));
+            stubPipelineReadAll(List.of(expectedPrincipal));
 
             Optional<Object> result = supplier.supply(runtimeContext);
 
@@ -205,12 +244,12 @@ class PrincipalSupplierTest {
         }
 
         @Test
-        @DisplayName("returns first entity when multiple results")
+        @DisplayName("returns the first entity when the pipeline returns several")
         void returnsFirstOfMultiple() throws SupplyException {
             setupRuntimeContext();
             Object first = new Object();
             Object second = new Object();
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(first, second));
+            stubPipelineReadAll(List.of(first, second));
 
             Optional<Object> result = supplier.supply(runtimeContext);
 
@@ -219,18 +258,27 @@ class PrincipalSupplierTest {
         }
 
         @Test
-        @DisplayName("uses login field from authenticator definition as filter")
+        @DisplayName("queries the pipeline with a filter on the authenticator's login field")
         void usesLoginFieldFromAuthDef() throws SupplyException {
             setupRuntimeContext();
             when(authenticatorDefinition.login()).thenReturn(new ObjectAddress("email"));
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(new Object()));
+            stubPipelineReadAll(List.of(new Object()));
 
             supplier.supply(runtimeContext);
 
-            verify(repository).getEntities(eq(Optional.empty()), argThat(opt -> {
-                assertTrue(opt.isPresent());
-                return opt.get().toString().contains("email");
-            }), eq(Optional.empty()));
+            ArgumentCaptor<IOperationRequest> reqCaptor = ArgumentCaptor.forClass(IOperationRequest.class);
+            verify(domainContext).invoke(reqCaptor.capture());
+            Optional<?> filterArg = reqCaptor.getValue().arg(IOperationRequest.FILTER);
+            assertTrue(filterArg.isPresent(), "the readAll request must carry a filter");
+            // Filter.eq("email", login) renders as a $field/$eq tree:
+            //   Filter{name='$field', value=email, literals=[Filter{name='$eq', value=<login>, ...}]}
+            String filterStr = filterArg.get().toString();
+            assertTrue(filterStr.contains("value=email"),
+                    "the filter must target the configured login field 'email'; got " + filterStr);
+            assertFalse(filterStr.contains("value=id"),
+                    "the filter must NOT fall back to the default 'id' field once 'email' is configured; got " + filterStr);
+            assertTrue(filterStr.contains("value=john@example.com"),
+                    "the filter must match on the requested login value; got " + filterStr);
         }
     }
 
@@ -259,7 +307,7 @@ class PrincipalSupplierTest {
             when(authenticatorDefinition.enabled()).thenReturn(new ObjectAddress("enabled"));
             FakeUser user = new FakeUser();
             user.enabled = false; // would fail if checked
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             Optional<Object> result = supplier.supply(runtimeContext);
 
@@ -274,7 +322,7 @@ class PrincipalSupplierTest {
             when(authenticatorDefinition.enabled()).thenReturn(new ObjectAddress("enabled"));
             FakeUser user = new FakeUser();
             user.enabled = false;
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
             assertTrue(ex.getMessage().contains("disabled"));
@@ -287,7 +335,7 @@ class PrincipalSupplierTest {
             when(authenticatorDefinition.accountNonLocked()).thenReturn(new ObjectAddress("accountNonLocked"));
             FakeUser user = new FakeUser();
             user.accountNonLocked = false;
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
             assertTrue(ex.getMessage().contains("locked"));
@@ -300,7 +348,7 @@ class PrincipalSupplierTest {
             when(authenticatorDefinition.accountNonExpired()).thenReturn(new ObjectAddress("accountNonExpired"));
             FakeUser user = new FakeUser();
             user.accountNonExpired = false;
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
             assertTrue(ex.getMessage().contains("expired"));
@@ -313,7 +361,7 @@ class PrincipalSupplierTest {
             when(authenticatorDefinition.credentialsNonExpired()).thenReturn(new ObjectAddress("credentialsNonExpired"));
             FakeUser user = new FakeUser();
             user.credentialsNonExpired = false;
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             SupplyException ex = assertThrows(SupplyException.class, () -> supplier.supply(runtimeContext));
             assertTrue(ex.getMessage().contains("expired"));
@@ -328,7 +376,7 @@ class PrincipalSupplierTest {
             when(authenticatorDefinition.accountNonExpired()).thenReturn(new ObjectAddress("accountNonExpired"));
             when(authenticatorDefinition.credentialsNonExpired()).thenReturn(new ObjectAddress("credentialsNonExpired"));
             FakeUser user = new FakeUser();
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             Optional<Object> result = supplier.supply(runtimeContext);
 
@@ -344,7 +392,7 @@ class PrincipalSupplierTest {
             // So no checks should be performed even though alwaysEnabled=false
             FakeUser user = new FakeUser();
             user.enabled = false; // would fail if checked
-            when(repository.getEntities(any(), any(), any())).thenReturn(List.of(user));
+            stubPipelineReadAll(List.of(user));
 
             Optional<Object> result = supplier.supply(runtimeContext);
 

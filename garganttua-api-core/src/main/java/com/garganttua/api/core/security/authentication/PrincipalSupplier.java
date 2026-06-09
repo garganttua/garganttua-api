@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Optional;
 
 import com.garganttua.api.core.domain.DomainDefinition;
+import com.garganttua.api.core.expression.SecurityExpressions;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.mapper.DefaultMapper;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IAuthenticatorDefinition;
-import com.garganttua.api.commons.filter.IFilter;
-import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authentication.IAuthenticationRequest;
+import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -25,7 +25,7 @@ import com.garganttua.core.supply.SupplyException;
  *
  * Performs the full principal resolution pipeline:
  * 1. Reads the AuthenticationRequest from the operation request
- * 2. Finds the authenticator entity by login in the repository
+ * 2. Finds the authenticator entity by login via the domain pipeline (readAll + login filter)
  * 3. Checks account status (enabled, non-locked, non-expired) unless alwaysEnabled
  * 4. Returns the verified principal
  */
@@ -89,9 +89,31 @@ public class PrincipalSupplier implements IContextualSupplier<Object, IRuntimeCo
             throw new SupplyException("No login field configured on authenticator");
         }
 
-        IRepository repository = domainContext.getRepository();
-        IFilter filter = Filter.eq(loginField.toString(), login);
-        List<Object> results = repository.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+        // Match by login and, for a tenant-scoped authenticator, ALSO by the caller's
+        // tenant. The lookup routes through invokeReadAll, whose super lookup-caller
+        // bypasses tenant filtering (requestedTenantId=null →
+        // RepositoryFilterTools.isSuperTenantWithoutTenant), so a same-login user of ANY
+        // tenant would otherwise match — letting any X-Tenant-Id authenticate a user of
+        // another tenant. The caller's tenant is the one requireCallerTenantForScope
+        // already mandates (the request TENANT_ID arg, set over HTTP from the X-Tenant-Id
+        // header), never the AuthenticationRequest body. The super lookup-caller routes
+        // this explicit filter as-is, so the tenantId predicate enforces the isolation.
+        Filter filter = Filter.eq(loginField.toString(), login);
+        if (authDef.scope() == AuthenticatorScope.tenant) {
+            ObjectAddress tenantField = domDef.entityDefinition().tenantId();
+            String callerTenant = request.arg(IOperationRequest.TENANT_ID).orElse(null);
+            if (tenantField != null && callerTenant != null && !callerTenant.isBlank()) {
+                filter = Filter.and(filter, Filter.eq(tenantField.toString(), callerTenant));
+            }
+        }
+
+        List<Object> results;
+        try {
+            results = SecurityExpressions.invokeReadAll(domainContext, filter);
+        } catch (Exception e) {
+            throw new SupplyException("PrincipalSupplier: failed to query authenticator domain '"
+                    + domainContext.getDomainName() + "' for login '" + login + "': " + e.getMessage(), e);
+        }
         if (results == null || results.isEmpty()) {
             throw new SupplyException("User not found for login: " + login);
         }
