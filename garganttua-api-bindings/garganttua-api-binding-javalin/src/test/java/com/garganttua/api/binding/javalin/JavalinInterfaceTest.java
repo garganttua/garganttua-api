@@ -94,6 +94,8 @@ class JavalinInterfaceTest {
 		volatile int invokeCount;
 		/** When set, invoke() returns this (so applyOutcome reconciles the response). */
 		volatile IOperationResponse responseOverride;
+		/** When set, invoke() publishes it on the request as 'encodedAuthorization' (a token-minting op). */
+		volatile Object encodedToPublish;
 
 		@SuppressWarnings("unchecked")
 		CapturingDomain(List<OperationDefinition> operations) {
@@ -123,6 +125,10 @@ class JavalinInterfaceTest {
 				}
 			} catch (ApiException e) {
 				throw new RuntimeException(e);
+			}
+			if (this.encodedToPublish != null) {
+				request.arg(com.garganttua.api.commons.service.ArgKey.of(
+						"encodedAuthorization", IClass.getClass(Object.class)), this.encodedToPublish);
 			}
 			return this.responseOverride;
 		}
@@ -418,6 +424,42 @@ class JavalinInterfaceTest {
 			assertEquals("{\"error\":\"No acceptable serializer for: application/xml\"}", resp.body(),
 					"a wildcard Accept admits JSON, so the JSON envelope is kept");
 			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/json"));
+		}
+	}
+
+	@Nested
+	@DisplayName("Authorization returned in the X-Authorization header (body is ok)")
+	class AuthorizationHeader {
+
+		@Test
+		@DisplayName("a minted token is returned in X-Authorization and the body is a minimal ok")
+		void tokenInHeaderBodyOk() throws Exception {
+			domain.encodedToPublish = "eyJhbGciOiJFUzI1NiJ9.payload.signature";
+			domain.responseOverride = new OperationResponse(OperationResponseCode.OK, "the-authentication-result");
+
+			HttpResponse<String> resp = send("POST", "/users", "credentials");
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("eyJhbGciOiJFUzI1NiJ9.payload.signature",
+					resp.headers().firstValue("X-Authorization").orElse(null),
+					"the minted token must travel in the X-Authorization header");
+			assertEquals("ok", resp.body(), "the body must be a minimal ok — the token is in the header, not the body");
+		}
+
+		@Test
+		@DisplayName("on failure the token is NOT headered and the 4xx + parlant error stands")
+		void failureKeepsErrorDetail() throws Exception {
+			domain.encodedToPublish = "should-not-leak";
+			domain.responseOverride = new OperationResponse(
+					OperationResponseCode.UNAUTHORIZED, new ApiException("Account is disabled"));
+
+			HttpResponse<String> resp = send("POST", "/users", "credentials");
+
+			assertEquals(401, resp.statusCode());
+			assertTrue(resp.headers().firstValue("X-Authorization").isEmpty(),
+					"no token header on a failed authentication");
+			assertEquals("{\"error\":\"Account is disabled\"}", resp.body(),
+					"failure keeps the detailed parlant error, not a bare ko");
 		}
 	}
 

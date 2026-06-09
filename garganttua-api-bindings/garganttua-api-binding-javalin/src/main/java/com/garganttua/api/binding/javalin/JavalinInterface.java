@@ -8,11 +8,13 @@ import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.endpoint.Interface;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.service.ArgKey;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
+import com.garganttua.core.reflection.IClass;
 
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -65,6 +67,17 @@ public class JavalinInterface implements IInterface {
 
 	/** Default HTTP port when none is supplied. */
 	public static final int DEFAULT_PORT = 7000;
+
+	/**
+	 * Response header carrying the minted authorization (the encoded token) after a
+	 * successful {@code authenticate} / {@code refreshAuthorization}. The body is then a
+	 * minimal {@code ok} — the token travels in the header, never the body.
+	 */
+	public static final String AUTHORIZATION_RESPONSE_HEADER = "X-Authorization";
+
+	/** The request arg under which the pipeline publishes the encoded token (set by CREATE/REFRESH_AUTHORIZATION). */
+	private static final ArgKey<Object> ENCODED_AUTHORIZATION =
+			ArgKey.of("encodedAuthorization", IClass.getClass(Object.class));
 
 	private final int port;
 	/** Whether this interface owns (creates + starts + stops) its Javalin server. */
@@ -202,12 +215,47 @@ public class JavalinInterface implements IInterface {
 			if (uuid != null) {
 				request.arg(IOperationRequest.ENTITY_UUID, uuid);
 			}
-			applyOutcome(ctx, domain.invoke(request));
+			IOperationResponse response = domain.invoke(request);
+
+			// A token-minting op (authenticate / refreshAuthorization) that produced an
+			// encoded authorization returns it in the X-Authorization response header; the
+			// body is a minimal "ok". The token travels in the header, never the body. The
+			// failure path is unchanged (applyOutcome surfaces the 4xx + parlant message).
+			Object encoded = request.arg(ENCODED_AUTHORIZATION).orElse(null);
+			if (encoded != null && isSuccess(response)) {
+				ctx.header(AUTHORIZATION_RESPONSE_HEADER, asTokenString(encoded));
+				ctx.status(httpStatus(response.getResponseCode())).contentType("text/plain").result("ok");
+				return;
+			}
+			applyOutcome(ctx, response);
 		} catch (RuntimeException e) {
 			// Defensive: the pipeline returns error codes rather than throwing, but a
 			// transport-level failure (e.g. no protocol resolved) must still answer.
 			ctx.status(500).result("Internal error: " + e.getMessage());
 		}
+	}
+
+	/** A successful outcome carries a payload, not a {@link Throwable}. */
+	private static boolean isSuccess(IOperationResponse response) {
+		return response != null && !(response.getResponse() instanceof Throwable);
+	}
+
+	/** Renders the encoded token as a header string (it may be a String or a byte[]/Byte[] wire form). */
+	private static String asTokenString(Object encoded) {
+		if (encoded instanceof String s) {
+			return s;
+		}
+		if (encoded instanceof byte[] b) {
+			return new String(b, java.nio.charset.StandardCharsets.UTF_8);
+		}
+		if (encoded instanceof Byte[] boxed) {
+			byte[] out = new byte[boxed.length];
+			for (int i = 0; i < boxed.length; i++) {
+				out[i] = boxed[i];
+			}
+			return new String(out, java.nio.charset.StandardCharsets.UTF_8);
+		}
+		return String.valueOf(encoded);
 	}
 
 	/**
