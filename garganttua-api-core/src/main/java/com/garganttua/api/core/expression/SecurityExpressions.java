@@ -117,6 +117,16 @@ public class SecurityExpressions {
 		return new Caller(superTenantId, null, null, null, true, true, null);
 	}
 
+	/**
+	 * Well-known request arg flagging a framework-internal pipeline write (a write
+	 * issued by {@link #invokeInternal}, e.g. the authenticate/refresh token persist
+	 * or a key auto-create) as opposed to a client-issued CRUD call. Set server-side
+	 * only — never read from the wire — so it cannot be forged by a caller. Read by
+	 * {@code requireNotDirectAuthorizationCreate} to let the framework mint a signable
+	 * authorization while rejecting a direct external create.
+	 */
+	public static final String FRAMEWORK_INTERNAL_WRITE_ARG = "_frameworkInternalWrite";
+
 	private static Object invokeInternal(IDomain<?> target, OperationDefinition op, ICaller caller,
 			java.util.function.Consumer<com.garganttua.api.core.service.OperationRequest> setup) {
 		com.garganttua.api.core.service.OperationRequest req =
@@ -128,6 +138,7 @@ public class SecurityExpressions {
 		req.arg(IOperationRequest.OWNER_ID, caller.ownerId());
 		req.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
 		req.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
+		req.arg(FRAMEWORK_INTERNAL_WRITE_ARG, Boolean.TRUE);
 		setup.accept(req);
 		IOperationResponse response = target.invoke(req);
 		OperationResponseCode code = response.getResponseCode();
@@ -813,6 +824,67 @@ public class SecurityExpressions {
 		if (!(unwrapped instanceof Throwable t)) return false;
 		opRequest.arg(LAST_EXCEPTION_ARG, t);
 		return true;
+	}
+
+	@Expression(name = "requireNotDirectAuthorizationCreate",
+			description = "CREATE_ONE guard for authorization domains. A SIGNABLE authorization may only be minted by the "
+					+ "framework's authenticate/refresh pipeline, which persists it ALREADY SIGNED (CREATE_AUTHORIZATION / "
+					+ "REFRESH_AUTHORIZATION → persistIfStorable → invokeInternal). A direct client CRUD create is rejected: "
+					+ "a caller cannot produce a valid signature, so it would store an unsigned/forgeable token. No-op for "
+					+ "ordinary domains and non-signable authorizations; passes for framework-internal writes (recognised by "
+					+ "the server-set FRAMEWORK_INTERNAL_WRITE marker, never read from the wire). Throws (→ 403) otherwise.")
+	public static boolean requireNotDirectAuthorizationCreate(@Nullable Object entity, @Nullable Object domainContext,
+			@Nullable Object request) {
+		if (!isAuthorizationSignable(domainContext)) {
+			return true;
+		}
+		IOperationRequest req = (unwrapOptional(request) instanceof IOperationRequest r) ? r : null;
+		boolean frameworkInternal = req != null
+				&& Boolean.TRUE.equals(req.arg(FRAMEWORK_INTERNAL_WRITE_ARG).orElse(null));
+		if (frameworkInternal) {
+			return true;
+		}
+		throw new ApiException("A signable authorization cannot be created directly. It is issued (and signed) "
+				+ "by the authentication pipeline — obtain it through authentication or token refresh.");
+	}
+
+	@Expression(name = "authorizationSignedPayload",
+			description = "Returns the SIGNED payload of a signable authorization entity — the bytes its getDataToSign "
+					+ "method produces, base64-encoded — or null when the domain is not a signable authorization (or no "
+					+ "getDataToSign / entity). Used by UPDATE_ONE to capture the pre-update signed material so a mutation "
+					+ "that would invalidate the signature can be detected without resolving the signing key.")
+	public static @Nullable String authorizationSignedPayload(@Nullable Object entity, @Nullable Object domainContext) {
+		Object defObj = authorizationDefinition(domainContext);
+		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.signable()) {
+			return null;
+		}
+		ObjectAddress dataMethod = authzDef.getDataToSignMethod();
+		Object e = unwrapOptional(entity);
+		if (dataMethod == null || e == null) {
+			return null;
+		}
+		byte[] data = DefaultMapper.reflection().invokeMethod(e, dataMethod.toString(), IClass.getClass(byte[].class));
+		return data == null ? null : java.util.Base64.getEncoder().encodeToString(data);
+	}
+
+	@Expression(name = "requireSignedPayloadUnchanged",
+			description = "UPDATE_ONE guard for signable authorizations: a signed token's signed material is immutable. "
+					+ "Compares the pre-update signed payload (captured via authorizationSignedPayload before the merge) "
+					+ "with the merged entity's. Equal (e.g. only the revoked flag — which getDataToSign does not cover — "
+					+ "changed) passes, so revocation stays allowed; different throws (→ 400), because the change would "
+					+ "invalidate the stored signature. No-op when the pre-update payload is null (non-signable domain).")
+	public static boolean requireSignedPayloadUnchanged(@Nullable Object beforePayload, @Nullable Object mergedEntity,
+			@Nullable Object domainContext) {
+		Object before = unwrapOptional(beforePayload);
+		if (!(before instanceof String beforeStr)) {
+			return true;
+		}
+		String after = authorizationSignedPayload(mergedEntity, domainContext);
+		if (beforeStr.equals(after)) {
+			return true;
+		}
+		throw new ApiException("A signed authorization is immutable: this update changes a field covered by the "
+				+ "signature, which would invalidate it. Only non-signed fields (e.g. revocation) may be updated.");
 	}
 
 	@Expression(name = "isAuthorizationStorable", description = "Returns true if the authorization definition has storable=true")

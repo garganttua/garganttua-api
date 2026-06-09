@@ -23,6 +23,14 @@ requirePresent(@entity)
 // Unwrap entity from Optional
 entity <- optionalGet(@entity)
 
+// A SIGNABLE authorization may only be minted (and signed) by the framework's
+// authenticate/refresh pipeline, which persists it already signed. Reject a
+// direct client CRUD create — a caller cannot produce a valid signature, so it
+// would store an unsigned token. No-op for ordinary domains and for the
+// framework-internal token persist. Runs before any field stamping or write.
+requireNotDirectAuthorizationCreate(@entity, @2, @0)
+! => recordCaughtException(@0, @exception) -> 403
+
 // Generate UUID if not set
 entity <- ensureUuid(@entity, @2)
 ! => recordCaughtException(@0, @exception) -> 500

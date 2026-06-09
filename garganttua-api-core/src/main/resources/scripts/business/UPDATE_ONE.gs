@@ -33,9 +33,22 @@ entities <- getEntities(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"))
 storedEntity <- first(@entities)
 ! => recordCaughtException(@0, @exception) -> 404
 
+// Capture the signed payload BEFORE the merge, so a mutation of a signable
+// authorization's signed material can be detected. null (no-op) for any domain
+// that is not a signable authorization.
+signedPayloadBefore <- authorizationSignedPayload(@storedEntity, @2)
+! => recordCaughtException(@0, @exception) -> 500
+
 // Apply authorized field updates
 storedEntity <- updateEntity(@caller, @storedEntity, @entity, @2)
 ! => recordCaughtException(@0, @exception) -> 500
+
+// A signed authorization is immutable: reject an update that changes a field
+// covered by the signature (would invalidate the stored signature). Passes when
+// only non-signed fields changed — e.g. revocation flips the revoked flag, which
+// getDataToSign does not cover. No-op for non-signable domains.
+requireSignedPayloadUnchanged(@signedPayloadBefore, @storedEntity, @2)
+! => recordCaughtException(@0, @exception) -> 400
 
 // Validate mandatory fields on the merged entity
 validateMandatories(@storedEntity, @2)
