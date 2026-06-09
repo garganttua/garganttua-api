@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.core.service.OperationResponse;
 import com.garganttua.api.core.service.RequestBuilder;
+import com.garganttua.api.commons.operation.Access;
+import com.garganttua.api.commons.service.OperationResponseCode;
 import com.garganttua.api.core.repository.Repository;
 import com.garganttua.api.core.domain.DomainDefinition;
 import com.garganttua.api.commons.ApiException;
@@ -302,21 +305,16 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     /**
      * Best-effort create of declared {@code createEntity(...)} entries at startup.
-     * Writes go straight through the repository — <strong>not</strong> through
-     * {@link #invoke(IOperationRequest)}.
+     * Each entry is created <strong>through the create pipeline</strong> (CREATE_ONE):
+     * it receives the same {@code ensureUuid} (time-ordered UUID v7, or the domain's
+     * custom {@code uuidGenerator}), tenant/owner stamping, mandatory/unicity
+     * validation, and {@code @EntityBeforeCreate}/{@code @EntityAfterCreate} hooks as
+     * any client create — so a declared entity needs no hand-written uuid.
      *
-     * <p>This runs from inside {@link #doStart()}, before the lifecycle has
-     * flipped to STARTED, so calling {@code invoke()} from here would trip
-     * {@code AbstractLifecycle.ensureStarted()} (regression observed in the
-     * example app's tenant domain). The same rationale that drives
-     * {@code Api.autoCreateMasterTenant} applies here: framework bootstrap
-     * has no caller to authorize and no reason to traverse the public
-     * workflow.
-     *
-     * <p>Consequence: {@code @EntityBeforeCreate} / {@code @EntityAfterCreate}
-     * hooks do <strong>not</strong> fire for these entities. If you need
-     * lifecycle hooks for startup data, use an API-level startup binder
-     * instead — it runs after every domain has started.
+     * <p>This runs from inside {@link #doStart()}, before the lifecycle has flipped
+     * to STARTED, so it dispatches to {@link #doInvoke} directly (the production
+     * pipeline entry) rather than {@link #invoke(IOperationRequest)}, whose
+     * {@code ensureStarted()} guard would reject a bootstrap call.
      */
     private void createStartupEntities() {
         List<E> createEntities = this.domainDefinition.createEntities();
@@ -325,7 +323,7 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         }
         IReflection reflection = reflection();
         String uuidFieldPath = this.domainDefinition.entityDefinition().uuid().toString();
-        log.info("Creating {} startup entities for domain {} (direct repository writes)",
+        log.info("Creating {} startup entities for domain {} (through the create pipeline)",
                 createEntities.size(), this.domainDefinition.domainName());
         for (E entity : createEntities) {
             try {
@@ -336,9 +334,13 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                             uuid, this.domainDefinition.domainName());
                     continue;
                 }
-                this.repository.save(entity);
-                log.info("Startup entity created (uuid={}) for domain {}", uuid,
-                        this.domainDefinition.domainName());
+                OperationResponse response = bootstrapCreate(entity);
+                if (!isPipelineSuccess(response)) {
+                    log.warn("Startup entity creation failed for domain {} (best-effort, continuing): {}",
+                            this.domainDefinition.domainName(), describeFailure(response));
+                    continue;
+                }
+                log.info("Startup entity created for domain {}", this.domainDefinition.domainName());
             } catch (ApiException e) {
                 log.warn("Startup entity creation failed for domain {} (best-effort, continuing): {}",
                         this.domainDefinition.domainName(), e.getMessage());
@@ -348,15 +350,16 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
 
     /**
      * Fail-fast upsert of declared {@code upsertEntity(...)} entries at startup.
-     * Same rationale and constraints as {@link #createStartupEntities()}:
-     * direct repository writes, no workflow, no lifecycle hooks.
+     * Like {@link #createStartupEntities()}, each entry goes <strong>through the
+     * pipeline</strong> — so it gets {@code ensureUuid}, validation and lifecycle
+     * hooks, and a declared entity needs no hand-written uuid.
      *
-     * <p>Upsert semantics here = "delete then save" when the uuid already
-     * exists. We do not rely on the DAO implementing native upsert because
-     * {@link com.garganttua.api.commons.dao.IDao} makes no such guarantee —
-     * the test in-memory DAO appends on every save. The delete-then-save
-     * pair is the only IDao-portable way to express "make sure this row is
-     * now exactly the declared value".
+     * <p>Upsert semantics = "replace when it already exists": when the declared
+     * entity carries a uuid that is already present, the existing row is first
+     * removed through DELETE_ONE, then the declared value is created through
+     * CREATE_ONE. We do not rely on the DAO implementing native upsert because
+     * {@link com.garganttua.api.commons.dao.IDao} makes no such guarantee. A
+     * declared entity with no uuid simply gets created (a fresh uuid is generated).
      */
     private void upsertStartupEntities() {
         List<E> upsertEntities = this.domainDefinition.upsertEntities();
@@ -365,26 +368,23 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         }
         IReflection reflection = reflection();
         String uuidFieldPath = this.domainDefinition.entityDefinition().uuid().toString();
-        log.info("Upserting {} startup entities for domain {} (direct repository writes)",
+        log.info("Upserting {} startup entities for domain {} (through the pipeline)",
                 upsertEntities.size(), this.domainDefinition.domainName());
         for (E entity : upsertEntities) {
             try {
                 Object uuidValue = reflection.getFieldValue(entity, uuidFieldPath);
                 String uuid = uuidValue != null ? uuidValue.toString() : null;
-                if (uuid == null) {
-                    throw new ApiException("Upsert startup entity has no UUID for domain "
-                            + this.domainDefinition.domainName());
+                if (uuid != null && this.repository.doesExist(uuid)) {
+                    OperationResponse deleted = bootstrapDelete(entity, uuid);
+                    if (!isPipelineSuccess(deleted)) {
+                        throw bootstrapFailure("delete (upsert replace)", deleted);
+                    }
                 }
-                if (this.repository.doesExist(uuid)) {
-                    this.repository.delete(entity);
-                    this.repository.save(entity);
-                    log.info("Startup entity replaced (uuid={}) for domain {}", uuid,
-                            this.domainDefinition.domainName());
-                } else {
-                    this.repository.save(entity);
-                    log.info("Startup entity created (uuid={}) for domain {}", uuid,
-                            this.domainDefinition.domainName());
+                OperationResponse created = bootstrapCreate(entity);
+                if (!isPipelineSuccess(created)) {
+                    throw bootstrapFailure("create (upsert)", created);
                 }
+                log.info("Startup entity upserted for domain {}", this.domainDefinition.domainName());
             } catch (ApiException e) {
                 throw e;
             } catch (Exception e) {
@@ -392,6 +392,79 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                         + this.domainDefinition.domainName(), e);
             }
         }
+    }
+
+    /**
+     * Dispatches a bootstrap CREATE through the pipeline. Mirrors the internal-create
+     * caller convention ({@link com.garganttua.api.core.expression.SecurityExpressions}):
+     * an {@link Access#anonymous} operation with a caller that mirrors the entity's own
+     * tenant/owner, so CREATE_ONE's ensure-stamping stays idempotent.
+     */
+    private OperationResponse bootstrapCreate(E entity) {
+        OperationDefinition op = OperationDefinition.createOne(
+                this.domainDefinition.domainName(), getEntityClass(), false, null, Access.anonymous);
+        return bootstrapInvoke(op, bootstrapCaller(entity), req -> req.arg("entity", entity));
+    }
+
+    /** Dispatches a bootstrap DELETE-by-uuid through the pipeline (used by upsert replace). */
+    private OperationResponse bootstrapDelete(E entity, String uuid) {
+        OperationDefinition op = OperationDefinition.deleteOne(
+                this.domainDefinition.domainName(), getEntityClass(), false, null, Access.anonymous);
+        return bootstrapInvoke(op, bootstrapCaller(entity), req -> req.arg(IOperationRequest.ENTITY_UUID, uuid));
+    }
+
+    /**
+     * Builds a bootstrap operation request (same arg shape as a transport-issued one)
+     * and runs it on {@link #doInvoke} — the started-check-free pipeline entry. Used
+     * only during {@link #doStart()} for declared startup entities.
+     */
+    private OperationResponse bootstrapInvoke(OperationDefinition op, ICaller caller,
+            java.util.function.Consumer<OperationRequest> setup) {
+        OperationRequest req = new OperationRequest(new HashMap<>());
+        req.arg(IOperationRequest.OPERATION, op);
+        req.arg(IOperationRequest.TENANT_ID, caller.tenantId());
+        req.arg(IOperationRequest.REQUESTED_TENANT_ID, caller.requestedTenantId());
+        req.arg(IOperationRequest.CALLER_ID, caller.callerId());
+        req.arg(IOperationRequest.OWNER_ID, caller.ownerId());
+        req.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
+        req.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
+        setup.accept(req);
+        return doInvoke(req, WorkflowExecutionOptions.none());
+    }
+
+    /** Caller for a bootstrap write: mirrors the entity's own tenant + owner (idempotent stamping); anonymous when the entity has no tenant. */
+    private ICaller bootstrapCaller(E entity) {
+        IReflection reflection = reflection();
+        var tenantAddr = this.domainDefinition.entityDefinition().tenantId();
+        String tenantId = tenantAddr != null ? asString(reflection.getFieldValue(entity, tenantAddr.toString())) : null;
+        var ownedAddr = this.domainDefinition.owned();
+        String ownerId = ownedAddr != null ? asString(reflection.getFieldValue(entity, ownedAddr.toString())) : null;
+        if (tenantId == null) {
+            return Caller.createAnonymousCaller();
+        }
+        return Caller.createTenantCallerWithOwnerId(tenantId, ownerId);
+    }
+
+    private static String asString(Object value) {
+        return value != null ? value.toString() : null;
+    }
+
+    private static boolean isPipelineSuccess(IOperationResponse response) {
+        OperationResponseCode code = response.getResponseCode();
+        return code == OperationResponseCode.OK || code == OperationResponseCode.CREATED
+                || code == OperationResponseCode.UPDATED || code == OperationResponseCode.DELETED;
+    }
+
+    private ApiException bootstrapFailure(String what, IOperationResponse response) {
+        Throwable cause = response.getException().orElse(null);
+        String base = "Startup " + what + " on domain '" + this.domainDefinition.domainName()
+                + "' returned " + response.getResponseCode();
+        return cause != null ? new ApiException(base, cause) : new ApiException(base);
+    }
+
+    private String describeFailure(IOperationResponse response) {
+        Throwable cause = response.getException().orElse(null);
+        return response.getResponseCode() + (cause != null ? " — " + cause.getMessage() : "");
     }
 
     @Override
