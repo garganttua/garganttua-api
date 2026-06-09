@@ -432,7 +432,7 @@ class JavalinInterfaceTest {
 	class AuthorizationHeader {
 
 		@Test
-		@DisplayName("a minted token is returned in X-Authorization and the body is a minimal ok")
+		@DisplayName("a minted token is returned in X-Authorization and the body is a structured {\"status\":\"ok\"}")
 		void tokenInHeaderBodyOk() throws Exception {
 			domain.encodedToPublish = "eyJhbGciOiJFUzI1NiJ9.payload.signature";
 			domain.responseOverride = new OperationResponse(OperationResponseCode.OK, "the-authentication-result");
@@ -443,7 +443,9 @@ class JavalinInterfaceTest {
 			assertEquals("eyJhbGciOiJFUzI1NiJ9.payload.signature",
 					resp.headers().firstValue("X-Authorization").orElse(null),
 					"the minted token must travel in the X-Authorization header");
-			assertEquals("ok", resp.body(), "the body must be a minimal ok — the token is in the header, not the body");
+			assertEquals("{\"status\":\"ok\"}", resp.body(),
+					"the body must be a structured envelope, symmetric to {\"error\":\"…\"}");
+			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/json"));
 		}
 
 		@Test

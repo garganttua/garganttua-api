@@ -4,8 +4,8 @@
 **Contexte** : le framework `garganttua-api` produit désormais correctement la forme
 encodée d'une authorization (refresh/verify la décodent). **Côté HTTP (binding Javalin)**,
 après un `authenticate` réussi, le token part dans l'en-tête de réponse **`X-Authorization`**
-et le corps se réduit à **`ok`** ; en cas d'échec, le code 4xx + message d'erreur parlant
-est conservé. Voir les commits `feat(security): authenticate/refresh emit…`,
+et le corps est une enveloppe structurée **`{"status":"ok"}`** (symétrique de `{"error":"…"}`) ;
+en cas d'échec, le code 4xx + le `{"error":"…"}` parlant est conservé. Voir les commits `feat(security): authenticate/refresh emit…`,
 `feat(security): verify Mode A decodes a Bearer JWT…` et `feat(javalin): return the
 authorization in the X-Authorization header…`.
 
@@ -13,7 +13,7 @@ authorization in the X-Authorization header…`.
 POST /users/authenticate            HTTP/1.1 200 OK
 { "login":"…", "credentials":"…" }  X-Authorization: <votre JWT>
 
-                                    ok
+                                    {"status":"ok"}
 ```
 
 > **Le pipeline est correct. La FORME du token est la responsabilité de l'entité

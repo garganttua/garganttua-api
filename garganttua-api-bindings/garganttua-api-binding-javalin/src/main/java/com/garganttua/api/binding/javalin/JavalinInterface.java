@@ -224,7 +224,14 @@ public class JavalinInterface implements IInterface {
 			Object encoded = request.arg(ENCODED_AUTHORIZATION).orElse(null);
 			if (encoded != null && isSuccess(response)) {
 				ctx.header(AUTHORIZATION_RESPONSE_HEADER, asTokenString(encoded));
-				ctx.status(httpStatus(response.getResponseCode())).contentType("text/plain").result("ok");
+				int status = httpStatus(response.getResponseCode());
+				// Symmetric to the error envelope: a structured {"status":"ok"} body, JSON when
+				// the client accepts it, degrading to plain "ok" when Accept excludes JSON.
+				if (clientAcceptsJson(ctx)) {
+					ctx.status(status).contentType("application/json").result(statusJson("ok"));
+				} else {
+					ctx.status(status).contentType("text/plain").result("ok");
+				}
 				return;
 			}
 			applyOutcome(ctx, response);
@@ -318,6 +325,11 @@ public class JavalinInterface implements IInterface {
 	/** Wraps an error message in a minimal JSON object: {@code {"error":"<escaped>"}}. */
 	private static String errorJson(String message) {
 		return "{\"error\":\"" + jsonEscape(message) + "\"}";
+	}
+
+	/** Wraps a success status in a minimal JSON object, symmetric to {@link #errorJson}: {@code {"status":"<escaped>"}}. */
+	private static String statusJson(String status) {
+		return "{\"status\":\"" + jsonEscape(status) + "\"}";
 	}
 
 	/** Escapes a string for embedding in a JSON string literal. */
