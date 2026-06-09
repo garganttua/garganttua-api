@@ -9,7 +9,7 @@
 	</parent>
 	<artifactId>garganttua-api-binding-jackson</artifactId>
 
-	<description>Binding wrapping Jackson (annotations, core, databind + geojson-jackson) — pins the JSON (de)serialization library used across the API.</description>
+	<description>Binding wrapping Jackson (annotations, core, databind, dataformat-xml + geojson-jackson) — pins the JSON/XML (de)serialization library used across the API and ships the framework's JSON and XML ISerializer implementations.</description>
 
 	<dependencies>
 		<dependency>
@@ -45,6 +45,34 @@
 					<artifactId>jackson-databind</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+
+		<!-- XML (de)serialization — Jackson's XmlMapper sits beside the JSON ObjectMapper. -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-xml</artifactId>
+			<version>${jackson.version}</version>
+		</dependency>
+
+		<!-- Contract layer: ISerializer, MimeType, @Serializer, ApiException, IClass. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-commons</artifactId>
+		</dependency>
+
+		<!-- test: garganttua-core's Bootstrap cold-starts an IReflection so
+		     IClass.getClass(...) resolves. NOT garganttua-api-core — core depends on
+		     this binding, which would close a reactor cycle. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-bootstrap</artifactId>
+			<version>${garganttua.core.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
