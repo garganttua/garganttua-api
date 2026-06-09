@@ -213,9 +213,15 @@ public class JavalinInterface implements IInterface {
 	/**
 	 * Reconciles the HTTP response with the pipeline's {@link IOperationResponse} so the
 	 * wire reflects the operation, not the always-200 default. On failure (the response
-	 * carries a {@link Throwable}) the status comes from the response code and the body is
-	 * a JSON error object ({@code {"error":"…"}}, {@code application/json}); on success
+	 * carries a {@link Throwable}) the status comes from the response code; on success
 	 * the RESPONSE stage already serialized the body, so only the status is corrected.
+	 * <p>
+	 * The error body is a JSON object ({@code {"error":"…"}}) <em>only</em> when the
+	 * client accepts JSON. When the {@code Accept} header explicitly excludes it — the
+	 * very situation a {@code 406} reports, e.g. a client asking for {@code application/xml}
+	 * the API cannot produce — answering in JSON would repeat the content-negotiation
+	 * violation being signalled. In that case the body degrades to {@code text/plain}
+	 * (the raw message), which every client accepts.
 	 */
 	private void applyOutcome(Context ctx, IOperationResponse response) {
 		if (response == null) {
@@ -226,10 +232,39 @@ public class JavalinInterface implements IInterface {
 		if (payload instanceof Throwable t) {
 			String message = (t.getMessage() != null && !t.getMessage().isBlank())
 					? t.getMessage() : t.getClass().getSimpleName();
-			ctx.status(status).contentType("application/json").result(errorJson(message));
+			if (clientAcceptsJson(ctx)) {
+				ctx.status(status).contentType("application/json").result(errorJson(message));
+			} else {
+				ctx.status(status).contentType("text/plain").result(message);
+			}
 		} else {
 			ctx.status(status);
 		}
+	}
+
+	/**
+	 * Whether the request's {@code Accept} header admits {@code application/json}. An
+	 * absent or blank {@code Accept} imposes no constraint (true); a wildcard range
+	 * ({@code *}{@code /*} or {@code application/*}) or an explicit {@code application/json}
+	 * admits it; anything else (e.g. {@code application/xml} alone) does not. The quality
+	 * factor is ignored — presence of an admitting range is enough.
+	 */
+	private static boolean clientAcceptsJson(Context ctx) {
+		String accept = ctx.header("Accept");
+		if (accept == null || accept.isBlank()) {
+			return true;
+		}
+		for (String range : accept.split(",")) {
+			String media = range.trim().toLowerCase();
+			int semi = media.indexOf(';');
+			if (semi >= 0) {
+				media = media.substring(0, semi).trim();
+			}
+			if (media.equals("*/*") || media.equals("application/*") || media.equals("application/json")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Wraps an error message in a minimal JSON object: {@code {"error":"<escaped>"}}. */

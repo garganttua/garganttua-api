@@ -30,7 +30,10 @@
    label to a success code via `mapSuccessCode`.
 4. The transport (e.g. `JavalinInterface`) maps the `OperationResponseCode` to an
    HTTP status via `httpStatus`, and emits the carried `Throwable`'s message as the
-   body (`{"error":"…"}`).
+   body. The body is a JSON envelope (`{"error":"…"}`, `application/json`) **only when
+   the client's `Accept` header admits JSON**; when it explicitly excludes JSON (e.g.
+   `Accept: application/xml` on the `406` it just provoked), the body degrades to the
+   raw message as `text/plain`, so the error never imposes a format the client refused.
 
 When the original exception is missing or carries no message, `Domain` synthesises a
 **parlant fallback** message — see §5.

@@ -190,14 +190,20 @@ class JavalinInterfaceTest {
 	}
 
 	private HttpResponse<String> send(String method, String path, String body) throws Exception {
+		return send(method, path, body, null);
+	}
+
+	private HttpResponse<String> send(String method, String path, String body, String accept) throws Exception {
 		HttpRequest.BodyPublisher pub = body == null
 				? HttpRequest.BodyPublishers.noBody()
 				: HttpRequest.BodyPublishers.ofString(body);
-		HttpRequest req = HttpRequest.newBuilder()
+		HttpRequest.Builder b = HttpRequest.newBuilder()
 				.uri(URI.create("http://localhost:" + port + path))
-				.method(method, pub)
-				.build();
-		return http.send(req, HttpResponse.BodyHandlers.ofString());
+				.method(method, pub);
+		if (accept != null) {
+			b.header("Accept", accept);
+		}
+		return http.send(b.build(), HttpResponse.BodyHandlers.ofString());
 	}
 
 	@Nested
@@ -363,6 +369,55 @@ class JavalinInterfaceTest {
 					"a CREATED outcome must surface as 201, not the always-200 default");
 			assertEquals("ok:create", resp.body(),
 					"on success the serialized body from the pipeline is kept");
+		}
+
+		@Test
+		@DisplayName("Accept: application/xml on a 406 → text/plain raw message, NOT a JSON envelope")
+		void xmlOnlyAcceptDegradesToPlainText() throws Exception {
+			// The very contradiction: the client asked for application/xml, the pipeline
+			// could not produce it (406), so the error must NOT come back as JSON — the
+			// format the client just refused. It degrades to text/plain.
+			domain.responseOverride = new OperationResponse(OperationResponseCode.NOT_ACCEPTABLE,
+					new ApiException("No acceptable serializer for: application/xml"));
+
+			HttpResponse<String> resp = send("GET", "/users", null, "application/xml");
+
+			assertEquals(406, resp.statusCode(), "an unmet Accept must surface as 406");
+			assertEquals("No acceptable serializer for: application/xml", resp.body(),
+					"the body must be the raw message, not wrapped in a JSON object");
+			String ct = resp.headers().firstValue("Content-Type").orElse("");
+			assertTrue(ct.contains("text/plain"),
+					"a client that refused JSON must not receive an application/json error body; got: " + ct);
+			assertFalse(ct.contains("application/json"),
+					"the JSON content-type must not be sent to an xml-only client; got: " + ct);
+		}
+
+		@Test
+		@DisplayName("Accept: application/json → JSON error envelope is kept")
+		void jsonAcceptKeepsJsonEnvelope() throws Exception {
+			domain.responseOverride = new OperationResponse(OperationResponseCode.CLIENT_ERROR,
+					new ApiException("bad request"));
+
+			HttpResponse<String> resp = send("GET", "/users", null, "application/json");
+
+			assertEquals(400, resp.statusCode());
+			assertEquals("{\"error\":\"bad request\"}", resp.body(),
+					"a client that accepts JSON still receives the JSON error envelope");
+			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/json"));
+		}
+
+		@Test
+		@DisplayName("Accept: */* (wildcard) → JSON error envelope is kept")
+		void wildcardAcceptKeepsJsonEnvelope() throws Exception {
+			domain.responseOverride = new OperationResponse(OperationResponseCode.NOT_ACCEPTABLE,
+					new ApiException("No acceptable serializer for: application/xml"));
+
+			HttpResponse<String> resp = send("GET", "/users", null, "application/xml, */*;q=0.1");
+
+			assertEquals(406, resp.statusCode());
+			assertEquals("{\"error\":\"No acceptable serializer for: application/xml\"}", resp.body(),
+					"a wildcard Accept admits JSON, so the JSON envelope is kept");
+			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/json"));
 		}
 	}
 
