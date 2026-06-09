@@ -6,6 +6,7 @@ import java.util.List;
 import org.javatuples.Pair;
 
 import com.garganttua.api.commons.definition.IEntityDefinition;
+import com.garganttua.api.commons.entity.IUuidGenerator;
 import com.garganttua.api.commons.entity.annotations.UnicityScope;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.ObjectAddress;
@@ -27,6 +28,8 @@ public record EntityDefinition<E>(
     List<IMethodBinder<Void>>  beforeUpdateMethodBuilders,
     List<IMethodBinder<Void>>  afterUpdateMethodBuilders,
     List<IMethodBinder<Void>>  beforeDeleteMethodBuilders,
-    List<IMethodBinder<Void>>  afterDeleteMethodBuilders) implements IEntityDefinition<E> {
+    List<IMethodBinder<Void>>  afterDeleteMethodBuilders,
+    boolean overwriteUuid,
+    IUuidGenerator uuidGenerator) implements IEntityDefinition<E> {
 
 }

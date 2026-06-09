@@ -85,15 +85,20 @@ public class EntityLifecycleExpressions {
 		return entityList;
 	}
 
-	@Expression(name = "ensureUuid", description = "Generates a UUID for the entity if the uuid field is null")
+	@Expression(name = "ensureUuid", description = "Assigns the entity's uuid at creation: generates one (a time-ordered UUID v7 by default, or the domain's custom uuidGenerator) when the client sent none, OR always when the domain declares overwriteUuid(true) — discarding any client-supplied value.")
 	public static Object ensureUuid(Object entity, Object context) {
 		try {
 			IDomain<?> dc = toDomain(context);
-			ObjectAddress uuidAddress = dc.getEntityDefinition().uuid();
+			com.garganttua.api.commons.definition.IEntityDefinition<?> entityDef = dc.getEntityDefinition();
+			ObjectAddress uuidAddress = entityDef.uuid();
 			String fieldName = uuidAddress.toString();
 			Object currentUuid = REFLECTION.getFieldValue(entity, fieldName);
-			if (currentUuid == null) {
-				REFLECTION.setFieldValue(entity, fieldName, UuidCreator.getTimeOrderedEpoch().toString());
+			if (currentUuid == null || entityDef.overwriteUuid()) {
+				com.garganttua.api.commons.entity.IUuidGenerator generator = entityDef.uuidGenerator();
+				String uuid = generator != null
+						? generator.generate(entity)
+						: UuidCreator.getTimeOrderedEpoch().toString();
+				REFLECTION.setFieldValue(entity, fieldName, uuid);
 			}
 			return entity;
 		} catch (ApiException e) {

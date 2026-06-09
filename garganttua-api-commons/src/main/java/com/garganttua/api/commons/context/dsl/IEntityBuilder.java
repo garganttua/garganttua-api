@@ -5,6 +5,7 @@ import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.IMethod;
 
 import com.garganttua.api.commons.context.IEntityContext;
+import com.garganttua.api.commons.entity.IUuidGenerator;
 import com.garganttua.api.commons.entity.annotations.UnicityScope;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
@@ -24,6 +25,20 @@ public interface IEntityBuilder<E> extends IAutomaticLinkedBuilder<IEntityBuilde
     IEntityBuilder<E> uuid(IField field) throws ApiException;
 
     IEntityBuilder<E> uuid(ObjectAddress fieldAddress) throws ApiException;
+
+    /**
+     * When {@code true}, the framework (re)generates the uuid at creation even if the
+     * client supplied one — the client value is discarded. Default {@code false}
+     * (a client-supplied uuid is kept; a missing one is generated).
+     */
+    IEntityBuilder<E> overwriteUuid(boolean overwrite);
+
+    /**
+     * Declares a custom uuid generator for this domain, used wherever the framework
+     * assigns the uuid (no client value, or {@link #overwriteUuid(boolean)} on). Default:
+     * a time-ordered UUID v7.
+     */
+    IEntityBuilder<E> uuidGenerator(IUuidGenerator generator);
 
     IEntityBuilder<E> tenantId(String string) throws ApiException;
 

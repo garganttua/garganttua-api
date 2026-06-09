@@ -54,6 +54,8 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     private IObjectQuery objectQuery;
     private ObjectAddress id;
     private ObjectAddress uuid;
+    private boolean overwriteUuid = false;
+    private com.garganttua.api.commons.entity.IUuidGenerator uuidGenerator;
     private ObjectAddress tenantId;
     private List<ObjectAddress> mandatories = new ArrayList<>();
     private List<Pair<ObjectAddress, UnicityScope>> unicities = new ArrayList<>();
@@ -130,6 +132,19 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
 
         this.uuid = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(String.class)).address();
 
+        return this;
+    }
+
+    @Override
+    public IEntityBuilder<E> overwriteUuid(boolean overwrite) {
+        this.overwriteUuid = overwrite;
+        return this;
+    }
+
+    @Override
+    public IEntityBuilder<E> uuidGenerator(com.garganttua.api.commons.entity.IUuidGenerator generator) {
+        Objects.requireNonNull(generator, "UUID generator cannot be null");
+        this.uuidGenerator = generator;
         return this;
     }
 
@@ -554,7 +569,9 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
                 this.buildMethodBinders(this.beforeUpdateMethodBuilders),
                 this.buildMethodBinders(this.afterUpdateMethodBuilders),
                 this.buildMethodBinders(this.beforeDeleteMethodBuilders),
-                this.buildMethodBinders(this.afterDeleteMethodBuilders));
+                this.buildMethodBinders(this.afterDeleteMethodBuilders),
+                this.overwriteUuid,
+                this.uuidGenerator);
 
         return new EntityContext<>(definition);
     }
