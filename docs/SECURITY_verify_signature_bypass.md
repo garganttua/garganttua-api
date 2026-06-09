@@ -4,7 +4,17 @@
 `synthAuthFromPrincipal`, `VERIFY_AUTHORIZATION.gs`
 **Sévérité** : **Élevée** — contournement d'authentification + élévation de privilèges
 **Version** : api `3.0.0-ALPHA01` (HEAD), core `2.0.0-ALPHA03`
-**Statut** : diagnostic **confirmé par lecture du code** — correctif à implémenter
+**Statut** : ✅ **CORRIGÉ** — volet A (`f0a1f3c4`) + volet B (`45587acd`)
+
+> **Résolu.** Volet A : la vérif de signature est désormais **framework-owned** sur la
+> branche `hasAuthenticator` (clé résolue par le `signedBy`, fail-closed sans signedBy
+> qualifié). Volet B : les **autorités sont server-authoritative** (record persisté) pour
+> les tokens storables. Tests dans `KeyAutoCreationIntegrationTest` (classe « SECURITY:
+> the framework verifies the signature even when the user authenticate does NOT ») :
+> signature falsifiée → 401, signature vide → 401, `authorities`→`ROLE_ADMIN` forgées →
+> non accordées (le `ROLE_USER` persisté gagne). Suite core **851/851**. Les volets 1 & 2
+> des subtilités (garde-fous supplier-mode / stateless) restent à durcir si besoin — la
+> fiche les détaille. Le descriptif ci-dessous est conservé comme constat + trace.
 
 ---
 
