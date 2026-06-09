@@ -262,7 +262,7 @@ graph TD
 |:--|:--|:--|
 | **Java 21** | 21 | Modern Java with records, pattern matching, and sealed types |
 | **Maven** | 3.8+ | Build automation, dependency management, and multi-module reactor |
-| **[garganttua-core](https://github.com/garganttua/garganttua-core)** | 2.0.0-ALPHA02 | Foundation: DI, reflection abstraction, expression/scripting, workflow engine, AOT |
+| **[garganttua-core](https://github.com/garganttua/garganttua-core)** | 2.0.0-ALPHA03 | Foundation: DI, reflection abstraction, expression/scripting, workflow engine, AOT |
 | **[Jackson](https://github.com/FasterXML/jackson-databind)** | 2.17 | JSON (de)serialization |
 | **[json-path](https://github.com/json-path/JsonPath)** | 2.9.0 | JSON traversal and extraction |
 | **[MongoDB Java Driver](https://www.mongodb.com/docs/drivers/java/sync/current/)** | - | MongoDB DAO implementation |
