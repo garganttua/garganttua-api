@@ -2,8 +2,12 @@ package com.garganttua.api.core.integ.security;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,6 +15,9 @@ import org.junit.jupiter.api.Test;
 
 import com.garganttua.api.core.integ.crud.AbstractCrudScriptTest;
 import com.garganttua.api.core.expression.SecurityExpressions;
+import com.garganttua.api.core.security.authentication.AuthenticateCredentialsSupplierBuilder;
+import com.garganttua.api.core.security.authentication.AuthenticatorDefinitionSupplierBuilder;
+import com.garganttua.api.core.security.authentication.PrincipalSupplierBuilder;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.context.IApi;
@@ -18,7 +25,15 @@ import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
+import com.garganttua.core.crypto.IKeyRealm;
+import com.garganttua.core.crypto.KeyAlgorithm;
+import com.garganttua.core.crypto.KeyRealmBuilder;
+import com.garganttua.core.crypto.SignatureAlgorithm;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 import com.garganttua.core.workflow.WorkflowResult;
 
 /**
@@ -240,5 +255,127 @@ class SignableAuthorizationWriteGuardsTest extends AbstractCrudScriptTest {
         assertEquals(400, result.code());
         TokenDto stored = (TokenDto) tokenDao.getStorage().get(0);
         assertEquals("access", stored.getTokenType(), "the stored token must be unchanged after a rejected update");
+    }
+
+    // ───── regression: an AUTHENTICATOR domain that merely references a signable token
+    //       domain must NOT be mistaken for one (the create guard must no-op on it). ─────
+
+    static class FixedKeyRealmSupplierBuilder implements ISupplierBuilder<IKeyRealm, ISupplier<IKeyRealm>> {
+        private final IKeyRealm realm;
+        FixedKeyRealmSupplierBuilder(IKeyRealm realm) { this.realm = realm; }
+        @Override public IClass<IKeyRealm> getSuppliedClass() { return IClass.getClass(IKeyRealm.class); }
+        @Override public Type getSuppliedType() { return IKeyRealm.class; }
+        @Override public boolean isContextual() { return false; }
+        @Override public ISupplier<IKeyRealm> build() {
+            return new ISupplier<IKeyRealm>() {
+                @Override public Optional<IKeyRealm> supply() { return Optional.of(realm); }
+                @Override public Type getSuppliedType() { return IKeyRealm.class; }
+                @Override public IClass<IKeyRealm> getSuppliedClass() { return IClass.getClass(IKeyRealm.class); }
+            };
+        }
+    }
+
+    /** Builds a users (authenticator) domain that references the signable token domain — the failing config. */
+    private IApi buildUsersReferencingSignableTokens() throws ApiException {
+        IKeyRealm keyRealm = KeyRealmBuilder.builder()
+                .name("guard-test-realm")
+                .algorithm(KeyAlgorithm.EC_256)
+                .signatureAlgorithm(SignatureAlgorithm.SHA256)
+                .build();
+
+        IApiBuilder builder = newBuilder();
+
+        var tokenDomainBuilder = builder.domain(IClass.getClass(Token.class))
+                .tenant(true)
+                .superTenant("superTenant")
+                .owned("ownerId")
+                .entity()
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                .up()
+                .dto(IClass.getClass(TokenDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(new CapturingDao())
+                .up()
+                .security()
+                    .authorization()
+                        .type("tokenType")
+                        .authorities("authorities")
+                        .revokable("revoked")
+                        .signable()
+                            .signature("signature")
+                            .getDataToSign("getDataToSign")
+                        .up()
+                    .up()
+                .up();
+
+        StubAuthentication stubAuth = new StubAuthentication();
+        var authBuilder = builder.security()
+                .authentication(new FixedSupplierBuilder<>(stubAuth, IClass.getClass(StubAuthentication.class)));
+        authBuilder.authenticate("authenticate")
+                .withParam(0, new PrincipalSupplierBuilder())
+                .withParam(1, new AuthenticateCredentialsSupplierBuilder())
+                .withParam(2, new AuthenticatorDefinitionSupplierBuilder());
+        authBuilder.up();
+
+        @SuppressWarnings("rawtypes")
+        var userDomainBuilder = builder.domain(IClass.getClass(User.class))
+                .tenant(true)
+                .superTenant("superTenant")
+                .owner("uuid")
+                .superOwner("superOwner")
+                .entity()
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .mandatory("name")
+                .up()
+                .dto(IClass.getClass(UserDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(new CapturingDao())
+                .up()
+                .creation(true).readAll(true);
+
+        var authenticatorBuilder = userDomainBuilder.security()
+                .authenticator()
+                    .login("id")
+                    .scope(AuthenticatorScope.tenant)
+                    .alwaysEnabled(true);
+        authenticatorBuilder.authentication(authBuilder)
+                    .authorization((com.garganttua.api.commons.context.dsl.IDomainBuilder) tokenDomainBuilder)
+                        .lifeTime(60, TimeUnit.MINUTES)
+                        .key(new FixedKeyRealmSupplierBuilder(keyRealm));
+        userDomainBuilder.up();
+
+        return buildAndStart(builder);
+    }
+
+    @Test
+    @DisplayName("regression: an authenticator domain referencing a signable token domain is NOT guarded")
+    void authenticatorDomainNotMistakenForSignableAuthorization() throws ApiException {
+        IApi api = buildUsersReferencingSignableTokens();
+        IDomain<?> usersCtx = api.getDomain("users").orElseThrow();
+        IDomain<?> tokensCtx = api.getDomain("tokens").orElseThrow();
+
+        // The fallback view DID resolve the linked token domain — the trap that
+        // made `users` look like a signable authorization (and 403'd user creation).
+        assertTrue(SecurityExpressions.isAuthorizationSignable(usersCtx),
+                "authorizationDefinition falls back to the linked signable token domain");
+        // The OWN view (used by the guard) correctly says: users is not itself signable.
+        assertFalse(SecurityExpressions.isOwnAuthorizationSignable(usersCtx),
+                "users does not carry its own signable authorization");
+        assertTrue(SecurityExpressions.isOwnAuthorizationSignable(tokensCtx),
+                "the token domain itself IS a signable authorization");
+
+        OperationRequest noMarker = new OperationRequest(new HashMap<>());
+
+        // The guard must NOT block a create on the authenticator domain.
+        User u = new User();
+        u.setName("Alice");
+        u.setTenantId("SUPER_TENANT");
+        assertTrue(SecurityExpressions.requireNotDirectAuthorizationCreate(u, usersCtx, noMarker),
+                "creating on an authenticator domain must not be blocked");
+
+        // The actual signable token domain stays guarded (still 403 without the marker).
+        assertThrows(ApiException.class,
+                () -> SecurityExpressions.requireNotDirectAuthorizationCreate(token("t", "access", false), tokensCtx, noMarker),
+                "a direct create on the signable token domain itself is still forbidden");
     }
 }

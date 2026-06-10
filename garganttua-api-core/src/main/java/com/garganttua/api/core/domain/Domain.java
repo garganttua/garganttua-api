@@ -428,6 +428,10 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         req.arg(IOperationRequest.OWNER_ID, caller.ownerId());
         req.arg(IOperationRequest.SUPER_TENANT, caller.superTenant());
         req.arg(IOperationRequest.SUPER_OWNER, caller.superOwner());
+        // A startup-declared write is framework-orchestrated, not a client transport
+        // call — flag it so guards like requireNotDirectAuthorizationCreate treat it as
+        // internal (a domain may legitimately seed its own rows at boot).
+        req.arg(com.garganttua.api.core.expression.SecurityExpressions.FRAMEWORK_INTERNAL_WRITE_ARG, Boolean.TRUE);
         setup.accept(req);
         return doInvoke(req, WorkflowExecutionOptions.none());
     }

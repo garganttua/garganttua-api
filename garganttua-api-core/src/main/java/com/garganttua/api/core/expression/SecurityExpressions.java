@@ -427,6 +427,34 @@ public class SecurityExpressions {
 		return null;
 	}
 
+	/**
+	 * Returns the authorization definition the domain carries <strong>itself</strong>
+	 * (its own {@code .security().authorization()}), with <strong>no</strong> fallback
+	 * to a linked authorization domain. This is the token domain's own view — distinct
+	 * from {@link #authorizationDefinition(Object)}, whose fallback makes an
+	 * <em>authenticator</em> domain (which merely references a token domain) report the
+	 * token's definition. CRUD-write guards must key on the OWN definition: a {@code users}
+	 * authenticator that references a signable token domain is NOT itself a signable
+	 * authorization and its CRUD writes must stay unguarded.
+	 */
+	public static @Nullable Object ownAuthorizationDefinition(@Nullable Object context) {
+		IDomain<?> dc = toDomain(context);
+		DomainDefinition<?> domDef = toDomainDefinition(dc);
+		if (domDef != null && domDef.domainSecurityDefinition() != null) {
+			return domDef.domainSecurityDefinition().authorizationDefinition();
+		}
+		return null;
+	}
+
+	@Expression(name = "isOwnAuthorizationSignable",
+			description = "True when the domain ITSELF is a signable authorization (its own .security().authorization().signable()), "
+					+ "with NO fallback to a linked token domain. Used by the CRUD-write guards so that an authenticator domain "
+					+ "referencing a signable token domain is not mistaken for one — only the token domain itself is guarded.")
+	public static boolean isOwnAuthorizationSignable(@Nullable Object domainContext) {
+		Object def = ownAuthorizationDefinition(domainContext);
+		return def instanceof IDomainAuthorizationDefinition d && d.signable();
+	}
+
 	@Expression(name = "createAuthorizationEntity", description = "Creates a new authorization entity with fields populated from authentication result, principal uuid and tenant id")
 	public static Object createAuthorizationEntity(@Nullable Object authorizationDefObj,
 			@Nullable Object authenticationResult, @Nullable Object domainContextObj,
@@ -835,7 +863,7 @@ public class SecurityExpressions {
 					+ "the server-set FRAMEWORK_INTERNAL_WRITE marker, never read from the wire). Throws (→ 403) otherwise.")
 	public static boolean requireNotDirectAuthorizationCreate(@Nullable Object entity, @Nullable Object domainContext,
 			@Nullable Object request) {
-		if (!isAuthorizationSignable(domainContext)) {
+		if (!isOwnAuthorizationSignable(domainContext)) {
 			return true;
 		}
 		IOperationRequest req = (unwrapOptional(request) instanceof IOperationRequest r) ? r : null;
@@ -854,7 +882,7 @@ public class SecurityExpressions {
 					+ "getDataToSign / entity). Used by UPDATE_ONE to capture the pre-update signed material so a mutation "
 					+ "that would invalidate the signature can be detected without resolving the signing key.")
 	public static @Nullable String authorizationSignedPayload(@Nullable Object entity, @Nullable Object domainContext) {
-		Object defObj = authorizationDefinition(domainContext);
+		Object defObj = ownAuthorizationDefinition(domainContext);
 		if (!(defObj instanceof IDomainAuthorizationDefinition authzDef) || !authzDef.signable()) {
 			return null;
 		}
