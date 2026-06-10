@@ -1,97 +1,175 @@
-# Repository Filter Business Rules
+# Repository Filter & Access Business Rules
 
-How Garganttua API decides which entities are visible to a caller under multi-tenancy, ownership, and entity-characteristic rules.
+How Garganttua API decides **who the caller is** and **which entities it may see**, under
+multi-tenancy, ownership, and entity-characteristic rules.
 
-The `RepositoryFilterTools` class in `garganttua-api-core` implements complex filtering logic for multi-tenant data access. This section documents the business rules that determine which entities are visible to callers.
+> **Status legend** — 🟢 *in place* (implemented + tested) · 🟡 *target* (decided, not yet
+> implemented) · ⚠️ *open question*.
 
-### Caller Privileges
+Two layers cooperate:
+
+1. **Caller identity resolution** — establishes the caller's `tenantId` / `ownerId` and
+   `superTenant` / `superOwner` flags **from the verified authorization** (the token).
+2. **Repository filtering** (`RepositoryFilterTools`) — turns that identity plus the entity's
+   role/characteristic flags into a data filter.
+
+---
+
+## 1. Caller identity resolution
+
+### 1.1 Current state 🟢
+
+| Source | Where | Behaviour |
+|---|---|---|
+| Caller built | `JavalinProtocol.getCaller` | `tenantId` / `ownerId` / `callerId` read from the **headers** `X-Tenant-Id` / `X-Owner-Id` / `X-Caller-Id`; `superTenant`/`superOwner` = `false`. |
+| Token verified | `SecurityExpressions.verifyAuthorization` | The token's own tenant is used **only** for the verification lookup — never written back onto the caller. |
+| Super recomputed | `applyServerAuthoritativeSuperStatus` (`VERIFY_AUTHORIZATION.gs`) | Recomputes `superTenant`/`superOwner` from the **server registries** (`api.isSuperTenant`/`isSuperOwner`) — a server-side consult. **Preserves** the header `tenantId`/`ownerId`. |
+
+> ⚠️ **Consequence (isolation gap when the transport is exposed)**: the operational identity
+> (tenant/owner) comes from the **headers**, not the token. With no header an `authenticated`
+> operation passes without a tenant; with a **wrong** header it is accepted (there is no
+> `caller.tenantId == token.tenantId` guard).
+
+### 1.2 Target — the verified token becomes authoritative 🟡
+
+After `verifyAuthorization`, the caller is **rebuilt from the token** (the proven identity),
+overriding the headers:
+
+| # | Rule | Detail |
+|---|---|---|
+| **R1** (tenant cross-tenant) | token is **super** AND `header.tenant ≠ token.tenant` | `requestedTenantId = header.tenant`; `tenantId = token.tenant`. |
+| **R1-err** | `header.tenant ≠ token.tenant` AND token is **not super** | **Reject** ⚠️ (the authenticated user's tenant is not a super tenant) — *reject, not silent (to confirm)*. |
+| **R2a** | token is **super** AND `caller.tenant == null` | data of **all tenants** (no tenant filter). |
+| **R2b** | token is **not super** AND `caller.tenant == null` | `caller.tenantId = token.tenant` (scoped to the token's tenant). |
+| **R3** | same as R1/R2 for **owner** (`superOwner`, `ownerId`). |
+
+Consequence: **`Access.tenant` / `Access.owner` become redundant** (the token always carries the
+scope) → access collapses to **`anonymous` vs `authenticated`**, and isolation becomes automatic.
+
+---
+
+## 2. Caller privileges (filtering)
 
 | Privilege | Description |
 |-----------|-------------|
-| **Super Tenant** | Can access entities across all tenants. If no specific tenant is requested, bypasses all tenant filtering. |
-| **Super Owner** | Can access entities regardless of ownership. Bypasses owner-based filtering. |
-| **Regular Caller** | Subject to tenant isolation and ownership rules. |
+| **Super Tenant** | Accesses entities across all tenants. With no tenant requested, **bypasses** tenant filtering entirely. |
+| **Super Owner** | Accesses entities regardless of ownership. **Bypasses** owner filtering. |
+| **Regular Caller** | Subject to tenant + owner isolation. |
 
-### Entity Configuration Flags
+### Super-owner visibility 🟢
+
+| Case | Sees |
+|---|---|
+| **non-super** tenant + **super owner** | all data **of its tenant**, across all owners. |
+| **super** tenant + **super owner** | all data of **all tenants**. |
+
+*Implemented by composition: `buildOwnerFilter` → `null` when super owner (no owner filter) ∧
+the tenant filter still applies (or is bypassed when super tenant).*
+
+---
+
+## 3. Entity configuration flags
 
 | Flag | Description |
 |------|-------------|
-| **public** | Entity is publicly accessible (no tenant restriction for visibility) |
-| **hiddenable** | Entity has a `hidden` field that can hide it from non-super-owners |
-| **shared** | Entity can be shared with specific tenants via a `shareWith` field |
-| **owned** | Entity belongs to a specific owner (user) via an `ownerId` field |
-| **tenant** | Entity belongs to a specific tenant via a `tenantId` field |
+| **public** | Visible with no tenant restriction (cross-tenant). |
+| **hiddenable** | `hidden` field: a non-super-owner does not see hidden entities. |
+| **shared** | `shareWith` field: an **owned** entity's owner shares it with **another owner** (`shareWith` holds owner ids → `shareWith = callerOwnerId`). `shared` ⟹ `owned`. 🟡 *target — the code currently scopes per tenant.* |
+| **owned** | Belongs to an owner via `ownerId`. |
+| **tenant** | Belongs to a tenant via `tenantId`. |
 
-### Access Filter Matrix
+---
 
-The access filter determines which entities are visible based on entity configuration:
+## 4. Access filter matrix 🟢
 
-| Public | Hiddenable | Shared | Filter Logic |
-|:------:|:----------:|:------:|--------------|
+`buildAccessFilter` (`RepositoryFilterTools`) by public / hiddenable / shared:
+
+| Public | Hiddenable | Shared | Filter |
+|:------:|:----------:|:------:|--------|
 | ✓ | ✓ | - | `tenantId = callerTenant` **OR** `hidden = false` |
-| ✓ | ✗ | - | No filter (all entities visible) |
+| ✓ | ✗ | - | no filter (all visible) |
 | ✗ | ✓ | ✓ | (`hidden = false` **AND** `shareWith = callerTenant`) **OR** `tenantId = callerTenant` |
 | ✗ | ✓ | ✗ | `tenantId = callerTenant` |
 | ✗ | ✗ | ✓ | `shareWith = callerTenant` **OR** `tenantId = callerTenant` |
 | ✗ | ✗ | ✗ | `tenantId = callerTenant` |
 
-### Owner Filter Rules
+### Owner filter 🟢
 
-| Condition | Filter Applied |
-|-----------|----------------|
-| Entity is **owned** AND caller is **not super owner** | `ownerId = callerOwnerId` |
-| Entity is **not owned** OR caller is **super owner** | No owner filter |
+| Condition | Filter |
+|-----------|--------|
+| **owned** AND caller is **not** super owner | `ownerId = callerOwnerId` |
+| **not** owned **OR** super owner | no owner filter |
 
-### Multi-Tenancy Toggle
+> 🟡 **Target — owner-scoped sharing.** Since `shared` ⟹ `owned` and shares are between
+> owners, the `shared` characteristic extends the **owner** filter (not the tenant filter):
+> for a `shared` + `owned` entity, a non-super-owner sees `ownerId = callerOwnerId` **OR**
+> `shareWith = callerOwnerId`. `hidden = false` still gates a `hiddenable` entity. The matrix
+> in §4 documents the **current** (tenant-scoped) behaviour, pending this change.
 
-Multi-tenancy can be disabled globally via the builder DSL:
+### Super-tenant bypass 🟢
 
-```java
-ApiContextBuilder.builder()
-    .multiTenant(false)   // disables all tenant-related behavior
-    .domain(Product.class)
-        ...
-    .up()
-    .build();
-```
+| Condition | Behaviour |
+|-----------|-----------|
+| super tenant AND no tenant requested | all tenant/access filtering bypassed |
+| super tenant AND a tenant requested | filters applied for the requested tenant |
+| not super tenant | standard filtering |
 
-When `multiTenant(false)`:
-- `superTenantId()`, `superTenantAutoCreate()`, and `domain().tenant(true)` throw `ApiException` (strict mode)
-- Tenant and share filters are skipped in `RepositoryFilterTools`
-- Owner and visibility filters remain active
-- `@EntityUnicity(scope=TENANT)` behaves as `GLOBAL`
-
-### Super Tenant Bypass
-
-| Condition | Behavior |
-|-----------|----------|
-| Caller is **super tenant** AND no specific tenant requested | All tenant/access filtering bypassed |
-| Caller is **super tenant** AND specific tenant requested | Filters applied for requested tenant |
-| Caller is **not super tenant** | Standard filtering applied |
-
-### Filter Combination
-
-All applicable filters are combined using **AND** logic:
+### Combination
 
 ```
 Final Filter = baseFilter AND accessFilter AND ownerFilter
 ```
 
-### Examples
+---
 
-#### Example 1: Private Shared Entity
-Configuration: `public=false`, `hiddenable=true`, `shared=true`
+## 5. Multi-tenancy toggle 🟢
 
-A caller from tenant "T1" will see:
-- Entities where `hidden=false` AND `shareWith=T1`
-- OR entities where `tenantId=T1`
+`.multiTenant(false)`:
+- `superTenantId()`, `superTenantAutoCreate()`, `domain().tenant(true)` throw `ApiException`.
+- **tenant** and **share** filters disabled (`buildTenantFilter`/`buildShareFilter` → `null`).
+- **owner** and **visibility** filters remain active.
+- `@EntityUnicity(scope=TENANT)` behaves as `GLOBAL`.
 
-#### Example 2: Public Hiddenable Entity
-Configuration: `public=true`, `hiddenable=true`
+---
 
-A caller will see:
-- Their own tenant's entities (`tenantId=callerTenant`)
-- OR any visible entities (`hidden=false`)
+## 6. Synthesis — rule → code → status
 
-#### Example 3: Super Tenant Access
-A super tenant caller without a specific tenant request bypasses all tenant filtering and sees all entities (subject to owner filtering if applicable)
+| Rule | Code | Status |
+|---|---|---|
+| Caller from headers | `JavalinProtocol.getCaller:58` | 🟢 |
+| Super recomputed (registry) | `SecurityExpressions.applyServerAuthoritativeSuperStatus:277` | 🟢 |
+| R1/R1-err — cross-tenant from token | *(to create, after `verifyAuthorization`)* | 🟡 |
+| R2b — default tenant = token's tenant | *(to create)* | 🟡 |
+| R2a — super with no tenant → all tenants | `RepositoryFilterTools.isSuperTenantWithoutTenant` + `buildFilter:55` | 🟢 |
+| R3 — same for owner | *(to create)* + `buildOwnerFilter` | 🟡 |
+| Super-owner visibility (R4) | `buildOwnerFilter:149` | 🟢 |
+| public / hiddenable | `buildAccessFilter:85`, `buildVisibleFilter` | 🟢 |
+| shared — current (per tenant) | `buildShareFilter:264` (`shareWith = requestedTenantId`) | 🟢 |
+| shared — target (per owner, ⟹ owned) | `buildShareFilter` / `buildOwnerFilter` *(to rework: `shareWith = callerOwnerId`)* | 🟡 |
+| Owner filter | `buildOwnerIdFilter:281` | 🟢 |
+| multiTenant toggle | `FilterContext` (`!multiTenant` → null) | 🟢 |
+| `Access.tenant`/`Access.owner` gates | `VERIFY_TENANT.gs` / `VERIFY_OWNER.gs` | 🟢 (🟡 *removal candidates once R1-R3 land*) |
+
+---
+
+## 7. Decisions & open questions
+
+1. ✅ **Resolved — `shared` is owner-scoped**: a `shared` entity is necessarily `owned`; an owner
+   shares with **another owner** (`shareWith = callerOwnerId`). 🟡 *code change pending (currently
+   tenant-scoped).*
+2. ⚠️ **R1-err**: an `X-Tenant-Id` contradicting a non-super token → **reject** (401/403) confirmed,
+   rather than silently ignored?
+3. ⚠️ Removal of `Access.tenant` / `Access.owner` once the token-authoritative caller resolution
+   (R1-R3) ships?
+
+---
+
+## 8. Examples
+
+**Private shared** (`public=false, hiddenable=true, shared=true`) — a caller from T1 sees:
+`hidden=false AND shareWith=T1`, **or** `tenantId=T1`.
+
+**Public hiddenable** (`public=true, hiddenable=true`) — a caller sees:
+its own entities (`tenantId=callerTenant`) **or** any visible entity (`hidden=false`).
+
+**Super tenant** with no tenant requested: full bypass → all entities (subject to the owner filter).

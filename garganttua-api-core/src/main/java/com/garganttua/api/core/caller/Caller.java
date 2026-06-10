@@ -10,10 +10,21 @@ public record Caller(
 		String requestedTenantId,
 		String callerId,
 		String ownerId,
+		String requestedOwnerId,
 		boolean superTenant,
 		boolean superOwner,
 		List<String> authorities
 ) implements ICaller {
+
+	/**
+	 * Backward-compatible 7-arg constructor — {@code requestedOwnerId} defaults to
+	 * {@code ownerId} (a caller operates on its own owner unless cross-owner is set).
+	 * Keeps the many existing {@code new Caller(...)} sites unchanged.
+	 */
+	public Caller(String tenantId, String requestedTenantId, String callerId, String ownerId,
+			boolean superTenant, boolean superOwner, List<String> authorities) {
+		this(tenantId, requestedTenantId, callerId, ownerId, ownerId, superTenant, superOwner, authorities);
+	}
 
 	/**
 	 * @deprecated Produces a caller with {@code tenantId=null}, which
@@ -83,15 +94,15 @@ public record Caller(
 	}
 
 	public Caller withCallerId(String callerId) {
-		return new Caller(tenantId, requestedTenantId, callerId, ownerId, superTenant, superOwner, authorities);
+		return new Caller(tenantId, requestedTenantId, callerId, ownerId, requestedOwnerId, superTenant, superOwner, authorities);
 	}
 
 	public Caller withOwnerId(String ownerId) {
-		return new Caller(tenantId, requestedTenantId, callerId, ownerId, superTenant, superOwner, authorities);
+		return new Caller(tenantId, requestedTenantId, callerId, ownerId, requestedOwnerId, superTenant, superOwner, authorities);
 	}
 
 	public Caller withAuthorities(List<String> authorities) {
-		return new Caller(tenantId, requestedTenantId, callerId, ownerId, superTenant, superOwner, authorities);
+		return new Caller(tenantId, requestedTenantId, callerId, ownerId, requestedOwnerId, superTenant, superOwner, authorities);
 	}
 
 }
