@@ -30,10 +30,14 @@ Two layers cooperate:
 > operation passes without a tenant; with a **wrong** header it is accepted (there is no
 > `caller.tenantId == token.tenantId` guard).
 
-### 1.2 Target — the verified token becomes authoritative 🟡
+### 1.2 The verified token is authoritative 🟢
 
-After `verifyAuthorization`, the caller is **rebuilt from the token** (the proven identity),
-overriding the headers:
+"Verifying an authorization" ≡ "an authentication": `verifyAuthorization` produces an
+`IAuthentication` carrying the principal's `tenantId`/`ownerId`/`isSuperTenant`/`isSuperOwner`.
+`IAuthentication.reconcile(protocolCaller)` then **rebuilds the caller from the token** (the
+proven identity), overriding the headers — wired into `VERIFY_AUTHORIZATION.gs` (replacing the
+old header-trusted caller). `Access.tenant`/`Access.owner` and the `VERIFY_TENANT`/`VERIFY_OWNER`
+gates have been removed.
 
 | # | Rule | Detail |
 |---|---|---|
@@ -136,19 +140,20 @@ Final Filter = baseFilter AND accessFilter AND ownerFilter
 
 | Rule | Code | Status |
 |---|---|---|
-| Caller from headers | `JavalinProtocol.getCaller:58` | 🟢 |
-| Super recomputed (registry) | `SecurityExpressions.applyServerAuthoritativeSuperStatus:277` | 🟢 |
-| R1/R1-err — cross-tenant from token | *(to create, after `verifyAuthorization`)* | 🟡 |
-| R2b — default tenant = token's tenant | *(to create)* | 🟡 |
-| R2a — super with no tenant → all tenants | `RepositoryFilterTools.isSuperTenantWithoutTenant` + `buildFilter:55` | 🟢 |
-| R3 — same for owner | *(to create)* + `buildOwnerFilter` | 🟡 |
+| Caller from headers (protocol) | `JavalinProtocol.getCaller:58` | 🟢 |
+| Caller rebuilt from the token | `IAuthentication.reconcile` + `SecurityExpressions.reconcileCaller` (in `VERIFY_AUTHORIZATION.gs`) | 🟢 |
+| Super recomputed (registry) on resolved home | `SecurityExpressions.applyServerAuthoritativeSuperStatus:277` | 🟢 |
+| R1/R1-err — cross-tenant from token (reject non-super) | `IAuthentication.reconcile` | 🟢 |
+| R2b — default tenant = token's tenant | `IAuthentication.reconcile` | 🟢 |
+| R2a — super with no tenant → all tenants | `reconcile` (requested*=null) + `RepositoryFilterTools.isSuperTenantWithoutTenant` | 🟢 |
+| R3 — same for owner (incl. cross-owner via requestedOwnerId) | `IAuthentication.reconcile` | 🟢 |
 | Super-owner visibility (R4) | `buildOwnerFilter:149` | 🟢 |
 | public / hiddenable | `buildAccessFilter:85`, `buildVisibleFilter` | 🟢 |
 | shared — current (per tenant) | `buildShareFilter:264` (`shareWith = requestedTenantId`) | 🟢 |
 | shared — target (per owner, ⟹ owned) | `buildShareFilter` / `buildOwnerFilter` *(to rework: `shareWith = callerOwnerId`)* | 🟡 |
 | Owner filter | `buildOwnerIdFilter:281` | 🟢 |
 | multiTenant toggle | `FilterContext` (`!multiTenant` → null) | 🟢 |
-| `Access.tenant`/`Access.owner` gates | `VERIFY_TENANT.gs` / `VERIFY_OWNER.gs` | 🟢 (🟡 *removal candidates once R1-R3 land*) |
+| `Access.tenant`/`Access.owner` gates | *removed — folded into `reconcile` + the filter* | 🟢 |
 
 ---
 
@@ -157,10 +162,10 @@ Final Filter = baseFilter AND accessFilter AND ownerFilter
 1. ✅ **Resolved — `shared` is owner-scoped**: a `shared` entity is necessarily `owned`; an owner
    shares with **another owner** (`shareWith = callerOwnerId`). 🟡 *code change pending (currently
    tenant-scoped).*
-2. ⚠️ **R1-err**: an `X-Tenant-Id` contradicting a non-super token → **reject** (401/403) confirmed,
-   rather than silently ignored?
-3. ⚠️ Removal of `Access.tenant` / `Access.owner` once the token-authoritative caller resolution
-   (R1-R3) ships?
+2. ✅ **Resolved — R1-err rejects**: a header tenant/owner contradicting a non-super token →
+   **403** (`IAuthentication.reconcile` throws), not silently ignored.
+3. ✅ **Resolved — `Access.tenant` / `Access.owner` removed**: the token-authoritative caller
+   resolution (R1-R3) shipped; the enum keeps only `anonymous` / `authenticated`.
 
 ---
 
