@@ -630,13 +630,18 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                 // anonymous/auth traffic (anonymous ops pass, non-anonymous
                 // ops get a clean 401 from the security script).
                 caller = autoCreateCallerFromBody(request);
-            } else if (caller.tenantId() == null) {
-                // Caller has SOME information (super flags, ownerId, callerId,
-                // …) but lacks a tenantId. This is almost always a misuse —
-                // most notably the deprecated no-arg createSuperCaller()
-                // which sets superTenant=true with tenantId=null. Reject
-                // explicitly so the caller gets a parlant error instead of
-                // silent under-isolation downstream.
+            } else if (caller.tenantId() == null && isMultiTenant()) {
+                // Multi-tenant only: a caller carrying SOME information (super
+                // flags, ownerId, callerId, …) but no tenantId is almost always a
+                // misuse — most notably the deprecated no-arg createSuperCaller()
+                // which sets superTenant=true with tenantId=null. Reject explicitly
+                // so the caller gets a parlant error instead of silent
+                // under-isolation downstream.
+                //
+                // In NON-tenant mode (multiTenant(false)) a tenantId is never
+                // required: an owner-scoped caller (e.g. Alice's ownerId, no
+                // tenant) is legitimate — owner isolation is still enforced by the
+                // repository owner filter, not by the tenant binding.
                 return OperationResponse.badRequest(new ApiException(
                         "Caller is missing tenantId — super and owner flags require a "
                                 + "tenantId binding (use Caller.createSuperCaller(superTenantId) "

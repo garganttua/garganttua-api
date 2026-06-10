@@ -48,6 +48,24 @@ class OperationResponseFailureCarriesThrowableTest extends AbstractCrudIntegrati
         return api;
     }
 
+    /** Multi-tenant Products — the tenantId-binding guard for a malformed super caller is multi-tenant only. */
+    private IApi buildMultiTenantProducts(StubDao dao) throws ApiException {
+        IApiBuilder builder = newBuilder();
+        builder.domain(IClass.getClass(Product.class))
+                .tenant(true).superTenant("superTenant")
+                .entity().id("id").uuid("uuid").tenantId("tenantId").up()
+                .dto(IClass.getClass(ProductDto.class))
+                    .id("id").uuid("uuid").tenantId("tenantId")
+                    .db(dao)
+                .up()
+                .readAll(true).readOne(true)
+            .up();
+        IApi api = builder.build();
+        api.onInit();
+        api.onStart();
+        return api;
+    }
+
     @Nested
     @DisplayName("Static factories")
     class Factories {
@@ -137,10 +155,12 @@ class OperationResponseFailureCarriesThrowableTest extends AbstractCrudIntegrati
         }
 
         @Test
-        @DisplayName("malformed super caller (null tenantId) is still rejected with a parlant 'missing tenantId' exception")
+        @DisplayName("multi-tenant: malformed super caller (null tenantId) is rejected with a parlant 'missing tenantId' exception")
         @SuppressWarnings("deprecation")
         void malformedSuperCallerStillRejected() throws ApiException {
-            IApi api = buildUnsecuredProducts(new StubDao());
+            // Multi-tenant only: in non-tenant mode a tenantless caller is legitimate
+            // (see NonTenantOwnerCallerTest).
+            IApi api = buildMultiTenantProducts(new StubDao());
             IDomain<?> domain = api.getDomain("products").orElseThrow();
 
             IOperationResponse response = RequestBuilder.builder(domain)
