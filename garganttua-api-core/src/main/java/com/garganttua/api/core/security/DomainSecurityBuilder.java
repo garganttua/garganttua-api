@@ -35,7 +35,6 @@ public class DomainSecurityBuilder<E>
 
     private List<ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>>> interfaces;
     private boolean disabled = false;
-    private boolean hasCrudSecurityConfig = false;
     private IAuthorizationBuilder authorization;
     private IClass<?> entityClass;
     private IAuthenticatorBuilder authenticator;
@@ -127,15 +126,22 @@ public class DomainSecurityBuilder<E>
         return this.disabled;
     }
 
-    public boolean hasSecurityConfiguration() {
-        return !this.disabled && (this.authenticator != null || this.authorization != null || this.hasCrudSecurityConfig);
+    /**
+     * Whether the domain's security pipeline (VERIFY_AUTHORIZATION / VERIFY_TENANT /
+     * VERIFY_OWNER / VERIFY_AUTHORITY) is installed. Security is ON by default and the
+     * per-operation access level governs (default {@code authenticated}); a domain
+     * opts OUT of the whole gate explicitly via {@code .security().disable(true)}, and
+     * opens individual operations via {@code Access.anonymous}. This is a fail-safe
+     * default: a domain with no security mention still requires a valid token.
+     */
+    public boolean isSecurityEnabled() {
+        return !this.disabled;
     }
 
     // --- CRUD access ---
 
     private IDomainSecurityBuilder<E> setCrudAccess(String label, Access access) {
         up().workflow(label).security().access(access);
-        this.hasCrudSecurityConfig = true;
         return this;
     }
 
@@ -173,7 +179,6 @@ public class DomainSecurityBuilder<E>
 
     private IDomainSecurityBuilder<E> setCrudAuthority(String label, boolean authority) {
         up().workflow(label).security().authority(authority);
-        this.hasCrudSecurityConfig = true;
         return this;
     }
 
@@ -211,7 +216,6 @@ public class DomainSecurityBuilder<E>
 
     private IDomainSecurityBuilder<E> setCrudAuthority(String label, String customAuthority) {
         up().workflow(label).security().authority(customAuthority);
-        this.hasCrudSecurityConfig = true;
         return this;
     }
 

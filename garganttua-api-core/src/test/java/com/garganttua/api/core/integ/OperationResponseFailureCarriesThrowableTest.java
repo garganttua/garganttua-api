@@ -40,6 +40,7 @@ class OperationResponseFailureCarriesThrowableTest extends AbstractCrudIntegrati
                     .id("id").uuid("uuid")
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .readAll(true).readOne(true)
             .up();
         IApi api = builder.build();
@@ -58,6 +59,7 @@ class OperationResponseFailureCarriesThrowableTest extends AbstractCrudIntegrati
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .readAll(true).readOne(true)
             .up();
         IApi api = builder.build();

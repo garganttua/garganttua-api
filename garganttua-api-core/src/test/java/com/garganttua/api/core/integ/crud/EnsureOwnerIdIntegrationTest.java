@@ -92,6 +92,7 @@ class EnsureOwnerIdIntegrationTest extends AbstractCrudScriptTest {
 					.id("id").uuid("uuid").tenantId("tenantId")
 					.db(new CapturingDao())
 				.up()
+				.security().disable(true).up()
 			.up();
 
 		context = buildAndStart(builder);

@@ -43,6 +43,7 @@ class OperationResponseProcessingTimeTest extends AbstractCrudIntegrationTest {
                     .id("id").uuid("uuid")
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .readAll(true)
             .up();
         IApi api = builder.build();

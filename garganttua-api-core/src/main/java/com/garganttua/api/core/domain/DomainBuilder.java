@@ -651,7 +651,7 @@ public class DomainBuilder<E>
 
         // Compute configuration flags
         boolean securityEnabled = this.securityBuilder != null
-                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).isSecurityEnabled();
         boolean hasAuthorization = this.securityBuilder != null
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
                 && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig();
@@ -816,7 +816,7 @@ public class DomainBuilder<E>
         autoRegisterSecurityWorkflows();
 
         boolean securityEnabled = this.securityBuilder != null
-                && ((DomainSecurityBuilder<E>) this.securityBuilder).hasSecurityConfiguration();
+                && ((DomainSecurityBuilder<E>) this.securityBuilder).isSecurityEnabled();
         boolean hasAuthorization = this.securityBuilder != null
                 && ((DomainSecurityBuilder<E>) this.securityBuilder).hasAuthenticator()
                 && ((AuthenticatorBuilder<E>) ((DomainSecurityBuilder<E>) this.securityBuilder).getAuthenticator()).hasAuthorizationConfig();

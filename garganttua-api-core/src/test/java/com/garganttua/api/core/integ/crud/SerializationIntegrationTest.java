@@ -105,6 +105,7 @@ class SerializationIntegrationTest extends AbstractCrudIntegrationTest {
 					.id("id").uuid("uuid").tenantId("tenantId")
 					.db(userDao)
 				.up()
+				.security().disable(true).up()
 			.up();
 
 		context = buildAndStart(builder);

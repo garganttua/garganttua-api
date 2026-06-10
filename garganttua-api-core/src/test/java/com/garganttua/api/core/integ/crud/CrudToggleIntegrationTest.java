@@ -32,6 +32,9 @@ class CrudToggleIntegrationTest extends AbstractCrudScriptTest {
                 .up();
 
         configurator.configure(domainBuilder);
+        // This test exercises the CRUD enable/disable toggle, not the auth gate —
+        // opt the domain out of the now-default security pipeline.
+        domainBuilder.security().disable(true).up();
         domainBuilder.up();
 
         IApi context = buildAndStart(builder);

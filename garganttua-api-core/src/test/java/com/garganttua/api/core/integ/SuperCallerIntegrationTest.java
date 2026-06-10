@@ -52,6 +52,7 @@ class SuperCallerIntegrationTest extends AbstractCrudIntegrationTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .readAll(true)
             .up();
 

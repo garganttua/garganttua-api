@@ -41,6 +41,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(userDao)
                 .up()
+                .security().disable(true).up()
             .up();
 
         context = buildAndStart(builder);
@@ -115,6 +116,7 @@ class DeleteAllIntegrationTest extends AbstractCrudScriptTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(new FailingDao())
                 .up()
+                .security().disable(true).up()
             .up();
 
         IApi failingContext = buildAndStart(failingBuilder);

@@ -40,6 +40,7 @@ class RequestBuilderIntegrationTest extends AbstractCrudIntegrationTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(productDao)
                 .up()
+                .security().disable(true).up()
             .up();
 
         context = buildAndStart(builder);

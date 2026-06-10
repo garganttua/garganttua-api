@@ -63,6 +63,7 @@ class DomainObservableIntegrationTest extends AbstractCrudIntegrationTest {
 					.id("id").uuid("uuid").tenantId("tenantId")
 					.db(new CapturingDao())
 				.up()
+				.security().disable(true).up()
 			.up();
 		return buildAndStart(builder);
 	}

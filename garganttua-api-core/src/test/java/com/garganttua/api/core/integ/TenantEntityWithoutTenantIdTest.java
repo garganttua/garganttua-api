@@ -97,6 +97,7 @@ class TenantEntityWithoutTenantIdTest extends AbstractCrudIntegrationTest {
                     .id("id").uuid("uuid")            // <-- no .tenantId(...)
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .readAll(true).readOne(true)
             .up();
 

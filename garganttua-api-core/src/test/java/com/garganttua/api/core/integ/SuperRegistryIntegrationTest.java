@@ -51,6 +51,7 @@ class SuperRegistryIntegrationTest extends AbstractCrudScriptTest {
                     .id("id").uuid("uuid").tenantId("tenantId")
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .creation(true).readOne(true).readAll(true).update(true)
             .up();
 
@@ -120,6 +121,7 @@ class SuperRegistryIntegrationTest extends AbstractCrudScriptTest {
                     .dto(IClass.getClass(UserDto.class))
                         .id("id").uuid("uuid").tenantId("tenantId").db(dao)
                     .up()
+                    .security().disable(true).up()
                     .readAll(true)
                 .up();
             IApi api = builder.build();

@@ -94,6 +94,10 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 					.disable(false)
 					.readOneAccess(Access.tenant)
 				.up();
+		} else {
+			// Security is ON by default now; this branch tests the no-gate path,
+			// so opt out explicitly.
+			domainBuilder.security().disable(true).up();
 		}
 		domainBuilder.up();
 

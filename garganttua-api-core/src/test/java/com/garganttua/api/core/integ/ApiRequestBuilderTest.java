@@ -39,6 +39,7 @@ class ApiRequestBuilderTest extends AbstractCrudIntegrationTest {
                     .id("id").uuid("uuid")
                     .db(dao)
                 .up()
+                .security().disable(true).up()
                 .readAll(true).readOne(true).creation(true)
             .up();
         IApi api = builder.build();
