@@ -3,15 +3,18 @@ package com.garganttua.api.binding.javalin;
 import java.util.List;
 import java.util.Objects;
 
+import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.endpoint.Interface;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.api.commons.service.ArgKey;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.OperationResponseCode;
+import com.garganttua.api.core.expression.SerializationExpressions;
 import com.garganttua.core.lifecycle.ILifecycle;
 import com.garganttua.core.lifecycle.LifecycleStatus;
 import com.garganttua.core.reflection.IClass;
@@ -225,16 +228,13 @@ public class JavalinInterface implements IInterface {
 			if (encoded != null && isSuccess(response)) {
 				ctx.header(AUTHORIZATION_RESPONSE_HEADER, asTokenString(encoded));
 				int status = httpStatus(response.getResponseCode());
-				// Symmetric to the error envelope: a structured {"status":"ok"} body, JSON when
-				// the client accepts it, degrading to plain "ok" when Accept excludes JSON.
-				if (clientAcceptsJson(ctx)) {
-					ctx.status(status).contentType("application/json").result(statusJson("ok"));
-				} else {
-					ctx.status(status).contentType("text/plain").result("ok");
-				}
+				// Structured success envelope, rendered in the client's negotiated media
+				// (JSON, XML, …) via the serializer registry; degrades to plain "ok" only
+				// when no registered serializer satisfies Accept.
+				writeEnvelope(ctx, domain, status, new StatusEnvelope("ok"), "ok");
 				return;
 			}
-			applyOutcome(ctx, response);
+			applyOutcome(ctx, domain, response);
 		} catch (RuntimeException e) {
 			// Defensive: the pipeline returns error codes rather than throwing, but a
 			// transport-level failure (e.g. no protocol resolved) must still answer.
@@ -271,14 +271,13 @@ public class JavalinInterface implements IInterface {
 	 * carries a {@link Throwable}) the status comes from the response code; on success
 	 * the RESPONSE stage already serialized the body, so only the status is corrected.
 	 * <p>
-	 * The error body is a JSON object ({@code {"error":"…"}}) <em>only</em> when the
-	 * client accepts JSON. When the {@code Accept} header explicitly excludes it — the
-	 * very situation a {@code 406} reports, e.g. a client asking for {@code application/xml}
-	 * the API cannot produce — answering in JSON would repeat the content-negotiation
-	 * violation being signalled. In that case the body degrades to {@code text/plain}
-	 * (the raw message), which every client accepts.
+	 * The error body is rendered in the client's negotiated media (JSON, XML, …) via
+	 * the serializer registry. It degrades to {@code text/plain} (the raw message) only
+	 * when no registered serializer satisfies {@code Accept} — the very situation a
+	 * {@code 406} reports, where answering in a served media would repeat the
+	 * content-negotiation violation being signalled. {@code text/plain} every client accepts.
 	 */
-	private void applyOutcome(Context ctx, IOperationResponse response) {
+	private void applyOutcome(Context ctx, IDomain<?> domain, IOperationResponse response) {
 		if (response == null) {
 			return;
 		}
@@ -287,74 +286,55 @@ public class JavalinInterface implements IInterface {
 		if (payload instanceof Throwable t) {
 			String message = (t.getMessage() != null && !t.getMessage().isBlank())
 					? t.getMessage() : t.getClass().getSimpleName();
-			if (clientAcceptsJson(ctx)) {
-				ctx.status(status).contentType("application/json").result(errorJson(message));
-			} else {
-				ctx.status(status).contentType("text/plain").result(message);
-			}
+			writeEnvelope(ctx, domain, status, new ErrorEnvelope(message), message);
 		} else {
 			ctx.status(status);
 		}
 	}
 
 	/**
-	 * Whether the request's {@code Accept} header admits {@code application/json}. An
-	 * absent or blank {@code Accept} imposes no constraint (true); a wildcard range
-	 * ({@code *}{@code /*} or {@code application/*}) or an explicit {@code application/json}
-	 * admits it; anything else (e.g. {@code application/xml} alone) does not. The quality
-	 * factor is ignored — presence of an admitting range is enough.
+	 * Writes a small envelope object as the response body in the client's negotiated
+	 * media. Reuses the framework's RFC 7231 negotiation ({@link SerializationExpressions#negotiateSerializer})
+	 * over the API's serializer registry, labels the response with the chosen media type,
+	 * and falls back to {@code text/plain} (the supplied raw text) only when the API has
+	 * no serializer or none satisfies {@code Accept}.
 	 */
-	private static boolean clientAcceptsJson(Context ctx) {
-		String accept = ctx.header("Accept");
-		if (accept == null || accept.isBlank()) {
-			return true;
-		}
-		for (String range : accept.split(",")) {
-			String media = range.trim().toLowerCase();
-			int semi = media.indexOf(';');
-			if (semi >= 0) {
-				media = media.substring(0, semi).trim();
-			}
-			if (media.equals("*/*") || media.equals("application/*") || media.equals("application/json")) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/** Wraps an error message in a minimal JSON object: {@code {"error":"<escaped>"}}. */
-	private static String errorJson(String message) {
-		return "{\"error\":\"" + jsonEscape(message) + "\"}";
-	}
-
-	/** Wraps a success status in a minimal JSON object, symmetric to {@link #errorJson}: {@code {"status":"<escaped>"}}. */
-	private static String statusJson(String status) {
-		return "{\"status\":\"" + jsonEscape(status) + "\"}";
-	}
-
-	/** Escapes a string for embedding in a JSON string literal. */
-	private static String jsonEscape(String s) {
-		StringBuilder out = new StringBuilder(s.length() + 16);
-		for (int i = 0; i < s.length(); i++) {
-			char c = s.charAt(i);
-			switch (c) {
-				case '"' -> out.append("\\\"");
-				case '\\' -> out.append("\\\\");
-				case '\n' -> out.append("\\n");
-				case '\r' -> out.append("\\r");
-				case '\t' -> out.append("\\t");
-				case '\b' -> out.append("\\b");
-				case '\f' -> out.append("\\f");
-				default -> {
-					if (c < 0x20) {
-						out.append(String.format("\\u%04x", (int) c));
-					} else {
-						out.append(c);
-					}
+	private void writeEnvelope(Context ctx, IDomain<?> domain, int status, Object envelope, String fallbackText) {
+		IApi api = apiOf(domain);
+		if (api != null) {
+			try {
+				ISerializer serializer = SerializationExpressions.negotiateSerializer(api, ctx.header("Accept"));
+				byte[] body = serializer.serialize(envelope);
+				ctx.status(status);
+				if (serializer.mimeType() != null) {
+					ctx.contentType(serializer.mimeType().toString());
 				}
+				ctx.result(body);
+				return;
+			} catch (Exception negotiationOrSerializationFailed) {
+				// No serializer satisfies Accept (or serialization failed) — degrade to plain text.
 			}
 		}
-		return out.toString();
+		ctx.status(status).contentType("text/plain").result(fallbackText);
+	}
+
+	/** The API context backing a domain (the serializer registry lives on it), or null. */
+	private static IApi apiOf(IDomain<?> domain) {
+		return domain != null ? domain.getApiContext() : null;
+	}
+
+	/** Minimal success envelope: serializes to {@code {"status":"ok"}} (JSON) / {@code <StatusEnvelope><status>ok</status></StatusEnvelope>} (XML). */
+	public static final class StatusEnvelope {
+		private final String status;
+		public StatusEnvelope(String status) { this.status = status; }
+		public String getStatus() { return this.status; }
+	}
+
+	/** Minimal error envelope: serializes to {@code {"error":"…"}} (JSON) / {@code <ErrorEnvelope><error>…</error></ErrorEnvelope>} (XML). */
+	public static final class ErrorEnvelope {
+		private final String error;
+		public ErrorEnvelope(String error) { this.error = error; }
+		public String getError() { return this.error; }
 	}
 
 	/** Maps the framework's response code to an HTTP status. */

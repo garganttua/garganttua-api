@@ -201,12 +201,55 @@ class SerializationExpressionsTest {
 		}
 
 		@Test
-		@DisplayName("ignores q-values but still matches on the first known type")
-		void ignoresQ() {
+		@DisplayName("honors q-order: a higher-q type wins over an earlier lower-q one")
+		void qOrdering() {
+			ISerializer json = fakeSerializer(MimeType.APPLICATION_JSON, null, null);
 			ISerializer xml = fakeSerializer(MimeType.APPLICATION_XML, null, null);
-			IApi api = apiWithSerializers(xml);
+			IApi api = apiWithSerializers(json, xml);
+			// json listed first but lower q — xml must win.
 			assertSame(xml, SerializationExpressions.negotiateSerializer(api,
-					"application/xml;q=0.5, text/html;q=0.9"));
+					"application/json;q=0.8, application/xml;q=0.9"));
+		}
+
+		@Test
+		@DisplayName("browser Accept (xml;q=0.9, */*;q=0.8) resolves to XML, not the JSON default")
+		void browserAcceptPrefersXml() {
+			ISerializer json = fakeSerializer(MimeType.APPLICATION_JSON, null, null);
+			ISerializer xml = fakeSerializer(MimeType.APPLICATION_XML, null, null);
+			IApi api = apiWithSerializers(json, xml);
+			// The */* must NOT short-circuit to JSON: application/xml has the higher q.
+			assertSame(xml, SerializationExpressions.negotiateSerializer(api,
+					"text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"));
+		}
+
+		@Test
+		@DisplayName("*/* with a low q still yields the default when no concrete type matches")
+		void wildcardLowQDefault() {
+			ISerializer json = fakeSerializer(MimeType.APPLICATION_JSON, null, null);
+			ISerializer xml = fakeSerializer(MimeType.APPLICATION_XML, null, null);
+			IApi api = apiWithSerializers(json, xml);
+			// No serializer for image/png; */* (even at q=0.1) yields the JSON default.
+			assertSame(json, SerializationExpressions.negotiateSerializer(api, "image/png, */*;q=0.1"));
+		}
+
+		@Test
+		@DisplayName("q=0 marks a type as not acceptable and is skipped")
+		void qZeroRefused() {
+			ISerializer json = fakeSerializer(MimeType.APPLICATION_JSON, null, null);
+			ISerializer xml = fakeSerializer(MimeType.APPLICATION_XML, null, null);
+			IApi api = apiWithSerializers(json, xml);
+			assertSame(xml, SerializationExpressions.negotiateSerializer(api,
+					"application/json;q=0, application/xml"));
+		}
+
+		@Test
+		@DisplayName("a subtype wildcard (application/*) matches a serializer of that type")
+		void subtypeWildcard() {
+			ISerializer json = fakeSerializer(MimeType.APPLICATION_JSON, null, null);
+			ISerializer xml = fakeSerializer(MimeType.APPLICATION_XML, null, null);
+			IApi api = apiWithSerializers(xml, json);
+			// application/* → the first registered application/* serializer (xml here).
+			assertSame(xml, SerializationExpressions.negotiateSerializer(api, "application/*"));
 		}
 
 		@Test

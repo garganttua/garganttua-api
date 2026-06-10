@@ -39,6 +39,16 @@ public interface IDomain<E> extends ILifecycle, IObservable {
 
 	IDomainDefinition<E> getDomainDefinition();
 
+	/**
+	 * The API context this domain belongs to (it carries the serializer registry,
+	 * super-tenant config, etc.). Defaults to {@code null} for lightweight or
+	 * stand-in implementations; the runtime {@code Domain} returns its owning API.
+	 * Transport bindings read it to negotiate response media types.
+	 */
+	default IApi getApiContext() {
+		return null;
+	}
+
 	default IEntityDefinition<E> getEntityDefinition() {
 		return getDomainDefinition().entityDefinition();
 	}

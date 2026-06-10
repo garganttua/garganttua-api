@@ -20,10 +20,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.garganttua.api.binding.jackson.JacksonJsonSerializer;
+import com.garganttua.api.binding.jackson.JacksonXmlSerializer;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.definition.IDomainDefinition;
+import com.garganttua.api.commons.serialization.ISerializer;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.BusinessOperation;
 import com.garganttua.api.commons.operation.OperationDefinition;
@@ -96,12 +100,19 @@ class JavalinInterfaceTest {
 		volatile IOperationResponse responseOverride;
 		/** When set, invoke() publishes it on the request as 'encodedAuthorization' (a token-minting op). */
 		volatile Object encodedToPublish;
+		/** Serializer registry surfaced via getApiContext() — JSON by default; tests may add XML. */
+		final List<ISerializer> serializers = new java.util.ArrayList<>(List.of(new JacksonJsonSerializer()));
+		private final IApi api;
 
 		@SuppressWarnings("unchecked")
 		CapturingDomain(List<OperationDefinition> operations) {
 			this.definition = mock(IDomainDefinition.class);
 			when(this.definition.operations()).thenReturn(operations);
+			this.api = mock(IApi.class);
+			when(this.api.getSerializers()).thenAnswer(inv -> this.serializers);
 		}
+
+		@Override public IApi getApiContext() { return this.api; }
 
 		@Override public String getDomainName() { return "users"; }
 		@Override @SuppressWarnings("unchecked")
@@ -424,6 +435,23 @@ class JavalinInterfaceTest {
 			assertEquals("{\"error\":\"No acceptable serializer for: application/xml\"}", resp.body(),
 					"a wildcard Accept admits JSON, so the JSON envelope is kept");
 			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/json"));
+		}
+
+		@Test
+		@DisplayName("Accept: application/xml with an XML serializer → the error envelope is XML, not text/plain")
+		void xmlAcceptYieldsXmlErrorEnvelope() throws Exception {
+			domain.serializers.add(new JacksonXmlSerializer()); // XML is now negotiable
+			domain.responseOverride = new OperationResponse(OperationResponseCode.UNAUTHORIZED,
+					new ApiException("missing authorization"));
+
+			HttpResponse<String> resp = send("GET", "/users", null, "application/xml");
+
+			assertEquals(401, resp.statusCode());
+			assertTrue(resp.body().contains("<error>missing authorization</error>"),
+					"the error must be rendered in XML; got: " + resp.body());
+			assertTrue(resp.headers().firstValue("Content-Type").orElse("").contains("application/xml"),
+					"the error body must be labelled application/xml; got: "
+							+ resp.headers().firstValue("Content-Type").orElse(""));
 		}
 	}
 

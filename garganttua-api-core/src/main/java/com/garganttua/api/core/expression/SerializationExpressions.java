@@ -2,7 +2,6 @@ package com.garganttua.api.core.expression;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.Locale;
-import java.util.Optional;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.MimeType;
@@ -93,35 +92,101 @@ public class SerializationExpressions {
 	}
 
 	@Expression(name = "negotiateSerializer",
-			description = "Picks the best serializer matching the Accept header. Falls back to JSON for */* or missing header. Throws 406 if nothing matches.")
+			description = "RFC 7231 content negotiation. Parses the Accept header into media ranges with q-values, "
+					+ "orders them by q (descending, stable so a tie keeps header order), and returns the first range "
+					+ "that has a registered serializer. A concrete type/subtype matches that serializer; type/* matches "
+					+ "any serializer of that type; */* (or a missing/blank header) yields the default (JSON when "
+					+ "registered, else the first serializer). A range with q=0 is 'not acceptable' and skipped. Throws "
+					+ "406 when no acceptable serializer exists. Crucially */* no longer short-circuits the whole header: "
+					+ "a browser's 'application/xml;q=0.9,*/*;q=0.8' resolves to XML, not the JSON default.")
 	public static ISerializer negotiateSerializer(@Nullable Object apiContext, @Nullable Object acceptHeader) {
 		IApi api = (IApi) unwrapOptional(apiContext);
 		if (api == null) {
 			throw new ApiException("API context is null");
 		}
 		String raw = asString(acceptHeader);
-		if (raw == null || raw.isBlank() || raw.contains("*/*")) {
-			return api.getSerializers().stream()
-					.filter(s -> s.mimeType() == MimeType.APPLICATION_JSON)
-					.findFirst()
-					.orElseGet(() -> api.getSerializers().stream()
-							.findFirst()
-							.orElseThrow(() -> new ApiException("No serializer registered")));
+		if (raw == null || raw.isBlank()) {
+			return defaultSerializer(api);
 		}
+		java.util.List<AcceptRange> ranges = parseAcceptHeader(raw);
+		if (ranges.isEmpty()) {
+			return defaultSerializer(api);
+		}
+		for (AcceptRange range : ranges) {
+			ISerializer match = matchSerializer(api, range);
+			if (match != null) {
+				return match;
+			}
+		}
+		throw new ApiException("No acceptable serializer for: " + raw);
+	}
+
+	/** One parsed entry of an {@code Accept} header: a media range and its quality factor. */
+	private record AcceptRange(String type, String subtype, double q) {}
+
+	/** Parses an {@code Accept} header into media ranges, dropping q=0 entries, ordered by q descending (stable). */
+	private static java.util.List<AcceptRange> parseAcceptHeader(String raw) {
+		java.util.List<AcceptRange> ranges = new java.util.ArrayList<>();
 		for (String token : raw.split(",")) {
 			String trimmed = token.trim();
 			if (trimmed.isEmpty()) continue;
-			int semicolon = trimmed.indexOf(';');
-			String candidate = (semicolon < 0 ? trimmed : trimmed.substring(0, semicolon))
-					.trim().toLowerCase(Locale.ROOT);
-			Optional<MimeType> mime = MimeType.find(candidate);
-			if (mime.isEmpty()) continue;
-			Optional<ISerializer> match = api.getSerializers().stream()
-					.filter(s -> s.mimeType() == mime.get())
-					.findFirst();
-			if (match.isPresent()) return match.get();
+			String[] parts = trimmed.split(";");
+			String media = parts[0].trim().toLowerCase(Locale.ROOT);
+			if (media.isEmpty()) continue;
+			int slash = media.indexOf('/');
+			String type = slash < 0 ? media : media.substring(0, slash);
+			String subtype = slash < 0 ? "*" : media.substring(slash + 1);
+			double q = 1.0;
+			for (int p = 1; p < parts.length; p++) {
+				String param = parts[p].trim();
+				if (param.startsWith("q=")) {
+					try {
+						q = Double.parseDouble(param.substring(2).trim());
+					} catch (NumberFormatException ignored) {
+						q = 1.0;
+					}
+				}
+			}
+			if (q <= 0.0) continue; // q=0 means the client explicitly refuses this range
+			ranges.add(new AcceptRange(type, subtype, q));
 		}
-		throw new ApiException("No acceptable serializer for: " + raw);
+		// Stable sort by q descending — a tie keeps the client's stated order.
+		ranges.sort((a, b) -> Double.compare(b.q(), a.q()));
+		return ranges;
+	}
+
+	/** The serializer satisfying a single media range, or null when none is registered for it. */
+	private static ISerializer matchSerializer(IApi api, AcceptRange range) {
+		if ("*".equals(range.type()) && "*".equals(range.subtype())) {
+			return defaultSerializer(api);
+		}
+		return api.getSerializers().stream()
+				.filter(s -> s.mimeType() != null)
+				.filter(s -> mimeMatchesRange(s.mimeType(), range))
+				.findFirst()
+				.orElse(null);
+	}
+
+	/** Whether a serializer's MIME type satisfies a media range (exact, or subtype wildcard {@code type/*}). */
+	private static boolean mimeMatchesRange(MimeType mime, AcceptRange range) {
+		String value = mime.getValue();
+		int slash = value.indexOf('/');
+		String type = slash < 0 ? value : value.substring(0, slash);
+		String subtype = slash < 0 ? "" : value.substring(slash + 1);
+		if (!range.type().equals(type)) {
+			return false;
+		}
+		return "*".equals(range.subtype()) || range.subtype().equals(subtype);
+	}
+
+	/** The default serializer: JSON when registered, otherwise the first one; 406 when the pool is empty. */
+	private static ISerializer defaultSerializer(IApi api) {
+		return api.getSerializers().stream()
+				.filter(s -> s.mimeType() == MimeType.APPLICATION_JSON)
+				.findFirst()
+				.orElseGet(() -> api.getSerializers().stream()
+						.findFirst()
+						.orElseThrow(() -> new ApiException("No serializer registered")));
 	}
 
 	@Expression(name = "deserialize",
