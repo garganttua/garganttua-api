@@ -997,11 +997,46 @@ public class SecurityExpressions {
 	// — single source of truth. The sign path asks it for a materialized signing
 	// realm + the qualified signer id to stamp on the token.
 	private static ResolvedKeyRealm resolveKeyRealmAndSigner(@Nullable Object domainContext, @Nullable Object operationRequest) {
+		return resolveKeyRealmAndSigner(domainContext, operationRequest, null);
+	}
+
+	private static ResolvedKeyRealm resolveKeyRealmAndSigner(@Nullable Object domainContext, @Nullable Object operationRequest,
+			@Nullable ICaller signingCaller) {
 		IDomain<?> authzDomain = toDomain(domainContext);
 		IOperationRequest req = (unwrapOptional(operationRequest) instanceof IOperationRequest r) ? r : null;
 		com.garganttua.api.core.security.key.KeySupplier.Signing s =
-				new com.garganttua.api.core.security.key.KeySupplier().resolveSigning(authzDomain, req);
+				new com.garganttua.api.core.security.key.KeySupplier().resolveSigning(authzDomain, req, signingCaller);
 		return new ResolvedKeyRealm(s.realm(), s.signerId());
+	}
+
+	/**
+	 * The identity a freshly-minted token's signing key is scoped to: the authenticated
+	 * PRINCIPAL, read off the token itself (its {@code owned} + tenantId fields, set by
+	 * {@link #createAuthorizationEntity}). This is what {@code oneForEach} keys on, so the
+	 * realm is {@code …:caller:<tenant>:<principal-ownerId>} instead of the anonymous
+	 * login request's {@code …:caller:anonymous:anonymous}. Returns null when neither
+	 * field is populated (then the request caller is used, preserving legacy behaviour).
+	 */
+	private static @Nullable ICaller signingPrincipalCaller(@Nullable Object token, @Nullable IDomain<?> domainContext) {
+		Object entity = unwrapOptional(token);
+		if (entity == null || domainContext == null) {
+			return null;
+		}
+		IDomain<?> tokenDomain = resolveAuthorizationDomain(domainContext);
+		if (tokenDomain == null) {
+			tokenDomain = domainContext;
+		}
+		ObjectAddress ownedAddr = tokenDomain.getDomainDefinition() != null
+				? tokenDomain.getDomainDefinition().owned() : null;
+		ObjectAddress tenantAddr = tokenDomain.getTenantIdFieldAddress();
+		String ownerId = ownedAddr != null ? readField(entity, ownedAddr) : null;
+		String tenantId = tenantAddr != null ? readField(entity, tenantAddr) : null;
+		if (ownerId == null && tenantId == null) {
+			return null;
+		}
+		// Preserve ownerId even when tenantId is null (non-tenant mode): the principal
+		// is identified by its (qualified) ownerId.
+		return new Caller(tenantId, tenantId, null, ownerId, false, false, null);
 	}
 
 	/**
@@ -1132,7 +1167,10 @@ public class SecurityExpressions {
 		if (!isAuthorizationSignable(domainContext)) {
 			return true;
 		}
-		ResolvedKeyRealm resolved = resolveKeyRealmAndSigner(domainContext, operationRequest);
+		// Scope the signing key on the authenticated PRINCIPAL (read off the token),
+		// not the anonymous login request — so oneForEach mints one key per principal.
+		ICaller principalCaller = signingPrincipalCaller(authzEntity, toDomain(domainContext));
+		ResolvedKeyRealm resolved = resolveKeyRealmAndSigner(domainContext, operationRequest, principalCaller);
 		boolean signed = signAuthorization(authzEntity, domainContext, resolved.realm());
 		stampSignedBy(authzEntity, domainContext, resolved.signerId());
 		return signed;

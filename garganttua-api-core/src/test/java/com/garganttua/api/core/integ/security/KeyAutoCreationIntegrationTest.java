@@ -420,12 +420,11 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
 
     /**
      * Bare OperationRequest carrying just the caller fields (tenantId, ownerId)
-     * — used to test the persisted-key resolver directly, bypassing the
-     * authenticate workflow. The realmName scoping for oneForEach depends on
-     * the caller's ownerId, which the authenticate flow itself does not
-     * provide (the caller is anonymous at authentication time). Tests that
-     * want to assert per-caller scoping must therefore drive resolveKeyRealm
-     * with a request that has an owner set.
+     * — used to test the persisted-key resolver ({@code resolveKeyRealm}) directly
+     * with an explicit caller. Note: a full LOGIN no longer scopes the key on this
+     * request caller — the sign path scopes on the authenticated PRINCIPAL read off
+     * the token (see {@code loginScopesKeyByPrincipal}). This helper exercises the
+     * resolver's request-caller path in isolation.
      */
     private static OperationRequest callerRequest(String tenantId, String ownerId) {
         OperationRequest request = new OperationRequest(new java.util.HashMap<>());
@@ -901,6 +900,42 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                     "oneForEach stamps the caller's tenant onto the key entity");
             assertEquals("owner-99", stored.getOwnerId(),
                     "oneForEach stamps the caller's owner onto the key entity");
+        }
+
+        @Test
+        @DisplayName("a full LOGIN scopes the signing key on the authenticated PRINCIPAL — one key per principal, not anonymous")
+        void loginScopesKeyByPrincipal() throws Exception {
+            // The fix: signing during authenticate scopes the key on the PRINCIPAL
+            // (read off the freshly-minted token's owner/tenant), not the anonymous
+            // login request — so oneForEach yields one key per principal instead of
+            // the shared cryptokeys:caller:anonymous:anonymous.
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForEach);
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+            seedUser(w.userDao, "bob@example.com", "uuid-bob", "SUPER_TENANT");
+
+            WorkflowResult alice = executeScript(w.userCtx,
+                    authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, alice.code(), "alice's login must succeed");
+
+            assertEquals(1, w.keyDao.getStorage().size(), "alice's login mints exactly one key");
+            CryptoKeyDto aliceKey = (CryptoKeyDto) w.keyDao.getStorage().get(0);
+            assertEquals("cryptokeys:caller:SUPER_TENANT:users:uuid-alice", aliceKey.getRealmName(),
+                    "the key must be scoped on alice (the principal), not the anonymous login caller; got: "
+                            + aliceKey.getRealmName());
+            assertFalse(aliceKey.getRealmName().contains("anonymous"),
+                    "no anonymous fallback; got: " + aliceKey.getRealmName());
+            assertEquals("SUPER_TENANT", aliceKey.getTenantId(), "key stamped with the principal's tenant");
+            assertEquals("users:uuid-alice", aliceKey.getOwnerId(), "key stamped with the principal's owner");
+
+            WorkflowResult bob = executeScript(w.userCtx,
+                    authenticateRequest("bob@example.com", "SUPER_TENANT"));
+            assertEquals(0, bob.code(), "bob's login must succeed");
+
+            assertEquals(2, w.keyDao.getStorage().size(),
+                    "bob is a distinct principal → a distinct key (one key per principal)");
+            CryptoKeyDto bobKey = (CryptoKeyDto) w.keyDao.getStorage().get(1);
+            assertEquals("cryptokeys:caller:SUPER_TENANT:users:uuid-bob", bobKey.getRealmName(),
+                    "bob's key must be scoped on bob; got: " + bobKey.getRealmName());
         }
     }
 

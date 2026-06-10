@@ -93,6 +93,18 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 	 * Uses the same business rules as {@link #resolveKey}.
 	 */
 	public Signing resolveSigning(IDomain<?> authzDomain, IOperationRequest request) {
+		return resolveSigning(authzDomain, request, null);
+	}
+
+	/**
+	 * Sign-path key resolution scoped by an explicit principal. {@code signingCaller}
+	 * is the identity the key realm is bound to: at authenticate / refresh time it is
+	 * the just-authenticated PRINCIPAL (the token's own owner/tenant), NOT the anonymous
+	 * login request — so {@code oneForEach} yields one key per principal rather than the
+	 * shared {@code …:caller:anonymous:anonymous}. A null {@code signingCaller} falls
+	 * back to the request caller (the legacy behaviour, e.g. resolveKeyRealm).
+	 */
+	public Signing resolveSigning(IDomain<?> authzDomain, IOperationRequest request, ICaller signingCaller) {
 		requireAuthzAuthDef(authzDomain);
 		Object supplied = trySupplierMode(authzDomain);
 		if (supplied != null) {
@@ -109,7 +121,7 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 		}
 		IDomainAuthenticatorAuthorizationKeyDefinition keyConfig = keyConfig(authzDomain);
 		if (keyConfig != null && keyConfig.keyDomain() != null) {
-			Persisted p = resolvePersisted(authzDomain, keyConfig, request);
+			Persisted p = resolvePersisted(authzDomain, keyConfig, request, signingCaller);
 			IReflection reflection = DefaultMapper.reflection();
 			return new Signing(
 					SecurityExpressions.materializeKeyRealm(p.entity(), p.keyDef(), reflection),
@@ -123,9 +135,18 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 	protected record Persisted(Object entity, IDomain<?> keyDomain, IDomainKeyDefinition keyDef) {
 	}
 
-	/** The core persisted-key business rules: scope → lookup → policy → create/rotate. */
 	protected Persisted resolvePersisted(IDomain<?> authzDomain,
 			IDomainAuthenticatorAuthorizationKeyDefinition keyConfig, IOperationRequest request) {
+		return resolvePersisted(authzDomain, keyConfig, request, null);
+	}
+
+	/**
+	 * The core persisted-key business rules: scope → lookup → policy → create/rotate.
+	 * The realm scope is computed from {@code signingCaller} when provided (the
+	 * authenticated principal on the sign path), else from the request caller.
+	 */
+	protected Persisted resolvePersisted(IDomain<?> authzDomain,
+			IDomainAuthenticatorAuthorizationKeyDefinition keyConfig, IOperationRequest request, ICaller signingCaller) {
 		IDomain<?> keyDomain = SecurityExpressions.resolveKeyDomain(authzDomain, keyConfig);
 		if (keyDomain == null) {
 			throw new ApiException("KeySupplier: the configured .key(domain) entity class '"
@@ -137,7 +158,7 @@ public class KeySupplier implements IContextualSupplier<Object, IRuntimeContext>
 					+ "' is not marked as a @Key domain");
 		}
 
-		ICaller caller = SecurityExpressions.extractCaller(request);
+		ICaller caller = signingCaller != null ? signingCaller : SecurityExpressions.extractCaller(request);
 		String realmName = buildRealmName(keyConfig.usage(), caller, keyDomain.getDomainName());
 
 		IFilter filter = Filter.eq(keyEntDef.name().toString(), realmName);
