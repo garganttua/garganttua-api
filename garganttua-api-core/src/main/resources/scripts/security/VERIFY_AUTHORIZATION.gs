@@ -71,13 +71,19 @@ _authResult <- verifyAuthorization(@3, @authz, @0)
 
 setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
 
-// Server-authoritative super-status. The caller's superTenant/superOwner flags
-// arrived from the protocol (the decoded token) and must NOT be trusted. Recompute
-// them from the server-side registries — membership of the caller's tenantId /
-// ownerId — and overwrite the 'caller' arg so every downstream stage (VERIFY_AUTHORITY,
-// repository filtering, field-level update rights) reads the registry's verdict, not
-// the token's claim. No-op when the registries already agree with the caller.
-_caller <- applyServerAuthoritativeSuperStatus(:arg(@0, "caller"), @3)
+// Reconcile the (untrusted) protocol caller with the verified, trusted authentication.
+// The token's identity (tenant / owner / super) wins over the headers; a header that
+// contradicts a non-super token is a cross-target attempt and is rejected (403). This
+// is the single authoritative step — it subsumes the old server super-status recompute
+// AND the tenant/owner gates (R1-R3, see docs/repository-filters.md §1.2).
+_caller <- reconcileCaller(@_authResult, :arg(@0, "caller"))
+! => recordCaughtException(@0, @exception) -> 403
+
+// Server-authoritative super-status on the RESOLVED home tenant/owner: recompute the
+// super flags from the server registries so a token that did not carry a resolvable
+// identity (Mode B / unstamped) still gets the correct super verdict. A self-contained
+// authentication that already set trustworthy super flags agrees with the registry.
+_caller <- applyServerAuthoritativeSuperStatus(@_caller, @3)
 setRequestArg(@0, "caller", @_caller)
 
 output <- 0 -> 0

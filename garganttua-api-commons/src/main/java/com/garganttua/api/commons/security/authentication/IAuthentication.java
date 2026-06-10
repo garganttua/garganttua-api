@@ -74,36 +74,51 @@ public interface IAuthentication {
 		String headerOwner = protocolCaller == null ? null : protocolCaller.ownerId();
 		String callerId = protocolCaller == null ? null : protocolCaller.callerId();
 
-		String resolvedTenantId = tenantId();
-		String resolvedRequestedTenantId = reconcileScope(headerTenant, tenantId(), isSuperTenant(), "tenant");
+		String[] tenant = reconcileScope(headerTenant, tenantId(), isSuperTenant(), "tenant");
+		String[] owner = reconcileScope(headerOwner, ownerId(), isSuperOwner(), "owner");
 
-		String resolvedOwnerId = ownerId();
-		String resolvedRequestedOwnerId = reconcileScope(headerOwner, ownerId(), isSuperOwner(), "owner");
+		// Authorities come from the verified authentication. A null (NOT empty) list means
+		// the authentication did not resolve them (e.g. a Mode-B trusted in-process token) —
+		// fall back to the protocol caller's. An empty list is authoritative (no roles).
+		List<String> resolvedAuthorities = authorities() != null
+				? authorities()
+				: (protocolCaller == null ? null : protocolCaller.authorities());
 
-		return ICaller.of(resolvedTenantId, resolvedRequestedTenantId, callerId,
-				resolvedOwnerId, resolvedRequestedOwnerId,
-				isSuperTenant(), isSuperOwner(), authorities());
+		return ICaller.of(tenant[0], tenant[1], callerId, owner[0], owner[1],
+				isSuperTenant(), isSuperOwner(), resolvedAuthorities);
 	}
 
 	/**
-	 * Computes the "requested" scope (tenant or owner) from the header value against
-	 * the token's value: no header → token's own scope ({@code null} for a super
-	 * principal, meaning "all"); same → the shared value; different → the header is a
-	 * cross-target, allowed only when {@code superCapability}, else rejected.
+	 * Resolves a dimension (tenant or owner) into {@code {home, requested}} from the
+	 * header value against the token's value:
+	 * <ul>
+	 *   <li>the token does NOT carry this dimension (null — e.g. a non-tenant entity, or a
+	 *       Mode-B trusted token without a registered domain) → it imposes no constraint:
+	 *       keep the header for both (the server super-recompute downstream still applies);</li>
+	 *   <li>no header → the token's own scope ({@code requested=null} for a super principal
+	 *       = "all");</li>
+	 *   <li>header == token → the shared value;</li>
+	 *   <li>header ≠ token → a cross-target: {@code home=token, requested=header}, allowed only
+	 *       when {@code superCapability}, else rejected.</li>
+	 * </ul>
 	 */
-	private static String reconcileScope(String headerValue, String tokenValue, boolean superCapability,
-			String dimension) {
-		if (headerValue == null || headerValue.isBlank()) {
-			return superCapability ? null : tokenValue;
+	private static String[] reconcileScope(String header, String token, boolean superCapability, String dimension) {
+		boolean noToken = token == null || token.isBlank();
+		boolean noHeader = header == null || header.isBlank();
+		if (noToken) {
+			return new String[] { noHeader ? null : header, noHeader ? null : header };
 		}
-		if (headerValue.equals(tokenValue)) {
-			return tokenValue;
+		if (noHeader) {
+			return new String[] { token, superCapability ? null : token };
+		}
+		if (token.equals(header)) {
+			return new String[] { token, token };
 		}
 		if (superCapability) {
-			return headerValue; // cross-target: the super principal operates on the requested scope
+			return new String[] { token, header };
 		}
-		throw new ApiException("Authenticated principal's " + dimension + " '" + tokenValue
-				+ "' is not super; it cannot operate on " + dimension + " '" + headerValue + "'.");
+		throw new ApiException("Authenticated principal's " + dimension + " '" + token
+				+ "' is not super; it cannot operate on " + dimension + " '" + header + "'.");
 	}
 
 }

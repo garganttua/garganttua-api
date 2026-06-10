@@ -269,6 +269,21 @@ public class SecurityExpressions {
 		return entity;
 	}
 
+	@Expression(name = "reconcileCaller",
+			description = "Folds the (untrusted) protocol caller into the verified, trusted IAuthentication via "
+					+ "IAuthentication.reconcile (R1-R3): the token's identity (tenant/owner/super) wins over the "
+					+ "headers; a header that contradicts a non-super token is rejected (ApiException → 403). Returns the "
+					+ "protocol caller unchanged when there is no authentication (anonymous path). Replaces "
+					+ "applyServerAuthoritativeSuperStatus on the verify path.")
+	public static ICaller reconcileCaller(@Nullable Object authResult, @Nullable Object protocolCaller) {
+		Object auth = unwrapOptional(authResult);
+		ICaller caller = (ICaller) unwrapOptional(protocolCaller);
+		if (!(auth instanceof IAuthentication authentication)) {
+			return caller;
+		}
+		return authentication.reconcile(caller);
+	}
+
 	@Expression(name = "applyServerAuthoritativeSuperStatus",
 			description = "Recomputes the caller's superTenant/superOwner flags from the server-side registries "
 					+ "(membership of the caller's tenantId / ownerId), OVERRIDING whatever the protocol claimed, and "
@@ -1595,12 +1610,36 @@ public class SecurityExpressions {
 				// keep null
 			}
 		}
+		// Fill the full security context onto the Authentication: identity (tenant /
+		// owner) read off the token, super status from the server registries. This is
+		// the trusted identity the pipeline reconciles the protocol caller against.
+		IDomain<?> authzDomain = toDomain(domainContext);
+		String authTenantId = null;
+		String authOwnerId = null;
+		boolean superTenant = false;
+		boolean superOwner = false;
+		if (authzDomain != null) {
+			ObjectAddress tenantAddr = authzDomain.getTenantIdFieldAddress();
+			authTenantId = tenantAddr != null ? readField(existingAuthzEntity, tenantAddr) : null;
+			ObjectAddress ownedAddr = authzDomain.getDomainDefinition() != null
+					? authzDomain.getDomainDefinition().owned() : null;
+			authOwnerId = ownedAddr != null ? readField(existingAuthzEntity, ownedAddr) : null;
+			IApi api = apiOf(authzDomain);
+			if (api != null) {
+				superTenant = authTenantId != null && api.isSuperTenant(authTenantId);
+				superOwner = authOwnerId != null && api.isSuperOwner(authOwnerId);
+			}
+		}
 		return new com.garganttua.api.commons.security.authentication.Authentication(
 				true,
 				principal,
 				null,
 				tokenType,
 				authorities,
+				authTenantId,
+				authOwnerId,
+				superTenant,
+				superOwner,
 				true, true, true, true);
 	}
 
@@ -1793,8 +1832,11 @@ public class SecurityExpressions {
 			// owner link). Trust it as-is — an external protocol always decodes
 			// to a REGISTERED token class (which takes the authenticate path
 			// below); only an in-process caller can present an unregistered one.
+			// Trusted in-process Mode-B token with no registered domain: the framework
+			// cannot resolve its identity/authorities, so it carries NONE — null lets
+			// reconcile fall back to the (trusted) protocol caller's tenant/owner/authorities.
 			return new com.garganttua.api.commons.security.authentication.Authentication(
-					true, authz, null, authz, java.util.List.of(), true, true, true, true);
+					true, authz, null, authz, null, true, true, true, true);
 		}
 
 		// 2. Framework-owned intrinsic checks: expiration + revocation, read from
