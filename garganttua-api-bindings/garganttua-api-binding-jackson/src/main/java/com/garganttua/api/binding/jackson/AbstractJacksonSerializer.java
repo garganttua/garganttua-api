@@ -3,6 +3,7 @@ package com.garganttua.api.binding.jackson;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.MimeType;
 import com.garganttua.api.commons.serialization.ISerializer;
@@ -26,6 +27,11 @@ abstract class AbstractJacksonSerializer implements ISerializer {
 		// with a 400 — the DTO simply ignores it. Empty beans must not blow up writes.
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+		// Java 8 date/time support: without the JSR-310 module Jackson throws on any
+		// non-null java.time value (Instant, LocalDate*, …). Register it and emit
+		// ISO-8601 strings rather than numeric timestamps.
+		mapper.registerModule(new JavaTimeModule());
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 		this.mapper = mapper;
 		this.mimeType = mimeType;
 	}

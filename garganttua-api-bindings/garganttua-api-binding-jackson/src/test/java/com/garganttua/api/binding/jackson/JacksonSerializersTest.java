@@ -171,6 +171,56 @@ class JacksonSerializersTest {
 		}
 	}
 
+	/** A DTO carrying a java.time value — the case that used to 500 without the JSR-310 module. */
+	public static class Temporal {
+		public String label;
+		public java.time.Instant expiration;
+
+		public Temporal() {}
+
+		public Temporal(String label, java.time.Instant expiration) {
+			this.label = label;
+			this.expiration = expiration;
+		}
+	}
+
+	private static final IClass<Temporal> TEMPORAL = IClass.getClass(Temporal.class);
+
+	@Nested
+	@DisplayName("java.time support (JSR-310)")
+	class JavaTime {
+
+		private static final java.time.Instant WHEN = java.time.Instant.parse("2026-06-10T12:34:56Z");
+
+		@Test
+		@DisplayName("JSON: a non-null Instant renders as an ISO-8601 string (not a 500), and round-trips")
+		void jsonInstant() throws ApiException {
+			JacksonJsonSerializer json = new JacksonJsonSerializer();
+			String text = new String(json.serialize(new Temporal("key", WHEN)), StandardCharsets.UTF_8);
+
+			assertTrue(text.contains("\"2026-06-10T12:34:56Z\""),
+					"Instant must be an ISO-8601 string, not a numeric timestamp; got: " + text);
+
+			Temporal back = json.deserialize(text.getBytes(StandardCharsets.UTF_8), TEMPORAL);
+			assertEquals(WHEN, back.expiration, "the Instant must round-trip to the exact value");
+			assertEquals("key", back.label);
+		}
+
+		@Test
+		@DisplayName("XML: a non-null Instant renders as an ISO-8601 string (not a 500), and round-trips")
+		void xmlInstant() throws ApiException {
+			JacksonXmlSerializer xml = new JacksonXmlSerializer();
+			String text = new String(xml.serialize(new Temporal("key", WHEN)), StandardCharsets.UTF_8);
+
+			assertTrue(text.contains("<expiration>2026-06-10T12:34:56Z</expiration>"),
+					"Instant must be an ISO-8601 element value; got: " + text);
+
+			Temporal back = xml.deserialize(text.getBytes(StandardCharsets.UTF_8), TEMPORAL);
+			assertEquals(WHEN, back.expiration, "the Instant must round-trip to the exact value");
+			assertEquals("key", back.label);
+		}
+	}
+
 	@Nested
 	@DisplayName("Common contract")
 	class Contract {
