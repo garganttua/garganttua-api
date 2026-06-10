@@ -29,7 +29,7 @@ import com.garganttua.core.reflection.IClass;
  * shortcuts (createOne/readAll/...) ignored the domain's per-operation
  * access/authority overrides because they instantiated a fresh
  * {@code OperationDefinition.*WithStandardSecurity(...)} every time — hard-coding
- * {@code Access.tenant} regardless of the DSL config.
+ * {@code Access.authenticated} regardless of the DSL config.
  */
 @DisplayName("RequestBuilder honours DSL-configured operation overrides")
 class RequestBuilderOperationResolutionTest extends AbstractCrudIntegrationTest {
@@ -91,10 +91,10 @@ class RequestBuilderOperationResolutionTest extends AbstractCrudIntegrationTest 
         @Test
         @DisplayName("creationAccess(owner) → RequestBuilder.createOne() attaches an op with access=owner")
         void creationOwner() throws ApiException {
-            IApi api = buildApi(b -> b.creationAccess(Access.owner));
+            IApi api = buildApi(b -> b.creationAccess(Access.authenticated));
             IDomain<?> domain = api.getDomain("users").orElseThrow();
             IRequest req = RequestBuilder.builder(domain).createOne(new User()).build();
-            assertEquals(Access.owner, operationAttached(req).access());
+            assertEquals(Access.authenticated, operationAttached(req).access());
         }
 
         @Test
@@ -157,7 +157,7 @@ class RequestBuilderOperationResolutionTest extends AbstractCrudIntegrationTest 
             OperationDefinition standard = OperationDefinition.createOneWithStandardSecurity(
                     domain.getDomainName(), domain.getEntityClass());
             assertEquals(standard.access(), attached.access(),
-                    "fallback access should match createOneWithStandardSecurity (Access.tenant)");
+                    "fallback access should match createOneWithStandardSecurity (Access.authenticated)");
             assertEquals(standard.authority(), attached.authority(),
                     "fallback authority should match createOneWithStandardSecurity (true)");
             assertEquals(BusinessOperation.create, attached.getBusinessOperation(),

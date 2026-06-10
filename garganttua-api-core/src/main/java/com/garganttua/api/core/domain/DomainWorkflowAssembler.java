@@ -395,42 +395,13 @@ class DomainWorkflowAssembler<E> {
 		accessScript.up().up();
 		codeVars.add("_verify_authorization_verify_authorization_code");
 
-		// Guard for subsequent security scripts: business rules + verify-authorization
-		String accessGuard = buildCompoundGuard(codeVars);
-
-		// VERIFY_TENANT — tenant access check
-		if (multiTenancyEnabled) {
-			var tenantScript = builder.stage("verify-tenant")
-					.script("classpath:scripts/security/VERIFY_TENANT.gs")
-						.name("verify-tenant")
-						.input("operationRequest", "@0")
-						.input("repository", "@1")
-						.input("domainContext", "@2");
-			if (accessGuard != null) {
-				tenantScript.when(accessGuard);
-			}
-			tenantScript.up().up();
-			codeVars.add("_verify_tenant_verify_tenant_code");
-		}
-
-		// VERIFY_OWNER — owner access check
-		if (isOwnerOrOwned) {
-			String ownerGuard = buildCompoundGuard(codeVars);
-			var ownerScript = builder.stage("verify-owner")
-					.script("classpath:scripts/security/VERIFY_OWNER.gs")
-						.name("verify-owner")
-						.input("operationRequest", "@0")
-						.input("repository", "@1")
-						.input("domainContext", "@2");
-			if (ownerGuard != null) {
-				ownerScript.when(ownerGuard);
-			}
-			ownerScript.up().up();
-			codeVars.add("_verify_owner_verify_owner_code");
-		}
+		// VERIFY_TENANT / VERIFY_OWNER removed: tenant/owner isolation is now folded into
+		// IAuthentication.reconcile (the verified token always carries the caller's
+		// tenant/owner) on the VERIFY_AUTHORIZATION step, plus the repository filter.
+		// No separate Access.tenant/owner gate exists any more.
 
 		// VERIFY_AUTHORITY — caller's authority check (per-operation, 403 on miss).
-		// Runs after token decoding / tenant / owner so the caller is fully resolved
+		// Runs after token decoding + reconcile so the caller is fully resolved
 		// and the operation lookup is stable.
 		String authorityGuard = buildCompoundGuard(codeVars);
 		var authorityScript = builder.stage("verify-authority")

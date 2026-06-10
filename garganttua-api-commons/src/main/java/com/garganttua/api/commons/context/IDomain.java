@@ -13,7 +13,6 @@ import com.garganttua.api.commons.definition.IDtoDefinition;
 import com.garganttua.api.commons.definition.IEntityDefinition;
 import com.garganttua.api.commons.entity.annotations.UnicityScope;
 import com.garganttua.api.commons.filter.IFilter;
-import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.OperationDefinition;
 import com.garganttua.api.commons.pageable.IPageable;
 import com.garganttua.api.commons.repository.IRepository;
@@ -129,10 +128,9 @@ public interface IDomain<E> extends ILifecycle, IObservable {
 	 * - the entity is not public AND the operation access level is tenant or owner
 	 */
 	default boolean isTenantIdMandatoryForOperation(OperationDefinition operation) {
-		if (operation == null) return false;
-		if (isPublicEntity()) return false;
-		Access access = operation.access();
-		return access == Access.tenant || access == Access.owner;
+		// No Access.tenant/owner gate any more: tenant isolation is folded into
+		// IAuthentication.reconcile + the repository filter (token-authoritative redesign).
+		return false;
 	}
 
 	/**
@@ -141,9 +139,7 @@ public interface IDomain<E> extends ILifecycle, IObservable {
 	 * - the entity is owned AND the operation access level is owner
 	 */
 	default boolean isOwnerIdMandatoryForOperation(OperationDefinition operation) {
-		if (operation == null) return false;
-		if (!isOwnedEntity()) return false;
-		return operation.access() == Access.owner;
+		return false;
 	}
 
 	// Hook method addresses (to be implemented by concrete class)

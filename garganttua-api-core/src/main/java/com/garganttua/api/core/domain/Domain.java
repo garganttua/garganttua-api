@@ -854,9 +854,9 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             return null;
         }
         com.garganttua.api.commons.operation.Access access = op.access();
-        boolean needsOwner = access == com.garganttua.api.commons.operation.Access.owner;
+        boolean needsOwner = access == com.garganttua.api.commons.operation.Access.authenticated;
         boolean needsTenant = needsOwner
-                || access == com.garganttua.api.commons.operation.Access.tenant;
+                || access == com.garganttua.api.commons.operation.Access.authenticated;
         try {
             if (needsOwner && (caller == null || caller.ownerId() == null)) {
                 com.garganttua.api.core.expression.SecurityExpressions.requireOwnerId(caller);

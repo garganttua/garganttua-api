@@ -378,19 +378,20 @@ public class SecurityExpressions {
 		return true;
 	}
 
-	@Expression(name = "isTenantIdMandatory", description = "Returns true if the operation requires a tenantId based on access level")
+	@Expression(name = "isTenantIdMandatory",
+			description = "Always false since the token-authoritative redesign: there is no Access.tenant gate. "
+					+ "Tenant isolation is folded into IAuthentication.reconcile (the verified token carries the "
+					+ "caller's tenant) and the repository filter; a tenantId is never required on the caller based on "
+					+ "the access level.")
 	public static boolean isTenantIdMandatory(Object operation, Object context) {
-		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
-		if (opDef == null) return false;
-		Access access = opDef.access();
-		return access == Access.tenant || access == Access.owner;
+		return false;
 	}
 
-	@Expression(name = "isOwnerIdMandatory", description = "Returns true if the operation requires an ownerId based on access level")
+	@Expression(name = "isOwnerIdMandatory",
+			description = "Always false since the token-authoritative redesign: there is no Access.owner gate. "
+					+ "Owner isolation is folded into reconcile + the repository filter.")
 	public static boolean isOwnerIdMandatory(Object operation, Object context) {
-		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
-		if (opDef == null) return false;
-		return opDef.access() == Access.owner;
+		return false;
 	}
 
 	@Expression(name = "authenticatorContext", description = "Returns the IAuthenticatorDefinition from the domain's security definition")

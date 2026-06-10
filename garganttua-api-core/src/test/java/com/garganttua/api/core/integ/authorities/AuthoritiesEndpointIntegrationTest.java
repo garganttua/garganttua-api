@@ -328,27 +328,9 @@ class AuthoritiesEndpointIntegrationTest extends AbstractCrudIntegrationTest {
             assertFalse(names.isEmpty());
         }
 
-        @Test
-        @DisplayName("access=tenant + caller without requestedTenantId → throws")
-        void tenantAccessRequiresRequestedTenant() throws ApiException {
-            IApi api = buildApi(true, Access.tenant, null);
-            // A caller with no tenant info at all (anonymous-like).
-            ApiException ex = assertThrows(ApiException.class,
-                    () -> api.getAuthoritiesForCaller(Caller.createAnonymousCaller()));
-            assertTrue(ex.getMessage().contains("tenant"),
-                    "error must mention the tenant requirement — got: " + ex.getMessage());
-        }
-
-        @Test
-        @DisplayName("access=owner + caller without ownerId → throws")
-        void ownerAccessRequiresOwnerId() throws ApiException {
-            IApi api = buildApi(true, Access.owner, null);
-            // A tenant-scoped caller without owner.
-            ApiException ex = assertThrows(ApiException.class,
-                    () -> api.getAuthoritiesForCaller(Caller.createTenantCaller("ACME")));
-            assertTrue(ex.getMessage().contains("owner"),
-                    "error must mention the owner requirement — got: " + ex.getMessage());
-        }
+        // Removed: access=tenant / access=owner gates no longer exist (token-authoritative
+        // redesign — only anonymous / authenticated remain). The authenticated case is
+        // already covered by "access=authenticated + anonymous caller → throws".
 
         @Test
         @DisplayName("authority gate + caller with the right authority → list returned")

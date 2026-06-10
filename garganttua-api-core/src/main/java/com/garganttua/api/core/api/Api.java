@@ -167,18 +167,6 @@ public class Api extends AbstractLifecycle implements IApi, com.garganttua.core.
                             + "(no tenantId on the caller).");
                 }
                 break;
-            case tenant:
-                if (!superCaller && caller.requestedTenantId() == null) {
-                    throw new ApiException("Authorities endpoint requires a tenant-scoped caller "
-                            + "(no requestedTenantId).");
-                }
-                break;
-            case owner:
-                if (!superCaller && caller.ownerId() == null) {
-                    throw new ApiException("Authorities endpoint requires an owner-scoped caller "
-                            + "(no ownerId).");
-                }
-                break;
             default:
                 break;
         }

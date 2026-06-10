@@ -595,7 +595,7 @@ class JavalinInterfaceTest {
 			assertNotNull(domain.lastOperation, "the read must reach the domain");
 			assertEquals(BusinessOperation.readAll, domain.lastOperation.getBusinessOperation());
 			assertEquals(Access.anonymous, domain.lastOperation.access(),
-					"the dispatched op must carry the domain's configured access, not Access.tenant");
+					"the dispatched op must carry the domain's configured access, not Access.authenticated");
 			assertFalse(domain.lastOperation.authority(),
 					"the dispatched op must carry the domain's configured authority flag");
 			assertSame(anonymousReadAll, domain.lastOperation,

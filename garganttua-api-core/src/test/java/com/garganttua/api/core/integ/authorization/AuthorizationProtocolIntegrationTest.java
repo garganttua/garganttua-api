@@ -92,7 +92,7 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 		if (securityEnabled) {
 			domainBuilder.security()
 					.disable(false)
-					.readOneAccess(Access.tenant)
+					.readOneAccess(Access.authenticated)
 				.up();
 		} else {
 			// Security is ON by default now; this branch tests the no-gate path,
@@ -121,7 +121,7 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 		// about decoder routing, not authority enforcement.
 		OperationRequest req = tenantRequest(
 				OperationDefinition.readOne("users", IClass.getClass(User.class),
-						false, null, com.garganttua.api.commons.operation.Access.tenant),
+						false, null, com.garganttua.api.commons.operation.Access.authenticated),
 				"acme");
 		req.arg("type", "uuid");
 		req.arg("identifier", "u-1");

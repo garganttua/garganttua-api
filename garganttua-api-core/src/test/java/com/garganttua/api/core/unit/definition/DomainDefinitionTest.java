@@ -171,8 +171,8 @@ class DomainDefinitionTest {
         @DisplayName("uses access levels from workflow definitions")
         void usesAccessFromWorkflowDefinitions() {
             Map<String, IWorkflowDefinition> workflows = Map.of(
-                    "create", crudWorkflow(Access.owner, false),
-                    "readAll", crudWorkflow(Access.tenant, false),
+                    "create", crudWorkflow(Access.authenticated, false),
+                    "readAll", crudWorkflow(Access.authenticated, false),
                     "readOne", crudWorkflow(Access.anonymous, false));
 
             DomainDefinition<TestEntity> def = createDefinition(
@@ -190,8 +190,8 @@ class DomainDefinitionTest {
                     .filter(o -> o.getBusinessOperation() == BusinessOperation.readOne)
                     .findFirst().orElseThrow();
 
-            assertEquals(Access.owner, createOp.access());
-            assertEquals(Access.tenant, readAllOp.access());
+            assertEquals(Access.authenticated, createOp.access());
+            assertEquals(Access.authenticated, readAllOp.access());
             assertEquals(Access.anonymous, readOneOp.access());
         }
 
@@ -293,7 +293,7 @@ class DomainDefinitionTest {
             when(ucDef.operation()).thenReturn(TechnicalOperation.create);
             when(ucDef.scope()).thenReturn(Scope.oneEntity);
             when(ucDef.authority()).thenReturn(true);
-            when(ucDef.access()).thenReturn(Access.owner);
+            when(ucDef.access()).thenReturn(Access.authenticated);
 
             DomainDefinition<TestEntity> def = createDefinition(
                     defaultSecurityDef(), Map.of("myUseCase", ucDef), Map.of());
@@ -304,7 +304,7 @@ class DomainDefinitionTest {
             assertEquals(OperationType.usesCase, ops.get(0).type());
             assertEquals(TechnicalOperation.create, ops.get(0).technicalOperation());
             assertTrue(ops.get(0).authority());
-            assertEquals(Access.owner, ops.get(0).access());
+            assertEquals(Access.authenticated, ops.get(0).access());
         }
 
         @Test

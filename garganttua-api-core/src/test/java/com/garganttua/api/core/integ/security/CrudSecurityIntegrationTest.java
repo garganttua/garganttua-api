@@ -101,19 +101,19 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("readAllAccess(tenant) sets tenant access on readAll operation")
         void readAllAccessTenant() throws ApiException {
-            IDomain<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.authenticated));
             OperationDefinition op = findOperation(ctx, BusinessOperation.readAll);
             assertNotNull(op);
-            assertEquals(Access.tenant, op.access());
+            assertEquals(Access.authenticated, op.access());
         }
 
         @Test
         @DisplayName("updateAccess(owner) sets owner access on update operation")
         void updateAccessOwner() throws ApiException {
-            IDomain<?> ctx = buildSecuredDomain(b -> b.updateAccess(Access.owner));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.updateAccess(Access.authenticated));
             OperationDefinition op = findOperation(ctx, BusinessOperation.update);
             assertNotNull(op);
-            assertEquals(Access.owner, op.access());
+            assertEquals(Access.authenticated, op.access());
         }
 
         @Test
@@ -129,13 +129,13 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @DisplayName("each operation can have different access levels")
         void differentAccessLevels() throws ApiException {
             IDomain<?> ctx = buildSecuredDomain(b -> b
-                    .creationAccess(Access.tenant)
+                    .creationAccess(Access.authenticated)
                     .readAllAccess(Access.anonymous)
-                    .deleteAllAccess(Access.owner));
+                    .deleteAllAccess(Access.authenticated));
 
-            assertEquals(Access.tenant, findOperation(ctx, BusinessOperation.create).access());
+            assertEquals(Access.authenticated, findOperation(ctx, BusinessOperation.create).access());
             assertEquals(Access.anonymous, findOperation(ctx, BusinessOperation.readAll).access());
-            assertEquals(Access.owner, findOperation(ctx, BusinessOperation.deleteAll).access());
+            assertEquals(Access.authenticated, findOperation(ctx, BusinessOperation.deleteAll).access());
             // Unchanged ones keep default
             assertEquals(Access.authenticated, findOperation(ctx, BusinessOperation.readOne).access());
         }
@@ -207,7 +207,7 @@ class CrudSecurityIntegrationTest extends AbstractCrudScriptTest {
         @Test
         @DisplayName("tenant access rejects request without authorization token")
         void tenantAccessRejectsWithoutAuth() throws ApiException {
-            IDomain<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.tenant));
+            IDomain<?> ctx = buildSecuredDomain(b -> b.readAllAccess(Access.authenticated));
             OperationDefinition op = findOperation(ctx, BusinessOperation.readAll);
             WorkflowResult result = executeWithoutAuth(ctx, op);
             assertFalse(result.isSuccess());

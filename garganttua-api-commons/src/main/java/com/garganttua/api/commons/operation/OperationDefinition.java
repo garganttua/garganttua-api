@@ -13,32 +13,32 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 	// --- Static factory methods ---
 
 	public static OperationDefinition readOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.oneEntity, OperationType.standard, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition createOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.create, entity, Scope.oneEntity, OperationType.standard, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition useCaseWithStandardSecurity(String domainName, TechnicalOperation operation, IClass<?> entity,
 			Scope scope) {
-		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, true, null, Access.tenant);
+		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition deleteAllWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, null, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition deleteOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.oneEntity, OperationType.standard, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition updateOneWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, null, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.update, entity, Scope.oneEntity, OperationType.standard, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition readAllWithStandardSecurity(String domainName, IClass<?> entity) {
-		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, null, Access.tenant);
+		return new OperationDefinition(domainName, TechnicalOperation.read, entity, Scope.allEntities, OperationType.standard, true, null, Access.authenticated);
 	}
 
 	public static OperationDefinition authenticate(String domainName, IClass<?> entity) {

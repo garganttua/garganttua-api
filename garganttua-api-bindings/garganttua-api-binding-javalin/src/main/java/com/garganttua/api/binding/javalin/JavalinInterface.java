@@ -144,7 +144,7 @@ public class JavalinInterface implements IInterface {
 		// Resolve each route's operation from the domain's CONFIGURED operations so the
 		// access/authority the request carries matches what the domain declared (e.g.
 		// readAllAccess(anonymous)). Hardcoding *WithStandardSecurity would send
-		// Access.tenant/authority=true regardless, and the verify stages would reject an
+		// Access.authenticated/authority=true regardless, and the verify stages would reject an
 		// anonymous HTTP caller — silently skipping the business stage. A route is
 		// registered only when its operation is actually enabled on the domain.
 		List<OperationDefinition> configured = domain.getDomainDefinition().operations();
