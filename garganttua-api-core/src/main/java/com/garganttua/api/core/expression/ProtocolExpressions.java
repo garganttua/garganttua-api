@@ -6,8 +6,11 @@ import java.util.Map;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.pageable.Pageable;
 import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.sort.Sort;
+import com.garganttua.api.commons.sort.SortDirection;
 import com.garganttua.core.expression.annotations.Expression;
 
 import jakarta.annotation.Nullable;
@@ -124,6 +127,41 @@ public class ProtocolExpressions {
 		req.arg(IOperationRequest.SUPER_TENANT.name(), c.superTenant());
 		req.arg(IOperationRequest.SUPER_OWNER.name(), c.superOwner());
 		return c;
+	}
+
+	@Expression(name = "applyReadParamsFromQuery",
+			description = "Translates HTTP query parameters into the typed readAll args so pagination / sort / "
+					+ "output-mode work over the transport: page+size → IPageable (PAGE), sort=field[,asc|desc] → "
+					+ "ISort (SORT), mode=full|uuid|id → MODE. No-op for absent params; harmless for non-readAll ops.")
+	public static Object applyReadParamsFromQuery(@Nullable Object request, @Nullable Object queryParameters) {
+		IOperationRequest req = (IOperationRequest) unwrapOptional(request);
+		Object qpObj = unwrapOptional(queryParameters);
+		if (req == null || !(qpObj instanceof Map<?, ?> qp)) {
+			return request;
+		}
+		Object sizeRaw = qp.get("size");
+		if (sizeRaw != null) {
+			int pageSize = toInt(sizeRaw, 0);
+			if (pageSize > 0) {
+				int pageIndex = Math.max(toInt(qp.get("page"), 0), 0);
+				req.arg(IOperationRequest.PAGE.name(), new Pageable(pageIndex, pageSize));
+			}
+		}
+		Object sortRaw = qp.get("sort");
+		if (sortRaw != null && !String.valueOf(sortRaw).isBlank()) {
+			String[] parts = String.valueOf(sortRaw).split(",", 2);
+			String field = parts[0].trim();
+			if (!field.isEmpty()) {
+				SortDirection dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim()))
+						? SortDirection.desc : SortDirection.asc;
+				req.arg(IOperationRequest.SORT.name(), new Sort(field, dir));
+			}
+		}
+		Object modeRaw = qp.get("mode");
+		if (modeRaw != null && !String.valueOf(modeRaw).isBlank()) {
+			req.arg(IOperationRequest.MODE.name(), String.valueOf(modeRaw).trim());
+		}
+		return request;
 	}
 
 	// ----- helpers -----

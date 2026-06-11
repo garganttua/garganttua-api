@@ -26,7 +26,10 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.protocol.IProtocol;
+import com.garganttua.api.commons.pageable.IPageable;
 import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.sort.ISort;
+import com.garganttua.api.commons.sort.SortDirection;
 import com.garganttua.core.reflection.IClass;
 
 @DisplayName("ProtocolExpressions")
@@ -347,6 +350,68 @@ class ProtocolExpressionsTest {
 		void rejectsNullRequest() {
 			ICaller caller = new Caller("t", "t", "c", null, false, false, null);
 			assertThrows(ApiException.class, () -> ProtocolExpressions.setCallerArgs(null, caller));
+		}
+	}
+
+	@Nested
+	@DisplayName("applyReadParamsFromQuery — HTTP query params → typed readAll args")
+	class ApplyReadParams {
+
+		@Test
+		@DisplayName("page+size → IPageable, sort=field,desc → ISort, mode=uuid → MODE")
+		void translatesAll() {
+			OperationRequest req = new OperationRequest(new HashMap<>());
+			Map<String, Object> qp = new HashMap<>();
+			qp.put("page", "1");
+			qp.put("size", "2");
+			qp.put("sort", "name,desc");
+			qp.put("mode", "uuid");
+
+			Object out = ProtocolExpressions.applyReadParamsFromQuery(req, qp);
+			assertSame(req, out, "returns the request unchanged");
+
+			IPageable page = req.arg(IOperationRequest.PAGE).orElseThrow();
+			assertEquals(1, page.getPageIndex());
+			assertEquals(2, page.getPageSize());
+
+			ISort sort = req.arg(IOperationRequest.SORT).orElseThrow();
+			assertEquals("name", sort.getFieldName());
+			assertEquals(SortDirection.desc, sort.getDirection());
+
+			assertEquals("uuid", req.arg(IOperationRequest.MODE).orElseThrow());
+		}
+
+		@Test
+		@DisplayName("sort without a direction defaults to asc; page defaults to 0 when only size is given")
+		void defaults() {
+			OperationRequest req = new OperationRequest(new HashMap<>());
+			Map<String, Object> qp = new HashMap<>();
+			qp.put("size", "5");
+			qp.put("sort", "label");
+
+			ProtocolExpressions.applyReadParamsFromQuery(req, qp);
+
+			IPageable page = req.arg(IOperationRequest.PAGE).orElseThrow();
+			assertEquals(0, page.getPageIndex());
+			assertEquals(5, page.getPageSize());
+
+			ISort sort = req.arg(IOperationRequest.SORT).orElseThrow();
+			assertEquals("label", sort.getFieldName());
+			assertEquals(SortDirection.asc, sort.getDirection());
+		}
+
+		@Test
+		@DisplayName("no read params → no typed args set (size=0 also yields no page)")
+		void noOp() {
+			OperationRequest req = new OperationRequest(new HashMap<>());
+			Map<String, Object> qp = new HashMap<>();
+			qp.put("size", "0"); // size 0 must NOT create a page
+
+			ProtocolExpressions.applyReadParamsFromQuery(req, qp);
+
+			assertTrue(req.arg(IOperationRequest.PAGE).isEmpty(), "no pageable for size 0");
+			assertTrue(req.arg(IOperationRequest.SORT).isEmpty());
+			assertTrue(req.arg(IOperationRequest.MODE).isEmpty());
 		}
 	}
 }

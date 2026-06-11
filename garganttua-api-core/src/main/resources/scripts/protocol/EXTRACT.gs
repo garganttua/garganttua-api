@@ -54,6 +54,9 @@ setRequestArg(@0, "path", @path)
 setRequestArg(@0, "method", @method)
 setRequestArg(@0, "rawAuthorization", @auth)
 setRequestArg(@0, "queryParameters", @params)
+// Translate the read query params (page, size, sort, mode) into the typed readAll args
+// (PAGE/SORT/MODE), so pagination / sort / output-mode work over the transport.
+applyReadParamsFromQuery(@0, @params)
 setCallerArgs(@0, @caller)
 
 // Do NOT seed the workflow output with the caller: it is consumed downstream via
