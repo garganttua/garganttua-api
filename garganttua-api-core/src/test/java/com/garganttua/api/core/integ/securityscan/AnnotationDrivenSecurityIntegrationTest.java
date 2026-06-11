@@ -70,6 +70,7 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
                     credentials,
                     ok ? "anno-token" : null,
                     ok ? List.of("ROLE_USER") : null,
+                    null, null, false, false, // tenantId, ownerId, isSuperTenant, isSuperOwner
                     true, true, true, true);
         }
     }
@@ -83,7 +84,8 @@ class AnnotationDrivenSecurityIntegrationTest extends AbstractCrudScriptTest {
             // Token self-validation hook (signature/custom). Expiration + revocation
             // are enforced by the framework before this runs; here we accept.
             return new com.garganttua.api.commons.security.authentication.Authentication(
-                    true, principal, credentials, "anno-token", List.of(), true, true, true, true);
+                    true, principal, credentials, "anno-token", List.of(),
+                    null, null, false, false, true, true, true, true);
         }
     }
 

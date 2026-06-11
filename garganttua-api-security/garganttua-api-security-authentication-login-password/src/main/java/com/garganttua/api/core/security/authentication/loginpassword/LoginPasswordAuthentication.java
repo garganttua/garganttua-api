@@ -20,7 +20,8 @@ public class LoginPasswordAuthentication {
 		String encodedPassword = "";
 		boolean matches = this.encoder.matches(new String(credential), encodedPassword);
 		return new com.garganttua.api.commons.security.authentication.Authentication(
-				matches, principal, null, null, null, true, true, true, true);
+				matches, principal, null, null, null,
+				null, null, false, false, true, true, true, true);
 	}
 
 /* 	@AuthenticatorSecurityPreProcessing

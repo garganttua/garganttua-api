@@ -151,7 +151,7 @@ class InvokeAuthenticateExpressionTest {
 		void happyPath() {
 			IApi api = mock(IApi.class);
 			IDomain domain = mockDomain("jwtTokens", IClass.getClass(FixtureEntity.class));
-			IAuthentication expected = new Authentication(true, new Object(), null, "jwt", List.of(), true, true, true, true);
+			IAuthentication expected = new Authentication(true, new Object(), null, "jwt", List.of(), null, null, false, false, true, true, true, true);
 			when(domain.invoke(any(IOperationRequest.class))).thenReturn(OperationResponse.ok(expected));
 
 			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());
@@ -220,7 +220,7 @@ class InvokeAuthenticateExpressionTest {
 		void noTenantPropagationWhenNull() {
 			IApi api = mock(IApi.class);
 			IDomain domain = mockDomain("jwtTokens", IClass.getClass(FixtureEntity.class));
-			IAuthentication expected = new Authentication(true, new Object(), null, "jwt", List.of(), true, true, true, true);
+			IAuthentication expected = new Authentication(true, new Object(), null, "jwt", List.of(), null, null, false, false, true, true, true, true);
 			when(domain.invoke(any(IOperationRequest.class))).thenReturn(OperationResponse.ok(expected));
 
 			AuthenticationRequest req = new AuthenticationRequest(null, new FixtureAuth());

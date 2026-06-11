@@ -99,12 +99,12 @@ class TryAuthenticateTest {
 
     private Authentication successAuth() {
         return new Authentication(true, "principal", null, "token-123", List.of("ROLE_USER"),
-                true, true, true, true);
+                null, null, false, false, true, true, true, true);
     }
 
     private Authentication failedAuth() {
         return new Authentication(false, null, null, null, null,
-                true, true, true, true);
+                null, null, false, false, true, true, true, true);
     }
 
     // --- Tests ---

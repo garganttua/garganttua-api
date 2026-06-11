@@ -39,6 +39,7 @@ public class StubTokenAuthentication {
                 credentials,
                 success ? "token" : null,
                 success ? List.of() : null,
+                null, null, false, false, // tenantId, ownerId, isSuperTenant, isSuperOwner
                 true, true, true, true);
     }
 }

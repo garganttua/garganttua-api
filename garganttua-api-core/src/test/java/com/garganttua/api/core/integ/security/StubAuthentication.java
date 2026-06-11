@@ -22,6 +22,7 @@ public class StubAuthentication {
                 credentials,
                 success ? "auth-token" : null,
                 success ? List.of("ROLE_USER") : null,
+                null, null, false, false, // tenantId, ownerId, isSuperTenant, isSuperOwner
                 true, true, true, true);
     }
 }

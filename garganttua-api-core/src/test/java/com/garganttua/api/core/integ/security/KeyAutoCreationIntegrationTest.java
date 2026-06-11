@@ -233,7 +233,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                 ok = false;
             }
             return new com.garganttua.api.commons.security.authentication.Authentication(
-                    ok, ok ? t : null, t, "verified", null, true, true, true, true);
+                    ok, ok ? t : null, t, "verified", null,
+                    null, null, false, false, true, true, true, true);
         }
     }
 
@@ -248,7 +249,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                 Object token, Object signingKey,
                 com.garganttua.api.commons.definition.IAuthenticatorDefinition def) {
             return new com.garganttua.api.commons.security.authentication.Authentication(
-                    true, token, token, "permissive", null, true, true, true, true);
+                    true, token, token, "permissive", null,
+                    null, null, false, false, true, true, true, true);
         }
     }
 

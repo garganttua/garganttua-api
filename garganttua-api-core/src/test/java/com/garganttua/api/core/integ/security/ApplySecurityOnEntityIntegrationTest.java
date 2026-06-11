@@ -36,7 +36,7 @@ class ApplySecurityOnEntityIntegrationTest extends AbstractCrudScriptTest {
     /** Authentication strategy carrying a no-op authenticate + the entity-securing method. */
     public static class SecuringStrategy {
         public IAuthentication authenticate() {
-            return new Authentication(true, null, null, null, List.of(), true, true, true, true);
+            return new Authentication(true, null, null, null, List.of(), null, null, false, false, true, true, true, true);
         }
 
         /** Secures the entity in place: prefixes the name (stands in for hashing a password). */

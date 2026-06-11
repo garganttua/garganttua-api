@@ -34,18 +34,4 @@ public record Authentication(
 	boolean accountNonLocked,
 	boolean accountNonExpired) implements IAuthentication {
 
-	/**
-	 * Backward-compatible constructor without the identity/privilege fields —
-	 * {@code tenantId}/{@code ownerId} default to {@code null} and the super flags to
-	 * {@code false}. Keeps the existing {@code new Authentication(...)} sites unchanged;
-	 * the verify/authenticate paths use the full constructor to carry the real context.
-	 */
-	public Authentication(boolean authenticated, Object principal, Object credentials,
-			Object authorization, List<String> authorities, boolean credentialsNonExpired,
-			boolean enabled, boolean accountNonLocked, boolean accountNonExpired) {
-		this(authenticated, principal, credentials, authorization, authorities,
-				null, null, false, false,
-				credentialsNonExpired, enabled, accountNonLocked, accountNonExpired);
-	}
-
 }

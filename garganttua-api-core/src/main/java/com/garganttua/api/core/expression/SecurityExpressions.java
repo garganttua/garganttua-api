@@ -1992,7 +1992,9 @@ public class SecurityExpressions {
 			// cannot resolve its identity/authorities, so it carries NONE — null lets
 			// reconcile fall back to the (trusted) protocol caller's tenant/owner/authorities.
 			return new com.garganttua.api.commons.security.authentication.Authentication(
-					true, authz, null, authz, null, true, true, true, true);
+					true, authz, null, authz, null,
+					null, null, false, false, // no resolved tenant/owner, non-super
+					true, true, true, true);
 		}
 
 		// 2. Framework-owned intrinsic checks: expiration + revocation, read from
