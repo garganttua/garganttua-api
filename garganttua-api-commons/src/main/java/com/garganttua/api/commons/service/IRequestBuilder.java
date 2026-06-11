@@ -48,6 +48,9 @@ public interface IRequestBuilder {
 
 	IRequestBuilder sort(ISort sort);
 
+	/** readAll output shape — full entities (default) / only uuids / only ids. */
+	IRequestBuilder mode(ReadAllOutputMode mode);
+
 	// --- Tracing ---
 
 	IRequestBuilder executionUuid(UUID executionUuid);

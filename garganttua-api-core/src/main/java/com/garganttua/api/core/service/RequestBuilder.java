@@ -127,6 +127,13 @@ public class RequestBuilder implements IRequestBuilder {
 	}
 
 	@Override
+	public IRequestBuilder mode(com.garganttua.api.commons.service.ReadAllOutputMode mode) {
+		// The enum constant name IS the wire value read by READ_ALL.gs (:arg(@0, "mode")).
+		this.operationRequest.arg(IOperationRequest.MODE, mode == null ? null : mode.name());
+		return this;
+	}
+
+	@Override
 	public IRequestBuilder executionUuid(UUID executionUuid) {
 		this.operationRequest.arg(IOperationRequest.EXECUTION_UUID, executionUuid);
 		return this;

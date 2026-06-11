@@ -18,6 +18,7 @@ import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.service.IOperationResponse;
 import com.garganttua.api.commons.service.IRequestBuilder;
 import com.garganttua.api.commons.service.OperationResponseCode;
+import com.garganttua.api.commons.service.ReadAllOutputMode;
 import com.garganttua.api.core.caller.Caller;
 import com.garganttua.api.core.integ.crud.AbstractCrudIntegrationTest;
 import com.garganttua.core.reflection.IClass;
@@ -126,6 +127,31 @@ class ApiRequestBuilderTest extends AbstractCrudIntegrationTest {
             List<?> b = (List<?>) viaLongForm.getResponse();
             assertEquals(1, a.size(), "shortcut should return the one seeded row; got " + a);
             assertEquals(b.size(), a.size(), "shortcut and long form must return the same number of rows");
+        }
+
+        @Test
+        @DisplayName("readAll().mode(uuid).execute() reduces the result to uuids — the DSL .mode() reaches the pipeline")
+        void readAllModeUuidThroughDsl() throws ApiException {
+            StubDao dao = new StubDao();
+            ProductDto seed = new ProductDto();
+            seed.setId("p-1");
+            seed.setUuid("uuid-1");
+            seed.setLabel("Coffee");
+            seed.setPrice(3.5);
+            dao.getStorage().add(seed);
+
+            IApi api = buildApiWithProduct(dao);
+
+            IOperationResponse resp = api.request("products")
+                    .caller(Caller.createTenantCaller("acme"))
+                    .readAll()
+                    .mode(ReadAllOutputMode.uuid)
+                    .build()
+                    .execute();
+
+            assertEquals(OperationResponseCode.OK, resp.getResponseCode(), () -> "got " + resp);
+            assertEquals(List.of("uuid-1"), resp.getResponse(),
+                    "mode=uuid must reduce the readAll result to the list of uuids");
         }
 
         @Test
