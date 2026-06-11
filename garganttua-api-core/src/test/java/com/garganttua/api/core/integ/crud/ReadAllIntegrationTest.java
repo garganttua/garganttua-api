@@ -194,6 +194,38 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Test
+    @DisplayName("readAll with pageable actually SLICES (page 1 / size 2 over 5 → entities 3-4), totalCount=5, via the canonical PAGE key")
+    void readAllPageableSlices() throws ApiException {
+        for (int i = 0; i < 5; i++) {
+            UserDto u = new UserDto();
+            u.setId(String.valueOf(i));
+            u.setUuid("uuid-" + i);
+            u.setTenantId("SUPER_TENANT");
+            u.setName("User" + i);
+            userDao.getStorage().add(u);
+        }
+
+        IPageable pageable = new IPageable() {
+            @Override public int getPageIndex() { return 1; } // second page (0-based)
+            @Override public int getPageSize() { return 2; }
+        };
+
+        OperationDefinition readAllOp = OperationDefinition.readAllWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = superTenantScriptRequest(readAllOp);
+        // The CANONICAL key (now "pageable") — proves the DSL/IDomain page path reaches the pipeline.
+        request.arg(IOperationRequest.PAGE, pageable);
+
+        WorkflowResult result = executeScript(userCtx, request);
+        assertTrue(result.isSuccess(), () -> "readAll failed; vars=" + result.variables());
+
+        Page page = (Page) result.output();
+        assertEquals(5L, page.totalCount(), "totalCount is the UNPAGINATED total");
+        assertEquals(2, page.entities().size(), "page size 2 -> exactly 2 entities");
+        assertEquals("uuid-2", ((User) page.entities().get(0)).getUuid(), "page 1 starts at index 2 (the 3rd entity)");
+        assertEquals("uuid-3", ((User) page.entities().get(1)).getUuid(), "and ends at index 3 (the 4th entity)");
+    }
+
+    @Test
     @DisplayName("readAll without pageable returns a plain list")
     void readAllWithoutPageableReturnsPlainList() throws ApiException {
         seedUsers();
@@ -213,7 +245,7 @@ class ReadAllIntegrationTest extends AbstractCrudScriptTest {
         seedUsers();
 
         IPageable pageable = new IPageable() {
-            @Override public int getPageIndex() { return 1; }
+            @Override public int getPageIndex() { return 0; } // first page; size 5 holds all 3
             @Override public int getPageSize() { return 5; }
         };
 

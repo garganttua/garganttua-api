@@ -30,8 +30,12 @@ public interface IOperationRequest {
 	ArgKey<Object> BODY = ArgKey.of("body", IClass.getClass(Object.class));
 	ArgKey<String> ENTITY_UUID = ArgKey.of("entityUuid", IClass.getClass(String.class));
 	ArgKey<IFilter> FILTER = ArgKey.of("filter", IClass.getClass(IFilter.class));
-	ArgKey<IPageable> PAGE = ArgKey.of("page", IClass.getClass(IPageable.class));
+	// "pageable" — MUST match what READ_ALL.gs reads (:arg(@0, "pageable")), so the DSL .page()
+	// and IDomain.readAll(page) actually reach the pipeline.
+	ArgKey<IPageable> PAGE = ArgKey.of("pageable", IClass.getClass(IPageable.class));
 	ArgKey<ISort> SORT = ArgKey.of("sort", IClass.getClass(ISort.class));
+	/** readAll output mode — "full" / "uuid" / "id" (see READ_ALL.gs). */
+	ArgKey<String> MODE = ArgKey.of("mode", IClass.getClass(String.class));
 
 	ArgKey<String> CALLER_ID = ArgKey.of("callerId", IClass.getClass(String.class));
 	ArgKey<String> TENANT_ID = ArgKey.of("tenantId", IClass.getClass(String.class));

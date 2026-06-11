@@ -181,7 +181,15 @@ public abstract class AbstractCrudIntegrationTest {
         @Override
         public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
                 throws ApiException {
-            return new ArrayList<>(storage);
+            List<Object> result = new ArrayList<>(storage);
+            // Honor the pageable (slicing) so pagination is exercised end-to-end, like a real DAO.
+            if (pageable.isPresent()) {
+                IPageable p = pageable.get();
+                int from = Math.min(Math.max(p.getPageIndex(), 0) * p.getPageSize(), result.size());
+                int to = Math.min(from + p.getPageSize(), result.size());
+                result = new ArrayList<>(result.subList(from, to));
+            }
+            return result;
         }
 
         @Override
@@ -276,10 +284,16 @@ public abstract class AbstractCrudIntegrationTest {
             this.lastPageable = pageable;
             this.lastFilter = filter;
             this.lastSort = sort;
-            if (filter.isPresent()) {
-                return filterStorage(filter.get());
+            List<Object> result = filter.isPresent() ? filterStorage(filter.get()) : new ArrayList<>(storage);
+            // Honor the pageable so pagination (slicing) is exercised end-to-end, like a real DAO:
+            // skip pageIndex*pageSize, take pageSize. count() still reports the unpaginated total.
+            if (pageable.isPresent()) {
+                IPageable p = pageable.get();
+                int from = Math.min(Math.max(p.getPageIndex(), 0) * p.getPageSize(), result.size());
+                int to = Math.min(from + p.getPageSize(), result.size());
+                result = new ArrayList<>(result.subList(from, to));
             }
-            return new ArrayList<>(storage);
+            return result;
         }
 
         private List<Object> filterStorage(com.garganttua.api.commons.filter.IFilter f) {
