@@ -7,6 +7,8 @@ import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.security.context.IAuthorizationContext;
 import com.garganttua.core.dsl.IAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
 
 public interface IAuthorizationBuilder<E>
         extends IAutomaticLinkedBuilder<IAuthorizationBuilder<E>, IDomainSecurityBuilder<E>, IAuthorizationContext> {
@@ -70,6 +72,19 @@ public interface IAuthorizationBuilder<E>
     IAuthorizationBuilder<E> decode(ObjectAddress methodAddress) throws ApiException;
 
     IAuthorizationBuilder<E> storable(boolean b);
+
+    /**
+     * Declares a custom caller-reconciliation method, overriding the default
+     * {@link com.garganttua.api.commons.security.authentication.IAuthentication#reconcile}
+     * (R1-R3) on the verify path. The method's contract is forced:
+     * {@code ICaller method(IAuthentication authentication, ICaller protocolCaller)} — it
+     * receives the verified, trusted authentication and the untrusted protocol caller, and
+     * returns the caller the pipeline must use. Enables fully custom, self-contained caller
+     * resolution (e.g. reading super status from signed token claims). {@code supplier}
+     * provides the instance carrying the method; its two parameters are framework-wired.
+     */
+    IAuthorizationBuilder<E> reconcile(ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName)
+            throws ApiException;
 
     // Custom token production (the mint-side issuer) moved to the authentication
     // builder: .authentication(supplier).authorization(issuer, "method"). See

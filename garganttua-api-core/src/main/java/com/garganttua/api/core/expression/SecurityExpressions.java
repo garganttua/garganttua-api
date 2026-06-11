@@ -270,18 +270,61 @@ public class SecurityExpressions {
 	}
 
 	@Expression(name = "reconcileCaller",
-			description = "Folds the (untrusted) protocol caller into the verified, trusted IAuthentication via "
-					+ "IAuthentication.reconcile (R1-R3): the token's identity (tenant/owner/super) wins over the "
-					+ "headers; a header that contradicts a non-super token is rejected (ApiException → 403). Returns the "
-					+ "protocol caller unchanged when there is no authentication (anonymous path). Replaces "
-					+ "applyServerAuthoritativeSuperStatus on the verify path.")
-	public static ICaller reconcileCaller(@Nullable Object authResult, @Nullable Object protocolCaller) {
+			description = "Folds the (untrusted) protocol caller into the verified, trusted IAuthentication. "
+					+ "Default (R1-R3): IAuthentication.reconcile — the token's identity (tenant/owner/super) wins over "
+					+ "the headers; a header contradicting a non-super token is rejected (403); then the super flags are "
+					+ "recomputed from the server registries on the resolved home (authoritative). Custom: when "
+					+ ".authorization().reconcile(supplier,\"method\") is declared, that method owns caller resolution "
+					+ "entirely (no registry super-recompute) — enabling self-contained tokens whose super status comes "
+					+ "from signed claims. Returns the protocol caller unchanged when there is no authentication.")
+	public static ICaller reconcileCaller(@Nullable Object authResult, @Nullable Object protocolCaller,
+			@Nullable Object request, @Nullable Object domainContext, @Nullable Object apiContext) {
 		Object auth = unwrapOptional(authResult);
 		ICaller caller = (ICaller) unwrapOptional(protocolCaller);
 		if (!(auth instanceof IAuthentication authentication)) {
 			return caller;
 		}
-		return authentication.reconcile(caller);
+
+		// Custom reconcile method (default-or-custom): when .authorization().reconcile(supplier,
+		// "method") is declared, delegate caller resolution to it. Its params — (IAuthentication,
+		// ICaller) — are resolved from the runtime context by their suppliers, so we publish the
+		// authentication / request first (mirrors the mint-side issuer). Otherwise: default R1-R3.
+		IMethodBinder<?> binder = resolveReconcileBinder(domainContext);
+		if (binder != null) {
+			IDomain<?> dc = toDomain(domainContext);
+			Object req = unwrapOptional(request);
+			IOperationRequest opReq = (req instanceof IOperationRequest r) ? r : null;
+			IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
+			if (runtimeCtx != null) {
+				runtimeCtx.setVariable("authentication", authentication);
+				if (dc != null) {
+					runtimeCtx.setVariable("domainContext", dc);
+				}
+				if (opReq != null) {
+					runtimeCtx.setVariable("request", opReq);
+				}
+			}
+			Optional<? extends IMethodReturn<?>> result;
+			if (binder instanceof IContextualMethodBinder<?, ?> contextualBinder) {
+				result = ((IContextualMethodBinder<?, Object>) contextualBinder).execute(runtimeCtx);
+			} else {
+				result = binder.execute();
+			}
+			Object resolved = result.isPresent() ? result.get().single() : null;
+			if (!(resolved instanceof ICaller resolvedCaller)) {
+				throw new ApiException("reconcileCaller: the custom reconcile method must return an ICaller");
+			}
+			// Custom reconcile owns the result entirely — trust its super flags (self-contained).
+			return resolvedCaller;
+		}
+		// Default R1-R3, then the server-authoritative super-recompute on the resolved home.
+		ICaller reconciled = authentication.reconcile(caller);
+		return applyServerAuthoritativeSuperStatus(reconciled, apiContext);
+	}
+
+	private static IMethodBinder<?> resolveReconcileBinder(Object domainContext) {
+		Object defObj = authorizationDefinition(domainContext);
+		return (defObj instanceof IDomainAuthorizationDefinition def) ? def.reconcileBinder() : null;
 	}
 
 	@Expression(name = "applyServerAuthoritativeSuperStatus",

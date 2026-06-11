@@ -73,17 +73,13 @@ setRequestArg(@0, "principal", authResultPrincipal(@_authResult))
 
 // Reconcile the (untrusted) protocol caller with the verified, trusted authentication.
 // The token's identity (tenant / owner / super) wins over the headers; a header that
-// contradicts a non-super token is a cross-target attempt and is rejected (403). This
-// is the single authoritative step — it subsumes the old server super-status recompute
-// AND the tenant/owner gates (R1-R3, see docs/repository-filters.md §1.2).
-_caller <- reconcileCaller(@_authResult, :arg(@0, "caller"))
+// contradicts a non-super token is a cross-target attempt and is rejected (403). This is
+// the single authoritative step — it subsumes the tenant/owner gates AND the server
+// super-status recompute (default path; folded into reconcileCaller). When a custom
+// .authorization().reconcile(...) is declared, IT owns caller resolution entirely (no
+// registry recompute) — self-contained tokens. R1-R3, see docs/repository-filters.md §1.2.
+_caller <- reconcileCaller(@_authResult, :arg(@0, "caller"), @0, @2, @3)
 ! => recordCaughtException(@0, @exception) -> 403
-
-// Server-authoritative super-status on the RESOLVED home tenant/owner: recompute the
-// super flags from the server registries so a token that did not carry a resolvable
-// identity (Mode B / unstamped) still gets the correct super verdict. A self-contained
-// authentication that already set trustworthy super flags agrees with the registry.
-_caller <- applyServerAuthoritativeSuperStatus(@_caller, @3)
 setRequestArg(@0, "caller", @_caller)
 
 output <- 0 -> 0

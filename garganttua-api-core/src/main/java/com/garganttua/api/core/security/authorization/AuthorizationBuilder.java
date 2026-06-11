@@ -19,7 +19,11 @@ import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.reflection.fields.FieldResolver;
+import com.garganttua.core.supply.ISupplier;
+import com.garganttua.core.supply.dsl.ISupplierBuilder;
+import com.garganttua.api.core.security.authentication.CallerSupplierBuilder;
 
 @Reflected
 public class AuthorizationBuilder<E>
@@ -48,6 +52,7 @@ public class AuthorizationBuilder<E>
     private ISignableAuthorizationBuilder<E> signable;
     private IRefreshableAuthorizationBuilder<E> refreshable;
     private boolean storable = false;
+    private IAuthorizationMethodBinderBuilder<E> reconcile;
 
     public AuthorizationBuilder(IDomainSecurityBuilder<E> domainBuilder, IClass<?> entityClass) {
         super(domainBuilder);
@@ -294,6 +299,20 @@ public class AuthorizationBuilder<E>
     }
 
     @Override
+    public IAuthorizationBuilder<E> reconcile(ISupplierBuilder<?, ? extends ISupplier<?>> supplier, String methodName)
+            throws ApiException {
+        Objects.requireNonNull(supplier, "reconcile supplier cannot be null");
+        Objects.requireNonNull(methodName, "reconcile method name cannot be null");
+        // The custom reconcile method is ICaller method(IAuthentication authentication, ICaller caller):
+        // its two params are framework-fixed, auto-wired to the suppliers that read the verified
+        // authentication and the protocol caller from the runtime context.
+        this.reconcile = new AuthorizationMethodBinderBuilder<E>(this, supplier, methodName)
+                .withParam(0, new AuthenticationSupplierBuilder())
+                .withParam(1, new CallerSupplierBuilder());
+        return this;
+    }
+
+    @Override
     protected synchronized IAuthorizationContext doBuild() throws ApiException {
         // Collect signable fields if configured
         ObjectAddress signatureField = null;
@@ -325,12 +344,14 @@ public class AuthorizationBuilder<E>
             if (decodeMethod == null) decodeMethod = rb.getDecodeMethod();
         }
 
+        IMethodBinder<?> reconcileBinder = this.reconcile != null ? this.reconcile.build() : null;
+
         return new AuthorizationContext(
                 this.type, this.authorities, this.expiration, this.creation, this.revoked,
                 this.storable, this.signable != null, this.refreshable != null,
                 signatureField, getDataToSignMethod,
                 refreshExpiration, refreshRevoked,
-                encodeMethod, decodeMethod, this.signedBy);
+                encodeMethod, decodeMethod, this.signedBy, reconcileBinder);
     }
 
     @Override
