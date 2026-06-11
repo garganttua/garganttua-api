@@ -333,7 +333,7 @@ public class DomainBuilder<E>
         Objects.requireNonNull(fieldName, "Field name cannot be null");
         requireEntityDeclared();
 
-        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, IClass.getClass(org.geojson.Point.class)).address();
 
         return this;
     }
@@ -343,7 +343,7 @@ public class DomainBuilder<E>
         Objects.requireNonNull(field, "Field cannot be null");
         requireEntityDeclared();
 
-        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), IClass.getClass(org.geojson.Point.class)).address();
 
         return this;
     }
@@ -353,7 +353,7 @@ public class DomainBuilder<E>
         Objects.requireNonNull(fieldAddress, "Field address cannot be null");
         requireEntityDeclared();
 
-        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(Object.class)).address();
+        this.geolocalized = FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, IClass.getClass(org.geojson.Point.class)).address();
 
         return this;
     }
