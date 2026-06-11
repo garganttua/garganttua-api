@@ -12,13 +12,14 @@ import com.garganttua.core.observability.Logger;
 
 /**
  * Injects the entity being CREATED or UPDATED into a custom
- * {@code applySecurityOnEntity} method parameter. Reads the {@code "entity"} arg off
- * the operation request (the body the CRUD pipeline is about to persist), so the
- * user method can secure it in place (e.g. hash a password field) or return a
- * secured copy.
+ * {@code applySecurityOnEntity} method parameter. Reads the CURRENT pipeline entity from
+ * the runtime {@code "entity"} variable (published by the applySecurityOnEntity expression
+ * after uuid/tenant/owner stamping), so the user method can secure it in place (e.g. hash a
+ * password field) or return a secured copy.
  *
- * <p>Wired automatically as parameter 0 of an {@code applySecurityOnEntity} binder;
- * also usable explicitly via {@code .withParam(i, new SecuredEntitySupplierBuilder())}.
+ * <p>The {@code applySecurityOnEntity} method imposes no parameter — wire this supplier
+ * explicitly when the method needs the entity:
+ * {@code .applySecurityOnEntity("m").withParam(0, new SecuredEntitySupplierBuilder())}.
  */
 @SuppressWarnings("rawtypes")
 public class SecuredEntitySupplier implements IContextualSupplier<Object, IRuntimeContext> {

@@ -56,14 +56,17 @@ class ApplySecurityOnEntityIntegrationTest extends AbstractCrudScriptTest {
         userDao = new CapturingDao();
         IApiBuilder builder = newBuilder();
 
+        // Single fluent chain across TWO binder segments (authenticate then applySecurityOnEntity),
+        // each ending in up(). This compiles thanks to the parameterized Link on
+        // IAuthenticationMethodBinderBuilder — up() no longer returns a RAW IAuthenticationBuilder
+        // (which erased the generics and degraded the next withParam to Object).
         var authBuilder = builder.security()
                 .authentication(new FixedSupplierBuilder<>(new SecuringStrategy(),
-                        IClass.getClass(SecuringStrategy.class)));
-        authBuilder.authenticate("authenticate");
-        // The method is free: wire the entity being created/updated as its parameter explicitly.
-        authBuilder.applySecurityOnEntity("secure")
-                .withParam(0, new com.garganttua.api.core.security.authentication.SecuredEntitySupplierBuilder());
-        authBuilder.up();
+                        IClass.getClass(SecuringStrategy.class)))
+                .authenticate("authenticate").up()
+                .applySecurityOnEntity("secure")
+                        .withParam(0, new com.garganttua.api.core.security.authentication.SecuredEntitySupplierBuilder())
+                        .up();
 
         builder.domain(IClass.getClass(User.class))
                 .tenant(true)
