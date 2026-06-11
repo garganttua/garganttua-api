@@ -98,14 +98,13 @@ public class AuthenticationBuilder<E> extends AbstractAutomaticLinkedBuilder<IAu
     }
 
     /**
-     * Binds the custom {@code applySecurityOnEntity} method and auto-wires its first
-     * parameter to the entity being created/updated ({@link SecuredEntitySupplierBuilder}).
-     * Returns the binder builder so the caller may declare additional parameters via
-     * {@code .withParam(i, supplier)} and return with {@code .up()}.
+     * Binds the custom {@code applySecurityOnEntity} method and returns the binder builder.
+     * The method is completely free: NO parameter is imposed — the caller declares whatever
+     * it needs via {@code .withParam(i, supplier)} (e.g. {@link SecuredEntitySupplierBuilder}
+     * for the entity being written) and returns with {@code .up()}.
      */
     private IAuthenticationMethodBinderBuilder<?> bindApplySecurityOnEntity(String methodName) throws ApiException {
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName)
-                .withParam(0, new SecuredEntitySupplierBuilder());
+        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName);
         return this.applySecurityOnEntity;
     }
 

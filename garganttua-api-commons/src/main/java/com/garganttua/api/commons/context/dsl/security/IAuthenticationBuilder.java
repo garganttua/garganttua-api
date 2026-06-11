@@ -28,9 +28,11 @@ public interface IAuthenticationBuilder<E>
         /**
          * Declares a custom method, run on CREATE and UPDATE of this authenticator entity
          * (after validation, just before persistence), to apply security on it — e.g. hash a
-         * password field. Its first parameter is auto-wired to the entity being written; the
-         * method may mutate it in place or return a secured entity (both are honored). Declare
-         * additional parameters via {@code .withParam(i, supplier)} and return with {@code .up()}.
+         * password field. The method is completely free: NO parameter is imposed — declare
+         * whatever it needs via {@code .withParam(i, supplier)} (use
+         * {@code SecuredEntitySupplierBuilder} to receive the entity being written) and return
+         * with {@code .up()}. The method may mutate the entity in place or return a secured one
+         * (both are honored).
          */
         IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(
                         String methodName) throws ApiException;

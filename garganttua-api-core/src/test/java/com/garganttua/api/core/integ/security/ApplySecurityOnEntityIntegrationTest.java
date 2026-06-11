@@ -60,8 +60,9 @@ class ApplySecurityOnEntityIntegrationTest extends AbstractCrudScriptTest {
                 .authentication(new FixedSupplierBuilder<>(new SecuringStrategy(),
                         IClass.getClass(SecuringStrategy.class)));
         authBuilder.authenticate("authenticate");
-        // The entity being created/updated is auto-wired as the first parameter.
-        authBuilder.applySecurityOnEntity("secure");
+        // The method is free: wire the entity being created/updated as its parameter explicitly.
+        authBuilder.applySecurityOnEntity("secure")
+                .withParam(0, new com.garganttua.api.core.security.authentication.SecuredEntitySupplierBuilder());
         authBuilder.up();
 
         builder.domain(IClass.getClass(User.class))
