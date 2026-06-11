@@ -80,24 +80,33 @@ public class AuthenticationBuilder<E> extends AbstractAutomaticLinkedBuilder<IAu
     }
 
     @Override
-    public IAuthenticationBuilder<E> applySecurityOnEntity(String methodName) throws ApiException {
+    public IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(String methodName) throws ApiException {
         Objects.requireNonNull(methodName, "Method name cannot be null");
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
-        return this;
+        return bindApplySecurityOnEntity(methodName);
     }
 
     @Override
-    public IAuthenticationBuilder<E> applySecurityOnEntity(IMethod method) throws ApiException {
+    public IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(IMethod method) throws ApiException {
         Objects.requireNonNull(method, "Method cannot be null");
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
-        return this;
+        return bindApplySecurityOnEntity(method.getName());
     }
 
     @Override
-    public IAuthenticationBuilder<E> applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
+    public IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(ObjectAddress methodAddress) throws ApiException {
         Objects.requireNonNull(methodAddress, "Method address cannot be null");
-        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier);
-        return this;
+        return bindApplySecurityOnEntity(methodAddress.getElement(methodAddress.length() - 1));
+    }
+
+    /**
+     * Binds the custom {@code applySecurityOnEntity} method and auto-wires its first
+     * parameter to the entity being created/updated ({@link SecuredEntitySupplierBuilder}).
+     * Returns the binder builder so the caller may declare additional parameters via
+     * {@code .withParam(i, supplier)} and return with {@code .up()}.
+     */
+    private IAuthenticationMethodBinderBuilder<?> bindApplySecurityOnEntity(String methodName) throws ApiException {
+        this.applySecurityOnEntity = new AuthenticationMethodBinderBuilder<>(this, this.supplier, methodName)
+                .withParam(0, new SecuredEntitySupplierBuilder());
+        return this.applySecurityOnEntity;
     }
 
     @Override

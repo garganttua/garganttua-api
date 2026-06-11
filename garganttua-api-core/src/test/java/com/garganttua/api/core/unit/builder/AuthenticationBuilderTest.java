@@ -76,23 +76,25 @@ class AuthenticationBuilderTest {
         }
 
         @Test
-        @DisplayName("applySecurityOnEntity(String) returns same builder")
-        void applySecurityStringReturnsSelf() throws ApiException {
-            assertSame(builder, builder.applySecurityOnEntity("applySecurityOnEntity"));
+        @DisplayName("applySecurityOnEntity(String) returns binder builder whose up() is the auth builder")
+        void applySecurityStringReturnsBinder() throws ApiException {
+            var binder = builder.applySecurityOnEntity("applySecurityOnEntity");
+            assertNotNull(binder, "should return the binder builder");
+            assertSame(builder, binder.up(), "binder.up() returns the authentication builder");
         }
 
         @Test
-        @DisplayName("applySecurityOnEntity(Method) returns same builder")
-        void applySecurityMethodReturnsSelf() throws Exception {
+        @DisplayName("applySecurityOnEntity(Method) returns binder builder")
+        void applySecurityMethodReturnsBinder() throws Exception {
             IMethod m = IClass.getClass(TestAuthentication.class).getMethod("applySecurityOnEntity");
-            assertSame(builder, builder.applySecurityOnEntity(m));
+            assertNotNull(builder.applySecurityOnEntity(m), "should return the binder builder");
         }
 
         @Test
-        @DisplayName("applySecurityOnEntity(ObjectAddress) returns same builder")
-        void applySecurityObjectAddressReturnsSelf() throws ApiException {
+        @DisplayName("applySecurityOnEntity(ObjectAddress) returns binder builder")
+        void applySecurityObjectAddressReturnsBinder() throws ApiException {
             ObjectAddress addr = new ObjectAddress("applySecurityOnEntity");
-            assertSame(builder, builder.applySecurityOnEntity(addr));
+            assertNotNull(builder.applySecurityOnEntity(addr), "should return the binder builder");
         }
 
         @Test

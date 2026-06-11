@@ -25,13 +25,20 @@ public interface IAuthenticationBuilder<E>
         IAuthenticationBuilder<E> entityMustHaveFieldOfTypeAnnotatedWith(IClass<? extends Annotation> annotation,
                         IClass<?> fieldType) throws ApiException;
 
-        IAuthenticationBuilder<E> applySecurityOnEntity(
+        /**
+         * Declares a custom method, run on CREATE and UPDATE of this authenticator entity
+         * (after validation, just before persistence), to apply security on it — e.g. hash a
+         * password field. Its first parameter is auto-wired to the entity being written; the
+         * method may mutate it in place or return a secured entity (both are honored). Declare
+         * additional parameters via {@code .withParam(i, supplier)} and return with {@code .up()}.
+         */
+        IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(
                         String methodName) throws ApiException;
 
-        IAuthenticationBuilder<E> applySecurityOnEntity(
+        IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(
                         IMethod method) throws ApiException;
 
-        IAuthenticationBuilder<E> applySecurityOnEntity(
+        IAuthenticationMethodBinderBuilder<?> applySecurityOnEntity(
                         ObjectAddress methodAddress) throws ApiException;
 
         IUseCaseBuilder<?, ?, ?> useCase(String methodName) throws ApiException;

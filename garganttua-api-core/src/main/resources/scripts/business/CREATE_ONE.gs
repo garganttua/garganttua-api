@@ -61,6 +61,11 @@ entity <- runBeforeCreate(@entity, @0)
 guardSuperStatusOnWrite(@entity, @2)
 ! => recordCaughtException(@0, @exception) -> 403
 
+// Apply the authenticator's custom security on the entity (e.g. hash a password) — after
+// validation, just before persistence. No-op for non-authenticator domains.
+entity <- applySecurityOnEntity(@entity, @2, @0)
+! => recordCaughtException(@0, @exception) -> 500
+
 // Persist entity
 saveEntity(@1, @entity)
 ! => recordCaughtException(@0, @exception) -> 500

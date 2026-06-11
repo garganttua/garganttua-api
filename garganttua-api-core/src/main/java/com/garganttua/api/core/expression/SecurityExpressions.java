@@ -450,6 +450,58 @@ public class SecurityExpressions {
 		return null;
 	}
 
+	@Expression(name = "applySecurityOnEntity",
+			description = "Runs the authenticator's custom applySecurityOnEntity method(s) on the entity being "
+					+ "created/updated (after validation, before persist) — e.g. hashing a password. Each configured "
+					+ "authentication's binder receives the CURRENT entity (SecuredEntitySupplier) and may mutate it in "
+					+ "place or return a secured entity (both honored, chained). No-op when the domain is not an "
+					+ "authenticator or declares no applySecurityOnEntity. Returns the (possibly secured) entity.")
+	public static Object applySecurityOnEntity(@Nullable Object entityObj, @Nullable Object domainContextObj,
+			@Nullable Object request) {
+		Object entity = unwrapOptional(entityObj);
+		if (entity == null) {
+			return entity;
+		}
+		IAuthenticatorDefinition authDef = authenticatorContext(domainContextObj);
+		if (authDef == null || authDef.authenticationDefinitions() == null) {
+			return entity;
+		}
+		IDomain<?> domain = toDomain(domainContextObj);
+		Object req = unwrapOptional(request);
+		IOperationRequest opReq = (req instanceof IOperationRequest r) ? r : null;
+
+		for (IAuthenticationDefinition auth : authDef.authenticationDefinitions()) {
+			if (auth == null) {
+				continue;
+			}
+			IMethodBinder<?> binder = auth.applySecurityOnEntityMethodBinder();
+			if (binder == null) {
+				continue;
+			}
+			IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
+			if (runtimeCtx != null) {
+				runtimeCtx.setVariable("entity", entity);
+				if (domain != null) {
+					runtimeCtx.setVariable("domainContext", domain);
+				}
+				if (opReq != null) {
+					runtimeCtx.setVariable("request", opReq);
+				}
+			}
+			Optional<? extends IMethodReturn<?>> result;
+			if (binder instanceof IContextualMethodBinder<?, ?> contextualBinder) {
+				result = ((IContextualMethodBinder<?, Object>) contextualBinder).execute(runtimeCtx);
+			} else {
+				result = binder.execute();
+			}
+			Object secured = result.isPresent() ? result.get().single() : null;
+			if (secured != null) {
+				entity = secured; // the method returned a secured entity; void/mutate keeps the same ref
+			}
+		}
+		return entity;
+	}
+
 	@Expression(name = "authenticatorScope", description = "Returns the authenticator scope string from IAuthenticatorDefinition")
 	public static String authenticatorScope(Object authContext) {
 		if (authContext instanceof IAuthenticatorDefinition def) {

@@ -69,6 +69,11 @@ storedEntity <- runBeforeUpdate(@storedEntity, @0)
 guardSuperStatusOnWrite(@storedEntity, @2)
 ! => recordCaughtException(@0, @exception) -> 403
 
+// Apply the authenticator's custom security on the merged entity (e.g. re-hash a changed
+// password) — after validation, just before persistence. No-op for non-authenticator domains.
+storedEntity <- applySecurityOnEntity(@storedEntity, @2, @0)
+! => recordCaughtException(@0, @exception) -> 500
+
 // Persist
 saveEntity(@1, @storedEntity)
 ! => recordCaughtException(@0, @exception) -> 500
