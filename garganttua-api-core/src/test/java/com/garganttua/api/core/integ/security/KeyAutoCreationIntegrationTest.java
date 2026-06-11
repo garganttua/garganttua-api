@@ -252,6 +252,24 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
         }
     }
 
+    /**
+     * Custom reconcile handler: records the injected verified authentication and returns a
+     * distinctive super caller, proving the declared method (not the default R1-R3) owns
+     * caller resolution on the verify path.
+     */
+    public static class RecordingReconcile {
+        static final java.util.List<com.garganttua.api.commons.security.authentication.IAuthentication> received =
+                new java.util.ArrayList<>();
+
+        public com.garganttua.api.commons.caller.ICaller reconcile(
+                com.garganttua.api.commons.security.authentication.IAuthentication authentication,
+                com.garganttua.api.commons.caller.ICaller protocolCaller) {
+            received.add(authentication);
+            return new com.garganttua.api.core.caller.Caller("SUPER_TENANT", "SUPER_TENANT",
+                    "reconciled-user", "reconciled-owner", true, true, java.util.List.of("ROLE_RECONCILED"));
+        }
+    }
+
     /** Wires an API for a given AuthenticatorKeyUsage and returns its handles. */
     static class Wired {
         IApi api;
@@ -310,6 +328,8 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                             .signature("signature")
                             .getDataToSign("getDataToSign")
                         .up()
+                        .reconcile(new FixedSupplierBuilder<>(new RecordingReconcile(),
+                                IClass.getClass(RecordingReconcile.class)), "reconcile")
                     .up()
                 .up();
 
@@ -1119,6 +1139,45 @@ class KeyAutoCreationIntegrationTest extends AbstractCrudScriptTest {
                 sb.append(cur.getMessage());
             }
             return sb.toString();
+        }
+    }
+
+    @Nested
+    @DisplayName("Custom reconcile — .authorization().reconcile overrides caller resolution on the verify path")
+    class CustomReconcile {
+
+        @Test
+        @DisplayName("a token-authenticated operation invokes the declared reconcile, injecting the verified authentication, and uses its caller")
+        void customReconcileInvokedOnVerify() throws Exception {
+            RecordingReconcile.received.clear();
+            Wired w = buildApi(AuthenticatorKeyUsage.oneForAll);
+            seedUser(w.userDao, "alice@example.com", "uuid-alice", "SUPER_TENANT");
+
+            // Mint a real signed token via a login.
+            WorkflowResult mint = executeScript(w.userCtx, authenticateRequest("alice@example.com", "SUPER_TENANT"));
+            assertEquals(0, mint.code(), () -> "mint failed; vars=" + mint.variables());
+            TokenEntity token = (TokenEntity) mint.output();
+            assertNotNull(token.getSignature(), "minted token must be signed");
+
+            // Full-pipeline readAll on the users domain WITH the token (Mode B): VERIFY_AUTHORIZATION
+            // verifies the token, then reconcileCaller resolves + invokes the custom reconcile.
+            OperationDefinition readAll = w.userCtx.getDomainDefinition().operations().stream()
+                    .filter(op -> op.getBusinessOperation()
+                            == com.garganttua.api.commons.operation.BusinessOperation.readAll)
+                    .findFirst().orElseThrow();
+            OperationRequest readReq = tenantScriptRequest(readAll, "SUPER_TENANT");
+            readReq.arg("authorization", token);
+            WorkflowResult result = executeScript(w.userCtx, readReq);
+
+            assertEquals(1, RecordingReconcile.received.size(),
+                    "the custom reconcile must be invoked exactly once on the verify path");
+            assertNotNull(RecordingReconcile.received.get(0),
+                    "the verified IAuthentication must be injected into the custom reconcile method");
+            assertTrue(RecordingReconcile.received.get(0).authenticated(),
+                    "the injected authentication must be the verified, successful one");
+            assertEquals(0, result.code(),
+                    () -> "the super caller returned by the custom reconcile must be used — readAll succeeds; vars="
+                            + result.variables());
         }
     }
 }
