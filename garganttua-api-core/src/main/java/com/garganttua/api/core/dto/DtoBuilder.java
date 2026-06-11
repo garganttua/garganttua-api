@@ -15,6 +15,7 @@ import com.garganttua.api.commons.context.IDtoContext;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.IDtoBuilder;
 import com.garganttua.api.commons.dao.IDao;
+import com.garganttua.api.commons.dao.IDaoFactory;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.core.reflection.IClass;
@@ -165,6 +166,9 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
         this.throwExceptionIfNoTenantId();
         this.throwExceptionIfNoId();
         if (this.daos.isEmpty()) {
+            this.applyDefaultDaoIfAny();
+        }
+        if (this.daos.isEmpty()) {
             throw new ApiException("No DAO configured for dto " + this.dtoClass.getSimpleName()
                     + ". Call .db(...) on the dto builder before .build(). Example:\n"
                     + "\n"
@@ -209,6 +213,39 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
             return up().up() instanceof ApiBuilder acb && acb.isMultiTenant();
         } catch (Exception e) {
             return true; // default to strict
+        }
+    }
+
+    /**
+     * Last resort before the "no DAO configured" error: if the api builder
+     * carries a default DAO factory (registered by a persistence starter), ask
+     * it for a DAO for this domain. Explicit {@code .db(...)} already populated
+     * {@code daos} so we never reach here when one was set.
+     */
+    private void applyDefaultDaoIfAny() throws ApiException {
+        IDaoFactory factory = defaultDaoFactory();
+        if (factory == null) {
+            return;
+        }
+        IDao dao = factory.create(parentDomainName(), this.dtoClass);
+        if (dao != null) {
+            this.db(dao);
+        }
+    }
+
+    private IDaoFactory defaultDaoFactory() {
+        try {
+            return up().up() instanceof ApiBuilder acb ? acb.getDefaultDaoFactory() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String parentDomainName() {
+        try {
+            return up() instanceof DomainBuilder<?> db ? db.getDomainName() : null;
+        } catch (Exception e) {
+            return null;
         }
     }
 

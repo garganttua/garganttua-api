@@ -64,6 +64,10 @@
 		<!-- Standalone deps reintroduced directly (no binding wrapper). -->
 		<javatuples.version>1.2</javatuples.version>
 		<jakarta-inject.version>2.0.1</jakarta-inject.version>
+		<!-- YAML parser for the bootstrap starter's application.yaml loader.
+		     Single jar, zero transitive deps — keeps the bootstrap core free
+		     of jackson/databind. -->
+		<snakeyaml.version>2.3</snakeyaml.version>
 		<junit.version>5.11.4</junit.version>
 		<mockito.version>5.14.2</mockito.version>
 
@@ -94,6 +98,21 @@
 			<dependency>
 				<groupId>com.garganttua</groupId>
 				<artifactId>garganttua-api-dao-mongodb</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-starter-bootstrap</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-starter-mongodb</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.garganttua</groupId>
+				<artifactId>garganttua-api-starter-javalin</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
@@ -222,6 +241,11 @@
 				<groupId>jakarta.inject</groupId>
 				<artifactId>jakarta.inject-api</artifactId>
 				<version>${jakarta-inject.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.yaml</groupId>
+				<artifactId>snakeyaml</artifactId>
+				<version>${snakeyaml.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.junit.jupiter</groupId>

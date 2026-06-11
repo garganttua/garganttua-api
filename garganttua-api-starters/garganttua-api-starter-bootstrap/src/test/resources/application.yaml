@@ -1,0 +1,7 @@
+server:
+  port: 7000
+api:
+  multiTenant: false
+  packages:
+    - com.example.one
+    - com.example.two

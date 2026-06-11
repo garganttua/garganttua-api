@@ -34,6 +34,7 @@ In addition, this module ships the annotation families that drive auto-detection
 3.0.0-ALPHA01
 
 ### Dependencies
+ - `com.garganttua.core:garganttua-commons`
  - `com.garganttua.core:garganttua-execution`
  - `com.garganttua.core:garganttua-reflection`
  - `com.garganttua.core:garganttua-injection`

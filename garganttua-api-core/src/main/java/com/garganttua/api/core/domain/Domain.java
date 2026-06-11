@@ -164,6 +164,13 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         log.debug("Workflow configured for domain {}: {}", this.domainDefinition.domainName(),
                 this.workflow != null ? this.workflow.getName() : "none");
 
+        // 2. Hand each DAO its domain definition. The IDao contract exposes
+        //    registerDomain(...) precisely so a persistence implementation (e.g.
+        //    MongoDao, which needs the dto class to materialise read results) can
+        //    capture what it persists — but nothing used to call it. No-op for
+        //    DAOs that don't care (in-memory stubs).
+        registerDomainOnDaos();
+
         // 3. Build interfaces, pass domain context (with access rules), and init them
         initializeInterfaces();
 
@@ -172,6 +179,12 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         initializeEvents();
 
         return this;
+    }
+
+    private void registerDomainOnDaos() {
+        for (IDtoContext<?> dtoContext : this.dtoContexts) {
+            dtoContext.getDao().registerDomain(this.domainDefinition);
+        }
     }
 
     private void initializeInterfaces() {

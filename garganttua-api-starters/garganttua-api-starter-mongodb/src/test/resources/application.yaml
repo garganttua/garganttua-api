@@ -1,0 +1,8 @@
+# Real-MongoDB integration test config — points at a local mongod (skipped when
+# unreachable). multiTenancy off, scan the test fixtures.
+api:
+  multiTenant: false
+  packages: com.garganttua.api.starter.mongodb
+mongodb:
+  uri: mongodb://localhost:27017
+  database: garganttua_starter_it

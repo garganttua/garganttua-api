@@ -9,51 +9,22 @@
 	</parent>
 	<artifactId>garganttua-api-starter-quickstart</artifactId>
 	<packaging>jar</packaging>
-	<description>Quickstart starter: minimal in-memory setup to bootstrap an API in minutes.</description>
+	<description>Quickstart starter: the bootstrap runner with the runtime reflection stack —
+		no persistence, no transport. Supply your own in-memory IDao for tutorials and tests.</description>
 
 	<!--
-	  Quickstart — the minimal set of dependencies to get an IApi up and
-	  serving in-process, suitable for tutorials, scripted demos and
-	  integration tests:
-
-	    * garganttua-api-core              — the framework itself
-	    * garganttua-runtime-reflection    — runtime IReflectionProvider
-	    * garganttua-reflections           — IAnnotationScanner backed by
-	                                         org.reflections
-
-	  No DAO, no transport, no security — the user supplies an in-memory
-	  Map-backed IDao inline and exercises the API in-process via
-	  apiBuilder.build().request(...).execute(). For anything beyond a demo,
-	  switch to the jvm-mongo-javalin starter (or AOT variant).
-
-	  Wiring:
-
-	      IApi api = ApiBuilder.builder()
-	          .multiTenant(false)
-	          .domain(IClass.getClass(User.class))
-	              .entity().id("id").uuid("uuid").tenantId("tenantId").up()
-	              .dto(IClass.getClass(UserDto.class))
-	                  .id("id").uuid("uuid").tenantId("tenantId")
-	                  .db(new MyInMemoryDao())   // user-provided
-	              .up()
-	          .up()
-	          .build();
+	  Quickstart — aggregator that pulls only the bootstrap starter (framework +
+	  runtime reflection + GarganttuaApplication runner). No DAO, no HTTP
+	  transport: the user supplies an in-memory IDao (via .db(...) on a domain,
+	  or a test IApiAutoConfiguration registering a default DAO) and exercises
+	  the API in-process. For a real web app, switch to the
+	  jvm-mongo-javalin starter (or its AOT variant).
 	-->
 
 	<dependencies>
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-core</artifactId>
-		</dependency>
-
-		<!-- Reflection: runtime stack (no AOT processing required). -->
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-runtime-reflection</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-reflections</artifactId>
+			<artifactId>garganttua-api-starter-bootstrap</artifactId>
 		</dependency>
 	</dependencies>
 </project>

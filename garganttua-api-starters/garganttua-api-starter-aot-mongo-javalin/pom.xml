@@ -9,44 +9,24 @@
 	</parent>
 	<artifactId>garganttua-api-starter-aot-mongo-javalin</artifactId>
 	<packaging>jar</packaging>
-	<description>AOT/native starter: MongoDB + Javalin, GraalVM-ready.</description>
+	<description>AOT/native starter: same stack as jvm-mongo-javalin but with AOT reflection
+		providers ahead of the runtime ones (GraalVM-ready).</description>
 
 	<!--
-	  aot-mongo-javalin — same stack as jvm-mongo-javalin but with the AOT
-	  reflection provider/scanner ahead of the runtime ones. Use this when
-	  building for GraalVM native-image or anywhere classpath scanning at
-	  startup is too expensive.
-
-	    * garganttua-api-core               — the framework
-	    * garganttua-aot-reflection         — IReflectionProvider backed by
-	                                          metadata produced at compile
-	                                          time (garganttua-aot-maven-plugin)
-	    * garganttua-aot-annotation-scanner — matching IAnnotationScanner
-	    * garganttua-runtime-reflection     — runtime fallback when an
-	                                          element was not seen during
-	                                          AOT processing
-	    * garganttua-reflections            — runtime scanner fallback
-	    * garganttua-api-dao-mongodb        — MongoDB IDao
-	    * garganttua-api-javalin            — TODO: pending 3.0 port
-	    * garganttua-api-interface-rest     — TODO: pending 3.0 port
-	    * garganttua-api-security           — TODO: pending 3.0 port
+	  aot-mongo-javalin — identical stack to jvm-mongo-javalin, but adds the AOT
+	  reflection provider/scanner so garganttua-core's Bootstrap ServiceLoader
+	  picks them ahead of the runtime ones. The runner is unchanged — provider
+	  precedence is decided purely by classpath contents.
 
 	  AOT processing is opt-in: add the garganttua-aot-maven-plugin to your
-	  application's build to populate the AOT index. Without that plugin,
-	  the AOT provider returns nothing and the runtime fallback kicks in —
-	  so this starter is a no-op upgrade over the jvm variant until you
-	  enable the plugin.
+	  application's build to populate the AOT index. Without it, the AOT provider
+	  returns nothing and the runtime fallback kicks in — so this starter is a
+	  no-op upgrade over the jvm variant until you enable the plugin.
 	-->
 
 	<dependencies>
-		<dependency>
-			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-core</artifactId>
-		</dependency>
-
-		<!-- Reflection: AOT first, runtime fallback. SPI ordering in the
-		     ReflectionBuilder gives the higher-priority AOT provider/scanner
-		     precedence when both are on the classpath. -->
+		<!-- AOT reflection first; the bootstrap starter still brings the runtime
+		     fallback (garganttua-runtime-reflection + garganttua-reflections). -->
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-aot-reflection</artifactId>
@@ -55,35 +35,18 @@
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-aot-annotation-scanner</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-runtime-reflection</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-reflections</artifactId>
-		</dependency>
 
-		<!-- Persistence: MongoDB. -->
 		<dependency>
 			<groupId>com.garganttua</groupId>
-			<artifactId>garganttua-api-dao-mongodb</artifactId>
+			<artifactId>garganttua-api-starter-bootstrap</artifactId>
 		</dependency>
-
-		<!--
-		  TODO: enable once the modules are ported to 3.0.
-		  <dependency>
-		      <groupId>com.garganttua</groupId>
-		      <artifactId>garganttua-api-javalin</artifactId>
-		  </dependency>
-		  <dependency>
-		      <groupId>com.garganttua</groupId>
-		      <artifactId>garganttua-api-interface-rest</artifactId>
-		  </dependency>
-		  <dependency>
-		      <groupId>com.garganttua</groupId>
-		      <artifactId>garganttua-api-security</artifactId>
-		  </dependency>
-		-->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-starter-mongodb</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-starter-javalin</artifactId>
+		</dependency>
 	</dependencies>
 </project>

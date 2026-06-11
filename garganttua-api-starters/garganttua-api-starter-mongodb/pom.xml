@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api-starters</artifactId>
+		<version>3.0.0-ALPHA01</version>
+	</parent>
+	<artifactId>garganttua-api-starter-mongodb</artifactId>
+	<packaging>jar</packaging>
+	<description>MongoDB add-on starter: auto-wires a default MongoDB DAO from application.yaml
+		(mongodb.uri / mongodb.database) onto every annotation-scanned domain.</description>
+
+	<!--
+	  garganttua-api-starter-mongodb — drop this on the classpath alongside the
+	  bootstrap starter and every domain becomes persistable with no DSL:
+	  MongoAutoConfiguration reads mongodb.uri + mongodb.database, opens a
+	  MongoClient, and registers a default IDaoFactory producing a MongoDao per
+	  domain (collection = domain name). Discovered via ServiceLoader
+	  (META-INF/services/...IApiAutoConfiguration).
+	-->
+
+	<dependencies>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-starter-bootstrap</artifactId>
+		</dependency>
+
+		<!-- MongoDB DAO (brings the mongodb-driver-sync transitively). -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-dao-mongodb</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

@@ -25,6 +25,8 @@ import com.garganttua.api.commons.context.dsl.IApiStartupBinderBuilder;
 import com.garganttua.api.commons.context.dsl.IDomainBuilder;
 import com.garganttua.api.commons.context.dsl.security.IApiSecurityBuilder;
 import com.garganttua.api.commons.context.dsl.security.IAuthenticationBuilder;
+import com.garganttua.api.commons.dao.IDaoFactory;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.api.commons.protocol.Protocol;
 import com.garganttua.api.commons.security.authorization.AuthorizationProtocol;
@@ -117,6 +119,8 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 	private volatile boolean lockSuperOwnerCreation = true;
 
 	private final Map<IClass<?>, DomainBuilder<?>> domainBuilders = new ConcurrentHashMap<>();
+	private volatile IDaoFactory defaultDaoFactory;
+	private volatile ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> defaultInterface;
 	private volatile SecurityBuilder securityBuilder;
 	private final List<ApiStartupBinderBuilder> startupBinderBuilders = new CopyOnWriteArrayList<>();
 	private final List<ISerializer> serializers = new CopyOnWriteArrayList<>();
@@ -495,6 +499,13 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			// Build all domain contexts
 			Map<String, IDomain<?>> domainContexts = new HashMap<>();
 			for (DomainBuilder<?> domainBuilder : this.domainBuilders.values()) {
+				// A starter-registered default interface (e.g. Javalin) is
+				// attached to every domain that did not declare one explicitly,
+				// so the normal lifecycle (handle + onStart) exposes it. An
+				// explicit .interfasse(...) always wins.
+				if (this.defaultInterface != null && !domainBuilder.hasInterfaces()) {
+					domainBuilder.interfasse(this.defaultInterface);
+				}
 				domainBuilder.setDependencyBuilders(this.injectionContextBuilder, this.expressionContextBuilder);
 				IDomain<?> domainContext = domainBuilder.build();
 				domainContexts.put(domainContext.getDomain(), domainContext);
@@ -1072,6 +1083,25 @@ public class ApiBuilder extends AbstractAutomaticDependentBuilder<IApiBuilder, I
 			this.withPackage(Objects.requireNonNull(pkg, "package name cannot be null"));
 		}
 		return this;
+	}
+
+	@Override
+	public IApiBuilder defaultDao(IDaoFactory factory) throws ApiException {
+		this.defaultDaoFactory = Objects.requireNonNull(factory, "default DAO factory cannot be null");
+		return this;
+	}
+
+	@Override
+	public IApiBuilder defaultInterface(
+			ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> iface)
+			throws ApiException {
+		this.defaultInterface = Objects.requireNonNull(iface, "default interface cannot be null");
+		return this;
+	}
+
+	/** Default DAO factory consulted by {@link DtoBuilder} when a dto sets no {@code .db(...)}; may be {@code null}. */
+	public IDaoFactory getDefaultDaoFactory() {
+		return this.defaultDaoFactory;
 	}
 
 }

@@ -52,8 +52,8 @@ Garganttua API is organized into independent modules, each focusing on a specifi
 |:--|:--|
 | [**garganttua-api**](././README.md) | Declarative, annotation-driven REST API framework — multi-tenancy, pluggable security, AOT/native-ready — built on garganttua-core. |
 | \|- [**garganttua-api-bindings**](./garganttua-api-bindings/README.md) | Aggregator for third-party bindings — each submodule wraps one external library (Jackson, SLF4J, JsonPath, MongoDB driver, Javalin) so consumers depend on a binding artifact, keeping library swaps a pom-level edit. |
-| \|    \|- [**garganttua-api-binding-jackson**](./garganttua-api-bindings/garganttua-api-binding-jackson/README.md) | Binding wrapping Jackson (annotations, core, databind + geojson-jackson) — pins the JSON (de)serialization library used across the API. |
-| \|    \|- [**garganttua-api-binding-javalin**](./garganttua-api-bindings/garganttua-api-binding-javalin/README.md) | Binding wrapping Javalin (lightweight HTTP server) — consumed by the garganttua-api-javalin transport module. |
+| \|    \|- [**garganttua-api-binding-jackson**](./garganttua-api-bindings/garganttua-api-binding-jackson/README.md) | Binding wrapping Jackson (annotations, core, databind, dataformat-xml + geojson-jackson) — pins the JSON/XML (de)serialization library used across the API and ships the framework's JSON and XML ISerializer implementations. |
+| \|    \|- [**garganttua-api-binding-javalin**](./garganttua-api-bindings/garganttua-api-binding-javalin/README.md) | Binding wrapping Javalin (lightweight HTTP server). Ships a Javalin-backed IInterface (transport entry point) plus its companion IProtocol Context adapter. |
 | \|    \|- [**garganttua-api-binding-jsonpath**](./garganttua-api-bindings/garganttua-api-binding-jsonpath/README.md) | Binding wrapping Jayway JsonPath — isolates the json-path dependency (used by the JWT security module for claims extraction). |
 | \|    \|- [**garganttua-api-binding-mongodb**](./garganttua-api-bindings/garganttua-api-binding-mongodb/README.md) | Binding wrapping the MongoDB sync driver — consumed by garganttua-api-dao-mongodb. |
 | \|    \|- [**garganttua-api-binding-slf4j**](./garganttua-api-bindings/garganttua-api-binding-slf4j/README.md) | Binding wrapping SLF4J (façade + simple impl) — opt-in classic SLF4J logging for downstream apps and bridging into the framework's observability logger. |
@@ -73,9 +73,13 @@ Garganttua API is organized into independent modules, each focusing on a specifi
 | \|    \|- [**garganttua-api-security-authentication-pin**](./garganttua-api-security/garganttua-api-security-authentication-pin/README.md) | PIN-code authentication strategy with error-counter lockout. |
 | \|    \|- [**garganttua-api-security-authorization-jwt**](./garganttua-api-security/garganttua-api-security-authorization-jwt/README.md) | JWT authorization: signable/refreshable JWT tokens (pending migration to the 3.0.0 core). |
 | \|- [**garganttua-api-starters**](./garganttua-api-starters/README.md) | Opinionated Spring Boot / Javalin starters bundling a ready-to-run API stack (parent module). |
-| \|    \|- [**garganttua-api-starter-aot-mongo-javalin**](./garganttua-api-starters/garganttua-api-starter-aot-mongo-javalin/README.md) | AOT/native starter: MongoDB + Javalin, GraalVM-ready. |
-| \|    \|- [**garganttua-api-starter-jvm-mongo-javalin**](./garganttua-api-starters/garganttua-api-starter-jvm-mongo-javalin/README.md) | JVM starter: MongoDB + Javalin. |
-| \|    \|- [**garganttua-api-starter-quickstart**](./garganttua-api-starters/garganttua-api-starter-quickstart/README.md) | Quickstart starter: minimal in-memory setup to bootstrap an API in minutes. |
+| \|    \|- [**garganttua-api-starter-aot-mongo-javalin**](./garganttua-api-starters/garganttua-api-starter-aot-mongo-javalin/README.md) | AOT/native starter: same stack as jvm-mongo-javalin but with AOT reflection 		providers ahead of the runtime ones (GraalVM-ready). |
+| \|    \|- [**garganttua-api-starter-bootstrap**](./garganttua-api-starters/garganttua-api-starter-bootstrap/README.md) | Bootstrap starter: a Spring-Boot-style runner (GarganttuaApplication.run) that 		assembles the framework, scans @Entity/@Dto, runs ServiceLoader auto-configs and reads 		application.yaml — transport- and persistence-agnostic (no Mongo, no Javalin). |
+| \|    \|- [**garganttua-api-starter-javalin**](./garganttua-api-starters/garganttua-api-starter-javalin/README.md) | Javalin add-on starter: exposes every annotation-scanned domain over HTTP on a 		shared Javalin server (server.port), with JSON serialization out of the box. |
+| \|    \|- [**garganttua-api-starter-jvm-mongo-javalin**](./garganttua-api-starters/garganttua-api-starter-jvm-mongo-javalin/README.md) | JVM starter: bootstrap runner + MongoDB persistence + Javalin HTTP, runtime reflection. |
+| \|    \|- [**garganttua-api-starter-mongodb**](./garganttua-api-starters/garganttua-api-starter-mongodb/README.md) | MongoDB add-on starter: auto-wires a default MongoDB DAO from application.yaml 		(mongodb.uri / mongodb.database) onto every annotation-scanned domain. |
+| \|    \|- [**garganttua-api-starter-quickstart**](./garganttua-api-starters/garganttua-api-starter-quickstart/README.md) | Quickstart starter: the bootstrap runner with the runtime reflection stack — 		no persistence, no transport. Supply your own in-memory IDao for tutorials and tests. |
+
 
 
 <!-- AUTO-GENERATED-ARCHITECTURE-STOP -->
@@ -197,23 +201,31 @@ graph TD
     garganttua-api-security-authentication-pin["garganttua-api-security-authentication-pin"]
     garganttua-api-security-authorization-jwt["garganttua-api-security-authorization-jwt"]
     garganttua-api-starter-aot-mongo-javalin["garganttua-api-starter-aot-mongo-javalin"]
+    garganttua-api-starter-bootstrap["garganttua-api-starter-bootstrap"]
+    garganttua-api-starter-javalin["garganttua-api-starter-javalin"]
     garganttua-api-starter-jvm-mongo-javalin["garganttua-api-starter-jvm-mongo-javalin"]
+    garganttua-api-starter-mongodb["garganttua-api-starter-mongodb"]
     garganttua-api-starter-quickstart["garganttua-api-starter-quickstart"]
     garganttua-api-starters["garganttua-api-starters"]
 
-    garganttua-api-starter-quickstart --> garganttua-api-core
-    garganttua-api-starter-quickstart --> garganttua-runtime-reflection
-    garganttua-api-starter-quickstart --> garganttua-reflections
-    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-core
-    garganttua-api-starter-jvm-mongo-javalin --> garganttua-runtime-reflection
-    garganttua-api-starter-jvm-mongo-javalin --> garganttua-reflections
-    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-dao-mongodb
-    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-core
+    garganttua-api-starter-quickstart --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-starter-mongodb
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-starter-javalin
     garganttua-api-starter-aot-mongo-javalin --> garganttua-aot-reflection
     garganttua-api-starter-aot-mongo-javalin --> garganttua-aot-annotation-scanner
-    garganttua-api-starter-aot-mongo-javalin --> garganttua-runtime-reflection
-    garganttua-api-starter-aot-mongo-javalin --> garganttua-reflections
-    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-dao-mongodb
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-starter-mongodb
+    garganttua-api-starter-aot-mongo-javalin --> garganttua-api-starter-javalin
+    garganttua-api-starter-mongodb --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-mongodb --> garganttua-api-dao-mongodb
+    garganttua-api-starter-javalin --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-javalin --> garganttua-api-binding-javalin
+    garganttua-api-starter-javalin --> garganttua-api-binding-jackson
+    garganttua-api-starter-bootstrap --> garganttua-api-core
+    garganttua-api-starter-bootstrap --> garganttua-runtime-reflection
+    garganttua-api-starter-bootstrap --> garganttua-reflections
+    garganttua-api-starter-bootstrap --> garganttua-bootstrap
     garganttua-api-native-image --> garganttua-reflection
     garganttua-api-native-image --> garganttua-native-image-utils
     garganttua-api-native-image --> garganttua-api-commons
@@ -222,6 +234,11 @@ graph TD
     garganttua-api-dao-mongodb --> garganttua-api-binding-mongodb
     garganttua-api-dao-mongodb --> garganttua-aot-reflection
     garganttua-api-dao-mongodb --> garganttua-aot-commons
+    garganttua-api-binding-javalin --> garganttua-api-commons
+    garganttua-api-binding-javalin --> garganttua-api-core
+    garganttua-api-binding-javalin --> garganttua-api-binding-jackson
+    garganttua-api-binding-jackson --> garganttua-api-commons
+    garganttua-api-binding-jackson --> garganttua-bootstrap
     garganttua-api-binding-jsonpath --> garganttua-api-commons
     garganttua-api-interface-rest --> garganttua-api-commons
     garganttua-api-core --> garganttua-api-commons
@@ -239,6 +256,8 @@ graph TD
     garganttua-api-core --> garganttua-api-binding-jackson
     garganttua-api-core --> garganttua-runtime-reflection
     garganttua-api-core --> garganttua-reflections
+    garganttua-api-core --> garganttua-observability
+    garganttua-api-commons --> garganttua-commons
     garganttua-api-commons --> garganttua-execution
     garganttua-api-commons --> garganttua-reflection
     garganttua-api-commons --> garganttua-injection

@@ -1,0 +1,61 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.garganttua</groupId>
+		<artifactId>garganttua-api-starters</artifactId>
+		<version>3.0.0-ALPHA01</version>
+	</parent>
+	<artifactId>garganttua-api-starter-javalin</artifactId>
+	<packaging>jar</packaging>
+	<description>Javalin add-on starter: exposes every annotation-scanned domain over HTTP on a
+		shared Javalin server (server.port), with JSON serialization out of the box.</description>
+
+	<!--
+	  garganttua-api-starter-javalin — drop this on the classpath alongside the
+	  bootstrap starter and every domain is served over HTTP with no DSL:
+	  JavalinAutoConfiguration reads server.port, creates ONE shared
+	  JavalinInterface as the default interface for all domains, and registers
+	  JavalinProtocol (which is not @Protocol-annotated). It also pulls
+	  binding-jackson so the framework auto-detects a JSON @Serializer. Discovered
+	  via ServiceLoader (META-INF/services/...IApiAutoConfiguration).
+	-->
+
+	<dependencies>
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-starter-bootstrap</artifactId>
+		</dependency>
+
+		<!-- HTTP transport. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-javalin</artifactId>
+		</dependency>
+
+		<!-- JSON serialization: JacksonJsonSerializer is @Serializer-annotated
+		     under com.garganttua.api.binding.jackson, so the framework asset
+		     scan auto-detects it once this jar is on the classpath. -->
+		<dependency>
+			<groupId>com.garganttua</groupId>
+			<artifactId>garganttua-api-binding-jackson</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+</project>

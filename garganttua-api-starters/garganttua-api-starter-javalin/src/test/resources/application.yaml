@@ -1,0 +1,6 @@
+# E2E test config — no multi-tenancy, scan the test fixtures, serve on 7099.
+api:
+  multiTenant: false
+  packages: com.garganttua.api.starter.javalin
+server:
+  port: 7099

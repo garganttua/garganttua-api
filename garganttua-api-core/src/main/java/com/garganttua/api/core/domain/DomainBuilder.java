@@ -778,8 +778,13 @@ public class DomainBuilder<E>
         this.workflows.put(name, wb);
     }
 
-    String getDomainName() {
+    public String getDomainName() {
         return this.domainName;
+    }
+
+    /** True when at least one interface was declared on this domain via {@code .interfasse(...)}. */
+    public boolean hasInterfaces() {
+        return !this.interfaces.isEmpty();
     }
 
     private volatile boolean workflowStagesPopulated = false;

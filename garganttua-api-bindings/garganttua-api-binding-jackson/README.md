@@ -32,6 +32,11 @@ Consumers (`garganttua-api-core`, `garganttua-api-security`, `garganttua-api-jav
  - `com.fasterxml.jackson.core:jackson-core:2.18.6`
  - `com.fasterxml.jackson.core:jackson-databind:2.18.6`
  - `de.grundid.opendatalab:geojson-jackson:1.14`
+ - `com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.18.6`
+ - `com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.6`
+ - `com.garganttua:garganttua-api-commons`
+ - `com.garganttua.core:garganttua-bootstrap:2.0.0-ALPHA03:test`
+ - `org.junit.jupiter:junit-jupiter-engine:test`
 
 <!-- AUTO-GENERATED-END -->
 

@@ -28,6 +28,11 @@
 	-->
 
 	<modules>
+		<!-- Code-bearing starters: the bootstrap runner + auto-config add-ons. -->
+		<module>garganttua-api-starter-bootstrap</module>
+		<module>garganttua-api-starter-mongodb</module>
+		<module>garganttua-api-starter-javalin</module>
+		<!-- Aggregators: compose the above into ready-to-use stacks. -->
 		<module>garganttua-api-starter-quickstart</module>
 		<module>garganttua-api-starter-jvm-mongo-javalin</module>
 		<module>garganttua-api-starter-aot-mongo-javalin</module>

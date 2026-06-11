@@ -34,8 +34,11 @@ The pinned version (`javalin.version` in the root POM) is currently **6.6.0**. U
 
 ### Dependencies
  - `io.javalin:javalin:6.6.0`
- - `com.garganttua:garganttua-api-commons:3.0.0-ALPHA01`
- - `com.garganttua:garganttua-api-core:3.0.0-ALPHA01`
+ - `com.garganttua:garganttua-api-commons`
+ - `com.garganttua:garganttua-api-core:${project.version}`
+ - `org.junit.jupiter:junit-jupiter-engine:test`
+ - `org.mockito:mockito-core:test`
+ - `com.garganttua:garganttua-api-binding-jackson:${project.version}:test`
 
 <!-- AUTO-GENERATED-END -->
 

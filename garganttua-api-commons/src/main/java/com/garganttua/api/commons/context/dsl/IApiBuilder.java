@@ -3,6 +3,8 @@ package com.garganttua.api.commons.context.dsl;
 import com.garganttua.api.commons.context.BuildingStage;
 import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.dsl.security.IApiSecurityBuilder;
+import com.garganttua.api.commons.dao.IDaoFactory;
+import com.garganttua.api.commons.endpoint.IInterface;
 import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.api.commons.security.authorization.IAuthorizationProtocol;
 import com.garganttua.api.commons.serialization.ISerializer;
@@ -84,6 +86,31 @@ public interface IApiBuilder extends IDependentBuilder<IApiBuilder, IApi> {
 	 * }</pre>
 	 */
 	IApiBuilder packages(String... packageNames) throws ApiException;
+
+	/**
+	 * Registers the default {@link IDaoFactory} consulted at build time for any
+	 * dto that did not configure a DAO via {@code .db(...)}. An explicit
+	 * {@code .db(...)} always wins; the factory is only asked when none is set.
+	 *
+	 * <p>This is the hook a persistence starter (e.g. the MongoDB starter) uses
+	 * to make every annotation-scanned domain persistable with no DSL — see
+	 * {@link com.garganttua.api.commons.starter.IApiAutoConfiguration}.
+	 */
+	IApiBuilder defaultDao(IDaoFactory factory) throws ApiException;
+
+	/**
+	 * Registers the default HTTP interface attached to every domain that did not
+	 * declare one via {@code .interfasse(...)}. A single shared supplier can
+	 * serve all domains (the interface's {@code handle(domain)} is per-domain
+	 * and its {@code onStart()} is idempotent).
+	 *
+	 * <p>This is the hook a transport starter (e.g. the Javalin starter) uses to
+	 * expose every scanned domain over HTTP with no DSL — see
+	 * {@link com.garganttua.api.commons.starter.IApiAutoConfiguration}.
+	 */
+	IApiBuilder defaultInterface(
+			ISupplierBuilder<? extends IInterface, ? extends ISupplier<? extends IInterface>> iface)
+			throws ApiException;
 
 	/**
 	 * Toggles the auto-inclusion of the framework's own packages
