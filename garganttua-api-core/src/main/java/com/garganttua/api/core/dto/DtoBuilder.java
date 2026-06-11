@@ -47,6 +47,7 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     private ObjectAddress id;
     private ObjectAddress uuid;
     private ObjectAddress tenantId;
+    private final List<com.garganttua.api.commons.definition.DtoComposition> compositions = new ArrayList<>();
     private List<ISupplierBuilder<?, ? extends ISupplier<?>>> daos = new ArrayList<>();
     private IObjectQuery objectQuery;
 
@@ -161,6 +162,17 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
     }
 
     @Override
+    public IDtoBuilder<E, D> composed(String fieldName, String collection) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        Objects.requireNonNull(collection, "Composition collection cannot be null");
+        // Resolve to any type: the referenced type is the field's own (its element type for a List).
+        ObjectAddress field = FieldResolver.fieldByFieldName(this.dtoClass, provider(), fieldName,
+                IClass.getClass(Object.class)).address();
+        this.compositions.add(new com.garganttua.api.commons.definition.DtoComposition(field, collection));
+        return this;
+    }
+
+    @Override
     protected synchronized IDtoContext<D> doBuild() throws ApiException {
         this.throwExceptionIfNoUuid();
         this.throwExceptionIfNoTenantId();
@@ -183,7 +195,30 @@ public class DtoBuilder<E, D> extends AbstractAutomaticLinkedBuilder<IDtoBuilder
                     this.dtoClass.getSimpleName());
         }
 
-        return new DtoContext(new DtoDefinition<>(this.dtoClass, this.uuid, this.id, this.tenantId), this.daos.get(0));
+        detectComposedAnnotations();
+
+        return new DtoContext(new DtoDefinition<>(this.dtoClass, this.uuid, this.id, this.tenantId,
+                List.copyOf(this.compositions)), this.daos.get(0));
+    }
+
+    /**
+     * Adds compositions declared via the {@code @Composed} annotation on the DTO fields,
+     * complementing the explicit {@code .composed(...)} DSL (a field declared by both is added once).
+     */
+    private void detectComposedAnnotations() throws ApiException {
+        for (IField field : this.dtoClass.getDeclaredFields()) {
+            com.garganttua.api.commons.dto.annotations.Composed anno =
+                    field.getAnnotation(IClass.getClass(com.garganttua.api.commons.dto.annotations.Composed.class));
+            if (anno == null) {
+                continue;
+            }
+            ObjectAddress addr = FieldResolver.fieldByFieldName(this.dtoClass, provider(), field.getName(),
+                    IClass.getClass(Object.class)).address();
+            boolean already = this.compositions.stream().anyMatch(c -> c.field().equals(addr));
+            if (!already) {
+                this.compositions.add(new com.garganttua.api.commons.definition.DtoComposition(addr, anno.collection()));
+            }
+        }
     }
 
     private void throwExceptionIfNoUuid() throws ApiException {

@@ -210,7 +210,7 @@ class RepositoryTest {
         idAddress = new ObjectAddress("id");
         tenantIdAddress = new ObjectAddress("tenantId");
 
-        dtoDefinition = new DtoDefinition<>(IClass.getClass(TestDto.class), uuidAddress, idAddress, tenantIdAddress);
+        dtoDefinition = new DtoDefinition<>(IClass.getClass(TestDto.class), uuidAddress, idAddress, tenantIdAddress, java.util.List.of());
 
         inMemoryDao = new InMemoryDao();
 
@@ -688,8 +688,8 @@ class RepositoryTest {
             ObjectAddress idAddr = new ObjectAddress("id");
             ObjectAddress tenantIdAddr = new ObjectAddress("tenantId");
 
-            IDtoDefinition<DtoA> defA = new DtoDefinition<>(IClass.getClass(DtoA.class), uuidAddr, idAddr, tenantIdAddr);
-            IDtoDefinition<DtoB> defB = new DtoDefinition<>(IClass.getClass(DtoB.class), uuidAddr, idAddr, tenantIdAddr);
+            IDtoDefinition<DtoA> defA = new DtoDefinition<>(IClass.getClass(DtoA.class), uuidAddr, idAddr, tenantIdAddr, java.util.List.of());
+            IDtoDefinition<DtoB> defB = new DtoDefinition<>(IClass.getClass(DtoB.class), uuidAddr, idAddr, tenantIdAddr, java.util.List.of());
 
             daoA = new InMemoryDao();
             daoB = new InMemoryDao();

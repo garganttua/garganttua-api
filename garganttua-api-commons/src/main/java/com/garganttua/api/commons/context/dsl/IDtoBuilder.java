@@ -34,4 +34,12 @@ public interface IDtoBuilder<E, D> extends IAutomaticLinkedBuilder<IDtoBuilder<E
 
     IDtoBuilder<E, D> tenantId(ObjectAddress fieldAddress) throws ApiException;
 
+    /**
+     * Declares a COMPOSITION (à la {@code @DBRef}): {@code fieldName} holds a reference (or a
+     * {@code List} of references) to DTOs stored in {@code collection}. The DAO persists only a
+     * reference for this field and resolves it back to the full DTO on read. The DSL equivalent
+     * of the {@code @Composed} annotation.
+     */
+    IDtoBuilder<E, D> composed(String fieldName, String collection) throws ApiException;
+
 }
