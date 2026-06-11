@@ -162,7 +162,7 @@ public class MongoDao implements IDao {
 					if (collection != null) {
 						map.put(field.getName(), toReference(value, collection));
 					} else {
-						map.put(field.getName(), value);
+						map.put(field.getName(), toStorable(value));
 					}
 				}
 				clazz = clazz.getSuperclass();
@@ -171,6 +171,19 @@ public class MongoDao implements IDao {
 		} catch (IllegalAccessException e) {
 			throw new ApiException("Failed to convert DTO to MongoDB Document", e);
 		}
+	}
+
+	/**
+	 * Normalises a plain (non-composition) field value into a BSON-friendly form before storage.
+	 * An {@code enum} is written as its {@code name()} so the wire shape is codec-independent and
+	 * human-readable; the read side rebuilds it from the field's declared enum type. Everything else
+	 * (the temporal types, numbers, strings) is handed to the driver verbatim.
+	 */
+	private Object toStorable(Object value) {
+		if (value instanceof Enum<?> e) {
+			return e.name();
+		}
+		return value;
 	}
 
 	/**
@@ -256,8 +269,116 @@ public class MongoDao implements IDao {
 		} else if (!isReference(value)) {
 			// A reference reaching a non-composition field means we are one level too deep
 			// (a composed DTO that itself composes): leave it null rather than mis-set it.
-			field.set(instance, value);
+			Class<?> target = rawType(field);
+			Object coerced = coerce(value, target);
+			try {
+				field.set(instance, coerced);
+			} catch (IllegalArgumentException e) {
+				throw new ApiException("Cannot map field '" + fieldName + "' of " + field.getDeclaringClass().getName()
+						+ ": stored " + describeType(value) + " is not assignable to declared "
+						+ (target == null ? "type" : target.getName()), e);
+			}
 		}
+	}
+
+	/** The declared raw type of a non-generic field, or {@code null} when it is parameterized (e.g. a {@code List<X>}). */
+	private Class<?> rawType(IField field) {
+		Type generic = field.getGenericType();
+		return generic instanceof Class<?> raw ? raw : null;
+	}
+
+	private String describeType(Object value) {
+		return value == null ? "null" : value.getClass().getName();
+	}
+
+	/**
+	 * Adapts a value decoded from BSON to the field's declared Java type — MongoDB's Document codec
+	 * is lossy across the JVM type system (an enum comes back as a String, a {@code java.time.Instant}
+	 * as a {@code java.util.Date}, a 32-bit field as an {@code Integer}). Handles the common, lossless
+	 * cases; anything it does not recognise is returned untouched for {@code field.set} to accept or reject.
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private Object coerce(Object value, Class<?> target) {
+		if (value == null || target == null || target.isInstance(value)) {
+			return value;
+		}
+		if (target.isEnum() && value instanceof String name) {
+			return Enum.valueOf((Class<? extends Enum>) target, name);
+		}
+		if (value instanceof java.util.Date date) {
+			return fromDate(date, target);
+		}
+		if (value instanceof Number number) {
+			return fromNumber(number, target);
+		}
+		if (value instanceof String text) {
+			return fromString(text, target);
+		}
+		return value;
+	}
+
+	/** {@code java.util.Date} (how the driver decodes a BSON datetime) → the declared {@code java.time} type, at UTC. */
+	private Object fromDate(java.util.Date date, Class<?> target) {
+		java.time.Instant instant = date.toInstant();
+		if (target == java.time.Instant.class) {
+			return instant;
+		}
+		if (target == java.time.LocalDateTime.class) {
+			return java.time.LocalDateTime.ofInstant(instant, java.time.ZoneOffset.UTC);
+		}
+		if (target == java.time.LocalDate.class) {
+			return java.time.LocalDate.ofInstant(instant, java.time.ZoneOffset.UTC);
+		}
+		if (target == java.time.ZonedDateTime.class) {
+			return instant.atZone(java.time.ZoneOffset.UTC);
+		}
+		if (target == java.time.OffsetDateTime.class) {
+			return instant.atOffset(java.time.ZoneOffset.UTC);
+		}
+		return date;
+	}
+
+	/** Widens/narrows a stored {@link Number} to the declared numeric type (handles primitives too). */
+	private Object fromNumber(Number number, Class<?> target) {
+		if (target == Long.class || target == long.class) {
+			return number.longValue();
+		}
+		if (target == Integer.class || target == int.class) {
+			return number.intValue();
+		}
+		if (target == Double.class || target == double.class) {
+			return number.doubleValue();
+		}
+		if (target == Float.class || target == float.class) {
+			return number.floatValue();
+		}
+		if (target == Short.class || target == short.class) {
+			return number.shortValue();
+		}
+		if (target == Byte.class || target == byte.class) {
+			return number.byteValue();
+		}
+		return number;
+	}
+
+	/** Parses a stored {@code String} into the declared scalar type (configs occasionally land as text). */
+	private Object fromString(String text, Class<?> target) {
+		if (target == Integer.class || target == int.class) {
+			return Integer.valueOf(text);
+		}
+		if (target == Long.class || target == long.class) {
+			return Long.valueOf(text);
+		}
+		if (target == Double.class || target == double.class) {
+			return Double.valueOf(text);
+		}
+		if (target == Float.class || target == float.class) {
+			return Float.valueOf(text);
+		}
+		if (target == Boolean.class || target == boolean.class) {
+			return Boolean.valueOf(text);
+		}
+		return text;
 	}
 
 	private boolean isReference(Object value) {
