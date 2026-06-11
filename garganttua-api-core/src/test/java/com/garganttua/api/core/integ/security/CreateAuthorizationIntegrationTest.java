@@ -19,7 +19,9 @@ import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
 import com.garganttua.api.commons.context.dsl.IApiBuilder;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.service.ArgKey;
 import com.garganttua.api.commons.service.IOperationRequest;
+import com.garganttua.api.commons.security.authentication.IAuthentication;
 import com.garganttua.api.commons.security.authenticator.AuthenticatorScope;
 import com.garganttua.core.reflection.IClass;
 import com.garganttua.core.reflection.IReflection;
@@ -230,6 +232,28 @@ class CreateAuthorizationIntegrationTest extends AbstractCrudScriptTest {
             assertNotNull(result.output(), "workflow should produce an output");
             assertInstanceOf(TokenEntity.class, result.output(),
                     "output should be a TokenEntity (authorization), not an IAuthentication");
+        }
+
+        @Test
+        @DisplayName("authenticate publishes a sanitized IAuthentication (context, no credentials/principal) for the transport body")
+        void authenticatePublishesSanitizedAuthentication() throws ApiException {
+            OperationRequest request = authenticateRequest("john@example.com", "valid-password", "SUPER_TENANT");
+            WorkflowResult result = executeScript(userCtx, request);
+            assertEquals(0, result.code());
+
+            Object authObj = request.arg(ArgKey.of("authentication", IClass.getClass(Object.class))).orElse(null);
+            assertInstanceOf(IAuthentication.class, authObj,
+                    "the pipeline must publish an IAuthentication for transports to render as the login body");
+            IAuthentication auth = (IAuthentication) authObj;
+
+            assertTrue(auth.authenticated(), "authenticated must be true after a successful login");
+            assertEquals("SUPER_TENANT", auth.tenantId(), "tenantId is the minted token's (the caller's tenant)");
+            assertEquals("users:user-uuid-1", auth.ownerId(),
+                    "ownerId is the qualified principal id, read off the minted token");
+            assertNotNull(auth.authorities(), "authorities must be carried");
+            assertTrue(auth.authorities().contains("ROLE_USER"), "authorities come from the token (ROLE_USER)");
+            assertNull(auth.principal(), "principal must NOT be returned over the wire (internal)");
+            assertNull(auth.credentials(), "credentials must NEVER be returned over the wire");
         }
 
         @Test

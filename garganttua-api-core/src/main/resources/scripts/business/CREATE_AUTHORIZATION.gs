@@ -27,19 +27,24 @@ requirePresent(if(notNull(@3), 1))
 // If the authorization is storable, look up an existing non-expired
 // authorization for this principal in the linked authorization domain.
 // Returns null when not storable or none reusable.
-output <- findReusableAuthorization(@2, @3)
+_tokenEntity <- findReusableAuthorization(@2, @3)
 ! => recordCaughtException(@0, @exception) -> 500
 
-// Reuse path: when a reusable authorization exists, encode it to its wire form
-// (publishing it on the request) and make THAT the output, short-circuiting the
-// fresh-create block. encodeReusedIfPresent returns the encoded form (or the entity
-// when no encode method) when something is reusable, else null untouched. So when
-// @output is set, `if(isNull(@output),1)` returns empty, requirePresent throws, and
-// the bare `! -> 0` terminates with the encoded form as output. When @output is null
-// (no reuse), the guard passes and the script falls through to fresh-create.
-output <- encodeReusedIfPresent(@output, @2, @0)
+// Reuse path: encode the reused token to its wire form (publishing it on the request as
+// encodedAuthorization for the transport header); returns null when nothing is reusable.
+_encodedReused <- encodeReusedIfPresent(@_tokenEntity, @2, @0)
 ! => recordCaughtException(@0, @exception) -> 500
-requirePresent(if(isNull(@output), 1))
+
+// Publish the sanitized IAuthentication (security context — tenant/owner/super/authorities,
+// never credentials/principal) on the request, for transports that render it as the response
+// body. authenticationResponse returns null when not reusable (no-op).
+setRequestArg(@0, "authentication", authenticationResponse(@3, @_tokenEntity, @_encodedReused, @2))
+
+// Reuse output: the token (encoded wire form, or the entity when no encode method). When a
+// token was reused, @_tokenEntity is set, requirePresent throws and `! -> 0` terminates with
+// it; otherwise the guard passes and the script falls through to fresh-create.
+output <- coalesce(@_encodedReused, @_tokenEntity)
+requirePresent(if(isNull(@_tokenEntity), 1))
 ! -> 0
 
 // ===== fresh-create branch =====
@@ -69,6 +74,8 @@ setRequestArg(@0, "encodedAuthorization", @_encoded)
 persistIfStorable(@output, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 
-// Emit the encoded transport form (e.g. JWT header.payload.signature) as the
-// operation output when an encode method produced one; otherwise ship the entity.
+// Publish the sanitized IAuthentication (security context) on the request for transports to
+// render as the response body; the operation output stays the token (encoded wire form, or
+// the entity) so in-process consumers and the verify path are unchanged.
+setRequestArg(@0, "authentication", authenticationResponse(@3, @output, @_encoded, @2))
 output <- coalesce(@_encoded, @output) -> 0

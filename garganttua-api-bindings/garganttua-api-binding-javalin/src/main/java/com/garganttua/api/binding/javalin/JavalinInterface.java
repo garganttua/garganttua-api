@@ -82,6 +82,14 @@ public class JavalinInterface implements IInterface {
 	private static final ArgKey<Object> ENCODED_AUTHORIZATION =
 			ArgKey.of("encodedAuthorization", IClass.getClass(Object.class));
 
+	/**
+	 * The request arg under which the pipeline publishes the sanitized {@code IAuthentication}
+	 * (the login security context — tenant/owner/super/authorities, never credentials/principal)
+	 * after authenticate / refreshAuthorization. Rendered as the response body.
+	 */
+	private static final ArgKey<Object> AUTHENTICATION =
+			ArgKey.of("authentication", IClass.getClass(Object.class));
+
 	private final int port;
 	/** Whether this interface owns (creates + starts + stops) its Javalin server. */
 	private final boolean ownsServer;
@@ -222,16 +230,19 @@ public class JavalinInterface implements IInterface {
 
 			// A token-minting op (authenticate / refreshAuthorization) that produced an
 			// encoded authorization returns it in the X-Authorization response header; the
-			// body is a minimal "ok". The token travels in the header, never the body. The
-			// failure path is unchanged (applyOutcome surfaces the 4xx + parlant message).
+			// body is the sanitized IAuthentication (login security context — tenant/owner/
+			// super/authorities, never credentials/principal). The token travels in the header,
+			// never the body. The failure path is unchanged (applyOutcome surfaces the 4xx).
 			Object encoded = request.arg(ENCODED_AUTHORIZATION).orElse(null);
 			if (encoded != null && isSuccess(response)) {
 				ctx.header(AUTHORIZATION_RESPONSE_HEADER, asTokenString(encoded));
 				int status = httpStatus(response.getResponseCode());
-				// Structured success envelope, rendered in the client's negotiated media
-				// (JSON, XML, …) via the serializer registry; degrades to plain "ok" only
-				// when no registered serializer satisfies Accept.
-				writeEnvelope(ctx, domain, status, new StatusEnvelope("ok"), "ok");
+				// Rendered in the client's negotiated media (JSON, XML, …) via the serializer
+				// registry; degrades to plain "ok" only when no registered serializer satisfies
+				// Accept, or when the pipeline published no authentication.
+				Object authentication = request.arg(AUTHENTICATION).orElse(null);
+				Object body = authentication != null ? authentication : new StatusEnvelope("ok");
+				writeEnvelope(ctx, domain, status, body, "ok");
 				return;
 			}
 			applyOutcome(ctx, domain, response);

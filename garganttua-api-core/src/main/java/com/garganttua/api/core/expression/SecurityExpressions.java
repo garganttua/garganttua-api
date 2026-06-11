@@ -1644,6 +1644,66 @@ public class SecurityExpressions {
 				true, true, true, true);
 	}
 
+	@Expression(name = "authenticationResponse",
+			description = "Builds the IAuthentication returned to the client after a successful authenticate/login: "
+					+ "the security context (tenantId/ownerId read off the minted token, super status from the "
+					+ "registries, authorities from the token, the encoded token as authorization), SANITIZED of "
+					+ "credentials and principal (never returned over the wire). Returns null when the token entity is "
+					+ "null (lets the reuse branch fall through to fresh-create).")
+	public static Object authenticationResponse(@Nullable Object authResult, @Nullable Object tokenEntity,
+			@Nullable Object encodedToken, @Nullable Object domainContext) {
+		Object token = unwrapOptional(tokenEntity);
+		if (token == null) {
+			return null;
+		}
+		IReflection reflection = DefaultMapper.reflection();
+		// domainContext is the AUTHENTICATOR domain (e.g. users); the token's identity fields
+		// live on the linked AUTHORIZATION domain, so resolve it to read tenant/owner correctly.
+		IDomain<?> authzDomain = resolveAuthorizationDomain(toDomain(domainContext));
+		String tenantId = null;
+		String ownerId = null;
+		boolean superTenant = false;
+		boolean superOwner = false;
+		List<String> authorities = null;
+		if (authzDomain != null) {
+			ObjectAddress tenantAddr = authzDomain.getTenantIdFieldAddress();
+			tenantId = tenantAddr != null ? readField(token, tenantAddr) : null;
+			ObjectAddress ownedAddr = authzDomain.getDomainDefinition() != null
+					? authzDomain.getDomainDefinition().owned() : null;
+			ownerId = ownedAddr != null ? readField(token, ownedAddr) : null;
+			IApi api = apiOf(authzDomain);
+			if (api != null) {
+				superTenant = tenantId != null && api.isSuperTenant(tenantId);
+				superOwner = ownerId != null && api.isSuperOwner(ownerId);
+			}
+			Object defObj = authorizationDefinition(domainContext);
+			if (defObj instanceof IDomainAuthorizationDefinition authzDef && authzDef.authorities() != null) {
+				try {
+					Object raw = reflection.getFieldValue(token, authzDef.authorities().toString());
+					if (raw instanceof List<?> list) {
+						@SuppressWarnings("unchecked")
+						List<String> typed = (List<String>) list;
+						authorities = typed;
+					}
+				} catch (Exception ignored) {
+					// keep null
+				}
+			}
+		}
+		Object authorization = unwrapOptional(encodedToken);
+		return new com.garganttua.api.commons.security.authentication.Authentication(
+				true,
+				null, // principal — internal, never returned
+				null, // credentials — internal, never returned
+				authorization,
+				authorities,
+				tenantId,
+				ownerId,
+				superTenant,
+				superOwner,
+				true, true, true, true);
+	}
+
 	@Expression(name = "findByLogin", description = "Finds an entity by login field in the repository. Returns the entity or throws if not found.")
 	public static Object findByLogin(@Nullable Object authContextObj, @Nullable Object repositoryObj, @Nullable Object loginValue) {
 		if (authContextObj == null || repositoryObj == null || loginValue == null) {
