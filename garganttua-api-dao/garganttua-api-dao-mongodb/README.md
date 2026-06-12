@@ -10,6 +10,8 @@
 - **Sorting and pagination** — `ISort` translates to `Sorts.ascending` / `Sorts.descending`; `IPageable` applies `skip` and `limit` on the `FindIterable`
 - **Upsert-based save** — `save()` performs a `replaceOne` with `upsert(true)` when `_id` is present, and an `insertOne` otherwise
 - **Reflection-based DTO mapping** — `MongoDao` uses `garganttua-core` `IClass` / `IField` abstractions to convert between DTO instances and `Document` objects at runtime, traversing the class hierarchy and skipping `static` and `transient` fields
+- **DTO composition (`@DBRef`-style)** — a field declared via `@Composed` / `.composed(fieldName, collection)` is persisted as a MongoDB `DBRef` reference (1-1) or a `List<DBRef>` (1-N) instead of an embedded document, and eagerly resolved back into the composed DTO(s) on read
+- **Round-trip type fidelity** — on read, each stored value is adapted back to the field's declared Java type (BSON `String` → `enum`, BSON datetime / `java.util.Date` → `java.time.*`, 32-bit `Integer` → `Long`, `String` → scalar); on write an `enum` is stored by its `name()`
 - **AOT / native-ready** — `MongoDao` is annotated with `@Reflected`; the AOT annotation processor emits `AOTClass_MongoDao` at compile time; `MongoDaoInfrastructureSeed` registers it in `AOTRegistry` via `ServiceLoader` so the class resolves under `AOTReflectionProvider` without a classpath scanner
 
 ## Installation
@@ -66,6 +68,52 @@ A stateless utility class that recursively converts an `IFilter` tree into a `Bs
 | `$field` + `$text` | `Filters.text(value)` |
 
 A `$field` node carries the field name as its `value` and exactly one comparison child. Logical operators require at least two children.
+
+### DTO Composition (`@Composed` / `.composed(...)`)
+
+A DTO field can **reference** DTOs stored in another collection rather than embedding them — the MongoDB analogue of Spring Data's `@DBRef`. Declare a composition either with the field-level annotation or the DSL:
+
+```java
+public class OrderDto {
+    private String uuid;
+
+    @Composed(collection = "customers")
+    private CustomerDto customer;        // 1-1 — one DBRef
+
+    @Composed(collection = "lines")
+    private List<OrderLineDto> lines;    // 1-N — a List<DBRef>
+}
+
+// …or, equivalently, via the DSL (no annotation on the field):
+.dto(OrderDto.class)
+    .id("id").uuid("uuid").tenantId("tenantId")
+    .composed("customer", "customers")
+    .composed("lines", "lines")
+    .db(new MongoDao(db, "orders"))
+```
+
+Both paths land in `IDtoDefinition.compositions()`, which `MongoDao` reads at `registerDomain`. Then:
+
+- **On write** (`dtoToDocument`) — a composition field is stored **only as a reference**, never the embedded DTO: a single `DBRef{$ref: collection, $id: uuid}` for a 1-1 field, or a `List<DBRef>` for a 1-N (`Collection`) field. The `$id` is the composed DTO's `uuid`. The composed targets are persisted independently by their own domains — there is **no cascade save**.
+- **On read** (`documentToDto`) — each reference is **eagerly resolved one level deep**: the referenced document is fetched from its collection (`getCollection($ref).find(uuid == $id)`) and mapped onto the field's (element) type. Resolution does **not** recurse into a referenced DTO's own compositions, so a reference graph can never loop. A dangling reference resolves to `null`.
+
+The `uuid` stays under its own field name (no `_id` remapping), so existing `MongoFilterConverter` filters are unaffected; references resolve by querying the target's `uuid` field.
+
+### Type fidelity on the round trip
+
+MongoDB's `Document` codec is lossy across the JVM type system — an `enum` decodes back as a `String`, a `java.time.Instant` as a `java.util.Date`, a 32-bit field as an `Integer`. `MongoDao` adapts each stored value back to its declared field type on read:
+
+| Stored (BSON-decoded) | Declared field type | Result |
+|---|---|---|
+| `String` | an `enum` | `Enum.valueOf(type, name)` |
+| `java.util.Date` | `Instant` / `LocalDateTime` / `LocalDate` / `ZonedDateTime` / `OffsetDateTime` | converted at UTC |
+| `Number` | any boxed/primitive numeric | widened/narrowed |
+| `String` | `int` / `long` / `double` / `float` / `boolean` | parsed |
+| already-assignable | — | passed through |
+
+On write, an `enum` is stored by its `name()` so the wire shape is codec-independent and human-readable. A value the coercer cannot adapt is left for `field.set`, which surfaces a mismatch as a parlant `ApiException` naming the field and the stored vs declared types.
+
+> The single-value coercion is generic plumbing every DAO backend needs; `docs/CORE_EVOLUTION_value_coercion_for_daos.md` proposes hosting it in `garganttua-core`'s mapper so this block can later delegate.
 
 ### AOT and Native-Image Readiness
 
@@ -127,6 +175,9 @@ A single `MongoDao` instance handles one collection. To back multiple domains, c
 - Index creation is not managed by `MongoDao`. Create indexes (unique, TTL, text, geospatial) independently — via `MongoCollection.createIndex(...)`, a migration tool, or your Spring configuration.
 - For native-image builds, confirm that `garganttua-aot-reflection` and `garganttua-aot-commons` are on the compile and runtime classpath. The `AOTClass_MongoDao` descriptor is emitted into `target/generated-sources/annotations` and must be compiled into the artifact.
 - `MongoFilterConverter.convert()` throws `ApiException` on unsupported operators. Extend it by adding cases to the `switch` expression in `convertField` if your domain requires additional MongoDB operators.
+- **Composition is not cascade persistence.** Writing a DTO with a `@Composed` field stores only the reference — the composed targets must be saved through their own domains/DAOs. Reading resolves them, but writing does not create them.
+- **Composition resolution costs one query per reference.** Reading an entity with N `@Composed` references issues N additional `find` calls (one per `DBRef`), one level deep. For wide 1-N fan-out, prefer fetching the references and batching lookups in application code, or model the data as embedded documents instead.
+- **A composed target is expected to expose its `uuid` under the same field name** as the owning DTO's uuid (the `$id` of every emitted `DBRef`). Resolution queries the target collection by that field name.
 
 ## License
 This module is distributed under the MIT License.
