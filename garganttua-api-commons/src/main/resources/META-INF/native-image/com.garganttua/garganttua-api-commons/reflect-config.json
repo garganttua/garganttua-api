@@ -1,0 +1,15 @@
+[
+  {
+    "comment": "Named map-backed IOperationRequest returned by IOperationRequest.create(), flowing through the pipeline as @0 and resolved by name. Shipped here (not via @Reflected) because the AOT processor mis-generates descriptors for its generic arg(ArgKey<T>,T) method. GraalVM auto-discovers this file under META-INF/native-image, so a native consumer needs no hand-written reflect-config.",
+    "name": "com.garganttua.api.commons.service.MapBackedOperationRequest",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.garganttua.api.commons.service.MapBackedCaller",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredFields": true
+  }
+]

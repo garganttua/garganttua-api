@@ -1,0 +1,8 @@
+[
+  {
+    "comment": "The concrete Javalin context impl flows through the pipeline as the raw request/response object; the framework resolves its type by name at the EXTRACT/RESPONSE stages. Under native-image this fails ('Cannot resolve class: io.javalin.http.servlet.JavalinServletContext') unless registered. It is a Javalin library type, so it cannot carry @Reflected — the binding ships its descriptor here. GraalVM auto-discovers this file under META-INF/native-image.",
+    "name": "io.javalin.http.servlet.JavalinServletContext",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  }
+]

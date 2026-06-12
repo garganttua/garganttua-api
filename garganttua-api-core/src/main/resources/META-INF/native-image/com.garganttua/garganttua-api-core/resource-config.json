@@ -1,0 +1,8 @@
+{
+  "comment": "garganttua-api-core ships the workflow pipeline scripts loaded at runtime via `include: classpath ... scripts/<stage>/<NAME>.gs`. They MUST be embedded for native-image, otherwise startup fails with 'WorkflowException: include: classpath resource not found: scripts/protocol/EXTRACT.gs'. GraalVM auto-discovers this file under META-INF/native-image, so a native consumer needs no hand-written resource-config.",
+  "resources": {
+    "includes": [
+      { "pattern": "scripts/.*\\.gs" }
+    ]
+  }
+}

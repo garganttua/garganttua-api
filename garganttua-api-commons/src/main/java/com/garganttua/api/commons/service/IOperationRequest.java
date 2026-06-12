@@ -62,64 +62,13 @@ public interface IOperationRequest {
 
 	// --- Factory ---
 
-	@SuppressWarnings("unchecked")
+	/**
+	 * A fresh map-backed request. Returns a NAMED {@code @Reflected} type
+	 * ({@link MapBackedOperationRequest}) rather than an anonymous class, so it
+	 * resolves under native-image with no hand-written reflect-config.
+	 */
 	static IOperationRequest create() {
-		final Map<String, Object> map = new java.util.HashMap<>();
-		return new IOperationRequest() {
-			@Override
-			public Map<String, Object> args() {
-				return map;
-			}
-
-			@Override
-			public <T> Optional<T> arg(ArgKey<T> key) {
-				return Optional.ofNullable((T) map.get(key.name()));
-			}
-
-			@Override
-			public <T> void arg(ArgKey<T> key, T value) {
-				map.put(key.name(), value);
-			}
-
-			@Override
-			public String domain() {
-				OperationPath path = operationPath();
-				return path != null ? path.domain() : null;
-			}
-
-			@Override
-			public ICaller caller() {
-				return new ICaller() {
-					@Override public String tenantId() { return arg(TENANT_ID).orElse(null); }
-					@Override public String requestedTenantId() { return arg(REQUESTED_TENANT_ID).orElse(null); }
-					@Override public String callerId() { return arg(CALLER_ID).orElse(null); }
-					@Override public String ownerId() { return arg(OWNER_ID).orElse(null); }
-					@Override public boolean superTenant() { return Boolean.TRUE.equals(arg(SUPER_TENANT).orElse(null)); }
-					@Override public boolean superOwner() { return Boolean.TRUE.equals(arg(SUPER_OWNER).orElse(null)); }
-					@Override public List<String> authorities() { return (List<String>) arg(AUTHORITIES).orElse(null); }
-				};
-			}
-
-			@Override
-			public OperationDefinition operation() {
-				return arg(OPERATION).orElse(null);
-			}
-
-			@Override
-			public OperationPath operationPath() {
-				return arg(PATH).map(OperationPath::new).orElse(null);
-			}
-
-			@Override
-			public UUID executionUuid() {
-				return arg(EXECUTION_UUID).orElse(null);
-			}
-
-			@Override
-			public UUID correlationUuid() {
-				return arg(CORRELATION_UUID).orElse(null);
-			}
-		};
+		return new MapBackedOperationRequest();
 	}
 
 	// --- Core methods ---
