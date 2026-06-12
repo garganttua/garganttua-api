@@ -6,7 +6,7 @@
 
 **Key Features:**
 - **`IDao` implementation** — `MongoDao` fulfills the full `IDao` contract: `find`, `save`, `delete`, `count`, and `registerDomain`
-- **Filter translation** — `MongoFilterConverter` maps the framework's `IFilter` tree (logical operators `$and` / `$or` / `$nor`, field comparisons `$eq` / `$ne` / `$gt` / `$gte` / `$lt` / `$lte` / `$regex` / `$empty` / `$in` / `$nin` / `$text`) to native MongoDB `Bson` predicates via `com.mongodb.client.model.Filters`
+- **Filter translation** — `MongoFilterConverter` maps the framework's `IFilter` tree (logical operators `$and` / `$or` / `$nor`, field comparisons `$eq` / `$ne` / `$gt` / `$gte` / `$lt` / `$lte` / `$regex` / `$empty` / `$in` / `$nin` / `$text`, and geospatial `$geoWithin` / `$geoWithinSphere`) to native MongoDB `Bson` predicates via `com.mongodb.client.model.Filters`
 - **Sorting and pagination** — `ISort` translates to `Sorts.ascending` / `Sorts.descending`; `IPageable` applies `skip` and `limit` on the `FindIterable`
 - **Upsert-based save** — `save()` performs a `replaceOne` with `upsert(true)` when `_id` is present, and an `insertOne` otherwise
 - **Reflection-based DTO mapping** — `MongoDao` uses `garganttua-core` `IClass` / `IField` abstractions to convert between DTO instances and `Document` objects at runtime, traversing the class hierarchy and skipping `static` and `transient` fields
@@ -66,8 +66,21 @@ A stateless utility class that recursively converts an `IFilter` tree into a `Bs
 | `$field` + `$empty` | `Filters.exists(field, false)` |
 | `$field` + `$in` / `$nin` | `Filters.in` / `Filters.nin` |
 | `$field` + `$text` | `Filters.text(value)` |
+| `$field` + `$geoWithin` / `$geoWithinSphere` | `Filters.geoWithin(field, {$geometry: …})` |
 
 A `$field` node carries the field name as its `value` and exactly one comparison child. Logical operators require at least two children.
+
+### Geospatial queries (`$geoWithin` / `$geoWithinSphere`)
+
+A geolocalized domain (`@EntityGeolocalized` / `.geolocalized(field)`, whose location field is forced to `org.geojson.Point`) can be queried with the framework's geo filters `Filter.geolocWithin(field, geometry)` and `Filter.geolocWithinSphere(field, geometry)`, where `geometry` is any `org.geojson` GeoJSON shape (`Point`, `Polygon`, `MultiPolygon`, …).
+
+`MongoFilterConverter` translates both to a MongoDB GeoJSON predicate:
+
+```json
+{ "location": { "$geoWithin": { "$geometry": { "type": "Polygon", "coordinates": [ … ] } } } }
+```
+
+The `org.geojson` geometry is serialised to its `{type, coordinates}` GeoJSON form via Jackson (the geojson library's own (de)serialisation), so every shape is handled uniformly. **`$geoWithin` and `$geoWithinSphere` map to the same `$geometry` query** — a `2dsphere` index already evaluates containment on the sphere, so `Sphere` is an alias. This requires a **`2dsphere` index** on the location field (create it independently — see the index note below).
 
 ### DTO Composition (`@Composed` / `.composed(...)`)
 

@@ -5,11 +5,16 @@ import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.filter.IFilter;
 import com.mongodb.client.model.Filters;
 
 public class MongoFilterConverter {
+
+	/** Serialises an {@code org.geojson} geometry to its GeoJSON {@code {type,coordinates}} form. */
+	private static final ObjectMapper GEO_MAPPER = new ObjectMapper();
 
 	public static Bson convert(IFilter filter) throws ApiException {
 		if (filter == null) {
@@ -76,8 +81,33 @@ public class MongoFilterConverter {
 			case "$in" -> convertIn(fieldName, comparison);
 			case "$nin" -> convertNin(fieldName, comparison);
 			case "$text" -> Filters.text(value.toString());
+			// Geospatial: $geoWithin and $geoWithinSphere both resolve to a GeoJSON
+			// $geoWithin/$geometry query — a 2dsphere index already evaluates it on the
+			// sphere, so 'Sphere' is an alias here. Requires a 2dsphere index on the field.
+			case "$geoWithin", "$geoWithinSphere" -> convertGeoWithin(fieldName, value);
 			default -> throw new ApiException("Unsupported comparison operator: " + op);
 		};
+	}
+
+	/**
+	 * Turns an {@code org.geojson} geometry (the filter's value) into a MongoDB
+	 * {@code {<field>: {$geoWithin: {$geometry: {type,coordinates}}}}} predicate. The geometry is
+	 * serialised through Jackson (the geojson library's own (de)serialisation), so every GeoJSON
+	 * shape — Point, Polygon, MultiPolygon, … — is handled uniformly.
+	 */
+	private static Bson convertGeoWithin(String fieldName, Object geometry) throws ApiException {
+		if (geometry == null) {
+			throw new ApiException("$geoWithin filter on field '" + fieldName + "' requires a GeoJSON geometry value");
+		}
+		try {
+			// Filters.geoWithin(field, Bson) already wraps the geometry in $geometry, so pass the
+			// raw {type,coordinates} GeoJSON — wrapping it here would double-nest $geometry.
+			Document geoJson = Document.parse(GEO_MAPPER.writeValueAsString(geometry));
+			return Filters.geoWithin(fieldName, geoJson);
+		} catch (JsonProcessingException e) {
+			throw new ApiException("Failed to serialise the GeoJSON geometry for field '" + fieldName
+					+ "' (expected an org.geojson geometry, got " + geometry.getClass().getName() + ")", e);
+		}
 	}
 
 	private static Bson convertIn(String fieldName, IFilter comparison) throws ApiException {
