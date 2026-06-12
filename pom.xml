@@ -49,7 +49,7 @@
 		<java.version>25</java.version>
 
 		<!-- Garganttua Core -->
-		<garganttua.core.version>2.0.0-ALPHA03</garganttua.core.version>
+		<garganttua.core.version>2.0.0-ALPHA04</garganttua.core.version>
 
 		<!-- Binding library versions — each binding sub-module wraps
 		     ONE external library, and these properties pin its version
