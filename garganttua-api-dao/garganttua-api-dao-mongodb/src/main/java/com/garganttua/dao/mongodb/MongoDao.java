@@ -167,6 +167,13 @@ public class MongoDao implements IDao {
 				}
 				clazz = clazz.getSuperclass();
 			}
+			// Project the domain uuid onto _id so save() upserts (rather than always inserting →
+			// duplicate rows) and delete() has a key. The uuid is kept under its own field name so
+			// uuid-keyed filters (readOne / readAll by uuid) still match — _id is an added projection.
+			Object uuidValue = map.get(this.uuidFieldName);
+			if (uuidValue != null) {
+				map.put(MONGO_ID, uuidValue);
+			}
 			return new Document(map);
 		} catch (IllegalAccessException e) {
 			throw new ApiException("Failed to convert DTO to MongoDB Document", e);
@@ -263,11 +270,17 @@ public class MongoDao implements IDao {
 			return;
 		}
 		String fieldName = field.getName();
-		if (!doc.containsKey(fieldName)) {
+		Object value;
+		if (doc.containsKey(fieldName)) {
+			value = doc.get(fieldName);
+		} else if (fieldName.equals(this.uuidFieldName) && doc.containsKey(MONGO_ID)) {
+			// The uuid is projected onto _id on write; recover it from there for documents that
+			// carry only _id (e.g. written by another tool, or an _id-only projection).
+			value = doc.get(MONGO_ID);
+		} else {
 			return;
 		}
 		field.setAccessible(true);
-		Object value = doc.get(fieldName);
 		if (comps.containsKey(fieldName)) {
 			field.set(instance, resolveReference(field, value));
 		} else if (!isReference(value)) {
@@ -309,6 +322,11 @@ public class MongoDao implements IDao {
 		}
 		if (value == null || target == null || target.isInstance(value)) {
 			return value;
+		}
+		if (value instanceof org.bson.types.Binary binary && target == byte[].class) {
+			// The driver decodes BSON binary back as org.bson.types.Binary, not byte[] — unwrap it,
+			// else any byte[] field (token signature, key material) is unreadable.
+			return binary.getData();
 		}
 		if (target.isEnum() && value instanceof String name) {
 			return Enum.valueOf((Class<? extends Enum>) target, name);

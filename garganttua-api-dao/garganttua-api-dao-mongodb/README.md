@@ -8,7 +8,7 @@
 - **`IDao` implementation** — `MongoDao` fulfills the full `IDao` contract: `find`, `save`, `delete`, `count`, and `registerDomain`
 - **Filter translation** — `MongoFilterConverter` maps the framework's `IFilter` tree (logical operators `$and` / `$or` / `$nor`, field comparisons `$eq` / `$ne` / `$gt` / `$gte` / `$lt` / `$lte` / `$regex` / `$empty` / `$in` / `$nin` / `$text`, and geospatial `$geoWithin` / `$geoWithinSphere`) to native MongoDB `Bson` predicates via `com.mongodb.client.model.Filters`
 - **Sorting and pagination** — `ISort` translates to `Sorts.ascending` / `Sorts.descending`; `IPageable` applies `skip` and `limit` on the `FindIterable`
-- **Upsert-based save** — `save()` performs a `replaceOne` with `upsert(true)` when `_id` is present, and an `insertOne` otherwise
+- **Upsert-based save** — `save()` performs a `replaceOne` with `upsert(true)` when `_id` is present, and an `insertOne` otherwise. The domain uuid is projected onto `_id` on write (kept under its own field name too, so uuid filters still match), so saves upsert by uuid instead of inserting duplicates, and `delete()` always has a key
 - **Reflection-based DTO mapping** — `MongoDao` uses `garganttua-core` `IClass` / `IField` abstractions to convert between DTO instances and `Document` objects at runtime, traversing the class hierarchy and skipping `static` and `transient` fields
 - **DTO composition (`@DBRef`-style)** — a field declared via `@Composed` / `.composed(fieldName, collection)` is persisted as a MongoDB `DBRef` reference (1-1) or a `List<DBRef>` (1-N) instead of an embedded document, and eagerly resolved back into the composed DTO(s) on read
 - **Round-trip type fidelity** — on read, each stored value is adapted back to the field's declared Java type (BSON `String` → `enum`, BSON datetime / `java.util.Date` → `java.time.*`, 32-bit `Integer` → `Long`, `String` → scalar); on write an `enum` is stored by its `name()`
@@ -48,7 +48,9 @@
 new MongoDao(mongoDatabase, "users")
 ```
 
-After construction, the framework calls `registerDomain(IDomainDefinition)` to supply the DTO class used for document-to-object mapping. The first DTO definition's `dtoClass()` is captured and used throughout the lifetime of the DAO instance. DTO fields are enumerated via `IClass.getDeclaredFields()` on each operation; `static` and `transient` fields are excluded.
+After construction, the framework calls `registerDomain(IDomainDefinition)` to supply the DTO class used for document-to-object mapping. The first DTO definition's `dtoClass()` (and its `uuid()` field address and `compositions()`) is captured and used throughout the lifetime of the DAO instance. DTO fields are enumerated via `IClass.getDeclaredFields()` on each operation; `static` and `transient` fields are excluded.
+
+**uuid ↔ `_id`.** The domain uuid is projected onto MongoDB's `_id` on write and recovered from it on read. This makes `save()` upsert by uuid (`replaceOne(..., upsert(true))`) instead of inserting a duplicate row each time, and gives `delete()` a key. The uuid is also kept under its own field name, so filters that query it (every `readOne` / `readAll`-by-uuid, built as `Filter.eq(uuidField, …)`) keep matching without the filter converter needing to know about `_id`.
 
 ### `MongoFilterConverter`
 
@@ -123,7 +125,10 @@ MongoDB's `Document` codec is lossy across the JVM type system — an `enum` dec
 | `java.util.Date` | `Instant` / `LocalDateTime` / `LocalDate` / `ZonedDateTime` / `OffsetDateTime` | converted at UTC |
 | `Number` | any boxed/primitive numeric | widened/narrowed |
 | `String` | `int` / `long` / `double` / `float` / `boolean` | parsed |
+| `org.bson.types.Binary` | `byte[]` | unwrapped via `getData()` |
 | already-assignable | — | passed through |
+
+(The `Binary` → `byte[]` case matters in practice: the driver decodes every BSON binary as `org.bson.types.Binary`, so without it a `byte[]` field — a token signature, raw key material — would be unreadable and break token verification / reuse / `readAll`.)
 
 On write, an `enum` is stored by its `name()` so the wire shape is codec-independent and human-readable. A value the coercer cannot adapt is left for `field.set`, which surfaces a mismatch as a parlant `ApiException` naming the field and the stored vs declared types.
 
