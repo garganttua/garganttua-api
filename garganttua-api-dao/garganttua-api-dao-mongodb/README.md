@@ -12,6 +12,7 @@
 - **Reflection-based DTO mapping** — `MongoDao` uses `garganttua-core` `IClass` / `IField` abstractions to convert between DTO instances and `Document` objects at runtime, traversing the class hierarchy and skipping `static` and `transient` fields
 - **DTO composition (`@DBRef`-style)** — a field declared via `@Composed` / `.composed(fieldName, collection)` is persisted as a MongoDB `DBRef` reference (1-1) or a `List<DBRef>` (1-N) instead of an embedded document, and eagerly resolved back into the composed DTO(s) on read
 - **Round-trip type fidelity** — on read, each stored value is adapted back to the field's declared Java type (BSON `String` → `enum`, BSON datetime / `java.util.Date` → `java.time.*`, 32-bit `Integer` → `Long`, `String` → scalar); on write an `enum` is stored by its `name()`
+- **`IKey` key-material persistence** — a DTO field of type `com.garganttua.core.crypto.IKey` (the key-store entity that backs token signing) is stored as a self-describing BSON sub-document and reconstructed on read; the field stays `IKey`-typed at runtime
 - **AOT / native-ready** — `MongoDao` is annotated with `@Reflected`; the AOT annotation processor emits `AOTClass_MongoDao` at compile time; `MongoDaoInfrastructureSeed` registers it in `AOTRegistry` via `ServiceLoader` so the class resolves under `AOTReflectionProvider` without a classpath scanner
 
 ## Installation
@@ -127,6 +128,21 @@ MongoDB's `Document` codec is lossy across the JVM type system — an `enum` dec
 On write, an `enum` is stored by its `name()` so the wire shape is codec-independent and human-readable. A value the coercer cannot adapt is left for `field.set`, which surfaces a mismatch as a parlant `ApiException` naming the field and the stored vs declared types.
 
 > The single-value coercion is generic plumbing every DAO backend needs; `docs/CORE_EVOLUTION_value_coercion_for_daos.md` proposes hosting it in `garganttua-core`'s mapper so this block can later delegate.
+
+### `IKey` key-material persistence
+
+A key-store entity (the `@Key` domain that holds token signing/verification material) carries fields of type `com.garganttua.core.crypto.IKey`. There is **no BSON codec for `IKey`** — it is an interface wrapping a lazy `java.security.Key` behind a package-private constructor — so handing one to the driver fails with `Can't find a codec for class …crypto.Key`. (`byte[]` fields are fine; the driver encodes them natively. The problem is specifically the rich `IKey` type.)
+
+`MongoDao` bridges `IKey` ↔ a self-describing BSON sub-document at the persistence boundary (`IKeyBsonBridge`). The DTO field **stays `IKey`-typed** at runtime — the entity signs/verifies with it; only the stored shape changes:
+
+```json
+{ "__ikey": true, "type": "PRIVATE", "algorithm": "EC-256",
+  "signatureAlgorithm": "SHA256", "rawKey": "<base64 material>" }
+```
+
+The raw material round-trips through core's `KeySerializer.exportRawKey` / `importRawKey`; the metadata needed to rebuild the key (`KeyType`, the `NAME-SIZE` algorithm rebuilt via `KeyAlgorithm.validateKeyAlgorithm`, the `SignatureAlgorithm` / encryption mode + padding) is stored alongside. On read, a sub-document carrying the `__ikey` marker is reconstructed back into an `IKey`, byte-identical to the original.
+
+> **Limitation:** `IKey` does not expose its IV size, so encryption keys round-trip with `ivSize = 0`. Signing keys — the key-store mint path — do not use it, so they are unaffected.
 
 ### AOT and Native-Image Readiness
 

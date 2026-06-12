@@ -29,6 +29,14 @@
 			<artifactId>garganttua-api-binding-jackson</artifactId>
 		</dependency>
 
+		<!-- IKey persistence bridge: serialise/reconstruct crypto key material at the
+		     DAO boundary (KeySerializer + KeyAlgorithm live here; IKey + enums are in
+		     garganttua-commons, already on the classpath). -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-crypto</artifactId>
+		</dependency>
+
 		<!-- AOT support. The @Reflected annotation processor emits AOTClass_*
 		     descriptors into target/generated-sources/annotations referencing
 		     com.garganttua.core.aot.reflection, so that artefact is needed on the

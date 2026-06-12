@@ -183,6 +183,10 @@ public class MongoDao implements IDao {
 		if (value instanceof Enum<?> e) {
 			return e.name();
 		}
+		if (value instanceof com.garganttua.core.crypto.IKey key) {
+			// No BSON codec exists for IKey — persist it as a self-describing sub-document.
+			return IKeyBsonBridge.toDocument(key);
+		}
 		return value;
 	}
 
@@ -298,7 +302,11 @@ public class MongoDao implements IDao {
 	 * cases; anything it does not recognise is returned untouched for {@code field.set} to accept or reject.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Object coerce(Object value, Class<?> target) {
+	private Object coerce(Object value, Class<?> target) throws ApiException {
+		// A persisted IKey sub-document is reconstructed regardless of the (interface) target type.
+		if (IKeyBsonBridge.isKeyDocument(value)) {
+			return IKeyBsonBridge.fromDocument((Document) value);
+		}
 		if (value == null || target == null || target.isInstance(value)) {
 			return value;
 		}
