@@ -64,6 +64,30 @@ public interface IEntityBuilder<E> extends IAutomaticLinkedBuilder<IEntityBuilde
 
     IEntityBuilder<E> unicity(ObjectAddress fieldAddress, UnicityScope system) throws ApiException;
 
+    /**
+     * Declares a field a caller may valorize at CREATION (no authority required). Declaring any
+     * {@code create(...)} turns creation into a WHITELIST: only declared fields are kept from the
+     * client body, every other client-supplied field is stripped before persist. With no
+     * {@code create(...)} declared at all, creation is unrestricted (the client body is kept as-is).
+     * The CREATE-time analogue of {@link #update(String)}.
+     */
+    IEntityBuilder<E> create(String string) throws ApiException;
+
+    IEntityBuilder<E> create(IField field) throws ApiException;
+
+    IEntityBuilder<E> create(ObjectAddress fieldAddress) throws ApiException;
+
+    /**
+     * Declares a field a caller may valorize at CREATION only when it carries {@code authority};
+     * otherwise the field is stripped from the created entity. The CREATE-time analogue of
+     * {@link #update(String, String)}.
+     */
+    IEntityBuilder<E> create(String string, String authority) throws ApiException;
+
+    IEntityBuilder<E> create(IField field, String authority) throws ApiException;
+
+    IEntityBuilder<E> create(ObjectAddress fieldAddress, String authority) throws ApiException;
+
     IEntityBuilder<E> update(String string) throws ApiException;
 
     IEntityBuilder<E> update(IField field) throws ApiException;

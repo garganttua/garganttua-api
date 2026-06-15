@@ -30,6 +30,16 @@ public interface IEntityDefinition<E> {
 
     List<Pair<ObjectAddress, UnicityScope>> unicities();
 
+    /**
+     * CREATE-time field whitelist: each pair binds a field a caller may valorize at creation to the
+     * authority it requires (null/empty = no authority). When EMPTY, creation is unrestricted (the
+     * client body is kept as-is). When non-empty, only these fields are kept — every other
+     * client-supplied field is stripped. Declared via {@code entity().create(field[, authority])}.
+     */
+    default List<Pair<ObjectAddress, String>> creates() {
+        return List.of();
+    }
+
     List<Pair<ObjectAddress, String>> updates();
 
     List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedFields();

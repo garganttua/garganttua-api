@@ -59,6 +59,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     private ObjectAddress tenantId;
     private List<ObjectAddress> mandatories = new ArrayList<>();
     private List<Pair<ObjectAddress, UnicityScope>> unicities = new ArrayList<>();
+    private List<Pair<ObjectAddress, String>> creates = new ArrayList<>();
     private List<Pair<ObjectAddress, String>> updates = new ArrayList<>();
     private List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedFields = new ArrayList<>();
     private List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedMethods = new ArrayList<>();
@@ -259,6 +260,49 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
         this.unicities.add(new Pair<ObjectAddress, UnicityScope>(
                 FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), scope));
 
+        return this;
+    }
+
+    @Override
+    public IEntityBuilder<E> create(String fieldName) throws ApiException {
+        return create(fieldName, null);
+    }
+
+    @Override
+    public IEntityBuilder<E> create(IField field) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        return create(field.getName(), null);
+    }
+
+    @Override
+    public IEntityBuilder<E> create(ObjectAddress fieldAddress) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
+        this.creates.add(new Pair<ObjectAddress, String>(
+                FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), null));
+        return this;
+    }
+
+    @Override
+    public IEntityBuilder<E> create(String fieldName, String authority) throws ApiException {
+        Objects.requireNonNull(fieldName, "Field name cannot be null");
+        this.creates.add(new Pair<ObjectAddress, String>(
+                FieldResolver.fieldByFieldName(this.entityClass, provider(), fieldName, null).address(), authority));
+        return this;
+    }
+
+    @Override
+    public IEntityBuilder<E> create(IField field, String authority) throws ApiException {
+        Objects.requireNonNull(field, "Field cannot be null");
+        this.creates.add(new Pair<ObjectAddress, String>(
+                FieldResolver.fieldByFieldName(this.entityClass, provider(), field.getName(), null).address(), authority));
+        return this;
+    }
+
+    @Override
+    public IEntityBuilder<E> create(ObjectAddress fieldAddress, String authority) throws ApiException {
+        Objects.requireNonNull(fieldAddress, "Field address name cannot be null");
+        this.creates.add(new Pair<ObjectAddress, String>(
+                FieldResolver.fieldByAddress(this.entityClass, provider(), fieldAddress, null).address(), authority));
         return this;
     }
 
@@ -560,6 +604,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
                 this.tenantId,
                 new ArrayList<>(this.mandatories),
                 new ArrayList<>(this.unicities),
+                new ArrayList<>(this.creates),
                 new ArrayList<>(this.updates),
                 new ArrayList<>(this.annotatedFields),
                 new ArrayList<>(this.annotatedMethods),

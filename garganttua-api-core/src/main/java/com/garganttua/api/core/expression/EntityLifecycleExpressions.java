@@ -8,6 +8,7 @@ import java.util.Set;
 import org.javatuples.Pair;
 
 import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.entity.EntityCreator;
 import com.garganttua.api.core.entity.EntityUpdater;
 import com.garganttua.api.core.entity.EntityDefinition;
 import com.garganttua.api.core.filter.Filter;
@@ -239,6 +240,14 @@ public class EntityLifecycleExpressions {
 	public static Object runAfterCreate(Object entity, Object request) {
 		return runLifecycleHooks(entity, request, "afterCreate",
 				ed -> ((EntityDefinition<?>) ed).afterCreateMethodBuilders());
+	}
+
+	@Expression(name = "createEntity", description = "Strips fields the caller is not authorized to valorize at creation (create-time field whitelist; no-op when no .create(...) is declared)")
+	public static Object createEntity(Object caller, Object entity, Object context) {
+		ICaller c = (ICaller) unwrapOptional(caller);
+		IDomain<?> dc = toDomain(context);
+		EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
+		return new EntityCreator().create(c, unwrapOptional(entity), entityDef.creates());
 	}
 
 	@Expression(name = "updateEntity", description = "Applies authorized field updates from updatedEntity onto storedEntity")

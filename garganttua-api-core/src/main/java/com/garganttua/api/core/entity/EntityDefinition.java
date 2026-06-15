@@ -19,6 +19,7 @@ public record EntityDefinition<E>(
     ObjectAddress tenantId,
     List<ObjectAddress> mandatories,
     List<Pair<ObjectAddress, UnicityScope>> unicities,
+    List<Pair<ObjectAddress, String>> creates,
     List<Pair<ObjectAddress, String>> updates,
     List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedFields,
     List<Pair<ObjectAddress, IClass<? extends Annotation>>> annotatedMethods,
