@@ -377,10 +377,11 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
-        @DisplayName("super-tenant caller bypasses the field-level gate (matches super-caller convention)")
-        void superTenantBypassesGate() throws ApiException {
+        @DisplayName("super-tenant caller does NOT bypass the field-level gate — the guarded field is preserved")
+        void superTenantDoesNotBypassGate() throws ApiException {
             User body = new User();
             body.setName("Bob By Super");
+            body.setEmail("super@example.com");
 
             // Custom super-caller pinned to TENANT_A — the seeded entity lives
             // on TENANT_A and using the canned superTenantScriptRequest (which
@@ -394,7 +395,7 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
             req.arg(IOperationRequest.REQUESTED_TENANT_ID, "TENANT_A");
             req.arg(IOperationRequest.SUPER_TENANT, true);
             req.arg(IOperationRequest.SUPER_OWNER, true);
-            // No authorities — super flag must be enough to bypass the gate.
+            // No authorities — super status must NOT be enough; the guarded field is skipped.
             req.arg("caller", new com.garganttua.api.core.caller.Caller(
                     "TENANT_A", "TENANT_A", null, null, true, true, null));
             req.arg("authorization", new com.garganttua.api.core.integ.TestAuthorization()); // Mode B
@@ -404,11 +405,13 @@ class UpdateOneIntegrationTest extends AbstractCrudScriptTest {
 
             WorkflowResult result = executeScript(guardedUserCtx, req);
             assertTrue(result.isSuccess(),
-                    "super-tenant on the right tenant must succeed. code=" + result.code()
+                    "the update operation itself succeeds — only the guarded field is skipped. code=" + result.code()
                             + " response=" + result.variables());
             User updated = (User) result.output();
-            assertEquals("Bob By Super", updated.getName(),
-                    "super-tenant caller bypasses every authority gate, including field-level ones");
+            assertEquals("Bob", updated.getName(),
+                    "guarded 'name' must NOT change — a super-tenant without 'user-update-name' gets no bypass");
+            assertEquals("super@example.com", updated.getEmail(),
+                    "ungated 'email' still updates — no authority required");
         }
     }
 }

@@ -203,11 +203,12 @@ public class SecurityExpressions {
 	@Expression(name = "callerHasAuthority",
 			description = "Returns true when the caller carries an authority equal to the supplied name. "
 					+ "Safe: returns false when caller is null, has no authorities, or the name is blank. "
-					+ "Super-tenant and super-owner callers bypass the check.")
+					+ "Super-tenant / super-owner status does NOT bypass the check — being super grants "
+					+ "cross-tenant / cross-owner reach, not the authority to perform an operation; a super "
+					+ "caller must still carry the required authority.")
 	public static boolean callerHasAuthority(@Nullable Object caller, @Nullable Object authorityName) {
 		ICaller c = (ICaller) unwrapOptional(caller);
 		if (c == null) return false;
-		if (c.superTenant() || c.superOwner()) return true;
 		Object name = unwrapOptional(authorityName);
 		if (!(name instanceof String authority) || authority.isBlank()) return false;
 		java.util.List<String> authorities = c.authorities();

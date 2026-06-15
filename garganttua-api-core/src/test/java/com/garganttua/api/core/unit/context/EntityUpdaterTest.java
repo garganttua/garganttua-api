@@ -247,8 +247,8 @@ class EntityUpdaterTest {
         }
 
         @Test
-        @DisplayName("super-tenant caller bypasses field-level authority gates")
-        void superTenantBypassesGate() {
+        @DisplayName("super-tenant caller does NOT bypass field-level gates — it must carry the authority")
+        void superTenantDoesNotBypassGate() {
             Product stored = new Product("Old", 10.0, "Cat", "secret");
             Product updated = new Product("New", 99.0, "NewCat", "hacked");
 
@@ -258,19 +258,26 @@ class EntityUpdaterTest {
                     Pair.with(new ObjectAddress("category"), "ROLE_CATEGORY_EDITOR")
             );
 
-            // null authorities on the super-tenant — but the super flag bypasses
-            // the gate (mirrors SecurityExpressions.callerHasAuthority).
+            // Super-tenant WITHOUT the authorities: being super grants cross-tenant
+            // reach, not the authority to mutate guarded fields — all are skipped.
             updater.update(callerWith(null, /*superTenant*/ true, /*superOwner*/ false),
                     stored, updated, authorizations);
 
+            assertEquals("Old", stored.getName(), "guarded field must NOT change for a super-tenant lacking the authority");
+            assertEquals(10.0, stored.getPrice());
+            assertEquals("Cat", stored.getCategory());
+
+            // The same super-tenant, now carrying the authorities, may mutate them.
+            updater.update(callerWith(List.of("ROLE_ADMIN", "ROLE_PRICING", "ROLE_CATEGORY_EDITOR"),
+                    /*superTenant*/ true, /*superOwner*/ false), stored, updated, authorizations);
             assertEquals("New", stored.getName());
             assertEquals(99.0, stored.getPrice());
             assertEquals("NewCat", stored.getCategory());
         }
 
         @Test
-        @DisplayName("super-owner caller bypasses field-level authority gates")
-        void superOwnerBypassesGate() {
+        @DisplayName("super-owner caller does NOT bypass field-level gates either")
+        void superOwnerDoesNotBypassGate() {
             Product stored = new Product("Old", 10.0, "Cat", "secret");
             Product updated = new Product("New", 99.0, "NewCat", "hacked");
 
@@ -281,8 +288,8 @@ class EntityUpdaterTest {
             updater.update(callerWith(null, /*superTenant*/ false, /*superOwner*/ true),
                     stored, updated, authorizations);
 
-            assertEquals("New", stored.getName(),
-                    "super-owner caller must also bypass the field-level authority gate");
+            assertEquals("Old", stored.getName(),
+                    "a super-owner caller must NOT bypass the field-level authority gate");
         }
 
         @Test

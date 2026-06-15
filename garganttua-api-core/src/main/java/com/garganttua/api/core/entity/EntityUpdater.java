@@ -58,8 +58,6 @@ public class EntityUpdater implements IEntityUpdater{
 	 *
 	 * <ul>
 	 *   <li>No authority required (null or empty) → allowed.</li>
-	 *   <li>Super-tenant or super-owner caller → bypass; they are system
-	 *       callers and the authority gate does not apply.</li>
 	 *   <li>Otherwise the caller must carry the named authority in
 	 *       {@code caller.authorities()}; a {@code null} or empty list
 	 *       fails the check (the previous "null means unrestricted"
@@ -67,12 +65,13 @@ public class EntityUpdater implements IEntityUpdater{
 	 *       {@code Caller.createTenantCaller} has null authorities and
 	 *       must not bypass field-level gates).</li>
 	 * </ul>
+	 *
+	 * <p>Super-tenant / super-owner status does <strong>not</strong> bypass the
+	 * gate: being super grants cross-tenant / cross-owner reach, not the
+	 * authority to mutate a guarded field — a super caller must still carry it.
 	 */
 	private static boolean isAuthorized(ICaller caller, String requiredAuthority) {
 		if (requiredAuthority == null || requiredAuthority.isEmpty()) {
-			return true;
-		}
-		if (caller.superTenant() || caller.superOwner()) {
 			return true;
 		}
 		List<String> callerAuthorities = caller.authorities();

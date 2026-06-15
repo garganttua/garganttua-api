@@ -99,6 +99,27 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
         return request;
     }
 
+    /** Same shape as {@link #authenticatedRequest}, but a super-tenant + super-owner caller. */
+    private OperationRequest superCreateRequest(OperationDefinition operation, List<String> authorities) {
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, operation);
+        request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");
+        request.arg(IOperationRequest.REQUESTED_TENANT_ID, "SUPER_TENANT");
+        request.arg(IOperationRequest.CALLER_ID, "super-user");
+        request.arg(IOperationRequest.OWNER_ID, "super-user");
+        request.arg(IOperationRequest.SUPER_TENANT, true);
+        request.arg(IOperationRequest.SUPER_OWNER, true);
+        request.arg(IOperationRequest.AUTHORITIES, authorities);
+        request.arg("authorization", new TestAuthorization());
+        request.arg("caller", new Caller("SUPER_TENANT", "SUPER_TENANT", "super-user", "super-user",
+                true, true, authorities));
+        User entity = new User();
+        entity.setName("test");
+        entity.setTenantId("SUPER_TENANT");
+        request.arg("entity", entity);
+        return request;
+    }
+
     // --- Tests ---
 
     @Nested
@@ -258,33 +279,29 @@ class AuthorityIntegrationTest extends AbstractCrudScriptTest {
         }
 
         @Test
-        @DisplayName("super-tenant caller bypasses the authority check")
-        void superTenantBypasses() throws ApiException {
+        @DisplayName("super-tenant caller does NOT bypass the authority check — it must carry the authority too")
+        void superTenantDoesNotBypass() throws ApiException {
             IDomain<?> ctx = buildDomain(b -> b
                     .creationAccess(Access.authenticated)
                     .creationAuthority("admin"));
-            // Super-status is now server-authoritative: VERIFY_AUTHORIZATION
-            // recomputes the caller's superTenant flag from the Api registry,
-            // overriding whatever the token/caller claimed. So the caller's
-            // tenantId must be a REGISTERED super-tenant for the bypass to hold.
+            // Registered as a legitimate super-tenant (so the server-authoritative
+            // recompute keeps superTenant=true) — the point is that even a genuine
+            // super-tenant gets NO authority bypass: being super grants cross-tenant
+            // reach, not the authority to perform the operation.
             ((com.garganttua.api.core.domain.Domain<?>) ctx).getApiContext()
                     .registerSuperTenant("SUPER_TENANT");
             OperationDefinition op = op(ctx, BusinessOperation.create);
-            // Super-tenant caller with NO authorities should still pass
-            OperationRequest request = superTenantScriptRequest(op);
-            request.arg("authorization", new TestAuthorization());
-            request.arg(IOperationRequest.AUTHORITIES, List.<String>of());
-            Caller superCaller = new Caller("SUPER_TENANT", "SUPER_TENANT", "super-user", "super-user",
-                    true, true, List.of());
-            request.arg("caller", superCaller);
-            User entity = new User();
-            entity.setName("test");
-            entity.setTenantId("SUPER_TENANT");
-            request.arg("entity", entity);
-            WorkflowResult result = executeScript(ctx, request);
-            assertTrue(result.isSuccess(),
-                    "super-tenant should bypass authority. code=" + result.code()
-                            + " vars=" + result.variables());
+
+            // (1) super-tenant WITHOUT the "admin" authority → denied 403
+            WorkflowResult denied = executeScript(ctx, superCreateRequest(op, List.of()));
+            assertEquals(403, denied.code(),
+                    "a super-tenant lacking the authority must still be denied. vars=" + denied.variables());
+
+            // (2) the same super-tenant WITH the "admin" authority → passes
+            WorkflowResult allowed = executeScript(ctx, superCreateRequest(op, List.of("admin")));
+            assertTrue(allowed.isSuccess(),
+                    "a super-tenant carrying the authority passes. code=" + allowed.code()
+                            + " vars=" + allowed.variables());
         }
 
         @Test

@@ -30,8 +30,10 @@ The list aggregates two sources:
 
 Defaults are conservative: `access=authenticated` (not anonymous —
 exposing the matrix to the public would help an attacker map the
-surface), no authority gate. Super-tenant / super-owner bypass the
-authority gate but still must meet the access level.
+surface), no authority gate. Super-tenant / super-owner status does
+**not** bypass the authority gate (nor the field-level one): being super
+grants cross-tenant / cross-owner reach, not the authority to perform an
+operation — a super caller must still carry the required authority.
 
 Transport modules read `api.getAuthoritiesEndpoint()` to decide whether
 to publish the route — `null` when not opted in, populated descriptor
