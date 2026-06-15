@@ -665,6 +665,22 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
             // Map "body" to "entity" for script compatibility
             request.arg(IOperationRequest.BODY).ifPresent(body -> request.arg("entity", body));
 
+            // Map "entityUuid" to the single-entity lookup args ("identifier"/"type")
+            // that READ_ONE/UPDATE_ONE/DELETE_ONE.gs (→ buildGetOneFilter) read. Bindings,
+            // the IDomain convenience methods and the bootstrap upsert all carry the lookup
+            // key as ENTITY_UUID; without this translation buildGetOneFilter sees a null
+            // identifier, builds no uuid clause, and a by-uuid fetch silently degrades to
+            // match-all (returns an arbitrary row). Honour an explicit "identifier"/"type"
+            // if one was already set (e.g. RequestBuilder, or an id-typed lookup).
+            request.arg(IOperationRequest.ENTITY_UUID).ifPresent(uuid -> {
+                if (request.arg("identifier").isEmpty()) {
+                    request.arg("identifier", uuid);
+                }
+                if (request.arg("type").isEmpty()) {
+                    request.arg("type", "uuid");
+                }
+            });
+
             Map<String, Object> workflowParams = new java.util.LinkedHashMap<>();
             workflowParams.put("$1", this.repository);
             workflowParams.put("$2", this);
