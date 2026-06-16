@@ -107,4 +107,41 @@ class CreateFieldAuthorityIntegrationTest extends AbstractCrudIntegrationTest {
 		assertEquals("Dave", result.getName());
 		assertNull(result.getEmail(), "a super caller without 'user-set-email' gets no bypass — email stripped");
 	}
+
+	@Test
+	@DisplayName("a framework/bootstrap write bypasses the whitelist — a seeded guarded field is preserved")
+	void bootstrapWriteBypassesWhitelist() throws ApiException {
+		StubDao dao = new StubDao();
+		User seed = new User();
+		seed.setUuid("seed-uuid");
+		seed.setName("Seed");
+		seed.setEmail("seed@example.com");   // guarded field, set by a server-trusted seed
+		seed.setTenantId("superTenant");
+
+		IApiBuilder builder = newBuilder();
+		builder.domain(IClass.getClass(User.class))
+				.tenant(true)
+				.superTenant("superTenant")
+				.entity()
+					.id("id").uuid("uuid").tenantId("tenantId")
+					.create("name")
+					.create("email", "user-set-email")   // guarded — a client without the authority loses it
+				.up()
+				.dto(IClass.getClass(UserDto.class))
+					.id("id").uuid("uuid").tenantId("tenantId")
+					.db(dao)
+				.up()
+				.creation(true)
+				.create(seed)                            // declared startup entity → bootstrapCreate
+				.security().disable(true).up()
+			.up();
+		buildAndStart(builder);                          // runs the startup write at doStart()
+
+		UserDto persisted = (UserDto) dao.getStorage().stream()
+				.filter(UserDto.class::isInstance).findFirst().orElseThrow();
+		assertEquals("Seed", persisted.getName());
+		assertEquals("seed@example.com", persisted.getEmail(),
+				"the seeded guarded field must be PRESERVED — a bootstrap write bypasses the create whitelist "
+						+ "(the bootstrap caller carries no authorities, but the write is framework-internal)");
+	}
 }

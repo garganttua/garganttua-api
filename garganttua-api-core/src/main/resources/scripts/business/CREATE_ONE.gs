@@ -34,7 +34,7 @@ requireNotDirectAuthorizationCreate(@entity, @2, @0)
 // Strip fields the caller is not authorized to valorize at creation (create-time
 // field whitelist; no-op unless this domain declares .create(...) fields). Runs
 // BEFORE framework stamping so uuid/tenantId/ownerId are still set by ensure*.
-entity <- createEntity(@caller, @entity, @2)
+entity <- createEntity(@caller, @entity, @2, @0)
 ! => recordCaughtException(@0, @exception) -> 403
 
 // Generate UUID if not set

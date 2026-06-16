@@ -242,12 +242,24 @@ public class EntityLifecycleExpressions {
 				ed -> ((EntityDefinition<?>) ed).afterCreateMethodBuilders());
 	}
 
-	@Expression(name = "createEntity", description = "Strips fields the caller is not authorized to valorize at creation (create-time field whitelist; no-op when no .create(...) is declared)")
-	public static Object createEntity(Object caller, Object entity, Object context) {
+	@Expression(name = "createEntity", description = "Strips fields the caller is not authorized to valorize at creation (create-time field whitelist; no-op when no .create(...) is declared, or for framework-internal/bootstrap writes)")
+	public static Object createEntity(Object caller, Object entity, Object context, Object request) {
+		Object e = unwrapOptional(entity);
+		// Framework-internal / bootstrap writes (seed, startup upsert, token/key persist) are
+		// server-orchestrated and trusted: they bypass the create whitelist, exactly as
+		// requireNotDirectAuthorizationCreate does. Otherwise a seeded entity with a fixed
+		// uuid/tenantId, or a guarded field (e.g. a super-owner admin), would be stripped because
+		// the bootstrap caller carries no authorities. The marker is server-set only, never read
+		// from the wire (see SecurityExpressions.FRAMEWORK_INTERNAL_WRITE_ARG), so it is unforgeable.
+		IOperationRequest req = (unwrapOptional(request) instanceof IOperationRequest r) ? r : null;
+		if (req != null
+				&& Boolean.TRUE.equals(req.arg(SecurityExpressions.FRAMEWORK_INTERNAL_WRITE_ARG).orElse(null))) {
+			return e;
+		}
 		ICaller c = (ICaller) unwrapOptional(caller);
 		IDomain<?> dc = toDomain(context);
 		EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
-		return new EntityCreator().create(c, unwrapOptional(entity), entityDef.creates());
+		return new EntityCreator().create(c, e, entityDef.creates());
 	}
 
 	@Expression(name = "updateEntity", description = "Applies authorized field updates from updatedEntity onto storedEntity")
