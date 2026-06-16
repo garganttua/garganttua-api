@@ -157,6 +157,24 @@ public class JavalinInterface implements IInterface {
 		// registered only when its operation is actually enabled on the domain.
 		List<OperationDefinition> configured = domain.getDomainDefinition().operations();
 
+		// Use cases first: each declared use case is a routable operation carrying its own verb
+		// (read→GET, create→POST, update→PUT, delete→DELETE), its own path (defaulting to
+		// /{domain}/{name}) and a {uuid} segment when scoped to a single entity. They are
+		// registered BEFORE the CRUD table so a literal use-case path (e.g. /users/greet) wins
+		// over readOne's /users/{uuid} — Javalin resolves a collision by registration order, so
+		// the literal route must come first or readOne would swallow it as uuid="greet". The
+		// dispatched operation is the domain's own, carrying the access/authority the use case
+		// declared via .security().
+		for (OperationDefinition op : configured) {
+			if (op.getBusinessOperation() != BusinessOperation.useCase) {
+				continue;
+			}
+			String path = toJavalinPath(op);
+			boolean hasUuid = path.contains("{uuid}");
+			Handler handler = ctx -> dispatch(domain, op, ctx, hasUuid ? ctx.pathParam("uuid") : null);
+			register(server, verbOf(op.technicalOperation()), path, handler);
+		}
+
 		route(server, HttpVerb.POST,   base, domain, configured, BusinessOperation.create,    false);
 		route(server, HttpVerb.GET,    base, domain, configured, BusinessOperation.readAll,   false);
 		route(server, HttpVerb.GET,    one,  domain, configured, BusinessOperation.readOne,   true);
@@ -169,6 +187,31 @@ public class JavalinInterface implements IInterface {
 		// (its authenticate operation is then present in the configured operations).
 		route(server, HttpVerb.POST, base + "/authenticate", domain, configured,
 				BusinessOperation.authenticate, false);
+	}
+
+	/** The HTTP verb a use case's technical operation maps to. */
+	private static HttpVerb verbOf(com.garganttua.api.commons.operation.TechnicalOperation op) {
+		if (op == null) {
+			return HttpVerb.GET;
+		}
+		return switch (op) {
+			case create -> HttpVerb.POST;
+			case update -> HttpVerb.PUT;
+			case delete -> HttpVerb.DELETE;
+			case read -> HttpVerb.GET;
+		};
+	}
+
+	/**
+	 * The Javalin route path for an operation: its declared {@link OperationDefinition#getPath()}
+	 * with the framework's {@code ${uuid}} placeholder rewritten to Javalin's {@code {uuid}}.
+	 */
+	private static String toJavalinPath(OperationDefinition op) {
+		String path = op.getPath() != null ? op.getPath().path() : null;
+		if (path == null || path.isBlank()) {
+			return "/";
+		}
+		return path.replace("${uuid}", "{uuid}");
 	}
 
 	private enum HttpVerb { GET, POST, PUT, DELETE }
@@ -186,6 +229,11 @@ public class JavalinInterface implements IInterface {
 			return; // operation not enabled on this domain — no route
 		}
 		Handler handler = ctx -> dispatch(domain, operation, ctx, hasUuid ? ctx.pathParam("uuid") : null);
+		register(server, verb, path, handler);
+	}
+
+	/** Binds a handler to a Javalin route for the given verb. */
+	private void register(Javalin server, HttpVerb verb, String path, Handler handler) {
 		switch (verb) {
 			case GET -> server.get(path, handler);
 			case POST -> server.post(path, handler);

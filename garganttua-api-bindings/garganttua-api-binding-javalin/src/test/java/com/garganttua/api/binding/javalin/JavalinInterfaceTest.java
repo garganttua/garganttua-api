@@ -544,6 +544,130 @@ class JavalinInterfaceTest {
 		}
 	}
 
+	/** Builds a use-case {@link OperationDefinition} carrying a minimal definition (verb, scope, path). */
+	static OperationDefinition useCaseOp(String name,
+			com.garganttua.api.commons.operation.TechnicalOperation verb,
+			com.garganttua.api.commons.operation.Scope scope, String path) {
+		com.garganttua.api.commons.definition.IUseCaseDefinition uc =
+				new com.garganttua.api.commons.definition.IUseCaseDefinition() {
+			@Override public String name() { return name; }
+			@Override public com.garganttua.api.commons.operation.OperationPath path() {
+				return new com.garganttua.api.commons.operation.OperationPath(path);
+			}
+			@Override public IClass<?> inputType() { return null; }
+			@Override public IClass<?> outputType() { return null; }
+			@Override public com.garganttua.core.reflection.binders.IMethodBinder<?> binder() { return null; }
+			@Override public com.garganttua.api.commons.operation.Scope scope() { return scope; }
+			@Override public com.garganttua.api.commons.operation.TechnicalOperation operation() { return verb; }
+			@Override public Access access() { return Access.anonymous; }
+			@Override public boolean authority() { return false; }
+			@Override public String authorityName() { return null; }
+		};
+		return OperationDefinition.useCase("users", fakeEntityClass(), uc);
+	}
+
+	@Nested
+	@DisplayName("Use case routes → use-case OperationDefinition")
+	class UseCaseRoutes {
+
+		@Test
+		@DisplayName("GET /users/greet → the read-scoped use case, no uuid, Context handed through")
+		void getReadUseCase() throws Exception {
+			startWith(List.of(useCaseOp("greet",
+					com.garganttua.api.commons.operation.TechnicalOperation.read,
+					com.garganttua.api.commons.operation.Scope.allEntities, "/users/greet")));
+
+			HttpResponse<String> resp = send("GET", "/users/greet", null);
+
+			assertEquals(200, resp.statusCode());
+			assertEquals("ok:useCase", resp.body(), "the use-case stage's output round-trips through the protocol");
+			assertEquals(BusinessOperation.useCase, domain.lastOperation.getBusinessOperation());
+			assertEquals("greet", domain.lastOperation.useCaseName(), "the dispatched op must be the greet use case");
+			assertNull(domain.lastUuid, "an allEntities use case carries no uuid");
+			assertInstanceOf(Context.class, domain.lastRawRequest);
+			assertEquals("/users/greet", domain.lastPath);
+		}
+
+		@Test
+		@DisplayName("POST /users/import → a create-scoped use case carries its body")
+		void postCreateUseCase() throws Exception {
+			startWith(List.of(useCaseOp("import",
+					com.garganttua.api.commons.operation.TechnicalOperation.create,
+					com.garganttua.api.commons.operation.Scope.allEntities, "/users/import")));
+
+			HttpResponse<String> resp = send("POST", "/users/import", "row1,row2");
+
+			assertEquals(200, resp.statusCode());
+			assertEquals(BusinessOperation.useCase, domain.lastOperation.getBusinessOperation());
+			assertEquals("import", domain.lastOperation.useCaseName());
+			assertArrayEquals("row1,row2".getBytes(StandardCharsets.UTF_8), domain.lastBody,
+					"the POST body must reach the protocol verbatim");
+		}
+
+		@Test
+		@DisplayName("PUT /users/activate/{uuid} → a one-entity use case captures the uuid")
+		void putOneEntityUseCase() throws Exception {
+			startWith(List.of(useCaseOp("activate",
+					com.garganttua.api.commons.operation.TechnicalOperation.update,
+					com.garganttua.api.commons.operation.Scope.oneEntity, "/users/activate/${uuid}")));
+
+			HttpResponse<String> resp = send("PUT", "/users/activate/u-42", "body");
+
+			assertEquals(200, resp.statusCode());
+			assertEquals(BusinessOperation.useCase, domain.lastOperation.getBusinessOperation());
+			assertEquals("activate", domain.lastOperation.useCaseName());
+			assertEquals("u-42", domain.lastUuid, "the ${uuid} segment must be threaded as ENTITY_UUID");
+			assertEquals("/users/activate/u-42", domain.lastPath);
+		}
+
+		@Test
+		@DisplayName("a use case the domain does not expose gets no route (404)")
+		void unconfiguredUseCaseHasNoRoute() throws Exception {
+			// readAll only — no readOne (/users/{uuid}) to shadow /users/greet, and no greet use case.
+			startWith(List.of(OperationDefinition.readAllWithStandardSecurity("users", fakeEntityClass())));
+
+			assertEquals(404, send("GET", "/users/greet", null).statusCode(),
+					"a domain without the greet use case must expose no /users/greet route");
+		}
+
+		@Test
+		@DisplayName("a literal use-case path wins over readOne's /{uuid} when both are registered")
+		void useCasePathWinsOverReadOne() throws Exception {
+			IClass<?> e = fakeEntityClass();
+			startWith(List.of(
+					OperationDefinition.readOneWithStandardSecurity("users", e),
+					useCaseOp("greet", com.garganttua.api.commons.operation.TechnicalOperation.read,
+							com.garganttua.api.commons.operation.Scope.allEntities, "/users/greet")));
+
+			assertEquals(200, send("GET", "/users/greet", null).statusCode());
+			assertEquals(BusinessOperation.useCase, domain.lastOperation.getBusinessOperation(),
+					"the literal /users/greet must route to the use case, not readOne with uuid=greet");
+			assertEquals("greet", domain.lastOperation.useCaseName());
+
+			// A real uuid still reaches readOne.
+			assertEquals(200, send("GET", "/users/u-1", null).statusCode());
+			assertEquals(BusinessOperation.readOne, domain.lastOperation.getBusinessOperation());
+			assertEquals("u-1", domain.lastUuid);
+		}
+
+		@Test
+		@DisplayName("two use cases on one domain route to distinct paths")
+		void twoUseCasesDistinctPaths() throws Exception {
+			startWith(List.of(
+					useCaseOp("greet", com.garganttua.api.commons.operation.TechnicalOperation.read,
+							com.garganttua.api.commons.operation.Scope.allEntities, "/users/greet"),
+					useCaseOp("stats", com.garganttua.api.commons.operation.TechnicalOperation.read,
+							com.garganttua.api.commons.operation.Scope.allEntities, "/users/stats")));
+
+			assertEquals(200, send("GET", "/users/greet", null).statusCode());
+			assertEquals("greet", domain.lastOperation.useCaseName());
+
+			assertEquals(200, send("GET", "/users/stats", null).statusCode());
+			assertEquals("stats", domain.lastOperation.useCaseName(),
+					"the second use case must route to its own path");
+		}
+	}
+
 	@Nested
 	@DisplayName("Caller seeding")
 	class CallerSeeding {
