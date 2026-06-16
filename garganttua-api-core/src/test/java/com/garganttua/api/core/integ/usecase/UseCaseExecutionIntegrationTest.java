@@ -57,6 +57,14 @@ class UseCaseExecutionIntegrationTest extends AbstractCrudScriptTest {
             String message = "Hello, " + name + "!";
             return new GreetingOutput(message, message.length());
         }
+
+        /** A second, equally free method: it declares @UseCaseInput AND @DomainContext, both auto-wired. */
+        public GreetingOutput describe(@UseCaseInput GreetingInput input,
+                @com.garganttua.api.commons.security.injection.DomainContext IDomain<?> domain) {
+            String name = (input != null && input.getName() != null) ? input.getName() : "stranger";
+            String message = name + "@" + domain.getDomainName();
+            return new GreetingOutput(message, message.length());
+        }
     }
 
     private IApi context;
@@ -80,6 +88,13 @@ class UseCaseExecutionIntegrationTest extends AbstractCrudScriptTest {
                         .method("greet", IClass.getClass(GreetingOutput.class), IClass.getClass(GreetingInput.class))
                     .up()
                 .up()
+                .useCase("describe", IClass.getClass(GreetingInput.class), IClass.getClass(GreetingOutput.class))
+                    .bind(new GreetingService())
+                        .method("describe", IClass.getClass(GreetingOutput.class),
+                                IClass.getClass(GreetingInput.class),
+                                IClass.getClass(IDomain.class))
+                    .up()
+                .up()
                 .security().disable(true).up()
             .up();
 
@@ -88,11 +103,34 @@ class UseCaseExecutionIntegrationTest extends AbstractCrudScriptTest {
     }
 
     private OperationDefinition greetOperation() {
+        return useCaseOperation("greet");
+    }
+
+    private OperationDefinition useCaseOperation(String name) {
         return userCtx.getDomainDefinition().operations().stream()
                 .filter(op -> op.getBusinessOperation() == BusinessOperation.useCase)
-                .filter(op -> "greet".equals(op.useCaseName()))
+                .filter(op -> name.equals(op.useCaseName()))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("greet use-case operation not exposed in operations()"));
+                .orElseThrow(() -> new AssertionError(name + " use-case operation not exposed in operations()"));
+    }
+
+    @Test
+    @DisplayName("a free method declaring @UseCaseInput AND @DomainContext gets both auto-wired")
+    void useCaseAutowiresSeveralFrameworkParams() throws ApiException {
+        OperationDefinition describeOp = useCaseOperation("describe");
+        OperationRequest request = superTenantScriptRequest(describeOp);
+        request.arg("entity", new GreetingInput("Alice"));
+
+        WorkflowResult result = executeScript(userCtx, request);
+
+        assertTrue(result.isSuccess(), () -> {
+            var workflow = (com.garganttua.core.workflow.Workflow) userCtx.getWorkflow();
+            return "Workflow failed with code " + result.code()
+                    + "\nGenerated script:\n" + workflow.getGeneratedScript();
+        });
+        GreetingOutput output = assertInstanceOf(GreetingOutput.class, result.output());
+        // The body fed @UseCaseInput (Alice) AND the @DomainContext was injected (the "users" domain).
+        assertEquals("Alice@users", output.getMessage());
     }
 
     @Test

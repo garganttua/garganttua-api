@@ -4,10 +4,8 @@ import com.garganttua.api.core.dto.DtoBuilder;
 import com.garganttua.api.core.entity.EntityBuilder;
 import com.garganttua.api.core.security.DomainSecurityBuilder;
 import com.garganttua.api.core.security.authenticator.AuthenticatorBuilder;
-import com.garganttua.api.commons.usecase.injection.UseCaseInput;
 import com.garganttua.api.core.usecase.UseCaseBinderBuilder;
 import com.garganttua.api.core.usecase.UseCaseBuilder;
-import com.garganttua.api.core.usecase.UseCaseInputSupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
@@ -56,8 +54,11 @@ import java.util.Set;
 
 import com.garganttua.core.injection.BeanDefinition;
 import com.garganttua.core.injection.IBeanFactory;
+import com.garganttua.core.injection.IInjectableElementResolver;
 import com.garganttua.core.injection.IInjectableElementResolverBuilder;
+import com.garganttua.core.injection.Resolved;
 import com.garganttua.core.injection.context.dsl.BeanFactoryBuilder;
+import com.garganttua.core.injection.context.dsl.InjectableElementResolverBuilder;
 import com.garganttua.core.injection.context.dsl.IInjectionContextBuilder;
 import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.mapper.IMapper;
@@ -488,17 +489,51 @@ public class DomainBuilder<E>
     }
 
     /**
+     * Packages scanned for declarative {@code @Resolver} parameter resolvers — the use case's
+     * {@code @UseCaseInput} and the security {@code @Caller}/{@code @ApiContext}/{@code @DomainContext}/…
+     * resolvers all live under the api tree. Core's built-in resolvers come from
+     * {@code setBuiltInResolvers}, not a scan.
+     */
+    private static final String[] FRAMEWORK_RESOLVER_PACKAGES = { "com.garganttua.api" };
+
+    /**
+     * Builds a fresh resolver registry that discovers every declarative {@code @Resolver}
+     * ({@code @UseCaseInput}, {@code @Caller}, {@code @DomainContext}, …). A dedicated registry is
+     * used rather than the shared {@code injectionContextBuilder.resolvers()} because the latter is
+     * memoised — built (without the api packages) when the injection context is, so a late package
+     * scan could never reach it. Returns {@code null} when no injection context is available.
+     */
+    private IInjectableElementResolver buildUseCaseResolverRegistry() throws ApiException {
+        if (this.injectionContextBuilder == null) {
+            return null;
+        }
+        try {
+            InjectableElementResolverBuilder resolversBuilder =
+                    new InjectableElementResolverBuilder(this.injectionContextBuilder);
+            resolversBuilder.setReflection(IClass.getReflection());
+            InjectionContextBuilder.setBuiltInResolvers(resolversBuilder, Set.of(), false);
+            resolversBuilder.withPackages(FRAMEWORK_RESOLVER_PACKAGES);
+            resolversBuilder.autoDetect(true);
+            return resolversBuilder.build();
+        } catch (com.garganttua.core.dsl.DslException e) {
+            throw new ApiException("Failed to build the use-case parameter resolver registry: "
+                    + e.getMessage(), e);
+        }
+    }
+
+    /**
      * Auto-wires a use case's bound method parameters from their framework injection annotations —
      * the declarative dual of the explicit {@code .withParam(i, supplier)} the security scanner
-     * performs (cf. {@code SecurityAnnotationScanner}). A {@code @UseCaseInput} parameter is supplied
-     * with the deserialized request body (the use case's {@code InputType}) via
-     * {@link UseCaseInputSupplierBuilder}; its {@code @Resolver} ({@code UseCaseInputElementResolver})
-     * is the declarative dual recorded for the DI path. A parameter without a recognised annotation is
-     * left untouched, so an explicit {@code .withParam(...)} still wins and a truly unwired parameter
-     * surfaces as the binder's own "no supplier configured" error at build.
+     * performs (cf. {@code SecurityAnnotationScanner}). Each parameter carrying a {@code @Resolver}-backed
+     * annotation ({@code @UseCaseInput} → the deserialized body, {@code @Caller}, {@code @DomainContext},
+     * {@code @ApiContext}, …) is supplied by the {@code SupplierBuilder} its resolver yields, so the
+     * method stays completely free: it declares only the parameters it needs, in any order. A parameter
+     * no resolver matches is left untouched, so an explicit {@code .withParam(...)} still wins and a
+     * truly unwired parameter surfaces as the binder's own "no supplier configured" error at build.
      */
-    private void autowireUseCaseParameters(UseCaseBinderBuilder<?, ?, E> binder) throws ApiException {
-        if (binder == null) {
+    private void autowireUseCaseParameters(UseCaseBinderBuilder<?, ?, E> binder,
+            IInjectableElementResolver resolvers) throws ApiException {
+        if (binder == null || resolvers == null) {
             return;
         }
         IMethod method;
@@ -512,15 +547,15 @@ public class DomainBuilder<E>
         if (method == null) {
             return;
         }
-        IClass<UseCaseInput> useCaseInputAnno = IClass.getClass(UseCaseInput.class);
         IParameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             IParameter parameter = parameters[i];
             try {
-                if (parameter.getAnnotation(useCaseInputAnno) != null) {
-                    binder.withParam(i, new UseCaseInputSupplierBuilder(parameter.getType()));
+                Resolved resolved = resolvers.resolve(parameter.getType(), parameter);
+                if (resolved != null && resolved.resolved()) {
+                    binder.withParam(i, resolved.elementSupplier(), resolved.nullable());
                 }
-            } catch (com.garganttua.core.dsl.DslException e) {
+            } catch (com.garganttua.core.injection.DiException | com.garganttua.core.dsl.DslException e) {
                 throw new ApiException("Failed to auto-wire parameter " + i + " of use case method '"
                         + method.getName() + "': " + e.getMessage(), e);
             }
@@ -679,12 +714,16 @@ public class DomainBuilder<E>
 
         // Build the full use case definitions: each carries its name, route path, in/out types and
         // the built method binder, plus verb (default read) / scope (default allEntities) / security.
+        // The resolver registry that auto-wires each bound method's annotated parameters is built once
+        // (only when there are use cases to wire), then reused across them.
+        IInjectableElementResolver useCaseResolvers =
+                this.useCases.isEmpty() ? null : buildUseCaseResolverRegistry();
         Map<String, IUseCaseDefinition> useCaseDefinitions = new HashMap<>();
         for (Map.Entry<String, IUseCaseBuilder<?, ?, E>> entry : this.useCases.entrySet()) {
             UseCaseBuilder<?, ?, E> ucb = (UseCaseBuilder<?, ?, E>) entry.getValue();
-            // Auto-wire the bound method's annotated parameters (e.g. @UseCaseInput) before the
-            // builder materialises the binder — the method stays "completely free".
-            autowireUseCaseParameters(ucb.getBinderBuilder());
+            // Auto-wire the bound method's annotated parameters (@UseCaseInput, @Caller, @DomainContext,
+            // …) before the builder materialises the binder — the method stays "completely free".
+            autowireUseCaseParameters(ucb.getBinderBuilder(), useCaseResolvers);
             entry.getValue().build();
             com.garganttua.api.commons.operation.Scope scope = ucb.getScope() != null
                     ? ucb.getScope() : com.garganttua.api.commons.operation.Scope.allEntities;
