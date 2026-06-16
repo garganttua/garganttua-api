@@ -28,15 +28,19 @@ import jakarta.annotation.Nullable;
 public class UseCaseExpressions {
 
 	@Expression(name = "useCaseName",
-			description = "Returns the use-case name carried by the request's operation (null for non-use-case ops) "
-					+ "— so the assembler can guard one business stage per use case: "
-					+ "and(equals(businessOperation(@0), \"useCase\"), equals(useCaseName(@0), \"<name>\")).")
+			description = "Returns the use-case name carried by the request's operation, or the empty string for "
+					+ "non-use-case ops — NEVER null, so the per-use-case stage guard can compare it safely even "
+					+ "though the engine's and(...) evaluates both members eagerly (no short-circuit): "
+					+ "and(equals(businessOperation(@0), \"useCase\"), equals(useCaseName(@0), \"<name>\")). "
+					+ "The empty string can never equal a real (non-empty) use-case name, so a CRUD request on a "
+					+ "use-case-bearing domain skips every use-case stage instead of feeding null into equals(String,String).")
 	public static String useCaseName(@Nullable Object request) {
 		if (!(unwrapOptional(request) instanceof IOperationRequest req)) {
-			return null;
+			return "";
 		}
 		OperationDefinition op = req.operation();
-		return op != null ? op.useCaseName() : null;
+		String name = op != null ? op.useCaseName() : null;
+		return name != null ? name : "";
 	}
 
 	@Expression(name = "invokeUseCase",
