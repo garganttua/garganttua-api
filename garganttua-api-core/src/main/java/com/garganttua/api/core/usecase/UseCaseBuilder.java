@@ -16,6 +16,7 @@ import com.garganttua.api.commons.context.dsl.security.IUseCaseSecurityBuilder;
 import com.garganttua.core.dsl.AbstractAutomaticLinkedBuilder;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.binders.IMethodBinder;
 import com.garganttua.core.supply.ISupplier;
 import com.garganttua.core.supply.dsl.FixedSupplierBuilder;
 import com.garganttua.core.supply.dsl.ISupplierBuilder;
@@ -33,10 +34,18 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
     private TechnicalOperation operation;
     private IClass<I> useCaseInput;
     private IClass<O> useCaseOutput;
+    private IMethodBinder<?> builtBinder;
 
     public UseCaseBuilder(String useCaseName, IDomainBuilder<E> up) {
         super(up);
         this.useCaseName = Objects.requireNonNull(useCaseName, "Use case name cannot be null");
+    }
+
+    public UseCaseBuilder(String useCaseName, IDomainBuilder<E> up, IClass<I> inputType, IClass<O> outputType) {
+        super(up);
+        this.useCaseName = Objects.requireNonNull(useCaseName, "Use case name cannot be null");
+        this.useCaseInput = inputType;
+        this.useCaseOutput = outputType;
     }
 /* 
     public UseCaseBuilder(IDomainBuilder up) {
@@ -164,8 +173,37 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
         return this.securityBuilder != null ? this.securityBuilder.getCustomAuthority() : null;
     }
 
+    public String getName() {
+        return this.useCaseName;
+    }
+
+    public String getPathSuffix() {
+        return this.suffix;
+    }
+
+    public String getCompletePath() {
+        return this.path;
+    }
+
+    public IClass<I> getInputType() {
+        return this.useCaseInput;
+    }
+
+    public IClass<O> getOutputType() {
+        return this.useCaseOutput;
+    }
+
+    /** The functional method binder built from {@code bind(...)} — the use case's executable, or null. */
+    public IMethodBinder<?> getBuiltBinder() {
+        return this.builtBinder;
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     protected synchronized IUseCase<I, O> doBuild() throws ApiException {
+        // Build the real method binder (the bound method, fed by suppliers) — the definition keeps
+        // it; the UseCase wrapper below only satisfies the builder contract.
+        this.builtBinder = (this.binder != null) ? this.binder.build() : null;
         return new UseCase<>(
                 this.useCaseName,
                 this.binder,

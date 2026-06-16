@@ -112,11 +112,9 @@ public record DomainDefinition<E>(
     private void collectUseCaseOperations(List<OperationDefinition> ops, IClass<?> entityClass) {
         if (useCases == null) return;
         for (IUseCaseDefinition ucDef : useCases.values()) {
-            ops.add(OperationDefinition.useCase(domainName,
-                    Objects.requireNonNullElse(ucDef.operation(), TechnicalOperation.read),
-                    entityClass,
-                    Objects.requireNonNullElse(ucDef.scope(), Scope.allEntities),
-                    ucDef.authority(), ucDef.authorityName(), ucDef.access()));
+            // The use-case definition (verb/scope/access/authority + path/in-out/binder) is carried
+            // on the operation; the builder guarantees a non-null verb (read) and scope (allEntities).
+            ops.add(OperationDefinition.useCase(domainName, entityClass, ucDef));
         }
     }
 

@@ -28,6 +28,23 @@ class OperationTest {
 
     static class DummyEntity {}
 
+    /** Minimal use-case definition for building a use-case OperationDefinition in tests. */
+    private static com.garganttua.api.commons.definition.IUseCaseDefinition uc(String name,
+            TechnicalOperation verb, Scope scope) {
+        return new com.garganttua.api.commons.definition.IUseCaseDefinition() {
+            public String name() { return name; }
+            public com.garganttua.api.commons.operation.OperationPath path() { return null; }
+            public IClass<?> inputType() { return null; }
+            public IClass<?> outputType() { return null; }
+            public com.garganttua.core.reflection.binders.IMethodBinder<?> binder() { return null; }
+            public Scope scope() { return scope; }
+            public TechnicalOperation operation() { return verb; }
+            public Access access() { return Access.authenticated; }
+            public boolean authority() { return false; }
+            public String authorityName() { return null; }
+        };
+    }
+
     @Nested
     @DisplayName("Factory methods")
     class FactoryMethods {
@@ -61,9 +78,12 @@ class OperationTest {
 
         @Test
         void testUseCase() {
-            OperationDefinition op = OperationDefinition.useCase("domain", TechnicalOperation.read, IClass.getClass(DummyEntity.class), Scope.oneEntity, false, null, Access.authenticated);
+            OperationDefinition op = OperationDefinition.useCase("domain", IClass.getClass(DummyEntity.class),
+                    uc("myUseCase", TechnicalOperation.read, Scope.oneEntity));
 
             assertEquals(OperationType.usesCase, op.type());
+            assertEquals("myUseCase", op.getOperationName(), "a use case's operation name is its own name");
+            assertEquals("myUseCase", op.useCaseName());
         }
 
         @Test
@@ -139,7 +159,8 @@ class OperationTest {
 
         @Test
         void testUseCase() {
-            OperationDefinition op = OperationDefinition.useCase("x", TechnicalOperation.read, IClass.getClass(DummyEntity.class), Scope.oneEntity, false, null, Access.authenticated);
+            OperationDefinition op = OperationDefinition.useCase("x", IClass.getClass(DummyEntity.class),
+                    uc("myUseCase", TechnicalOperation.read, Scope.oneEntity));
             assertEquals(BusinessOperation.useCase, op.getBusinessOperation());
         }
 

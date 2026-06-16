@@ -4,11 +4,26 @@ import java.util.Objects;
 
 import com.garganttua.api.commons.Pluralizer;
 import com.garganttua.api.commons.Singularizer;
+import com.garganttua.api.commons.definition.IUseCaseDefinition;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.core.reflection.IClass;
 
 public record OperationDefinition(String domainName, TechnicalOperation technicalOperation, IClass<?> entity, Scope scope,
-		OperationType type, boolean authority, String authorityName, Access access) {
+		OperationType type, boolean authority, String authorityName, Access access, IUseCaseDefinition useCase) {
+
+	/**
+	 * Backwards-compatible constructor for non-use-case operations (CRUD, authenticate, …): they
+	 * carry no {@link IUseCaseDefinition}. Keeps every existing 8-arg call site compiling.
+	 */
+	public OperationDefinition(String domainName, TechnicalOperation technicalOperation, IClass<?> entity, Scope scope,
+			OperationType type, boolean authority, String authorityName, Access access) {
+		this(domainName, technicalOperation, entity, scope, type, authority, authorityName, access, null);
+	}
+
+	/** The use case's name when this is a use-case operation, else {@code null} — the identity discriminator. */
+	public String useCaseName() {
+		return useCase != null ? useCase.name() : null;
+	}
 
 	// --- Static factory methods ---
 
@@ -87,8 +102,16 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 		return new OperationDefinition(domainName, TechnicalOperation.delete, entity, Scope.allEntities, OperationType.standard, authority, authorityName, access);
 	}
 
-	public static OperationDefinition useCase(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, String authorityName, Access access) {
-		return new OperationDefinition(domainName, operation, entity, scope, OperationType.usesCase, authority, authorityName, access);
+	/**
+	 * Builds the operation for a domain use case from its definition. The verb / scope / access /
+	 * authority and the rich spec (path, in/out, binder) all come from {@code useCase}, which is kept
+	 * on the operation so the path, body type and identity read from it.
+	 */
+	public static OperationDefinition useCase(String domainName, IClass<?> entity, IUseCaseDefinition useCase) {
+		TechnicalOperation verb = useCase.operation() != null ? useCase.operation() : TechnicalOperation.read;
+		Scope scope = useCase.scope() != null ? useCase.scope() : Scope.allEntities;
+		return new OperationDefinition(domainName, verb, entity, scope,
+				OperationType.usesCase, useCase.authority(), useCase.authorityName(), useCase.access(), useCase);
 	}
 
 	public static OperationDefinition workflow(String domainName, TechnicalOperation operation, IClass<?> entity, Scope scope, boolean authority, String authorityName, Access access) {
@@ -104,10 +127,16 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 	// --- Delegation to Operation computation ---
 
 	public OperationPath getPath() {
+		if (useCase != null && useCase.path() != null) {
+			return useCase.path();
+		}
 		return Operation.computePath(entity, type, scope);
 	}
 
 	public String getOperationName() {
+		if (useCase != null) {
+			return useCase.name();
+		}
 		return Operation.computeOperationName(technicalOperation, scope, type, entity);
 	}
 
@@ -157,6 +186,9 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 	}
 
 	private String getDefaultAuthorityName() {
+		if (useCase != null) {
+			return "usecase-" + useCase.name();
+		}
 		return technicalOperation + "-" + scope + "-"
 						+ ((scope == Scope.allEntities || scope == Scope.listOfEntities)
 								? Pluralizer.toPlural(this.entity.getSimpleName().toLowerCase())
@@ -176,11 +208,14 @@ public record OperationDefinition(String domainName, TechnicalOperation technica
 				Objects.equals(entity, other.entity) &&
 				technicalOperation == other.technicalOperation &&
 				scope == other.scope &&
-				type == other.type;
+				type == other.type &&
+				// Use cases of the same shape are distinct operations — discriminate by name, so the
+				// transport / matching / workflow assembly never conflate two use cases on a domain.
+				Objects.equals(useCaseName(), other.useCaseName());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(domainName, entity, technicalOperation, scope, type);
+		return Objects.hash(domainName, entity, technicalOperation, scope, type, useCaseName());
 	}
 }

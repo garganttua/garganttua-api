@@ -17,9 +17,11 @@ public record Operation(
 				def.technicalOperation(),
 				def.scope(),
 				computeBusinessOperation(def.technicalOperation(), def.scope(), def.type()),
-				computeOperationName(def.technicalOperation(), def.scope(), def.type(), def.entity()),
+				// getOperationName()/getPath() honour a use case's own name + route; for CRUD they
+				// fall back to the computed defaults.
+				def.getOperationName(),
 				def.type(),
-				computePath(def.entity(), def.type(), def.scope()));
+				def.getPath());
 	}
 
 	static BusinessOperation computeBusinessOperation(TechnicalOperation techOp, Scope scope, OperationType type) {

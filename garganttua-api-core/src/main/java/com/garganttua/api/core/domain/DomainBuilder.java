@@ -459,7 +459,27 @@ public class DomainBuilder<E>
         Objects.requireNonNull(useCaseName, "Use case name cannot be null");
 
         return (IUseCaseBuilder<I, O, E>) this.useCases.computeIfAbsent(useCaseName,
-                name -> new UseCaseBuilder<I, O, E>(name, this));
+                name -> new UseCaseBuilder<I, O, E>(name, this, inputType, outputType));
+    }
+
+    /**
+     * Resolves a use case's route path: an explicit {@code completePath} as-is, else the domain base
+     * {@code /<domain>} plus the {@code pathSuffix}; a {@code ${uuid}} segment is appended for a
+     * {@code oneEntity} scope when not already present.
+     */
+    private com.garganttua.api.commons.operation.OperationPath buildUseCasePath(
+            String completePath, String suffix, com.garganttua.api.commons.operation.Scope scope) {
+        String p;
+        if (completePath != null && !completePath.isBlank()) {
+            p = completePath.startsWith("/") ? completePath : "/" + completePath;
+        } else {
+            String base = "/" + this.domainName;
+            p = (suffix != null && !suffix.isBlank()) ? base + "/" + suffix : base;
+        }
+        if (scope == com.garganttua.api.commons.operation.Scope.oneEntity && !p.contains("${uuid}")) {
+            p = p + "/${uuid}";
+        }
+        return new com.garganttua.api.commons.operation.OperationPath(p);
     }
 
     @Override
@@ -612,14 +632,24 @@ public class DomainBuilder<E>
             startupBinders.add(binder);
         }
 
-        // Build use case definitions (deprecated, kept for backwards compatibility)
+        // Build the full use case definitions: each carries its name, route path, in/out types and
+        // the built method binder, plus verb (default read) / scope (default allEntities) / security.
         Map<String, IUseCaseDefinition> useCaseDefinitions = new HashMap<>();
         for (Map.Entry<String, IUseCaseBuilder<?, ?, E>> entry : this.useCases.entrySet()) {
             entry.getValue().build();
             UseCaseBuilder<?, ?, E> ucb = (UseCaseBuilder<?, ?, E>) entry.getValue();
+            com.garganttua.api.commons.operation.Scope scope = ucb.getScope() != null
+                    ? ucb.getScope() : com.garganttua.api.commons.operation.Scope.allEntities;
+            com.garganttua.api.commons.operation.TechnicalOperation verb = ucb.getOperation() != null
+                    ? ucb.getOperation() : com.garganttua.api.commons.operation.TechnicalOperation.read;
             useCaseDefinitions.put(entry.getKey(), new UseCaseDefinition(
-                    ucb.getScope(),
-                    ucb.getOperation(),
+                    ucb.getName(),
+                    buildUseCasePath(ucb.getCompletePath(), ucb.getPathSuffix(), scope),
+                    ucb.getInputType(),
+                    ucb.getOutputType(),
+                    ucb.getBuiltBinder(),
+                    scope,
+                    verb,
                     ucb.getAccess(),
                     ucb.hasAuthority(),
                     ucb.getCustomAuthority()));
