@@ -43,6 +43,7 @@ class DomainWorkflowAssembler<E> {
 
 	private final String domainName;
 	private final Map<String, DomainWorkflowBuilder<E>> workflows;
+	private final java.util.Set<String> useCaseNames;
 	private final boolean securityEnabled;
 	private final boolean hasAuthorization;
 	private final boolean multiTenancyEnabled;
@@ -54,6 +55,7 @@ class DomainWorkflowAssembler<E> {
 
 	DomainWorkflowAssembler(String domainName,
 			Map<String, DomainWorkflowBuilder<E>> workflows,
+			java.util.Set<String> useCaseNames,
 			boolean securityEnabled,
 			boolean hasAuthorization,
 			boolean multiTenancyEnabled,
@@ -64,6 +66,7 @@ class DomainWorkflowAssembler<E> {
 			com.garganttua.core.workflow.WorkflowTimingConfig workflowTimingConfig) {
 		this.domainName = domainName;
 		this.workflows = workflows;
+		this.useCaseNames = useCaseNames != null ? useCaseNames : java.util.Set.of();
 		this.securityEnabled = securityEnabled;
 		this.hasAuthorization = hasAuthorization;
 		this.multiTenancyEnabled = multiTenancyEnabled;
@@ -143,6 +146,7 @@ class DomainWorkflowAssembler<E> {
 		// Stage 8 — business operations (guarded by all security stages)
 		String fullGuard = buildCompoundGuard(securityCodeVars);
 		List<String> operationCodeVars = buildBusinessOperationStages(builder, fullGuard);
+		operationCodeVars.addAll(buildUseCaseStages(builder, fullGuard));
 		operationCodeVars.addAll(buildCreateAuthorizationStage(builder, fullGuard));
 
 		// Stage 9 — serialize (Mode A only, gated on Accept presence).
@@ -194,6 +198,14 @@ class DomainWorkflowAssembler<E> {
 				String sanitized = label.replace("-", "_");
 				codeVars.add("_" + sanitized + "_" + sanitized + "_code");
 			}
+		}
+
+		// Use-case operation code vars — one per declared use case, treated like a CRUD
+		// op (init 405, skipped→405, error propagates) so a request matching no use case
+		// yields 405 and a failing use case surfaces its real code.
+		for (String name : this.useCaseNames) {
+			String sanitized = ("usecase-" + name).replace("-", "_");
+			codeVars.add("_" + sanitized + "_" + sanitized + "_code");
 		}
 
 		// Authorization code var
@@ -465,6 +477,34 @@ class DomainWorkflowAssembler<E> {
 			}
 		}
 		return operationCodeVars;
+	}
+
+	/**
+	 * One business stage per declared use case — the use-case counterpart of the CRUD stages. Each
+	 * runs {@code USE_CASE.gs} (→ {@code invokeUseCase}) and is guarded by the business operation AND
+	 * the use case's name, so a domain hosting several use cases routes each request to exactly one.
+	 */
+	private List<String> buildUseCaseStages(IWorkflowBuilder builder, String guard) {
+		List<String> codeVars = new ArrayList<>();
+		String useCaseLabel = com.garganttua.api.commons.operation.BusinessOperation.useCase.getLabel();
+		for (String name : this.useCaseNames) {
+			String stageName = "usecase-" + name;
+			var scriptBuilder = builder.stage(stageName)
+					.when("and(equals(businessOperation(@0), \"" + useCaseLabel + "\"), "
+							+ "equals(useCaseName(@0), \"" + name + "\"))")
+					.script("classpath:scripts/business/USE_CASE.gs")
+						.name(stageName)
+						.input("operationRequest", "@0")
+						.input("repository", "@1")
+						.input("domainContext", "@2");
+			if (guard != null) {
+				scriptBuilder.when(guard);
+			}
+			scriptBuilder.up().up();
+			String sanitized = stageName.replace("-", "_");
+			codeVars.add("_" + sanitized + "_" + sanitized + "_code");
+		}
+		return codeVars;
 	}
 
 	private List<String> buildCreateAuthorizationStage(IWorkflowBuilder builder, String guard) {

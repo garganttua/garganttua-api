@@ -34,6 +34,10 @@ public class SerializationExpressions {
 	public static boolean operationExpectsBody(@Nullable Object operation) {
 		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
 		if (opDef == null) return false;
+		// A use case carries a body iff it declared an input type (the @UseCaseInput target).
+		if (opDef.type() == OperationType.usesCase) {
+			return opDef.useCase() != null && opDef.useCase().inputType() != null;
+		}
 		TechnicalOperation tech = opDef.technicalOperation();
 		return tech == TechnicalOperation.create || tech == TechnicalOperation.update;
 	}
@@ -51,6 +55,11 @@ public class SerializationExpressions {
 		// and the login would fail over HTTP.
 		if (opDef.type() == OperationType.authentication) {
 			return IClass.getClass(com.garganttua.api.core.security.authentication.AuthenticationRequest.class);
+		}
+		// A use case deserializes its body to its declared input type (the @UseCaseInput target),
+		// not the domain entity.
+		if (opDef.type() == OperationType.usesCase && opDef.useCase() != null && opDef.useCase().inputType() != null) {
+			return opDef.useCase().inputType();
 		}
 		IClass<?> entityClass = opDef.entity();
 		if (entityClass != null) {

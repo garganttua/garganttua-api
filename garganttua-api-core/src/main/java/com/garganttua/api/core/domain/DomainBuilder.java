@@ -4,7 +4,10 @@ import com.garganttua.api.core.dto.DtoBuilder;
 import com.garganttua.api.core.entity.EntityBuilder;
 import com.garganttua.api.core.security.DomainSecurityBuilder;
 import com.garganttua.api.core.security.authenticator.AuthenticatorBuilder;
+import com.garganttua.api.commons.usecase.injection.UseCaseInput;
+import com.garganttua.api.core.usecase.UseCaseBinderBuilder;
 import com.garganttua.api.core.usecase.UseCaseBuilder;
+import com.garganttua.api.core.usecase.UseCaseInputSupplierBuilder;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import com.garganttua.core.reflection.IField;
@@ -60,7 +63,9 @@ import com.garganttua.core.injection.context.dsl.InjectionContextBuilder;
 import com.garganttua.core.mapper.IMapper;
 import com.garganttua.core.mapper.MapperException;
 import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IMethod;
 import com.garganttua.core.reflection.IObjectQuery;
+import com.garganttua.core.reflection.IParameter;
 import com.garganttua.core.reflection.IReflectionProvider;
 import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.core.reflection.ReflectionException;
@@ -482,6 +487,46 @@ public class DomainBuilder<E>
         return new com.garganttua.api.commons.operation.OperationPath(p);
     }
 
+    /**
+     * Auto-wires a use case's bound method parameters from their framework injection annotations —
+     * the declarative dual of the explicit {@code .withParam(i, supplier)} the security scanner
+     * performs (cf. {@code SecurityAnnotationScanner}). A {@code @UseCaseInput} parameter is supplied
+     * with the deserialized request body (the use case's {@code InputType}) via
+     * {@link UseCaseInputSupplierBuilder}; its {@code @Resolver} ({@code UseCaseInputElementResolver})
+     * is the declarative dual recorded for the DI path. A parameter without a recognised annotation is
+     * left untouched, so an explicit {@code .withParam(...)} still wins and a truly unwired parameter
+     * surfaces as the binder's own "no supplier configured" error at build.
+     */
+    private void autowireUseCaseParameters(UseCaseBinderBuilder<?, ?, E> binder) throws ApiException {
+        if (binder == null) {
+            return;
+        }
+        IMethod method;
+        try {
+            method = binder.method();
+        } catch (com.garganttua.core.dsl.DslException e) {
+            // No method bound yet (or address-only) — nothing to auto-wire; the binder build
+            // will report a missing method itself.
+            return;
+        }
+        if (method == null) {
+            return;
+        }
+        IClass<UseCaseInput> useCaseInputAnno = IClass.getClass(UseCaseInput.class);
+        IParameter[] parameters = method.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            IParameter parameter = parameters[i];
+            try {
+                if (parameter.getAnnotation(useCaseInputAnno) != null) {
+                    binder.withParam(i, new UseCaseInputSupplierBuilder(parameter.getType()));
+                }
+            } catch (com.garganttua.core.dsl.DslException e) {
+                throw new ApiException("Failed to auto-wire parameter " + i + " of use case method '"
+                        + method.getName() + "': " + e.getMessage(), e);
+            }
+        }
+    }
+
     @Override
     public IDomainWorkflowBuilder<E> workflow(String workflowName) {
         Objects.requireNonNull(workflowName, "Workflow name cannot be null");
@@ -636,15 +681,21 @@ public class DomainBuilder<E>
         // the built method binder, plus verb (default read) / scope (default allEntities) / security.
         Map<String, IUseCaseDefinition> useCaseDefinitions = new HashMap<>();
         for (Map.Entry<String, IUseCaseBuilder<?, ?, E>> entry : this.useCases.entrySet()) {
-            entry.getValue().build();
             UseCaseBuilder<?, ?, E> ucb = (UseCaseBuilder<?, ?, E>) entry.getValue();
+            // Auto-wire the bound method's annotated parameters (e.g. @UseCaseInput) before the
+            // builder materialises the binder — the method stays "completely free".
+            autowireUseCaseParameters(ucb.getBinderBuilder());
+            entry.getValue().build();
             com.garganttua.api.commons.operation.Scope scope = ucb.getScope() != null
                     ? ucb.getScope() : com.garganttua.api.commons.operation.Scope.allEntities;
             com.garganttua.api.commons.operation.TechnicalOperation verb = ucb.getOperation() != null
                     ? ucb.getOperation() : com.garganttua.api.commons.operation.TechnicalOperation.read;
+            // Default the route suffix to the use case name so each use case on a domain gets a
+            // distinct path (/<domain>/<name>) when no explicit pathSuffix/completePath is given.
+            String suffix = ucb.getPathSuffix() != null ? ucb.getPathSuffix() : ucb.getName();
             useCaseDefinitions.put(entry.getKey(), new UseCaseDefinition(
                     ucb.getName(),
-                    buildUseCasePath(ucb.getCompletePath(), ucb.getPathSuffix(), scope),
+                    buildUseCasePath(ucb.getCompletePath(), suffix, scope),
                     ucb.getInputType(),
                     ucb.getOutputType(),
                     ucb.getBuiltBinder(),
@@ -858,7 +909,7 @@ public class DomainBuilder<E>
         boolean isOwnerOrOwned = this.owner != null || this.owned != null;
 
         new DomainWorkflowAssembler<E>(
-                this.domainName, this.workflows, securityEnabled, hasAuthorization,
+                this.domainName, this.workflows, this.useCases.keySet(), securityEnabled, hasAuthorization,
                 multiTenancyEnabled, isOwnerOrOwned,
                 injectionContextBuilder, expressionContextBuilder,
                 workflowsBuilder, workflowTimingConfig).populateStages();

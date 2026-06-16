@@ -198,6 +198,15 @@ public class UseCaseBuilder<I, O, E> extends AbstractAutomaticLinkedBuilder<IUse
         return this.builtBinder;
     }
 
+    /**
+     * The binder <em>builder</em> backing {@code bind(...)} — exposed so the domain build can auto-wire
+     * the bound method's annotated parameters ({@code @UseCaseInput}, {@code @Caller}, …) via the
+     * injection resolvers before {@link #doBuild()} materialises it. Null when no method is bound.
+     */
+    public UseCaseBinderBuilder<I, O, E> getBinderBuilder() {
+        return this.binder;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     protected synchronized IUseCase<I, O> doBuild() throws ApiException {
