@@ -31,6 +31,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.DeleteResult;
@@ -75,6 +76,12 @@ public class MongoDao implements IDao {
 	@Override
 	public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
 			throws ApiException {
+		return find(pageable, filter, sort, Optional.empty());
+	}
+
+	@Override
+	public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort,
+			Optional<List<String>> projection) throws ApiException {
 		Bson mongoFilter = filter.map(MongoFilterConverter::convert).orElse(new Document());
 
 		FindIterable<Document> iterable = getCollection().find(mongoFilter);
@@ -91,11 +98,67 @@ public class MongoDao implements IDao {
 			iterable.limit(p.getPageSize());
 		});
 
+		applyProjection(iterable, projection);
+
 		List<Object> results = new ArrayList<>();
 		for (Document doc : iterable) {
 			results.add(documentToDto(doc));
 		}
 		return results;
+	}
+
+	/**
+	 * Narrows the fetched fields to the requested projection (entity field names translated to their
+	 * document fields) for IO savings. Always force-includes the uuid field and every composition
+	 * (DBRef) field — {@code _id} is returned by default — so {@link #documentToDto} can still map the
+	 * identity and resolve references. No-op when the projection is empty.
+	 */
+	private void applyProjection(FindIterable<Document> iterable, Optional<List<String>> projection) {
+		if (projection == null || projection.isEmpty() || projection.get().isEmpty()) {
+			return;
+		}
+		java.util.LinkedHashSet<String> docFields = new java.util.LinkedHashSet<>();
+		for (String entityField : projection.get()) {
+			if (entityField == null || entityField.isBlank()) {
+				continue;
+			}
+			// A dotted path a.b projects its top-level document field (Mongo returns the whole sub-doc).
+			String head = entityField.contains(".")
+					? entityField.substring(0, entityField.indexOf('.'))
+					: entityField;
+			docFields.add(translateToDtoField(head.trim()));
+		}
+		if (docFields.isEmpty()) {
+			return;
+		}
+		docFields.add(this.uuidFieldName);
+		docFields.addAll(this.compositions.keySet());
+		iterable.projection(Projections.include(new ArrayList<>(docFields)));
+	}
+
+	/**
+	 * Translates an ENTITY field name to its document (DTO) field name by reading {@code @FieldMappingRule}
+	 * on the DTO fields ({@code sourceFieldAddress} = the entity field). Falls back to the same name when
+	 * no rule maps it (DTO field name == entity field name).
+	 */
+	private String translateToDtoField(String entityField) {
+		if (this.dtoClass == null) {
+			return entityField;
+		}
+		IClass<?> current = this.dtoClass;
+		while (current != null) {
+			for (IField field : current.getDeclaredFields()) {
+				com.garganttua.core.mapper.annotations.FieldMappingRule[] rules =
+						field.getAnnotationsByType(IClass.getClass(com.garganttua.core.mapper.annotations.FieldMappingRule.class));
+				for (com.garganttua.core.mapper.annotations.FieldMappingRule rule : rules) {
+					if (entityField.equals(rule.sourceFieldAddress())) {
+						return field.getName();
+					}
+				}
+			}
+			current = current.getSuperclass();
+		}
+		return entityField;
 	}
 
 	@Override

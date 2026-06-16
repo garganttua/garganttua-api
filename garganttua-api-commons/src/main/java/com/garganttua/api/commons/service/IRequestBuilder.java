@@ -51,6 +51,17 @@ public interface IRequestBuilder {
 	/** readAll output shape — full entities (default) / only uuids / only ids. */
 	IRequestBuilder mode(ReadAllOutputMode mode);
 
+	/**
+	 * Field projection ("select") — restrict a read to the given ENTITY field names. The read then
+	 * yields sparse objects carrying only those fields. Empty/no fields means "the whole entity".
+	 */
+	IRequestBuilder select(String... fields);
+
+	/** Alias of {@link #select(String...)}. */
+	default IRequestBuilder fields(String... fields) {
+		return select(fields);
+	}
+
 	// --- Tracing ---
 
 	IRequestBuilder executionUuid(UUID executionUuid);

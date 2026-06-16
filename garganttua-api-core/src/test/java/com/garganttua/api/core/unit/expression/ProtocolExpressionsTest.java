@@ -413,5 +413,32 @@ class ProtocolExpressionsTest {
 			assertTrue(req.arg(IOperationRequest.SORT).isEmpty());
 			assertTrue(req.arg(IOperationRequest.MODE).isEmpty());
 		}
+
+		@SuppressWarnings("unchecked")
+		@Test
+		@DisplayName("fields=name,email → PROJECTION list (trimmed, blanks dropped)")
+		void parsesFields() {
+			OperationRequest req = new OperationRequest(new HashMap<>());
+			Map<String, Object> qp = new HashMap<>();
+			qp.put("fields", " name , , email ");
+
+			ProtocolExpressions.applyReadParamsFromQuery(req, qp);
+
+			List<String> projection = (List<String>) req.arg(IOperationRequest.PROJECTION).orElseThrow();
+			assertEquals(List.of("name", "email"), projection,
+					"comma-split, trimmed, with empty segments dropped");
+		}
+
+		@Test
+		@DisplayName("absent / blank fields → no PROJECTION arg")
+		void noFields() {
+			OperationRequest req = new OperationRequest(new HashMap<>());
+			Map<String, Object> qp = new HashMap<>();
+			qp.put("fields", "   ");
+
+			ProtocolExpressions.applyReadParamsFromQuery(req, qp);
+
+			assertTrue(req.arg(IOperationRequest.PROJECTION).isEmpty(), "a blank fields param sets no projection");
+		}
 	}
 }

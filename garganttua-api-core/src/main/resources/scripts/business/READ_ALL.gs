@@ -16,6 +16,7 @@ pageable <- :arg(@0, "pageable")
 caller <- :arg(@0, "caller")
 filter <- :arg(@0, "filter")
 outputMode <- :arg(@0, "mode")
+projection <- :arg(@0, "projection")
 domainName <- :arg(@0, "domainName")
 
 requirePresent(@caller)
@@ -25,8 +26,11 @@ requirePresent(@caller)
 filter <- buildFilter(@caller, @filter, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 
-// Read all entities from the repository
-entities <- getEntities(@1, @pageable, @filter, @sort)
+// Read all entities from the repository. A field projection is pushed down to the DAO only when
+// it is safe (no afterGet hooks / injection / compositions could read a non-requested field);
+// otherwise the projection is empty here and the output is shaped post-fetch below.
+daoProjection <- effectiveDaoProjection(@2, @projection)
+entities <- getEntitiesProjected(@1, @pageable, @filter, @sort, @daoProjection)
 ! => recordCaughtException(@0, @exception) -> 500
 
 entities <- if(equals(@outputMode, "full"), (
@@ -34,6 +38,11 @@ entities <- if(equals(@outputMode, "full"), (
     entities <- runAfterGet(@entities, @0)
 ), @entities)
 ! => recordCaughtException(@0, @exception) -> 500
+
+// Field projection ("select"): shape entity-shaped output into sparse maps of only the requested
+// fields. No-op without a projection; skipped for uuid/id modes (already reduced). Unknown field -> 400.
+entities <- applyProjection(@entities, @2, @projection, @outputMode)
+! => recordCaughtException(@0, @exception) -> 400
 
 entities <- if(equals(@outputMode, "uuid"), (
     entities <- reduceToUuids(@entities, @2)

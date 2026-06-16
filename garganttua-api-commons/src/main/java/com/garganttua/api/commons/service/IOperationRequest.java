@@ -36,6 +36,14 @@ public interface IOperationRequest {
 	ArgKey<ISort> SORT = ArgKey.of("sort", IClass.getClass(ISort.class));
 	/** readAll output mode — "full" / "uuid" / "id" (see READ_ALL.gs). */
 	ArgKey<String> MODE = ArgKey.of("mode", IClass.getClass(String.class));
+	/**
+	 * Field projection ("select") — the list of ENTITY field names a read should return. When set,
+	 * a read yields sparse maps carrying only those fields (see READ_ALL.gs / READ_ONE.gs and
+	 * {@code projectFields}). Value is a {@code List<String>}; absent/empty means "no projection"
+	 * (the whole entity). Name {@code "projection"} is what the scripts read via {@code :arg(@0,"projection")}.
+	 */
+	@SuppressWarnings("rawtypes")
+	ArgKey<List> PROJECTION = ArgKey.of("projection", IClass.getClass(List.class));
 
 	ArgKey<String> CALLER_ID = ArgKey.of("callerId", IClass.getClass(String.class));
 	ArgKey<String> TENANT_ID = ArgKey.of("tenantId", IClass.getClass(String.class));

@@ -1,6 +1,7 @@
 package com.garganttua.api.core.expression;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+import java.util.List;
 import java.util.Map;
 
 import com.garganttua.api.commons.ApiException;
@@ -160,6 +161,18 @@ public class ProtocolExpressions {
 		Object modeRaw = qp.get("mode");
 		if (modeRaw != null && !String.valueOf(modeRaw).isBlank()) {
 			req.arg(IOperationRequest.MODE.name(), String.valueOf(modeRaw).trim());
+		}
+		// fields=name,email → PROJECTION (a List<String> of entity field names). Trim + drop blanks;
+		// an empty list is treated as "no projection" and not set.
+		Object fieldsRaw = qp.get("fields");
+		if (fieldsRaw != null && !String.valueOf(fieldsRaw).isBlank()) {
+			List<String> fields = java.util.Arrays.stream(String.valueOf(fieldsRaw).split(","))
+					.map(String::trim)
+					.filter(s -> !s.isEmpty())
+					.toList();
+			if (!fields.isEmpty()) {
+				req.arg(IOperationRequest.PROJECTION.name(), fields);
+			}
 		}
 		return request;
 	}

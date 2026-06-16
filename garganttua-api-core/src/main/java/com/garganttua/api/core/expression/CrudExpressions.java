@@ -1,10 +1,15 @@
 package com.garganttua.api.core.expression;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.garganttua.api.core.domain.Domain;
+import com.garganttua.api.core.entity.EntityDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.core.repository.RepositoryFilterTools;
 import com.garganttua.api.commons.ApiException;
@@ -20,6 +25,8 @@ import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.service.Page;
 import com.garganttua.api.commons.sort.ISort;
 import com.garganttua.core.expression.annotations.Expression;
+import com.garganttua.core.reflection.IClass;
+import com.garganttua.core.reflection.IField;
 import com.garganttua.core.reflection.ObjectAddress;
 
 import static com.garganttua.api.core.expression.ExpressionUtils.*;
@@ -136,6 +143,116 @@ public class CrudExpressions {
 				})
 				.filter(Objects::nonNull)
 				.toList();
+	}
+
+	@Expression(name = "getEntitiesProjected",
+			description = "Like getEntities but pushes an optional field projection (entity field names) down to the "
+					+ "repository/DAO for IO savings where supported. Empty/absent projection means no pushdown (full fetch).")
+	public static List<Object> getEntitiesProjected(Object repository, Object pageable, Object filter, Object sort,
+			Object projection) throws ApiException {
+		IRepository repo = (IRepository) repository;
+		List<String> fields = unwrapStringList(projection);
+		Optional<List<String>> proj = (fields == null || fields.isEmpty()) ? Optional.empty() : Optional.of(fields);
+		return repo.getEntities(
+				unwrap(pageable, IPageable.class),
+				unwrap(filter, IFilter.class),
+				unwrap(sort, ISort.class),
+				proj);
+	}
+
+	@Expression(name = "effectiveDaoProjection",
+			description = "The projection to push to the DAO: the requested entity fields when DB-level projection is "
+					+ "SAFE (no afterGet hooks, no injection, no compositions — server semantics won't read non-requested "
+					+ "fields), else an empty list (full fetch). Never null; the output shaping (projectFields) still "
+					+ "applies regardless.")
+	public static List<Object> effectiveDaoProjection(Object context, Object fields) {
+		List<String> requested = unwrapStringList(fields);
+		if (requested == null || requested.isEmpty()) {
+			return List.of();
+		}
+		IDomain<?> dc = toDomain(context);
+		return projectionPushdownAllowed(dc) ? new ArrayList<>(requested) : List.of();
+	}
+
+	/**
+	 * DB-level projection is safe only when no server-side reader can need a non-requested field:
+	 * no afterGet hooks, no DI injection, and no DTO compositions (DBRef resolution reads other docs).
+	 */
+	private static boolean projectionPushdownAllowed(IDomain<?> dc) {
+		boolean injection = (dc instanceof Domain<?> d) && d.isDoInjection();
+		boolean hasAfterGet = dc.getEntityDefinition() instanceof EntityDefinition<?> ed
+				&& ed.afterGetMethodBuilders() != null && !ed.afterGetMethodBuilders().isEmpty();
+		boolean hasCompositions = dc.getDomainDefinition().dtoDefinitions().stream()
+				.anyMatch(dto -> dto.compositions() != null && !dto.compositions().isEmpty());
+		return !injection && !hasAfterGet && !hasCompositions;
+	}
+
+	@Expression(name = "applyProjection",
+			description = "Shapes a read result into sparse maps of ONLY the requested entity fields (a SELECT). "
+					+ "No-op when no fields are requested, or when the output mode already reduced the result (uuid/id). "
+					+ "Unknown field -> ApiException (the script routes it to 400).")
+	public static Object applyProjection(Object entities, Object context, Object fields, Object outputMode) {
+		Object mode = unwrapOptional(outputMode);
+		String modeStr = mode != null ? mode.toString() : null;
+		if ("uuid".equals(modeStr) || "id".equals(modeStr)) {
+			return entities; // already reduced to a scalar field — projection does not apply
+		}
+		return projectFields(entities, context, fields);
+	}
+
+	@Expression(name = "projectFields",
+			description = "Projects each entity to a sparse map carrying ONLY the requested entity fields (the wire "
+					+ "names). Validates field names against the entity; unknown field -> ApiException. No-op (returns "
+					+ "the input unchanged) when no fields are requested.")
+	@SuppressWarnings("unchecked")
+	public static List<Object> projectFields(Object entities, Object context, Object fields) {
+		List<String> requested = unwrapStringList(fields);
+		if (entities == null) {
+			return List.of();
+		}
+		List<Object> entityList = (List<Object>) entities;
+		if (requested == null || requested.isEmpty() || entityList.isEmpty()) {
+			return entityList;
+		}
+
+		IDomain<?> dc = toDomain(context);
+		IClass<?> entityClass = dc.getEntityClass();
+		// Resolve + validate every requested name once against the entity class — an unknown field
+		// fails fast with a parlant message even when the result set is empty.
+		LinkedHashMap<String, IField> resolved = new LinkedHashMap<>();
+		for (String name : requested) {
+			IField field = REFLECTION.findField(entityClass, name)
+					.orElseThrow(() -> new ApiException("Unknown field '" + name
+							+ "' in projection for entity " + entityClass.getSimpleName()));
+			resolved.put(name, field);
+		}
+
+		return entityList.stream().map(entity -> {
+			Map<String, Object> map = new LinkedHashMap<>();
+			resolved.forEach((name, field) -> {
+				try {
+					map.put(name, REFLECTION.getFieldValue(entity, field));
+				} catch (Exception e) {
+					throw new ApiException("Failed to read field '" + name + "' for projection", e);
+				}
+			});
+			return (Object) map;
+		}).toList();
+	}
+
+	/** Unwraps an Optional/List into a trimmed, blank-filtered {@code List<String>}; null when absent or not a list. */
+	private static List<String> unwrapStringList(Object value) {
+		Object unwrapped = unwrapOptional(value);
+		if (!(unwrapped instanceof List<?> list)) {
+			return null;
+		}
+		List<String> result = new ArrayList<>();
+		for (Object o : list) {
+			if (o == null) continue;
+			String s = o.toString().trim();
+			if (!s.isEmpty()) result.add(s);
+		}
+		return result;
 	}
 
 	@Expression(name = "encapsulateInPage", description = "Wraps a list of entities into a Page record with totalCount")

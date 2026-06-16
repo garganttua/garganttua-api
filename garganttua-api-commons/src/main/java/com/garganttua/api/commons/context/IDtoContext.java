@@ -22,6 +22,12 @@ public interface IDtoContext<D> {
         return getDao().find(pageable, filter, sort);
     }
 
+	/** Find with an optional field projection, delegated to the DAO (best-effort; default ignores it). */
+	default List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort,
+			Optional<List<String>> projection) throws ApiException {
+        return getDao().find(pageable, filter, sort, projection);
+    }
+
 	default Object save(Object object) throws ApiException {
         return getDao().save(object);
     }

@@ -20,6 +20,16 @@ public interface IRepository {
 	List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
 			throws ApiException;
 
+	/**
+	 * Get entities with an optional field projection (list of ENTITY field names) pushed down to the
+	 * DAO for IO savings where supported. The default ignores the projection and delegates to the
+	 * 3-arg variant, so callers that never project (unicity checks, lookups) are unaffected.
+	 */
+	default List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort,
+			Optional<List<String>> projection) throws ApiException {
+		return getEntities(pageable, filter, sort);
+	}
+
 	void save(Object entity) throws ApiException;
 
 	void delete(Object entity) throws ApiException;

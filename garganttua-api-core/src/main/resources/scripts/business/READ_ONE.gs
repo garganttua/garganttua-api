@@ -14,6 +14,7 @@
 caller <- :arg(@0, "caller")
 lookupType <- :arg(@0, "type")
 lookupId <- :arg(@0, "identifier")
+projection <- :arg(@0, "projection")
 
 requirePresent(@caller)
 ! => recordCaughtException(@0, @exception) -> 400
@@ -21,8 +22,9 @@ requirePresent(@caller)
 filter <- buildGetOneFilter(@caller, @lookupType, @lookupId, @2)
 ! => recordCaughtException(@0, @exception) -> 500
 
-// Read entities matching the filter
-entities <- getEntities(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"))
+// Read entities matching the filter (projection pushed to the DAO only when safe)
+daoProjection <- effectiveDaoProjection(@2, @projection)
+entities <- getEntitiesProjected(@1, :arg(@0, "pageable"), @filter, :arg(@0, "sort"), @daoProjection)
 ! => recordCaughtException(@0, @exception) -> 500
 
 // Extract single entity from results
@@ -35,6 +37,11 @@ entities <- doInjection(@0, @entities)
 ! => recordCaughtException(@0, @exception) -> 500
 entities <- runAfterGet(@entities, @0)
 ! => recordCaughtException(@0, @exception) -> 500
+
+// Field projection ("select"): shape into a sparse map of only the requested fields. No-op without
+// a projection; unknown field -> 400.
+entities <- projectFields(@entities, @2, @projection)
+! => recordCaughtException(@0, @exception) -> 400
 entity <- first(@entities)
 
 output <- @entity -> 0

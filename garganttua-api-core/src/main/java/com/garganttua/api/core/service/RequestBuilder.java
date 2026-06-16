@@ -133,6 +133,19 @@ public class RequestBuilder implements IRequestBuilder {
 		return this;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public IRequestBuilder select(String... fields) {
+		// Trim + drop blanks; an empty selection means "no projection" (the whole entity).
+		List<String> list = (fields == null) ? List.of()
+				: java.util.Arrays.stream(fields)
+						.filter(f -> f != null && !f.isBlank())
+						.map(String::trim)
+						.toList();
+		this.operationRequest.arg((ArgKey) IOperationRequest.PROJECTION, list.isEmpty() ? null : list);
+		return this;
+	}
+
 	@Override
 	public IRequestBuilder executionUuid(UUID executionUuid) {
 		this.operationRequest.arg(IOperationRequest.EXECUTION_UUID, executionUuid);

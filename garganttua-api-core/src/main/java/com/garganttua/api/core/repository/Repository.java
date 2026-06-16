@@ -70,8 +70,14 @@ public class Repository implements IRepository {
     @Override
     public List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort)
             throws ApiException {
-        log.debug("Fetching entities with filter={}", filter.orElse(null));
-        List<Map<String, Object>> dtoMaps = queryAllDtos(pageable, filter, sort);
+        return getEntities(pageable, filter, sort, Optional.empty());
+    }
+
+    @Override
+    public List<Object> getEntities(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort,
+            Optional<List<String>> projection) throws ApiException {
+        log.debug("Fetching entities with filter={} projection={}", filter.orElse(null), projection.orElse(null));
+        List<Map<String, Object>> dtoMaps = queryAllDtos(pageable, filter, sort, projection);
         return mergeAndMapToEntities(dtoMaps);
     }
 
@@ -127,18 +133,18 @@ public class Repository implements IRepository {
     // --- Internal: querying ---
 
     private List<Map<String, Object>> queryAllDtos(Optional<IPageable> pageable, Optional<IFilter> filter,
-            Optional<ISort> sort) throws ApiException {
+            Optional<ISort> sort, Optional<List<String>> projection) throws ApiException {
         IDomain<?> dc = getDomain();
         if (dc != null) {
-            return queryWithFilterMapping(dc, pageable, filter, sort);
+            return queryWithFilterMapping(dc, pageable, filter, sort, projection);
         }
         return dtoContexts.stream()
-                .map(ctx -> queryDtoContext(ctx, pageable, filter, sort))
+                .map(ctx -> queryDtoContext(ctx, pageable, filter, sort, projection))
                 .toList();
     }
 
     private List<Map<String, Object>> queryWithFilterMapping(IDomain<?> dc, Optional<IPageable> pageable,
-            Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
+            Optional<IFilter> filter, Optional<ISort> sort, Optional<List<String>> projection) throws ApiException {
         IDomainDefinition<?> definition = dc.getDomainDefinition();
         List<Pair<IClass<?>, IFilter>> mappedFilters = filterMapper.map(definition, filter.orElse(null));
 
@@ -146,7 +152,7 @@ public class Repository implements IRepository {
         for (Pair<IClass<?>, IFilter> mapped : mappedFilters) {
             IDtoContext<?> dtoContext = findDtoContextByClass(mapped.getValue0());
             if (dtoContext != null) {
-                dtoMaps.add(queryDtoContext(dtoContext, pageable, Optional.ofNullable(mapped.getValue1()), sort));
+                dtoMaps.add(queryDtoContext(dtoContext, pageable, Optional.ofNullable(mapped.getValue1()), sort, projection));
             }
         }
         return dtoMaps;
@@ -160,7 +166,7 @@ public class Repository implements IRepository {
                 continue;
             }
             IFilter filter = Filter.eq(fieldAddress.toString(), value);
-            dtoMaps.add(queryDtoContext(dtoContext, Optional.empty(), Optional.of(filter), Optional.empty()));
+            dtoMaps.add(queryDtoContext(dtoContext, Optional.empty(), Optional.of(filter), Optional.empty(), Optional.empty()));
         }
 
         Map<String, List<Object>> merged = mergeMaps(dtoMaps, false);
@@ -172,9 +178,14 @@ public class Repository implements IRepository {
     }
 
     private Map<String, Object> queryDtoContext(IDtoContext<?> dtoContext, Optional<IPageable> pageable,
-            Optional<IFilter> filter, Optional<ISort> sort) throws ApiException {
+            Optional<IFilter> filter, Optional<ISort> sort, Optional<List<String>> projection) throws ApiException {
         Map<String, Object> map = new HashMap<>();
-        List<Object> dtos = dtoContext.find(pageable, filter, sort);
+        // Use the 3-arg find for the common no-projection path so DAOs/contexts that only implement
+        // it are unaffected; the projecting 4-arg variant is reached only when fields were requested.
+        boolean hasProjection = projection != null && projection.isPresent() && !projection.get().isEmpty();
+        List<Object> dtos = hasProjection
+                ? dtoContext.find(pageable, filter, sort, projection)
+                : dtoContext.find(pageable, filter, sort);
         for (Object dto : dtos) {
             String uuid = dtoContext.getUuid(dto);
             map.put(uuid, dto);
