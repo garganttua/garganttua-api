@@ -26,6 +26,7 @@ import com.garganttua.api.commons.definition.IDomainKeyDefinition;
 import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.api.commons.operation.Access;
 import com.garganttua.api.commons.operation.OperationDefinition;
+import com.garganttua.api.commons.operation.OperationType;
 import com.garganttua.api.commons.Pluralizer;
 import com.garganttua.api.commons.repository.IRepository;
 import com.garganttua.api.commons.security.authentication.IAuthentication;
@@ -179,6 +180,37 @@ public class SecurityExpressions {
 		OperationDefinition opDef = (OperationDefinition) unwrapOptional(operation);
 		if (opDef == null) return "anonymous";
 		return opDef.access() != null ? opDef.access().name() : "anonymous";
+	}
+
+	@Expression(name = "shouldSkipAuthorization",
+			description = "True when VERIFY_AUTHORIZATION can short-circuit. An operation is verified when it is "
+					+ "non-anonymous, OR it is anonymous but a token was actually presented (Mode A raw header or "
+					+ "Mode B pre-decoded authorization) — that is OPTIONAL authentication: an anonymous op honours a "
+					+ "valid token (identity persists) and rejects an invalid one (401). Skips when anonymous with no "
+					+ "token. authenticate / refresh ops always skip: they carry their own credentials in the body.")
+	public static boolean shouldSkipAuthorization(@Nullable Object request) {
+		IOperationRequest req = (unwrapOptional(request) instanceof IOperationRequest r) ? r : null;
+		if (req == null) {
+			return true;
+		}
+		OperationDefinition op = req.arg(IOperationRequest.OPERATION).orElse(null);
+		if (op == null) {
+			return true;
+		}
+		// authenticate / refresh validate their own token (presented in the body); never gate them here.
+		if (op.type() == OperationType.authentication || op.type() == OperationType.refreshAuthorization) {
+			return true;
+		}
+		// A non-anonymous operation always verifies.
+		if (op.access() != Access.anonymous) {
+			return false;
+		}
+		// Anonymous: skip only when NO token was presented; a presented token is verified (→ 401 if invalid).
+		boolean preDecoded = req.arg(IOperationRequest.AUTHORIZATION).orElse(null) != null;
+		String raw = AuthorizationProtocolExpressions
+				.rawAuthorizationAsString(req.arg(IOperationRequest.RAW_AUTHORIZATION).orElse(null));
+		boolean rawPresent = raw != null && !raw.isBlank();
+		return !(preDecoded || rawPresent);
 	}
 
 	@Expression(name = "operationAuthority", description = "Returns whether the operation requires an authority check")

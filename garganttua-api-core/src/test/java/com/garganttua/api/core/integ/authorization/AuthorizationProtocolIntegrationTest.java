@@ -291,6 +291,63 @@ class AuthorizationProtocolIntegrationTest extends AbstractCrudIntegrationTest {
 	}
 
 	@Nested
+	@DisplayName("Optional authentication on anonymous operations")
+	class OptionalAuthenticationOnAnonymous {
+
+		private OperationRequest anonymousRequest(String rawAuthorization) {
+			User seeded = new User();
+			seeded.setUuid("u-1");
+			seeded.setTenantId("acme");
+			seeded.setName("alice");
+			dao.getStorage().add(seeded);
+
+			OperationRequest req = tenantRequest(anonymousReadOne(), "acme");
+			req.arg("type", "uuid");
+			req.arg("identifier", "u-1");
+			if (rawAuthorization != null) {
+				req.arg("rawAuthorization", rawAuthorization);
+			}
+			return req;
+		}
+
+		@Test
+		@DisplayName("anonymous op + NO token → authorization step skipped, succeeds as anonymous")
+		void anonymousNoTokenSkips() throws ApiException {
+			IDomain<?> ctx = buildDomain(true);
+
+			IOperationResponse resp = ctx.invoke(anonymousRequest(null));
+
+			assertEquals(OperationResponseCode.OK, resp.getResponseCode(), () -> "Got: " + resp.getResponse());
+			assertEquals(0, bearer.decodeCount.get(), "no token presented → no decode (unchanged anonymous path)");
+		}
+
+		@Test
+		@DisplayName("anonymous op + VALID token → the token IS decoded and honoured (optional authentication)")
+		void anonymousWithValidTokenVerifies() throws ApiException {
+			IDomain<?> ctx = buildDomain(true);
+
+			IOperationResponse resp = ctx.invoke(anonymousRequest("Bearer xyz.signed.payload"));
+
+			assertEquals(OperationResponseCode.OK, resp.getResponseCode(), () -> "Got: " + resp.getResponse());
+			assertEquals(1, bearer.decodeCount.get(),
+					"an anonymous op that carries a token now verifies it (it was skipped before)");
+		}
+
+		@Test
+		@DisplayName("anonymous op + INVALID token → 401 (a presented token must still be valid)")
+		void anonymousWithInvalidTokenRejected() throws ApiException {
+			bearer.throwOnDecode = true;
+			IDomain<?> ctx = buildDomain(true);
+
+			IOperationResponse resp = ctx.invoke(anonymousRequest("Bearer poison"));
+
+			assertEquals(OperationResponseCode.UNAUTHORIZED, resp.getResponseCode(),
+					() -> "a present-but-invalid token on an anonymous op must 401. Got: " + resp.getResponse());
+			assertEquals(1, bearer.decodeCount.get(), "the decoder was invoked on the presented token");
+		}
+	}
+
+	@Nested
 	@DisplayName("Registration")
 	class Registration {
 

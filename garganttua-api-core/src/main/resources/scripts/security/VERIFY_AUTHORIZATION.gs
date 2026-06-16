@@ -34,12 +34,12 @@
 #               mismatch, validation rejected
 #@end
 
-operation     <- :arg(@0, "operation")
-access        <- operationAccess(@operation)
-_isAnonymous  <- equals(@access, "anonymous")
-
-// Anonymous operations need no authorization — short-circuit success.
-requirePresent(if(equals(@_isAnonymous, false), 1))
+// Skip the whole authorization step only when it is safe to: an anonymous operation
+// with NO token presented (plus the self-authenticating authenticate/refresh ops).
+// OPTIONAL authentication: an anonymous op that DOES carry a token still verifies it —
+// a valid token's identity persists, an invalid one is rejected (401).
+_skip <- shouldSkipAuthorization(@0)
+requirePresent(if(equals(@_skip, false), 1))
 ! -> 0
 
 // Mode A with a configured decode method (e.g. a JWT): reconstruct the authorization
