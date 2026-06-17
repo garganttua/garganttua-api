@@ -55,7 +55,51 @@ public final class InMemoryDaoAutoConfiguration implements IApiAutoConfiguration
 
 		@Override
 		public List<Object> find(Optional<IPageable> pageable, Optional<IFilter> filter, Optional<ISort> sort) {
-			return new ArrayList<>(this.storage);
+			List<Object> result = new ArrayList<>(this.storage);
+			filter.ifPresent(f -> result.removeIf(o -> !matches(o, f)));
+			return result;
+		}
+
+		/** Minimal filter matcher — enough to honour {@code $and}/{@code $or}/{@code $field:$eq} from the query filter. */
+		private static boolean matches(Object o, IFilter f) {
+			if (f == null || f.getName() == null) {
+				return true;
+			}
+			switch (f.getName()) {
+				case "$and":
+					for (IFilter sub : f.getFilters()) {
+						if (!matches(o, sub)) return false;
+					}
+					return true;
+				case "$or":
+					for (IFilter sub : f.getFilters()) {
+						if (matches(o, sub)) return true;
+					}
+					return f.getFilters() == null || f.getFilters().isEmpty();
+				case "$field": {
+					IFilter op = f.getFilters().get(0);
+					Object actual = readField(o, String.valueOf(f.getValue()));
+					if ("$eq".equals(op.getName())) {
+						return String.valueOf(actual).equals(String.valueOf(op.getValue()));
+					}
+					if ("$ne".equals(op.getName())) {
+						return !String.valueOf(actual).equals(String.valueOf(op.getValue()));
+					}
+					return true; // unsupported operator → do not exclude
+				}
+				default:
+					return true;
+			}
+		}
+
+		private static Object readField(Object o, String field) {
+			try {
+				java.lang.reflect.Field jf = o.getClass().getDeclaredField(field);
+				jf.setAccessible(true);
+				return jf.get(o);
+			} catch (Exception e) {
+				return null;
+			}
 		}
 
 		@Override

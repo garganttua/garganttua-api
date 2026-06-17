@@ -1,17 +1,21 @@
 package com.garganttua.api.core.expression;
 import com.garganttua.core.reflection.annotations.Reflected;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
 import com.garganttua.api.commons.context.IApi;
+import com.garganttua.api.commons.filter.IFilter;
 import com.garganttua.api.commons.pageable.Pageable;
 import com.garganttua.api.commons.protocol.IProtocol;
 import com.garganttua.api.commons.service.IOperationRequest;
 import com.garganttua.api.commons.sort.Sort;
 import com.garganttua.api.commons.sort.SortDirection;
+import com.garganttua.api.core.filter.Filter;
 import com.garganttua.core.expression.annotations.Expression;
 
 import jakarta.annotation.Nullable;
@@ -132,8 +136,10 @@ public class ProtocolExpressions {
 
 	@Expression(name = "applyReadParamsFromQuery",
 			description = "Translates HTTP query parameters into the typed readAll args so pagination / sort / "
-					+ "output-mode work over the transport: page+size → IPageable (PAGE), sort=field[,asc|desc] → "
-					+ "ISort (SORT), mode=full|uuid|id → MODE. No-op for absent params; harmless for non-readAll ops.")
+					+ "output-mode / projection / filter work over the transport: page+size → IPageable (PAGE), "
+					+ "sort=field[,asc|desc] → ISort (SORT), mode=full|uuid|id → MODE, fields=a,b → PROJECTION, "
+					+ "filter=field:op:value[;…] → FILTER (AND-combined, then AND'd with the caller's access filter). "
+					+ "No-op for absent params; harmless for non-readAll ops.")
 	public static Object applyReadParamsFromQuery(@Nullable Object request, @Nullable Object queryParameters) {
 		IOperationRequest req = (IOperationRequest) unwrapOptional(request);
 		Object qpObj = unwrapOptional(queryParameters);
@@ -174,7 +180,94 @@ public class ProtocolExpressions {
 				req.arg(IOperationRequest.PROJECTION.name(), fields);
 			}
 		}
+		// filter=field:op:value[;field:op:value…] → FILTER. Clauses are AND-combined; the framework
+		// then ANDs the result with the caller's access filter (buildFilter). The transport sets only
+		// the BASE business filter — tenant/owner/visibility isolation stays server-authoritative.
+		Object filterRaw = qp.get("filter");
+		if (filterRaw != null && !String.valueOf(filterRaw).isBlank()) {
+			IFilter filter = parseQueryFilter(String.valueOf(filterRaw));
+			if (filter != null) {
+				req.arg(IOperationRequest.FILTER.name(), filter);
+			}
+		}
 		return request;
+	}
+
+	/**
+	 * Parses the {@code filter} query parameter into an {@link IFilter}. The grammar is
+	 * {@code field:op:value} per clause, clauses separated by {@code ;}, AND-combined. Operators:
+	 * {@code eq, ne, gt, gte, lt, lte, regex, empty} and {@code in, nin} (comma-separated values).
+	 * A value splits on the FIRST two colons only, so the value itself may contain {@code :}
+	 * (e.g. {@code url:eq:http://x}). Scalar values are coerced to {@code true}/{@code false} →
+	 * Boolean, integer/decimal → Number, else String (so numeric/boolean fields match). A malformed
+	 * or unknown-operator clause is skipped. Returns {@code null} when nothing parses.
+	 */
+	static IFilter parseQueryFilter(String raw) {
+		List<Filter> clauses = new ArrayList<>();
+		for (String token : raw.split(";")) {
+			String clause = token.trim();
+			if (clause.isEmpty()) {
+				continue;
+			}
+			String[] parts = clause.split(":", 3);
+			if (parts.length < 2) {
+				continue;
+			}
+			String field = parts[0].trim();
+			String op = parts[1].trim().toLowerCase(Locale.ROOT);
+			String value = parts.length > 2 ? parts[2] : null;
+			if (field.isEmpty()) {
+				continue;
+			}
+			Filter f = buildFilterClause(field, op, value);
+			if (f != null) {
+				clauses.add(f);
+			}
+		}
+		if (clauses.isEmpty()) {
+			return null;
+		}
+		return clauses.size() == 1 ? clauses.get(0) : Filter.and(clauses.toArray(new Filter[0]));
+	}
+
+	private static Filter buildFilterClause(String field, String op, String value) {
+		switch (op) {
+			case "eq":    return Filter.eq(field, coerceFilterValue(value));
+			case "ne":    return Filter.ne(field, coerceFilterValue(value));
+			case "gt":    return Filter.gt(field, coerceFilterValue(value));
+			case "gte":   return Filter.gte(field, coerceFilterValue(value));
+			case "lt":    return Filter.lt(field, coerceFilterValue(value));
+			case "lte":   return Filter.lte(field, coerceFilterValue(value));
+			case "regex": return value != null ? Filter.regex(field, value) : null;
+			case "empty": return Filter.empty(field);
+			case "in":    return Filter.in(field, coerceFilterList(value));
+			case "nin":   return Filter.nin(field, coerceFilterList(value));
+			default:      return null; // unknown operator — skip the clause
+		}
+	}
+
+	/** Coerces a query value to Boolean / Long / Double when it parses cleanly, else keeps the String. */
+	private static Object coerceFilterValue(String value) {
+		if (value == null) {
+			return null;
+		}
+		String v = value.trim();
+		if ("true".equalsIgnoreCase(v)) return Boolean.TRUE;
+		if ("false".equalsIgnoreCase(v)) return Boolean.FALSE;
+		try { return Long.valueOf(v); } catch (NumberFormatException ignored) { /* not a long */ }
+		try { return Double.valueOf(v); } catch (NumberFormatException ignored) { /* not a double */ }
+		return value;
+	}
+
+	private static Object[] coerceFilterList(String value) {
+		if (value == null || value.isBlank()) {
+			return new Object[0];
+		}
+		return java.util.Arrays.stream(value.split(","))
+				.map(String::trim)
+				.filter(s -> !s.isEmpty())
+				.map(ProtocolExpressions::coerceFilterValue)
+				.toArray();
 	}
 
 	// ----- helpers -----

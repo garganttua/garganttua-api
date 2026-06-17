@@ -440,5 +440,83 @@ class ProtocolExpressionsTest {
 
 			assertTrue(req.arg(IOperationRequest.PROJECTION).isEmpty(), "a blank fields param sets no projection");
 		}
+
+		private static com.garganttua.api.commons.filter.IFilter filterOf(String query) {
+			OperationRequest req = new OperationRequest(new HashMap<>());
+			Map<String, Object> qp = new HashMap<>();
+			qp.put("filter", query);
+			ProtocolExpressions.applyReadParamsFromQuery(req, qp);
+			return req.arg(IOperationRequest.FILTER).orElse(null);
+		}
+
+		@Test
+		@DisplayName("filter=name:eq:Alice → $field(name) → $eq(Alice)")
+		void parsesSingleEq() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("name:eq:Alice");
+			assertEquals("$field", f.getName());
+			assertEquals("name", f.getValue());
+			com.garganttua.api.commons.filter.IFilter op = f.getFilters().get(0);
+			assertEquals("$eq", op.getName());
+			assertEquals("Alice", op.getValue());
+		}
+
+		@Test
+		@DisplayName("multi-clause filter=name:eq:Alice;age:gt:30 → $and; numeric value coerced to Long")
+		void parsesMultiClauseAnd() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("name:eq:Alice;age:gt:30");
+			assertEquals("$and", f.getName());
+			assertEquals(2, f.getFilters().size());
+
+			com.garganttua.api.commons.filter.IFilter ageField = f.getFilters().get(1);
+			assertEquals("$field", ageField.getName());
+			assertEquals("age", ageField.getValue());
+			com.garganttua.api.commons.filter.IFilter gt = ageField.getFilters().get(0);
+			assertEquals("$gt", gt.getName());
+			assertEquals(30L, gt.getValue(), "a numeric filter value is coerced to Long so a numeric field matches");
+		}
+
+		@Test
+		@DisplayName("filter=enabled:eq:true → boolean value coerced to Boolean.TRUE")
+		void coercesBoolean() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("enabled:eq:true");
+			assertEquals(Boolean.TRUE, f.getFilters().get(0).getValue());
+		}
+
+		@Test
+		@DisplayName("filter=url:eq:http://x.io → value may contain colons (split on the first two only)")
+		void valueKeepsColons() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("url:eq:http://x.io");
+			assertEquals("url", f.getValue());
+			assertEquals("http://x.io", f.getFilters().get(0).getValue());
+		}
+
+		@Test
+		@DisplayName("filter=role:in:admin,user → $in with the comma-separated values")
+		void parsesIn() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("role:in:admin,user");
+			assertEquals("$field", f.getName());
+			assertEquals("role", f.getValue());
+			com.garganttua.api.commons.filter.IFilter in = f.getFilters().get(0);
+			assertEquals("$in", in.getName());
+			assertEquals(2, in.getFilters().size(), "two values in the $in list");
+			assertEquals("admin", in.getFilters().get(0).getValue());
+			assertEquals("user", in.getFilters().get(1).getValue());
+		}
+
+		@Test
+		@DisplayName("filter=deletedAt:empty → $empty (no value)")
+		void parsesEmpty() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("deletedAt:empty:");
+			assertEquals("$field", f.getName());
+			assertEquals("deletedAt", f.getValue());
+			assertEquals("$empty", f.getFilters().get(0).getName());
+		}
+
+		@Test
+		@DisplayName("absent / blank / unknown-operator filter → no FILTER arg")
+		void noFilter() {
+			assertNull(filterOf("   "), "a blank filter sets nothing");
+			assertNull(filterOf("name:bogus:x"), "an unknown operator is skipped → no filter");
+		}
 	}
 }

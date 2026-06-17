@@ -1,6 +1,7 @@
 package com.garganttua.api.starter.javalin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -133,6 +134,34 @@ class GarganttuaApplicationE2ETest {
 		void domainDiscovered() {
 			assertNotNull(api.getDomain("widgets").orElse(null),
 					"the @Entity Widget should have produced a 'widgets' domain with no DSL");
+		}
+
+		@Test
+		@DisplayName("GET /widgets?filter=name:eq:carol returns only carol — the filter flows from the query string over Javalin")
+		void filteredReadAllOverHttp() throws Exception {
+			post("carol");
+			post("dave");
+
+			HttpResponse<String> filtered = http.send(HttpRequest.newBuilder()
+					.uri(URI.create(BASE + "?filter=name:eq:carol"))
+					.header("Accept", "application/json")
+					.GET()
+					.build(), BodyHandlers.ofString());
+
+			assertEquals(200, filtered.statusCode(), "a filtered readAll must be 200; body=" + filtered.body());
+			assertTrue(filtered.body().contains("\"name\":\"carol\""),
+					"carol must be returned; body=" + filtered.body());
+			assertFalse(filtered.body().contains("\"name\":\"dave\""),
+					"dave must be filtered OUT by name:eq:carol; body=" + filtered.body());
+		}
+
+		private void post(String name) throws Exception {
+			http.send(HttpRequest.newBuilder()
+					.uri(URI.create(BASE))
+					.header("Content-Type", "application/json")
+					.header("Accept", "application/json")
+					.POST(BodyPublishers.ofString("{\"name\":\"" + name + "\"}"))
+					.build(), BodyHandlers.ofString());
 		}
 	}
 }
