@@ -115,11 +115,18 @@ public class EntityLifecycleExpressions {
 			ICaller c = (ICaller) unwrapOptional(caller);
 			IDomain<?> dc = toDomain(context);
 			ObjectAddress tenantIdAddress = dc.getEntityDefinition().tenantId();
-			if (tenantIdAddress == null) return entity;
+			if (tenantIdAddress == null || c == null) return entity;
 			String fieldName = tenantIdAddress.toString();
 			Object currentTenantId = REFLECTION.getFieldValue(entity, fieldName);
 			if (currentTenantId == null) {
-				REFLECTION.setFieldValue(entity, fieldName, c.requestedTenantId());
+				// Stamp the caller's REQUESTED tenant — a super tenant may target another tenant via the
+				// request (cross-tenant create). When none was requested, fall back to the caller's HOME
+				// tenant: requestedTenantId is null for an unscoped super tenant (the read-side "all
+				// tenants" bypass signal), and that null must NOT leak into the persisted tenantId and
+				// orphan the entity. For a non-super caller requestedTenantId already equals tenantId,
+				// so this fallback only changes the super-tenant-without-target case.
+				String target = c.requestedTenantId() != null ? c.requestedTenantId() : c.tenantId();
+				REFLECTION.setFieldValue(entity, fieldName, target);
 			}
 			return entity;
 		} catch (ApiException e) {

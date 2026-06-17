@@ -131,6 +131,57 @@ class CreateOneIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Test
+    @DisplayName("a super tenant WITHOUT a target tenant stamps its own home tenant, not null")
+    void superTenantWithoutTargetStampsHomeTenant() throws ApiException {
+        User user = new User();
+        user.setName("Grace");
+
+        // A super tenant with no requested target: requestedTenantId is null (the read-side
+        // "all tenants" bypass signal). The created entity must NOT inherit that null — it
+        // belongs to the super tenant's home tenant.
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, createOp);
+        request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");
+        // REQUESTED_TENANT_ID intentionally NOT set → null (an unscoped super tenant).
+        request.arg(IOperationRequest.SUPER_TENANT, true);
+        request.arg(IOperationRequest.SUPER_OWNER, true);
+        request.arg("entity", user);
+
+        WorkflowResult result = executeScript(userCtx, request);
+
+        assertTrue(result.isSuccess(), () -> "failed with code " + result.code());
+        User output = (User) result.output();
+        assertEquals("SUPER_TENANT", output.getTenantId(),
+                "the stored entity must carry the super tenant's home tenantId, never null");
+    }
+
+    @Test
+    @DisplayName("a super tenant TARGETING another tenant stamps that target tenant")
+    void superTenantTargetingAnotherTenantStampsTarget() throws ApiException {
+        User user = new User();
+        user.setName("Heidi");
+
+        // A super tenant may create into another tenant by requesting it; the entity then
+        // belongs to the requested target, not the super tenant's home.
+        OperationDefinition createOp = OperationDefinition.createOneWithStandardSecurity("users", IClass.getClass(User.class));
+        OperationRequest request = new OperationRequest(new HashMap<>());
+        request.arg(IOperationRequest.OPERATION, createOp);
+        request.arg(IOperationRequest.TENANT_ID, "SUPER_TENANT");
+        request.arg(IOperationRequest.REQUESTED_TENANT_ID, "TENANT_B");
+        request.arg(IOperationRequest.SUPER_TENANT, true);
+        request.arg(IOperationRequest.SUPER_OWNER, true);
+        request.arg("entity", user);
+
+        WorkflowResult result = executeScript(userCtx, request);
+
+        assertTrue(result.isSuccess(), () -> "failed with code " + result.code());
+        User output = (User) result.output();
+        assertEquals("TENANT_B", output.getTenantId(),
+                "a requested target tenant must win over the home tenant (cross-tenant create)");
+    }
+
+    @Test
     @DisplayName("createOne returns 400 when mandatory field is null")
     void createOneReturns400WhenMandatoryNull() throws ApiException {
         User user = new User();
