@@ -155,6 +155,25 @@ class GarganttuaApplicationE2ETest {
 					"dave must be filtered OUT by name:eq:carol; body=" + filtered.body());
 		}
 
+		@Test
+		@DisplayName("GET /widgets?filter=<json> also filters over HTTP (Mongo-like JSON shape)")
+		void filteredReadAllJsonOverHttp() throws Exception {
+			post("erin");
+			post("frank");
+
+			String json = java.net.URLEncoder.encode("{\"name\":\"erin\"}", java.nio.charset.StandardCharsets.UTF_8);
+			HttpResponse<String> filtered = http.send(HttpRequest.newBuilder()
+					.uri(URI.create(BASE + "?filter=" + json))
+					.header("Accept", "application/json")
+					.GET()
+					.build(), BodyHandlers.ofString());
+
+			assertEquals(200, filtered.statusCode(), "a JSON-filtered readAll must be 200; body=" + filtered.body());
+			assertTrue(filtered.body().contains("\"name\":\"erin\""), "erin must be returned; body=" + filtered.body());
+			assertFalse(filtered.body().contains("\"name\":\"frank\""),
+					"frank must be filtered OUT by the JSON filter; body=" + filtered.body());
+		}
+
 		private void post(String name) throws Exception {
 			http.send(HttpRequest.newBuilder()
 					.uri(URI.create(BASE))

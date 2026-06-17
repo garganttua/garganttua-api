@@ -2,6 +2,7 @@ package com.garganttua.api.core.unit.expression;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -517,6 +518,71 @@ class ProtocolExpressionsTest {
 		void noFilter() {
 			assertNull(filterOf("   "), "a blank filter sets nothing");
 			assertNull(filterOf("name:bogus:x"), "an unknown operator is skipped → no filter");
+		}
+
+		// ----- JSON (Mongo-like) syntax -----
+
+		@Test
+		@DisplayName("JSON filter={\"name\":\"Alice\"} → $field(name) → $eq(Alice)")
+		void jsonScalarEq() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("{\"name\":\"Alice\"}");
+			assertEquals("$field", f.getName());
+			assertEquals("name", f.getValue());
+			assertEquals("$eq", f.getFilters().get(0).getName());
+			assertEquals("Alice", f.getFilters().get(0).getValue());
+		}
+
+		@Test
+		@DisplayName("JSON {\"age\":{\"$gte\":18,\"$lt\":65}} → $and(gte,lt); JSON numbers keep their type (Long)")
+		void jsonOperatorObject() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("{\"age\":{\"$gte\":18,\"$lt\":65}}");
+			assertEquals("$and", f.getName(), "two operators on one field are AND-combined");
+			assertEquals(2, f.getFilters().size());
+			com.garganttua.api.commons.filter.IFilter gte = f.getFilters().get(0).getFilters().get(0);
+			assertEquals("$gte", gte.getName());
+			assertEquals(18L, gte.getValue(), "a JSON integer is a Long, not a String");
+		}
+
+		@Test
+		@DisplayName("JSON {\"$or\":[{\"a\":1},{\"b\":2}]} → $or with two sub-filters")
+		void jsonOr() {
+			com.garganttua.api.commons.filter.IFilter f = filterOf("{\"$or\":[{\"a\":1},{\"b\":2}]}");
+			assertEquals("$or", f.getName());
+			assertEquals(2, f.getFilters().size());
+			assertEquals("a", f.getFilters().get(0).getValue());
+			assertEquals("b", f.getFilters().get(1).getValue());
+		}
+
+		@Test
+		@DisplayName("JSON {\"role\":[\"admin\",\"user\"]} → $in shorthand; JSON {\"x\":true} → Boolean")
+		void jsonArrayShorthandAndBoolean() {
+			com.garganttua.api.commons.filter.IFilter in = filterOf("{\"role\":[\"admin\",\"user\"]}");
+			assertEquals("$in", in.getFilters().get(0).getName());
+			assertEquals(2, in.getFilters().get(0).getFilters().size());
+
+			com.garganttua.api.commons.filter.IFilter b = filterOf("{\"enabled\":true}");
+			assertEquals(Boolean.TRUE, b.getFilters().get(0).getValue());
+		}
+
+		@Test
+		@DisplayName("JSON geospatial {\"location\":{\"$geoWithin\":{Polygon}}} → $geoWithin carrying a parsed GeoJSON geometry")
+		void jsonGeoWithin() {
+			String poly = "{\"location\":{\"$geoWithin\":{\"type\":\"Polygon\",\"coordinates\":"
+					+ "[[[0,0],[0,4],[4,4],[4,0],[0,0]]]}}}";
+			com.garganttua.api.commons.filter.IFilter f = filterOf(poly);
+			assertEquals("$field", f.getName());
+			assertEquals("location", f.getValue());
+			com.garganttua.api.commons.filter.IFilter geo = f.getFilters().get(0);
+			assertEquals("$geoWithin", geo.getName());
+			assertInstanceOf(org.geojson.Polygon.class, geo.getValue(),
+					"the geometry must be parsed into an org.geojson geometry, not left as raw JSON");
+		}
+
+		@Test
+		@DisplayName("malformed JSON filter raises a parlant ApiException")
+		void jsonMalformedThrows() {
+			ApiException ex = assertThrows(ApiException.class, () -> filterOf("{not valid json"));
+			assertTrue(ex.getMessage().contains("Invalid JSON filter"), "got: " + ex.getMessage());
 		}
 	}
 }
