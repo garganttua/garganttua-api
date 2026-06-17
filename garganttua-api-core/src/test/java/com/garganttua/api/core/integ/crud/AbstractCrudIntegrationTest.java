@@ -325,6 +325,24 @@ public abstract class AbstractCrudIntegrationTest {
                     }
                     return result;
                 }
+                if ("$ne".equals(operator.getName())) {
+                    // Keep rows whose field differs from the value — models the unicity self-exclusion
+                    // ($ne uuid) so an UPDATE does not see the row it is updating as a duplicate.
+                    Object expected = operator.getValue();
+                    List<Object> result = new ArrayList<>();
+                    for (Object obj : list) {
+                        try {
+                            java.lang.reflect.Field field = readField(obj, fieldName);
+                            Object actual = field.get(obj);
+                            if (expected == null ? actual != null : !expected.equals(actual)) {
+                                result.add(obj);
+                            }
+                        } catch (Exception e) {
+                            result.add(obj); // field unreadable → not equal → keep
+                        }
+                    }
+                    return result;
+                }
                 if ("$gt".equals(operator.getName())) {
                     Object threshold = operator.getValue();
                     if (threshold == null) return list;

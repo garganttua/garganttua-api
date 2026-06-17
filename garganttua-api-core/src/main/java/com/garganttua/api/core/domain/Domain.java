@@ -6,7 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
+import org.javatuples.Pair;
+
+import com.garganttua.api.commons.entity.annotations.UnicityScope;
+import com.garganttua.api.core.filter.Filter;
+import com.garganttua.core.reflection.ObjectAddress;
 import com.garganttua.api.core.service.OperationRequest;
 import com.garganttua.api.core.service.OperationResponse;
 import com.garganttua.api.core.service.RequestBuilder;
@@ -367,12 +373,16 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
      * pipeline</strong> — so it gets {@code ensureUuid}, validation and lifecycle
      * hooks, and a declared entity needs no hand-written uuid.
      *
-     * <p>Upsert semantics = "replace when it already exists": when the declared
-     * entity carries a uuid that is already present, the existing row is first
-     * removed through DELETE_ONE, then the declared value is created through
-     * CREATE_ONE. We do not rely on the DAO implementing native upsert because
-     * {@link com.garganttua.api.commons.dao.IDao} makes no such guarantee. A
-     * declared entity with no uuid simply gets created (a fresh uuid is generated).
+     * <p>Upsert semantics = "update in place when it already exists, else create".
+     * The existing row is matched by uuid, else by one of the entity's unicity
+     * constraints; when found, the declared values are merged onto it through
+     * UPDATE_ONE — <strong>never delete-then-create</strong>. A destructive
+     * delete+create would drop the row's identity ({@code _id}, referenced by
+     * DBRefs) and any data the declaration does not carry (e.g. UI curation), and
+     * would trip the entity's own unicity on the re-create. The in-place update
+     * keeps the identity, merges only the declared (updatable) fields, and the
+     * unicity check self-excludes the row being updated. A declared entity that
+     * matches nothing is simply created (a fresh uuid is generated when absent).
      */
     private void upsertStartupEntities() {
         List<E> upsertEntities = this.domainDefinition.upsertEntities();
@@ -385,17 +395,24 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                 upsertEntities.size(), this.domainDefinition.domainName());
         for (E entity : upsertEntities) {
             try {
-                Object uuidValue = reflection.getFieldValue(entity, uuidFieldPath);
-                String uuid = uuidValue != null ? uuidValue.toString() : null;
-                if (uuid != null && this.repository.doesExist(uuid)) {
-                    OperationResponse deleted = bootstrapDelete(entity, uuid);
-                    if (!isPipelineSuccess(deleted)) {
-                        throw bootstrapFailure("delete (upsert replace)", deleted);
+                // Match the existing row by uuid, else by a unicity constraint.
+                String uuid = resolveUpsertTargetUuid(entity);
+                OperationResponse result;
+                if (uuid != null) {
+                    // Update the existing row IN PLACE — pin its identity onto the declared entity so
+                    // the merge cannot move the row, then merge the declared (updatable) fields. No
+                    // delete: the row keeps its _id/relations and any non-declared data, and the
+                    // unicity check self-excludes it (UPDATE_ONE adds $ne uuid).
+                    reflection.setFieldValue(entity, uuidFieldPath, uuid);
+                    result = bootstrapUpdate(entity, uuid);
+                    if (!isPipelineSuccess(result)) {
+                        throw bootstrapFailure("update (upsert)", result);
                     }
-                }
-                OperationResponse created = bootstrapCreate(entity);
-                if (!isPipelineSuccess(created)) {
-                    throw bootstrapFailure("create (upsert)", created);
+                } else {
+                    result = bootstrapCreate(entity);
+                    if (!isPipelineSuccess(result)) {
+                        throw bootstrapFailure("create (upsert)", result);
+                    }
                 }
                 log.info("Startup entity upserted for domain {}", this.domainDefinition.domainName());
             } catch (ApiException e) {
@@ -405,6 +422,53 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
                         + this.domainDefinition.domainName(), e);
             }
         }
+    }
+
+    /**
+     * The uuid of the existing row an upsert must update in place: the declared uuid when it is
+     * already present, else the uuid of a row matching one of the entity's unicity constraints. The
+     * latter keeps upsert idempotent for entities keyed on a unique business field (not a stable
+     * uuid) — without it, a re-declared datum whose uuid is absent or changed would be created afresh
+     * and trip its own unicity constraint (CONFLICT). Returns {@code null} when nothing matches (a
+     * genuine fresh create). Mirrors {@code validateUnicity}'s per-field, tenant-scoped lookup.
+     */
+    private String resolveUpsertTargetUuid(E entity) {
+        IReflection reflection = reflection();
+        var entityDef = this.domainDefinition.entityDefinition();
+        String uuidPath = entityDef.uuid().toString();
+
+        Object declaredUuid = reflection.getFieldValue(entity, uuidPath);
+        if (declaredUuid != null && this.repository.doesExist(declaredUuid.toString())) {
+            return declaredUuid.toString();
+        }
+
+        List<Pair<ObjectAddress, UnicityScope>> unicities = entityDef.unicities();
+        if (unicities == null || unicities.isEmpty()) {
+            return null;
+        }
+        ObjectAddress tenantIdAddress = entityDef.tenantId();
+        for (Pair<ObjectAddress, UnicityScope> unicity : unicities) {
+            ObjectAddress fieldAddress = unicity.getValue0();
+            Object value = reflection.getFieldValue(entity, fieldAddress.toString());
+            if (value == null) {
+                continue;
+            }
+            Filter filter = Filter.eq(fieldAddress.toString(), value);
+            if (unicity.getValue1() == UnicityScope.tenant && tenantIdAddress != null) {
+                Object tenantId = reflection.getFieldValue(entity, tenantIdAddress.toString());
+                if (tenantId != null) {
+                    filter = Filter.and(filter, Filter.eq(tenantIdAddress.toString(), tenantId));
+                }
+            }
+            List<Object> matches = this.repository.getEntities(Optional.empty(), Optional.of(filter), Optional.empty());
+            if (!matches.isEmpty()) {
+                Object existingUuid = reflection.getFieldValue(matches.get(0), uuidPath);
+                if (existingUuid != null) {
+                    return existingUuid.toString();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -419,11 +483,19 @@ public class Domain<E> extends AbstractLifecycle implements IDomain<E> {
         return bootstrapInvoke(op, bootstrapCaller(entity), req -> req.arg("entity", entity));
     }
 
-    /** Dispatches a bootstrap DELETE-by-uuid through the pipeline (used by upsert replace). */
-    private OperationResponse bootstrapDelete(E entity, String uuid) {
-        OperationDefinition op = OperationDefinition.deleteOne(
+    /**
+     * Dispatches a bootstrap UPDATE-by-uuid through the pipeline (used by upsert to refresh an
+     * existing row in place). The declared entity is the merge body; UPDATE_ONE fetches the row at
+     * {@code uuid}, merges its updatable fields, validates (self-excluding the row on unicity) and
+     * persists — no delete, so the row's identity and any non-declared data survive.
+     */
+    private OperationResponse bootstrapUpdate(E entity, String uuid) {
+        OperationDefinition op = OperationDefinition.updateOne(
                 this.domainDefinition.domainName(), getEntityClass(), false, null, Access.anonymous);
-        return bootstrapInvoke(op, bootstrapCaller(entity), req -> req.arg(IOperationRequest.ENTITY_UUID, uuid));
+        return bootstrapInvoke(op, bootstrapCaller(entity), req -> {
+            req.arg("entity", entity);
+            req.arg(IOperationRequest.ENTITY_UUID, uuid);
+        });
     }
 
     /**

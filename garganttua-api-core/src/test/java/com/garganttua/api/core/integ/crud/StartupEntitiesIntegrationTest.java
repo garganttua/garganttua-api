@@ -40,6 +40,29 @@ class StartupEntitiesIntegrationTest extends AbstractCrudScriptTest {
         void apply(IDomainBuilder<User> domain) throws ApiException;
     }
 
+    /** CapturingDao whose save() REPLACES any row with the same uuid — mirrors MongoDB replaceOne by _id (a real upsert), so an in-place update leaves one row, not a duplicate. */
+    static class UpsertingDao extends CapturingDao {
+        @Override
+        public Object save(Object object) throws ApiException {
+            String uuid = uuidOf(object);
+            if (uuid != null) {
+                getStorage().removeIf(row -> uuid.equals(uuidOf(row)));
+            }
+            return super.save(object);
+        }
+
+        private static String uuidOf(Object o) {
+            try {
+                java.lang.reflect.Field f = o.getClass().getDeclaredField("uuid");
+                f.setAccessible(true);
+                Object v = f.get(o);
+                return v != null ? v.toString() : null;
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private IApi buildTenantApi(CapturingDao dao, EntityCfg entityCfg, DomainCfg domainCfg) throws ApiException {
         IApiBuilder builder = newBuilder();
@@ -138,25 +161,92 @@ class StartupEntitiesIntegrationTest extends AbstractCrudScriptTest {
     }
 
     @Test
-    @DisplayName("upsert(...) of an already-present uuid replaces the existing row through the pipeline")
-    void upsertStartupEntityReplacesExistingRow() throws ApiException {
-        CapturingDao dao = new CapturingDao();
+    @DisplayName("upsert(...) UPDATES the existing row in place — non-declared/non-updatable data survives (no delete-then-create)")
+    void upsertUpdatesInPlacePreservingData() throws ApiException {
+        UpsertingDao dao = new UpsertingDao();
 
-        // Pre-seed a persisted row at the declared uuid (the "previous run" state).
+        // Previous-run row carrying data the new declaration does NOT touch (email is not declared
+        // updatable below — it stands for UI curation a delete-then-create would wipe).
         UserDto existing = new UserDto();
         existing.setUuid("FIXED-X");
         existing.setName("old-name");
+        existing.setEmail("curated@example.com");
         existing.setTenantId("SUPER_TENANT");
         dao.getStorage().add(existing);
 
-        User declared = user("FIXED-X", "new-name");
+        User declared = user("FIXED-X", "new-name"); // email left unset
 
-        buildTenantApi(dao, e -> {}, d -> d.upsert(declared));
+        // Only "name" is updatable.
+        buildTenantApi(dao, e -> e.update("name"), d -> d.upsert(declared));
 
         List<UserDto> rows = rows(dao);
-        assertEquals(1, rows.size(), "replace must leave exactly one row at the declared uuid");
-        assertEquals("FIXED-X", rows.get(0).getUuid());
-        assertEquals("new-name", rows.get(0).getName(),
-                "the row must now hold the declared (upserted) value, not the stale one");
+        assertEquals(1, rows.size(), "an in-place update must not duplicate the row");
+        assertEquals("FIXED-X", rows.get(0).getUuid(), "the row keeps its identity (no delete-then-create)");
+        assertEquals("new-name", rows.get(0).getName(), "the declared updatable field is refreshed");
+        assertEquals("curated@example.com", rows.get(0).getEmail(),
+                "a field the upsert did not declare updatable must SURVIVE — proving update-in-place, not delete+create");
+    }
+
+    @Test
+    @DisplayName("upsert(...) matched by a unicity key updates that row in place (was: 409 on the unicity)")
+    void upsertMatchedByUnicityUpdatesInPlace() throws ApiException {
+        UpsertingDao dao = new UpsertingDao();
+
+        // Existing row keyed by a unique email, under a uuid the new declaration does not carry.
+        UserDto existing = new UserDto();
+        existing.setUuid("OLD-UUID");
+        existing.setName("old-name");
+        existing.setEmail("ref@example.com");
+        existing.setTenantId("SUPER_TENANT");
+        dao.getStorage().add(existing);
+
+        // Re-declared keyed by the unique email, no (matching) uuid.
+        User declared = user(null, "new-name");
+        declared.setEmail("ref@example.com");
+
+        assertDoesNotThrow(() ->
+                buildTenantApi(dao, e -> {
+                    e.unicity("email", com.garganttua.api.commons.entity.annotations.UnicityScope.system);
+                    e.update("name");
+                }, d -> d.upsert(declared)),
+                "an upsert matched by a unique field must update that row, not 409 against it");
+
+        List<UserDto> rows = rows(dao);
+        assertEquals(1, rows.size(), "the reference datum stays a single row");
+        assertEquals("OLD-UUID", rows.get(0).getUuid(), "the existing row's identity is preserved");
+        assertEquals("new-name", rows.get(0).getName(), "the declared value is merged");
+        assertEquals("ref@example.com", rows.get(0).getEmail());
+    }
+
+    @Test
+    @DisplayName("upsert(...) with a stable uuid AND system-scoped unicity updates cleanly (the palliad admin shape)")
+    void upsertStableUuidSystemUnicity() throws ApiException {
+        UpsertingDao dao = new UpsertingDao();
+
+        // The "admin": a stable uuid, a system-unique id and email (here all = the login value).
+        UserDto existing = new UserDto();
+        existing.setUuid("ADMIN-UUID");
+        existing.setId("admin@palliad.care");
+        existing.setName("old-name");
+        existing.setEmail("admin@palliad.care");
+        existing.setTenantId("SUPER_TENANT");
+        dao.getStorage().add(existing);
+
+        User declared = user("ADMIN-UUID", "new-name");
+        declared.setId("admin@palliad.care");
+        declared.setEmail("admin@palliad.care");
+
+        assertDoesNotThrow(() ->
+                buildTenantApi(dao, e -> {
+                    e.unicity("id", com.garganttua.api.commons.entity.annotations.UnicityScope.system);
+                    e.unicity("email", com.garganttua.api.commons.entity.annotations.UnicityScope.system);
+                    e.update("name");
+                }, d -> d.upsert(declared)),
+                "re-upserting the admin must refresh it in place, not 409 on its own id/email unicity");
+
+        List<UserDto> rows = rows(dao);
+        assertEquals(1, rows.size());
+        assertEquals("ADMIN-UUID", rows.get(0).getUuid());
+        assertEquals("new-name", rows.get(0).getName());
     }
 }
