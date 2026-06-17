@@ -2,6 +2,7 @@ package com.garganttua.api.core.expression;
 import com.garganttua.core.reflection.annotations.Reflected;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,7 +15,11 @@ import com.garganttua.api.core.entity.EntityDefinition;
 import com.garganttua.api.core.filter.Filter;
 import com.garganttua.api.commons.ApiException;
 import com.garganttua.api.commons.caller.ICaller;
+import com.garganttua.api.commons.context.IApi;
 import com.garganttua.api.commons.context.IDomain;
+import com.garganttua.core.reflection.binders.IContextualMethodBinder;
+import com.garganttua.core.runtime.IRuntimeContext;
+import com.garganttua.core.runtime.RuntimeExpressionContext;
 import com.garganttua.api.commons.definition.IEntityDefinition;
 import com.garganttua.api.commons.entity.annotations.UnicityScope;
 import com.garganttua.api.commons.filter.IFilter;
@@ -72,14 +77,19 @@ public class EntityLifecycleExpressions {
 			EntityDefinition<?> entityDef = (EntityDefinition<?>) dc.getEntityDefinition();
 			List<IMethodBinder<Void>> afterGetBinders = entityDef.afterGetMethodBuilders();
 
-			if (afterGetBinders == null || afterGetBinders.isEmpty()) return entityList;
-
-			for (IMethodBinder<Void> binder : afterGetBinders) {
-				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
-				for (Object entity : entityList) {
-					REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
+			if (afterGetBinders != null) {
+				for (IMethodBinder<Void> binder : afterGetBinders) {
+					ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
+					for (Object entity : entityList) {
+						REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
+					}
 				}
 			}
+			// Free afterGet hooks (bound to an exact, possibly external method) — executed with the
+			// current entity + injected context.
+			runFreeHooks(entityDef, "afterGet", entityList, dc, opRequest);
+		} catch (ApiException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new ApiException("Failed to execute afterGet lifecycle hooks", e);
 		}
@@ -335,15 +345,78 @@ public class EntityLifecycleExpressions {
 			IEntityDefinition<?> entityDef = dc.getEntityDefinition();
 			List<IMethodBinder<Void>> binders = bindersExtractor.apply(entityDef);
 
-			if (binders == null || binders.isEmpty()) return entity;
-
-			for (IMethodBinder<Void> binder : binders) {
-				ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
-				REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
+			if (binders != null) {
+				for (IMethodBinder<Void> binder : binders) {
+					ObjectAddress methodRef = new ObjectAddress(binder.getExecutableReference());
+					REFLECTION.invokeDeep(entity, methodRef, IClass.getClass(Void.class));
+				}
 			}
+			// Free hooks (bound to an exact, possibly external method) — executed with the current
+			// entity + injected context. A thrown ApiException (validation) propagates as-is.
+			runFreeHooks(entityDef, hookName, entity != null ? List.of(entity) : List.of(), dc, opRequest);
 			return entity;
+		} catch (ApiException e) {
+			throw e;
 		} catch (Exception e) {
 			throw new ApiException("Failed to execute " + hookName + " lifecycle hooks", e);
+		}
+	}
+
+	/**
+	 * Executes the domain's free lifecycle-hook binders for {@code hookName}: each bound method
+	 * (possibly external/static) receives the current entity + injected framework context. Mirrors
+	 * {@code applySecurityOnEntity} — seeds the runtime variables, then runs the contextual binder.
+	 */
+	@SuppressWarnings("unchecked")
+	private static void runFreeHooks(IEntityDefinition<?> entityDef, String hookName, List<Object> entities,
+			IDomain<?> dc, IOperationRequest opRequest) {
+		if (!(entityDef instanceof EntityDefinition<?> ed)) {
+			return;
+		}
+		Map<String, List<IMethodBinder<?>>> freeBinders = ed.freeHookBinders();
+		if (freeBinders == null) {
+			return;
+		}
+		List<IMethodBinder<?>> binders = freeBinders.get(hookName);
+		if (binders == null || binders.isEmpty()) {
+			return;
+		}
+		IApi api = (dc != null) ? dc.getApiContext() : null;
+		for (Object entity : entities) {
+			for (IMethodBinder<?> binder : binders) {
+				IRuntimeContext<?, ?> runtimeCtx = RuntimeExpressionContext.get();
+				if (runtimeCtx != null) {
+					runtimeCtx.setVariable("entity", entity);
+					if (dc != null) {
+						runtimeCtx.setVariable("domainContext", dc);
+					}
+					if (opRequest != null) {
+						runtimeCtx.setVariable("request", opRequest);
+					}
+					if (api != null) {
+						runtimeCtx.setVariable("apiContext", api);
+					}
+				}
+				Optional<? extends com.garganttua.core.reflection.IMethodReturn<?>> result;
+				if (binder instanceof IContextualMethodBinder<?, ?> contextualBinder) {
+					result = ((IContextualMethodBinder<?, Object>) contextualBinder).execute(runtimeCtx);
+				} else {
+					result = binder.execute();
+				}
+				// Surface any exception the hook threw (e.g. a validation rejection): the binder CAPTURES
+				// it in the result (invokeMethodSafely) rather than throwing it from execute(). The return
+				// value itself is ignored (lifecycle hooks are void).
+				if (result.isPresent() && result.get().hasException()) {
+					Throwable hookError = result.get().getException();
+					if (hookError instanceof RuntimeException re) {
+						throw re; // ApiException et al. propagate as-is (parlant message kept)
+					}
+					if (hookError instanceof Error err) {
+						throw err;
+					}
+					throw new ApiException("Hook '" + hookName + "' threw: " + hookError.getMessage(), hookError);
+				}
+			}
 		}
 	}
 }

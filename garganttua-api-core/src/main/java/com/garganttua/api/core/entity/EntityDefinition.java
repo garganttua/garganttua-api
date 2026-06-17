@@ -2,6 +2,7 @@ package com.garganttua.api.core.entity;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Map;
 
 import org.javatuples.Pair;
 
@@ -31,6 +32,14 @@ public record EntityDefinition<E>(
     List<IMethodBinder<Void>>  beforeDeleteMethodBuilders,
     List<IMethodBinder<Void>>  afterDeleteMethodBuilders,
     boolean overwriteUuid,
-    IUuidGenerator uuidGenerator) implements IEntityDefinition<E> {
+    IUuidGenerator uuidGenerator,
+    /**
+     * Free lifecycle-hook binders keyed by hook name ("beforeCreate" / "afterGet" / …). Unlike the
+     * {@code *MethodBuilders} above (instance methods invoked ON the entity via invokeDeep), these are
+     * fully-wired binders bound to an EXACT method (possibly on an external class, static or instance),
+     * fed the current entity + injected framework context, and EXECUTED. Declared via the
+     * {@code entity().beforeCreate(IMethod)} overloads.
+     */
+    Map<String, List<IMethodBinder<?>>> freeHookBinders) implements IEntityDefinition<E> {
 
 }

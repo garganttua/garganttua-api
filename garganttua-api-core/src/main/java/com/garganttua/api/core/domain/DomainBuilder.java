@@ -683,6 +683,13 @@ public class DomainBuilder<E>
             }
         }
 
+        // Build the @Resolver registry once (shared by entity free-hooks and the use cases below) and
+        // hand it to the entity builder so its free lifecycle-hook parameters auto-wire at build.
+        IInjectableElementResolver resolverRegistry = buildUseCaseResolverRegistry();
+        if (this.entityBuilder instanceof com.garganttua.api.core.entity.EntityBuilder<E> eb) {
+            eb.setResolverRegistry(resolverRegistry);
+        }
+
         // Build entity context and extract definition
         IEntityContext<E> entityContext = this.entityBuilder.build();
         EntityDefinition<E> entityDefinition = null;
@@ -714,10 +721,9 @@ public class DomainBuilder<E>
 
         // Build the full use case definitions: each carries its name, route path, in/out types and
         // the built method binder, plus verb (default read) / scope (default allEntities) / security.
-        // The resolver registry that auto-wires each bound method's annotated parameters is built once
-        // (only when there are use cases to wire), then reused across them.
-        IInjectableElementResolver useCaseResolvers =
-                this.useCases.isEmpty() ? null : buildUseCaseResolverRegistry();
+        // The resolver registry that auto-wires each bound method's annotated parameters is the same
+        // one built above for the entity free-hooks — reused here across the use cases.
+        IInjectableElementResolver useCaseResolvers = resolverRegistry;
         Map<String, IUseCaseDefinition> useCaseDefinitions = new HashMap<>();
         for (Map.Entry<String, IUseCaseBuilder<?, ?, E>> entry : this.useCases.entrySet()) {
             UseCaseBuilder<?, ?, E> ucb = (UseCaseBuilder<?, ?, E>) entry.getValue();

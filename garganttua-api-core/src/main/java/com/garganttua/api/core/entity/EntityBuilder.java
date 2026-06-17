@@ -71,6 +71,21 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     private List<Pair<String, EntityMethodBinderBuilder<E>>> beforeDeleteMethodBuilders = new ArrayList<>();
     private List<Pair<String, EntityMethodBinderBuilder<E>>> afterDeleteMethodBuilders = new ArrayList<>();
 
+    /** Free hooks (bound to the EXACT IMethod, possibly external) keyed by hook name. */
+    private final java.util.Map<String, List<EntityMethodBinderBuilder<E>>> freeHookBuilders = new java.util.HashMap<>();
+
+    /**
+     * Resolver registry to auto-wire free-hook method parameters (injected framework context like
+     * {@code @DomainContext}/{@code @ApiContext}). Set by {@code DomainBuilder} before {@code build()};
+     * null when no injection context is available (the entity-typed parameter is still wired).
+     */
+    private com.garganttua.core.injection.IInjectableElementResolver resolverRegistry;
+
+    /** Provided by {@code DomainBuilder.doBuild} so free-hook parameters can be auto-wired at build. */
+    public void setResolverRegistry(com.garganttua.core.injection.IInjectableElementResolver resolverRegistry) {
+        this.resolverRegistry = resolverRegistry;
+    }
+
     public EntityBuilder(IClass<?> entityClass, IDomainBuilder<E> domainBuilder) throws ApiException {
         super(domainBuilder);
         this.entityClass = Objects.requireNonNull(entityClass, "Entity class cannot be null");
@@ -458,7 +473,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> afterGet(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.afterGetMethodBuilders, true);
+        return this.bindFreeHook(method, "afterGet");
     }
 
     @Override
@@ -477,7 +492,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> beforeCreate(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.beforeCreateMethodBuilders);
+        return this.bindFreeHook(method, "beforeCreate");
     }
 
     @Override
@@ -496,7 +511,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> beforeUpdate(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.beforeUpdateMethodBuilders);
+        return this.bindFreeHook(method, "beforeUpdate");
     }
 
     @Override
@@ -515,7 +530,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> beforeDelete(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.beforeDeleteMethodBuilders);
+        return this.bindFreeHook(method, "beforeDelete");
     }
 
     @Override
@@ -534,7 +549,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> afterCreate(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.afterCreateMethodBuilders);
+        return this.bindFreeHook(method, "afterCreate");
     }
 
     @Override
@@ -553,7 +568,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> afterUpdate(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.afterUpdateMethodBuilders);
+        return this.bindFreeHook(method, "afterUpdate");
     }
 
     @Override
@@ -572,7 +587,7 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
     @Override
     public IEntityMethodBinderBuilder<E> afterDelete(IMethod method)
             throws ApiException {
-        return this.createEntityMethodBuilder(method.getName(), this.afterDeleteMethodBuilders);
+        return this.bindFreeHook(method, "afterDelete");
     }
 
     @Override
@@ -589,6 +604,86 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
             binders.add(pair.getValue1().build());
         }
         return binders;
+    }
+
+    /**
+     * Binds a lifecycle hook to the EXACT {@link IMethod} provided — honouring its declaring class
+     * (which may be external), its static/instance nature and its signature — rather than re-resolving
+     * a no-arg method by name on the entity. The bound method is fed the current entity (its entity-typed
+     * parameter) and injected framework context (other parameters) at {@link #buildFreeBinders()}, and is
+     * executed by the lifecycle expressions. Mirrors the use case's {@code bind(...).method(...)}.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private IEntityMethodBinderBuilder<E> bindFreeHook(IMethod method, String hookName) throws ApiException {
+        Objects.requireNonNull(method, "Method cannot be null");
+        IClass<?> declaringClass = method.getDeclaringClass();
+        ISupplierBuilder<?, ? extends ISupplier<?>> target;
+        if (java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
+            // Static: the target instance is irrelevant — supply null typed to the declaring class.
+            target = FixedSupplierBuilder.ofNullable(null, (IClass<Object>) (IClass<?>) declaringClass);
+        } else {
+            // Instance: materialise one instance of the (external) hook class via its public no-arg ctor.
+            try {
+                Object instance = declaringClass.getConstructor().newInstance();
+                target = new FixedSupplierBuilder(instance, declaringClass);
+            } catch (Exception e) {
+                throw new ApiException("Failed to instantiate hook class '" + declaringClass.getName()
+                        + "' for " + hookName + "(IMethod) — it needs a public no-arg constructor, "
+                        + "or make the hook method static.", e);
+            }
+        }
+        EntityMethodBinderBuilder<E> builder = new EntityMethodBinderBuilder<>(this, target);
+        builder.method(method);
+        this.freeHookBuilders.computeIfAbsent(hookName, k -> new ArrayList<>()).add(builder);
+        return builder;
+    }
+
+    /**
+     * Builds the free-hook binders (keyed by hook name), auto-wiring each bound method's parameters:
+     * the parameter typed as the entity receives the current entity ({@link HookEntitySupplierBuilder}),
+     * the others are resolved via the {@code @Resolver} registry ({@code @DomainContext}/{@code @ApiContext}/…).
+     */
+    private java.util.Map<String, List<IMethodBinder<?>>> buildFreeBinders() throws ApiException {
+        java.util.Map<String, List<IMethodBinder<?>>> result = new java.util.HashMap<>();
+        for (java.util.Map.Entry<String, List<EntityMethodBinderBuilder<E>>> entry : this.freeHookBuilders.entrySet()) {
+            List<IMethodBinder<?>> binders = new ArrayList<>();
+            for (EntityMethodBinderBuilder<E> builder : entry.getValue()) {
+                autowireHookParameters(builder);
+                binders.add(builder.build());
+            }
+            result.put(entry.getKey(), binders);
+        }
+        return result;
+    }
+
+    private void autowireHookParameters(EntityMethodBinderBuilder<E> binder) throws ApiException {
+        IMethod method;
+        try {
+            method = binder.method();
+        } catch (com.garganttua.core.dsl.DslException e) {
+            return;
+        }
+        if (method == null) {
+            return;
+        }
+        com.garganttua.core.reflection.IParameter[] parameters = method.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            com.garganttua.core.reflection.IParameter parameter = parameters[i];
+            try {
+                if (parameter.getType() != null && this.entityClass.getName().equals(parameter.getType().getName())) {
+                    binder.withParam(i, new HookEntitySupplierBuilder(this.entityClass));
+                } else if (this.resolverRegistry != null) {
+                    com.garganttua.core.injection.Resolved resolved =
+                            this.resolverRegistry.resolve(parameter.getType(), parameter);
+                    if (resolved != null && resolved.resolved()) {
+                        binder.withParam(i, resolved.elementSupplier(), resolved.nullable());
+                    }
+                }
+            } catch (com.garganttua.core.injection.DiException | com.garganttua.core.dsl.DslException e) {
+                throw new ApiException("Failed to auto-wire parameter " + i + " of hook method '"
+                        + method.getName() + "': " + e.getMessage(), e);
+            }
+        }
     }
 
     @Override
@@ -616,7 +711,8 @@ public class EntityBuilder<E> extends AbstractAutomaticLinkedBuilder<IEntityBuil
                 this.buildMethodBinders(this.beforeDeleteMethodBuilders),
                 this.buildMethodBinders(this.afterDeleteMethodBuilders),
                 this.overwriteUuid,
-                this.uuidGenerator);
+                this.uuidGenerator,
+                this.buildFreeBinders());
 
         return new EntityContext<>(definition);
     }
