@@ -246,10 +246,18 @@ public class MongoDao implements IDao {
 	/**
 	 * Normalises a plain (non-composition) field value into a BSON-friendly form before storage.
 	 * An {@code enum} is written as its {@code name()} so the wire shape is codec-independent and
-	 * human-readable; the read side rebuilds it from the field's declared enum type. Everything else
-	 * (the temporal types, numbers, strings) is handed to the driver verbatim.
+	 * human-readable; the read side rebuilds it from the field's declared enum type. An {@code IKey}
+	 * is persisted as a self-describing sub-document. Collections, arrays and maps are converted
+	 * element-by-element; an <em>embedded</em> POJO (anything that is neither a native BSON scalar
+	 * nor a declared {@code @Composed} DBRef) becomes a sub-{@link Document} via {@link #pojoToDocument}.
+	 * The native scalars (temporal types, numbers, strings, {@code byte[]}) are handed to the driver
+	 * verbatim.
 	 */
-	private Object toStorable(Object value) {
+	private Object toStorable(Object value) throws ApiException {
+		return toStorable(value, new java.util.IdentityHashMap<>());
+	}
+
+	private Object toStorable(Object value, java.util.IdentityHashMap<Object, Boolean> visited) throws ApiException {
 		if (value instanceof Enum<?> e) {
 			return e.name();
 		}
@@ -257,7 +265,99 @@ public class MongoDao implements IDao {
 			// No BSON codec exists for IKey — persist it as a self-describing sub-document.
 			return IKeyBsonBridge.toDocument(key);
 		}
-		return value;
+		// Map/Collection are themselves in java.util.* — they must be recursed BEFORE the
+		// "native by package" test below, else they would be handed to the driver raw.
+		if (value instanceof Map<?, ?> map) {
+			Document sub = new Document();
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				sub.put(String.valueOf(entry.getKey()), toStorable(entry.getValue(), visited));
+			}
+			return sub;
+		}
+		if (value instanceof Collection<?> elements) {
+			List<Object> converted = new ArrayList<>(elements.size());
+			for (Object element : elements) {
+				converted.add(toStorable(element, visited));
+			}
+			return converted;
+		}
+		if (value.getClass().isArray() && !value.getClass().getComponentType().isPrimitive()) {
+			// Array of reference types (POJO[], String[]…). Primitive arrays (byte[], int[]) are
+			// left native below so binary/key material survives untouched.
+			int length = java.lang.reflect.Array.getLength(value);
+			List<Object> converted = new ArrayList<>(length);
+			for (int i = 0; i < length; i++) {
+				converted.add(toStorable(java.lang.reflect.Array.get(value, i), visited));
+			}
+			return converted;
+		}
+		if (isNativeBson(value)) {
+			return value;
+		}
+		// An embedded POJO: persist it as a sub-document (NOT a DBRef — compositions are handled
+		// earlier, by field name, in dtoToDocument).
+		return pojoToDocument(value, visited);
+	}
+
+	/**
+	 * A value the MongoDB driver can store as-is: a primitive wrapper / {@link String}, an array of
+	 * primitives ({@code byte[]}, {@code int[]}…), or any type from the {@code java.*}/{@code javax.*}/
+	 * {@code jdk.*}/{@code org.bson.*} packages (covers {@code java.util.Date}, {@code java.time.*},
+	 * {@code org.bson.types.*}). Everything else is treated as an embedded POJO to be recursed.
+	 */
+	private boolean isNativeBson(Object v) {
+		if (v instanceof String || v instanceof Number || v instanceof Boolean || v instanceof Character) {
+			return true;
+		}
+		Class<?> c = v.getClass();
+		if (c.isArray()) {
+			return c.getComponentType().isPrimitive();
+		}
+		String name = c.getName();
+		return name.startsWith("java.") || name.startsWith("javax.")
+				|| name.startsWith("jdk.") || name.startsWith("org.bson.");
+	}
+
+	/**
+	 * Converts an embedded POJO into a sub-{@link Document} — the same declared-field walk as
+	 * {@link #dtoToDocument} (up the superclass chain, skipping static/transient/null), but with NO
+	 * {@code _id} projection (only the root carries {@code _id}) and NO composition handling (an
+	 * embedded POJO is a pure value object). Cycles are refused with a parlant {@link ApiException}:
+	 * embedded sub-documents must form a tree; a back-reference belongs in a {@code @Composed} DBRef.
+	 */
+	private Document pojoToDocument(Object pojo, java.util.IdentityHashMap<Object, Boolean> visited)
+			throws ApiException {
+		if (visited.containsKey(pojo)) {
+			throw new ApiException("Cycle detected while embedding POJO of type " + pojo.getClass().getName()
+					+ " — embedded sub-documents must form a tree; use a DBRef composition for back-references");
+		}
+		visited.put(pojo, Boolean.TRUE);
+		try {
+			Map<String, Object> map = new LinkedHashMap<>();
+			IClass<?> clazz = IClass.getClass(pojo.getClass());
+			while (clazz != null) {
+				for (IField field : clazz.getDeclaredFields()) {
+					int mods = field.getModifiers();
+					if (Modifier.isStatic(mods) || Modifier.isTransient(mods)) {
+						continue;
+					}
+					field.setAccessible(true);
+					Object value = field.get(pojo);
+					if (value == null) {
+						continue;
+					}
+					map.put(field.getName(), toStorable(value, visited));
+				}
+				clazz = clazz.getSuperclass();
+			}
+			return new Document(map);
+		} catch (IllegalAccessException e) {
+			throw new ApiException("Failed to convert embedded POJO " + pojo.getClass().getName() + " to sub-document", e);
+		} finally {
+			// Pop: a shared instance reachable through two sibling branches of a DAG stays legal;
+			// only a true ancestor cycle (still on the stack) is refused above.
+			visited.remove(pojo);
+		}
 	}
 
 	/**
@@ -350,7 +450,7 @@ public class MongoDao implements IDao {
 			// A reference reaching a non-composition field means we are one level too deep
 			// (a composed DTO that itself composes): leave it null rather than mis-set it.
 			Class<?> target = rawType(field);
-			Object coerced = coerce(value, target);
+			Object coerced = mapValue(field.getGenericType(), value);
 			try {
 				field.set(instance, coerced);
 			} catch (IllegalArgumentException e) {
@@ -365,6 +465,73 @@ public class MongoDao implements IDao {
 	private Class<?> rawType(IField field) {
 		Type generic = field.getGenericType();
 		return generic instanceof Class<?> raw ? raw : null;
+	}
+
+	/**
+	 * Reconstructs a value decoded from BSON onto its declared (possibly generic) Java type — the
+	 * symmetric read of {@link #toStorable}. A sub-{@link Document} becomes either a {@link Map} (when
+	 * the field is a {@code Map<…>}) or an embedded POJO (via {@link #documentToDto}); a {@link List}
+	 * is rebuilt element-by-element on its declared element type (recovered from the field's
+	 * {@code ParameterizedType}); everything scalar falls through to {@link #coerce}. The recursion
+	 * carries the generic {@link Type} so nested {@code List<POJO>} / {@code Map<String,POJO>} recover
+	 * their concrete element types rather than staying raw {@code Document}s.
+	 */
+	private Object mapValue(Type type, Object value) throws ApiException {
+		if (value == null) {
+			return null;
+		}
+		// A persisted IKey sub-document is reconstructed regardless of the (interface) target type —
+		// same priority as in coerce().
+		if (IKeyBsonBridge.isKeyDocument(value)) {
+			return IKeyBsonBridge.fromDocument((Document) value);
+		}
+		Class<?> raw = rawClass(type);
+		if (value instanceof Document doc) {
+			if (raw != null && Map.class.isAssignableFrom(raw)) {
+				Type valueType = typeArgument(type, 1);
+				Map<String, Object> result = new LinkedHashMap<>();
+				for (Map.Entry<String, Object> entry : doc.entrySet()) {
+					result.put(entry.getKey(), mapValue(valueType, entry.getValue()));
+				}
+				return result;
+			}
+			if (raw != null) {
+				// An embedded POJO sub-document → a concrete instance of the declared field type.
+				return documentToDto(doc, IClass.getClass(raw), Map.of());
+			}
+			return value;
+		}
+		if (value instanceof List<?> list) {
+			Type elementType = typeArgument(type, 0);
+			List<Object> result = new ArrayList<>(list.size());
+			for (Object element : list) {
+				result.add(mapValue(elementType, element));
+			}
+			return result;
+		}
+		return coerce(value, raw);
+	}
+
+	/** The raw {@link Class} behind a possibly-parameterized {@link Type} ({@code List<X>} → {@code List}), or {@code null}. */
+	private Class<?> rawClass(Type type) {
+		if (type instanceof Class<?> c) {
+			return c;
+		}
+		if (type instanceof ParameterizedType parameterized && parameterized.getRawType() instanceof Class<?> c) {
+			return c;
+		}
+		return null;
+	}
+
+	/** The {@code index}-th type argument of a {@link ParameterizedType} ({@code List<X>}→X, {@code Map<K,V>}→K/V), or {@code Object} if unavailable. */
+	private Type typeArgument(Type type, int index) {
+		if (type instanceof ParameterizedType parameterized) {
+			Type[] args = parameterized.getActualTypeArguments();
+			if (index < args.length) {
+				return args[index];
+			}
+		}
+		return Object.class;
 	}
 
 	private String describeType(Object value) {
