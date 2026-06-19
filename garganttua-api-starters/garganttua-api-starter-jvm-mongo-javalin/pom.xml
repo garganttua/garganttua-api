@@ -15,7 +15,9 @@
 	  jvm-mongo-javalin — the recommended "web app" stack. Aggregator that
 	  composes:
 
-	    * garganttua-api-starter-bootstrap — runner + runtime reflection
+	    * garganttua-api-starter-bootstrap — runner (reflection-provider-agnostic)
+	    * garganttua-starter-runtime       — runtime reflection stack
+	                                         (runtime-reflection + reflections)
 	    * garganttua-api-starter-mongodb   — MongoDB default DAO auto-config
 	    * garganttua-api-starter-javalin   — Javalin transport auto-config + JSON
 
@@ -28,6 +30,15 @@
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-starter-bootstrap</artifactId>
+		</dependency>
+
+		<!-- Runtime reflection stack (JDK reflection + org.reflections scanner).
+		     The bootstrap socle is provider-agnostic, so the JVM aggregator is
+		     where the runtime providers enter the classpath. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-starter-runtime</artifactId>
+			<type>pom</type>
 		</dependency>
 		<dependency>
 			<groupId>com.garganttua</groupId>

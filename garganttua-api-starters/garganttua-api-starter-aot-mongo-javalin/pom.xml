@@ -13,20 +13,26 @@
 		providers ahead of the runtime ones (GraalVM-ready).</description>
 
 	<!--
-	  aot-mongo-javalin — identical stack to jvm-mongo-javalin, but adds the AOT
-	  reflection provider/scanner so garganttua-core's Bootstrap ServiceLoader
-	  picks them ahead of the runtime ones. The runner is unchanged — provider
-	  precedence is decided purely by classpath contents.
+	  aot-mongo-javalin — same persistence/transport stack as jvm-mongo-javalin,
+	  but with the AOT reflection provider/scanner instead of the runtime ones.
+	  The bootstrap socle is provider-agnostic, so this aggregator brings the AOT
+	  providers ONLY — there is no runtime reflection stack on the classpath,
+	  keeping the build pure-AOT / native-image-clean (no org.reflections scan).
+	  The runner is unchanged — provider precedence is decided purely by classpath
+	  contents.
 
-	  AOT processing is opt-in: add the garganttua-aot-maven-plugin to your
-	  application's build to populate the AOT index. Without it, the AOT provider
-	  returns nothing and the runtime fallback kicks in — so this starter is a
-	  no-op upgrade over the jvm variant until you enable the plugin.
+	  AOT processing is required: add the garganttua-aot-maven-plugin to your
+	  application's build to populate the AOT index. There is NO runtime fallback
+	  in this starter — a type without a generated AOT descriptor will not be
+	  resolved. If you want the runtime safety net, use a future hybrid aggregator
+	  (bootstrap + garganttua-starter-hybrid), not this pure-AOT starter.
 	-->
 
 	<dependencies>
-		<!-- AOT reflection first; the bootstrap starter still brings the runtime
-		     fallback (garganttua-runtime-reflection + garganttua-reflections). -->
+		<!-- AOT reflection providers only. The bootstrap socle is now
+		     provider-agnostic, so no runtime reflection stack leaks in here —
+		     this aggregator stays pure-AOT (no org.reflections, no classpath
+		     scan), which native-image needs. -->
 		<dependency>
 			<groupId>com.garganttua.core</groupId>
 			<artifactId>garganttua-aot-reflection</artifactId>

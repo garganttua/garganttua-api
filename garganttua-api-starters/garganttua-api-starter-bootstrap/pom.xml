@@ -25,10 +25,12 @@
 	      environment-variable overrides (implements commons' IConfig).
 	    * Discovers IApiAutoConfiguration services and applies them before build.
 
-	  It brings the framework + the RUNTIME reflection stack only. Persistence
-	  (mongodb) and transport (javalin) are separate add-on starters that
-	  auto-wire themselves when present. The AOT aggregator simply adds the AOT
-	  reflection providers ahead of the runtime ones — the runner is unchanged.
+	  It brings the framework only — it is reflection-provider-agnostic and does
+	  NOT choose a reflection stack. The aggregators do: the JVM aggregator adds
+	  the runtime reflection providers, the AOT aggregator adds the AOT ones.
+	  Persistence (mongodb) and transport (javalin) are likewise separate add-on
+	  starters that auto-wire themselves when present. The runner is unchanged
+	  regardless of which providers sit on the classpath.
 	-->
 
 	<dependencies>
@@ -37,15 +39,9 @@
 			<artifactId>garganttua-api-core</artifactId>
 		</dependency>
 
-		<!-- Reflection: runtime stack (no AOT step required). -->
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-runtime-reflection</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.garganttua.core</groupId>
-			<artifactId>garganttua-reflections</artifactId>
-		</dependency>
+		<!-- No reflection provider here: this socle stays provider-agnostic.
+		     The runtime stack is brought by garganttua-api-starter-jvm-*, the
+		     AOT stack by garganttua-api-starter-aot-*. -->
 
 		<!-- Bootstrap orchestrator (Bootstrap.builder() cold-start + SPI wiring). -->
 		<dependency>

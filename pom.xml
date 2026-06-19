@@ -182,6 +182,14 @@
 				<artifactId>garganttua-runtime-reflection</artifactId>
 				<version>${garganttua.core.version}</version>
 			</dependency>
+			<!-- Runtime reflection aggregator (runtime-reflection + reflections):
+			     brought by the JVM starter, never by the bootstrap socle. -->
+			<dependency>
+				<groupId>com.garganttua.core</groupId>
+				<artifactId>garganttua-starter-runtime</artifactId>
+				<version>${garganttua.core.version}</version>
+				<type>pom</type>
+			</dependency>
 			<dependency>
 				<groupId>com.garganttua.core</groupId>
 				<artifactId>garganttua-aot-commons</artifactId>
