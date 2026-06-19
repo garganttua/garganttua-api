@@ -17,7 +17,7 @@ import com.garganttua.core.reflection.IClass;
  * mechanism with the mapper swapped, so a client asking for {@code application/xml}
  * is served rather than refused with a {@code 406}.
  */
-abstract class AbstractJacksonSerializer implements ISerializer {
+public abstract class AbstractJacksonSerializer implements ISerializer {
 
 	private final ObjectMapper mapper;
 	private final MimeType mimeType;
