@@ -415,9 +415,16 @@ class EncodeAuthorizationIntegrationTest extends AbstractCrudScriptTest {
         void tamperedJwtRejected() throws ApiException {
             String jwt = login();
             String[] parts = jwt.split("\\.", -1);
-            char[] sig = parts[2].toCharArray();
-            sig[sig.length - 1] = sig[sig.length - 1] == 'A' ? 'B' : 'A'; // flip within the base64 alphabet
-            String tampered = parts[0] + "." + parts[1] + "." + new String(sig);
+            // Tamper a decoded signature BYTE, not a trailing base64 char: the
+            // ECDSA/DER signature length varies run-to-run, and when it is not a
+            // multiple of 3 the last base64url char carries non-significant
+            // padding bits the decoder ignores — flipping those would leave the
+            // bytes (and thus the signature) unchanged, making the test flaky.
+            byte[] sigBytes = Base64.getUrlDecoder().decode(parts[2]);
+            sigBytes[sigBytes.length / 2] ^= 0x01; // flip a guaranteed-significant bit
+            String tamperedSig = Base64.getUrlEncoder().withoutPadding().encodeToString(sigBytes);
+            assertNotEquals(parts[2], tamperedSig, "the tamper must actually change the signature bytes");
+            String tampered = parts[0] + "." + parts[1] + "." + tamperedSig;
 
             OperationRequest req = bearer(tampered);
             SecurityExpressions.predecodeRawAuthorization(req, userCtx);
