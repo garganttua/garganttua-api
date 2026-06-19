@@ -13,18 +13,28 @@
 		no persistence, no transport. Supply your own in-memory IDao for tutorials and tests.</description>
 
 	<!--
-	  Quickstart — aggregator that pulls only the bootstrap starter (framework +
-	  runtime reflection + GarganttuaApplication runner). No DAO, no HTTP
-	  transport: the user supplies an in-memory IDao (via .db(...) on a domain,
-	  or a test IApiAutoConfiguration registering a default DAO) and exercises
-	  the API in-process. For a real web app, switch to the
+	  Quickstart — aggregator that pulls the bootstrap runner (framework +
+	  GarganttuaApplication runner) plus the runtime reflection stack. No DAO,
+	  no HTTP transport: the user supplies an in-memory IDao (via .db(...) on a
+	  domain, or a test IApiAutoConfiguration registering a default DAO) and
+	  exercises the API in-process. For a real web app, switch to the
 	  jvm-mongo-javalin starter (or its AOT variant).
+
+	  The bootstrap socle is reflection-provider-agnostic, so this aggregator is
+	  where the runtime providers enter the classpath.
 	-->
 
 	<dependencies>
 		<dependency>
 			<groupId>com.garganttua</groupId>
 			<artifactId>garganttua-api-starter-bootstrap</artifactId>
+		</dependency>
+
+		<!-- Runtime reflection stack (runtime-reflection + reflections). -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-starter-runtime</artifactId>
+			<type>pom</type>
 		</dependency>
 	</dependencies>
 </project>

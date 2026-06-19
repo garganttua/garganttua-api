@@ -33,6 +33,17 @@
 			<artifactId>garganttua-api-dao-mongodb</artifactId>
 		</dependency>
 
+		<!-- The boot test (GarganttuaApplication.run) scans @Entity/@Dto, so it
+		     needs a reflection provider. The bootstrap socle is now
+		     provider-agnostic; in production the aggregator supplies the stack,
+		     but this module's own test must bring one itself. -->
+		<dependency>
+			<groupId>com.garganttua.core</groupId>
+			<artifactId>garganttua-starter-runtime</artifactId>
+			<type>pom</type>
+			<scope>test</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
