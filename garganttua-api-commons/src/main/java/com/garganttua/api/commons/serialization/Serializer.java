@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.garganttua.core.reflection.annotations.Indexed;
+
 /**
  * Marks a class as a serializer that should be auto-discovered and registered
  * on the {@link com.garganttua.api.commons.context.IApi} global serializer pool.
@@ -18,6 +20,7 @@ import java.lang.annotation.Target;
  *       with {@code IApiBuilder.autoDetect(true)}</li>
  * </ul>
  */
+@Indexed
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Serializer {
