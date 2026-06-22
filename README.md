@@ -82,6 +82,8 @@ Garganttua API is organized into independent modules, each focusing on a specifi
 
 
 
+
+
 <!-- AUTO-GENERATED-ARCHITECTURE-STOP -->
 
 ## 📚 Module Categories
@@ -209,7 +211,9 @@ graph TD
     garganttua-api-starters["garganttua-api-starters"]
 
     garganttua-api-starter-quickstart --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-quickstart --> garganttua-starter-runtime
     garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-starter-bootstrap
+    garganttua-api-starter-jvm-mongo-javalin --> garganttua-starter-runtime
     garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-starter-mongodb
     garganttua-api-starter-jvm-mongo-javalin --> garganttua-api-starter-javalin
     garganttua-api-starter-aot-mongo-javalin --> garganttua-aot-reflection
@@ -219,12 +223,12 @@ graph TD
     garganttua-api-starter-aot-mongo-javalin --> garganttua-api-starter-javalin
     garganttua-api-starter-mongodb --> garganttua-api-starter-bootstrap
     garganttua-api-starter-mongodb --> garganttua-api-dao-mongodb
+    garganttua-api-starter-mongodb --> garganttua-starter-runtime
     garganttua-api-starter-javalin --> garganttua-api-starter-bootstrap
     garganttua-api-starter-javalin --> garganttua-api-binding-javalin
     garganttua-api-starter-javalin --> garganttua-api-binding-jackson
+    garganttua-api-starter-javalin --> garganttua-starter-runtime
     garganttua-api-starter-bootstrap --> garganttua-api-core
-    garganttua-api-starter-bootstrap --> garganttua-runtime-reflection
-    garganttua-api-starter-bootstrap --> garganttua-reflections
     garganttua-api-starter-bootstrap --> garganttua-bootstrap
     garganttua-api-native-image --> garganttua-reflection
     garganttua-api-native-image --> garganttua-native-image-utils
@@ -232,8 +236,13 @@ graph TD
     garganttua-api-native-image --> garganttua-objects-mapper
     garganttua-api-dao-mongodb --> garganttua-api-commons
     garganttua-api-dao-mongodb --> garganttua-api-binding-mongodb
+    garganttua-api-dao-mongodb --> garganttua-api-binding-jackson
+    garganttua-api-dao-mongodb --> garganttua-crypto
     garganttua-api-dao-mongodb --> garganttua-aot-reflection
     garganttua-api-dao-mongodb --> garganttua-aot-commons
+    garganttua-api-dao-mongodb --> garganttua-bootstrap
+    garganttua-api-dao-mongodb --> garganttua-runtime-reflection
+    garganttua-api-dao-mongodb --> garganttua-reflections
     garganttua-api-binding-javalin --> garganttua-api-commons
     garganttua-api-binding-javalin --> garganttua-api-core
     garganttua-api-binding-javalin --> garganttua-api-binding-jackson

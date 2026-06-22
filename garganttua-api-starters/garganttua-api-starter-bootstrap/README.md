@@ -29,8 +29,6 @@ It is deliberately **transport- and persistence-agnostic** — it brings the fra
 
 ### Dependencies
  - `com.garganttua:garganttua-api-core`
- - `com.garganttua.core:garganttua-runtime-reflection`
- - `com.garganttua.core:garganttua-reflections`
  - `com.garganttua.core:garganttua-bootstrap`
  - `org.yaml:snakeyaml`
  - `org.junit.jupiter:junit-jupiter-engine:test`

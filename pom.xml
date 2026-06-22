@@ -77,6 +77,13 @@
 		<maven-source-plugin.version>3.3.1</maven-source-plugin.version>
 		<maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
 		<jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+		<maven-exec-plugin.version>3.1.0</maven-exec-plugin.version>
+		<maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
+		<spotbugs-maven-plugin.version>4.9.8.3</spotbugs-maven-plugin.version>
+		<spotbugs.version>4.9.8</spotbugs.version>
+		<maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
+		<!-- Empty-jar guard (mirrors core): dormant by default, opt-in per module. -->
+		<enforce.jar.size.skip>true</enforce.jar.size.skip>
 	</properties>
 
 	<dependencyManagement>
@@ -413,6 +420,77 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- Stamp each jar's MANIFEST.MF so the module self-identifies at runtime
+			     (parity with core; Implementation-Vendor=com.garganttua lets a module
+			     scan discover the framework jars on the classpath). -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Implementation-Title>${project.name}</Implementation-Title>
+							<Implementation-Version>${project.version}</Implementation-Version>
+							<Implementation-Vendor>${project.groupId}</Implementation-Vendor>
+							<Garganttua-Module>${project.artifactId}</Garganttua-Module>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<!-- Regenerate the README auto-blocks (architecture, dependency graph,
+			     installation) on every build so the docs never drift from the poms.
+			     inherited=false → runs once, on the aggregator root only. -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>${maven-exec-plugin.version}</version>
+				<inherited>false</inherited>
+				<executions>
+					<execution>
+						<id>update-documentation</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>python3</executable>
+							<workingDirectory>${project.basedir}/scripts</workingDirectory>
+							<arguments>
+								<argument>run_all.py</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Refuse to install a stub jar (only META-INF, no .class) — the empty
+			     jar an IDE-driven partial build can leave behind, which corrupts every
+			     downstream consumer. Dormant by default (enforce.jar.size.skip=true),
+			     opt-in per jar-packaged module. Mirrors core. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>${maven-enforcer-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>jar-must-not-be-empty</id>
+						<phase>verify</phase>
+						<goals><goal>enforce</goal></goals>
+						<configuration>
+							<skip>${enforce.jar.size.skip}</skip>
+							<rules>
+								<requireFilesSize>
+									<message>JAR ${project.build.finalName}.jar is suspiciously small (&lt; 5 KB). Refusing to install — likely a build that skipped compile. Check IDE Maven settings / file watchers.</message>
+									<files>
+										<file>${project.build.directory}/${project.build.finalName}.jar</file>
+									</files>
+									<minsize>5000</minsize>
+									<maxsize>2147483647</maxsize>
+								</requireFilesSize>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -464,6 +542,41 @@
 								<goals><goal>check</goal></goals>
 							</execution>
 						</executions>
+					</plugin>
+					<!-- Static analysis (WARN-only, like checkstyle above) — parity with
+					     core's quality profile. Never fails the build; produces XML/HTML
+					     worklists. Needs online resolution on first run. -->
+					<plugin>
+						<groupId>com.github.spotbugs</groupId>
+						<artifactId>spotbugs-maven-plugin</artifactId>
+						<version>${spotbugs-maven-plugin.version}</version>
+						<dependencies>
+							<dependency>
+								<groupId>com.github.spotbugs</groupId>
+								<artifactId>spotbugs</artifactId>
+								<version>${spotbugs.version}</version>
+							</dependency>
+						</dependencies>
+						<configuration>
+							<effort>Max</effort>
+							<threshold>Low</threshold>
+							<failOnError>false</failOnError>
+							<includeTests>false</includeTests>
+							<xmlOutput>true</xmlOutput>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-pmd-plugin</artifactId>
+						<version>${maven-pmd-plugin.version}</version>
+						<configuration>
+							<failOnViolation>false</failOnViolation>
+							<includeTests>false</includeTests>
+							<rulesets>
+								<ruleset>category/java/errorprone.xml</ruleset>
+								<ruleset>category/java/bestpractices.xml</ruleset>
+							</rulesets>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>

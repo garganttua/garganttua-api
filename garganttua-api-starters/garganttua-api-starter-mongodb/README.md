@@ -30,6 +30,7 @@ A domain whose DTO declares an explicit `.db(...)` keeps it — the default DAO 
 ### Dependencies
  - `com.garganttua:garganttua-api-starter-bootstrap`
  - `com.garganttua:garganttua-api-dao-mongodb`
+ - `com.garganttua.core:garganttua-starter-runtime:test`
  - `org.junit.jupiter:junit-jupiter-engine:test`
  - `org.mockito:mockito-core:test`
  - `org.mockito:mockito-junit-jupiter:test`

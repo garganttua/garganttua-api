@@ -33,8 +33,16 @@
 ### Dependencies
  - `com.garganttua:garganttua-api-commons`
  - `com.garganttua:garganttua-api-binding-mongodb`
+ - `com.garganttua:garganttua-api-binding-jackson`
+ - `com.garganttua.core:garganttua-crypto`
  - `com.garganttua.core:garganttua-aot-reflection`
  - `com.garganttua.core:garganttua-aot-commons`
+ - `org.junit.jupiter:junit-jupiter-engine:test`
+ - `com.garganttua.core:garganttua-bootstrap:test`
+ - `com.garganttua.core:garganttua-runtime-reflection:test`
+ - `com.garganttua.core:garganttua-reflections:test`
+ - `org.mockito:mockito-core:test`
+ - `org.mockito:mockito-junit-jupiter:test`
 
 <!-- AUTO-GENERATED-END -->
 

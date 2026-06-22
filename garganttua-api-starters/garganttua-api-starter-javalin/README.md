@@ -31,6 +31,7 @@ A domain that declares its own interface via `.interfasse(...)` keeps it — the
  - `com.garganttua:garganttua-api-starter-bootstrap`
  - `com.garganttua:garganttua-api-binding-javalin`
  - `com.garganttua:garganttua-api-binding-jackson`
+ - `com.garganttua.core:garganttua-starter-runtime:test`
  - `org.junit.jupiter:junit-jupiter-engine:test`
  - `org.mockito:mockito-core:test`
  - `org.mockito:mockito-junit-jupiter:test`

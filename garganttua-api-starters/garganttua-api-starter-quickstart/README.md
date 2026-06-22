@@ -28,6 +28,7 @@ For a real web app, switch to [`garganttua-api-starter-jvm-mongo-javalin`](../ga
 
 ### Dependencies
  - `com.garganttua:garganttua-api-starter-bootstrap`
+ - `com.garganttua.core:garganttua-starter-runtime`
 
 <!-- AUTO-GENERATED-END -->
 

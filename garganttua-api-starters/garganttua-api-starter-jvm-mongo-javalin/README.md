@@ -29,6 +29,7 @@ Add this one dependency, annotate your `@Entity`/`@Dto`, drop an `application.ya
 
 ### Dependencies
  - `com.garganttua:garganttua-api-starter-bootstrap`
+ - `com.garganttua.core:garganttua-starter-runtime`
  - `com.garganttua:garganttua-api-starter-mongodb`
  - `com.garganttua:garganttua-api-starter-javalin`
 
