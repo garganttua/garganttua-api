@@ -75,6 +75,8 @@
 		<maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
 		<maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
 		<maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+		<maven-javadoc-plugin.version>3.6.3</maven-javadoc-plugin.version>
+		<jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
 	</properties>
 
 	<dependencyManagement>
@@ -334,7 +336,11 @@
 						     full runs under JDK 25 (inline mock-maker self-attach). Durable
 						     fix = bump Mockito + ByteBuddy to JDK-25-native versions (needs
 						     online resolution); then this flag can be dropped. -->
-						<argLine>-Dnet.bytebuddy.experimental=true</argLine>
+						<!-- @{argLine} is the late-bound property JaCoCo's prepare-agent
+						     sets; prepend it so the coverage agent loads alongside the
+						     ByteBuddy flag (without it our literal argLine would clobber
+						     JaCoCo and every report would read 0%). -->
+						<argLine>@{argLine} -Dnet.bytebuddy.experimental=true</argLine>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -360,6 +366,49 @@
 						<id>attach-sources</id>
 						<goals>
 							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Attach a -javadoc.jar to every module (parity with garganttua-core).
+			     doclint=none + failOnError=false: partial javadoc never fails the
+			     release build; the jar ships whatever exists. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>${maven-javadoc-plugin.version}</version>
+				<configuration>
+					<source>${java.version}</source>
+					<failOnError>false</failOnError>
+					<doclint>none</doclint>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Code coverage (parity with garganttua-core). prepare-agent before
+			     tests, report bound to the test phase → target/site/jacoco/ per module. -->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco-maven-plugin.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
 						</goals>
 					</execution>
 				</executions>
